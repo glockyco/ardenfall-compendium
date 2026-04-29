@@ -229,6 +229,35 @@ item_potion_recipes           # PotionRecipeItemData fields
 item_repair_kits              # RepairKitItemData fields
 ```
 
+Slice 1 implements this subset:
+
+```text
+items                         # ItemData fields
+item_tags                     # ItemData.tags child table
+item_equipment                # EquipItemData fields
+item_hand_items               # HandItemData fields
+item_primary_hand_items       # PrimaryHandItemData fields
+item_melee_weapons            # MeleeItemData fields
+item_armor                    # ArmorItemData fields
+```
+
+The following item layer tables are known missing after Slice 1 and remain tracked for Slice 2:
+
+```text
+item_bows
+item_consumables
+item_throwing_items
+item_throwing_potions
+item_slate_spells
+item_notes
+item_potion_recipes
+item_repair_kits
+item_arrows
+additional ItemData subclasses found during full enumeration
+```
+
+Slice 1 deliberately proves one deep branch (`MeleeItemData`) and one sibling equipment branch (`ArmorItemData`); it does not defer the variant architecture itself.
+
 For `MeleeItemData`, canonical rows include:
 
 ```text
@@ -430,11 +459,10 @@ Site-global map config is limited to true globals: bounds, tile URL pattern, hig
 
 ## 20. Remaining decisions before Slice 1 plan
 
-1. Exact Slice 1 item variant/table set.
-2. Parameter provenance level for Slice 1.
-3. Missing-reference policy by field criticality.
-4. Exact pipeline-emitted site metadata tables vs typed JSON shape.
-5. Read models as SQLite views vs materialized tables.
-6. Extraction lifecycle trigger/readiness timing.
-7. Fixture strategy for real BepInEx boundary validation.
-8. Concrete tooling choices still open from the original spec: validator, property testing, component primitives, repo/CI.
+1. Parameter provenance level for Slice 1.
+2. Missing-reference policy by field criticality.
+3. Exact pipeline-emitted site metadata tables vs typed JSON shape.
+4. Read models as SQLite views vs materialized tables.
+5. Extraction lifecycle trigger/readiness timing.
+6. Fixture strategy for real BepInEx boundary validation.
+7. Concrete tooling choices still open from the original spec: validator, property testing, component primitives, repo/CI.

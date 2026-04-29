@@ -47,7 +47,7 @@ Slice ordering after Slice 1 is provisional; it changes when real extracted data
 - Generic `/items` and `/items/[id]` routes driven by emitted metadata/read models.
 - Basic item overview/detail UI using structured `fieldList` sections and a registered `custom` escape hatch if needed.
 
-**Likely initial item layers:**
+**Slice 1 item layers:**
 
 - `items` (`ItemData`)
 - `item_tags` (`ItemData.tags`)
@@ -57,17 +57,16 @@ Slice ordering after Slice 1 is provisional; it changes when real extracted data
 - `item_melee_weapons` (`MeleeItemData`)
 - `item_armor` (`ArmorItemData`)
 
-This exact set remains a Slice 1 planning decision.
+This set is defined for Slice 1. It proves the item variant model with one deep inheritance branch (`MeleeItemData`) and one sibling equipment branch (`ArmorItemData`). Slice 2 fills the remaining item subtype breadth using the same mechanism.
 
 **Excludes:**
 
-- Full item subtype coverage if not needed to prove the architecture.
+- Remaining item subtype coverage listed in Slice 2.
 - Spells, quests, locations, map rendering, tile capture, FTS5 search, override mechanism, full design system depth.
 - Canonical capability tables. Capability/facet/read-model views may be generated later from canonical item layer tables.
 
 **Open decisions to close before planning:**
 
-- Exact Slice 1 item variant/table set.
 - Parameter provenance level for Slice 1.
 - Missing-reference policy by field criticality.
 - Exact pipeline-emitted site metadata physical shape.
@@ -166,21 +165,20 @@ This exact set remains a Slice 1 planning decision.
 
 | # | Question | Closes in slice |
 |---|---|---|
-| 1 | Exact Slice 1 item layer/table set | Slice 1 |
-| 2 | Parameter provenance level | Slice 1 initial; overrides slice revisits |
-| 3 | Missing-reference policy | Slice 1 |
-| 4 | Pipeline-emitted site metadata shape | Slice 1 |
-| 5 | Views vs materialized read models | Slice 1 initial; search/facets revisits |
-| 6 | Extraction lifecycle trigger/readiness timing | Slice 1 |
-| 7 | Fixture strategy for BepInEx boundary | Slice 1 |
-| 8 | Deployment target | First slice that publishes a built site |
-| 9 | Repo strategy + CI tooling | Slice 1 |
-| 10 | Component library / primitive strategy | Slice 1 initial; Slice 7 full |
-| 11 | JSON Schema validator | Slice 1 |
-| 12 | Property-test framework | Slice 1 |
-| 13 | Tile capture specifics | Slice 6 |
-| 14 | External archive backend | Slice 9 |
-| 15 | Future gameplay-mod surface | deferred indefinitely |
+| 1 | Parameter provenance level | Slice 1 initial; overrides slice revisits |
+| 2 | Missing-reference policy | Slice 1 |
+| 3 | Pipeline-emitted site metadata shape | Slice 1 |
+| 4 | Views vs materialized read models | Slice 1 initial; search/facets revisits |
+| 5 | Extraction lifecycle trigger/readiness timing | Slice 1 |
+| 6 | Fixture strategy for BepInEx boundary | Slice 1 |
+| 7 | Deployment target | First slice that publishes a built site |
+| 8 | Repo strategy + CI tooling | Slice 1 |
+| 9 | Component library / primitive strategy | Slice 1 initial; Slice 7 full |
+| 10 | JSON Schema validator | Slice 1 |
+| 11 | Property-test framework | Slice 1 |
+| 12 | Tile capture specifics | Slice 6 |
+| 13 | External archive backend | Slice 9 |
+| 14 | Future gameplay-mod surface | deferred indefinitely |
 
 ## Update protocol
 
