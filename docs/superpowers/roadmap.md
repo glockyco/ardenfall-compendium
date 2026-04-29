@@ -1,103 +1,193 @@
 # Ardenfall Archives — Implementation Roadmap
 
-Living tracker for the implementation of the spec at `docs/superpowers/specs/2026-04-28-ardenfall-archives-design.md`. Updated when slices are planned, started, completed, or re-shaped.
+Living tracker for implementation of:
+
+- Baseline spec: `docs/superpowers/specs/2026-04-28-ardenfall-archives-design.md`
+- Slice 1 amendment: `docs/superpowers/specs/2026-04-29-ardenfall-archives-implementation-decisions.md`
+
+The amendment is authoritative where it differs from the baseline spec.
 
 ## How this is organised
 
-The spec covers three layered subsystems (mod, pipeline, site) plus shared infrastructure. Rather than one mega-plan, the work is split into **slices**. Each slice gets its own plan under `docs/superpowers/plans/` and produces working, testable software on its own. Slices are sequenced so the architecture is exercised end-to-end as early as possible (Slice 1 is a walking skeleton through every layer).
+The project spans three layered subsystems (BepInEx mod, TS/Bun pipeline, SvelteKit site) plus shared descriptor/schema infrastructure. Rather than one mega-plan, work is split into **slices**. Each slice gets its own plan under `docs/superpowers/plans/` and must produce working, testable software on its own.
 
-Slice ordering after Slice 1 is provisional; it will shift as we learn from execution.
+Slice ordering after Slice 1 is provisional; it changes when real extracted data proves a better sequence.
 
 ## Status legend
 
 - **planned** — described here, no plan written yet
+- **brainstorming** — design decisions still being closed
 - **drafting** — plan being written
 - **ready** — plan written and committed, awaiting execution
 - **in-progress** — plan execution underway
 - **done** — plan executed and merged
-- **deferred** — explicitly parked; won't be picked up until a stated trigger fires
+- **deferred** — explicitly parked until a stated trigger fires
 
 ## Slices
 
-### Slice 1 — Walking skeleton (Spell, end-to-end)
+### Slice 1 — Item walking skeleton
 
-**Status:** drafting
-**Plan:** `docs/superpowers/plans/2026-04-28-walking-skeleton.md` (in flight)
-**Spec coverage:** §4 (architectural shape, all three stages — minimal cuts), §6 (repo layout, Spell-only), §7 (descriptor format), §8 (mod, walker base, hotkey trigger, Spell DTO), §9 (pipeline, validate + denormalise + canonicalise + emit-sqlite stages), §11 (canonical store, no FTS5 yet), §14 (site, generic overview + detail for Spell), §15 (P1–P4, P6, P7, P9 — design system depth in Slice 5)
-**Delivers:** running mod that extracts spells from the Ardenfall demo, pipeline that turns the snapshot into a SQLite blob, static SvelteKit site rendering `/spells` and `/spells/<id>`. End-to-end TDD coverage on the architectural seams.
-**Excludes:** map, asset pipeline, tile pyramid, FTS5 search, override mechanism, more than one entity type, full design system.
-**Open questions to close in this slice:**
-- JSON Schema validator pinned (§16.5)
-- Property-test framework pinned (§16.6)
-- Initial component-library decision for design-system primitives (§16.4)
-- Repo strategy + CI tooling (§16.2) — at least decide private/public and a single CI runner
+**Status:** brainstorming
+**Plan:** `docs/superpowers/plans/2026-04-29-item-walking-skeleton.md` (not written yet)
+**Spec coverage:** baseline §4, §6–§9, §11, §14, §15 plus all implementation decisions in `2026-04-29-ardenfall-archives-implementation-decisions.md`.
 
-### Slice 2 — Asset pipeline
+**Delivers:**
+
+- Bun workspace repo foundation for `pipeline/` and `site/`, with `mod/` as C# sibling.
+- Descriptor-only entity root: `entities/item/entity.json`.
+- Item variant descriptor mechanism under `entities/item/variants/`.
+- BepInEx extraction path for `ItemData` assets using `BuiltLookupTable.GetAssetsOfType<ItemData>()`.
+- Stable asset IDs via `BuiltLookupTable.GetGuid(Object)`.
+- Explicit snapshot DTOs; no raw Unity/Odin/game object JSON.
+- `Parameter<T>.Get()` and `SmartListParameter<T>.Get()` resolution for item fields.
+- Extraction preflight for lookup table, `ArdenfallGame.instance`, `worldData`, and `masterRecordTable` readiness.
+- Snapshot manifest with game/build/extractor metadata, preflight result, counts, diagnostics.
+- Canonical SQLite tables for `items`, `item_tags`, and the first meaningful item variant/layer tables.
+- Pipeline-emitted site metadata; site does not read raw descriptors.
+- Generic `/items` and `/items/[id]` routes driven by emitted metadata/read models.
+- Basic item overview/detail UI using structured `fieldList` sections and a registered `custom` escape hatch if needed.
+
+**Likely initial item layers:**
+
+- `items` (`ItemData`)
+- `item_tags` (`ItemData.tags`)
+- `item_equipment` (`EquipItemData`)
+- `item_hand_items` (`HandItemData`)
+- `item_primary_hand_items` (`PrimaryHandItemData`)
+- `item_melee_weapons` (`MeleeItemData`)
+- `item_armor` (`ArmorItemData`)
+
+This exact set remains a Slice 1 planning decision.
+
+**Excludes:**
+
+- Full item subtype coverage if not needed to prove the architecture.
+- Spells, quests, locations, map rendering, tile capture, FTS5 search, override mechanism, full design system depth.
+- Canonical capability tables. Capability/facet/read-model views may be generated later from canonical item layer tables.
+
+**Open decisions to close before planning:**
+
+- Exact Slice 1 item variant/table set.
+- Parameter provenance level for Slice 1.
+- Missing-reference policy by field criticality.
+- Exact pipeline-emitted site metadata physical shape.
+- Read models as SQLite views vs materialized tables.
+- Extraction lifecycle trigger/readiness timing.
+- Fixture strategy for real BepInEx boundary validation.
+- JSON Schema validator, property-test framework, initial UI primitives, repo/CI/tooling choices.
+
+### Slice 2 — Item subtype enrichment
 
 **Status:** planned
-**Spec coverage:** §8.4, §9 (`emit-assets` stage), §12, §14 (image rendering on detail pages)
-**Delivers:** content-addressed PNG emission from the mod, WebP optimisation via `sharp`, `asset_refs` table populated, detail pages render entity images.
-**Open questions to close:** none specific to this slice.
+**Spec coverage:** implementation addendum §9–§11, §16.
 
-### Slice 3 — Map system
+**Delivers:** fills out the remaining item inheritance/leaf layers observed in ILSpy, likely including:
 
-**Status:** planned
-**Spec coverage:** §10 (full), §8 (tile capture trigger added to mod), §9 (`emit-tiles` stage)
-**Delivers:** deck.gl `OrthographicView` map; descriptor-driven `createEntityLayer` loop; `DataFilterExtension` filtering wired for at least one mappable entity; tile pyramid generation from in-game capture.
-**Open questions to close:** tile capture mod specifics — orthographic camera setup, zoom levels, projection bounds (§16.7).
+- `item_bows`
+- `item_consumables`
+- `item_throwing_items`
+- `item_throwing_potions`
+- `item_slate_spells`
+- `item_notes`
+- `item_potion_recipes`
+- `item_repair_kits`
+- `item_arrows`
+- any additional `ItemData` subclasses found during full enumeration
 
-### Slice 4 — Entity expansion (Item, NPC, Region, …)
+**Trigger for breakdown:** if a subtype touches spells, notes/books, potion/status effects, or other domains deeply, it becomes its own plan.
 
-**Status:** planned
-**Spec coverage:** §6, §7, §14
-**Delivers:** descriptors for additional entity types; validation that the generic UI primitives accommodate diverse shapes without forking. Likely decomposes into one sub-plan per entity if the work is non-trivial; mechanical adds get batched.
-**Trigger for breakdown:** if any single entity type requires changes to `entity.schema.json` or to a UI primitive, that's its own plan; otherwise batched.
-
-### Slice 5 — Design system depth + search
-
-**Status:** planned
-**Spec coverage:** §11 (FTS5), §14 (full design system: tokens, lint rules, primitives), §15 P5
-**Delivers:** FTS5 virtual tables in the canonical store; search UI on the site; design-system tokens, lint rules, full component primitive set replacing whatever the walking skeleton scaffolded.
-**Open questions to close:** none beyond what Slice 1 deferred.
-
-### Slice 6 — Versioning, diff, and snapshot archive
+### Slice 3 — Asset pipeline
 
 **Status:** planned
-**Spec coverage:** §11 (`emit-digest`), §13, §16.9
-**Delivers:** `digests/<gameVersion>.summary.json` emitted by the pipeline; CLI command for cross-version diff; documented workflow for archiving raw snapshots and SQLite blobs externally; PR-body template carrying the digest.
-**Open questions to close:** external archive backend (§16.9).
+**Spec coverage:** baseline §8.4, §9 (`emit-assets`), §12; amendment §13, §16.
 
-### Slice 7 — Override mechanism
+**Delivers:** content-addressed PNG emission from the mod, WebP optimisation via `sharp`, `asset_refs` population, item icon rendering, generated asset manifest, asset diagnostics.
+
+**Note:** Slice 1 may include minimal icon references. Actual image extraction/rendering can move here unless needed to make item pages honest.
+
+### Slice 4 — Spells
+
+**Status:** planned
+**Spec coverage:** amendment §18.
+
+**Delivers:** `SpellData` extraction and canonicalization: typed `spells` root table; generated tooltips if feasible; references to `StatType`; type-tagged validated JSON for `SpellEffect` / `SubSpellData.effects`; link from `SlateSpellItemData` to spells once both sides exist.
+
+### Slice 5 — Locations and first map-oriented data
+
+**Status:** planned
+**Spec coverage:** baseline §10; amendment §17–§18.
+
+**Delivers:** `LocationAsset` extraction; `locations` and `location_volumes` tables; map-readiness for point/polygon data; coordinate canonicalization. This slice prepares map data without requiring tile capture or deck.gl UI yet.
+
+### Slice 6 — Map system
+
+**Status:** planned
+**Spec coverage:** baseline §10; amendment §17.
+
+**Delivers:** deck.gl `OrthographicView` map; emitted `map_layers` metadata/read models; generic layer factory; no AK-style split styling tables; first tile pyramid if capture tooling is ready.
+
+**Open questions to close:** orthographic camera setup, zoom levels, projection bounds, capture stitching strategy.
+
+### Slice 7 — Design system depth + search/facets
+
+**Status:** planned
+**Spec coverage:** baseline §11, §14, §15 P5; amendment §16.
+
+**Delivers:** design tokens, lint rules, stable primitive set, FTS5 search, item/entity facets, generated read models for search/filter performance.
+
+### Slice 8 — Quests and graph-heavy data
+
+**Status:** planned
+**Spec coverage:** amendment §18.
+
+**Delivers:** typed `quests` root table; child tables for stable phases/objectives/events/rewards where practical; validated type-tagged JSON for FlowCanvas/Odin graph internals until queries prove typed tables are warranted.
+
+### Slice 9 — Versioning, diff, and snapshot archive
+
+**Status:** planned
+**Spec coverage:** baseline §13, §16.9; amendment §15.
+
+**Delivers:** committed summary digests; cross-version diff CLI; raw snapshot/canonical SQLite archive workflow; PR-body digest template; external archive backend selected.
+
+### Slice 10 — Override mechanism
 
 **Status:** deferred
-**Trigger:** first time an entity needs an authored correction that the extracted data can't carry (e.g. a name fix, a manual classification, a curated description). Not before.
-**Spec coverage:** §6 (`overrides/`), §16.8
+**Trigger:** first authored correction that the extracted data cannot carry, or first need to distinguish resolved value from authored default/override in public output.
+**Spec coverage:** baseline §6, §16.8; amendment §12.
 
-### Slice 8 — AGENTS.md / CLAUDE.md per subsystem with worked examples
+### Slice 11 — AGENTS.md / CLAUDE.md per subsystem with worked examples
 
 **Status:** planned
-**Spec coverage:** §15 P8
-**Delivers:** repo-level + per-subsystem AGENTS.md (with CLAUDE.md pointers) carrying explicit good/bad code examples per the cited evidence.
-**Note:** earlier slices land minimal AGENTS.md stubs; this slice fills them in once the architecture has stopped moving.
+**Spec coverage:** baseline §15 P8.
 
-## Open questions tracker (mirror of spec §16)
+**Delivers:** repo-level and per-subsystem agent guidance with explicit good/bad examples. Earlier slices may land minimal stubs; this slice fills them in once architecture has stopped moving.
+
+## Open questions tracker
 
 | # | Question | Closes in slice |
 |---|---|---|
-| 1 | Deployment target | Slice 1 (or first slice that publishes a built site) |
-| 2 | Repo strategy + CI tooling | Slice 1 |
-| 3 | Future mod surface | deferred indefinitely |
-| 4 | Component library specifics | Slice 1 (initial), Slice 5 (full) |
-| 5 | JSON Schema validator pin | Slice 1 |
-| 6 | Property-test framework pin | Slice 1 |
-| 7 | Tile capture mod specifics | Slice 3 |
-| 8 | Override mechanism details | Slice 7 |
-| 9 | External archive backend | Slice 6 |
+| 1 | Exact Slice 1 item layer/table set | Slice 1 |
+| 2 | Parameter provenance level | Slice 1 initial; overrides slice revisits |
+| 3 | Missing-reference policy | Slice 1 |
+| 4 | Pipeline-emitted site metadata shape | Slice 1 |
+| 5 | Views vs materialized read models | Slice 1 initial; search/facets revisits |
+| 6 | Extraction lifecycle trigger/readiness timing | Slice 1 |
+| 7 | Fixture strategy for BepInEx boundary | Slice 1 |
+| 8 | Deployment target | First slice that publishes a built site |
+| 9 | Repo strategy + CI tooling | Slice 1 |
+| 10 | Component library / primitive strategy | Slice 1 initial; Slice 7 full |
+| 11 | JSON Schema validator | Slice 1 |
+| 12 | Property-test framework | Slice 1 |
+| 13 | Tile capture specifics | Slice 6 |
+| 14 | External archive backend | Slice 9 |
+| 15 | Future gameplay-mod surface | deferred indefinitely |
 
 ## Update protocol
 
 When a slice transitions:
-- **Drafting → ready:** plan link + commit hash recorded, status updated.
+
+- **Brainstorming → drafting:** all decisions that materially affect the slice are closed or marked provisional with revisit triggers.
+- **Drafting → ready:** plan link and commit hash recorded.
 - **Ready → in-progress:** worktree branch noted.
-- **In-progress → done:** completion date recorded, any spec deviations noted under the slice with rationale.
+- **In-progress → done:** completion date recorded; any spec deviations noted under the slice with rationale.
 - **Slice re-shaped:** old slice marked `superseded by Slice N`, new slice added.

@@ -1,7 +1,9 @@
 # Ardenfall Archives — Design Spec
 
 Date: 2026-04-28
-Status: Draft (awaiting user review)
+Status: Approved baseline; amended by `2026-04-29-ardenfall-archives-implementation-decisions.md`
+
+> **Implementation note:** Later ILSpy inspection and implementation-level brainstorming refined several details in this baseline spec. For Slice 1 planning and implementation, `2026-04-29-ardenfall-archives-implementation-decisions.md` is authoritative where it differs from this document. In particular, it supersedes the original Spell-first walking skeleton, `entities/<id>/operations.ts`, side-effect TS registries, site-side descriptor reading, one-table-per-entity storage, and `name + type` stable-id fallback as primary identity.
 
 ## 1. Goal
 
