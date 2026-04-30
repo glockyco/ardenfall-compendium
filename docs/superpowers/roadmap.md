@@ -44,6 +44,9 @@ Slice ordering after Slice 1 is provisional; it changes when real extracted data
 - Lean extraction lifecycle: commands register immediately; advisory readiness monitor logs when ready; `extract` reruns preflight before writing.
 - Atomic extraction output: publish only complete successful snapshots; pipeline ignores staging, failed, or incomplete attempts.
 - Snapshot manifest with game/build/extractor metadata, preflight result, counts, diagnostics.
+- Fixture strategy: synthetic contract fixtures plus curated real-derived boundary capsules; full exports and generated artifacts stay ignored or external.
+- Fixture hygiene guardrails: manifests, size budgets, curation tooling, and CI checks against accidental exported-data commits.
+- Local boundary validation against an ignored real BepInEx snapshot remains required for extractor changes.
 - Snapshot-level lightweight provenance for each extracted item `Parameter<T>` / `SmartListParameter<T>` field (`isSet`, inherited flag, optional parent ref).
 - Canonical SQLite tables for `items`, `item_tags`, and the first meaningful item variant/layer tables.
 - Pipeline-emitted site metadata; site does not read raw descriptors.
@@ -68,9 +71,16 @@ This set is defined for Slice 1. It proves the item variant model with one deep 
 - Spells, quests, locations, map rendering, tile capture, FTS5 search, override mechanism, full design system depth.
 - Canonical capability tables. Capability/facet/read models may be generated later from canonical item layer tables.
 
+**Fixture/exported-data policy:**
+
+- Commit synthetic fixtures, curated real-derived micro-capsules, compact digests, manifests, curation scripts, and hygiene checks.
+- Do not commit full snapshots, generated SQLite/read-model databases, generated assets/media/tiles, staging/failed attempts, local logs, or ad hoc dumps.
+- Real-derived capsules are permitted but must be mechanically curated from successful ignored snapshots and kept tiny/reviewable.
+- Deferred: fixture size budget, exact fixture paths, selected real item ids after first extraction, private/full-regression CI, external archive backend, artifact retention/access policy, and public site content publication policy.
+
+
 **Open decisions to close before planning:**
 
-- Fixture strategy for real BepInEx boundary validation.
 - JSON Schema validator, property-test framework, initial UI primitives, repo/CI/tooling choices.
 
 ### Slice 2 — Item subtype enrichment
@@ -163,15 +173,14 @@ This set is defined for Slice 1. It proves the item variant model with one deep 
 
 | # | Question | Closes in slice |
 |---|---|---|
-| 1 | Fixture strategy for BepInEx boundary | Slice 1 |
-| 2 | Deployment target | First slice that publishes a built site |
-| 3 | Repo strategy + CI tooling | Slice 1 |
-| 4 | Component library / primitive strategy | Slice 1 initial; Slice 7 full |
-| 5 | JSON Schema validator | Slice 1 |
-| 6 | Property-test framework | Slice 1 |
-| 7 | Tile capture specifics | Slice 6 |
-| 8 | External archive backend | Slice 9 |
-| 9 | Future gameplay-mod surface | deferred indefinitely |
+| 1 | Deployment target | First slice that publishes a built site |
+| 2 | Repo strategy + CI tooling | Slice 1 |
+| 3 | Component library / primitive strategy | Slice 1 initial; Slice 7 full |
+| 4 | JSON Schema validator | Slice 1 |
+| 5 | Property-test framework | Slice 1 |
+| 6 | Tile capture specifics | Slice 6 |
+| 7 | External archive backend | Slice 9 |
+| 8 | Future gameplay-mod surface | deferred indefinitely |
 
 ## Update protocol
 

@@ -593,7 +593,92 @@ Site-global map config is limited to true globals: bounds, tile URL pattern, hig
 - **Quests:** typed `quests` root table; child tables for stable phases/objectives/events/rewards where practical; type-tagged JSON for FlowCanvas/Odin graph internals until queries prove typed tables are warranted.
 - **Locations:** typed `locations` root table plus `location_volumes`; map metadata emitted as SQLite read models.
 
-## 19. Refusals
+## 19. Fixture and exported-data strategy
+
+**Status:** Accepted for Slice 1.
+
+The repository is source and test contract, not an export archive. Full extracted game data may be useful locally and later as release/update artifacts, but it must not become ordinary git history.
+
+Committed fixture classes:
+
+```text
+synthetic contract fixtures
+curated real-derived boundary capsules
+compact expected digests / boundary certificates
+fixture manifests
+fixture curation and hygiene-check scripts
+```
+
+Synthetic fixtures use invented data and cover schema, pipeline, and rejection behavior. They are valid for ordinary CI assertions but are not evidence that the BepInEx runtime boundary works.
+
+Curated real-derived boundary capsules are allowed because redistribution/copyright is not treated as a blocker for this project, but they remain intentionally tiny, reviewable, and mechanically produced from a successful BepInEx extraction. They exist to prove runtime DTO shape and boundary behavior, not to archive Ardenfall data.
+
+A curated real-derived capsule must be produced by a checked-in deterministic curation tool from an ignored full snapshot. It preserves snapshot DTO shape, manifest/preflight shape, reference kinds, provenance fields, diagnostics shape, and selected real runtime values needed for boundary validation. It must not be hand-trimmed from a full export.
+
+Minimum Slice 1 real-boundary evidence:
+
+```text
+successful preflight/manifest/hashes from the real mod
+GetAssetsOfType<ItemData>() produced item rows
+BuiltLookupTable.GetGuid success for an item/root asset
+at least one base ItemData row
+at least one deep subclass branch such as MeleeItemData
+at least one sibling equipment branch such as ArmorItemData
+resolved Parameter<T> set case
+resolved Parameter<T> inherited case if present in the selected data
+resolved SmartListParameter<ItemTag> set/inherited/empty coverage where present
+lookupAsset refs
+optional-empty field representation
+diagnostic missing-ref shape when naturally available or covered synthetically
+```
+
+Full local/runtime artifacts are ignored or external:
+
+```text
+full raw snapshots
+staging / failed / incomplete extraction attempts
+generated SQLite databases
+generated read-model databases
+generated site assets
+icons, screenshots, map tiles, and bulk media
+local extraction logs and ad hoc dumps
+```
+
+Generated SQLite/read-model outputs are rebuilt into temporary test directories. Tests compare invariants, selected normalized rows, and compact digests; generated databases/assets are not golden files in git.
+
+Every committed fixture pack requires a manifest declaring:
+
+```text
+fixture kind: synthetic | real-derived-curated | digest | boundary-certificate
+schema version
+extractor version when applicable
+game/build identifier when applicable
+source and curation tool version
+intended assertions
+selected ids/types and selection rationale
+normalization/scrubbing/minimization notes
+content hashes
+```
+
+CI must enforce fixture hygiene: size budgets, required manifests, deterministic formatting, no machine-local paths, no raw Unity/Odin/game-object JSON, no raw `Parameter<T>` / `SmartListParameter<T>` state, and no tracked files under generated-artifact or extraction-output paths.
+
+Local boundary validation remains first-class. Extractor changes must be validated against a real ignored snapshot by running the BepInEx mod, confirming `status` / `extract` behavior, atomically publishing a snapshot, and running pipeline boundary validation against that explicit snapshot path.
+
+Deferred/pending decisions:
+
+```text
+exact committed fixture size budget
+exact fixture directory names
+exact curated item ids/types after first successful extraction
+whether private/full-regression CI is worth adding
+external archive backend for full snapshots and generated release artifacts
+retention/access policy for external artifacts
+public static-site content publication policy
+```
+
+These deferred decisions do not reopen the repository hygiene invariant: full exports and generated artifacts stay out of git.
+
+## 20. Refusals
 
 - No raw Unity/Odin/game object JSON.
 - No side-effect global registries.
@@ -603,7 +688,6 @@ Site-global map config is limited to true globals: bounds, tile URL pattern, hig
 - No canonical capability tables invented before query pressure proves the abstraction.
 - No map styling tables split by color/radius/icon/border; one emitted layer contract.
 
-## 20. Remaining decisions before Slice 1 plan
+## 21. Remaining decisions before Slice 1 plan
 
-1. Fixture strategy for real BepInEx boundary validation.
-2. Concrete tooling choices still open from the original spec: validator, property testing, component primitives, repo/CI.
+1. Concrete tooling choices still open from the original spec: validator, property testing, component primitives, repo/CI.
