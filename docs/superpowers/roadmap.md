@@ -41,6 +41,8 @@ Slice ordering after Slice 1 is provisional; it changes when real extracted data
 - Explicit snapshot DTOs; no raw Unity/Odin/game object JSON.
 - `Parameter<T>.Get()` and `SmartListParameter<T>.Get()` resolution for item fields.
 - Extraction preflight for lookup table, `ArdenfallGame.instance`, `worldData`, and `masterRecordTable` readiness.
+- Lean extraction lifecycle: commands register immediately; advisory readiness monitor logs when ready; `extract` reruns preflight before writing.
+- Atomic extraction output: publish only complete successful snapshots; pipeline ignores staging, failed, or incomplete attempts.
 - Snapshot manifest with game/build/extractor metadata, preflight result, counts, diagnostics.
 - Snapshot-level lightweight provenance for each extracted item `Parameter<T>` / `SmartListParameter<T>` field (`isSet`, inherited flag, optional parent ref).
 - Canonical SQLite tables for `items`, `item_tags`, and the first meaningful item variant/layer tables.
@@ -64,11 +66,10 @@ This set is defined for Slice 1. It proves the item variant model with one deep 
 
 - Remaining item subtype coverage listed in Slice 2.
 - Spells, quests, locations, map rendering, tile capture, FTS5 search, override mechanism, full design system depth.
-- Canonical capability tables. Capability/facet/read-model views may be generated later from canonical item layer tables.
+- Canonical capability tables. Capability/facet/read models may be generated later from canonical item layer tables.
 
 **Open decisions to close before planning:**
 
-- Extraction lifecycle trigger/readiness timing.
 - Fixture strategy for real BepInEx boundary validation.
 - JSON Schema validator, property-test framework, initial UI primitives, repo/CI/tooling choices.
 
@@ -162,16 +163,15 @@ This set is defined for Slice 1. It proves the item variant model with one deep 
 
 | # | Question | Closes in slice |
 |---|---|---|
-| 1 | Extraction lifecycle trigger/readiness timing | Slice 1 |
-| 2 | Fixture strategy for BepInEx boundary | Slice 1 |
-| 3 | Deployment target | First slice that publishes a built site |
-| 4 | Repo strategy + CI tooling | Slice 1 |
-| 5 | Component library / primitive strategy | Slice 1 initial; Slice 7 full |
-| 6 | JSON Schema validator | Slice 1 |
-| 7 | Property-test framework | Slice 1 |
-| 8 | Tile capture specifics | Slice 6 |
-| 9 | External archive backend | Slice 9 |
-| 10 | Future gameplay-mod surface | deferred indefinitely |
+| 1 | Fixture strategy for BepInEx boundary | Slice 1 |
+| 2 | Deployment target | First slice that publishes a built site |
+| 3 | Repo strategy + CI tooling | Slice 1 |
+| 4 | Component library / primitive strategy | Slice 1 initial; Slice 7 full |
+| 5 | JSON Schema validator | Slice 1 |
+| 6 | Property-test framework | Slice 1 |
+| 7 | Tile capture specifics | Slice 6 |
+| 8 | External archive backend | Slice 9 |
+| 9 | Future gameplay-mod surface | deferred indefinitely |
 
 ## Update protocol
 

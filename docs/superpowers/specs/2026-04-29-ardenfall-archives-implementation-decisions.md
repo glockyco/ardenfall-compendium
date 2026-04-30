@@ -459,7 +459,7 @@ Diagnostic example:
 
 ## 14. Extraction roots and readiness
 
-**Status:** Locked invariant.
+**Status:** Locked invariant; lifecycle accepted for Slice 1.
 
 Primary asset-backed extraction root:
 
@@ -482,6 +482,22 @@ masterRecordTable.GetTables() is non-empty
 
 Failed preflight writes no partial snapshot and reports a structured error.
 
+### Lifecycle UX
+
+Extraction lifecycle uses a lean hybrid readiness model.
+
+Plugin initialization registers config, logging, hotkey/command surface, and lifecycle-hint observers. Plugin initialization must not assume Ardenfall runtime roots are ready and must not extract.
+
+The authoritative extraction gate is the preflight executed immediately before snapshot creation. Readiness monitor state is advisory UX only. Lifecycle events, scene/load hints, and bounded polling may trigger readiness rechecks and a single ready transition log, but no single event proves readiness.
+
+Slice 1 exposes manual `status` and `extract` commands. `status` reports current/last preflight checks and blocking reasons. `extract` may be invoked anytime, reruns full preflight, and either writes one complete snapshot or writes no consumable snapshot.
+
+`extract-when-ready` / auto-extract is optional, default-off, and only for developer smoke testing. It must call the same extraction path and final preflight as manual extraction.
+
+Extraction output is atomic: after successful preflight, write to a staging/attempt path; complete entity files, diagnostics, manifest, counts, and hashes; then publish/rename to the final snapshot path. The pipeline ignores staging, failed, or incomplete attempts.
+
+Cached readiness is never an authorization token. Every extraction path must rerun preflight immediately before writing.
+
 ## 15. Snapshot manifest and diagnostics
 
 **Status:** Accepted for Slice 1.
@@ -492,7 +508,7 @@ Every snapshot includes a manifest with at least:
 game version / build identifier if available
 extractor version
 extraction timestamp
-preflight result
+preflight result with checked fields, pass/fail reasons, and timestamp
 counts per root type
 required diagnostic count
 optional diagnostic count
@@ -500,6 +516,8 @@ content hashes
 ```
 
 The pipeline rejects snapshots with failed preflight or fatal diagnostics.
+
+The pipeline also rejects snapshots missing a successful preflight object, expected files, required root counts, or declared content hashes.
 
 ## 16. Site read models and database access
 
@@ -587,6 +605,5 @@ Site-global map config is limited to true globals: bounds, tile URL pattern, hig
 
 ## 20. Remaining decisions before Slice 1 plan
 
-1. Extraction lifecycle trigger/readiness timing.
-2. Fixture strategy for real BepInEx boundary validation.
-3. Concrete tooling choices still open from the original spec: validator, property testing, component primitives, repo/CI.
+1. Fixture strategy for real BepInEx boundary validation.
+2. Concrete tooling choices still open from the original spec: validator, property testing, component primitives, repo/CI.
