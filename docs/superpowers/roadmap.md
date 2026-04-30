@@ -42,6 +42,7 @@ Slice ordering after Slice 1 is provisional; it changes when real extracted data
 - `Parameter<T>.Get()` and `SmartListParameter<T>.Get()` resolution for item fields.
 - Extraction preflight for lookup table, `ArdenfallGame.instance`, `worldData`, and `masterRecordTable` readiness.
 - Snapshot manifest with game/build/extractor metadata, preflight result, counts, diagnostics.
+- Snapshot-level lightweight provenance for each extracted item `Parameter<T>` / `SmartListParameter<T>` field (`isSet`, inherited flag, optional parent ref).
 - Canonical SQLite tables for `items`, `item_tags`, and the first meaningful item variant/layer tables.
 - Pipeline-emitted site metadata; site does not read raw descriptors.
 - Generic `/items` and `/items/[id]` routes driven by emitted metadata/read models.
@@ -67,7 +68,6 @@ This set is defined for Slice 1. It proves the item variant model with one deep 
 
 **Open decisions to close before planning:**
 
-- Parameter provenance level for Slice 1.
 - Missing-reference policy by field criticality.
 - Exact pipeline-emitted site metadata physical shape.
 - Read models as SQLite views vs materialized tables.
@@ -165,20 +165,19 @@ This set is defined for Slice 1. It proves the item variant model with one deep 
 
 | # | Question | Closes in slice |
 |---|---|---|
-| 1 | Parameter provenance level | Slice 1 initial; overrides slice revisits |
-| 2 | Missing-reference policy | Slice 1 |
-| 3 | Pipeline-emitted site metadata shape | Slice 1 |
-| 4 | Views vs materialized read models | Slice 1 initial; search/facets revisits |
-| 5 | Extraction lifecycle trigger/readiness timing | Slice 1 |
-| 6 | Fixture strategy for BepInEx boundary | Slice 1 |
-| 7 | Deployment target | First slice that publishes a built site |
-| 8 | Repo strategy + CI tooling | Slice 1 |
-| 9 | Component library / primitive strategy | Slice 1 initial; Slice 7 full |
-| 10 | JSON Schema validator | Slice 1 |
-| 11 | Property-test framework | Slice 1 |
-| 12 | Tile capture specifics | Slice 6 |
-| 13 | External archive backend | Slice 9 |
-| 14 | Future gameplay-mod surface | deferred indefinitely |
+| 1 | Missing-reference policy | Slice 1 |
+| 2 | Pipeline-emitted site metadata shape | Slice 1 |
+| 3 | Views vs materialized read models | Slice 1 initial; search/facets revisits |
+| 4 | Extraction lifecycle trigger/readiness timing | Slice 1 |
+| 5 | Fixture strategy for BepInEx boundary | Slice 1 |
+| 6 | Deployment target | First slice that publishes a built site |
+| 7 | Repo strategy + CI tooling | Slice 1 |
+| 8 | Component library / primitive strategy | Slice 1 initial; Slice 7 full |
+| 9 | JSON Schema validator | Slice 1 |
+| 10 | Property-test framework | Slice 1 |
+| 11 | Tile capture specifics | Slice 6 |
+| 12 | External archive backend | Slice 9 |
+| 13 | Future gameplay-mod surface | deferred indefinitely |
 
 ## Update protocol
 

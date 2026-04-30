@@ -304,7 +304,7 @@ Extraction matching uses assignability for inherited layers and exact type for l
 
 ## 12. Parameter and SmartList resolution
 
-**Status:** Accepted for Slice 1; provenance details provisional.
+**Status:** Accepted for Slice 1.
 
 Canonical values are resolved in the mod through the game's runtime semantics:
 
@@ -316,16 +316,42 @@ item.tags.Get()
 
 The mod emits resolved values in explicit snapshot DTOs. It does not serialize `Parameter<T>`, `SmartListParameter<T>`, `ParameterizedObject`, Odin containers, Unity objects, records, or record references directly.
 
-Optional lightweight provenance may be included when cheap:
+For Slice 1, emit lightweight provenance for every extracted item `Parameter<T>` and `SmartListParameter<T>` field:
 
 ```json
 {
-  "field": "itemName",
-  "source": "itemName.Get()",
-  "inherited": true,
-  "parentId": "..."
+  "name": "Iron Sword",
+  "weight": 3.5,
+  "tags": ["tag-guid"],
+  "provenance": {
+    "name": {
+      "kind": "parameter",
+      "source": "itemName.Get()",
+      "isSet": true,
+      "inherited": false
+    },
+    "weight": {
+      "kind": "parameter",
+      "source": "weight.Get()",
+      "isSet": false,
+      "inherited": true,
+      "parent": {
+        "kind": "lookupAsset",
+        "guid": "parent-guid",
+        "unityType": "Ardenfall.Item.ItemData"
+      }
+    },
+    "tags": {
+      "kind": "smartListParameter",
+      "source": "tags.Get()",
+      "isSet": true,
+      "inherited": false
+    }
+  }
 }
 ```
+
+This provenance is raw-snapshot data. Canonical SQLite stores resolved values; provenance may be retained in diagnostics/provenance artifacts but is not public site contract in Slice 1.
 
 Full raw authored parameter state is deferred until overrides/diff tooling proves a need.
 
@@ -459,7 +485,6 @@ Site-global map config is limited to true globals: bounds, tile URL pattern, hig
 
 ## 20. Remaining decisions before Slice 1 plan
 
-1. Parameter provenance level for Slice 1.
 2. Missing-reference policy by field criticality.
 3. Exact pipeline-emitted site metadata tables vs typed JSON shape.
 4. Read models as SQLite views vs materialized tables.
