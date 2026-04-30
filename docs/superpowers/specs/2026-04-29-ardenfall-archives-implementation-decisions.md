@@ -135,28 +135,85 @@ Built-in generic kinds render through site primitives. `custom` is the explicit 
 
 ## 6. Site metadata storage
 
-**Status:** Accepted for Slice 1; provisional beyond Slice 1.
+**Status:** Accepted for Slice 1; disciplined hybrid.
 
-Stable identity/routing fields are SQLite columns. Evolving UI config remains typed JSON until query pressure proves it should be normalized.
+The site metadata model is a relational spine with typed JSON leaves. Stable/cross-cutting metadata is relational. JSON is allowed only for kind-owned renderer/config payloads that are not independently queried.
 
-Initial shape:
+Slice 1 metadata tables:
 
 ```sql
-create table entity_types (
-  id text primary key,
+create table site_entities (
+  entity_id text primary key,
   singular_label text not null,
   plural_label text not null,
   route_path text not null,
-  table_name text not null,
-  overview_json text not null,
-  detail_json text not null,
-  map_json text
+  canonical_table text not null
+);
+
+create table site_entity_fields (
+  entity_id text not null,
+  field_id text not null,
+  source_table text not null,
+  source_column text not null,
+  label text not null,
+  value_kind text not null,
+  formatter text,
+  null_policy text not null,
+  link_target text,
+  primary key (entity_id, field_id)
+);
+
+create table site_overview_columns (
+  entity_id text not null,
+  column_id text not null,
+  field_id text not null,
+  position integer not null,
+  primary key (entity_id, column_id)
+);
+
+create table site_detail_sections (
+  entity_id text not null,
+  section_id text not null,
+  kind text not null,
+  title text not null,
+  position integer not null,
+  renderer_key text,
+  payload_schema_version integer not null default 1,
+  payload_json text,
+  primary key (entity_id, section_id)
+);
+
+create table site_detail_section_fields (
+  entity_id text not null,
+  section_id text not null,
+  field_id text not null,
+  position integer not null,
+  primary key (entity_id, section_id, field_id)
+);
+
+create table item_variants (
+  variant_id text primary key,
+  label text not null,
+  unity_type text not null,
+  canonical_table text not null,
+  parent_variant_id text,
+  position integer not null,
+  is_public_route integer not null default 0
+);
+
+create table site_read_models (
+  read_model_id text primary key,
+  physical_name text not null,
+  entity_id text not null,
+  purpose text not null
 );
 ```
 
 **Invariant:** site-facing metadata is emitted by the pipeline. The site does not parse source descriptors.
 
-**Revisit triggers:** two or more features need to query inside a JSON column; map metadata becomes hard to debug; JSON parsing logic repeats; metadata shape stabilizes enough that normalization reduces code.
+**JSON rules:** `payload_json` is allowed only when selected by a registered `surface + kind + schema_version`; validated by the pipeline; parsed only inside `site/src/lib/store/`; and free of canonical entity data, SQL snippets, arbitrary JS expressions, unregistered renderer names, and ad hoc styling.
+
+**Promotion triggers:** move payload fields to relational metadata when they are queried, sorted, filtered, searched, joined, reused by two or more section/layer kinds, or repeatedly parsed outside one store accessor.
 
 ## 7. Canonical SQLite storage
 

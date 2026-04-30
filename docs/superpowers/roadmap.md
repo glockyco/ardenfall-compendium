@@ -68,7 +68,6 @@ This set is defined for Slice 1. It proves the item variant model with one deep 
 
 **Open decisions to close before planning:**
 
-- Exact pipeline-emitted site metadata physical shape.
 - Read models as SQLite views vs materialized tables.
 - Extraction lifecycle trigger/readiness timing.
 - Fixture strategy for real BepInEx boundary validation.
@@ -164,18 +163,17 @@ This set is defined for Slice 1. It proves the item variant model with one deep 
 
 | # | Question | Closes in slice |
 |---|---|---|
-| 1 | Pipeline-emitted site metadata shape | Slice 1 |
-| 2 | Views vs materialized read models | Slice 1 initial; search/facets revisits |
-| 3 | Extraction lifecycle trigger/readiness timing | Slice 1 |
-| 4 | Fixture strategy for BepInEx boundary | Slice 1 |
-| 5 | Deployment target | First slice that publishes a built site |
-| 6 | Repo strategy + CI tooling | Slice 1 |
-| 7 | Component library / primitive strategy | Slice 1 initial; Slice 7 full |
-| 8 | JSON Schema validator | Slice 1 |
-| 9 | Property-test framework | Slice 1 |
-| 10 | Tile capture specifics | Slice 6 |
-| 11 | External archive backend | Slice 9 |
-| 12 | Future gameplay-mod surface | deferred indefinitely |
+| 1 | Views vs materialized read models | Slice 1 initial; search/facets revisits |
+| 2 | Extraction lifecycle trigger/readiness timing | Slice 1 |
+| 3 | Fixture strategy for BepInEx boundary | Slice 1 |
+| 4 | Deployment target | First slice that publishes a built site |
+| 5 | Repo strategy + CI tooling | Slice 1 |
+| 6 | Component library / primitive strategy | Slice 1 initial; Slice 7 full |
+| 7 | JSON Schema validator | Slice 1 |
+| 8 | Property-test framework | Slice 1 |
+| 9 | Tile capture specifics | Slice 6 |
+| 10 | External archive backend | Slice 9 |
+| 11 | Future gameplay-mod surface | deferred indefinitely |
 
 ## Update protocol
 
