@@ -374,8 +374,31 @@ Rules:
 - Asset-backed entities use `BuiltLookupTable.Instance.GetGuid(asset)` as primary stable id.
 - Deterministic `type + name` hashes are fallback only, and must be surfaced as unstable/provisional.
 - Record-backed refs preserve `(table, subtable, id)`.
-- Required missing IDs are fatal for that entity.
-- Optional missing refs become explicit diagnostics or `missing` refs; never silent nulls.
+- Missing refs use a field-level criticality policy: `fatal`, `diagnostic`, or `optional-empty`.
+- `fatal`: required identity/domain refs fail the current entity and increment fatal diagnostics. The pipeline rejects snapshots with fatal diagnostics. Examples: root item id, required variant discriminator, required foreign-key relation.
+- `diagnostic`: optional but notable refs emit an explicit `{ kind: "missing" }` ref plus a diagnostic. Extraction continues. Examples: item icon unexpectedly missing from `BuiltLookupTable`, tag/category ref not resolvable, optional equipment stat ref missing.
+- `optional-empty`: absence is normal and emits the normal empty value without a diagnostic. Examples: empty description, empty sounds list, absent pickup mesh, absent optional quickslot icon.
+
+Missing refs are never silent nulls. A null-like value is only valid when the field declares `optional-empty`.
+
+Diagnostic example:
+
+```json
+{
+  "field": "icon",
+  "value": {
+    "kind": "missing",
+    "reason": "lookupAssetGuidMissing",
+    "source": "ItemData.icon"
+  },
+  "diagnostic": {
+    "severity": "diagnostic",
+    "code": "lookupAssetGuidMissing",
+    "entity": "item:<guid>",
+    "field": "icon"
+  }
+}
+```
 
 ## 14. Extraction roots and readiness
 
@@ -485,9 +508,8 @@ Site-global map config is limited to true globals: bounds, tile URL pattern, hig
 
 ## 20. Remaining decisions before Slice 1 plan
 
-2. Missing-reference policy by field criticality.
-3. Exact pipeline-emitted site metadata tables vs typed JSON shape.
-4. Read models as SQLite views vs materialized tables.
-5. Extraction lifecycle trigger/readiness timing.
-6. Fixture strategy for real BepInEx boundary validation.
-7. Concrete tooling choices still open from the original spec: validator, property testing, component primitives, repo/CI.
+1. Exact pipeline-emitted site metadata tables vs typed JSON shape.
+2. Read models as SQLite views vs materialized tables.
+3. Extraction lifecycle trigger/readiness timing.
+4. Fixture strategy for real BepInEx boundary validation.
+5. Concrete tooling choices still open from the original spec: validator, property testing, component primitives, repo/CI.
