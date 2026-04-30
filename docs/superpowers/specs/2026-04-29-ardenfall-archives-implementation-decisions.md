@@ -505,22 +505,44 @@ The pipeline rejects snapshots with failed preflight or fatal diagnostics.
 
 **Status:** Accepted for Slice 1; extensible.
 
-The canonical SQLite tables remain authoritative. The pipeline may emit read models/views for site convenience:
+Canonical SQLite tables remain authoritative. The public site/runtime contract is generated materialized read-model tables registered in `site_read_models`. SQLite views may exist only as pipeline-local derivation, validation, or debugging aids unless explicitly promoted by a later decision.
+
+Slice 1 public read models:
 
 ```text
 item_overview_rows
-item_detail_sections
+item_detail_rows
+```
+
+Future generated read models:
+
+```text
 item_filter_facets
-item_search
+item_search / FTS virtual tables
 map_points
 map_layers
 ```
 
-Read models are generated from canonical tables and descriptor metadata. They are not hand-maintained second sources of truth.
+Read models are generated from canonical tables and descriptor/emitted metadata. They are not hand-maintained second sources of truth, never feed back into canonicalization, and are rebuilt deterministically from the snapshot + descriptors + pipeline code.
 
-All site database access goes through `site/src/lib/store/`. Pages and components call typed query functions/read-model accessors, not raw SQL scattered through routes.
+Every public read model records or is covered by manifest metadata:
 
-This preserves the option to move from full-download `sql.js` to `sql.js-httpvfs` without changing pages/components.
+```text
+schema version
+source snapshot digest
+descriptor digest
+pipeline version
+row count
+content checksum
+```
+
+Pipeline validation must check primary-key coverage, orphan refs, required refs, item variant ancestry, projected-field checksums, and declared missing-ref policy. Count equality alone is insufficient.
+
+Internal derivation/debug views use private names such as `_derive_*` or `_validate_*` and are not part of the site API.
+
+All site database access goes through `site/src/lib/store/`. Store accessors may query `site_*` metadata tables, registered read-model tables, and FTS/facet read models. Public pages/components must not join canonical inheritance-layer tables directly and must not parse metadata JSON themselves.
+
+The pipeline reports per-table/index size so read-model bloat is visible before publishing. If DB size becomes a problem, optimize/prune read models behind the store contract rather than pushing joins into components.
 
 ## 17. Map rendering contract
 
@@ -565,8 +587,6 @@ Site-global map config is limited to true globals: bounds, tile URL pattern, hig
 
 ## 20. Remaining decisions before Slice 1 plan
 
-1. Exact pipeline-emitted site metadata tables vs typed JSON shape.
-2. Read models as SQLite views vs materialized tables.
-3. Extraction lifecycle trigger/readiness timing.
-4. Fixture strategy for real BepInEx boundary validation.
-5. Concrete tooling choices still open from the original spec: validator, property testing, component primitives, repo/CI.
+1. Extraction lifecycle trigger/readiness timing.
+2. Fixture strategy for real BepInEx boundary validation.
+3. Concrete tooling choices still open from the original spec: validator, property testing, component primitives, repo/CI.
