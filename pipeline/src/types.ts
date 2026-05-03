@@ -1,0 +1,189 @@
+export type EntityId = string & { readonly __brand: "EntityId" };
+export type VariantId = string & { readonly __brand: "VariantId" };
+
+export interface EntityDescriptor {
+  $schema?: string;
+  id: string;
+  label: { singular: string; plural: string };
+  extraction: { root: string; walker?: string; options?: Record<string, unknown> };
+  fields: FieldSpec[];
+  variants?: { dir: string; registry?: string };
+  denormalise?: OperationRef[];
+  site?: { overview?: SiteOverview; detail?: SiteDetail };
+  map?: SiteMap | null;
+}
+
+export interface VariantDescriptor {
+  $schema?: string;
+  variantId: string;
+  label: string;
+  unityType: string;
+  canonicalTable: string;
+  parentVariantId?: string;
+  isPublicRoute?: boolean;
+  position?: number;
+  fields: FieldSpec[];
+}
+
+export interface FieldSpec {
+  name: string;
+  type: string;
+  from: string;
+  operation?: string;
+  missingPolicy?: "fatal" | "diagnostic" | "optional-empty";
+  label?: string;
+  description?: string;
+}
+
+export interface OperationRef {
+  op: string;
+  from?: string;
+  as?: string;
+}
+
+export interface SiteOverview {
+  columns: string[];
+  search?: string[];
+  filters?: SiteFilter[];
+}
+
+export interface SiteDetail {
+  sections: SiteSection[];
+}
+
+export interface SiteFilter {
+  field: string;
+  kind: "categorical" | "range" | "boolean";
+}
+
+export type SiteSection =
+  | { id: string; kind: "fieldList"; title: string; fields: string[] }
+  | {
+      id: string;
+      kind: "custom";
+      title: string;
+      renderer: string;
+      props?: Record<string, unknown>;
+    };
+
+export interface SiteMap {
+  layer: string;
+  icon?: string;
+  color?: number[];
+  radius?: number;
+  filters?: SiteFilter[];
+  tooltip?: string[];
+}
+
+// Snapshot
+
+export interface SnapshotManifest {
+  schemaVersion: number;
+  gameVersion?: string;
+  buildIdentifier?: string;
+  extractorVersion: string;
+  extractedAt: string;
+  preflight: {
+    passed: boolean;
+    completedAt: string;
+    checks: { name: string; ok: boolean; reason?: string }[];
+  };
+  counts: Record<string, number>;
+  diagnostics: { fatal: number; diagnostic: number };
+  hashes: Record<string, string>;
+}
+
+export interface SnapshotEnvelope<F = Record<string, unknown>> {
+  entityId: string;
+  schemaVersion: number;
+  rows: SnapshotRow<F>[];
+}
+
+export interface SnapshotRow<F = Record<string, unknown>> {
+  id: string;
+  variant?: string;
+  fields: F;
+  tags?: string[];
+  provenance?: Record<string, FieldProvenance>;
+  diagnostics?: SnapshotDiagnostic[];
+}
+
+export type FieldProvenance =
+  | {
+      kind: "parameter";
+      source: string;
+      isSet: boolean;
+      inherited: boolean;
+      parent?: SnapshotRefBrief;
+    }
+  | {
+      kind: "smartListParameter";
+      source: string;
+      isSet: boolean;
+      inherited: boolean;
+      parent?: SnapshotRefBrief;
+    }
+  | {
+      kind: "lookupAsset";
+      source: string;
+      isSet: boolean;
+      inherited: boolean;
+      parent?: SnapshotRefBrief;
+    }
+  | {
+      kind: "record";
+      source: string;
+      isSet: boolean;
+      inherited: boolean;
+      parent?: SnapshotRefBrief;
+    }
+  | {
+      kind: "runtimeObject";
+      source: string;
+      isSet: boolean;
+      inherited: boolean;
+      parent?: SnapshotRefBrief;
+    }
+  | {
+      kind: "missing";
+      source: string;
+      isSet: false;
+      inherited: boolean;
+      parent?: SnapshotRefBrief;
+    };
+
+export interface SnapshotRefBrief {
+  kind: string;
+  guid?: string;
+  unityType?: string;
+}
+
+export interface SnapshotDiagnostic {
+  severity: "fatal" | "diagnostic";
+  code: string;
+  field: string;
+  message?: string;
+}
+
+// Snapshot refs (canonical)
+
+export type SnapshotRef =
+  | { kind: "lookupAsset"; guid: string; unityType?: string; name?: string }
+  | { kind: "record"; table: string; subtable: string; id: string; recordType?: string }
+  | { kind: "runtimeObject"; extractionId: string; unityType?: string; stable: false }
+  | { kind: "missing"; reason: string; source: string };
+
+// Stages
+
+export interface StageContext {
+  workspaceRoot: string;
+  snapshotDir: string;
+  outDir: string;
+  log: (level: "info" | "warn" | "error", msg: string) => void;
+}
+
+export interface Stage<I, O> {
+  id: string;
+  inputs: readonly string[];
+  run: (inputs: I, ctx: StageContext) => Promise<O> | O;
+}

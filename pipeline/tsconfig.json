@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.base.json",
+  "include": ["src/**/*", "scripts/**/*", "test/**/*", "../schemas/*.json"],
+  "compilerOptions": {
+    "rootDir": ".",
+    "paths": {
+      "$pipeline/*": ["./src/*"]
+    }
+  }
+}

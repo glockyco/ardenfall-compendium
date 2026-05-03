@@ -1,6 +1,20 @@
 {
-  "name": "@ardenfall/pipeline",
+  "name": "@ardenfall-archives/pipeline",
   "private": true,
-  "version": "0.0.0",
-  "type": "module"
+  "type": "module",
+  "main": "src/cli.ts",
+  "bin": {
+    "ardenfall-pipeline": "src/cli.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "bunx tsgo --noEmit -p ."
+  },
+  "dependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
+  },
+  "devDependencies": {
+    "fast-check": "^4.7.0"
+  }
 }
