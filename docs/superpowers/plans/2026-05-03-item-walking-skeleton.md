@@ -803,6 +803,28 @@ on:
     branches: [main]
   pull_request:
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      pipeline: ${{ steps.filter.outputs.pipeline }}
+      mod: ${{ steps.filter.outputs.mod }}
+      fixtures: ${{ steps.filter.outputs.fixtures }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            pipeline:
+              - 'pipeline/**'
+              - 'entities/**'
+              - 'schemas/**'
+            mod:
+              - 'mod/**'
+            fixtures:
+              - 'fixtures/**'
+              - 'pipeline/scripts/check-fixtures.ts'
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -815,11 +837,8 @@ jobs:
 
   pipeline:
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' ||
-      contains(toJson(github.event.pull_request.changed_files), 'pipeline/') ||
-      contains(toJson(github.event.pull_request.changed_files), 'entities/') ||
-      contains(toJson(github.event.pull_request.changed_files), 'schemas/')
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.pipeline == 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -843,9 +862,9 @@ jobs:
 
   mod:
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' ||
-      contains(toJson(github.event.pull_request.changed_files), 'mod/')
+    needs: changes
+    continue-on-error: true
+    if: github.event_name == 'push' || needs.changes.outputs.mod == 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -855,10 +874,8 @@ jobs:
 
   fixtures:
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' ||
-      contains(toJson(github.event.pull_request.changed_files), 'fixtures/') ||
-      contains(toJson(github.event.pull_request.changed_files), 'pipeline/scripts/check-fixtures.ts')
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.fixtures == 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -6008,9 +6025,8 @@ Replace the `mod` job body with a soft check that does not require game DLLs:
 ```yaml
 mod:
   runs-on: ubuntu-latest
-  if: |
-    github.event_name == 'push' ||
-    contains(toJson(github.event.pull_request.changed_files), 'mod/')
+  needs: changes
+  if: github.event_name == 'push' || needs.changes.outputs.mod == 'true'
   steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-dotnet@v4
