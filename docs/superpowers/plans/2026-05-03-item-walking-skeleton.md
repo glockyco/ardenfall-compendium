@@ -566,6 +566,10 @@ Expected: `SYNCING` then `SYNCED`. `.git/hooks/pre-commit` and `.git/hooks/pre-p
 - [ ] **Step 3: Write `.gitignore`**
 
 ```
+# Worktrees (local development isolation, never committed)
+.worktrees/
+worktrees/
+
 # Bun + Node
 node_modules/
 .bun/
