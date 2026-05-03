@@ -4141,6 +4141,8 @@ git commit -m "feat(mod): walker base, ref resolver, provenance capture"
 - [ ] **Step 1: Write the preflight implementation**
 
 ```csharp
+using System;
+using System.Linq;
 using Ardenfall;
 using ArdenfallArchives.Dtos;
 
@@ -4163,9 +4165,9 @@ public static class Preflight
         });
         Check(report, "builtLookupTableNonEmpty", () =>
         {
-            var t = BuiltLookupTable.Instance;
-            // Replace with the actual API — e.g. t.AllAssets.Count > 0 or t.GetAssetsOfType<UnityEngine.Object>().Any()
-            var ok = t != null && t.GetAssetsOfType<Ardenfall.Item.ItemData>().Any();
+            // GetAssetsOfType<T>() is a static method on BuiltLookupTable that returns List<T>.
+            var ok = BuiltLookupTable.Instance != null
+                && BuiltLookupTable.GetAssetsOfType<Ardenfall.Item.ItemData>().Any();
             return (ok, ok ? null : "BuiltLookupTable produced no ItemData assets");
         });
         Check(report, "ardenfallGame", () =>
@@ -4180,9 +4182,11 @@ public static class Preflight
         });
         Check(report, "masterRecordTable", () =>
         {
+            // MasterRecordTable exposes a public `tables` Dictionary; the live DLL has no
+            // GetTables() method despite the plan literal suggesting one.
             var m = ArdenfallGame.instance?.worldData?.masterRecordTable;
-            var nonEmpty = m != null && m.GetTables().Any();
-            return (nonEmpty, nonEmpty ? null : "masterRecordTable.GetTables() empty");
+            var nonEmpty = m != null && m.tables != null && m.tables.Count > 0;
+            return (nonEmpty, nonEmpty ? null : "masterRecordTable.tables empty");
         });
 
         report.Passed = report.Checks.All(c => c.Ok);
@@ -4204,7 +4208,7 @@ public static class Preflight
 }
 ```
 
-> **Member-name caveat:** `BuiltLookupTable.AllAssets` / `GetAssetsOfType<T>` and `MasterRecordTable.GetTables()` are best-effort identifiers. If the live DLL exposes different names, update the call sites here and in the `ItemExtractor`. The preflight contract (which checks run, what they prove) is fixed; the API surface inside each check is per-game-version.
+> **Member-name caveat resolved (Demo2025 build):** `BuiltLookupTable.GetAssetsOfType<T>()` is a public static method (signature: `static List<T> GetAssetsOfType<T>() where T : UnityEngine.Object`). `MasterRecordTable` exposes `public Dictionary<string, RecordTableWrapper> tables` directly, with **no** `GetTables()` method. Update the call sites here and in `ItemExtractor` if you target a different game version. The preflight contract (which checks run, what they prove) is fixed; the API surface inside each check is per-game-version.
 
 - [ ] **Step 2: Build and commit**
 
