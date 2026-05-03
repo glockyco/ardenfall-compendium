@@ -1,0 +1,63 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "item",
+  "label": { "singular": "Item", "plural": "Items" },
+
+  "extraction": {
+    "root": "BuiltLookupTable.GetAssetsOfType<ItemData>",
+    "walker": "ItemWalker",
+    "options": {
+      "preflight": ["builtLookupTable", "ardenfallGame", "worldData", "masterRecordTable"]
+    }
+  },
+
+  "fields": [
+    { "name": "id", "type": "id", "from": "guid", "missingPolicy": "fatal" },
+    { "name": "name", "type": "string", "from": "itemName.Get()", "missingPolicy": "diagnostic" },
+    {
+      "name": "weight",
+      "type": "number",
+      "from": "weight.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    { "name": "value", "type": "integer", "from": "value.Get()", "missingPolicy": "diagnostic" },
+    { "name": "iconRef", "type": "ref:asset", "from": "icon", "missingPolicy": "diagnostic" },
+    {
+      "name": "description",
+      "type": "string",
+      "from": "description.Get()",
+      "missingPolicy": "optional-empty"
+    }
+  ],
+
+  "variants": { "dir": "variants" },
+
+  "site": {
+    "overview": {
+      "columns": ["name", "value", "weight", "variant"],
+      "search": ["name"],
+      "filters": [
+        { "field": "variant", "kind": "categorical" },
+        { "field": "value", "kind": "range" }
+      ]
+    },
+    "detail": {
+      "sections": [
+        {
+          "id": "summary",
+          "kind": "fieldList",
+          "title": "Summary",
+          "fields": ["name", "weight", "value"]
+        },
+        {
+          "id": "description",
+          "kind": "fieldList",
+          "title": "Description",
+          "fields": ["description"]
+        }
+      ]
+    }
+  },
+
+  "map": null
+}
