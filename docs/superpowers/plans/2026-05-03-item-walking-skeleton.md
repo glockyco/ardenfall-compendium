@@ -1440,8 +1440,8 @@ Expected: lockfile updates; ajv resolves to 8.20.0+, ajv-formats to 3.0.1.
 #!/usr/bin/env bun
 import Ajv2020 from "ajv/dist/2020";
 import addFormats from "ajv-formats";
-import { standaloneCode } from "ajv/dist/standalone";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import standaloneCode from "ajv/dist/standalone";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
 const targets = [
