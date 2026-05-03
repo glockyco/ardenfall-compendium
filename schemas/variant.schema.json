@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ardenfall-archives.example/schemas/variant.schema.json",
+  "title": "Entity variant descriptor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["variantId", "label", "unityType", "canonicalTable", "fields"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "variantId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "label": { "type": "string", "minLength": 1 },
+    "unityType": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Fully-qualified Mono type name (e.g. Ardenfall.Item.MeleeItemData)"
+    },
+    "canonicalTable": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "parentVariantId": { "type": "string" },
+    "isPublicRoute": { "type": "boolean", "default": false },
+    "position": { "type": "integer", "minimum": 0 },
+    "fields": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://ardenfall-archives.example/schemas/entity.schema.json#/$defs/field"
+      }
+    }
+  }
+}
