@@ -60,6 +60,7 @@ lefthook.yml
 package.json                          ← Bun workspace root
 bun.lock                              ← committed
 tsconfig.base.json                    ← shared TS settings extended by pipeline + site
+tsconfig.json                         ← root project; extends tsconfig.base.json, empty include until D.1/H.1
 LICENSE                               ← MIT
 README.md
 AGENTS.md                             ← repo-level pointer; minimal in Slice 1
@@ -313,6 +314,7 @@ Goal: clean, opinionated project skeleton; CI runs (no jobs do real work yet); l
 - Create: `package.json`
 - Create: `bun.lock`
 - Create: `tsconfig.base.json`
+- Create: `tsconfig.json` (root project — extends `tsconfig.base.json`, no `include` until D.1/H.1 land workspace configs)
 - Create: `.editorconfig`
 - Create: `.gitattributes`
 - Create: `pipeline/package.json` (workspace member stub; D.1 overwrites with the real content)
@@ -373,6 +375,18 @@ Goal: clean, opinionated project skeleton; CI runs (no jobs do real work yet); l
 }
 ```
 
+- [ ] **Step 2b: Write root `tsconfig.json`**
+
+`bunx tsgo --noEmit -p .` (the root `typecheck` script and the A-gate smoke check) needs a `tsconfig.json` at the project root. `tsconfig.base.json` is the shared settings file workspaces extend; the root `tsconfig.json` exists so `tsgo -p .` resolves to a real config. It deliberately includes nothing — pipeline and site each typecheck their own sources via per-workspace configs (D.1, H.1).
+
+```jsonc
+{
+  "extends": "./tsconfig.base.json",
+  "include": [],
+  "files": []
+}
+```
+
 - [ ] **Step 3: Write `.editorconfig`**
 
 ```
@@ -428,7 +442,7 @@ Expected: produces `bun.lock` and `node_modules/`. Exits 0. No deprecation warni
 - [ ] **Step 7: Commit**
 
 ```bash
-git add package.json bun.lock tsconfig.base.json .editorconfig .gitattributes pipeline/package.json site/package.json
+git add package.json bun.lock tsconfig.base.json tsconfig.json .editorconfig .gitattributes pipeline/package.json site/package.json
 git commit -m "chore(repo): bootstrap bun workspace and base tsconfig"
 ```
 
