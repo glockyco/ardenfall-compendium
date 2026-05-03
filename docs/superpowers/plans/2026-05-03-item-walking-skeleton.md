@@ -3013,11 +3013,11 @@ function ancestry(variant: VariantDescriptor, all: VariantDescriptor[]): Variant
   return chain;
 }
 
-function coerceForSqlite(value: unknown): unknown {
+function coerceForSqlite(value: unknown): string | number | null {
   if (value === null || value === undefined) return null;
   if (typeof value === "boolean") return value ? 1 : 0;
-  if (typeof value === "object") return JSON.stringify(value);
-  return value;
+  if (typeof value === "number" || typeof value === "string") return value;
+  return JSON.stringify(value);
 }
 
 export function canonicaliseItems(
@@ -3052,7 +3052,10 @@ export function canonicaliseItems(
       if (!variant) {
         throw new Error(`row '${row.id}' has unknown variant '${row.variant ?? "<none>"}'`);
       }
-      const rootValues = [...rootCols.map((c) => coerceForSqlite(row.fields[c])), row.variant];
+      const rootValues = [
+        ...rootCols.map((c) => coerceForSqlite(row.fields[c])),
+        variant.variantId,
+      ];
       rootInsert.run(...rootValues);
       for (const tag of row.tags ?? []) tagInsert.run(row.id, tag);
       for (const ancestor of ancestry(variant, variants)) {
