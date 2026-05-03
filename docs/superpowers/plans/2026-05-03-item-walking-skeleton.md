@@ -341,6 +341,7 @@ Goal: clean, opinionated project skeleton; CI runs (no jobs do real work yet); l
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@types/bun": "^1.3.13",
     "@typescript/native-preview": "beta",
     "eslint": "^9.0.0",
     "eslint-plugin-svelte": "^3.17.0",
@@ -372,7 +373,7 @@ Goal: clean, opinionated project skeleton; CI runs (no jobs do real work yet); l
     "resolveJsonModule": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "types": ["bun-types"],
+    "types": ["bun"],
   },
 }
 ```
@@ -1794,9 +1795,8 @@ Goal: pipeline workspace exists, types are defined, registry merge + topo orches
   "include": ["src/**/*", "scripts/**/*", "test/**/*", "../schemas/*.json"],
   "compilerOptions": {
     "rootDir": ".",
-    "baseUrl": ".",
     "paths": {
-      "$pipeline/*": ["src/*"],
+      "$pipeline/*": ["./src/*"],
     },
   },
 }
@@ -4938,8 +4938,7 @@ export default defineConfig({
   "include": ["src/**/*", "../entities/**/*.json", "../schemas/**/*.json"],
   "compilerOptions": {
     "rootDir": ".",
-    "baseUrl": ".",
-    "paths": { "$lib/*": ["src/lib/*"] },
+    "paths": { "$lib/*": ["./src/lib/*"] },
   },
 }
 ```
