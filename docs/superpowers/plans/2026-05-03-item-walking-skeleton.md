@@ -3857,6 +3857,7 @@ git commit -m "feat(mod): bootstrap bepinex csproj and dll-copy helper"
 - Create: `mod/src/Dtos/Diagnostic.cs`
 - Create: `mod/src/Dtos/Provenance.cs`
 - Create: `mod/src/Dtos/PreflightReport.cs`
+- Create: `mod/src/Polyfill/IsExternalInit.cs`
 
 - [ ] **Step 1: Write `SnapshotRef.cs`** — discriminated union via `Kind` field
 
@@ -3893,7 +3894,9 @@ public sealed class SnapshotRef
 - [ ] **Step 2: Write `Manifest.cs`**
 
 ```csharp
+using System.Collections.Generic;
 using Newtonsoft.Json;
+
 namespace ArdenfallArchives.Dtos;
 
 public sealed class Manifest
@@ -3919,7 +3922,9 @@ public sealed class DiagnosticTotals
 - [ ] **Step 3: Write `PreflightReport.cs`**
 
 ```csharp
+using System.Collections.Generic;
 using Newtonsoft.Json;
+
 namespace ArdenfallArchives.Dtos;
 
 public sealed class PreflightReport
@@ -3975,10 +3980,24 @@ public sealed class ParentRef
 }
 ```
 
+- [ ] **Step 5b: Write `mod/src/Polyfill/IsExternalInit.cs`**
+
+`init`-only setters require `System.Runtime.CompilerServices.IsExternalInit`. The .NET 5+ BCL provides it; net472 does not. The C# compiler synthesises a `[modreq]` reference to it on every `init` accessor, so all five DTOs above fail to compile (`error CS0518: Predefined type 'System.Runtime.CompilerServices.IsExternalInit' is not defined or imported`) without an internal polyfill.
+
+```csharp
+// Polyfill for `init`-only properties on net472 (which predates IsExternalInit).
+// Required by C# 9+ init accessors. The compiler synthesises a [modreq] reference
+// to this type; declaring it as internal in our assembly satisfies the reference
+// without depending on a newer BCL.
+namespace System.Runtime.CompilerServices;
+
+internal static class IsExternalInit { }
+```
+
 - [ ] **Step 6: Commit**
 
 ```bash
-git add mod/src/Dtos/
+git add mod/src/Dtos/ mod/src/Polyfill/
 git commit -m "feat(mod): shared snapshot dtos (ref, manifest, diagnostic, provenance)"
 ```
 
