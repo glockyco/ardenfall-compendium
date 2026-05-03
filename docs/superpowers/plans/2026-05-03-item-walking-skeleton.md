@@ -315,6 +315,8 @@ Goal: clean, opinionated project skeleton; CI runs (no jobs do real work yet); l
 - Create: `tsconfig.base.json`
 - Create: `.editorconfig`
 - Create: `.gitattributes`
+- Create: `pipeline/package.json` (workspace member stub; D.1 overwrites with the real content)
+- Create: `site/package.json` (workspace member stub; H.1 overwrites with the real content)
 
 - [ ] **Step 1: Write `package.json`**
 
@@ -402,15 +404,31 @@ trim_trailing_whitespace = false
 bun.lock -text
 ```
 
-- [ ] **Step 5: `bun install` and verify**
+- [ ] **Step 5: Write workspace member stubs**
+
+The root `package.json` declares `"workspaces": ["pipeline", "site"]`, so `bun install` will fail unless those directories contain valid `package.json` files. Land single-line stubs that D.1 (pipeline) and H.1 (site) will overwrite with the full content. Use the same package names downstream tasks expect.
+
+`pipeline/package.json`:
+
+```json
+{ "name": "@ardenfall/pipeline", "private": true, "version": "0.0.0", "type": "module" }
+```
+
+`site/package.json`:
+
+```json
+{ "name": "@ardenfall/site", "private": true, "version": "0.0.0", "type": "module" }
+```
+
+- [ ] **Step 6: `bun install` and verify**
 
 Run: `bun install`
-Expected: produces `bun.lock` and `node_modules/`. Exits 0. No deprecation warnings on the listed packages.
+Expected: produces `bun.lock` and `node_modules/`. Exits 0. No deprecation warnings on the listed packages. "Newer version available" availability notices are informational and not deprecation warnings.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add package.json bun.lock tsconfig.base.json .editorconfig .gitattributes
+git add package.json bun.lock tsconfig.base.json .editorconfig .gitattributes pipeline/package.json site/package.json
 git commit -m "chore(repo): bootstrap bun workspace and base tsconfig"
 ```
 
