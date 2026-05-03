@@ -1,3 +1,41 @@
-# Worktree directories — local development isolation, never committed.
+# Worktrees (local development isolation, never committed)
 .worktrees/
 worktrees/
+
+# Bun + Node
+node_modules/
+.bun/
+
+# SvelteKit
+.svelte-kit/
+site/build/
+
+# Pipeline outputs
+pipeline/dist/*.mjs.tmp
+site/static/data.sqlite
+site/static/data.sqlite-wal
+site/static/data.sqlite-shm
+site/static/assets/
+site/static/tiles/
+
+# C# / BepInEx mod
+mod/bin/
+mod/obj/
+mod/libs/
+
+# Snapshots and ad-hoc
+snapshots/
+fixtures/real-capsule/snapshot/
+*.log
+*.tmp
+*.bak
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
