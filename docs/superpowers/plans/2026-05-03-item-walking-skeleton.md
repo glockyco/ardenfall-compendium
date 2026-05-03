@@ -4012,6 +4012,7 @@ git commit -m "feat(mod): shared snapshot dtos (ref, manifest, diagnostic, prove
 - [ ] **Step 1: Write `RefResolver.cs`**
 
 ```csharp
+using System.Collections.Generic;
 using Ardenfall;
 using ArdenfallArchives.Dtos;
 using UnityEngine;
@@ -4033,7 +4034,7 @@ public sealed class RefResolver
         var guid = BuiltLookupTable.Instance != null
             ? BuiltLookupTable.Instance.GetGuid(asset)
             : null;
-        if (string.IsNullOrEmpty(guid))
+        if (guid is null || guid.Length == 0)
         {
             return EmitMissing(field, entityRowId, policy, reason: "lookupAssetGuidMissing", source: field);
         }
@@ -4094,6 +4095,7 @@ public static class ProvenanceCapture
 - [ ] **Step 3: Write `WalkerBase.cs`** — generic root for entity walkers
 
 ```csharp
+using System.Collections.Generic;
 using ArdenfallArchives.Dtos;
 using UnityEngine;
 
