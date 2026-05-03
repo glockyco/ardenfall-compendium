@@ -1,0 +1,23 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "armor",
+  "label": "Armor",
+  "unityType": "Ardenfall.Item.ArmorItemData",
+  "canonicalTable": "item_armor",
+  "parentVariantId": "equipment",
+  "position": 50,
+  "fields": [
+    {
+      "name": "armorRating",
+      "type": "integer",
+      "from": "armorRating",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "coverageSlot",
+      "type": "string",
+      "from": "coverageSlot",
+      "missingPolicy": "diagnostic"
+    }
+  ]
+}

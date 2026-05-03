@@ -1,0 +1,23 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "equipment",
+  "label": "Equipment",
+  "unityType": "Ardenfall.Item.EquipItemData",
+  "canonicalTable": "item_equipment",
+  "position": 10,
+  "fields": [
+    { "name": "equipSlot", "type": "string", "from": "equipSlot", "missingPolicy": "diagnostic" },
+    {
+      "name": "armorClass",
+      "type": "string",
+      "from": "armorClass",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "durabilityMax",
+      "type": "integer",
+      "from": "durabilityMax",
+      "missingPolicy": "optional-empty"
+    }
+  ]
+}

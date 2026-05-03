@@ -1,0 +1,12 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "hand-item",
+  "label": "Hand item",
+  "unityType": "Ardenfall.Item.HandItemData",
+  "canonicalTable": "item_hand_items",
+  "parentVariantId": "equipment",
+  "position": 20,
+  "fields": [
+    { "name": "twoHanded", "type": "boolean", "from": "twoHanded", "missingPolicy": "diagnostic" }
+  ]
+}

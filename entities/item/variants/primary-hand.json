@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "primary-hand",
+  "label": "Primary hand",
+  "unityType": "Ardenfall.Item.PrimaryHandItemData",
+  "canonicalTable": "item_primary_hand_items",
+  "parentVariantId": "hand-item",
+  "position": 30,
+  "fields": [
+    {
+      "name": "blockChance",
+      "type": "number",
+      "from": "blockChance",
+      "missingPolicy": "optional-empty"
+    }
+  ]
+}
