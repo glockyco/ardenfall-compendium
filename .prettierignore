@@ -1,0 +1,11 @@
+node_modules/
+.svelte-kit/
+site/build/
+site/static/data.sqlite
+mod/bin/
+mod/obj/
+mod/libs/
+pipeline/dist/
+snapshots/
+*.lock
+bun.lockb

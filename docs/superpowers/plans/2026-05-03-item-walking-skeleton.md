@@ -270,8 +270,8 @@ This list is the canonical source for Slice 1; the Pin Manifest in `2026-05-03-s
     "tailwindcss": "^4.2.4",
     "tailwind-variants": "^3.2.2",
     "typescript-eslint": "^8.0.0",
-    "vite": "^8.0.10"
-  }
+    "vite": "^8.0.10",
+  },
 }
 ```
 
@@ -304,6 +304,7 @@ Each phase ends with a passing-tests gate. Do not begin a later phase until the 
 - **K:** End-to-end CI is green on the merge commit; all four jobs pass in parallel.
 
 ---
+
 ## Phase A — Repository bootstrap
 
 Goal: clean, opinionated project skeleton; CI runs (no jobs do real work yet); lint/format/pre-commit wired.
@@ -311,6 +312,7 @@ Goal: clean, opinionated project skeleton; CI runs (no jobs do real work yet); l
 ### Task A.1: Initialise Bun workspace + tsconfig.base
 
 **Files:**
+
 - Create: `package.json`
 - Create: `bun.lock`
 - Create: `tsconfig.base.json`
@@ -330,25 +332,25 @@ Goal: clean, opinionated project skeleton; CI runs (no jobs do real work yet); l
   "engines": { "bun": ">=1.3.13" },
   "workspaces": ["pipeline", "site"],
   "scripts": {
-    "lint":              "eslint .",
-    "format":            "prettier --write .",
-    "format:check":      "prettier --check .",
-    "typecheck":         "bunx tsgo --noEmit -p .",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "bunx tsgo --noEmit -p .",
     "codegen:validators": "bun run pipeline/scripts/codegen-validators.ts",
-    "check:fixtures":    "bun run pipeline/scripts/check-fixtures.ts"
+    "check:fixtures": "bun run pipeline/scripts/check-fixtures.ts",
   },
   "devDependencies": {
-    "@eslint/js":              "^9.0.0",
+    "@eslint/js": "^9.0.0",
     "@typescript/native-preview": "beta",
-    "eslint":                  "^9.0.0",
-    "eslint-plugin-svelte":    "^3.17.0",
-    "globals":                 "^16.0.0",
-    "lefthook":                "^2.1.6",
-    "prettier":                "^3.5.0",
-    "prettier-plugin-svelte":  "^3.5.1",
+    "eslint": "^9.0.0",
+    "eslint-plugin-svelte": "^3.17.0",
+    "globals": "^16.0.0",
+    "lefthook": "^2.1.6",
+    "prettier": "^3.5.0",
+    "prettier-plugin-svelte": "^3.5.1",
     "prettier-plugin-tailwindcss": "^0.6.0",
-    "typescript-eslint":       "^8.0.0"
-  }
+    "typescript-eslint": "^8.0.0",
+  },
 }
 ```
 
@@ -357,21 +359,21 @@ Goal: clean, opinionated project skeleton; CI runs (no jobs do real work yet); l
 ```jsonc
 {
   "compilerOptions": {
-    "target":           "ES2023",
-    "module":           "ESNext",
+    "target": "ES2023",
+    "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib":              ["ES2023", "DOM", "DOM.Iterable"],
-    "strict":           true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "exactOptionalPropertyTypes": true,
-    "esModuleInterop":  true,
-    "skipLibCheck":     true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "resolveJsonModule": true,
-    "isolatedModules":  true,
+    "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "types":            ["bun-types"]
-  }
+    "types": ["bun-types"],
+  },
 }
 ```
 
@@ -383,7 +385,7 @@ Goal: clean, opinionated project skeleton; CI runs (no jobs do real work yet); l
 {
   "extends": "./tsconfig.base.json",
   "include": [],
-  "files": []
+  "files": [],
 }
 ```
 
@@ -449,6 +451,7 @@ git commit -m "chore(repo): bootstrap bun workspace and base tsconfig"
 ### Task A.2: Configure Prettier and ESLint
 
 **Files:**
+
 - Create: `.prettierrc`
 - Create: `.prettierignore`
 - Create: `eslint.config.js`
@@ -465,9 +468,7 @@ git commit -m "chore(repo): bootstrap bun workspace and base tsconfig"
   "trailingComma": "all",
   "singleQuote": false,
   "semi": true,
-  "overrides": [
-    { "files": "*.svelte", "options": { "parser": "svelte" } }
-  ]
+  "overrides": [{ "files": "*.svelte", "options": { "parser": "svelte" } }]
 }
 ```
 
@@ -568,6 +569,7 @@ git commit -m "chore(repo): configure prettier and eslint flat config"
 ### Task A.3: Configure lefthook, .gitignore, LICENSE, README
 
 **Files:**
+
 - Create: `lefthook.yml`
 - Create: `.gitignore`
 - Create: `LICENSE`
@@ -666,21 +668,21 @@ Expected: a name string. Use it.
 
 - [ ] **Step 5: Write `README.md`**
 
-```markdown
+````markdown
 # Ardenfall Archives
 
 Static, agentic-first wiki and interactive map for the Unity-Mono game **Ardenfall** (Spellcast Studios).
 
 ## Repository shape
 
-| Path | Subsystem | Toolchain |
-|---|---|---|
-| `mod/` | BepInEx 5 plugin that walks live game objects and emits JSON snapshots | C# / `dotnet build` |
-| `pipeline/` | TypeScript pipeline that validates snapshots and produces canonical SQLite + WebP assets | Bun |
-| `site/` | SvelteKit static site that ships the SQLite blob and renders entity pages + interactive map | Bun + Vite |
-| `entities/` | Filesystem-as-registry of entity descriptors | JSON |
-| `schemas/` | JSON Schema authority for descriptors, snapshots, manifests | JSON Schema 2020-12 |
-| `docs/superpowers/` | Specs, plans, and roadmap | Markdown |
+| Path                | Subsystem                                                                                   | Toolchain           |
+| ------------------- | ------------------------------------------------------------------------------------------- | ------------------- |
+| `mod/`              | BepInEx 5 plugin that walks live game objects and emits JSON snapshots                      | C# / `dotnet build` |
+| `pipeline/`         | TypeScript pipeline that validates snapshots and produces canonical SQLite + WebP assets    | Bun                 |
+| `site/`             | SvelteKit static site that ships the SQLite blob and renders entity pages + interactive map | Bun + Vite          |
+| `entities/`         | Filesystem-as-registry of entity descriptors                                                | JSON                |
+| `schemas/`          | JSON Schema authority for descriptors, snapshots, manifests                                 | JSON Schema 2020-12 |
+| `docs/superpowers/` | Specs, plans, and roadmap                                                                   | Markdown            |
 
 ## Design documents
 
@@ -699,6 +701,7 @@ bunx lefthook install
 bun run typecheck
 bun test
 ```
+````
 
 Mod build (Mac/Linux requires `mono` or `dotnet`):
 
@@ -710,18 +713,20 @@ dotnet build mod/ArdenfallArchives.csproj
 ## License
 
 MIT.
-```
+
+````
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add lefthook.yml .gitignore LICENSE README.md
 git commit -m "chore(repo): add lefthook, gitignore, license, and readme"
-```
+````
 
 ### Task A.4: Repo-level AGENTS.md and CLAUDE.md
 
 **Files:**
+
 - Create: `AGENTS.md`
 - Create: `CLAUDE.md`
 
@@ -775,6 +780,7 @@ git commit -m "docs(repo): add agents.md orientation"
 ### Task A.5: GitHub Actions CI
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 - [ ] **Step 1: Write `.github/workflows/ci.yml`**
@@ -832,7 +838,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
-        with: { dotnet-version: '8.0.x' }
+        with: { dotnet-version: "8.0.x" }
       - run: dotnet build mod/ArdenfallArchives.csproj -c Release -p:RestorePackagesWithLockFile=false
         env: { CI: "true" }
 
@@ -879,6 +885,7 @@ Goal: every cross-subsystem contract is JSON-Schema-validated. Compiled validato
 ### Task B.1: Author `entity.schema.json`
 
 **Files:**
+
 - Create: `schemas/entity.schema.json`
 
 - [ ] **Step 1: Write the schema**
@@ -886,66 +893,63 @@ Goal: every cross-subsystem contract is JSON-Schema-validated. Compiled validato
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id":     "https://ardenfall-archives.example/schemas/entity.schema.json",
-  "title":   "Entity descriptor",
-  "type":    "object",
+  "$id": "https://ardenfall-archives.example/schemas/entity.schema.json",
+  "title": "Entity descriptor",
+  "type": "object",
   "additionalProperties": false,
   "required": ["id", "label", "extraction", "fields"],
   "properties": {
-    "$schema":   { "type": "string" },
-    "id":        { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
     "label": {
       "type": "object",
       "additionalProperties": false,
       "required": ["singular", "plural"],
       "properties": {
         "singular": { "type": "string", "minLength": 1 },
-        "plural":   { "type": "string", "minLength": 1 }
-      }
+        "plural": { "type": "string", "minLength": 1 },
+      },
     },
     "extraction": {
       "type": "object",
       "additionalProperties": false,
       "required": ["root"],
       "properties": {
-        "root":    { "type": "string", "minLength": 1 },
-        "walker":  { "type": "string" },
-        "options": { "type": "object" }
-      }
+        "root": { "type": "string", "minLength": 1 },
+        "walker": { "type": "string" },
+        "options": { "type": "object" },
+      },
     },
     "fields": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/field" }
+      "items": { "$ref": "#/$defs/field" },
     },
     "variants": {
       "type": "object",
       "additionalProperties": false,
       "required": ["dir"],
       "properties": {
-        "dir":      { "type": "string", "default": "variants" },
-        "registry": { "type": "string" }
-      }
+        "dir": { "type": "string", "default": "variants" },
+        "registry": { "type": "string" },
+      },
     },
     "denormalise": {
       "type": "array",
-      "items": { "$ref": "#/$defs/op" }
+      "items": { "$ref": "#/$defs/op" },
     },
     "site": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "overview": { "$ref": "#/$defs/siteOverview" },
-        "detail":   { "$ref": "#/$defs/siteDetail"   }
-      }
+        "detail": { "$ref": "#/$defs/siteDetail" },
+      },
     },
     "map": {
-      "oneOf": [
-        { "type": "null" },
-        { "$ref": "#/$defs/siteMap" }
-      ],
-      "default": null
-    }
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/siteMap" }],
+      "default": null,
+    },
   },
   "$defs": {
     "field": {
@@ -953,26 +957,26 @@ Goal: every cross-subsystem contract is JSON-Schema-validated. Compiled validato
       "additionalProperties": false,
       "required": ["name", "type", "from"],
       "properties": {
-        "name":         { "type": "string", "pattern": "^[a-z][a-zA-Z0-9_]*$" },
-        "type":         { "type": "string", "minLength": 1 },
-        "from":         { "type": "string", "minLength": 1 },
-        "operation":    { "type": "string" },
+        "name": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9_]*$" },
+        "type": { "type": "string", "minLength": 1 },
+        "from": { "type": "string", "minLength": 1 },
+        "operation": { "type": "string" },
         "missingPolicy": {
           "enum": ["fatal", "diagnostic", "optional-empty"],
-          "default": "diagnostic"
+          "default": "diagnostic",
         },
-        "label":        { "type": "string" },
-        "description":  { "type": "string" }
-      }
+        "label": { "type": "string" },
+        "description": { "type": "string" },
+      },
     },
     "op": {
       "type": "object",
       "required": ["op"],
       "properties": {
-        "op":   { "type": "string" },
+        "op": { "type": "string" },
         "from": { "type": "string" },
-        "as":   { "type": "string" }
-      }
+        "as": { "type": "string" },
+      },
     },
     "siteOverview": {
       "type": "object",
@@ -980,9 +984,9 @@ Goal: every cross-subsystem contract is JSON-Schema-validated. Compiled validato
       "required": ["columns"],
       "properties": {
         "columns": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
-        "search":  { "type": "array", "items": { "type": "string" } },
-        "filters": { "type": "array", "items": { "$ref": "#/$defs/filter" } }
-      }
+        "search": { "type": "array", "items": { "type": "string" } },
+        "filters": { "type": "array", "items": { "$ref": "#/$defs/filter" } },
+      },
     },
     "siteDetail": {
       "type": "object",
@@ -991,9 +995,9 @@ Goal: every cross-subsystem contract is JSON-Schema-validated. Compiled validato
       "properties": {
         "sections": {
           "type": "array",
-          "items": { "$ref": "#/$defs/section" }
-        }
-      }
+          "items": { "$ref": "#/$defs/section" },
+        },
+      },
     },
     "filter": {
       "type": "object",
@@ -1001,8 +1005,8 @@ Goal: every cross-subsystem contract is JSON-Schema-validated. Compiled validato
       "required": ["field", "kind"],
       "properties": {
         "field": { "type": "string" },
-        "kind":  { "enum": ["categorical", "range", "boolean"] }
-      }
+        "kind": { "enum": ["categorical", "range", "boolean"] },
+      },
     },
     "section": {
       "oneOf": [
@@ -1011,40 +1015,45 @@ Goal: every cross-subsystem contract is JSON-Schema-validated. Compiled validato
           "additionalProperties": false,
           "required": ["id", "kind", "title", "fields"],
           "properties": {
-            "id":     { "type": "string" },
-            "kind":   { "const": "fieldList" },
-            "title":  { "type": "string" },
-            "fields": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
-          }
+            "id": { "type": "string" },
+            "kind": { "const": "fieldList" },
+            "title": { "type": "string" },
+            "fields": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          },
         },
         {
           "type": "object",
           "additionalProperties": false,
           "required": ["id", "kind", "title", "renderer"],
           "properties": {
-            "id":       { "type": "string" },
-            "kind":     { "const": "custom" },
-            "title":    { "type": "string" },
+            "id": { "type": "string" },
+            "kind": { "const": "custom" },
+            "title": { "type": "string" },
             "renderer": { "type": "string" },
-            "props":    { "type": "object" }
-          }
-        }
-      ]
+            "props": { "type": "object" },
+          },
+        },
+      ],
     },
     "siteMap": {
       "type": "object",
       "additionalProperties": false,
       "required": ["layer"],
       "properties": {
-        "layer":   { "type": "string" },
-        "icon":    { "type": "string" },
-        "color":   { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 255 }, "minItems": 3, "maxItems": 4 },
-        "radius":  { "type": "number", "minimum": 0 },
+        "layer": { "type": "string" },
+        "icon": { "type": "string" },
+        "color": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 },
+          "minItems": 3,
+          "maxItems": 4,
+        },
+        "radius": { "type": "number", "minimum": 0 },
         "filters": { "type": "array", "items": { "$ref": "#/$defs/filter" } },
-        "tooltip": { "type": "array", "items": { "type": "string" } }
-      }
-    }
-  }
+        "tooltip": { "type": "array", "items": { "type": "string" } },
+      },
+    },
+  },
 }
 ```
 
@@ -1066,6 +1075,7 @@ git commit -m "feat(schemas): define entity descriptor schema"
 ### Task B.2: Author `variant.schema.json`
 
 **Files:**
+
 - Create: `schemas/variant.schema.json`
 
 - [ ] **Step 1: Write the schema**
@@ -1073,26 +1083,32 @@ git commit -m "feat(schemas): define entity descriptor schema"
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id":     "https://ardenfall-archives.example/schemas/variant.schema.json",
-  "title":   "Entity variant descriptor",
-  "type":    "object",
+  "$id": "https://ardenfall-archives.example/schemas/variant.schema.json",
+  "title": "Entity variant descriptor",
+  "type": "object",
   "additionalProperties": false,
   "required": ["variantId", "label", "unityType", "canonicalTable", "fields"],
   "properties": {
-    "$schema":         { "type": "string" },
-    "variantId":       { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "label":           { "type": "string", "minLength": 1 },
-    "unityType":       { "type": "string", "minLength": 1, "description": "Fully-qualified Mono type name (e.g. Ardenfall.Item.MeleeItemData)" },
-    "canonicalTable":  { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "$schema": { "type": "string" },
+    "variantId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "label": { "type": "string", "minLength": 1 },
+    "unityType": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Fully-qualified Mono type name (e.g. Ardenfall.Item.MeleeItemData)",
+    },
+    "canonicalTable": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
     "parentVariantId": { "type": "string" },
-    "isPublicRoute":   { "type": "boolean", "default": false },
-    "position":        { "type": "integer", "minimum": 0 },
+    "isPublicRoute": { "type": "boolean", "default": false },
+    "position": { "type": "integer", "minimum": 0 },
     "fields": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "https://ardenfall-archives.example/schemas/entity.schema.json#/$defs/field" }
-    }
-  }
+      "items": {
+        "$ref": "https://ardenfall-archives.example/schemas/entity.schema.json#/$defs/field",
+      },
+    },
+  },
 }
 ```
 
@@ -1111,6 +1127,7 @@ git commit -m "feat(schemas): define entity variant schema"
 ### Task B.3: Author `snapshot.schema.json` and `manifest.schema.json`
 
 **Files:**
+
 - Create: `schemas/snapshot.schema.json`
 - Create: `schemas/manifest.schema.json`
 
@@ -1119,26 +1136,31 @@ git commit -m "feat(schemas): define entity variant schema"
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id":     "https://ardenfall-archives.example/schemas/manifest.schema.json",
-  "title":   "Snapshot manifest",
-  "type":    "object",
+  "$id": "https://ardenfall-archives.example/schemas/manifest.schema.json",
+  "title": "Snapshot manifest",
+  "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "extractorVersion", "extractedAt",
-    "preflight", "counts", "diagnostics", "hashes"
+    "schemaVersion",
+    "extractorVersion",
+    "extractedAt",
+    "preflight",
+    "counts",
+    "diagnostics",
+    "hashes",
   ],
   "properties": {
-    "schemaVersion":    { "type": "integer", "minimum": 1 },
-    "gameVersion":      { "type": "string" },
-    "buildIdentifier":  { "type": "string" },
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "gameVersion": { "type": "string" },
+    "buildIdentifier": { "type": "string" },
     "extractorVersion": { "type": "string", "minLength": 1 },
-    "extractedAt":      { "type": "string", "format": "date-time" },
+    "extractedAt": { "type": "string", "format": "date-time" },
     "preflight": {
       "type": "object",
       "additionalProperties": false,
       "required": ["passed", "checks", "completedAt"],
       "properties": {
-        "passed":      { "type": "boolean" },
+        "passed": { "type": "boolean" },
         "completedAt": { "type": "string", "format": "date-time" },
         "checks": {
           "type": "array",
@@ -1147,32 +1169,32 @@ git commit -m "feat(schemas): define entity variant schema"
             "additionalProperties": false,
             "required": ["name", "ok"],
             "properties": {
-              "name":   { "type": "string" },
-              "ok":     { "type": "boolean" },
-              "reason": { "type": "string" }
-            }
-          }
-        }
-      }
+              "name": { "type": "string" },
+              "ok": { "type": "boolean" },
+              "reason": { "type": "string" },
+            },
+          },
+        },
+      },
     },
     "counts": {
       "type": "object",
-      "additionalProperties": { "type": "integer", "minimum": 0 }
+      "additionalProperties": { "type": "integer", "minimum": 0 },
     },
     "diagnostics": {
       "type": "object",
       "additionalProperties": false,
       "required": ["fatal", "diagnostic"],
       "properties": {
-        "fatal":      { "type": "integer", "minimum": 0 },
-        "diagnostic": { "type": "integer", "minimum": 0 }
-      }
+        "fatal": { "type": "integer", "minimum": 0 },
+        "diagnostic": { "type": "integer", "minimum": 0 },
+      },
     },
     "hashes": {
       "type": "object",
-      "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
-    }
-  }
+      "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    },
+  },
 }
 ```
 
@@ -1183,13 +1205,13 @@ The snapshot per-entity files share a common envelope with entity-specific bodie
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id":     "https://ardenfall-archives.example/schemas/snapshot.schema.json",
-  "title":   "Snapshot per-entity envelope",
-  "type":    "object",
+  "$id": "https://ardenfall-archives.example/schemas/snapshot.schema.json",
+  "title": "Snapshot per-entity envelope",
+  "type": "object",
   "additionalProperties": false,
   "required": ["entityId", "schemaVersion", "rows"],
   "properties": {
-    "entityId":      { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "entityId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
     "schemaVersion": { "type": "integer", "minimum": 1 },
     "rows": {
       "type": "array",
@@ -1197,21 +1219,21 @@ The snapshot per-entity files share a common envelope with entity-specific bodie
         "type": "object",
         "required": ["id", "fields"],
         "properties": {
-          "id":       { "type": "string", "minLength": 1 },
-          "variant":  { "type": "string" },
-          "fields":   { "type": "object" },
-          "tags":     { "type": "array", "items": { "type": "string" } },
+          "id": { "type": "string", "minLength": 1 },
+          "variant": { "type": "string" },
+          "fields": { "type": "object" },
+          "tags": { "type": "array", "items": { "type": "string" } },
           "provenance": {
             "type": "object",
-            "additionalProperties": { "$ref": "#/$defs/fieldProvenance" }
+            "additionalProperties": { "$ref": "#/$defs/fieldProvenance" },
           },
           "diagnostics": {
             "type": "array",
-            "items": { "$ref": "#/$defs/diagnostic" }
-          }
-        }
-      }
-    }
+            "items": { "$ref": "#/$defs/diagnostic" },
+          },
+        },
+      },
+    },
   },
   "$defs": {
     "fieldProvenance": {
@@ -1219,19 +1241,28 @@ The snapshot per-entity files share a common envelope with entity-specific bodie
       "additionalProperties": false,
       "required": ["kind", "source", "isSet", "inherited"],
       "properties": {
-        "kind":      { "enum": ["parameter", "smartListParameter", "lookupAsset", "record", "runtimeObject", "missing"] },
-        "source":    { "type": "string" },
-        "isSet":     { "type": "boolean" },
+        "kind": {
+          "enum": [
+            "parameter",
+            "smartListParameter",
+            "lookupAsset",
+            "record",
+            "runtimeObject",
+            "missing",
+          ],
+        },
+        "source": { "type": "string" },
+        "isSet": { "type": "boolean" },
         "inherited": { "type": "boolean" },
         "parent": {
           "type": "object",
           "properties": {
-            "kind":      { "type": "string" },
-            "guid":      { "type": "string" },
-            "unityType": { "type": "string" }
-          }
-        }
-      }
+            "kind": { "type": "string" },
+            "guid": { "type": "string" },
+            "unityType": { "type": "string" },
+          },
+        },
+      },
     },
     "diagnostic": {
       "type": "object",
@@ -1239,12 +1270,12 @@ The snapshot per-entity files share a common envelope with entity-specific bodie
       "required": ["severity", "code", "field"],
       "properties": {
         "severity": { "enum": ["fatal", "diagnostic"] },
-        "code":     { "type": "string" },
-        "field":    { "type": "string" },
-        "message":  { "type": "string" }
-      }
-    }
-  }
+        "code": { "type": "string" },
+        "field": { "type": "string" },
+        "message": { "type": "string" },
+      },
+    },
+  },
 }
 ```
 
@@ -1254,6 +1285,7 @@ The snapshot per-entity files share a common envelope with entity-specific bodie
 bun -e 'JSON.parse(await Bun.file("schemas/manifest.schema.json").text())'
 bun -e 'JSON.parse(await Bun.file("schemas/snapshot.schema.json").text())'
 ```
+
 Both exit 0.
 
 - [ ] **Step 4: Commit**
@@ -1266,6 +1298,7 @@ git commit -m "feat(schemas): define manifest and snapshot envelope"
 ### Task B.4: `digest.schema.json` (stub) and `fixture-manifest.schema.json`
 
 **Files:**
+
 - Create: `schemas/digest.schema.json`
 - Create: `schemas/fixture-manifest.schema.json`
 
@@ -1274,20 +1307,29 @@ git commit -m "feat(schemas): define manifest and snapshot envelope"
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id":     "https://ardenfall-archives.example/schemas/digest.schema.json",
-  "title":   "Cross-version digest (stub for Slice 9)",
-  "type":    "object",
+  "$id": "https://ardenfall-archives.example/schemas/digest.schema.json",
+  "title": "Cross-version digest (stub for Slice 9)",
+  "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "gameVersion", "counts"],
   "properties": {
     "schemaVersion": { "type": "integer", "minimum": 1 },
-    "gameVersion":   { "type": "string", "minLength": 1 },
-    "extractedAt":   { "type": "string", "format": "date-time" },
-    "counts":        { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
-    "added":         { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
-    "removed":       { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } },
-    "renamed":       { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } }
-  }
+    "gameVersion": { "type": "string", "minLength": 1 },
+    "extractedAt": { "type": "string", "format": "date-time" },
+    "counts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "added": {
+      "type": "object",
+      "additionalProperties": { "type": "array", "items": { "type": "string" } },
+    },
+    "removed": {
+      "type": "object",
+      "additionalProperties": { "type": "array", "items": { "type": "string" } },
+    },
+    "renamed": {
+      "type": "object",
+      "additionalProperties": { "type": "array", "items": { "type": "string" } },
+    },
+  },
 }
 ```
 
@@ -1296,22 +1338,22 @@ git commit -m "feat(schemas): define manifest and snapshot envelope"
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id":     "https://ardenfall-archives.example/schemas/fixture-manifest.schema.json",
-  "title":   "Fixture pack manifest",
-  "type":    "object",
+  "$id": "https://ardenfall-archives.example/schemas/fixture-manifest.schema.json",
+  "title": "Fixture pack manifest",
+  "type": "object",
   "additionalProperties": false,
-  "required": [
-    "fixtureKind", "schemaVersion", "intendedAssertions", "selection", "hashes"
-  ],
+  "required": ["fixtureKind", "schemaVersion", "intendedAssertions", "selection", "hashes"],
   "properties": {
-    "fixtureKind":          { "enum": ["synthetic", "real-derived-curated", "digest", "boundary-certificate"] },
-    "schemaVersion":        { "type": "integer", "minimum": 1 },
-    "extractorVersion":     { "type": "string" },
-    "gameVersion":          { "type": "string" },
-    "buildIdentifier":      { "type": "string" },
-    "source":               { "type": "string" },
-    "curationToolVersion":  { "type": "string" },
-    "intendedAssertions":   { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "fixtureKind": {
+      "enum": ["synthetic", "real-derived-curated", "digest", "boundary-certificate"],
+    },
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "extractorVersion": { "type": "string" },
+    "gameVersion": { "type": "string" },
+    "buildIdentifier": { "type": "string" },
+    "source": { "type": "string" },
+    "curationToolVersion": { "type": "string" },
+    "intendedAssertions": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
     "selection": {
       "type": "array",
       "items": {
@@ -1319,19 +1361,19 @@ git commit -m "feat(schemas): define manifest and snapshot envelope"
         "required": ["entity", "ids"],
         "additionalProperties": false,
         "properties": {
-          "entity":    { "type": "string" },
-          "ids":       { "type": "array", "items": { "type": "string" } },
-          "rationale": { "type": "string" }
-        }
-      }
+          "entity": { "type": "string" },
+          "ids": { "type": "array", "items": { "type": "string" } },
+          "rationale": { "type": "string" },
+        },
+      },
     },
-    "scrubbing":            { "type": "string" },
-    "minimization":         { "type": "string" },
+    "scrubbing": { "type": "string" },
+    "minimization": { "type": "string" },
     "hashes": {
       "type": "object",
-      "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
-    }
-  }
+      "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    },
+  },
 }
 ```
 
@@ -1347,6 +1389,7 @@ git commit -m "feat(schemas): add digest stub and fixture manifest schemas"
 ### Task B.5: Compile validators and commit standalone outputs
 
 **Files:**
+
 - Create: `pipeline/scripts/codegen-validators.ts`
 - Create: `pipeline/dist/.gitkeep`
 - Modify: root `package.json` to add `ajv` and `ajv-formats` to root `devDependencies` (they are used by the codegen script)
@@ -1374,12 +1417,15 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
 const targets = [
-  { schema: "schemas/entity.schema.json",            out: "pipeline/dist/validate-entity.mjs" },
-  { schema: "schemas/variant.schema.json",           out: "pipeline/dist/validate-variant.mjs" },
-  { schema: "schemas/manifest.schema.json",          out: "pipeline/dist/validate-manifest.mjs" },
-  { schema: "schemas/snapshot.schema.json",          out: "pipeline/dist/validate-snapshot.mjs" },
-  { schema: "schemas/digest.schema.json",            out: "pipeline/dist/validate-digest.mjs" },
-  { schema: "schemas/fixture-manifest.schema.json",  out: "pipeline/dist/validate-fixture-manifest.mjs" },
+  { schema: "schemas/entity.schema.json", out: "pipeline/dist/validate-entity.mjs" },
+  { schema: "schemas/variant.schema.json", out: "pipeline/dist/validate-variant.mjs" },
+  { schema: "schemas/manifest.schema.json", out: "pipeline/dist/validate-manifest.mjs" },
+  { schema: "schemas/snapshot.schema.json", out: "pipeline/dist/validate-snapshot.mjs" },
+  { schema: "schemas/digest.schema.json", out: "pipeline/dist/validate-digest.mjs" },
+  {
+    schema: "schemas/fixture-manifest.schema.json",
+    out: "pipeline/dist/validate-fixture-manifest.mjs",
+  },
 ];
 
 // Single Ajv instance so $ref between schemas resolves.
@@ -1444,6 +1490,7 @@ Goal: `entities/item/` is the only place item shape is described. Validation aga
 ### Task C.1: Author `entities/item/entity.json`
 
 **Files:**
+
 - Create: `entities/item/entity.json`
 
 - [ ] **Step 1: Write the descriptor**
@@ -1455,18 +1502,25 @@ Goal: `entities/item/` is the only place item shape is described. Validation aga
   "label": { "singular": "Item", "plural": "Items" },
 
   "extraction": {
-    "root":   "BuiltLookupTable.GetAssetsOfType<ItemData>",
+    "root": "BuiltLookupTable.GetAssetsOfType<ItemData>",
     "walker": "ItemWalker",
-    "options": { "preflight": ["builtLookupTable", "ardenfallGame", "worldData", "masterRecordTable"] }
+    "options": {
+      "preflight": ["builtLookupTable", "ardenfallGame", "worldData", "masterRecordTable"],
+    },
   },
 
   "fields": [
-    { "name": "id",            "type": "id",            "from": "guid",            "missingPolicy": "fatal" },
-    { "name": "name",          "type": "string",        "from": "itemName.Get()",  "missingPolicy": "diagnostic" },
-    { "name": "weight",        "type": "number",        "from": "weight.Get()",    "missingPolicy": "diagnostic" },
-    { "name": "value",         "type": "integer",       "from": "value.Get()",     "missingPolicy": "diagnostic" },
-    { "name": "iconRef",       "type": "ref:asset",     "from": "icon",            "missingPolicy": "diagnostic" },
-    { "name": "description",   "type": "string",        "from": "description.Get()", "missingPolicy": "optional-empty" }
+    { "name": "id", "type": "id", "from": "guid", "missingPolicy": "fatal" },
+    { "name": "name", "type": "string", "from": "itemName.Get()", "missingPolicy": "diagnostic" },
+    { "name": "weight", "type": "number", "from": "weight.Get()", "missingPolicy": "diagnostic" },
+    { "name": "value", "type": "integer", "from": "value.Get()", "missingPolicy": "diagnostic" },
+    { "name": "iconRef", "type": "ref:asset", "from": "icon", "missingPolicy": "diagnostic" },
+    {
+      "name": "description",
+      "type": "string",
+      "from": "description.Get()",
+      "missingPolicy": "optional-empty",
+    },
   ],
 
   "variants": { "dir": "variants" },
@@ -1474,21 +1528,31 @@ Goal: `entities/item/` is the only place item shape is described. Validation aga
   "site": {
     "overview": {
       "columns": ["name", "value", "weight", "variant"],
-      "search":  ["name"],
+      "search": ["name"],
       "filters": [
         { "field": "variant", "kind": "categorical" },
-        { "field": "value",   "kind": "range" }
-      ]
+        { "field": "value", "kind": "range" },
+      ],
     },
     "detail": {
       "sections": [
-        { "id": "summary", "kind": "fieldList", "title": "Summary", "fields": ["name", "weight", "value"] },
-        { "id": "description", "kind": "fieldList", "title": "Description", "fields": ["description"] }
-      ]
-    }
+        {
+          "id": "summary",
+          "kind": "fieldList",
+          "title": "Summary",
+          "fields": ["name", "weight", "value"],
+        },
+        {
+          "id": "description",
+          "kind": "fieldList",
+          "title": "Description",
+          "fields": ["description"],
+        },
+      ],
+    },
   },
 
-  "map": null
+  "map": null,
 }
 ```
 
@@ -1507,6 +1571,7 @@ git commit -m "feat(entities): add item descriptor"
 ### Task C.2: Author the five Slice 1 variant descriptors
 
 **Files:**
+
 - Create: `entities/item/variants/equipment.json`
 - Create: `entities/item/variants/hand-item.json`
 - Create: `entities/item/variants/primary-hand.json`
@@ -1526,10 +1591,20 @@ Variant fields are the layer-introduced fields only. Inherited fields (e.g. `nam
   "canonicalTable": "item_equipment",
   "position": 10,
   "fields": [
-    { "name": "equipSlot",       "type": "string",  "from": "equipSlot",       "missingPolicy": "diagnostic" },
-    { "name": "armorClass",      "type": "string",  "from": "armorClass",      "missingPolicy": "optional-empty" },
-    { "name": "durabilityMax",   "type": "integer", "from": "durabilityMax",   "missingPolicy": "optional-empty" }
-  ]
+    { "name": "equipSlot", "type": "string", "from": "equipSlot", "missingPolicy": "diagnostic" },
+    {
+      "name": "armorClass",
+      "type": "string",
+      "from": "armorClass",
+      "missingPolicy": "optional-empty",
+    },
+    {
+      "name": "durabilityMax",
+      "type": "integer",
+      "from": "durabilityMax",
+      "missingPolicy": "optional-empty",
+    },
+  ],
 }
 ```
 
@@ -1545,8 +1620,8 @@ Variant fields are the layer-introduced fields only. Inherited fields (e.g. `nam
   "parentVariantId": "equipment",
   "position": 20,
   "fields": [
-    { "name": "twoHanded",       "type": "boolean", "from": "twoHanded",       "missingPolicy": "diagnostic" }
-  ]
+    { "name": "twoHanded", "type": "boolean", "from": "twoHanded", "missingPolicy": "diagnostic" },
+  ],
 }
 ```
 
@@ -1562,8 +1637,13 @@ Variant fields are the layer-introduced fields only. Inherited fields (e.g. `nam
   "parentVariantId": "hand-item",
   "position": 30,
   "fields": [
-    { "name": "blockChance",     "type": "number",  "from": "blockChance",     "missingPolicy": "optional-empty" }
-  ]
+    {
+      "name": "blockChance",
+      "type": "number",
+      "from": "blockChance",
+      "missingPolicy": "optional-empty",
+    },
+  ],
 }
 ```
 
@@ -1579,11 +1659,16 @@ Variant fields are the layer-introduced fields only. Inherited fields (e.g. `nam
   "parentVariantId": "primary-hand",
   "position": 40,
   "fields": [
-    { "name": "damageMin",       "type": "integer", "from": "damageMin",       "missingPolicy": "diagnostic" },
-    { "name": "damageMax",       "type": "integer", "from": "damageMax",       "missingPolicy": "diagnostic" },
-    { "name": "reach",           "type": "number",  "from": "reach",           "missingPolicy": "optional-empty" },
-    { "name": "weaponClass",     "type": "string",  "from": "weaponClass",     "missingPolicy": "diagnostic" }
-  ]
+    { "name": "damageMin", "type": "integer", "from": "damageMin", "missingPolicy": "diagnostic" },
+    { "name": "damageMax", "type": "integer", "from": "damageMax", "missingPolicy": "diagnostic" },
+    { "name": "reach", "type": "number", "from": "reach", "missingPolicy": "optional-empty" },
+    {
+      "name": "weaponClass",
+      "type": "string",
+      "from": "weaponClass",
+      "missingPolicy": "diagnostic",
+    },
+  ],
 }
 ```
 
@@ -1599,9 +1684,19 @@ Variant fields are the layer-introduced fields only. Inherited fields (e.g. `nam
   "parentVariantId": "equipment",
   "position": 50,
   "fields": [
-    { "name": "armorRating",     "type": "integer", "from": "armorRating",     "missingPolicy": "diagnostic" },
-    { "name": "coverageSlot",    "type": "string",  "from": "coverageSlot",    "missingPolicy": "diagnostic" }
-  ]
+    {
+      "name": "armorRating",
+      "type": "integer",
+      "from": "armorRating",
+      "missingPolicy": "diagnostic",
+    },
+    {
+      "name": "coverageSlot",
+      "type": "string",
+      "from": "coverageSlot",
+      "missingPolicy": "diagnostic",
+    },
+  ],
 }
 ```
 
@@ -1610,6 +1705,7 @@ Variant fields are the layer-introduced fields only. Inherited fields (e.g. `nam
 ```sh
 for f in entities/item/variants/*.json; do bun -e "JSON.parse(await Bun.file('$f').text())"; done
 ```
+
 Expected: each command exits 0; no output.
 
 > **Field-name caveat:** the field-from paths above (`damageMin`, `armorRating`, etc.) are best-effort names following `Ardenfall.*` C# conventions. The mod's adapters in Phase G will define the actual emitted keys; if the real Mono members differ, update both this descriptor and the matching adapter in the same commit. The descriptor is the contract; the adapter must satisfy it.
@@ -1634,6 +1730,7 @@ Goal: pipeline workspace exists, types are defined, registry merge + topo orches
 ### Task D.1: Bootstrap the pipeline workspace
 
 **Files:**
+
 - Create: `pipeline/package.json`
 - Create: `pipeline/tsconfig.json`
 - Create: `pipeline/src/types.ts`
@@ -1648,16 +1745,16 @@ Goal: pipeline workspace exists, types are defined, registry merge + topo orches
   "main": "src/cli.ts",
   "bin": { "ardenfall-pipeline": "src/cli.ts" },
   "scripts": {
-    "test":      "bun test",
-    "typecheck": "bunx tsgo --noEmit -p ."
+    "test": "bun test",
+    "typecheck": "bunx tsgo --noEmit -p .",
   },
   "dependencies": {
-    "ajv":         "^8.20.0",
-    "ajv-formats": "^3.0.1"
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
   },
   "devDependencies": {
-    "fast-check": "^4.7.0"
-  }
+    "fast-check": "^4.7.0",
+  },
 }
 ```
 
@@ -1671,9 +1768,9 @@ Goal: pipeline workspace exists, types are defined, registry merge + topo orches
     "rootDir": ".",
     "baseUrl": ".",
     "paths": {
-      "$pipeline/*": ["src/*"]
-    }
-  }
+      "$pipeline/*": ["src/*"],
+    },
+  },
 }
 ```
 
@@ -1740,7 +1837,13 @@ export interface SiteFilter {
 
 export type SiteSection =
   | { id: string; kind: "fieldList"; title: string; fields: string[] }
-  | { id: string; kind: "custom";    title: string; renderer: string; props?: Record<string, unknown> };
+  | {
+      id: string;
+      kind: "custom";
+      title: string;
+      renderer: string;
+      props?: Record<string, unknown>;
+    };
 
 export interface SiteMap {
   layer: string;
@@ -1759,7 +1862,11 @@ export interface SnapshotManifest {
   buildIdentifier?: string;
   extractorVersion: string;
   extractedAt: string;
-  preflight: { passed: boolean; completedAt: string; checks: { name: string; ok: boolean; reason?: string }[] };
+  preflight: {
+    passed: boolean;
+    completedAt: string;
+    checks: { name: string; ok: boolean; reason?: string }[];
+  };
   counts: Record<string, number>;
   diagnostics: { fatal: number; diagnostic: number };
   hashes: Record<string, string>;
@@ -1781,12 +1888,48 @@ export interface SnapshotRow<F = Record<string, unknown>> {
 }
 
 export type FieldProvenance =
-  | { kind: "parameter";          source: string; isSet: boolean; inherited: boolean; parent?: SnapshotRefBrief }
-  | { kind: "smartListParameter"; source: string; isSet: boolean; inherited: boolean; parent?: SnapshotRefBrief }
-  | { kind: "lookupAsset";        source: string; isSet: boolean; inherited: boolean; parent?: SnapshotRefBrief }
-  | { kind: "record";             source: string; isSet: boolean; inherited: boolean; parent?: SnapshotRefBrief }
-  | { kind: "runtimeObject";      source: string; isSet: boolean; inherited: boolean; parent?: SnapshotRefBrief }
-  | { kind: "missing";            source: string; isSet: false;   inherited: boolean; parent?: SnapshotRefBrief };
+  | {
+      kind: "parameter";
+      source: string;
+      isSet: boolean;
+      inherited: boolean;
+      parent?: SnapshotRefBrief;
+    }
+  | {
+      kind: "smartListParameter";
+      source: string;
+      isSet: boolean;
+      inherited: boolean;
+      parent?: SnapshotRefBrief;
+    }
+  | {
+      kind: "lookupAsset";
+      source: string;
+      isSet: boolean;
+      inherited: boolean;
+      parent?: SnapshotRefBrief;
+    }
+  | {
+      kind: "record";
+      source: string;
+      isSet: boolean;
+      inherited: boolean;
+      parent?: SnapshotRefBrief;
+    }
+  | {
+      kind: "runtimeObject";
+      source: string;
+      isSet: boolean;
+      inherited: boolean;
+      parent?: SnapshotRefBrief;
+    }
+  | {
+      kind: "missing";
+      source: string;
+      isSet: false;
+      inherited: boolean;
+      parent?: SnapshotRefBrief;
+    };
 
 export interface SnapshotRefBrief {
   kind: string;
@@ -1840,6 +1983,7 @@ git commit -m "feat(pipeline): bootstrap workspace and shared types"
 ### Task D.2: Typed-map registry (TDD)
 
 **Files:**
+
 - Create: `pipeline/src/registry.ts`
 - Create: `pipeline/test/registry.test.ts`
 
@@ -1927,6 +2071,7 @@ git commit -m "feat(pipeline): typed-map registry with duplicate detection"
 ### Task D.3: Topo-sorted orchestrator (TDD)
 
 **Files:**
+
 - Create: `pipeline/src/orchestrator.ts`
 - Create: `pipeline/test/orchestrator.test.ts`
 
@@ -1940,8 +2085,8 @@ import type { Stage, StageContext } from "$pipeline/types";
 
 const ctx: StageContext = {
   workspaceRoot: ".",
-  snapshotDir:   "snapshots/test",
-  outDir:        "pipeline/out/test",
+  snapshotDir: "snapshots/test",
+  outDir: "pipeline/out/test",
   log: () => undefined,
 };
 
@@ -1957,10 +2102,22 @@ describe("orchestrator", () => {
 
   it("topo-sorts a diamond dependency", async () => {
     const order: string[] = [];
-    const A = stage("a", [],          () => { order.push("a"); return "A"; });
-    const B = stage("b", ["a"],       () => { order.push("b"); return "B"; });
-    const C = stage("c", ["a"],       () => { order.push("c"); return "C"; });
-    const D = stage("d", ["b", "c"],  () => { order.push("d"); return "D"; });
+    const A = stage("a", [], () => {
+      order.push("a");
+      return "A";
+    });
+    const B = stage("b", ["a"], () => {
+      order.push("b");
+      return "B";
+    });
+    const C = stage("c", ["a"], () => {
+      order.push("c");
+      return "C";
+    });
+    const D = stage("d", ["b", "c"], () => {
+      order.push("d");
+      return "D";
+    });
     const result = await runStages([D, B, A, C], {}, ctx);
     expect(order[0]).toBe("a");
     expect(order[3]).toBe("d");
@@ -2064,6 +2221,7 @@ git commit -m "feat(pipeline): topo-sorted stage orchestrator"
 ### Task D.4: Descriptor loader stage
 
 **Files:**
+
 - Create: `pipeline/src/stages/load-descriptors.ts`
 - Modify: `pipeline/test/registry.test.ts` (no — separate test file)
 - Create: `pipeline/test/load-descriptors.test.ts`
@@ -2077,12 +2235,15 @@ import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 
 describe("loadDescriptors", () => {
   it("loads the item descriptor + variants from entities/", async () => {
-    const result = await loadDescriptors.run({}, {
-      workspaceRoot: ".",
-      snapshotDir:   "",
-      outDir:        "",
-      log: () => undefined,
-    });
+    const result = await loadDescriptors.run(
+      {},
+      {
+        workspaceRoot: ".",
+        snapshotDir: "",
+        outDir: "",
+        log: () => undefined,
+      },
+    );
     expect(result.entities.item.id).toBe("item");
     expect(result.variants.item.length).toBe(5);
     const ids = result.variants.item.map((v) => v.variantId).sort();
@@ -2131,13 +2292,17 @@ export const loadDescriptors: Stage<unknown, LoadDescriptorsOutput> = {
       const entityPath = join(dirPath, "entity.json");
       const entityDoc = JSON.parse(readFileSync(entityPath, "utf8")) as EntityDescriptor;
       if (!validateEntity(entityDoc)) {
-        const errors = (validateEntity as unknown as { errors?: { instancePath: string; message?: string }[] }).errors ?? [];
+        const errors =
+          (validateEntity as unknown as { errors?: { instancePath: string; message?: string }[] })
+            .errors ?? [];
         const path = entityPath;
         const detail = errors.map((e) => `${path}#${e.instancePath} — ${e.message}`).join("\n");
         throw new Error(`invalid entity descriptor at ${path}:\n${detail}`);
       }
       if (entityDoc.id !== dirName) {
-        throw new Error(`descriptor id mismatch at ${entityPath}: id='${entityDoc.id}' but folder='${dirName}'`);
+        throw new Error(
+          `descriptor id mismatch at ${entityPath}: id='${entityDoc.id}' but folder='${dirName}'`,
+        );
       }
       out.entities[entityDoc.id] = entityDoc;
 
@@ -2149,8 +2314,15 @@ export const loadDescriptors: Stage<unknown, LoadDescriptorsOutput> = {
           const variantPath = join(variantsDir, fileName);
           const variantDoc = JSON.parse(readFileSync(variantPath, "utf8")) as VariantDescriptor;
           if (!validateVariant(variantDoc)) {
-            const errors = (validateVariant as unknown as { errors?: { instancePath: string; message?: string }[] }).errors ?? [];
-            const detail = errors.map((e) => `${variantPath}#${e.instancePath} — ${e.message}`).join("\n");
+            const errors =
+              (
+                validateVariant as unknown as {
+                  errors?: { instancePath: string; message?: string }[];
+                }
+              ).errors ?? [];
+            const detail = errors
+              .map((e) => `${variantPath}#${e.instancePath} — ${e.message}`)
+              .join("\n");
             throw new Error(`invalid variant descriptor at ${variantPath}:\n${detail}`);
           }
           variantList.push(variantDoc);
@@ -2178,6 +2350,7 @@ git commit -m "feat(pipeline): descriptor loader stage with schema validation"
 ### Task D.5: Snapshot loader + validation stage
 
 **Files:**
+
 - Create: `pipeline/src/stages/load-snapshot.ts`
 - Create: `pipeline/src/stages/validate.ts`
 - Create: `pipeline/test/snapshot.test.ts`
@@ -2200,14 +2373,14 @@ Path: `pipeline/test/fixtures/synthetic/snapshot/manifest.json`
     "completedAt": "2026-05-03T12:00:00Z",
     "checks": [
       { "name": "builtLookupTable", "ok": true },
-      { "name": "ardenfallGame",    "ok": true },
-      { "name": "worldData",        "ok": true },
-      { "name": "masterRecordTable","ok": true }
-    ]
+      { "name": "ardenfallGame", "ok": true },
+      { "name": "worldData", "ok": true },
+      { "name": "masterRecordTable", "ok": true },
+    ],
   },
-  "counts":      { "item": 2 },
+  "counts": { "item": 2 },
   "diagnostics": { "fatal": 0, "diagnostic": 0 },
-  "hashes":      { "items.json": "0000000000000000000000000000000000000000000000000000000000000000" }
+  "hashes": { "items.json": "0000000000000000000000000000000000000000000000000000000000000000" },
 }
 ```
 
@@ -2226,7 +2399,11 @@ Path: `pipeline/test/fixtures/synthetic/snapshot/items.json`
         "name": "Iron Sword",
         "weight": 3.5,
         "value": 25,
-        "iconRef": { "kind": "lookupAsset", "guid": "fixture-icon-iron-sword", "unityType": "UnityEngine.Texture2D" },
+        "iconRef": {
+          "kind": "lookupAsset",
+          "guid": "fixture-icon-iron-sword",
+          "unityType": "UnityEngine.Texture2D",
+        },
         "description": "A simple iron blade.",
         "equipSlot": "primary",
         "armorClass": null,
@@ -2236,15 +2413,30 @@ Path: `pipeline/test/fixtures/synthetic/snapshot/items.json`
         "damageMin": 5,
         "damageMax": 10,
         "reach": 1.2,
-        "weaponClass": "sword"
+        "weaponClass": "sword",
       },
       "tags": ["weapon", "metal"],
       "provenance": {
-        "name":   { "kind": "parameter", "source": "itemName.Get()", "isSet": true,  "inherited": false },
-        "weight": { "kind": "parameter", "source": "weight.Get()",   "isSet": true,  "inherited": false },
-        "value":  { "kind": "parameter", "source": "value.Get()",    "isSet": true,  "inherited": false }
+        "name": {
+          "kind": "parameter",
+          "source": "itemName.Get()",
+          "isSet": true,
+          "inherited": false,
+        },
+        "weight": {
+          "kind": "parameter",
+          "source": "weight.Get()",
+          "isSet": true,
+          "inherited": false,
+        },
+        "value": {
+          "kind": "parameter",
+          "source": "value.Get()",
+          "isSet": true,
+          "inherited": false,
+        },
       },
-      "diagnostics": []
+      "diagnostics": [],
     },
     {
       "id": "fixture-leather-tunic",
@@ -2254,23 +2446,37 @@ Path: `pipeline/test/fixtures/synthetic/snapshot/items.json`
         "name": "Leather Tunic",
         "weight": 4.0,
         "value": 12,
-        "iconRef": { "kind": "missing", "reason": "lookupAssetGuidMissing", "source": "ItemData.icon" },
+        "iconRef": {
+          "kind": "missing",
+          "reason": "lookupAssetGuidMissing",
+          "source": "ItemData.icon",
+        },
         "description": "",
         "equipSlot": "chest",
         "armorClass": "light",
         "durabilityMax": 80,
         "armorRating": 6,
-        "coverageSlot": "torso"
+        "coverageSlot": "torso",
       },
       "tags": ["armor", "leather"],
       "provenance": {
-        "iconRef": { "kind": "missing", "source": "ItemData.icon", "isSet": false, "inherited": false }
+        "iconRef": {
+          "kind": "missing",
+          "source": "ItemData.icon",
+          "isSet": false,
+          "inherited": false,
+        },
       },
       "diagnostics": [
-        { "severity": "diagnostic", "code": "lookupAssetGuidMissing", "field": "iconRef", "message": "icon ref missing from BuiltLookupTable" }
-      ]
-    }
-  ]
+        {
+          "severity": "diagnostic",
+          "code": "lookupAssetGuidMissing",
+          "field": "iconRef",
+          "message": "icon ref missing from BuiltLookupTable",
+        },
+      ],
+    },
+  ],
 }
 ```
 
@@ -2284,8 +2490,8 @@ import { validate } from "$pipeline/stages/validate";
 
 const ctx = {
   workspaceRoot: ".",
-  snapshotDir:   "pipeline/test/fixtures/synthetic/snapshot",
-  outDir:        "pipeline/test/.tmp",
+  snapshotDir: "pipeline/test/fixtures/synthetic/snapshot",
+  outDir: "pipeline/test/.tmp",
   log: () => undefined,
 };
 
@@ -2300,7 +2506,9 @@ describe("loadSnapshot", () => {
 describe("validate", () => {
   it("passes the synthetic snapshot", async () => {
     const snap = await loadSnapshot.run({}, ctx);
-    const desc = await import("$pipeline/stages/load-descriptors").then((m) => m.loadDescriptors.run({}, ctx));
+    const desc = await import("$pipeline/stages/load-descriptors").then((m) =>
+      m.loadDescriptors.run({}, ctx),
+    );
     const result = validate.run({ "load-snapshot": snap, "load-descriptors": desc }, ctx);
     expect(result.errors).toEqual([]);
   });
@@ -2334,8 +2542,12 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
     const manifestPath = join(dir, "manifest.json");
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as SnapshotManifest;
     if (!validateManifest(manifest)) {
-      const errs = (validateManifest as unknown as { errors?: { instancePath: string; message?: string }[] }).errors ?? [];
-      throw new Error(`invalid snapshot manifest at ${manifestPath}:\n${errs.map((e) => `${manifestPath}#${e.instancePath} — ${e.message}`).join("\n")}`);
+      const errs =
+        (validateManifest as unknown as { errors?: { instancePath: string; message?: string }[] })
+          .errors ?? [];
+      throw new Error(
+        `invalid snapshot manifest at ${manifestPath}:\n${errs.map((e) => `${manifestPath}#${e.instancePath} — ${e.message}`).join("\n")}`,
+      );
     }
 
     const envelopes: Record<string, SnapshotEnvelope> = {};
@@ -2345,8 +2557,12 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
       const path = join(dir, fileName);
       const env = JSON.parse(readFileSync(path, "utf8")) as SnapshotEnvelope;
       if (!validateSnapshot(env)) {
-        const errs = (validateSnapshot as unknown as { errors?: { instancePath: string; message?: string }[] }).errors ?? [];
-        throw new Error(`invalid snapshot envelope at ${path}:\n${errs.map((e) => `${path}#${e.instancePath} — ${e.message}`).join("\n")}`);
+        const errs =
+          (validateSnapshot as unknown as { errors?: { instancePath: string; message?: string }[] })
+            .errors ?? [];
+        throw new Error(
+          `invalid snapshot envelope at ${path}:\n${errs.map((e) => `${path}#${e.instancePath} — ${e.message}`).join("\n")}`,
+        );
       }
       envelopes[env.entityId] = env;
     }
@@ -2363,8 +2579,8 @@ import type { LoadSnapshotOutput } from "./load-snapshot.ts";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 
 export interface ValidateInputs {
-  "load-snapshot":     LoadSnapshotOutput;
-  "load-descriptors":  LoadDescriptorsOutput;
+  "load-snapshot": LoadSnapshotOutput;
+  "load-descriptors": LoadDescriptorsOutput;
 }
 
 export interface ValidateOutput {
@@ -2377,30 +2593,54 @@ export const validate: Stage<ValidateInputs, ValidateOutput> = {
   inputs: ["load-snapshot", "load-descriptors"],
   run: (inputs) => {
     const errors: ValidateOutput["errors"] = [];
-    let fatal = 0, diagnostic = 0;
+    let fatal = 0,
+      diagnostic = 0;
 
     for (const [entityId, env] of Object.entries(inputs["load-snapshot"].envelopes)) {
       const entity = inputs["load-descriptors"].entities[entityId];
       if (!entity) {
-        errors.push({ entity: entityId, code: "unknownEntity", message: `snapshot has rows for '${entityId}' but no descriptor exists` });
+        errors.push({
+          entity: entityId,
+          code: "unknownEntity",
+          message: `snapshot has rows for '${entityId}' but no descriptor exists`,
+        });
         fatal++;
         continue;
       }
       for (const row of env.rows) {
         for (const fieldSpec of entity.fields) {
-          const present = Object.hasOwn(row.fields, fieldSpec.name) && row.fields[fieldSpec.name] !== undefined;
+          const present =
+            Object.hasOwn(row.fields, fieldSpec.name) && row.fields[fieldSpec.name] !== undefined;
           if (!present && fieldSpec.missingPolicy === "fatal") {
-            errors.push({ entity: entityId, row: row.id, field: fieldSpec.name, code: "missingFatalField", message: `required field '${fieldSpec.name}' missing on row '${row.id}'` });
+            errors.push({
+              entity: entityId,
+              row: row.id,
+              field: fieldSpec.name,
+              code: "missingFatalField",
+              message: `required field '${fieldSpec.name}' missing on row '${row.id}'`,
+            });
             fatal++;
           } else if (!present && fieldSpec.missingPolicy === "diagnostic") {
-            errors.push({ entity: entityId, row: row.id, field: fieldSpec.name, code: "missingDiagnosticField", message: `optional-but-notable field '${fieldSpec.name}' missing on row '${row.id}'` });
+            errors.push({
+              entity: entityId,
+              row: row.id,
+              field: fieldSpec.name,
+              code: "missingDiagnosticField",
+              message: `optional-but-notable field '${fieldSpec.name}' missing on row '${row.id}'`,
+            });
             diagnostic++;
           }
         }
         for (const d of row.diagnostics ?? []) {
           if (d.severity === "fatal") fatal++;
           else diagnostic++;
-          errors.push({ entity: entityId, row: row.id, field: d.field, code: d.code, message: d.message ?? d.code });
+          errors.push({
+            entity: entityId,
+            row: row.id,
+            field: d.field,
+            code: d.code,
+            message: d.message ?? d.code,
+          });
         }
       }
     }
@@ -2439,6 +2679,7 @@ Goal: synthetic snapshot → DDL emission → INSERTs → site metadata + read m
 ### Task E.1: DDL generator from descriptors
 
 **Files:**
+
 - Create: `pipeline/src/sql/ddl.ts`
 - Create: `pipeline/test/sql-ddl.test.ts`
 
@@ -2455,9 +2696,9 @@ const item: EntityDescriptor = {
   label: { singular: "Item", plural: "Items" },
   extraction: { root: "x" },
   fields: [
-    { name: "id",     type: "id",     from: "guid", missingPolicy: "fatal" },
-    { name: "name",   type: "string", from: "n",    missingPolicy: "diagnostic" },
-    { name: "weight", type: "number", from: "w",    missingPolicy: "diagnostic" },
+    { name: "id", type: "id", from: "guid", missingPolicy: "fatal" },
+    { name: "name", type: "string", from: "n", missingPolicy: "diagnostic" },
+    { name: "weight", type: "number", from: "w", missingPolicy: "diagnostic" },
   ],
   variants: { dir: "variants" },
 };
@@ -2528,9 +2769,9 @@ export function buildDDL(entity: EntityDescriptor, variants: VariantDescriptor[]
   // Tags child table.
   out.push(
     `CREATE TABLE "${entity.id}_tags" (` +
-    `"${entity.id}_id" TEXT NOT NULL REFERENCES "${entity.id}s"("id"), ` +
-    `"tag" TEXT NOT NULL, ` +
-    `PRIMARY KEY ("${entity.id}_id", "tag"));`,
+      `"${entity.id}_id" TEXT NOT NULL REFERENCES "${entity.id}s"("id"), ` +
+      `"tag" TEXT NOT NULL, ` +
+      `PRIMARY KEY ("${entity.id}_id", "tag"));`,
   );
 
   // Variant tables (each owns only its own fields).
@@ -2562,6 +2803,7 @@ git commit -m "feat(pipeline): build canonical ddl from descriptors"
 ### Task E.2: Site metadata DDL
 
 **Files:**
+
 - Create: `pipeline/src/sql/site-metadata-ddl.ts`
 
 - [ ] **Step 1: Write the file** (no failing test; this is a static SQL string lifted from addendum §6, validated by Task E.4 integration test)
@@ -2649,6 +2891,7 @@ git commit -m "feat(pipeline): site metadata ddl"
 ### Task E.3: Item canonicaliser
 
 **Files:**
+
 - Create: `pipeline/src/entities/item/canonicaliser.ts`
 - Create: `pipeline/src/entities/item/operations.ts`
 - Create: `pipeline/test/canonicaliser.test.ts`
@@ -2677,8 +2920,8 @@ import { loadSnapshot } from "$pipeline/stages/load-snapshot";
 
 const ctx = {
   workspaceRoot: ".",
-  snapshotDir:   "pipeline/test/fixtures/synthetic/snapshot",
-  outDir:        "pipeline/test/.tmp",
+  snapshotDir: "pipeline/test/fixtures/synthetic/snapshot",
+  outDir: "pipeline/test/.tmp",
   log: () => undefined,
 };
 
@@ -2690,20 +2933,32 @@ describe("canonicaliseItems", () => {
     db.exec(buildDDL(desc.entities.item, desc.variants.item));
     canonicaliseItems(db, desc.entities.item, desc.variants.item, snap.envelopes.item);
 
-    const items = db.query("SELECT id, name, variant FROM items ORDER BY id").all() as { id: string; name: string; variant: string }[];
+    const items = db.query("SELECT id, name, variant FROM items ORDER BY id").all() as {
+      id: string;
+      name: string;
+      variant: string;
+    }[];
     expect(items.length).toBe(2);
     expect(items.find((r) => r.id === "fixture-iron-sword")?.variant).toBe("melee-weapon");
 
-    const equipRows = db.query("SELECT id, equipSlot FROM item_equipment").all() as { id: string }[];
+    const equipRows = db.query("SELECT id, equipSlot FROM item_equipment").all() as {
+      id: string;
+    }[];
     expect(equipRows.length).toBe(2); // both items are equipment
 
-    const meleeRows = db.query("SELECT id, damageMin FROM item_melee_weapons").all() as { id: string; damageMin: number }[];
+    const meleeRows = db.query("SELECT id, damageMin FROM item_melee_weapons").all() as {
+      id: string;
+      damageMin: number;
+    }[];
     expect(meleeRows.find((r) => r.id === "fixture-iron-sword")?.damageMin).toBe(5);
 
     const armorRows = db.query("SELECT id FROM item_armor").all() as { id: string }[];
     expect(armorRows.find((r) => r.id === "fixture-leather-tunic")).toBeDefined();
 
-    const tagRows = db.query("SELECT item_id, tag FROM item_tags ORDER BY item_id, tag").all() as { item_id: string; tag: string }[];
+    const tagRows = db.query("SELECT item_id, tag FROM item_tags ORDER BY item_id, tag").all() as {
+      item_id: string;
+      tag: string;
+    }[];
     expect(tagRows.length).toBe(4); // 2 + 2
   });
 });
@@ -2746,16 +3001,20 @@ export function canonicaliseItems(
   const rootCols = entity.fields.map((f) => f.name);
   const rootInsert = db.prepare(
     `INSERT INTO "${entity.id}s" (${[...rootCols, "variant"].map((c) => `"${c}"`).join(", ")}) ` +
-    `VALUES (${[...rootCols, "variant"].map(() => "?").join(", ")})`,
+      `VALUES (${[...rootCols, "variant"].map(() => "?").join(", ")})`,
   );
-  const tagInsert = db.prepare(`INSERT INTO "${entity.id}_tags" ("${entity.id}_id", "tag") VALUES (?, ?)`);
+  const tagInsert = db.prepare(
+    `INSERT INTO "${entity.id}_tags" ("${entity.id}_id", "tag") VALUES (?, ?)`,
+  );
 
   const variantInserters = new Map<string, ReturnType<Database["prepare"]>>();
   for (const v of variants) {
     const cols = ["id", ...v.fields.map((f) => f.name)];
     variantInserters.set(
       v.variantId,
-      db.prepare(`INSERT INTO "${v.canonicalTable}" (${cols.map((c) => `"${c}"`).join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`),
+      db.prepare(
+        `INSERT INTO "${v.canonicalTable}" (${cols.map((c) => `"${c}"`).join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`,
+      ),
     );
   }
 
@@ -2765,10 +3024,7 @@ export function canonicaliseItems(
       if (!variant) {
         throw new Error(`row '${row.id}' has unknown variant '${row.variant ?? "<none>"}'`);
       }
-      const rootValues = [
-        ...rootCols.map((c) => coerceForSqlite(row.fields[c])),
-        row.variant,
-      ];
+      const rootValues = [...rootCols.map((c) => coerceForSqlite(row.fields[c])), row.variant];
       rootInsert.run(...rootValues);
       for (const tag of row.tags ?? []) tagInsert.run(row.id, tag);
       for (const ancestor of ancestry(variant, variants)) {
@@ -2800,6 +3056,7 @@ git commit -m "feat(pipeline): item canonicaliser with ancestor variant inserts"
 ### Task E.4: Site metadata emitter
 
 **Files:**
+
 - Create: `pipeline/src/stages/emit-site-metadata.ts`
 - Create: `pipeline/test/site-metadata.test.ts`
 
@@ -2822,18 +3079,36 @@ describe("emitSiteMetadata", () => {
     db.exec(SITE_METADATA_DDL);
     emitSiteMetadata(db, desc);
 
-    const ent = db.query("SELECT * FROM site_entities WHERE entity_id = 'item'").get() as { route_path: string };
+    const ent = db.query("SELECT * FROM site_entities WHERE entity_id = 'item'").get() as {
+      route_path: string;
+    };
     expect(ent.route_path).toBe("/items");
 
-    const cols = db.query("SELECT field_id FROM site_overview_columns WHERE entity_id = 'item' ORDER BY position").all() as { field_id: string }[];
+    const cols = db
+      .query(
+        "SELECT field_id FROM site_overview_columns WHERE entity_id = 'item' ORDER BY position",
+      )
+      .all() as { field_id: string }[];
     expect(cols.map((c) => c.field_id)).toEqual(["name", "value", "weight", "variant"]);
 
-    const sections = db.query("SELECT section_id, kind FROM site_detail_sections WHERE entity_id = 'item' ORDER BY position").all() as { section_id: string; kind: string }[];
+    const sections = db
+      .query(
+        "SELECT section_id, kind FROM site_detail_sections WHERE entity_id = 'item' ORDER BY position",
+      )
+      .all() as { section_id: string; kind: string }[];
     expect(sections.map((s) => s.section_id)).toEqual(["summary", "description"]);
     expect(sections.every((s) => s.kind === "fieldList")).toBe(true);
 
-    const variants = db.query("SELECT variant_id, parent_variant_id FROM item_variants ORDER BY position").all() as { variant_id: string; parent_variant_id: string | null }[];
-    expect(variants.map((v) => v.variant_id)).toEqual(["equipment", "hand-item", "primary-hand", "melee-weapon", "armor"]);
+    const variants = db
+      .query("SELECT variant_id, parent_variant_id FROM item_variants ORDER BY position")
+      .all() as { variant_id: string; parent_variant_id: string | null }[];
+    expect(variants.map((v) => v.variant_id)).toEqual([
+      "equipment",
+      "hand-item",
+      "primary-hand",
+      "melee-weapon",
+      "armor",
+    ]);
   });
 });
 ```
@@ -2884,41 +3159,91 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
 
   const tx = db.transaction(() => {
     for (const [entityId, entity] of Object.entries(desc.entities)) {
-      insertEntity.run(entityId, entity.label.singular, entity.label.plural, `/${entity.label.plural.toLowerCase()}`, `${entityId}s`);
+      insertEntity.run(
+        entityId,
+        entity.label.singular,
+        entity.label.plural,
+        `/${entity.label.plural.toLowerCase()}`,
+        `${entityId}s`,
+      );
       for (const f of entity.fields) {
-        insertField.run(entityId, f.name, `${entityId}s`, f.name, f.label ?? f.name, valueKindOf(f.type), f.missingPolicy ?? "diagnostic");
+        insertField.run(
+          entityId,
+          f.name,
+          `${entityId}s`,
+          f.name,
+          f.label ?? f.name,
+          valueKindOf(f.type),
+          f.missingPolicy ?? "diagnostic",
+        );
       }
       // Variant fields land on their canonical_table:
       for (const v of desc.variants[entityId] ?? []) {
         for (const f of v.fields) {
-          insertField.run(entityId, f.name, v.canonicalTable, f.name, f.label ?? f.name, valueKindOf(f.type), f.missingPolicy ?? "diagnostic");
+          insertField.run(
+            entityId,
+            f.name,
+            v.canonicalTable,
+            f.name,
+            f.label ?? f.name,
+            valueKindOf(f.type),
+            f.missingPolicy ?? "diagnostic",
+          );
         }
       }
       // Synthetic variant column (route filter):
-      insertField.run(entityId, "variant", `${entityId}s`, "variant", "Variant", "string", "diagnostic");
+      insertField.run(
+        entityId,
+        "variant",
+        `${entityId}s`,
+        "variant",
+        "Variant",
+        "string",
+        "diagnostic",
+      );
 
       const overview = entity.site?.overview;
       if (overview) {
-        overview.columns.forEach((field, i) => insertColumn.run(entityId, `col_${field}`, field, i));
+        overview.columns.forEach((field, i) =>
+          insertColumn.run(entityId, `col_${field}`, field, i),
+        );
       }
       const detail = entity.site?.detail;
       if (detail) {
         detail.sections.forEach((section, i) => {
           if (section.kind === "fieldList") {
             insertSection.run(entityId, section.id, "fieldList", section.title, i, null, null);
-            section.fields.forEach((field, j) => insertSectionField.run(entityId, section.id, field, j));
+            section.fields.forEach((field, j) =>
+              insertSectionField.run(entityId, section.id, field, j),
+            );
           } else {
-            insertSection.run(entityId, section.id, "custom", section.title, i, section.renderer, JSON.stringify(section.props ?? {}));
+            insertSection.run(
+              entityId,
+              section.id,
+              "custom",
+              section.title,
+              i,
+              section.renderer,
+              JSON.stringify(section.props ?? {}),
+            );
           }
         });
       }
       // Read models (Slice 1 declares two; emission lands in Task E.5).
       insertReadModel.run("item_overview_rows", "item_overview_rows", entityId, "overview");
-      insertReadModel.run("item_detail_rows",   "item_detail_rows",   entityId, "detail");
+      insertReadModel.run("item_detail_rows", "item_detail_rows", entityId, "detail");
     }
 
     for (const v of desc.variants.item ?? []) {
-      insertVariant.run(v.variantId, v.label, v.unityType, v.canonicalTable, v.parentVariantId ?? null, v.position ?? 0, v.isPublicRoute ? 1 : 0);
+      insertVariant.run(
+        v.variantId,
+        v.label,
+        v.unityType,
+        v.canonicalTable,
+        v.parentVariantId ?? null,
+        v.position ?? 0,
+        v.isPublicRoute ? 1 : 0,
+      );
     }
   });
   tx();
@@ -2940,6 +3265,7 @@ git commit -m "feat(pipeline): emit site metadata from descriptors"
 ### Task E.5: Read-model emission
 
 **Files:**
+
 - Create: `pipeline/src/stages/emit-read-models.ts`
 - Modify: `pipeline/test/canonicaliser.test.ts` (no — separate test file)
 - Create: `pipeline/test/read-models.test.ts`
@@ -2958,8 +3284,8 @@ import { loadSnapshot } from "$pipeline/stages/load-snapshot";
 
 const ctx = {
   workspaceRoot: ".",
-  snapshotDir:   "pipeline/test/fixtures/synthetic/snapshot",
-  outDir:        ".",
+  snapshotDir: "pipeline/test/fixtures/synthetic/snapshot",
+  outDir: ".",
   log: () => undefined,
 };
 
@@ -2972,10 +3298,14 @@ describe("emitItemReadModels", () => {
     canonicaliseItems(db, desc.entities.item, desc.variants.item, snap.envelopes.item);
     emitItemReadModels(db, desc);
 
-    const overview = db.query("SELECT id, name, variant FROM item_overview_rows ORDER BY name").all() as { id: string; name: string; variant: string }[];
+    const overview = db
+      .query("SELECT id, name, variant FROM item_overview_rows ORDER BY name")
+      .all() as { id: string; name: string; variant: string }[];
     expect(overview.map((r) => r.name)).toEqual(["Iron Sword", "Leather Tunic"]);
 
-    const detail = db.query("SELECT id, fields_json FROM item_detail_rows WHERE id = 'fixture-iron-sword'").get() as { id: string; fields_json: string };
+    const detail = db
+      .query("SELECT id, fields_json FROM item_detail_rows WHERE id = 'fixture-iron-sword'")
+      .get() as { id: string; fields_json: string };
     const fields = JSON.parse(detail.fields_json);
     expect(fields.damageMin).toBe(5);
     expect(fields.weight).toBe(3.5);
@@ -3023,7 +3353,11 @@ export function emitItemReadModels(db: Database, desc: LoadDescriptorsOutput): v
   // ancestor variant tables. We do this with a per-row loop so SQLite stays
   // schema-agnostic and the test owns the contract.
   const variants = desc.variants.item ?? [];
-  const items = db.query("SELECT id, name, variant FROM items").all() as { id: string; name: string; variant: string }[];
+  const items = db.query("SELECT id, name, variant FROM items").all() as {
+    id: string;
+    name: string;
+    variant: string;
+  }[];
   const insertDetail = db.prepare(
     `INSERT INTO item_detail_rows (id, name, variant, fields_json) VALUES (?, ?, ?, ?)`,
   );
@@ -3033,7 +3367,9 @@ export function emitItemReadModels(db: Database, desc: LoadDescriptorsOutput): v
     let cur = variants.find((v) => v.variantId === variantId);
     while (cur) {
       chain.unshift(cur.canonicalTable);
-      cur = cur.parentVariantId ? variants.find((v) => v.variantId === cur!.parentVariantId) : undefined;
+      cur = cur.parentVariantId
+        ? variants.find((v) => v.variantId === cur!.parentVariantId)
+        : undefined;
     }
     return chain;
   }
@@ -3041,10 +3377,15 @@ export function emitItemReadModels(db: Database, desc: LoadDescriptorsOutput): v
   const tx = db.transaction(() => {
     for (const item of items) {
       const fields: Record<string, unknown> = {};
-      const root = db.query("SELECT * FROM items WHERE id = ?").get(item.id) as Record<string, unknown>;
+      const root = db.query("SELECT * FROM items WHERE id = ?").get(item.id) as Record<
+        string,
+        unknown
+      >;
       Object.assign(fields, root);
       for (const tableName of ancestry(item.variant)) {
-        const layer = db.query(`SELECT * FROM "${tableName}" WHERE id = ?`).get(item.id) as Record<string, unknown> | undefined;
+        const layer = db.query(`SELECT * FROM "${tableName}" WHERE id = ?`).get(item.id) as
+          | Record<string, unknown>
+          | undefined;
         if (layer) Object.assign(fields, layer);
       }
       insertDetail.run(item.id, item.name, item.variant, JSON.stringify(fields));
@@ -3069,6 +3410,7 @@ git commit -m "feat(pipeline): emit item overview and detail read models"
 ### Task E.6: Property invariants for item canonicalisation
 
 **Files:**
+
 - Create: `pipeline/test/invariants/items.test.ts`
 
 - [ ] **Step 1: Write the property tests**
@@ -3112,7 +3454,10 @@ describe("item canonical invariants", () => {
     const desc = await loadDescriptors.run({}, ctx);
     await fc.assert(
       fc.asyncProperty(
-        fc.array(arbItem(() => "melee-weapon"), { minLength: 1, maxLength: 50 }),
+        fc.array(
+          arbItem(() => "melee-weapon"),
+          { minLength: 1, maxLength: 50 },
+        ),
         async (items) => {
           const db = new Database(":memory:");
           db.exec(buildDDL(desc.entities.item, desc.variants.item));
@@ -3126,7 +3471,10 @@ describe("item canonical invariants", () => {
             })),
           };
           canonicaliseItems(db, desc.entities.item, desc.variants.item, env);
-          const counts = db.query("SELECT id, COUNT(*) c FROM items GROUP BY id").all() as { id: string; c: number }[];
+          const counts = db.query("SELECT id, COUNT(*) c FROM items GROUP BY id").all() as {
+            id: string;
+            c: number;
+          }[];
           expect(counts.every((r) => r.c === 1)).toBe(true);
         },
       ),
@@ -3138,7 +3486,10 @@ describe("item canonical invariants", () => {
     const desc = await loadDescriptors.run({}, ctx);
     await fc.assert(
       fc.asyncProperty(
-        fc.array(arbItem(() => "melee-weapon"), { minLength: 1, maxLength: 30 }),
+        fc.array(
+          arbItem(() => "melee-weapon"),
+          { minLength: 1, maxLength: 30 },
+        ),
         async (items) => {
           const db = new Database(":memory:");
           db.exec(buildDDL(desc.entities.item, desc.variants.item));
@@ -3153,14 +3504,18 @@ describe("item canonical invariants", () => {
           };
           canonicaliseItems(db, desc.entities.item, desc.variants.item, env);
           // every melee row has matching primary_hand, hand, equipment, items rows
-          const orphans = db.query(`
+          const orphans = db
+            .query(
+              `
             SELECT mw.id FROM item_melee_weapons mw
             LEFT JOIN item_primary_hand_items ph ON ph.id = mw.id
             LEFT JOIN item_hand_items         h  ON h.id  = mw.id
             LEFT JOIN item_equipment          e  ON e.id  = mw.id
             LEFT JOIN items                   i  ON i.id  = mw.id
             WHERE ph.id IS NULL OR h.id IS NULL OR e.id IS NULL OR i.id IS NULL
-          `).all();
+          `,
+            )
+            .all();
           expect(orphans).toEqual([]);
         },
       ),
@@ -3185,6 +3540,7 @@ git commit -m "test(pipeline): property invariants for item canonical ancestry"
 ### Task E.7: SQLite emission CLI
 
 **Files:**
+
 - Create: `pipeline/src/stages/emit-sqlite.ts`
 - Create: `pipeline/src/cli.ts`
 - Modify: root `package.json` to add `pipeline:run` script
@@ -3206,7 +3562,7 @@ import type { LoadSnapshotOutput } from "./load-snapshot.ts";
 
 export interface EmitSqliteInputs {
   "load-descriptors": LoadDescriptorsOutput;
-  "load-snapshot":    LoadSnapshotOutput;
+  "load-snapshot": LoadSnapshotOutput;
 }
 
 export interface EmitSqliteOutput {
@@ -3223,8 +3579,15 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
     const db = new Database(outputPath, { create: true, readwrite: true });
     db.exec("PRAGMA journal_mode = DELETE;");
     db.exec(SITE_METADATA_DDL);
-    db.exec(buildDDL(inputs["load-descriptors"].entities.item, inputs["load-descriptors"].variants.item));
-    canonicaliseItems(db, inputs["load-descriptors"].entities.item, inputs["load-descriptors"].variants.item, inputs["load-snapshot"].envelopes.item);
+    db.exec(
+      buildDDL(inputs["load-descriptors"].entities.item, inputs["load-descriptors"].variants.item),
+    );
+    canonicaliseItems(
+      db,
+      inputs["load-descriptors"].entities.item,
+      inputs["load-descriptors"].variants.item,
+      inputs["load-snapshot"].envelopes.item,
+    );
     emitSiteMetadata(db, inputs["load-descriptors"]);
     emitItemReadModels(db, inputs["load-descriptors"]);
     db.close();
@@ -3256,13 +3619,12 @@ const ctx = {
   log: (level: "info" | "warn" | "error", msg: string) => console.warn(`[${level}] ${msg}`),
 };
 
-const result = await runStages(
-  [loadDescriptors, loadSnapshot, validate, emitSqlite],
-  {},
-  ctx,
-);
+const result = await runStages([loadDescriptors, loadSnapshot, validate, emitSqlite], {}, ctx);
 
-const v = result.validate as { errors: unknown[]; countsBySeverity: { fatal: number; diagnostic: number } };
+const v = result.validate as {
+  errors: unknown[];
+  countsBySeverity: { fatal: number; diagnostic: number };
+};
 if (v.countsBySeverity.fatal > 0) {
   console.error(`pipeline rejected snapshot: ${v.countsBySeverity.fatal} fatal diagnostics`);
   for (const e of v.errors) console.error(JSON.stringify(e));
@@ -3295,6 +3657,7 @@ bun -e '
   });
 '
 ```
+
 Expected: prints the two synthetic items.
 
 - [ ] **Step 5: Commit**
@@ -3322,6 +3685,7 @@ Goal: csproj compiles cleanly against `mod/libs/`. Walker base, ref resolver, pr
 ### Task F.1: csproj, libs/ helper, JSON settings
 
 **Files:**
+
 - Create: `mod/ArdenfallArchives.csproj`
 - Create: `mod/scripts/copy-libs.sh`
 - Create: `mod/src/Emit/JsonSettings.cs`
@@ -3410,13 +3774,13 @@ The mod walks live Ardenfall runtime objects and emits JSON snapshots. It is **n
 
 ## Layout
 
-- `src/Plugin.cs`             — entry point, trigger registration.
-- `src/Triggers/`             — hotkey, console command, advisory readiness monitor.
-- `src/Preflight/`            — fail-fast gate before snapshot creation.
-- `src/Walker/`               — generic walker base, cycle detection, ref resolution, provenance.
-- `src/Dtos/`                 — shared DTOs (SnapshotRef, Manifest, Diagnostic).
+- `src/Plugin.cs` — entry point, trigger registration.
+- `src/Triggers/` — hotkey, console command, advisory readiness monitor.
+- `src/Preflight/` — fail-fast gate before snapshot creation.
+- `src/Walker/` — generic walker base, cycle detection, ref resolution, provenance.
+- `src/Dtos/` — shared DTOs (SnapshotRef, Manifest, Diagnostic).
 - `src/Entities/<E>/Adapters/` — per-layer extractor adapters.
-- `src/Emit/`                 — JSON + atomic snapshot writers.
+- `src/Emit/` — JSON + atomic snapshot writers.
 
 Read `docs/superpowers/specs/2026-04-29-ardenfall-archives-implementation-decisions.md` §11–§14 for the contract.
 ```
@@ -3437,6 +3801,7 @@ git commit -m "feat(mod): bootstrap bepinex csproj and dll-copy helper"
 ### Task F.2: Shared DTOs (SnapshotRef, Manifest, Diagnostic, Provenance)
 
 **Files:**
+
 - Create: `mod/src/Dtos/SnapshotRef.cs`
 - Create: `mod/src/Dtos/Manifest.cs`
 - Create: `mod/src/Dtos/Diagnostic.cs`
@@ -3570,6 +3935,7 @@ git commit -m "feat(mod): shared snapshot dtos (ref, manifest, diagnostic, prove
 ### Task F.3: Walker base, ref resolver, provenance capture
 
 **Files:**
+
 - Create: `mod/src/Walker/RefResolver.cs`
 - Create: `mod/src/Walker/ProvenanceCapture.cs`
 - Create: `mod/src/Walker/WalkerBase.cs`
@@ -3698,6 +4064,7 @@ git commit -m "feat(mod): walker base, ref resolver, provenance capture"
 ### Task F.4: Preflight
 
 **Files:**
+
 - Create: `mod/src/Preflight/Preflight.cs`
 
 - [ ] **Step 1: Write the preflight implementation**
@@ -3789,6 +4156,7 @@ Goal: hot-installable BepInEx mod that walks `ItemData` assets and emits a compl
 ### Task G.1: Item snapshot DTOs
 
 **Files:**
+
 - Create: `mod/src/Entities/Item/ItemSnapshot.cs`
 - Create: `mod/src/Entities/Item/ItemEquipmentSnapshot.cs`
 - Create: `mod/src/Entities/Item/ItemHandSnapshot.cs`
@@ -3855,6 +4223,7 @@ git commit -m "feat(mod): item per-layer snapshot dtos"
 ### Task G.2: Adapters per layer
 
 **Files:**
+
 - Create: `mod/src/Entities/Item/Adapters/ExtractItem.cs`
 - Create: `mod/src/Entities/Item/Adapters/ExtractEquipment.cs`
 - Create: `mod/src/Entities/Item/Adapters/ExtractHandItem.cs`
@@ -4005,6 +4374,7 @@ git commit -m "feat(mod): item per-layer extractors"
 ### Task G.3: ItemExtractor orchestrator
 
 **Files:**
+
 - Create: `mod/src/Entities/Item/ItemExtractor.cs`
 
 - [ ] **Step 1: Write `ItemExtractor.cs`**
@@ -4123,6 +4493,7 @@ git commit -m "feat(mod): item extractor with variant dispatch"
 ### Task G.4: Atomic snapshot writer + manifest builder
 
 **Files:**
+
 - Create: `mod/src/Emit/SnapshotWriter.cs`
 - Create: `mod/src/Emit/ManifestBuilder.cs`
 
@@ -4230,6 +4601,7 @@ git commit -m "feat(mod): atomic snapshot writer and manifest builder"
 ### Task G.5: Triggers and Plugin entry point
 
 **Files:**
+
 - Create: `mod/src/Triggers/Hotkey.cs`
 - Create: `mod/src/Triggers/ConsoleCommand.cs`
 - Create: `mod/src/Triggers/ReadinessMonitor.cs`
@@ -4421,6 +4793,7 @@ Expected: log line `snapshot published: <plugins>/ArdenfallArchives/snapshots/De
 ```sh
 bun run pipeline:run "$PLUGINS_DIR/snapshots/Demo2025-<ts>" pipeline/test/.real
 ```
+
 Expected: `wrote pipeline/test/.real/data.sqlite (NNNN bytes)`. Pipeline rejects only on `fatal` diagnostics; `diagnostic` is allowed.
 
 - [ ] **Step 5: Inspect the real SQLite blob**
@@ -4435,6 +4808,7 @@ bun -e '
   });
 '
 ```
+
 Expected: prints first five item names from the real game data.
 
 - [ ] **Step 6: Capture lessons in `mod/AGENTS.md`**
@@ -4454,6 +4828,7 @@ Goal: SvelteKit static workspace with Tailwind v4 tokens and shadcn-svelte primi
 ### Task H.1: SvelteKit + Tailwind + sql.js-fts5 install
 
 **Files:**
+
 - Create: `site/package.json`
 - Create: `site/tsconfig.json`
 - Create: `site/svelte.config.js`
@@ -4469,27 +4844,27 @@ Goal: SvelteKit static workspace with Tailwind v4 tokens and shadcn-svelte primi
   "private": true,
   "type": "module",
   "scripts": {
-    "dev":   "vite dev",
+    "dev": "vite dev",
     "build": "vite build",
-    "check": "svelte-kit sync && svelte-check --tsgo --tsconfig ./tsconfig.json"
+    "check": "svelte-kit sync && svelte-check --tsgo --tsconfig ./tsconfig.json",
   },
   "dependencies": {
-    "sql.js-fts5": "^1.4.0"
+    "sql.js-fts5": "^1.4.0",
   },
   "devDependencies": {
-    "@sveltejs/adapter-static":     "^3.0.10",
-    "@sveltejs/kit":                "^2.59.0",
+    "@sveltejs/adapter-static": "^3.0.10",
+    "@sveltejs/kit": "^2.59.0",
     "@sveltejs/vite-plugin-svelte": "^6.2.1",
-    "@tailwindcss/vite":            "^4.2.4",
-    "@types/sql.js":                "^1.4.9",
-    "bits-ui":                      "^2.18.1",
-    "svelte":                       "^5.55.5",
-    "svelte-check":                 "^4.3.4",
-    "tailwind-variants":            "^3.2.2",
-    "tailwindcss":                  "^4.2.4",
-    "tw-animate-css":               "^1.4.0",
-    "vite":                         "^8.0.10"
-  }
+    "@tailwindcss/vite": "^4.2.4",
+    "@types/sql.js": "^1.4.9",
+    "bits-ui": "^2.18.1",
+    "svelte": "^5.55.5",
+    "svelte-check": "^4.3.4",
+    "tailwind-variants": "^3.2.2",
+    "tailwindcss": "^4.2.4",
+    "tw-animate-css": "^1.4.0",
+    "vite": "^8.0.10",
+  },
 }
 ```
 
@@ -4503,8 +4878,8 @@ export default {
   preprocess: vitePreprocess(),
   kit: {
     adapter: adapter({
-      pages:    "build",
-      assets:   "build",
+      pages: "build",
+      assets: "build",
       fallback: "index.html",
       precompress: false,
       strict: true,
@@ -4536,8 +4911,8 @@ export default defineConfig({
   "compilerOptions": {
     "rootDir": ".",
     "baseUrl": ".",
-    "paths": { "$lib/*": ["src/lib/*"] }
-  }
+    "paths": { "$lib/*": ["src/lib/*"] },
+  },
 }
 ```
 
@@ -4575,11 +4950,11 @@ SvelteKit static; data is shipped as `static/data.sqlite` and queried in-browser
 
 ## Layout
 
-- `src/lib/components/ui/`     — copied shadcn-svelte primitives (one-owner per file).
-- `src/lib/entity/sections/`   — built-in section renderers.
-- `src/lib/entities/<id>/`     — per-entity custom renderers.
-- `src/lib/store/`             — SQLite glue and accessors.
-- `src/routes/`                — pages.
+- `src/lib/components/ui/` — copied shadcn-svelte primitives (one-owner per file).
+- `src/lib/entity/sections/` — built-in section renderers.
+- `src/lib/entities/<id>/` — per-entity custom renderers.
+- `src/lib/store/` — SQLite glue and accessors.
+- `src/routes/` — pages.
 ```
 
 - [ ] **Step 7: `bun install` + verify**
@@ -4597,6 +4972,7 @@ git commit -m "feat(site): bootstrap sveltekit static workspace"
 ### Task H.2: Tailwind v4 tokens
 
 **Files:**
+
 - Create: `site/src/app.css`
 - Create: `site/src/lib/utils.ts`
 
@@ -4609,36 +4985,36 @@ git commit -m "feat(site): bootstrap sveltekit static workspace"
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background:           var(--background);
-  --color-foreground:           var(--foreground);
-  --color-primary:              var(--primary);
-  --color-primary-foreground:   var(--primary-foreground);
-  --color-secondary:            var(--secondary);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted:                var(--muted);
-  --color-muted-foreground:     var(--muted-foreground);
-  --color-border:               var(--border);
-  --color-ring:                 var(--ring);
-  --color-destructive:          var(--destructive);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --radius-sm:                  calc(var(--radius) - 0.125rem);
-  --radius-md:                  var(--radius);
-  --radius-lg:                  calc(var(--radius) + 0.125rem);
+  --radius-sm: calc(var(--radius) - 0.125rem);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 0.125rem);
 }
 
 :root {
-  --radius:               0.5rem;
-  --background:           oklch(0.10 0.02 260);
-  --foreground:           oklch(0.95 0.01 260);
-  --primary:              oklch(0.70 0.18 50);   /* Ardenfall amber */
-  --primary-foreground:   oklch(0.10 0 0);
-  --secondary:            oklch(0.20 0.02 260);
+  --radius: 0.5rem;
+  --background: oklch(0.1 0.02 260);
+  --foreground: oklch(0.95 0.01 260);
+  --primary: oklch(0.7 0.18 50); /* Ardenfall amber */
+  --primary-foreground: oklch(0.1 0 0);
+  --secondary: oklch(0.2 0.02 260);
   --secondary-foreground: oklch(0.95 0.01 260);
-  --muted:                oklch(0.20 0.02 260);
-  --muted-foreground:     oklch(0.60 0.02 260);
-  --border:               oklch(0.30 0.02 260);
-  --ring:                 oklch(0.70 0.18 50 / 50%);
-  --destructive:          oklch(0.55 0.22 25);
+  --muted: oklch(0.2 0.02 260);
+  --muted-foreground: oklch(0.6 0.02 260);
+  --border: oklch(0.3 0.02 260);
+  --ring: oklch(0.7 0.18 50 / 50%);
+  --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.95 0 0);
 }
 ```
@@ -4667,6 +5043,7 @@ git commit -m "feat(site): tailwind v4 design tokens"
 ### Task H.3: shadcn-svelte initial component set
 
 **Files:**
+
 - Create (via CLI): `site/src/lib/components/ui/button/`, `input/`, `label/`, `select/`, `dialog/`, `tabs/`, `tooltip/`
 
 - [ ] **Step 1: Initialise shadcn-svelte**
@@ -4696,6 +5073,7 @@ git commit -m "feat(site): add shadcn-svelte initial primitive set"
 ### Task H.4: Site SQLite store
 
 **Files:**
+
 - Create: `site/src/lib/store/index.ts`
 - Create: `site/src/lib/store/site-meta.ts`
 - Create: `site/src/lib/store/items.ts`
@@ -4738,7 +5116,10 @@ export async function getDb(): Promise<Database> {
   return dbPromise;
 }
 
-export async function query<T = Record<string, SqlValue>>(sql: string, params: SqlValue[] = []): Promise<T[]> {
+export async function query<T = Record<string, SqlValue>>(
+  sql: string,
+  params: SqlValue[] = [],
+): Promise<T[]> {
   const d = await getDb();
   const stmt = d.prepare(sql);
   stmt.bind(params);
@@ -4748,7 +5129,10 @@ export async function query<T = Record<string, SqlValue>>(sql: string, params: S
   return rows;
 }
 
-export async function queryOne<T = Record<string, SqlValue>>(sql: string, params: SqlValue[] = []): Promise<T | undefined> {
+export async function queryOne<T = Record<string, SqlValue>>(
+  sql: string,
+  params: SqlValue[] = [],
+): Promise<T | undefined> {
   const rows = await query<T>(sql, params);
   return rows[0];
 }
@@ -4767,7 +5151,11 @@ export interface SiteEntity {
   canonical_table: string;
 }
 
-export interface SiteOverviewColumn { entity_id: string; field_id: string; position: number }
+export interface SiteOverviewColumn {
+  entity_id: string;
+  field_id: string;
+  position: number;
+}
 export interface SiteDetailSection {
   entity_id: string;
   section_id: string;
@@ -4777,7 +5165,12 @@ export interface SiteDetailSection {
   renderer_key: string | null;
   payload_json: string | null;
 }
-export interface SiteDetailSectionField { entity_id: string; section_id: string; field_id: string; position: number }
+export interface SiteDetailSectionField {
+  entity_id: string;
+  section_id: string;
+  field_id: string;
+  position: number;
+}
 export interface SiteEntityField {
   entity_id: string;
   field_id: string;
@@ -4792,10 +5185,16 @@ export const getEntity = (id: string) =>
   queryOne<SiteEntity>("SELECT * FROM site_entities WHERE entity_id = ?", [id]);
 
 export const listOverviewColumns = (id: string) =>
-  query<SiteOverviewColumn>("SELECT * FROM site_overview_columns WHERE entity_id = ? ORDER BY position", [id]);
+  query<SiteOverviewColumn>(
+    "SELECT * FROM site_overview_columns WHERE entity_id = ? ORDER BY position",
+    [id],
+  );
 
 export const listDetailSections = (id: string) =>
-  query<SiteDetailSection>("SELECT * FROM site_detail_sections WHERE entity_id = ? ORDER BY position", [id]);
+  query<SiteDetailSection>(
+    "SELECT * FROM site_detail_sections WHERE entity_id = ? ORDER BY position",
+    [id],
+  );
 
 export const listSectionFields = (entityId: string, sectionId: string) =>
   query<SiteDetailSectionField>(
@@ -4859,6 +5258,7 @@ Goal: `/items` and `/items/[id]` render correctly from the SQLite blob, driven b
 ### Task I.1: Layout, landing, EntityTable
 
 **Files:**
+
 - Create: `site/src/routes/+layout.svelte`
 - Create: `site/src/routes/+page.svelte`
 - Create: `site/src/lib/components/EntityTable.svelte`
@@ -4984,6 +5384,7 @@ git commit -m "feat(site): layout, landing, generic entity table"
 ### Task I.2: Items overview route
 
 **Files:**
+
 - Create: `site/src/routes/items/+page.svelte`
 
 - [ ] **Step 1: Write the page**
@@ -5038,6 +5439,7 @@ git commit -m "feat(site): items overview route from site_overview_columns"
 ### Task I.3: Items detail route + section renderers
 
 **Files:**
+
 - Create: `site/src/routes/items/[id]/+page.svelte`
 - Create: `site/src/lib/entity/sections/FieldList.svelte`
 - Create: `site/src/lib/entity/registry.ts`
@@ -5231,6 +5633,7 @@ cp pipeline/test/.tmp/data.sqlite site/static/data.sqlite
 bun run --cwd site check
 bun run --cwd site build
 ```
+
 Expected: all four exit 0; `site/build/` contains a static site that includes `items/` and `items/<id>/` HTML shells (rendered after hydration; the static prerender stage emits HTML for the shell, item rows arrive client-side from the SQLite blob).
 
 - [ ] **Step 6: Manual smoke**
@@ -5263,6 +5666,7 @@ Goal: synthetic fixtures live under `fixtures/synthetic/` with a manifest envelo
 ### Task J.1: Move synthetic fixture into fixtures/ and write manifest envelope
 
 **Files:**
+
 - Move: `pipeline/test/fixtures/synthetic/snapshot/*` → `fixtures/synthetic/snapshot/*`
 - Create: `fixtures/synthetic/manifest.json`
 - Modify: `pipeline/test/snapshot.test.ts`, `pipeline/test/canonicaliser.test.ts`, `pipeline/test/site-metadata.test.ts`, `pipeline/test/read-models.test.ts` (update `snapshotDir` paths)
@@ -5288,17 +5692,21 @@ git mv pipeline/test/fixtures/synthetic/snapshot fixtures/synthetic/snapshot
     "ItemData base + MeleeItemData branch + ArmorItemData branch coverage",
     "lookupAsset and missing iconRef",
     "Parameter<T> resolved/inherited shape",
-    "SmartListParameter<ItemTag> populated and empty cases"
+    "SmartListParameter<ItemTag> populated and empty cases",
   ],
   "selection": [
-    { "entity": "item", "ids": ["fixture-iron-sword", "fixture-leather-tunic"], "rationale": "one melee branch + one armor branch" }
+    {
+      "entity": "item",
+      "ids": ["fixture-iron-sword", "fixture-leather-tunic"],
+      "rationale": "one melee branch + one armor branch",
+    },
   ],
-  "scrubbing":    "synthetic; no scrubbing required",
+  "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
     "snapshot/manifest.json": "0000000000000000000000000000000000000000000000000000000000000000",
-    "snapshot/items.json":    "0000000000000000000000000000000000000000000000000000000000000000"
-  }
+    "snapshot/items.json": "0000000000000000000000000000000000000000000000000000000000000000",
+  },
 }
 ```
 
@@ -5322,6 +5730,7 @@ git commit -m "refactor(fixtures): move synthetic fixture under fixtures/ with m
 ### Task J.2: Hygiene check script
 
 **Files:**
+
 - Create: `pipeline/scripts/check-fixtures.ts`
 - Create: `fixtures/real-capsule/.gitkeep`
 
@@ -5359,7 +5768,12 @@ function checkPack(packDir: string) {
     return;
   }
   if (!validateFixtureManifest(manifest)) {
-    const errs = (validateFixtureManifest as unknown as { errors?: { instancePath: string; message?: string }[] }).errors ?? [];
+    const errs =
+      (
+        validateFixtureManifest as unknown as {
+          errors?: { instancePath: string; message?: string }[];
+        }
+      ).errors ?? [];
     for (const e of errs) errors.push(`${manifestPath}#${e.instancePath} — ${e.message}`);
   }
 
@@ -5380,7 +5794,9 @@ function checkPack(packDir: string) {
     if (!expected) {
       errors.push(`${path}: hash not declared in ${manifestPath}`);
     } else if (expected !== "0".repeat(64) && expected !== hash) {
-      errors.push(`${path}: hash mismatch (declared ${expected.slice(0, 12)}…, actual ${hash.slice(0, 12)}…)`);
+      errors.push(
+        `${path}: hash mismatch (declared ${expected.slice(0, 12)}…, actual ${hash.slice(0, 12)}…)`,
+      );
     }
   });
 }
@@ -5395,7 +5811,8 @@ for (const dir of ["fixtures/synthetic", "fixtures/real-capsule"]) {
 for (const forbidden of ["snapshots", "site/static/data.sqlite", "site/static/assets"]) {
   if (statSync(forbidden, { throwIfNoEntry: false })) {
     // 'site/static/data.sqlite' may be present locally if you copied it manually; CI runs on a fresh checkout where it must not exist.
-    if (process.env.CI === "true") errors.push(`forbidden path present in CI checkout: ${forbidden}`);
+    if (process.env.CI === "true")
+      errors.push(`forbidden path present in CI checkout: ${forbidden}`);
   }
 }
 
@@ -5426,6 +5843,7 @@ git commit -m "feat(fixtures): hygiene check script with size budgets and manife
 ### Task J.3: Backfill real fixture hashes
 
 **Files:**
+
 - Modify: `fixtures/synthetic/manifest.json`
 - Create: `fixtures/scripts/curate-capsule.ts` (stub for real-derived curation)
 
@@ -5482,6 +5900,7 @@ Goal: every job in `.github/workflows/ci.yml` passes on a clean PR; an end-to-en
 ### Task K.1: End-to-end smoke test
 
 **Files:**
+
 - Create: `pipeline/test/end-to-end.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -5505,8 +5924,8 @@ describe("end-to-end pipeline", () => {
     try {
       const ctx = {
         workspaceRoot: ".",
-        snapshotDir:   "fixtures/synthetic/snapshot",
-        outDir:        out,
+        snapshotDir: "fixtures/synthetic/snapshot",
+        outDir: out,
         log: () => undefined,
       };
       const result = await runStages(
@@ -5521,22 +5940,29 @@ describe("end-to-end pipeline", () => {
       const db = new Database(dbPath, { readonly: true });
 
       // Site metadata is populated.
-      const entityCount = (db.query("SELECT COUNT(*) c FROM site_entities").get() as { c: number }).c;
+      const entityCount = (db.query("SELECT COUNT(*) c FROM site_entities").get() as { c: number })
+        .c;
       expect(entityCount).toBeGreaterThan(0);
 
       // Read models are populated.
-      const overviewCount = (db.query("SELECT COUNT(*) c FROM item_overview_rows").get() as { c: number }).c;
+      const overviewCount = (
+        db.query("SELECT COUNT(*) c FROM item_overview_rows").get() as { c: number }
+      ).c;
       expect(overviewCount).toBe(2);
 
       // Variant ancestry is consistent for the melee row.
-      const orphans = db.query(`
+      const orphans = db
+        .query(
+          `
         SELECT mw.id FROM item_melee_weapons mw
         LEFT JOIN item_primary_hand_items ph ON ph.id = mw.id
         LEFT JOIN item_hand_items         h  ON h.id  = mw.id
         LEFT JOIN item_equipment          e  ON e.id  = mw.id
         LEFT JOIN items                   i  ON i.id  = mw.id
         WHERE ph.id IS NULL OR h.id IS NULL OR e.id IS NULL OR i.id IS NULL
-      `).all();
+      `,
+        )
+        .all();
       expect(orphans).toEqual([]);
       db.close();
     } finally {
@@ -5561,6 +5987,7 @@ git commit -m "test(pipeline): end-to-end synthetic smoke"
 ### Task K.2: Tighten the CI workflow
 
 **Files:**
+
 - Modify: `.github/workflows/ci.yml`
 
 - [ ] **Step 1: Drop `continue-on-error` from the mod job (if added in Phase A); skip the dotnet build in CI for Slice 1**
@@ -5568,20 +5995,20 @@ git commit -m "test(pipeline): end-to-end synthetic smoke"
 Replace the `mod` job body with a soft check that does not require game DLLs:
 
 ```yaml
-  mod:
-    runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' ||
-      contains(toJson(github.event.pull_request.changed_files), 'mod/')
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with: { dotnet-version: '8.0.x' }
-      - name: format-check
-        run: dotnet format mod/ArdenfallArchives.csproj --verify-no-changes
-      # Full `dotnet build` requires Assembly-CSharp.dll which is not redistributable;
-      # build is verified locally per mod/AGENTS.md. CI verifies formatting only until
-      # Slice 9 wires up an external archive of buildable references.
+mod:
+  runs-on: ubuntu-latest
+  if: |
+    github.event_name == 'push' ||
+    contains(toJson(github.event.pull_request.changed_files), 'mod/')
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-dotnet@v4
+      with: { dotnet-version: "8.0.x" }
+    - name: format-check
+      run: dotnet format mod/ArdenfallArchives.csproj --verify-no-changes
+    # Full `dotnet build` requires Assembly-CSharp.dll which is not redistributable;
+    # build is verified locally per mod/AGENTS.md. CI verifies formatting only until
+    # Slice 9 wires up an external archive of buildable references.
 ```
 
 - [ ] **Step 2: Add a copy step to the `site` job so the build sees a real SQLite blob**
@@ -5589,11 +6016,11 @@ Replace the `mod` job body with a soft check that does not require game DLLs:
 The site `bun run build` will emit warnings if `static/data.sqlite` is absent. Generate a synthetic blob in CI before the build:
 
 ```yaml
-      - name: build synthetic sqlite for static prerender
-        run: |
-          bun run pipeline:run fixtures/synthetic/snapshot site/static
-      - run: bun run --cwd site check
-      - run: bun run --cwd site build
+- name: build synthetic sqlite for static prerender
+  run: |
+    bun run pipeline:run fixtures/synthetic/snapshot site/static
+- run: bun run --cwd site check
+- run: bun run --cwd site build
 ```
 
 - [ ] **Step 3: Push to a feature branch and open a PR; verify all four jobs pass**
@@ -5603,6 +6030,7 @@ git checkout -b slice1-end-to-end
 git push -u origin slice1-end-to-end
 # open PR via GitHub UI; CI runs lint, pipeline, site, mod, fixtures.
 ```
+
 Expected: green check on PR. If `mod` job complains about `dotnet format` whitespace, fix locally and force-push.
 
 - [ ] **Step 4: Commit and merge**
@@ -5626,28 +6054,28 @@ All five CI jobs (`lint`, `pipeline`, `site`, `mod` (format), `fixtures`) pass o
 
 Trace each Slice 1 deliverable from `docs/superpowers/roadmap.md` and amendment §8–§14, §16, §19 to the task that delivers it:
 
-| Deliverable | Task |
-|---|---|
-| Bun workspace + C# sibling | A.1, F.1 |
-| `entities/item/entity.json` | C.1 |
-| `entities/item/variants/` | C.2 |
-| BepInEx ItemData extraction via `BuiltLookupTable.GetAssetsOfType<ItemData>()` | F.4, G.3 |
-| Stable asset IDs via `BuiltLookupTable.GetGuid` | F.3, G.3 |
-| Explicit DTOs (no raw Unity JSON) | G.1 |
-| `Parameter<T>.Get()` + `SmartListParameter<T>.Get()` resolution | G.2 |
-| Preflight gate | F.4, G.5 |
-| Lifecycle: hot register, advisory readiness, atomic publish | G.5 |
-| Snapshot manifest with metadata | G.4, G.5 |
-| Provenance per `Parameter<T>` field | F.3, G.2 |
-| Canonical SQLite tables (items, item_tags, equipment, hand_items, primary_hand, melee, armor) | E.1, E.3 |
-| Pipeline-emitted site metadata | E.4 |
-| Read models (`item_overview_rows`, `item_detail_rows`) | E.5 |
-| `/items` overview route | I.2 |
-| `/items/[id]` detail with `fieldList` + `custom` | I.3 |
-| Synthetic + curated fixture infrastructure | J.1, J.2, J.3 |
-| Hygiene CI checks | J.2 + A.5 |
-| Local boundary validation | G.6 |
-| End-to-end smoke | K.1 |
+| Deliverable                                                                                   | Task          |
+| --------------------------------------------------------------------------------------------- | ------------- |
+| Bun workspace + C# sibling                                                                    | A.1, F.1      |
+| `entities/item/entity.json`                                                                   | C.1           |
+| `entities/item/variants/`                                                                     | C.2           |
+| BepInEx ItemData extraction via `BuiltLookupTable.GetAssetsOfType<ItemData>()`                | F.4, G.3      |
+| Stable asset IDs via `BuiltLookupTable.GetGuid`                                               | F.3, G.3      |
+| Explicit DTOs (no raw Unity JSON)                                                             | G.1           |
+| `Parameter<T>.Get()` + `SmartListParameter<T>.Get()` resolution                               | G.2           |
+| Preflight gate                                                                                | F.4, G.5      |
+| Lifecycle: hot register, advisory readiness, atomic publish                                   | G.5           |
+| Snapshot manifest with metadata                                                               | G.4, G.5      |
+| Provenance per `Parameter<T>` field                                                           | F.3, G.2      |
+| Canonical SQLite tables (items, item_tags, equipment, hand_items, primary_hand, melee, armor) | E.1, E.3      |
+| Pipeline-emitted site metadata                                                                | E.4           |
+| Read models (`item_overview_rows`, `item_detail_rows`)                                        | E.5           |
+| `/items` overview route                                                                       | I.2           |
+| `/items/[id]` detail with `fieldList` + `custom`                                              | I.3           |
+| Synthetic + curated fixture infrastructure                                                    | J.1, J.2, J.3 |
+| Hygiene CI checks                                                                             | J.2 + A.5     |
+| Local boundary validation                                                                     | G.6           |
+| End-to-end smoke                                                                              | K.1           |
 
 ### Open spec items intentionally not closed in Slice 1
 

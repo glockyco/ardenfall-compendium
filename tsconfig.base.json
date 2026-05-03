@@ -1,18 +1,18 @@
 {
   "compilerOptions": {
-    "target":           "ES2023",
-    "module":           "ESNext",
+    "target": "ES2023",
+    "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib":              ["ES2023", "DOM", "DOM.Iterable"],
-    "strict":           true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
     "exactOptionalPropertyTypes": true,
-    "esModuleInterop":  true,
-    "skipLibCheck":     true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "resolveJsonModule": true,
-    "isolatedModules":  true,
+    "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "types":            ["bun-types"]
+    "types": ["bun-types"]
   }
 }

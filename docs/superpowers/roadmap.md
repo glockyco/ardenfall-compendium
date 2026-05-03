@@ -170,16 +170,16 @@ This set is defined for Slice 1. It proves the item variant model with one deep 
 
 ## Open questions tracker
 
-| # | Question | Status | Closes in slice |
-|---|---|---|---|
-| 1 | Deployment target | open | First slice that publishes a built site |
-| 2 | Repo strategy + CI tooling | **closed** | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §1, §8) |
-| 3 | Component library / primitive strategy | **closed (initial)** | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §5); design system depth in Slice 7 |
-| 4 | JSON Schema validator | **closed** | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §3) |
-| 5 | Property-test framework | **closed** | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §4) |
-| 6 | Tile capture specifics | open | Slice 6 |
-| 7 | External archive backend | open | Slice 9 |
-| 8 | Future gameplay-mod surface | deferred | indefinitely |
+| #   | Question                               | Status               | Closes in slice                                                                       |
+| --- | -------------------------------------- | -------------------- | ------------------------------------------------------------------------------------- |
+| 1   | Deployment target                      | open                 | First slice that publishes a built site                                               |
+| 2   | Repo strategy + CI tooling             | **closed**           | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §1, §8)                             |
+| 3   | Component library / primitive strategy | **closed (initial)** | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §5); design system depth in Slice 7 |
+| 4   | JSON Schema validator                  | **closed**           | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §3)                                 |
+| 5   | Property-test framework                | **closed**           | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §4)                                 |
+| 6   | Tile capture specifics                 | open                 | Slice 6                                                                               |
+| 7   | External archive backend               | open                 | Slice 9                                                                               |
+| 8   | Future gameplay-mod surface            | deferred             | indefinitely                                                                          |
 
 ## Update protocol
 

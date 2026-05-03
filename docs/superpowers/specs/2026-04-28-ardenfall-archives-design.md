@@ -57,21 +57,21 @@ This is shape **β** in the prior research synthesis (RePoE / PyPoE is the clean
 
 ## 5. Components
 
-| ID | Component | Owner stage | Notes |
-|---|---|---|---|
-| C1 | Runtime hook | Mod | BepInEx plugin lifecycle; hotkey + console-command triggers; never on-load |
-| C2 | Extractor | Mod | Typed DTOs over `Assembly-CSharp.dll`; generic walker base for cycle detection, ScriptableObject ID resolution, JSON emission |
-| C3 | Wire format | Mod → Pipeline | One JSON file per entity kind plus `manifest.json` carrying game version, build profile, extraction timestamp, content hashes |
-| C4 | Schema authority | Repo (committed) | `entities/<id>/entity.json` descriptors; one source of truth, validated by JSON Schema |
-| C5 | Transformer pipeline | Pipeline | Declarative DAG of named operations; topo-sorted, never hand-ordered `run_all()` |
-| C6 | Canonical store | Pipeline → Site | SQLite blob (~10–20 MB target), FTS5 search, shipped to the client |
-| C7 | Site UI primitives | Site | Generic overview + detail components, configured per entity by descriptor |
-| C8 | Map system | Site | deck.gl `OrthographicView`; descriptor-driven layer construction; one declarative loop |
-| C9 | Asset pipeline | Mod → Pipeline → Site | Content-addressed (sha256 truncated) PNG → WebP via `sharp` |
-| C10 | Build orchestrator | Pipeline | Bun-driven topo-sorted task graph |
-| C11 | Versioning + diff | Repo | Schema, named operations, property invariants, summary digests in git; bulk artefacts external |
-| C12 | Deployment | Site | Static hosting; specific target deferred (see open questions) |
-| C13 | Future mod surface | Repo | Where non-extraction mods would live; deferred (see open questions) |
+| ID  | Component            | Owner stage           | Notes                                                                                                                         |
+| --- | -------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| C1  | Runtime hook         | Mod                   | BepInEx plugin lifecycle; hotkey + console-command triggers; never on-load                                                    |
+| C2  | Extractor            | Mod                   | Typed DTOs over `Assembly-CSharp.dll`; generic walker base for cycle detection, ScriptableObject ID resolution, JSON emission |
+| C3  | Wire format          | Mod → Pipeline        | One JSON file per entity kind plus `manifest.json` carrying game version, build profile, extraction timestamp, content hashes |
+| C4  | Schema authority     | Repo (committed)      | `entities/<id>/entity.json` descriptors; one source of truth, validated by JSON Schema                                        |
+| C5  | Transformer pipeline | Pipeline              | Declarative DAG of named operations; topo-sorted, never hand-ordered `run_all()`                                              |
+| C6  | Canonical store      | Pipeline → Site       | SQLite blob (~10–20 MB target), FTS5 search, shipped to the client                                                            |
+| C7  | Site UI primitives   | Site                  | Generic overview + detail components, configured per entity by descriptor                                                     |
+| C8  | Map system           | Site                  | deck.gl `OrthographicView`; descriptor-driven layer construction; one declarative loop                                        |
+| C9  | Asset pipeline       | Mod → Pipeline → Site | Content-addressed (sha256 truncated) PNG → WebP via `sharp`                                                                   |
+| C10 | Build orchestrator   | Pipeline              | Bun-driven topo-sorted task graph                                                                                             |
+| C11 | Versioning + diff    | Repo                  | Schema, named operations, property invariants, summary digests in git; bulk artefacts external                                |
+| C12 | Deployment           | Site                  | Static hosting; specific target deferred (see open questions)                                                                 |
+| C13 | Future mod surface   | Repo                  | Where non-extraction mods would live; deferred (see open questions)                                                           |
 
 ## 6. Repository layout
 
@@ -171,23 +171,26 @@ One JSON file per entity type. Schema-validated. Holds pure data; no inline code
   },
 
   "fields": [
-    { "name": "id",       "type": "id",         "from": "_id" },
-    { "name": "name",     "type": "string",     "from": "displayName" },
-    { "name": "school",   "type": "ref:school", "from": "school" },
-    { "name": "manaCost", "type": "int",        "from": "cost.mana" },
-    { "name": "description", "type": "richtext", "from": "tooltip", "operation": "spell.formatTooltip" }
+    { "name": "id", "type": "id", "from": "_id" },
+    { "name": "name", "type": "string", "from": "displayName" },
+    { "name": "school", "type": "ref:school", "from": "school" },
+    { "name": "manaCost", "type": "int", "from": "cost.mana" },
+    {
+      "name": "description",
+      "type": "richtext",
+      "from": "tooltip",
+      "operation": "spell.formatTooltip"
+    }
   ],
 
-  "denormalise": [
-    { "op": "linkBack", "from": "school", "as": "spells" }
-  ],
+  "denormalise": [{ "op": "linkBack", "from": "school", "as": "spells" }],
 
   "site": {
     "overview": {
       "columns": ["name", "school", "manaCost"],
-      "search":  ["name"],
+      "search": ["name"],
       "filters": [
-        { "field": "school",   "kind": "categorical" },
+        { "field": "school", "kind": "categorical" },
         { "field": "manaCost", "kind": "range" }
       ]
     },
@@ -282,7 +285,7 @@ The walker is generic; per-entity logic lives in the descriptor's `extraction.op
 - **TypeScript on Bun.** Bun ships a built-in test runner, SQLite driver, JSON loader, and TypeScript execution; one tool replaces what was Python + uv + pytest + a JSON library + a SQLite driver in the predecessors. Site shares the language for free type sharing.
 - **Newtonsoft-compatible JSON.** Bun's built-in JSON parser handles the wire format.
 - **`sharp`** for image processing (PNG → WebP). Ubiquitous, native, fast.
-- **JSON Schema validator** for `entity.json` and `snapshot.json`. *Recommendation pending validation:* `Ajv` is the dominant choice, but the specific validator should be pinned in the first implementation slice with a brief comparison.
+- **JSON Schema validator** for `entity.json` and `snapshot.json`. _Recommendation pending validation:_ `Ajv` is the dominant choice, but the specific validator should be pinned in the first implementation slice with a brief comparison.
 
 ### 9.2 Stages
 
@@ -328,9 +331,7 @@ One declarative loop replaces AK's wall of imperative calls:
 const layers: Layer[] = [];
 for (const descriptor of entityDescriptors) {
   if (!descriptor.map) continue;
-  layers.push(
-    createEntityLayer(descriptor, data[descriptor.id], filters[descriptor.id])
-  );
+  layers.push(createEntityLayer(descriptor, data[descriptor.id], filters[descriptor.id]));
 }
 ```
 
@@ -374,7 +375,7 @@ Two generic routes drive every entity type:
 
 A few entities will need bespoke detail views (e.g. the world map page itself). These get their own routes and are exempt from the generic flow; the descriptor's `site` field is optional.
 
-The design system (component primitives, tokens, lint rules) is established **on day one** before any entity UI is written. Specific component library is *recommendation pending validation*: shadcn-svelte plus design tokens is the leading candidate per the handoff but not yet committed; the implementation plan will pin it after a brief comparison.
+The design system (component primitives, tokens, lint rules) is established **on day one** before any entity UI is written. Specific component library is _recommendation pending validation_: shadcn-svelte plus design tokens is the leading candidate per the handoff but not yet committed; the implementation plan will pin it after a brief comparison.
 
 ## 15. Principles
 
