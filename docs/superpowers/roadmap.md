@@ -4,6 +4,7 @@ Living tracker for implementation of:
 
 - Baseline spec: `docs/superpowers/specs/2026-04-28-ardenfall-archives-design.md`
 - Slice 1 amendment: `docs/superpowers/specs/2026-04-29-ardenfall-archives-implementation-decisions.md`
+- Slice 1 tooling decisions: `docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`
 
 The amendment is authoritative where it differs from the baseline spec.
 
@@ -27,9 +28,9 @@ Slice ordering after Slice 1 is provisional; it changes when real extracted data
 
 ### Slice 1 — Item walking skeleton
 
-**Status:** brainstorming
-**Plan:** `docs/superpowers/plans/2026-04-29-item-walking-skeleton.md` (not written yet)
-**Spec coverage:** baseline §4, §6–§9, §11, §14, §15 plus all implementation decisions in `2026-04-29-ardenfall-archives-implementation-decisions.md`.
+**Status:** drafting
+**Plan:** `docs/superpowers/plans/2026-05-03-item-walking-skeleton.md` (not written yet)
+**Spec coverage:** baseline §4, §6–§9, §11, §14, §15; all implementation decisions in `2026-04-29-ardenfall-archives-implementation-decisions.md`; tooling decisions in `2026-05-03-slice1-tooling-decisions.md`.
 
 **Delivers:**
 
@@ -78,10 +79,7 @@ This set is defined for Slice 1. It proves the item variant model with one deep 
 - Real-derived capsules are permitted but must be mechanically curated from successful ignored snapshots and kept tiny/reviewable.
 - Deferred: fixture size budget, exact fixture paths, selected real item ids after first extraction, private/full-regression CI, external archive backend, artifact retention/access policy, and public site content publication policy.
 
-
-**Open decisions to close before planning:**
-
-- JSON Schema validator, property-test framework, initial UI primitives, repo/CI/tooling choices.
+**Open decisions:** closed in `docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`. JSON Schema validator (Ajv 8 + standalone codegen), property-test framework (fast-check 4 plain), UI primitives (shadcn-svelte 1.2.7 + Bits UI 2.18.1 + Tailwind v4.2.4), repo strategy (public GitHub, MIT), CI tooling (GitHub Actions, four path-filtered jobs), lint/format (Prettier + ESLint 9, Biome deferred), pre-commit (lefthook 2.1.6), TypeScript compiler (`@typescript/native-preview` beta migrating to `typescript@^7.0.x` on stable release), SQLite (`bun:sqlite` built-in), image processing (sharp with Bun spike).
 
 ### Slice 2 — Item subtype enrichment
 
@@ -171,16 +169,16 @@ This set is defined for Slice 1. It proves the item variant model with one deep 
 
 ## Open questions tracker
 
-| # | Question | Closes in slice |
-|---|---|---|
-| 1 | Deployment target | First slice that publishes a built site |
-| 2 | Repo strategy + CI tooling | Slice 1 |
-| 3 | Component library / primitive strategy | Slice 1 initial; Slice 7 full |
-| 4 | JSON Schema validator | Slice 1 |
-| 5 | Property-test framework | Slice 1 |
-| 6 | Tile capture specifics | Slice 6 |
-| 7 | External archive backend | Slice 9 |
-| 8 | Future gameplay-mod surface | deferred indefinitely |
+| # | Question | Status | Closes in slice |
+|---|---|---|---|
+| 1 | Deployment target | open | First slice that publishes a built site |
+| 2 | Repo strategy + CI tooling | **closed** | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §1, §8) |
+| 3 | Component library / primitive strategy | **closed (initial)** | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §5); design system depth in Slice 7 |
+| 4 | JSON Schema validator | **closed** | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §3) |
+| 5 | Property-test framework | **closed** | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §4) |
+| 6 | Tile capture specifics | open | Slice 6 |
+| 7 | External archive backend | open | Slice 9 |
+| 8 | Future gameplay-mod surface | deferred | indefinitely |
 
 ## Update protocol
 
