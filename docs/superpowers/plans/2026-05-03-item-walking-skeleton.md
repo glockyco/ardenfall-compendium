@@ -614,7 +614,7 @@ pre-push:
     - name: typecheck
       run: bun run typecheck
     - name: tests
-      run: bun test
+      run: bun test --pass-with-no-tests
 ```
 
 - [ ] **Step 2: Install lefthook hooks**
