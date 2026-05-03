@@ -44,3 +44,4 @@ Thumbs.db
 pipeline/dist/*
 !pipeline/dist/.gitkeep
 !pipeline/dist/validate-*.mjs
+!pipeline/dist/validate-*.d.mts
