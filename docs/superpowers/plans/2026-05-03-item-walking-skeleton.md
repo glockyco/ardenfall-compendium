@@ -452,6 +452,7 @@ git commit -m "chore(repo): bootstrap bun workspace and base tsconfig"
 - Create: `.prettierrc`
 - Create: `.prettierignore`
 - Create: `eslint.config.js`
+- Create: `site/svelte.config.js` (stub; H.1 overwrites with the real SvelteKit config)
 
 - [ ] **Step 1: Write `.prettierrc`**
 
@@ -536,18 +537,31 @@ export default tseslint.config(
 );
 ```
 
-- [ ] **Step 4: Verify formatters run cleanly on bootstrapped files**
+- [ ] **Step 4: Stub `site/svelte.config.js` so `eslint.config.js` resolves**
+
+`eslint.config.js` imports `./site/svelte.config.js` at module evaluation time. That is a hard ES-module error, not a lint warning, until H.1 lands the real config. Land a no-op stub now; H.1 will overwrite it with the real `@sveltejs/adapter-static` config.
+
+`site/svelte.config.js`:
+
+```js
+// Stub: full SvelteKit config lands in H.1.
+// eslint-plugin-svelte and prettier-plugin-svelte both consume this
+// during A.2 even though the site itself does not exist yet.
+export default {};
+```
+
+- [ ] **Step 5: Verify formatters run cleanly on bootstrapped files**
 
 Run: `bun run format:check`
-Expected: PASS. (Only `package.json` and the configs are present; all are valid Prettier-formatted JSON/JS.)
+Expected: PASS. (Only `package.json`, the configs, and the svelte stub are present; all are valid Prettier-formatted.)
 
 Run: `bun run lint`
-Expected: PASS or report `0 errors` and may report `0 warnings`. (`eslint.config.js` references `site/svelte.config.js` which does not exist yet; if eslint warns, ignore until Phase H — until then, exclude `eslint.config.js` self-lint by adding it to `ignores` if needed.)
+Expected: PASS — `0 errors`. Warnings are tolerated; record any in the report.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add .prettierrc .prettierignore eslint.config.js
+git add .prettierrc .prettierignore eslint.config.js site/svelte.config.js
 git commit -m "chore(repo): configure prettier and eslint flat config"
 ```
 
