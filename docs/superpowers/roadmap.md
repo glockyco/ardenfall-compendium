@@ -28,8 +28,8 @@ Slice ordering after Slice 1 is provisional; it changes when real extracted data
 
 ### Slice 1 — Item walking skeleton
 
-**Status:** drafting
-**Plan:** `docs/superpowers/plans/2026-05-03-item-walking-skeleton.md` (not written yet)
+**Status:** ready
+**Plan:** `docs/superpowers/plans/2026-05-03-item-walking-skeleton.md`
 **Spec coverage:** baseline §4, §6–§9, §11, §14, §15; all implementation decisions in `2026-04-29-ardenfall-archives-implementation-decisions.md`; tooling decisions in `2026-05-03-slice1-tooling-decisions.md`.
 
 **Delivers:**
