@@ -39,3 +39,8 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# Pipeline generated validators — the .mjs are committed; everything else under dist/ is ignored
+pipeline/dist/*
+!pipeline/dist/.gitkeep
+!pipeline/dist/validate-*.mjs
