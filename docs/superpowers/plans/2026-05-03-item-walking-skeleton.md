@@ -551,20 +551,31 @@ export default tseslint.config(
 export default {};
 ```
 
-- [ ] **Step 5: Verify formatters run cleanly on bootstrapped files**
+- [ ] **Step 5: Apply Prettier to pre-existing files and verify formatters run cleanly**
+
+A.1 wrote `package.json`, `pipeline/package.json`, `site/package.json`, and `tsconfig.base.json` with column-aligned JSON that Prettier rewrites. The plan markdown's embedded code fences also get Prettier-formatted by default (`embeddedLanguageFormatting: auto`). Prettier governs the whole repo from A.2 onward, so apply it once now and commit the rewrites alongside the new config files.
+
+Run: `bun run format`
+Expected: Prettier rewrites the four A.1 config files plus any markdown under `docs/` that doesn't already match its canonical output. The intent of the rewrites is whitespace-only (column alignment removed, trailing commas normalised, fenced code blocks reformatted by their language). Diff-review the changes to confirm — no semantic content should change.
 
 Run: `bun run format:check`
-Expected: PASS. (Only `package.json`, the configs, and the svelte stub are present; all are valid Prettier-formatted.)
+Expected: PASS.
 
 Run: `bun run lint`
 Expected: PASS — `0 errors`. Warnings are tolerated; record any in the report.
 
 - [ ] **Step 6: Commit**
 
+Stage every file Prettier touched plus the four new files. The commit message stays scoped to "configure prettier and eslint flat config" — the rewrites are a side-effect of wiring Prettier, not a separate change.
+
 ```bash
-git add .prettierrc .prettierignore eslint.config.js site/svelte.config.js
+git add .prettierrc .prettierignore eslint.config.js site/svelte.config.js \
+        package.json pipeline/package.json site/package.json tsconfig.base.json \
+        docs/
 git commit -m "chore(repo): configure prettier and eslint flat config"
 ```
+
+Use `git diff --cached` before the commit to confirm rewrites are formatting-only.
 
 ### Task A.3: Configure lefthook, .gitignore, LICENSE, README
 
