@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ardenfall-archives.example/schemas/fixture-manifest.schema.json",
+  "title": "Fixture pack manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["fixtureKind", "schemaVersion", "intendedAssertions", "selection", "hashes"],
+  "properties": {
+    "fixtureKind": {
+      "enum": ["synthetic", "real-derived-curated", "digest", "boundary-certificate"]
+    },
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "extractorVersion": { "type": "string" },
+    "gameVersion": { "type": "string" },
+    "buildIdentifier": { "type": "string" },
+    "source": { "type": "string" },
+    "curationToolVersion": { "type": "string" },
+    "intendedAssertions": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "selection": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entity", "ids"],
+        "additionalProperties": false,
+        "properties": {
+          "entity": { "type": "string" },
+          "ids": { "type": "array", "items": { "type": "string" } },
+          "rationale": { "type": "string" }
+        }
+      }
+    },
+    "scrubbing": { "type": "string" },
+    "minimization": { "type": "string" },
+    "hashes": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+    }
+  }
+}
