@@ -1,0 +1,69 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: 1.3.13 }
+      - run: bun install --frozen-lockfile
+      - run: bun run format:check
+      - run: bun run lint
+
+  pipeline:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      contains(toJson(github.event.pull_request.changed_files), 'pipeline/') ||
+      contains(toJson(github.event.pull_request.changed_files), 'entities/') ||
+      contains(toJson(github.event.pull_request.changed_files), 'schemas/')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: 1.3.13 }
+      - run: bun install --frozen-lockfile
+      - run: bun run codegen:validators
+      - run: bun run typecheck
+      - run: bun test pipeline/test
+
+  site:
+    runs-on: ubuntu-latest
+    needs: pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: 1.3.13 }
+      - run: bun install --frozen-lockfile
+      - run: bun run codegen:validators
+      - run: bun run --cwd site check
+      - run: bun run --cwd site build
+
+  mod:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: |
+      github.event_name == 'push' ||
+      contains(toJson(github.event.pull_request.changed_files), 'mod/')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: "8.0.x" }
+      - run: dotnet build mod/ArdenfallArchives.csproj -c Release -p:RestorePackagesWithLockFile=false
+        env: { CI: "true" }
+
+  fixtures:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      contains(toJson(github.event.pull_request.changed_files), 'fixtures/') ||
+      contains(toJson(github.event.pull_request.changed_files), 'pipeline/scripts/check-fixtures.ts')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: 1.3.13 }
+      - run: bun install --frozen-lockfile
+      - run: bun run check:fixtures
