@@ -15,7 +15,8 @@
     "format:check": "prettier --check .",
     "typecheck": "bunx tsgo --noEmit -p .",
     "codegen:validators": "bun run pipeline/scripts/codegen-validators.ts",
-    "check:fixtures": "bun run pipeline/scripts/check-fixtures.ts"
+    "check:fixtures": "bun run pipeline/scripts/check-fixtures.ts",
+    "pipeline:run": "bun run pipeline/src/cli.ts run"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
