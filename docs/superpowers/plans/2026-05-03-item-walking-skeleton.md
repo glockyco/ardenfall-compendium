@@ -3583,11 +3583,11 @@ import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import type { Stage } from "../types.ts";
-import { buildDDL } from "../sql/ddl.ts";
-import { SITE_METADATA_DDL } from "../sql/site-metadata-ddl.ts";
-import { canonicaliseItems } from "../entities/item/canonicaliser.ts";
-import { emitSiteMetadata } from "./emit-site-metadata.ts";
-import { emitItemReadModels } from "./emit-read-models.ts";
+import { buildDDL } from "../sql/ddl";
+import { SITE_METADATA_DDL } from "../sql/site-metadata-ddl";
+import { canonicaliseItems } from "../entities/item/canonicaliser";
+import { emitSiteMetadata } from "./emit-site-metadata";
+import { emitItemReadModels } from "./emit-read-models";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type { LoadSnapshotOutput } from "./load-snapshot.ts";
 
@@ -3610,17 +3610,17 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
     const db = new Database(outputPath, { create: true, readwrite: true });
     db.exec("PRAGMA journal_mode = DELETE;");
     db.exec(SITE_METADATA_DDL);
-    db.exec(
-      buildDDL(inputs["load-descriptors"].entities.item, inputs["load-descriptors"].variants.item),
-    );
-    canonicaliseItems(
-      db,
-      inputs["load-descriptors"].entities.item,
-      inputs["load-descriptors"].variants.item,
-      inputs["load-snapshot"].envelopes.item,
-    );
-    emitSiteMetadata(db, inputs["load-descriptors"]);
-    emitItemReadModels(db, inputs["load-descriptors"]);
+    const desc = inputs["load-descriptors"];
+    const itemEntity = desc.entities.item;
+    const itemVariants = desc.variants.item;
+    const itemEnvelope = inputs["load-snapshot"].envelopes.item;
+    if (!itemEntity || !itemVariants || !itemEnvelope) {
+      throw new Error("emit-sqlite: missing item descriptor or envelope");
+    }
+    db.exec(buildDDL(itemEntity, itemVariants));
+    canonicaliseItems(db, itemEntity, itemVariants, itemEnvelope);
+    emitSiteMetadata(db, desc);
+    emitItemReadModels(db, desc);
     db.close();
     return { outputPath, byteSize: Bun.file(outputPath).size };
   },
@@ -3631,11 +3631,12 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
 
 ```ts
 #!/usr/bin/env bun
-import { runStages } from "./orchestrator.ts";
-import { loadDescriptors } from "./stages/load-descriptors.ts";
-import { loadSnapshot } from "./stages/load-snapshot.ts";
-import { validate } from "./stages/validate.ts";
-import { emitSqlite } from "./stages/emit-sqlite.ts";
+import { runStages } from "./orchestrator";
+import { loadDescriptors } from "./stages/load-descriptors";
+import { loadSnapshot } from "./stages/load-snapshot";
+import { validate } from "./stages/validate";
+import { emitSqlite } from "./stages/emit-sqlite";
+import type { Stage, StageContext } from "./types.ts";
 
 const [, , subcommand, snapshotDir, outDir] = Bun.argv;
 if (subcommand !== "run" || !snapshotDir || !outDir) {
@@ -3643,14 +3644,16 @@ if (subcommand !== "run" || !snapshotDir || !outDir) {
   process.exit(2);
 }
 
-const ctx = {
+const ctx: StageContext = {
   workspaceRoot: ".",
   snapshotDir,
   outDir,
-  log: (level: "info" | "warn" | "error", msg: string) => console.warn(`[${level}] ${msg}`),
+  log: (level, msg) => console.warn(`[${level}] ${msg}`),
 };
 
-const result = await runStages([loadDescriptors, loadSnapshot, validate, emitSqlite], {}, ctx);
+const stages = [loadDescriptors, loadSnapshot, validate, emitSqlite] as Stage<unknown, unknown>[];
+
+const result = await runStages(stages, {}, ctx);
 
 const v = result.validate as {
   errors: unknown[];
