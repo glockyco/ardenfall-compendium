@@ -3721,6 +3721,7 @@ Goal: csproj compiles cleanly against `mod/libs/`. Walker base, ref resolver, pr
 **Files:**
 
 - Create: `mod/ArdenfallArchives.csproj`
+- Create: `mod/nuget.config`
 - Create: `mod/scripts/copy-libs.sh`
 - Create: `mod/src/Emit/JsonSettings.cs`
 - Create: `mod/AGENTS.md`
@@ -3730,7 +3731,7 @@ Goal: csproj compiles cleanly against `mod/libs/`. Walker base, ref resolver, pr
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <AssemblyName>ArdenfallArchives</AssemblyName>
     <RootNamespace>ArdenfallArchives</RootNamespace>
     <LangVersion>latest</LangVersion>
@@ -3739,7 +3740,7 @@ Goal: csproj compiles cleanly against `mod/libs/`. Walker base, ref resolver, pr
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BepInEx.Core" Version="5.4.23" />
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
@@ -3752,6 +3753,21 @@ Goal: csproj compiles cleanly against `mod/libs/`. Walker base, ref resolver, pr
     <Reference Include="Sirenix.Serialization">       <HintPath>libs\Sirenix.Serialization.dll</HintPath>       <Private>false</Private> </Reference>
   </ItemGroup>
 </Project>
+```
+
+- [ ] **Step 1b: Write `mod/nuget.config`**
+
+`BepInEx.Core` is not on nuget.org; it lives on the BepInEx BaGet feed. Without this file the restore step fails with `NU1101: Unable to find package BepInEx.Core`.
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+    <add key="BepInEx" value="https://nuget.bepinex.dev/v3/index.json" />
+  </packageSources>
+</configuration>
 ```
 
 - [ ] **Step 2: Write `mod/scripts/copy-libs.sh`**
@@ -3819,16 +3835,16 @@ The mod walks live Ardenfall runtime objects and emits JSON snapshots. It is **n
 Read `docs/superpowers/specs/2026-04-29-ardenfall-archives-implementation-decisions.md` §11–§14 for the contract.
 ```
 
-- [ ] **Step 5: Verify the project file is well-formed (no build yet — game DLLs may not be present)**
+- [ ] **Step 5: Verify the project builds**
 
-Run: `dotnet restore mod/ArdenfallArchives.csproj || echo "restore may fail without libs/; that's expected here"`
-Expected: project is recognised by `dotnet`. If `libs/` is empty, build will fail at the linker step; that's fine for this task.
+Run: `bash mod/scripts/copy-libs.sh && dotnet build mod/ArdenfallArchives.csproj`
+Expected: `Build succeeded` with `0 Warning(s)` and `0 Error(s)`. The compiled `ArdenfallArchives.dll` lands in `mod/bin/Debug/net472/`.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 chmod +x mod/scripts/copy-libs.sh
-git add mod/ArdenfallArchives.csproj mod/scripts/copy-libs.sh mod/src/Emit/JsonSettings.cs mod/AGENTS.md
+git add mod/ArdenfallArchives.csproj mod/nuget.config mod/scripts/copy-libs.sh mod/src/Emit/JsonSettings.cs mod/AGENTS.md
 git commit -m "feat(mod): bootstrap bepinex csproj and dll-copy helper"
 ```
 
