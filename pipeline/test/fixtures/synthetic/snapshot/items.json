@@ -16,15 +16,13 @@
           "unityType": "UnityEngine.Texture2D"
         },
         "description": "A simple iron blade.",
-        "equipSlot": "primary",
-        "armorClass": null,
-        "durabilityMax": 100,
+        "equipSlot": "Weapon",
+        "animationSpeedMultiplier": 1.0,
         "twoHanded": false,
-        "blockChance": 0.1,
-        "damageMin": 5,
-        "damageMax": 10,
-        "reach": 1.2,
-        "weaponClass": "sword"
+        "damage": 7.5,
+        "criticalHitChance": 0.05,
+        "meleeDurabilityMax": 100,
+        "canBlock": true
       },
       "tags": ["weapon", "metal"],
       "provenance": {
@@ -42,7 +40,7 @@
         },
         "value": {
           "kind": "parameter",
-          "source": "value.Get()",
+          "source": "moneyValue.Get()",
           "isSet": true,
           "inherited": false
         }
@@ -63,11 +61,10 @@
           "source": "ItemData.icon"
         },
         "description": "",
-        "equipSlot": "chest",
-        "armorClass": "light",
-        "durabilityMax": 80,
+        "equipSlot": "ChestArmor",
         "armorRating": 6,
-        "coverageSlot": "torso"
+        "armorDurabilityMax": 80,
+        "coverageSlot": "ChestArmor"
       },
       "tags": ["armor", "leather"],
       "provenance": {

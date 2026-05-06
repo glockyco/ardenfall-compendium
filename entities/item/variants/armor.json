@@ -9,14 +9,20 @@
   "fields": [
     {
       "name": "armorRating",
+      "type": "number",
+      "from": "armorRating.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "armorDurabilityMax",
       "type": "integer",
-      "from": "armorRating",
+      "from": "durabilityMax.Get()",
       "missingPolicy": "diagnostic"
     },
     {
       "name": "coverageSlot",
       "type": "string",
-      "from": "coverageSlot",
+      "from": "usableSlots.Get()",
       "missingPolicy": "diagnostic"
     }
   ]

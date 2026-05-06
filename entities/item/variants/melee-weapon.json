@@ -7,14 +7,24 @@
   "parentVariantId": "primary-hand",
   "position": 40,
   "fields": [
-    { "name": "damageMin", "type": "integer", "from": "damageMin", "missingPolicy": "diagnostic" },
-    { "name": "damageMax", "type": "integer", "from": "damageMax", "missingPolicy": "diagnostic" },
-    { "name": "reach", "type": "number", "from": "reach", "missingPolicy": "optional-empty" },
+    { "name": "damage", "type": "number", "from": "damage.Get()", "missingPolicy": "diagnostic" },
     {
-      "name": "weaponClass",
-      "type": "string",
-      "from": "weaponClass",
+      "name": "criticalHitChance",
+      "type": "number",
+      "from": "criticalHitChance.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "meleeDurabilityMax",
+      "type": "integer",
+      "from": "durabilityMax.Get()",
       "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "canBlock",
+      "type": "boolean",
+      "from": "canBlock.Get()",
+      "missingPolicy": "optional-empty"
     }
   ]
 }

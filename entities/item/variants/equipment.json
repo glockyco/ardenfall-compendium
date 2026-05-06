@@ -6,18 +6,11 @@
   "canonicalTable": "item_equipment",
   "position": 10,
   "fields": [
-    { "name": "equipSlot", "type": "string", "from": "equipSlot", "missingPolicy": "diagnostic" },
     {
-      "name": "armorClass",
+      "name": "equipSlot",
       "type": "string",
-      "from": "armorClass",
-      "missingPolicy": "optional-empty"
-    },
-    {
-      "name": "durabilityMax",
-      "type": "integer",
-      "from": "durabilityMax",
-      "missingPolicy": "optional-empty"
+      "from": "usableSlots.Get()",
+      "missingPolicy": "diagnostic"
     }
   ]
 }

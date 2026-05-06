@@ -37,7 +37,7 @@ describe("emitItemReadModels", () => {
       .query("SELECT id, fields_json FROM item_detail_rows WHERE id = 'fixture-iron-sword'")
       .get() as { id: string; fields_json: string };
     const fields = JSON.parse(detail.fields_json) as Record<string, unknown>;
-    expect(fields.damageMin).toBe(5);
+    expect(fields.damage).toBe(7.5);
     expect(fields.weight).toBe(3.5);
   });
 });

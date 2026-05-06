@@ -1,3 +1,3 @@
 namespace ArdenfallArchives.Entities.Item;
 
-public sealed record ItemArmorSnapshot(string Id, int ArmorRating, string CoverageSlot);
+public sealed record ItemArmorSnapshot(string Id, float ArmorRating, int ArmorDurabilityMax, string CoverageSlot);

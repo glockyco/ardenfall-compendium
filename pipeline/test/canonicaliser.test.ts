@@ -39,11 +39,11 @@ describe("canonicaliseItems", () => {
     }[];
     expect(equipRows.length).toBe(2); // both items are equipment
 
-    const meleeRows = db.query("SELECT id, damageMin FROM item_melee_weapons").all() as {
+    const meleeRows = db.query("SELECT id, damage FROM item_melee_weapons").all() as {
       id: string;
-      damageMin: number;
+      damage: number;
     }[];
-    expect(meleeRows.find((r) => r.id === "fixture-iron-sword")?.damageMin).toBe(5);
+    expect(meleeRows.find((r) => r.id === "fixture-iron-sword")?.damage).toBe(7.5);
 
     const armorRows = db.query("SELECT id FROM item_armor").all() as { id: string }[];
     expect(armorRows.find((r) => r.id === "fixture-leather-tunic")).toBeDefined();

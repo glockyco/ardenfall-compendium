@@ -8,10 +8,10 @@
   "position": 30,
   "fields": [
     {
-      "name": "blockChance",
-      "type": "number",
-      "from": "blockChance",
-      "missingPolicy": "optional-empty"
+      "name": "twoHanded",
+      "type": "boolean",
+      "from": "twoHanded.Get()",
+      "missingPolicy": "diagnostic"
     }
   ]
 }

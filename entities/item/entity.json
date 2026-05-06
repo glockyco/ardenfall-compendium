@@ -20,7 +20,12 @@
       "from": "weight.Get()",
       "missingPolicy": "diagnostic"
     },
-    { "name": "value", "type": "integer", "from": "value.Get()", "missingPolicy": "diagnostic" },
+    {
+      "name": "value",
+      "type": "integer",
+      "from": "moneyValue.Get()",
+      "missingPolicy": "diagnostic"
+    },
     { "name": "iconRef", "type": "ref:asset", "from": "icon", "missingPolicy": "diagnostic" },
     {
       "name": "description",

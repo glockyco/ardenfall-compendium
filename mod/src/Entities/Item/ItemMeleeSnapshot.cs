@@ -2,7 +2,7 @@ namespace ArdenfallArchives.Entities.Item;
 
 public sealed record ItemMeleeSnapshot(
     string Id,
-    int DamageMin,
-    int DamageMax,
-    float? Reach,
-    string WeaponClass);
+    float Damage,
+    float? CriticalHitChance,
+    int MeleeDurabilityMax,
+    bool? CanBlock);

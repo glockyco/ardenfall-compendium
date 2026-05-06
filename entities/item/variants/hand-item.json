@@ -7,6 +7,11 @@
   "parentVariantId": "equipment",
   "position": 20,
   "fields": [
-    { "name": "twoHanded", "type": "boolean", "from": "twoHanded", "missingPolicy": "diagnostic" }
+    {
+      "name": "animationSpeedMultiplier",
+      "type": "number",
+      "from": "animationSpeedMultiplier.Get()",
+      "missingPolicy": "optional-empty"
+    }
   ]
 }
