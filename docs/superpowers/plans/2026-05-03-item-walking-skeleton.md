@@ -1542,7 +1542,12 @@ Goal: `entities/item/` is the only place item shape is described. Validation aga
     { "name": "id", "type": "id", "from": "guid", "missingPolicy": "fatal" },
     { "name": "name", "type": "string", "from": "itemName.Get()", "missingPolicy": "diagnostic" },
     { "name": "weight", "type": "number", "from": "weight.Get()", "missingPolicy": "diagnostic" },
-    { "name": "value", "type": "integer", "from": "value.Get()", "missingPolicy": "diagnostic" },
+    {
+      "name": "value",
+      "type": "integer",
+      "from": "moneyValue.Get()",
+      "missingPolicy": "diagnostic",
+    },
     { "name": "iconRef", "type": "ref:asset", "from": "icon", "missingPolicy": "diagnostic" },
     {
       "name": "description",
@@ -1620,18 +1625,11 @@ Variant fields are the layer-introduced fields only. Inherited fields (e.g. `nam
   "canonicalTable": "item_equipment",
   "position": 10,
   "fields": [
-    { "name": "equipSlot", "type": "string", "from": "equipSlot", "missingPolicy": "diagnostic" },
     {
-      "name": "armorClass",
+      "name": "equipSlot",
       "type": "string",
-      "from": "armorClass",
-      "missingPolicy": "optional-empty",
-    },
-    {
-      "name": "durabilityMax",
-      "type": "integer",
-      "from": "durabilityMax",
-      "missingPolicy": "optional-empty",
+      "from": "usableSlots.Get()",
+      "missingPolicy": "diagnostic",
     },
   ],
 }
@@ -1649,7 +1647,12 @@ Variant fields are the layer-introduced fields only. Inherited fields (e.g. `nam
   "parentVariantId": "equipment",
   "position": 20,
   "fields": [
-    { "name": "twoHanded", "type": "boolean", "from": "twoHanded", "missingPolicy": "diagnostic" },
+    {
+      "name": "animationSpeedMultiplier",
+      "type": "number",
+      "from": "animationSpeedMultiplier.Get()",
+      "missingPolicy": "optional-empty",
+    },
   ],
 }
 ```
@@ -1667,10 +1670,10 @@ Variant fields are the layer-introduced fields only. Inherited fields (e.g. `nam
   "position": 30,
   "fields": [
     {
-      "name": "blockChance",
-      "type": "number",
-      "from": "blockChance",
-      "missingPolicy": "optional-empty",
+      "name": "twoHanded",
+      "type": "boolean",
+      "from": "twoHanded.Get()",
+      "missingPolicy": "diagnostic",
     },
   ],
 }
@@ -1688,14 +1691,24 @@ Variant fields are the layer-introduced fields only. Inherited fields (e.g. `nam
   "parentVariantId": "primary-hand",
   "position": 40,
   "fields": [
-    { "name": "damageMin", "type": "integer", "from": "damageMin", "missingPolicy": "diagnostic" },
-    { "name": "damageMax", "type": "integer", "from": "damageMax", "missingPolicy": "diagnostic" },
-    { "name": "reach", "type": "number", "from": "reach", "missingPolicy": "optional-empty" },
+    { "name": "damage", "type": "number", "from": "damage.Get()", "missingPolicy": "diagnostic" },
     {
-      "name": "weaponClass",
-      "type": "string",
-      "from": "weaponClass",
+      "name": "criticalHitChance",
+      "type": "number",
+      "from": "criticalHitChance.Get()",
+      "missingPolicy": "optional-empty",
+    },
+    {
+      "name": "meleeDurabilityMax",
+      "type": "integer",
+      "from": "durabilityMax.Get()",
       "missingPolicy": "diagnostic",
+    },
+    {
+      "name": "canBlock",
+      "type": "boolean",
+      "from": "canBlock.Get()",
+      "missingPolicy": "optional-empty",
     },
   ],
 }
@@ -1715,14 +1728,20 @@ Variant fields are the layer-introduced fields only. Inherited fields (e.g. `nam
   "fields": [
     {
       "name": "armorRating",
+      "type": "number",
+      "from": "armorRating.Get()",
+      "missingPolicy": "diagnostic",
+    },
+    {
+      "name": "armorDurabilityMax",
       "type": "integer",
-      "from": "armorRating",
+      "from": "durabilityMax.Get()",
       "missingPolicy": "diagnostic",
     },
     {
       "name": "coverageSlot",
       "type": "string",
-      "from": "coverageSlot",
+      "from": "usableSlots.Get()",
       "missingPolicy": "diagnostic",
     },
   ],
@@ -1737,7 +1756,7 @@ for f in entities/item/variants/*.json; do bun -e "JSON.parse(await Bun.file('$f
 
 Expected: each command exits 0; no output.
 
-> **Field-name caveat:** the field-from paths above (`damageMin`, `armorRating`, etc.) are best-effort names following `Ardenfall.*` C# conventions. The mod's adapters in Phase G will define the actual emitted keys; if the real Mono members differ, update both this descriptor and the matching adapter in the same commit. The descriptor is the contract; the adapter must satisfy it.
+> **Field-name caveat resolved for Demo2025:** these `from` paths were verified against `Assembly-CSharp.dll` during Phase G. `ItemData.value` is actually `moneyValue`; `EquipItemData` exposes `usableSlots`; `PrimaryHandItemData` owns `twoHanded`; `MeleeItemData` exposes `damage`, `criticalHitChance`, `durabilityMax`, and `canBlock`; `ArmorItemData` exposes `armorRating` and `durabilityMax`, while `coverageSlot` is derived from `usableSlots`. If a future patch changes these members, update both this descriptor and the matching adapter in the same commit. The descriptor is the contract; the adapter must satisfy it.
 
 - [ ] **Step 7: Commit**
 
@@ -2433,15 +2452,13 @@ Path: `pipeline/test/fixtures/synthetic/snapshot/items.json`
           "unityType": "UnityEngine.Texture2D",
         },
         "description": "A simple iron blade.",
-        "equipSlot": "primary",
-        "armorClass": null,
-        "durabilityMax": 100,
+        "equipSlot": "Weapon",
+        "animationSpeedMultiplier": 1.0,
         "twoHanded": false,
-        "blockChance": 0.1,
-        "damageMin": 5,
-        "damageMax": 10,
-        "reach": 1.2,
-        "weaponClass": "sword",
+        "damage": 7.5,
+        "criticalHitChance": 0.05,
+        "meleeDurabilityMax": 100,
+        "canBlock": true,
       },
       "tags": ["weapon", "metal"],
       "provenance": {
@@ -2459,7 +2476,7 @@ Path: `pipeline/test/fixtures/synthetic/snapshot/items.json`
         },
         "value": {
           "kind": "parameter",
-          "source": "value.Get()",
+          "source": "moneyValue.Get()",
           "isSet": true,
           "inherited": false,
         },
@@ -2480,11 +2497,10 @@ Path: `pipeline/test/fixtures/synthetic/snapshot/items.json`
           "source": "ItemData.icon",
         },
         "description": "",
-        "equipSlot": "chest",
-        "armorClass": "light",
-        "durabilityMax": 80,
+        "equipSlot": "ChestArmor",
         "armorRating": 6,
-        "coverageSlot": "torso",
+        "armorDurabilityMax": 80,
+        "coverageSlot": "ChestArmor",
       },
       "tags": ["armor", "leather"],
       "provenance": {
@@ -2974,11 +2990,11 @@ describe("canonicaliseItems", () => {
     }[];
     expect(equipRows.length).toBe(2); // both items are equipment
 
-    const meleeRows = db.query("SELECT id, damageMin FROM item_melee_weapons").all() as {
+    const meleeRows = db.query("SELECT id, damage FROM item_melee_weapons").all() as {
       id: string;
-      damageMin: number;
+      damage: number;
     }[];
-    expect(meleeRows.find((r) => r.id === "fixture-iron-sword")?.damageMin).toBe(5);
+    expect(meleeRows.find((r) => r.id === "fixture-iron-sword")?.damage).toBe(7.5);
 
     const armorRows = db.query("SELECT id FROM item_armor").all() as { id: string }[];
     expect(armorRows.find((r) => r.id === "fixture-leather-tunic")).toBeDefined();
@@ -3338,7 +3354,7 @@ describe("emitItemReadModels", () => {
       .query("SELECT id, fields_json FROM item_detail_rows WHERE id = 'fixture-iron-sword'")
       .get() as { id: string; fields_json: string };
     const fields = JSON.parse(detail.fields_json);
-    expect(fields.damageMin).toBe(5);
+    expect(fields.damage).toBe(7.5);
     expect(fields.weight).toBe(3.5);
   });
 });
@@ -3466,17 +3482,16 @@ function arbItem(variantPicker: () => string) {
     weight: fc.float({ min: 0, max: 1000, noNaN: true }),
     value: fc.integer({ min: 0, max: 10000 }),
     description: fc.string({ maxLength: 200 }),
-    equipSlot: fc.constantFrom("primary", "secondary", "chest", "head"),
-    armorClass: fc.option(fc.constantFrom("light", "medium", "heavy"), { nil: null }),
-    durabilityMax: fc.integer({ min: 1, max: 1000 }),
+    equipSlot: fc.constantFrom("Weapon", "AltWeapon", "ChestArmor", "HeadArmor"),
+    animationSpeedMultiplier: fc.float({ min: 0, max: 3, noNaN: true }),
     twoHanded: fc.boolean(),
-    blockChance: fc.float({ min: 0, max: 1, noNaN: true }),
-    damageMin: fc.integer({ min: 0, max: 100 }),
-    damageMax: fc.integer({ min: 0, max: 100 }),
-    reach: fc.float({ min: 0, max: 5, noNaN: true }),
-    weaponClass: fc.constantFrom("sword", "axe", "mace", "spear"),
-    armorRating: fc.integer({ min: 0, max: 100 }),
-    coverageSlot: fc.constantFrom("torso", "head", "legs", "arms"),
+    damage: fc.float({ min: 0, max: 100, noNaN: true }),
+    criticalHitChance: fc.float({ min: 0, max: 1, noNaN: true }),
+    meleeDurabilityMax: fc.integer({ min: 1, max: 1000 }),
+    canBlock: fc.boolean(),
+    armorRating: fc.float({ min: 0, max: 100, noNaN: true }),
+    armorDurabilityMax: fc.integer({ min: 1, max: 1000 }),
+    coverageSlot: fc.constantFrom("ChestArmor", "HeadArmor", "LegsArmor", "FeetArmor"),
   });
 }
 
@@ -4281,14 +4296,10 @@ Example pattern (`ItemEquipmentSnapshot.cs`):
 ```csharp
 namespace ArdenfallArchives.Entities.Item;
 
-public sealed record ItemEquipmentSnapshot(
-    string Id,
-    string EquipSlot,
-    string? ArmorClass,
-    int? DurabilityMax);
+public sealed record ItemEquipmentSnapshot(string Id, string EquipSlot);
 ```
 
-Repeat the same pattern for `ItemHandSnapshot` (`Id`, `TwoHanded`), `ItemPrimaryHandSnapshot` (`Id`, `BlockChance?`), `ItemMeleeSnapshot` (`Id`, `DamageMin`, `DamageMax`, `Reach?`, `WeaponClass`), `ItemArmorSnapshot` (`Id`, `ArmorRating`, `CoverageSlot`), and `ItemTagSnapshot` (`Id`, `Tag`).
+Repeat the same pattern for `ItemHandSnapshot` (`Id`, `AnimationSpeedMultiplier?`), `ItemPrimaryHandSnapshot` (`Id`, `TwoHanded`), `ItemMeleeSnapshot` (`Id`, `Damage`, `CriticalHitChance?`, `MeleeDurabilityMax`, `CanBlock?`), `ItemArmorSnapshot` (`Id`, `ArmorRating`, `ArmorDurabilityMax`, `CoverageSlot`), and `ItemTagSnapshot` (`Id`, `Tag`).
 
 - [ ] **Step 3: Commit**
 
@@ -4313,6 +4324,8 @@ Adapters take the live Mono object plus a `RefResolver` and produce the layer DT
 - [ ] **Step 1: Write `ExtractItem.cs`** — base ItemData adapter (reference)
 
 ```csharp
+using System;
+using System.Collections.Generic;
 using Ardenfall;
 using Ardenfall.Item;
 using ArdenfallArchives.Dtos;
@@ -4343,10 +4356,10 @@ public static class ExtractItem
         fields["weight"]     = weightResolved;
         provenance["weight"] = ProvenanceCapture.ForParameter<float>("weight.Get()", weightIsSet, inherited: !weightIsSet);
 
-        var valueResolved   = asset.value.Get();
-        var valueIsSet      = asset.value.IsSet;
-        fields["value"]     = valueResolved;
-        provenance["value"] = ProvenanceCapture.ForParameter<int>("value.Get()", valueIsSet, inherited: !valueIsSet);
+        var valueResolved = asset.moneyValue.Get();
+        var valueIsSet = asset.moneyValue.IsSet;
+        fields["value"] = valueResolved;
+        provenance["value"] = ProvenanceCapture.ForParameter<int>("moneyValue.Get()", valueIsSet, inherited: !valueIsSet);
 
         // Description (optional-empty).
         var descResolved   = asset.description?.Get() ?? "";
@@ -4354,7 +4367,7 @@ public static class ExtractItem
         provenance["description"] = ProvenanceCapture.ForParameter<string>("description.Get()", isSet: !string.IsNullOrEmpty(descResolved), inherited: false);
 
         // Icon (lookupAsset; missing → diagnostic).
-        fields["iconRef"] = refs.ResolveAsset(asset.icon, "iconRef", id, MissingPolicy.Diagnostic);
+        fields["iconRef"] = refs.ResolveAsset(asset.icon?.Get(), "iconRef", id, MissingPolicy.Diagnostic, source: "ItemData.icon");
         provenance["iconRef"] = (fields["iconRef"] as SnapshotRef)?.Kind == "missing"
             ? ProvenanceCapture.ForMissing("ItemData.icon", inherited: false)
             : ProvenanceCapture.ForLookupAsset("ItemData.icon", isSet: true, inherited: false);
@@ -4379,13 +4392,17 @@ public static class ExtractItem
 }
 ```
 
-> **API caveat repeats here:** `Parameter<T>.IsSet`, `SmartListParameter<T>.Get()`, and `ItemData.icon` are best-effort names. Confirm against the live DLL via ILSpy when implementing; if any differs, update both the adapter and (if exposed in the descriptor) `entities/item/entity.json`. The descriptor's `from` paths are the contract; the adapter's job is to satisfy them.
+> **API caveat resolved for Demo2025:** `Parameter<T>.IsSet`, `Parameter<T>.Get()`, `SmartListParameter<T>.Get()`, and `ItemData.icon` were verified in `Assembly-CSharp.dll`. `ItemData.icon` is `Parameter<Sprite>`, so adapters pass `asset.icon?.Get()` to `RefResolver`. If a future patch changes these members, update both the adapter and (if exposed in the descriptor) `entities/item/entity.json`. The descriptor's `from` paths are the contract; the adapter's job is to satisfy them.
 
 - [ ] **Step 2: Write the remaining five adapters** (same pattern, layer-specific fields only)
 
 ```csharp
 // ExtractEquipment.cs
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Ardenfall.Item;
+
 namespace ArdenfallArchives.Entities.Item.Adapters;
 
 public static class ExtractEquipment
@@ -4394,25 +4411,32 @@ public static class ExtractEquipment
     {
         return new Dictionary<string, object?>(StringComparer.Ordinal)
         {
-            ["equipSlot"]     = asset.equipSlot.ToString(),
-            ["armorClass"]    = asset.armorClass?.ToString(),
-            ["durabilityMax"] = asset.durabilityMax,
+            ["equipSlot"] = FormatSlots(asset.usableSlots.Get()),
         };
     }
+
+    internal static string FormatSlots(IReadOnlyCollection<ItemSlotType>? slots) =>
+        slots == null || slots.Count == 0 ? "" : string.Join(",", slots.Select(slot => slot.ToString()));
 }
 
 // ExtractHandItem.cs
 public static class ExtractHandItem
 {
     public static Dictionary<string, object?> Extract(Ardenfall.Item.HandItemData asset) =>
-        new(StringComparer.Ordinal) { ["twoHanded"] = asset.twoHanded };
+        new(StringComparer.Ordinal)
+        {
+            ["animationSpeedMultiplier"] = asset.animationSpeedMultiplier.Get(),
+        };
 }
 
 // ExtractPrimaryHand.cs
 public static class ExtractPrimaryHand
 {
     public static Dictionary<string, object?> Extract(Ardenfall.Item.PrimaryHandItemData asset) =>
-        new(StringComparer.Ordinal) { ["blockChance"] = asset.blockChance };
+        new(StringComparer.Ordinal)
+        {
+            ["twoHanded"] = asset.twoHanded.Get(),
+        };
 }
 
 // ExtractMelee.cs
@@ -4421,10 +4445,10 @@ public static class ExtractMelee
     public static Dictionary<string, object?> Extract(Ardenfall.Item.MeleeItemData asset) =>
         new(StringComparer.Ordinal)
         {
-            ["damageMin"]   = asset.damageMin,
-            ["damageMax"]   = asset.damageMax,
-            ["reach"]       = asset.reach,
-            ["weaponClass"] = asset.weaponClass?.ToString(),
+            ["damage"] = asset.damage.Get(),
+            ["criticalHitChance"] = asset.criticalHitChance.Get(),
+            ["meleeDurabilityMax"] = asset.durabilityMax.Get(),
+            ["canBlock"] = asset.canBlock.Get(),
         };
 }
 
@@ -4434,8 +4458,9 @@ public static class ExtractArmor
     public static Dictionary<string, object?> Extract(Ardenfall.Item.ArmorItemData asset) =>
         new(StringComparer.Ordinal)
         {
-            ["armorRating"]  = asset.armorRating,
-            ["coverageSlot"] = asset.coverageSlot.ToString(),
+            ["armorRating"] = asset.armorRating.Get(),
+            ["armorDurabilityMax"] = asset.durabilityMax.Get(),
+            ["coverageSlot"] = ExtractEquipment.FormatSlots(asset.usableSlots.Get()),
         };
 }
 ```
@@ -6180,11 +6205,11 @@ Spot checks:
 - The `provenance.kind` enum is consistent in the snapshot schema (B.3), the TS provenance type (D.1), and the C# `Provenance.Kind` field (F.2).
 - The variant id set `{"equipment","hand-item","primary-hand","melee-weapon","armor"}` is consistent across the variant descriptors (C.2), the canonicaliser ancestry walk (E.3), the `ItemExtractor` dispatch (G.3), and the synthetic fixture (D.5).
 - Site metadata table names (`site_entities`, `site_entity_fields`, `site_overview_columns`, `site_detail_sections`, `site_detail_section_fields`, `item_variants`, `site_read_models`, `asset_refs`) are consistent between `pipeline/src/sql/site-metadata-ddl.ts` (E.2), the emitter (E.4), the addendum §6, and the site store (H.4).
-- Field-from paths in `entities/item/entity.json` and the variant descriptors (C.1, C.2) are flagged as best-effort against the live DLL; the adapter caveat is repeated in F.3, F.4, and G.2 so an implementer hitting a discrepancy knows to fix both sides.
+- Field-from paths in `entities/item/entity.json` and the variant descriptors (C.1, C.2) were verified against the Demo2025 DLL during G.2; the adapter caveat in G.2 now records exact member mappings and the rule that future DLL drift must update descriptors and adapters together.
 
 ### Known risks remaining
 
-1. **`Parameter<T>.IsSet` API discovery.** Adapters in G.2 assume `Parameter<T>` exposes an `IsSet` property. If the live DLL exposes a different discriminator (e.g. `Parameter<T>.HasOverride()`), Task G.2 fix-up is local and the descriptor stays unchanged.
+1. **Future Ardenfall item API drift.** G.2 verified `Parameter<T>.Get()`, `Parameter<T>.IsSet`, `SmartListParameter<T>.Get()`, `ItemData.moneyValue`, `EquipItemData.usableSlots`, and the slice-1 variant members against Demo2025 `Assembly-CSharp.dll`. If a later Ardenfall patch changes them, update descriptors, adapters, fixtures, and tests in one cutover.
 2. **Bun's Node-API surface against `sharp`.** Asset emission is deferred to Slice 3, so the `sharp` spike is not on Slice 1's critical path. Slice 3 must include the spike before its `emit-assets` stage.
 3. **`sql.js-fts5` Vite v8 compatibility.** The library uses `?url` import for the wasm file, which Vite 8 / Rolldown supports natively. If a future Vite minor changes that API, switch to `import.meta.glob` or static asset URLs.
 4. **macOS WAL persistence in pipeline.** `emit-sqlite` issues `PRAGMA journal_mode = DELETE` to avoid WAL sidecars. If a downstream step opens the file with WAL re-enabled, sidecars will reappear; pipeline-managed databases are not modified after `emit-sqlite` writes them, so this is benign for Slice 1.
