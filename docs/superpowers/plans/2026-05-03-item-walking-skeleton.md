@@ -4900,15 +4900,17 @@ git commit -m "feat(mod): plugin entry, hotkey trigger, readiness monitor"
 
 Manual checkpoint, not a CI gate.
 
+> **Direction update 2026-05-06:** this manual F8 smoke remains valid as a fallback check for the existing walking skeleton, but it is no longer the primary automation path. The next strategic work is the HotRepl game-agnostic control-plane plan at `/Users/joaichberger/Projects/HotRepl/docs/superpowers/plans/2026-05-06-hotrepl-control-plane.md`, followed by a new Ardenfall command/orchestrator plan using typed HotRepl commands. Do not add more hardcoded in-game export orchestration here.
+
 - [ ] **Step 1: Install the mod**
 
-Copy `mod/bin/Debug/net46/ArdenfallArchives.dll` and `Newtonsoft.Json.dll` into Ardenfall's BepInEx plugins directory:
+Copy `mod/bin/Debug/net472/ArdenfallArchives.dll` and `Newtonsoft.Json.dll` into Ardenfall's BepInEx plugins directory:
 
 ```sh
 PLUGINS_DIR="$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Ardenfall Demo/BepInEx/plugins/ArdenfallArchives"
 mkdir -p "$PLUGINS_DIR"
-cp mod/bin/Debug/net46/ArdenfallArchives.dll "$PLUGINS_DIR/"
-cp mod/bin/Debug/net46/Newtonsoft.Json.dll "$PLUGINS_DIR/"
+cp mod/bin/Debug/net472/ArdenfallArchives.dll "$PLUGINS_DIR/"
+cp mod/bin/Debug/net472/Newtonsoft.Json.dll "$PLUGINS_DIR/"
 ```
 
 - [ ] **Step 2: Launch Ardenfall, observe BepInEx log**
