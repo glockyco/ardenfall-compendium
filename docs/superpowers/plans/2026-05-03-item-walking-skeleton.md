@@ -4605,10 +4605,11 @@ git commit -m "feat(mod): item extractor with variant dispatch"
 - [ ] **Step 1: Write `ManifestBuilder.cs`**
 
 ```csharp
-using ArdenfallArchives.Dtos;
-using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+using ArdenfallArchives.Dtos;
 
 namespace ArdenfallArchives.Emit;
 
@@ -4622,17 +4623,17 @@ public static class ManifestBuilder
         string extractorVersion,
         string? gameVersion = null,
         string? buildIdentifier = null) => new()
-    {
-        SchemaVersion    = 1,
-        ExtractorVersion = extractorVersion,
-        GameVersion      = gameVersion,
-        BuildIdentifier  = buildIdentifier,
-        ExtractedAt      = DateTimeOffset.UtcNow.ToString("O"),
-        Preflight        = preflight,
-        Counts           = new Dictionary<string, int>(counts),
-        Diagnostics      = diagnostics,
-        Hashes           = new Dictionary<string, string>(contentHashes),
-    };
+        {
+            SchemaVersion = 1,
+            ExtractorVersion = extractorVersion,
+            GameVersion = gameVersion,
+            BuildIdentifier = buildIdentifier,
+            ExtractedAt = DateTimeOffset.UtcNow.ToString("O"),
+            Preflight = preflight,
+            Counts = new Dictionary<string, int>(counts),
+            Diagnostics = diagnostics,
+            Hashes = new Dictionary<string, string>(contentHashes),
+        };
 
     public static string Sha256Hex(string content)
     {
@@ -4648,6 +4649,8 @@ public static class ManifestBuilder
 - [ ] **Step 2: Write `SnapshotWriter.cs`** — atomic stage-then-publish
 
 ```csharp
+using System;
+using System.IO;
 using ArdenfallArchives.Dtos;
 using Newtonsoft.Json;
 
@@ -4657,12 +4660,15 @@ public sealed class SnapshotWriter
 {
     private readonly string _baseDir;
 
-    public SnapshotWriter(string baseDir) { _baseDir = baseDir; }
+    public SnapshotWriter(string baseDir)
+    {
+        _baseDir = baseDir;
+    }
 
     public string BeginStaging(string gameVersion)
     {
-        var ts = DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmss");
-        var stagingDir = Path.Combine(_baseDir, $".staging-{gameVersion}-{ts}");
+        Directory.CreateDirectory(_baseDir);
+        var stagingDir = Path.Combine(_baseDir, $".staging-{gameVersion}-{Timestamp()}");
         Directory.CreateDirectory(stagingDir);
         return stagingDir;
     }
@@ -4683,8 +4689,7 @@ public sealed class SnapshotWriter
 
     public string Publish(string stagingDir, string gameVersion)
     {
-        var ts = DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmss");
-        var finalDir = Path.Combine(_baseDir, $"{gameVersion}-{ts}");
+        var finalDir = Path.Combine(_baseDir, $"{gameVersion}-{Timestamp()}");
         Directory.Move(stagingDir, finalDir);
         return finalDir;
     }
@@ -4693,6 +4698,8 @@ public sealed class SnapshotWriter
     {
         if (Directory.Exists(stagingDir)) Directory.Delete(stagingDir, recursive: true);
     }
+
+    private static string Timestamp() => DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmssfffffff");
 }
 ```
 
