@@ -4243,8 +4243,10 @@ Goal: hot-installable BepInEx mod that walks `ItemData` assets and emits a compl
 - [ ] **Step 1: Write `ItemSnapshot.cs`**
 
 ```csharp
+using System.Collections.Generic;
 using ArdenfallArchives.Dtos;
 using Newtonsoft.Json;
+
 namespace ArdenfallArchives.Entities.Item;
 
 /// <summary>
