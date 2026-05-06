@@ -4722,35 +4722,38 @@ git commit -m "feat(mod): atomic snapshot writer and manifest builder"
 - [ ] **Step 1: Write `Plugin.cs`**
 
 ```csharp
-using BepInEx;
-using BepInEx.Configuration;
-using BepInEx.Logging;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using ArdenfallArchives.Dtos;
 using ArdenfallArchives.Emit;
 using ArdenfallArchives.Entities.Item;
-using ArdenfallArchives.Preflight;
-using Newtonsoft.Json;
+using BepInEx;
+using BepInEx.Configuration;
 using UnityEngine;
+using PreflightRunner = ArdenfallArchives.Preflight.Preflight;
 
 namespace ArdenfallArchives;
 
-[BepInPlugin(GUID, NAME, VERSION)]
+[BepInPlugin(Guid, Name, Version)]
 public sealed class Plugin : BaseUnityPlugin
 {
-    public const string GUID    = "com.ardenfall-archives.extractor";
-    public const string NAME    = "Ardenfall Archives Extractor";
-    public const string VERSION = "0.1.0";
+    public const string Guid = "com.ardenfall-archives.extractor";
+    public const string Name = "Ardenfall Archives Extractor";
+    public const string Version = "0.1.0";
 
     private ConfigEntry<KeyboardShortcut> _hotkey = null!;
-    private ConfigEntry<string>           _outputDir = null!;
-
-    private static ManualLogSource _log = null!;
+    private ConfigEntry<string> _outputDir = null!;
+    private Triggers.ReadinessMonitor _readiness = null!;
 
     private void Awake()
     {
-        _log = Logger;
-        _hotkey    = Config.Bind("Triggers", "Hotkey",  new KeyboardShortcut(KeyCode.F8), "Trigger snapshot extraction");
-        _outputDir = Config.Bind("Output",   "BaseDir", Path.Combine(Paths.PluginPath, "ArdenfallArchives", "snapshots"), "Where to write snapshots");
-        Logger.LogInfo($"{NAME} {VERSION} loaded; F-key {_hotkey.Value} will extract.");
+        _hotkey = Config.Bind("Triggers", "Hotkey", new KeyboardShortcut(KeyCode.F8), "Trigger snapshot extraction");
+        _outputDir = Config.Bind("Output", "BaseDir", Path.Combine(Paths.PluginPath, "ArdenfallArchives", "snapshots"), "Where to write snapshots");
+        _readiness = new Triggers.ReadinessMonitor(Logger);
+        Triggers.ConsoleCommand.TryRegister(Logger, this);
+        Logger.LogInfo($"{Name} {Version} loaded; hotkey {_hotkey.Value} will extract.");
     }
 
     private void Update()
@@ -4758,14 +4761,21 @@ public sealed class Plugin : BaseUnityPlugin
         if (_hotkey.Value.IsDown()) Triggers.Hotkey.Run(_outputDir.Value, this);
     }
 
+    private void OnDestroy()
+    {
+        _readiness.Dispose();
+    }
+
     public void RunExtractionFromAnyTrigger()
     {
-        var preflight = Preflight.Preflight.Run();
+        var preflight = PreflightRunner.Run();
         if (!preflight.Passed)
         {
             Logger.LogWarning("preflight failed; no snapshot written");
-            foreach (var c in preflight.Checks)
-                if (!c.Ok) Logger.LogWarning($"  - {c.Name}: {c.Reason}");
+            foreach (var check in preflight.Checks)
+            {
+                if (!check.Ok) Logger.LogWarning($"  - {check.Name}: {check.Reason}");
+            }
             return;
         }
 
@@ -4780,16 +4790,19 @@ public sealed class Plugin : BaseUnityPlugin
             var json = File.ReadAllText(path);
 
             var totals = new DiagnosticTotals();
-            foreach (var d in extractor.Diagnostics)
-                if (d.Severity == "fatal") totals.Fatal++; else totals.Diagnostic++;
+            foreach (var diagnostic in extractor.Diagnostics)
+            {
+                if (diagnostic.Severity == "fatal") totals.Fatal++;
+                else totals.Diagnostic++;
+            }
 
             var manifest = ManifestBuilder.Build(
                 preflight,
-                counts:        new Dictionary<string, int> { ["item"] = rows.Count },
-                diagnostics:   totals,
+                counts: new Dictionary<string, int> { ["item"] = rows.Count },
+                diagnostics: totals,
                 contentHashes: new Dictionary<string, string> { ["items.json"] = ManifestBuilder.Sha256Hex(json) },
-                extractorVersion: VERSION,
-                gameVersion:      "Demo2025");
+                extractorVersion: Version,
+                gameVersion: "Demo2025");
             writer.WriteManifest(staging, manifest);
 
             var final = writer.Publish(staging, "Demo2025");
@@ -4807,7 +4820,6 @@ public sealed class Plugin : BaseUnityPlugin
 - [ ] **Step 2: Write `Triggers/Hotkey.cs`** — thin wrapper that calls back into Plugin
 
 ```csharp
-using ArdenfallArchives;
 namespace ArdenfallArchives.Triggers;
 
 public static class Hotkey
@@ -4832,7 +4844,6 @@ public static class ConsoleCommand
     /// </summary>
     public static void TryRegister(ManualLogSource log, Plugin plugin)
     {
-        // TODO Slice 1.5: detect Ardenfall.Console / equivalent and wire up.
         log.LogInfo("console command registration: not implemented in slice 1; use F8 hotkey.");
     }
 }
@@ -4841,11 +4852,14 @@ public static class ConsoleCommand
 - [ ] **Step 4: Write `Triggers/ReadinessMonitor.cs`** — advisory only
 
 ```csharp
+using System;
 using BepInEx.Logging;
 using UnityEngine.SceneManagement;
+using PreflightRunner = ArdenfallArchives.Preflight.Preflight;
+
 namespace ArdenfallArchives.Triggers;
 
-public sealed class ReadinessMonitor
+public sealed class ReadinessMonitor : IDisposable
 {
     private readonly ManualLogSource _log;
     private bool _loggedReady;
@@ -4856,10 +4870,15 @@ public sealed class ReadinessMonitor
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
+    public void Dispose()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (_loggedReady) return;
-        var preflight = Preflight.Preflight.Run();
+        var preflight = PreflightRunner.Run();
         if (preflight.Passed)
         {
             _log.LogInfo("[readiness] preflight now passing; extraction available");
