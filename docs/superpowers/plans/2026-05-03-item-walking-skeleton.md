@@ -4482,6 +4482,8 @@ git commit -m "feat(mod): item per-layer extractors"
 - [ ] **Step 1: Write `ItemExtractor.cs`**
 
 ```csharp
+using System;
+using System.Collections.Generic;
 using Ardenfall;
 using Ardenfall.Item;
 using ArdenfallArchives.Dtos;
@@ -4497,20 +4499,20 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
         var lookup = BuiltLookupTable.Instance;
         if (lookup == null) yield break;
 
-        foreach (var asset in lookup.GetAssetsOfType<ItemData>())
+        foreach (var asset in BuiltLookupTable.GetAssetsOfType<ItemData>())
         {
             if (asset == null) continue;
             if (!MarkVisited(asset)) continue;
 
             var guid = lookup.GetGuid(asset);
-            if (string.IsNullOrEmpty(guid))
+            if (guid is null || guid.Length == 0)
             {
                 Diagnostics.Add(new Diagnostic
                 {
                     Severity = "fatal",
-                    Code     = "lookupAssetGuidMissing",
-                    Field    = "id",
-                    Message  = $"ItemData asset '{asset.name}' has no GUID in BuiltLookupTable",
+                    Code = "lookupAssetGuidMissing",
+                    Field = "id",
+                    Message = $"ItemData asset '{asset.name}' has no GUID in BuiltLookupTable",
                 });
                 continue;
             }
@@ -4557,9 +4559,9 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
                 Diagnostics.Add(new Diagnostic
                 {
                     Severity = "diagnostic",
-                    Code     = "itemSubtypeUnsupportedInSlice1",
-                    Field    = "variant",
-                    Message  = $"item '{guid}' is type {asset.GetType().Name}; not yet supported",
+                    Code = "itemSubtypeUnsupportedInSlice1",
+                    Field = "variant",
+                    Message = $"item '{guid}' is type {asset.GetType().Name}; not yet supported",
                 });
                 continue;
             }
@@ -4575,11 +4577,12 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
             };
         }
         Diagnostics.AddRange(Refs.Diagnostics);
+        Refs.Diagnostics.Clear();
     }
 
     private static void Merge(Dictionary<string, object?> dst, IReadOnlyDictionary<string, object?> src)
     {
-        foreach (var (k, v) in src) dst[k] = v;
+        foreach (var entry in src) dst[entry.Key] = entry.Value;
     }
 }
 ```
