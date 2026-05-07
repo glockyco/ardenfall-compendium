@@ -21,7 +21,7 @@
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "0000000000000000000000000000000000000000000000000000000000000000",
-    "snapshot/items.json": "0000000000000000000000000000000000000000000000000000000000000000"
+    "snapshot/manifest.json": "f099b9faddb1b4924ad6d23d9b8a1939597d7a51141e1c7fd381fcf4e74d7346",
+    "snapshot/items.json": "c94563e5c3644ce18c4cd9b8f37f864147b174ac5b91a48e34ffa72859e03d2a"
   }
 }
