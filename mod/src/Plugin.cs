@@ -1,15 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using ArdenfallArchives.Dtos;
-using ArdenfallArchives.Emit;
-using ArdenfallArchives.Entities.Item;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using UnityEngine;
-using PreflightRunner = ArdenfallArchives.Preflight.Preflight;
 
 namespace ArdenfallArchives;
 
@@ -45,50 +38,29 @@ public sealed class Plugin : BaseUnityPlugin
 
     public void RunExtractionFromAnyTrigger()
     {
-        var preflight = PreflightRunner.Run();
-        if (!preflight.Passed)
+        var result = new Extraction.ExtractionService().ExtractAll(new Extraction.ExtractionRequest
+        {
+            OutputBaseDir = _outputDir.Value,
+            GameVersion = Game.GameInfo.SnapshotVersionSegment,
+        });
+
+        if (!result.Preflight.Passed)
         {
             Logger.LogWarning("preflight failed; no snapshot written");
-            foreach (var check in preflight.Checks)
+            foreach (var check in result.Preflight.Checks)
             {
                 if (!check.Ok) Logger.LogWarning($"  - {check.Name}: {check.Reason}");
             }
             return;
         }
 
-        var writer = new SnapshotWriter(_outputDir.Value);
-        var staging = writer.BeginStaging("Demo2025");
-        try
+        if (!result.Success)
         {
-            var extractor = new ItemExtractor();
-            var rows = extractor.Walk().ToList();
-            var envelope = new ItemSnapshotEnvelope { Rows = rows };
-            var path = writer.WriteEntityFile(staging, "item", envelope);
-            var json = File.ReadAllText(path);
-
-            var totals = new DiagnosticTotals();
-            foreach (var diagnostic in extractor.Diagnostics)
-            {
-                if (diagnostic.Severity == "fatal") totals.Fatal++;
-                else totals.Diagnostic++;
-            }
-
-            var manifest = ManifestBuilder.Build(
-                preflight,
-                counts: new Dictionary<string, int> { ["item"] = rows.Count },
-                diagnostics: totals,
-                contentHashes: new Dictionary<string, string> { ["items.json"] = ManifestBuilder.Sha256Hex(json) },
-                extractorVersion: Version,
-                gameVersion: "Demo2025");
-            writer.WriteManifest(staging, manifest);
-
-            var final = writer.Publish(staging, "Demo2025");
-            Logger.LogInfo($"snapshot published: {final} ({rows.Count} items, {extractor.Diagnostics.Count} diagnostics)");
+            Logger.LogError("extraction failed; no snapshot written");
+            foreach (var diagnostic in result.Diagnostics) Logger.LogError($"  - {diagnostic.Code}: {diagnostic.Message}");
+            return;
         }
-        catch (Exception ex)
-        {
-            writer.DiscardStaging(staging);
-            Logger.LogError($"extraction failed: {ex}");
-        }
+
+        Logger.LogInfo($"snapshot published: {result.PublishedDir} ({result.ItemCount} items, {result.DiagnosticCount} diagnostics)");
     }
 }
