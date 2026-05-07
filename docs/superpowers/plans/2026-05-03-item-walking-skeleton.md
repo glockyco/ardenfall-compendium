@@ -889,7 +889,7 @@ jobs:
       - run: bun run check:fixtures
 ```
 
-Note: the `mod` job will fail on a fresh checkout in Slice 1 because `mod/libs/` is gitignored and `Assembly-CSharp.dll` is not bundled. Use `if:` to gate the job until Phase F lands the csproj. Until Phase F: keep the job definition but mark it `continue-on-error: true`. Replace with hard failure once `mod/libs/` is reproducibly populated by an action step that bundles BepInEx publicly-shipped DLLs only (no game DLL needed for compile-only public types). Resolution of `Assembly-CSharp.dll` references for CI is owed by Phase F.
+Note: the `mod` job cannot build or test the mod on a fresh GitHub checkout because `mod/libs/` is gitignored and `Assembly-CSharp.dll` is not redistributable. Slice 1 CI therefore verifies mod formatting only. Full mod build/test verification is local-only with `mod/libs/` populated by `mod/scripts/copy-libs.sh`; adding private build-reference storage to GitHub CI is unplanned unless a future, explicit operations plan chooses that trade-off.
 
 - [ ] **Step 2: Commit**
 
@@ -4954,7 +4954,7 @@ If any field-name guess in the descriptor or adapter was wrong, fix it now and c
 
 ### Phase G gate
 
-Mod compiles, installs, runs, produces a complete snapshot, and the pipeline ingests it without fatal diagnostics. The `mod` job in CI is dropped from `continue-on-error: true` once the workflow is amended to fetch a stable BepInEx redistributable for compile-only references — owed by Phase K.
+Mod compiles, installs, runs, produces a complete snapshot, and the pipeline ingests it without fatal diagnostics. GitHub CI remains a mod format check only because full mod build/test requires local, non-redistributable game DLL references in `mod/libs/`.
 
 ---
 
@@ -6284,9 +6284,9 @@ mod:
       with: { dotnet-version: "8.0.x" }
     - name: format-check
       run: dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes
-    # Full `dotnet build` requires Assembly-CSharp.dll which is not redistributable;
-    # build is verified locally per mod/AGENTS.md. CI verifies formatting only until
-    # Slice 9 wires up an external archive of buildable references.
+    # Full `dotnet build` requires Assembly-CSharp.dll, which is not redistributable.
+    # Build/test verification is local-only with mod/libs/ populated via copy-libs.sh;
+    # GitHub CI intentionally verifies formatting only.
 ```
 
 - [ ] **Step 2: Add a copy step to the `site` job so the build sees a real SQLite blob**

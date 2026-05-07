@@ -93,7 +93,7 @@ Without a C# test project for the mod, none of the bug fixes can be verified exc
 
 - Create: `mod-tests/ArdenfallCompendium.Tests.csproj`
 - Create: `mod-tests/.gitignore` (entries for `bin/`, `obj/`)
-- Modify: `AncientKingdomsMods.sln` is a sibling-project artifact and is **not** the Ardenfall solution; check whether `ardenfall-compendium` has its own `.sln` or is dotnet-build'd via `mod/ArdenfallCompendium.csproj` directly. If no solution file exists, the test project is built standalone via `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj`.
+- Modify: no solution file exists; `ardenfall-compendium` is dotnet-built via `mod/ArdenfallCompendium.csproj` directly, so the test project is run standalone via `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj`.
 
 - [ ] **Step 1: Decide framework.** Use `xunit` 2.9+ with `xunit.runner.visualstudio`. xUnit is the dotnet-ecosystem default and integrates cleanly with `dotnet test`. Target `net8.0` for the test project (test runner does not need to match the mod's `netstandard2.1`); the test project references the mod's source by `<ProjectReference Include="..\mod\ArdenfallCompendium.csproj"/>` so test code can call mod types directly.
 
@@ -142,18 +142,18 @@ public sealed class SmokeTests
 dotnet test mod-tests/ArdenfallCompendium.Tests.csproj
 ```
 
-Expected: `Passed: 1, Failed: 0`. The test project must build without `mod/libs/Assembly-CSharp.dll`-resolving code paths — the smoke test only touches `Plugin.Version` static and `Application.version`-free types; no Unity types are loaded.
+Expected: `Passed: 1, Failed: 0`. The test project compiles the mod through the project reference, so it requires local `mod/libs/` references populated by `mod/scripts/copy-libs.sh`. It is intentionally a local regression substrate, not a GitHub CI job.
 
-- [ ] **Step 5: Update CI.** Add a `mod-tests` job to `.github/workflows/ci.yml` that runs after the `mod` (format-check) job, calling `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj`. Path-filter on `mod/**` and `mod-tests/**`.
+- [ ] **Step 5: Keep CI format-only.** Do not add a GitHub `mod-tests` job in Slice 1.5. GitHub cannot compile the mod project without non-redistributable game DLLs in `mod/libs/`; `.github/workflows/ci.yml` continues to verify `dotnet format` for `mod/**`, while local development verifies behavior with `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj`.
 
 - [ ] **Step 6: Commit.**
 
 ```sh
-git add mod-tests/ .github/workflows/ci.yml
+git add mod-tests/ docs/superpowers/plans/2026-05-07-slice-1-stabilisation.md
 git commit -m "test(mod): bootstrap xunit test project for ArdenfallCompendium"
 ```
 
-**Phase A gate:** `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj` passes locally. New CI job is wired and runs against the smoke test.
+**Phase A gate:** `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj` passes locally with `mod/libs/` populated. CI remains format-only for `mod/**`.
 
 ### Phase B — Refactor for testability + cache rows on the run
 

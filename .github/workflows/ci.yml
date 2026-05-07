@@ -73,9 +73,9 @@ jobs:
         with: { dotnet-version: "8.0.x" }
       - name: format-check
         run: dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes
-      # Full `dotnet build` requires Assembly-CSharp.dll which is not redistributable;
-      # build is verified locally per mod/AGENTS.md. CI verifies formatting only until
-      # a later slice wires up an external archive of buildable references.
+      # Full `dotnet build` requires Assembly-CSharp.dll, which is not redistributable.
+      # Build/test verification is local-only with mod/libs/ populated via copy-libs.sh;
+      # GitHub CI intentionally verifies formatting only.
 
   fixtures:
     runs-on: ubuntu-latest
