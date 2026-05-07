@@ -1,6 +1,6 @@
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "bun:test";
 import {
   buildPipelineCommand,
@@ -23,6 +23,8 @@ class FakeClient implements ControllerClient {
     command("entity.exportBatch", "job", true),
     command("run.finalize", "sync", true),
   ];
+  preflightResult: Record<string, unknown> = { ready: true };
+  publishedDir = "/tmp/snapshot";
 
   async connect() {}
   async authenticate() {
@@ -37,7 +39,7 @@ class FakeClient implements ControllerClient {
   async call(name: string, args: Record<string, unknown>) {
     this.calls.push({ name, args });
     if (name === "archive.preflight")
-      return { status: "ok", result: { ready: true }, artifacts: [], diagnostics: [] };
+      return { status: "ok", result: this.preflightResult, artifacts: [], diagnostics: [] };
     if (name === "run.begin")
       return {
         status: "ok",
@@ -55,7 +57,7 @@ class FakeClient implements ControllerClient {
     if (name === "run.finalize")
       return {
         status: "ok",
-        result: { runId: "run-1", publishedDir: "/tmp/snapshot" },
+        result: { runId: "run-1", publishedDir: this.publishedDir },
         artifacts: [],
         diagnostics: [],
       };
@@ -105,6 +107,45 @@ describe("exportArchive", () => {
     expect(events.at(-1)).toMatchObject({ phase: "pipeline", status: "completed" });
   });
 
+  it("surfaces failed preflight check reasons", async () => {
+    const client = new FakeClient();
+    client.preflightResult = {
+      ready: false,
+      checks: [
+        { name: "ardenfallGame", ok: false, reason: "ArdenfallGame.instance is null" },
+        { name: "worldData", ok: false, reason: "ArdenfallGame.instance.worldData is null" },
+      ],
+    };
+
+    await expect(
+      exportArchive({ client, outputBaseDir: "/tmp/out", pipelineOutDir: "/tmp/pipeline" }),
+    ).rejects.toThrow(
+      /archive\.preflight is not ready: ardenfallGame: ArdenfallGame\.instance is null; worldData: ArdenfallGame\.instance\.worldData is null/,
+    );
+  });
+
+  it("uses absolute output directories and normalizes published paths", async () => {
+    const client = new FakeClient();
+    client.publishedDir = `Z:${resolve("snapshots").replaceAll("/", "\\")}\\snapshots\\0.0.10.91-20260507`;
+    const validated: string[] = [];
+
+    const result = await exportArchive({
+      client,
+      outputBaseDir: "./snapshots",
+      pipelineOutDir: "/tmp/pipeline",
+      validate: async (snapshotDir) => {
+        validated.push(snapshotDir);
+        return { itemCount: 900 };
+      },
+      runPipeline: async () => undefined,
+    });
+
+    expect(client.calls.find((call) => call.name === "run.begin")?.args.outputBaseDir).toBe(
+      `Z:${resolve("./snapshots").replaceAll("/", "\\")}`,
+    );
+    expect(validated).toEqual([`${resolve("snapshots")}/snapshots/0.0.10.91-20260507`]);
+    expect(result.publishedDir).toBe(`${resolve("snapshots")}/snapshots/0.0.10.91-20260507`);
+  });
   it("refuses to run when a required command is missing", async () => {
     const client = new FakeClient();
     client.commands = client.commands.filter((descriptor) => descriptor.name !== "run.finalize");

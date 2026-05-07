@@ -8,7 +8,7 @@
     "passed": true,
     "completedAt": "2026-05-03T12:00:00Z",
     "checks": [
-      { "name": "builtLookupTable", "ok": true },
+      { "name": "builtLookupTable", "ok": true, "reason": null },
       { "name": "ardenfallGame", "ok": true },
       { "name": "worldData", "ok": true },
       { "name": "masterRecordTable", "ok": true }

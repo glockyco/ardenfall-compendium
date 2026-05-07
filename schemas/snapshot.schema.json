@@ -50,7 +50,7 @@
         "isSet": { "type": "boolean" },
         "inherited": { "type": "boolean" },
         "parent": {
-          "type": "object",
+          "type": ["object", "null"],
           "properties": {
             "kind": { "type": "string" },
             "guid": { "type": "string" },

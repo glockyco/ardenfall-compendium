@@ -30,7 +30,8 @@
           "kind": "parameter",
           "source": "itemName.Get()",
           "isSet": true,
-          "inherited": false
+          "inherited": false,
+          "parent": null
         },
         "weight": {
           "kind": "parameter",

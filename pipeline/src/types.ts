@@ -86,7 +86,7 @@ export interface SnapshotManifest {
   preflight: {
     passed: boolean;
     completedAt: string;
-    checks: { name: string; ok: boolean; reason?: string }[];
+    checks: { name: string; ok: boolean; reason?: string | null }[];
   };
   counts: Record<string, number>;
   diagnostics: { fatal: number; diagnostic: number };
@@ -114,42 +114,42 @@ export type FieldProvenance =
       source: string;
       isSet: boolean;
       inherited: boolean;
-      parent?: SnapshotRefBrief;
+      parent?: SnapshotRefBrief | null;
     }
   | {
       kind: "smartListParameter";
       source: string;
       isSet: boolean;
       inherited: boolean;
-      parent?: SnapshotRefBrief;
+      parent?: SnapshotRefBrief | null;
     }
   | {
       kind: "lookupAsset";
       source: string;
       isSet: boolean;
       inherited: boolean;
-      parent?: SnapshotRefBrief;
+      parent?: SnapshotRefBrief | null;
     }
   | {
       kind: "record";
       source: string;
       isSet: boolean;
       inherited: boolean;
-      parent?: SnapshotRefBrief;
+      parent?: SnapshotRefBrief | null;
     }
   | {
       kind: "runtimeObject";
       source: string;
       isSet: boolean;
       inherited: boolean;
-      parent?: SnapshotRefBrief;
+      parent?: SnapshotRefBrief | null;
     }
   | {
       kind: "missing";
       source: string;
       isSet: false;
       inherited: boolean;
-      parent?: SnapshotRefBrief;
+      parent?: SnapshotRefBrief | null;
     };
 
 export interface SnapshotRefBrief {

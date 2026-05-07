@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import type {
   CommandAccepted,
   CommandResult,
@@ -54,6 +55,7 @@ const REQUIRED_COMMANDS = new Map<string, "sync" | "job">([
 export async function exportArchive(options: ExportOptions): Promise<ExportResult> {
   const log = options.log ?? (() => undefined);
   const clientName = options.clientName ?? "ardenfall-controller";
+  const outputBaseDir = toRuntimePath(resolve(options.outputBaseDir));
   await options.client.connect();
   log({ phase: "connect", status: "completed" });
 
@@ -66,10 +68,10 @@ export async function exportArchive(options: ExportOptions): Promise<ExportResul
   assertRequiredCommands(await options.client.describeCommands());
 
   const preflight = await options.client.call("archive.preflight", {});
-  if (preflight.result.ready !== true) throw new Error("archive.preflight is not ready");
+  if (preflight.result.ready !== true) throw new Error(formatPreflightFailure(preflight.result));
   log({ phase: "preflight", status: "completed" });
 
-  const begin = await options.client.call("run.begin", { outputBaseDir: options.outputBaseDir });
+  const begin = await options.client.call("run.begin", { outputBaseDir });
   const runId = requireString(begin.result.runId, "run.begin result.runId");
   log({ phase: "run", status: "begun", runId });
 
@@ -89,9 +91,9 @@ export async function exportArchive(options: ExportOptions): Promise<ExportResul
   }
 
   const finalized = await options.client.call("run.finalize", { runId });
-  const publishedDir = requireString(
-    finalized.result.publishedDir,
-    "run.finalize result.publishedDir",
+
+  const publishedDir = normalizeControllerPath(
+    requireString(finalized.result.publishedDir, "run.finalize result.publishedDir"),
   );
   const validate = options.validate ?? validateSnapshot;
   await validate(publishedDir);
@@ -142,6 +144,35 @@ async function runPipeline(snapshotDir: string, pipelineOutDir: string): Promise
   });
   const exitCode = await proc.exited;
   if (exitCode !== 0) throw new Error(`pipeline:run exited ${exitCode}`);
+}
+
+function normalizeControllerPath(path: string): string {
+  const normalized = path.replaceAll("\\", "/");
+  return normalized.replace(/^z:\//i, "/");
+}
+
+function toRuntimePath(path: string): string {
+  if (!path.startsWith("/")) return path;
+  return `Z:${path.replaceAll("/", "\\")}`;
+}
+
+function formatPreflightFailure(result: Record<string, unknown>): string {
+  const checks = Array.isArray(result.checks) ? result.checks : [];
+  const failedChecks = checks
+    .filter((check): check is Record<string, unknown> => isObject(check) && check.ok !== true)
+    .map((check) => {
+      const name = typeof check.name === "string" && check.name.length > 0 ? check.name : "unknown";
+      const reason =
+        typeof check.reason === "string" && check.reason.length > 0 ? check.reason : "failed";
+      return `${name}: ${reason}`;
+    });
+
+  if (failedChecks.length === 0) return "archive.preflight is not ready";
+  return `archive.preflight is not ready: ${failedChecks.join("; ")}`;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function requireString(value: unknown, label: string): string {
