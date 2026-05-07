@@ -34,11 +34,11 @@ The implementation decisions addendum is authoritative where it differs from the
 **Explicitly out of scope (deferred):**
 
 - Item icon image rendering (Slice 3); Slice 1 carries icon refs as `asset_refs` stubs without WebP emission.
-- Spells, quests, locations, map system (Slices 4–6, 8).
-- FTS5 search and faceted filtering (Slice 7).
-- Override mechanism (Slice 10).
+- Locations and map substrate/system (Slices 5–6), map-supporting entities (Slice 7+), spells and quests (Slices 11–12).
+- FTS5 search and faceted filtering (Slice 10).
+- Override mechanism (Slice 14, deferred until trigger).
 - Remaining `ItemData` subclasses listed in Slice 2.
-- Deployment to a hosted target (Open question #1).
+- Deployment to a hosted target (closed by Slice 1.5).
 
 ---
 
@@ -75,7 +75,7 @@ schemas/entity.schema.json            ← descriptor authority
 schemas/variant.schema.json           ← item variant authority
 schemas/snapshot.schema.json          ← mod output authority
 schemas/manifest.schema.json          ← snapshot manifest authority
-schemas/digest.schema.json            ← stub for Slice 9; minimal shape only
+schemas/digest.schema.json            ← stub for Slice 13; minimal shape only
 schemas/fixture-manifest.schema.json  ← fixture pack manifest authority
 ```
 
@@ -196,13 +196,13 @@ site/src/lib/store/site-meta.ts             ← reads site_* tables, exposes typ
 site/src/lib/store/items.ts                 ← reads item_* read models
 site/src/routes/+layout.svelte
 site/src/routes/+page.svelte                ← landing
-site/src/routes/items/+page.svelte          ← overview (concrete; generic [entity] follows in Slice 4)
+site/src/routes/items/+page.svelte          ← overview (concrete; generic [entity] waits for a second public entity)
 site/src/routes/items/[id]/+page.svelte
 site/static/data.sqlite                     ← generated; .gitignore'd
 site/AGENTS.md
 ```
 
-(Generic `[entity]/+page.svelte` is intentionally deferred to the slice that introduces a second entity. Slice 1 ships concrete `/items` routes and the metadata-driven primitives. The generic route adds zero value with one entity; it gets refactored in Slice 4 when spells arrive. This avoids YAGNI premature abstraction.)
+(Generic `[entity]/+page.svelte` is intentionally deferred until a second public routed entity ships. Slice 1 ships concrete `/items` routes and the metadata-driven primitives. The generic route adds zero value with one entity; adding it is a trigger-based refactor, not a scheduled Slice 4/spell task.)
 
 ### Fixtures
 
@@ -747,7 +747,7 @@ git commit -m "chore(repo): add lefthook, gitignore, license, and readme"
 
 - [ ] **Step 1: Write `AGENTS.md`**
 
-The full per-subsystem worked-example treatment is owed by Slice 11. Slice 1 lands an honest stub that points at the live spec set so agents do not invent conventions.
+The full per-subsystem worked-example treatment is owed by Slice 15. Slice 1 lands an honest stub that points at the live spec set so agents do not invent conventions.
 
 ```markdown
 # Repo Agent Orientation
@@ -1334,13 +1334,13 @@ git commit -m "feat(schemas): define manifest and snapshot envelope"
 - Create: `schemas/digest.schema.json`
 - Create: `schemas/fixture-manifest.schema.json`
 
-- [ ] **Step 1: Write `digest.schema.json` (Slice 9 will expand)**
+- [ ] **Step 1: Write `digest.schema.json` (Slice 13 will expand)**
 
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ardenfall-compendium.example/schemas/digest.schema.json",
-  "title": "Cross-version digest (stub for Slice 9)",
+  "title": "Cross-version digest (stub for Slice 13)",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "gameVersion", "counts"],
@@ -2950,7 +2950,7 @@ import type { OperationMap } from "../../registry.ts";
 
 export const operations: OperationMap = {
   // No item-specific operations needed in Slice 1.
-  // Spell.formatTooltip etc. land in Slice 4.
+  // Spell.formatTooltip etc. land with the spells slice (currently Slice 11).
 };
 ```
 
@@ -6338,12 +6338,12 @@ Trace each Slice 1 deliverable from `docs/superpowers/roadmap.md` and amendment 
 ### Open spec items intentionally not closed in Slice 1
 
 - Asset image extraction / WebP rendering → Slice 3.
-- FTS5 search routes / facets → Slice 7.
-- Spells, locations, quests, map → Slices 4–6, 8.
-- Override mechanism → Slice 10 (deferred until trigger).
-- AGENTS.md fully populated with worked examples → Slice 11. Slice 1 ships honest stubs (A.4, F.1, H.1).
+- FTS5 search routes / facets → Slice 10.
+- Locations/map substrate and map UI → Slices 5–6; map-supporting entities → Slice 7+; spells and quests → Slices 11–12.
+- Override mechanism → Slice 14 (deferred until trigger).
+- AGENTS.md fully populated with worked examples → Slice 15. Slice 1 ships honest stubs (A.4, F.1, H.1).
 - Game-console `/extract` command → unplanned; HotRepl typed commands are the automation surface, and F8 is the manual fallback trigger.
-- Deployment target → first slice that publishes a built site.
+- Deployment target → closed by Slice 1.5.
 
 ### Placeholder scan
 

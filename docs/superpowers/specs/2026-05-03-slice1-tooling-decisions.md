@@ -353,12 +353,12 @@ Path filters use `paths:` on the workflow trigger so each job only runs when rel
 
 ### Site-side SQLite (browser)
 
-`@sqlite.org/sqlite-wasm` is the official SQLite-project Wasm build, published by the SQLite team and tracking SQLite mainline (`3.53.0-build1`, 2026-04-21). It ships the full SQLite feature surface — including FTS5 — and is the only browser SQLite that the upstream project itself maintains. Slice 1 does not use FTS5 (Slice 7), but the choice forecloses a Slice 7 driver swap and avoids depending on an unmaintained fork.
+`@sqlite.org/sqlite-wasm` is the official SQLite-project Wasm build, published by the SQLite team and tracking SQLite mainline (`3.53.0-build1`, 2026-04-21). It ships the full SQLite feature surface — including FTS5 — and is the only browser SQLite that the upstream project itself maintains. Slice 1 does not use FTS5 (Slice 10), but the choice forecloses a Slice 10 driver swap and avoids depending on an unmaintained fork.
 
 Rejected alternatives:
 
 - **`sql.js-fts5` 1.4.0** — last published 2021-01-06, unmaintained. The fork exists because upstream `sql.js` (1.14.1) compiles only with `-DSQLITE_ENABLE_FTS3`, not FTS5; verified in [sql-js/sql.js Makefile](https://github.com/sql-js/sql.js/blob/master/Makefile). An unmaintained dependency owning the site's data layer is unacceptable.
-- **`sql.js` 1.14.1** — actively maintained but FTS5-less. Picking it now means a driver swap in Slice 7.
+- **`sql.js` 1.14.1** — actively maintained but FTS5-less. Picking it now means a driver swap in Slice 10.
 - **`wa-sqlite`** 1.0.0 — last published 2024-01; modern API but more complex VFS handling and no first-party SQLite-team backing.
 
 Caveats:
@@ -489,12 +489,12 @@ The baseline spec §16 listed deferred decisions. This document closes:
 - **#5 JSON Schema validator** — see §3.
 - **#6 Property-invariant test framework** — see §4.
 
-Still open:
+Current roadmap ownership for decisions not closed by this document:
 
-- **#1 Deployment target** — closes in the first slice that publishes a built site (per roadmap).
+- **#1 Deployment target** — closed by Slice 1.5 (`adapter-cloudflare` + `wrangler deploy`).
 - **#7 Tile capture mod specifics** — owed by Slice 6.
-- **#8 Override mechanism details** — Slice 10 trigger.
-- **#9 External archive location** — owed by Slice 9.
+- **#8 Override mechanism details** — Slice 14 trigger.
+- **#9 External archive location** — owed by Slice 13.
 
 ## 14. Refusals
 
