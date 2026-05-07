@@ -248,7 +248,7 @@ This list is the canonical source for Slice 1; the Pin Manifest in `2026-05-03-s
     "@eslint/js": "^9.0.0",
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.59.0",
-    "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "@sveltejs/vite-plugin-svelte": "^7.1.1",
     "@tailwindcss/vite": "^4.2.4",
     "@typescript/native-preview": "beta",
     "ajv": "^8.20.0",
@@ -4987,7 +4987,7 @@ Goal: SvelteKit static workspace with Tailwind v4 tokens and shadcn-svelte primi
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.59.0",
-    "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "@sveltejs/vite-plugin-svelte": "^7.1.1",
     "@tailwindcss/vite": "^4.2.4",
     "@types/sql.js": "^1.4.9",
     "bits-ui": "^2.18.1",
@@ -5039,14 +5039,28 @@ export default defineConfig({
 
 ```jsonc
 {
-  "extends": "../tsconfig.base.json",
-  "include": ["src/**/*", "../entities/**/*.json", "../schemas/**/*.json"],
+  "extends": "./.svelte-kit/tsconfig.json",
   "compilerOptions": {
-    "rootDir": ".",
-    "paths": { "$lib/*": ["./src/lib/*"] },
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
+    "types": [],
   },
 }
 ```
+
+SvelteKit generates `./.svelte-kit/tsconfig.json` on `svelte-kit sync` with the
+`$lib`, `$app/types`, `rootDirs`, and include/exclude wiring it requires; extending
+that file is mandatory (svelte-check warns otherwise). The strict settings from
+`tsconfig.base.json` are duplicated here because the kit-generated config does not
+extend the project base. `types: []` overrides the kit default of `["node"]` so we
+stay browser-only.
 
 - [ ] **Step 5: Write `site/src/app.html`**
 

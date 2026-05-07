@@ -1,4 +1,16 @@
-// Stub: full SvelteKit config lands in H.1.
-// eslint-plugin-svelte and prettier-plugin-svelte both consume this
-// during A.2 even though the site itself does not exist yet.
-export default {};
+import adapter from "@sveltejs/adapter-static";
+import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+
+export default {
+  preprocess: vitePreprocess(),
+  kit: {
+    adapter: adapter({
+      pages: "build",
+      assets: "build",
+      fallback: "index.html",
+      precompress: false,
+      strict: true,
+    }),
+    alias: { $lib: "src/lib" },
+  },
+};

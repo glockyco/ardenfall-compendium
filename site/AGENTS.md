@@ -1,0 +1,18 @@
+# Site Agent Orientation
+
+SvelteKit static; data is shipped as `static/data.sqlite` and queried in-browser via `sql.js-fts5`. The site **never** parses descriptors or schema files at runtime; it reads pipeline-emitted `site_*` tables from SQLite.
+
+## Hard rules
+
+- All SQLite access goes through `src/lib/store/`. Components must not call `getDb()` or `query()` directly.
+- Design tokens live in `src/app.css`. Component styling references token names (`bg-primary`, etc.), never inline colours.
+- shadcn-svelte components are owned: edit `src/lib/components/ui/*` freely; do not depend on a specific upstream version.
+- Renderer registries (`sections`, etc.) merge typed exported maps at boot. No global `register()` calls.
+
+## Layout
+
+- `src/lib/components/ui/` — copied shadcn-svelte primitives (one-owner per file).
+- `src/lib/entity/sections/` — built-in section renderers.
+- `src/lib/entities/<id>/` — per-entity custom renderers.
+- `src/lib/store/` — SQLite glue and accessors.
+- `src/routes/` — pages.
