@@ -70,7 +70,7 @@ This is shape **β** in the prior research synthesis (RePoE / PyPoE is the clean
 | C9  | Asset pipeline       | Mod → Pipeline → Site | Content-addressed (sha256 truncated) PNG → WebP via `sharp`                                                                   |
 | C10 | Build orchestrator   | Pipeline              | Bun-driven topo-sorted task graph                                                                                             |
 | C11 | Versioning + diff    | Repo                  | Schema, named operations, property invariants, summary digests in git; bulk artefacts external                                |
-| C12 | Deployment           | Site                  | Static hosting; specific target deferred (see open questions)                                                                 |
+| C12 | Deployment           | Site                  | Cloudflare Workers Static Assets via `adapter-cloudflare` + `wrangler deploy` to `ardenfall.compendiums.org`                  |
 | C13 | Future mod surface   | Repo                  | Where non-extraction mods would live; deferred (see open questions)                                                           |
 
 ## 6. Repository layout
@@ -391,19 +391,19 @@ These are the contract this design owes to itself.
 - **P8.** Per-subsystem AGENTS.md / CLAUDE.md with explicit good/bad code examples. Cited evidence: the Anthropic study of agentic coding showed ~29% runtime reduction and ~17% token reduction with this discipline.
 - **P9.** Semantic density. Full English words over abbreviations. Brace-language (TS, C#, JSON) over indentation-significant syntax for the data layer.
 
-## 16. Open questions deferred to implementation plan
+## 16. Original open questions and current ownership
 
-These are intentionally not decided here; they are decisions the implementation plan must close.
+The baseline originally deferred these decisions to implementation planning. Current status:
 
-1. **Deployment target.** Cloudflare Pages, Vercel, GitHub Pages, self-hosted? Affects build target, asset CDN strategy, and tile-pyramid serving.
-2. **Repo strategy.** Public from day one, or private until first usable build? CI tooling.
-3. **Future mod surface.** Where does a (hypothetical) gameplay mod live? Same repo with `mods/<name>/`? Separate repo entirely? The current repo's name (`ardenfall-compendium`) accommodates either.
-4. **Component library.** shadcn-svelte + tokens is the leading candidate; a one-page comparison against alternatives is owed in the first implementation slice.
-5. **JSON Schema validator.** Ajv is the dominant choice; pin specifically in the first slice.
-6. **Property-invariant test framework.** Bun's built-in test runner plus `fast-check` is the leading candidate; pin in first slice.
-7. **Tile capture mod specifics.** Orthographic camera setup, zoom levels, projection bounds, capture stitching strategy. Owed by the map slice of the implementation plan.
-8. **Override mechanism details.** `entities/<id>/overrides/` is reserved as a later-phase concern; its provenance and merge rules are not designed here.
-9. **External archive location for snapshots and SQLite blobs.** Storage backend (S3-compatible bucket, GitHub Releases, etc.) is not chosen.
+1. **Deployment target — closed by Slice 1.5.** Cloudflare Workers Static Assets via SvelteKit `adapter-cloudflare` and local/operator `wrangler deploy` to `ardenfall.compendiums.org`.
+2. **Repo strategy — closed by Slice 1.** Public/private strategy and CI tooling are recorded in `2026-05-03-slice1-tooling-decisions.md`.
+3. **Future mod surface — deferred indefinitely.** The repository name accommodates it, but no gameplay-mod work is planned.
+4. **Component library — closed by Slice 1.** shadcn-svelte plus Tailwind v4 tokens are pinned in `2026-05-03-slice1-tooling-decisions.md`.
+5. **JSON Schema validator — closed by Slice 1.** Ajv is pinned in `2026-05-03-slice1-tooling-decisions.md`.
+6. **Property-invariant test framework — closed by Slice 1.** Bun tests plus `fast-check` are pinned in `2026-05-03-slice1-tooling-decisions.md`.
+7. **Tile capture mod specifics — open, Slice 6.** Orthographic camera setup, zoom levels, projection bounds, and capture stitching are owed by the map-system plan.
+8. **Override mechanism details — deferred until Slice 14 trigger.** `entities/<id>/overrides/` stays reserved until the first authored-correction need.
+9. **External archive location for snapshots and SQLite blobs — open, Slice 13.** Storage backend, retention, and publication policy are owned by the versioning/diff/archive slice.
 
 ## 17. What this design refuses
 
