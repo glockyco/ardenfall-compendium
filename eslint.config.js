@@ -42,4 +42,14 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
     },
   },
+  {
+    // shadcn-svelte primitives accept arbitrary user-supplied href values
+    // (internal, external, mailto:, hash). resolve() is a routing-tree helper
+    // and would break the wrapper. The rule stays on for app routes/pages
+    // where it catches real internal-link mistakes.
+    files: ["site/src/lib/components/ui/**/*.svelte"],
+    rules: {
+      "svelte/no-navigation-without-resolve": "off",
+    },
+  },
 );

@@ -6,7 +6,7 @@
 
 **Architecture:** β (three-stage; runtime → snapshot → canonical store → site) per the design spec. Descriptor-driven: `entities/item/entity.json` plus per-variant descriptors are the cross-subsystem contract. Pipeline emits site-facing metadata into SQLite tables; the site does not parse descriptors. Per the addendum, executable per-entity code lives in the subsystem that runs it: `pipeline/src/entities/item/`, `site/src/lib/entities/item/`, `mod/src/Entities/Item/`.
 
-**Tech Stack:** C# / BepInEx 5 / Newtonsoft.Json (mod). TypeScript / Bun 1.3.13 / Ajv 8 / fast-check 4 / `bun:sqlite` (pipeline). SvelteKit 2.59 / Svelte 5.55 / Vite 8 / Tailwind 4.2 / shadcn-svelte 1.2.7 / Bits UI 2.18.1 / `sql.js-fts5` 1.4 (site). lefthook 2.1 / Prettier 3.5 / ESLint 9 / `@typescript/native-preview@beta` (`tsgo`) / GitHub Actions.
+**Tech Stack:** C# / BepInEx 5 / Newtonsoft.Json (mod). TypeScript / Bun 1.3.13 / Ajv 8 / fast-check 4 / `bun:sqlite` (pipeline). SvelteKit 2.59 / Svelte 5.55 / Vite 8 / Tailwind 4.2 / shadcn-svelte 1.2.7 / Bits UI 2.18.1 / `@sqlite.org/sqlite-wasm` 3.53 (site). lefthook 2.1 / Prettier 3.8 / ESLint 10 / `@typescript/native-preview@beta` (`tsgo`, pipeline + root only) + `typescript` 6.0.x (site, svelte-check, typescript-eslint peer) / GitHub Actions.
 
 **Reference specs:**
 
@@ -180,7 +180,7 @@ site/svelte.config.js
 site/vite.config.ts
 site/src/app.html
 site/src/app.css                            ← Tailwind v4 + @theme inline tokens
-site/src/lib/utils.ts                       ← cn() helper for tailwind-variants
+site/src/lib/utils.ts                       ← shadcn-canonical `cn()` (clsx + twMerge); WithoutChild/WithoutChildren/WithElementRef helpers
 site/src/lib/components/ui/button/...       ← shadcn-svelte CLI copies
 site/src/lib/components/ui/input/...
 site/src/lib/components/ui/label/...
@@ -193,7 +193,7 @@ site/src/lib/entities/item/sections.ts      ← registered renderers (typed map)
 site/src/lib/entities/item/sections/MeleeStats.svelte
 site/src/lib/entity/sections/FieldList.svelte    ← built-in fieldList renderer
 site/src/lib/entity/registry.ts             ← merges per-entity sections at boot
-site/src/lib/store/index.ts                 ← getDb(), query(), queryOne(); sql.js-fts5
+site/src/lib/store/index.ts                 ← getDb(), query(), queryOne(); @sqlite.org/sqlite-wasm
 site/src/lib/store/site-meta.ts             ← reads site_* tables, exposes typed accessors
 site/src/lib/store/items.ts                 ← reads item_* read models
 site/src/routes/+layout.svelte
@@ -245,32 +245,37 @@ This list is the canonical source for Slice 1; the Pin Manifest in `2026-05-03-s
   "engines": { "bun": "1.3.13" },
   "devDependencies": {
     "@biomejs/biome": "(intentionally absent)",
-    "@eslint/js": "^9.0.0",
+    "@eslint/js": "^10.0.1",
+    "@internationalized/date": "^3.12.1",
+    "@lucide/svelte": "^1.14.0",
+    "@sqlite.org/sqlite-wasm": "^3.53.0-build1",
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.59.0",
+    "@sveltejs/kit": "^2.59.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.1",
     "@tailwindcss/vite": "^4.2.4",
     "@typescript/native-preview": "beta",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "bits-ui": "^2.18.1",
-    "eslint": "^9.0.0",
-    "eslint-plugin-svelte": "^3.17.0",
+    "clsx": "^2.1.1",
+    "eslint": "^10.3.0",
+    "eslint-plugin-svelte": "^3.17.1",
     "fast-check": "^4.7.0",
-    "globals": "^16.0.0",
+    "globals": "^17.6.0",
     "lefthook": "^2.1.6",
-    "prettier": "^3.5.0",
+    "prettier": "^3.8.3",
     "prettier-plugin-svelte": "^3.5.1",
-    "prettier-plugin-tailwindcss": "^0.6.0",
+    "prettier-plugin-tailwindcss": "^0.8.0",
     "shadcn-svelte": "1.2.7",
-    "sql.js-fts5": "^1.4.0",
-    "@types/sql.js": "^1.4.9",
     "svelte": "^5.55.5",
-    "svelte-check": "^4.3.4",
-    "tailwindcss": "^4.2.4",
+    "svelte-check": "^4.4.8",
+    "tailwind-merge": "^3.5.0",
     "tailwind-variants": "^3.2.2",
-    "typescript-eslint": "^8.0.0",
-    "vite": "^8.0.10",
+    "tailwindcss": "^4.2.4",
+    "tw-animate-css": "^1.4.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.2",
+    "vite": "^8.0.11",
   },
 }
 ```
@@ -4958,7 +4963,7 @@ Mod compiles, installs, runs, produces a complete snapshot, and the pipeline ing
 
 Goal: SvelteKit static workspace with Tailwind v4 tokens and shadcn-svelte primitives. Site builds against an empty data set; no item routes yet.
 
-### Task H.1: SvelteKit + Tailwind + sql.js-fts5 install
+### Task H.1: SvelteKit + Tailwind + @sqlite.org/sqlite-wasm install
 
 **Files:**
 
@@ -4975,31 +4980,39 @@ Goal: SvelteKit static workspace with Tailwind v4 tokens and shadcn-svelte primi
 {
   "name": "@ardenfall-archives/site",
   "private": true,
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
-    "check": "svelte-kit sync && svelte-check --tsgo --tsconfig ./tsconfig.json",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
   },
   "dependencies": {
-    "sql.js-fts5": "^1.4.0",
+    "@sqlite.org/sqlite-wasm": "^3.53.0-build1",
   },
   "devDependencies": {
+    "@internationalized/date": "^3.12.1",
+    "@lucide/svelte": "^1.14.0",
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.59.0",
+    "@sveltejs/kit": "^2.59.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.1",
     "@tailwindcss/vite": "^4.2.4",
-    "@types/sql.js": "^1.4.9",
     "bits-ui": "^2.18.1",
+    "clsx": "^2.1.1",
     "svelte": "^5.55.5",
-    "svelte-check": "^4.3.4",
+    "svelte-check": "^4.4.8",
+    "tailwind-merge": "^3.5.0",
     "tailwind-variants": "^3.2.2",
     "tailwindcss": "^4.2.4",
     "tw-animate-css": "^1.4.0",
-    "vite": "^8.0.10",
+    "vite": "^8.0.11",
   },
 }
 ```
+
+`check` does **not** pass `--tsgo`; see Tooling Decisions §10 for the
+svelte-check + native-preview blocker. The pipeline + root keep `tsgo`.
 
 - [ ] **Step 2: Write `site/svelte.config.js`**
 
@@ -5031,7 +5044,12 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
-  // sql.js-fts5 ships its wasm via ?url import; no further plugin needed.
+  optimizeDeps: {
+    // The official SQLite Wasm build must NOT be pre-bundled by Vite — its
+    // worker-loaded `.wasm` companion is fetched at runtime via the published
+    // `?url` exports.
+    exclude: ["@sqlite.org/sqlite-wasm"],
+  },
 });
 ```
 
@@ -5085,7 +5103,7 @@ stay browser-only.
 ```markdown
 # Site Agent Orientation
 
-SvelteKit static; data is shipped as `static/data.sqlite` and queried in-browser via `sql.js-fts5`. The site **never** parses descriptors or schema files at runtime; it reads pipeline-emitted `site_*` tables from SQLite.
+SvelteKit static; data is shipped as `static/data.sqlite` and queried in-browser via `@sqlite.org/sqlite-wasm`. The site **never** parses descriptors or schema files at runtime; it reads pipeline-emitted `site_*` tables from SQLite.
 
 ## Hard rules
 
@@ -5168,16 +5186,33 @@ git commit -m "feat(site): bootstrap sveltekit static workspace"
 - [ ] **Step 2: Write `site/src/lib/utils.ts`** (the `cn()` helper)
 
 ```ts
-import type { ClassValue } from "tailwind-variants";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-/** Concatenate class values; undefined/false drop out. */
+/**
+ * Concatenate class values with Tailwind-aware merging.
+ *
+ * Used by every shadcn-svelte primitive copied into `src/lib/components/ui/`.
+ * `clsx` flattens conditional class objects/arrays; `twMerge` resolves
+ * conflicts between Tailwind utilities so caller-supplied classes can override
+ * defaults (`cn("p-2", "p-4")` → `"p-4"`, not `"p-2 p-4"`).
+ */
 export function cn(...inputs: ClassValue[]): string {
-  return inputs
-    .flat()
-    .filter((v): v is string => typeof v === "string" && v.length > 0)
-    .join(" ");
+  return twMerge(clsx(inputs));
 }
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export type WithoutChild<T> = T extends { child?: any } ? Omit<T, "child"> : T;
+export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, "children"> : T;
+/* eslint-enable @typescript-eslint/no-explicit-any */
+export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
+export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };
 ```
+
+This is the canonical shape the shadcn-svelte registry expects. Components
+copied via the CLI import `cn`, `WithElementRef`, and `WithoutChildrenOrChild`
+from `$lib/utils.js` (note the `.js` specifier — required by SvelteKit ESM
+resolution).
 
 - [ ] **Step 3: Commit**
 
@@ -5192,27 +5227,77 @@ git commit -m "feat(site): tailwind v4 design tokens"
 
 - Create (via CLI): `site/src/lib/components/ui/button/`, `input/`, `label/`, `select/`, `dialog/`, `tabs/`, `tooltip/`
 
-- [ ] **Step 1: Initialise shadcn-svelte**
+- [ ] **Step 1: Write `site/components.json` directly**
 
-Run: `bunx shadcn-svelte@1.2.7 init --yes --base-color slate`
-Expected: writes `components.json`, edits `src/app.css` (already done; merge if conflict), adds aliases. Inspect output for any unexpected `app.css` changes.
+The shadcn-svelte 1.2.7 `init` command is interactive (prompts for design-system
+"preset"), and `--base-color slate` is rejected (the 1.2.7 CLI accepts only
+`neutral`, `stone`, `zinc`, `mauve`, `olive`, `mist`, `taupe`). Both points are
+CLI-implementation issues, not architectural choices, so we write the manifest
+directly and let the CLI's non-interactive `add` use it.
 
-If `init` fights the existing `app.css`, accept its changes and ensure the `:root` block plus `@theme inline` from Task H.2 are still present.
+```jsonc
+{
+  "$schema": "https://shadcn-svelte.com/schema.json",
+  "tailwind": {
+    "css": "src/app.css",
+    "baseColor": "neutral",
+  },
+  "aliases": {
+    "components": "$lib/components",
+    "utils": "$lib/utils",
+    "ui": "$lib/components/ui",
+    "hooks": "$lib/hooks",
+    "lib": "$lib",
+  },
+  "iconLibrary": "lucide",
+  "typescript": true,
+  "registry": "https://shadcn-svelte.com/registry",
+}
+```
 
-- [ ] **Step 2: Add the Slice 1 primitives**
+The token surface in `app.css` overrides `baseColor`, so the choice is
+cosmetic; pick the closest CLI-supported palette to your design intent.
 
-Run: `bunx shadcn-svelte@1.2.7 add button input label select dialog tabs tooltip --yes`
-Expected: each writes a directory under `src/lib/components/ui/<name>/`.
+- [ ] **Step 2: Add the Slice 1 primitives via `npx` (Node 22+)**
 
-- [ ] **Step 3: Verify each primitive imports cleanly**
+Run: `npx --yes shadcn-svelte@1.2.7 add button input label select dialog tabs tooltip --cwd ./site --no-deps -o -y`
 
-Run: `bun run --cwd site check`
-Expected: 0 errors. (Warnings about unused imports in copied templates are tolerated; svelte-check should pass.)
+- The CLI emits `▲ You are currently using an unsupported runtime` under
+  Bun. shadcn-svelte officially supports only Node 22+. Use `npx` so the CLI
+  runs against system Node, not Bun's runtime.
+- `--no-deps` keeps shadcn from `bun add`-ing peer deps behind your
+  back; `site/package.json` already declares `tailwind-variants`, `bits-ui`,
+  `@internationalized/date`, `clsx`, `tailwind-merge`, `@lucide/svelte`,
+  `tw-animate-css`. The CLI's "installed without the following dependencies"
+  warning is informational; verify via `bun pm ls` that all listed pkgs are
+  present at the requested versions.
+- `-o -y` overwrites without confirmation prompts.
+- The CLI also pulls in `separator` as a transitive dep of one of the chosen
+  primitives. That is expected.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 3: Reformat shadcn output to repo style**
+
+The CLI emits files with tabs. Repo style uses 2-space indentation. Run:
+
+`bun run format`
+
+Expected: prettier rewrites `site/src/lib/components/ui/**/*.{svelte,ts}` to
+repo style. shadcn's philosophy is that copied components are owned by the
+consumer, so reformatting is correct and explicit.
+
+- [ ] **Step 4: Verify**
+
+Run: `bun run --cwd site check && bun run --cwd site build && bun run lint`
+Expected: 0 errors across all three. shadcn's `button.svelte` triggers
+`svelte/no-navigation-without-resolve` (new in `eslint-plugin-svelte` 3.17.x)
+because it accepts an arbitrary user-supplied `href`. Disable that rule
+scoped to `site/src/lib/components/ui/**/*.svelte` only — keep it on for
+app routes/pages where it catches real internal-link mistakes.
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add site/components.json site/src/lib/components/ui/ site/src/app.css site/src/lib/utils.ts
+git add site/components.json site/src/lib/components/ui/ eslint.config.js
 git commit -m "feat(site): add shadcn-svelte initial primitive set"
 ```
 
@@ -5223,43 +5308,68 @@ git commit -m "feat(site): add shadcn-svelte initial primitive set"
 - Create: `site/src/lib/store/index.ts`
 - Create: `site/src/lib/store/site-meta.ts`
 - Create: `site/src/lib/store/items.ts`
-- Create: `site/src/lib/sql.js-fts5.d.ts`
+- Create: `site/src/lib/store/index.ts` (the SQLite client lives here; no
+  separate `.d.ts` shim required — `@sqlite.org/sqlite-wasm` ships its own
+  TypeScript types).
 
-- [ ] **Step 1: Write `site/src/lib/sql.js-fts5.d.ts`**
-
-```ts
-// Re-declare the relevant slice of @types/sql.js for the fts5 fork.
-declare module "sql.js-fts5/dist/sql-wasm.wasm?url" {
-  const url: string;
-  export default url;
-}
-```
+No ambient declaration is needed; `@sqlite.org/sqlite-wasm` ships its own
+TypeScript types via `package.json#exports`.
 
 - [ ] **Step 2: Write `site/src/lib/store/index.ts`**
 
 ```ts
 import { browser } from "$app/environment";
-import initSqlJs, { type Database, type SqlValue } from "sql.js-fts5";
-import sqlWasmUrl from "sql.js-fts5/dist/sql-wasm.wasm?url";
+import sqlite3InitModule, {
+  type Database,
+  type Sqlite3Static,
+  type SqlValue,
+} from "@sqlite.org/sqlite-wasm";
 
 let db: Database | null = null;
 let dbPromise: Promise<Database> | null = null;
 
+/**
+ * Open the static `data.sqlite` blob shipped under `static/data.sqlite`.
+ *
+ * Loads the bytes into a transient in-memory database via
+ * `sqlite3_deserialize`. The main-thread variant of
+ * `@sqlite.org/sqlite-wasm` does **not** require COOP/COEP headers (those
+ * are only needed for the worker + OPFS variant — irrelevant for read-only
+ * static data).
+ */
 export async function getDb(): Promise<Database> {
   if (!browser) throw new Error("getDb only runs in the browser");
   if (db) return db;
   if (dbPromise) return dbPromise;
   dbPromise = (async () => {
-    const [SQL, response] = await Promise.all([
-      initSqlJs({ locateFile: () => sqlWasmUrl }),
-      fetch("/data.sqlite"),
-    ]);
-    if (!response.ok) throw new Error(`failed to fetch /data.sqlite: ${response.status}`);
-    const buffer = await response.arrayBuffer();
-    db = new SQL.Database(new Uint8Array(buffer));
+    const [sqlite3, response] = await Promise.all([sqlite3InitModule(), fetch("/data.sqlite")]);
+    if (!response.ok) {
+      throw new Error(`failed to fetch /data.sqlite: ${response.status}`);
+    }
+    const buffer = new Uint8Array(await response.arrayBuffer());
+    db = openDeserialized(sqlite3, buffer);
     return db;
   })();
   return dbPromise;
+}
+
+function openDeserialized(sqlite3: Sqlite3Static, bytes: Uint8Array): Database {
+  const handle = new sqlite3.oo1.DB();
+  const ptr = sqlite3.wasm.allocFromTypedArray(bytes);
+  const rc = sqlite3.capi.sqlite3_deserialize(
+    handle.pointer!,
+    "main",
+    ptr,
+    bytes.byteLength,
+    bytes.byteLength,
+    sqlite3.capi.SQLITE_DESERIALIZE_FREEONCLOSE | sqlite3.capi.SQLITE_DESERIALIZE_RESIZEABLE,
+  );
+  if (rc !== sqlite3.capi.SQLITE_OK) {
+    sqlite3.wasm.dealloc(ptr);
+    handle.close();
+    throw new Error(`sqlite3_deserialize failed: rc=${rc}`);
+  }
+  return handle;
 }
 
 export async function query<T = Record<string, SqlValue>>(
@@ -5267,11 +5377,15 @@ export async function query<T = Record<string, SqlValue>>(
   params: SqlValue[] = [],
 ): Promise<T[]> {
   const d = await getDb();
-  const stmt = d.prepare(sql);
-  stmt.bind(params);
   const rows: T[] = [];
-  while (stmt.step()) rows.push(stmt.getAsObject() as T);
-  stmt.free();
+  d.exec({
+    sql,
+    bind: params,
+    rowMode: "object",
+    callback: (row) => {
+      rows.push(row as T);
+    },
+  });
   return rows;
 }
 
@@ -5299,6 +5413,7 @@ export interface SiteEntity {
 
 export interface SiteOverviewColumn {
   entity_id: string;
+  column_id: string;
   field_id: string;
   position: number;
 }
@@ -5385,7 +5500,7 @@ export const getItemDetail = (id: string) =>
 - [ ] **Step 5: Commit**
 
 ```bash
-git add site/src/lib/store/ site/src/lib/sql.js-fts5.d.ts
+git add site/src/lib/store/
 git commit -m "feat(site): sqlite store with site-meta and item accessors"
 ```
 
@@ -5417,10 +5532,10 @@ Goal: `/items` and `/items/[id]` render correctly from the SQLite blob, driven b
   let { children } = $props();
 </script>
 
-<header class="border-b border-border bg-background">
+<header class="border-border bg-background border-b">
   <div class="container mx-auto flex items-center justify-between p-4">
     <a href="/" class="text-lg font-semibold">Ardenfall Archives</a>
-    <nav class="flex gap-4 text-muted-foreground">
+    <nav class="text-muted-foreground flex gap-4">
       <a href="/items">Items</a>
     </nav>
   </div>
@@ -5438,7 +5553,7 @@ Goal: `/items` and `/items/[id]` render correctly from the SQLite blob, driven b
 </script>
 
 <h1 class="text-2xl font-bold">Ardenfall Archives</h1>
-<p class="mt-2 text-muted-foreground">
+<p class="text-muted-foreground mt-2">
   Static archive of Ardenfall game data. Slice 1 ships items only.
 </p>
 <a class="mt-4 inline-block underline" href="/items">Browse items →</a>
@@ -5458,8 +5573,8 @@ Goal: `/items` and `/items/[id]` render correctly from the SQLite blob, driven b
   };
 
   let { rows, columns, rowHref }: Props = $props();
-  let sortField = $state<keyof T & string | null>(null);
-  let sortDir   = $state<"asc" | "desc">("asc");
+  let sortField = $state<(keyof T & string) | null>(null);
+  let sortDir = $state<"asc" | "desc">("asc");
 
   const sortedRows = $derived.by(() => {
     if (!sortField) return rows;
@@ -5476,7 +5591,10 @@ Goal: `/items` and `/items/[id]` render correctly from the SQLite blob, driven b
 
   function toggleSort(field: keyof T & string) {
     if (sortField === field) sortDir = sortDir === "asc" ? "desc" : "asc";
-    else { sortField = field; sortDir = "asc"; }
+    else {
+      sortField = field;
+      sortDir = "asc";
+    }
   }
 </script>
 
@@ -5486,8 +5604,12 @@ Goal: `/items` and `/items/[id]` render correctly from the SQLite blob, driven b
       {#each columns as col (col.id)}
         <th
           scope="col"
-          aria-sort={sortField === col.field ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-          class="cursor-pointer p-2 select-none hover:bg-secondary"
+          aria-sort={sortField === col.field
+            ? sortDir === "asc"
+              ? "ascending"
+              : "descending"
+            : "none"}
+          class="hover:bg-secondary cursor-pointer p-2 select-none"
           onclick={() => toggleSort(col.field)}
         >
           {col.label}
@@ -5500,7 +5622,7 @@ Goal: `/items` and `/items/[id]` render correctly from the SQLite blob, driven b
   </thead>
   <tbody>
     {#each sortedRows as row (row.id)}
-      <tr class="border-b border-border hover:bg-muted/40">
+      <tr class="border-border hover:bg-muted/40 border-b">
         {#each columns as col (col.id)}
           <td class="p-2">
             {#if col.id === columns[0].id && rowHref}
@@ -5516,7 +5638,7 @@ Goal: `/items` and `/items/[id]` render correctly from the SQLite blob, driven b
 </table>
 
 {#if rows.length === 0}
-  <p class="p-4 text-muted-foreground">No rows.</p>
+  <p class="text-muted-foreground p-4">No rows.</p>
 {/if}
 ```
 
@@ -5544,7 +5666,7 @@ git commit -m "feat(site): layout, landing, generic entity table"
 
   let rows = $state<ItemOverviewRow[]>([]);
   let columns = $state<{ id: string; label: string; field: keyof ItemOverviewRow & string }[]>([]);
-  let label   = $state("Items");
+  let label = $state("Items");
   let loading = $state(true);
 
   onMount(async () => {
@@ -5554,7 +5676,11 @@ git commit -m "feat(site): layout, landing, generic entity table"
     columns = await Promise.all(
       colsMeta.map(async (c) => {
         const field = await getEntityField("item", c.field_id);
-        return { id: c.field_id, label: field?.label ?? c.field_id, field: c.field_id as keyof ItemOverviewRow & string };
+        return {
+          id: c.field_id,
+          label: field?.label ?? c.field_id,
+          field: c.field_id as keyof ItemOverviewRow & string,
+        };
       }),
     );
     rows = await listItemsOverview();
@@ -5566,9 +5692,9 @@ git commit -m "feat(site): layout, landing, generic entity table"
 
 <h1 class="text-2xl font-bold">{label}</h1>
 {#if loading}
-  <p class="mt-4 text-muted-foreground">Loading…</p>
+  <p class="text-muted-foreground mt-4">Loading…</p>
 {:else}
-  <p class="mt-2 text-muted-foreground">{rows.length} {label.toLowerCase()}</p>
+  <p class="text-muted-foreground mt-2">{rows.length} {label.toLowerCase()}</p>
   <div class="mt-4">
     <EntityTable {rows} {columns} rowHref={(r) => `/items/${r.id}`} />
   </div>
@@ -5603,7 +5729,7 @@ git commit -m "feat(site): items overview route from site_overview_columns"
   let { title, fields }: Props = $props();
 </script>
 
-<section class="rounded-md border border-border bg-secondary/40 p-4">
+<section class="border-border bg-secondary/40 rounded-md border p-4">
   <h2 class="text-lg font-semibold">{title}</h2>
   <dl class="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
     {#each fields as f (f.id)}
@@ -5673,7 +5799,7 @@ export const sections: SectionMap = {
   // the renderer exists to prove the registry shape and is reused in Slice 2.
 </script>
 
-<section class="rounded-md border border-border bg-secondary/40 p-4">
+<section class="border-border bg-secondary/40 rounded-md border p-4">
   <h2 class="text-lg font-semibold">{title}</h2>
   <p class="text-muted-foreground text-sm">Custom melee stats renderer.</p>
   <ul class="mt-2 text-sm">
@@ -5704,8 +5830,8 @@ export const sections: SectionMap = {
     payload: Record<string, unknown>;
   };
 
-  let id      = $derived(page.params.id);
-  let name    = $state<string | null>(null);
+  let id = $derived(page.params.id);
+  let name = $state<string | null>(null);
   let variant = $state<string | null>(null);
   let sections = $state<Section[]>([]);
   let loading = $state(true);
@@ -5713,8 +5839,12 @@ export const sections: SectionMap = {
 
   onMount(async () => {
     const detail = await getItemDetail(id);
-    if (!detail) { notFound = true; loading = false; return; }
-    name    = detail.name;
+    if (!detail) {
+      notFound = true;
+      loading = false;
+      return;
+    }
+    name = detail.name;
     variant = detail.variant;
     const allFields = JSON.parse(detail.fields_json) as Record<string, unknown>;
     const sectionsMeta = await listDetailSections("item");
@@ -5725,7 +5855,11 @@ export const sections: SectionMap = {
         const fieldsResolved = await Promise.all(
           fieldList.map(async (f) => {
             const meta = await getEntityField("item", f.field_id);
-            return { id: f.field_id, label: meta?.label ?? f.field_id, value: allFields[f.field_id] };
+            return {
+              id: f.field_id,
+              label: meta?.label ?? f.field_id,
+              value: allFields[f.field_id],
+            };
           }),
         );
         return {
@@ -5748,7 +5882,7 @@ export const sections: SectionMap = {
   <p class="text-muted-foreground">Loading…</p>
 {:else if notFound}
   <h1 class="text-2xl font-bold">Not found</h1>
-  <p class="mt-2 text-muted-foreground">No item with id <code>{id}</code>.</p>
+  <p class="text-muted-foreground mt-2">No item with id <code>{id}</code>.</p>
   <a class="mt-4 inline-block underline" href="/items">← back to items</a>
 {:else}
   <a class="text-sm underline" href="/items">← back to items</a>
@@ -5762,7 +5896,7 @@ export const sections: SectionMap = {
         {@const Renderer = sectionRegistry[section.rendererKey]}
         <Renderer title={section.title} fields={section.fields} payload={section.payload} />
       {:else}
-        <section class="rounded-md border border-destructive bg-destructive/10 p-4 text-sm">
+        <section class="border-destructive bg-destructive/10 rounded-md border p-4 text-sm">
           Unknown section renderer: <code>{section.rendererKey}</code>
         </section>
       {/if}
@@ -6256,7 +6390,7 @@ Spot checks:
 
 1. **Future Ardenfall item API drift.** G.2 verified `Parameter<T>.Get()`, `Parameter<T>.IsSet`, `SmartListParameter<T>.Get()`, `ItemData.moneyValue`, `EquipItemData.usableSlots`, and the slice-1 variant members against Demo2025 `Assembly-CSharp.dll`. If a later Ardenfall patch changes them, update descriptors, adapters, fixtures, and tests in one cutover.
 2. **Bun's Node-API surface against `sharp`.** Asset emission is deferred to Slice 3, so the `sharp` spike is not on Slice 1's critical path. Slice 3 must include the spike before its `emit-assets` stage.
-3. **`sql.js-fts5` Vite v8 compatibility.** The library uses `?url` import for the wasm file, which Vite 8 / Rolldown supports natively. If a future Vite minor changes that API, switch to `import.meta.glob` or static asset URLs.
+3. **`@sqlite.org/sqlite-wasm` and Vite.** The package must be in `optimizeDeps.exclude` so its `.wasm` is served as a static asset rather than pre-bundled. The main-thread variant we use for read-only static data does **not** require COOP/COEP; only the worker + OPFS variant does, and Slice 1 does not use it.
 4. **macOS WAL persistence in pipeline.** `emit-sqlite` issues `PRAGMA journal_mode = DELETE` to avoid WAL sidecars. If a downstream step opens the file with WAL re-enabled, sidecars will reappear; pipeline-managed databases are not modified after `emit-sqlite` writes them, so this is benign for Slice 1.
 
 ### Execution handoff

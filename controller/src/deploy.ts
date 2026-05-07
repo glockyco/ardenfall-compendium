@@ -55,7 +55,7 @@ async function requireFile(path: string): Promise<void> {
     if (!info.isFile()) throw new Error(`Missing deploy source: ${path}`);
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("Missing deploy source:")) throw error;
-    throw new Error(`Missing deploy source: ${path}`);
+    throw new Error(`Missing deploy source: ${path}`, { cause: error });
   }
 }
 
