@@ -25,8 +25,8 @@ This slice ships **no new entity coverage**, **no new presentation primitives** 
 - No tooltips, formatters, or inter-entity links (Slice 4 owns that).
 - No locations or maps (Slice 5+ owns that).
 - No FTS5 search or facets (Slice 10 owns that).
-- No deployment-time secrets management beyond what Cloudflare Pages requires.
-- No pivot away from `adapter-static`; the site stays an SPA shell. If a later slice needs SSR, that decision lands in its own plan.
+- No deployment-time secrets management in the initial local/operator deploy path. Wrangler uses the operator's local Cloudflare login, matching the Ancient Kingdoms setup. If a later CI deploy is required, that later plan must explicitly choose GitHub Action credentials/secrets.
+- No deployment-time pivot beyond the Cloudflare adapter needed for `wrangler deploy`; the site remains an SPA shell (`ssr=false`, `prerender=false`) unless a later slice chooses SSR.
 
 ## Bug inventory
 
@@ -503,91 +503,86 @@ git commit -m "feat(controller): wait-for-world helper drives MainMenu continue 
 
 **Status:** Closed in this plan.
 
-Cloudflare Pages with Direct Upload via `wrangler pages deploy` against `adapter-static` output. Rationale:
+Cloudflare Workers Static Assets via SvelteKit's `adapter-cloudflare` and `wrangler deploy`, modelled directly on Ancient Kingdoms' `website/wrangler.toml` + `pnpm cf-deploy` setup.
 
-- The site is a pure SPA with `ssr=false`, `prerender=false`. `adapter-static` is the right adapter and emits a single shell with `fallback: "index.html"`.
-- Cloudflare Pages serves static assets cleanly with native SPA fallback (`_redirects` line `/* /index.html 200`).
-- The sister project Ancient Kingdoms uses Cloudflare Workers with `adapter-cloudflare`. Switching Ardenfall Archives to Workers is unnecessary today — Pages is the simpler and cheaper answer for a pure static SPA. We can revisit if a slice needs SSR or edge functions, at which point switching adapters is a localised change.
-- The `compendiums.org` umbrella already proves out the Cloudflare side; same domain-management story.
+Observed Ancient Kingdoms setup:
 
-#### Task G.2 — Wire build + Pages deploy
+- `website/svelte.config.js` uses `@sveltejs/adapter-cloudflare`.
+- `website/wrangler.toml` points `main` at `.svelte-kit/cloudflare/_worker.js`, sets `workers_dev = false`, binds the custom domain route, and declares `[assets] directory = ".svelte-kit/cloudflare"`.
+- `website/package.json` has `"cf-deploy": "wrangler deploy"`.
+- There is no checked-in GitHub Actions deploy workflow and no repo-side `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` assumption. Deployment uses Wrangler auth (`wrangler login`) from the operator environment.
+
+Rationale:
+
+- This matches the existing `compendiums.org` umbrella pattern instead of introducing a second Cloudflare product path.
+- Wrangler owns project creation / upload / route binding after the initial Cloudflare login and custom-domain setup. No GitHub secrets are required for the initial deployment flow.
+- Ardenfall's site remains an SPA (`ssr=false`, `prerender=false`) even under `adapter-cloudflare`; the Worker is primarily the static-asset entrypoint plus routing shell. If a later slice wants SSR/edge code, the adapter is already compatible.
+
+#### Task G.2 — Wire `adapter-cloudflare` + Wrangler deploy
 
 **Files:**
 
-- Create: `site/_redirects` (SPA fallback rule)
-- Create: `site/wrangler.toml` (Pages project config)
-- Modify: `site/package.json` (add `cf-deploy` script)
-- Modify: `.github/workflows/ci.yml` (add deploy job gated on `main` push)
-- Modify: `site/AGENTS.md` (document the deploy)
+- Modify: `site/package.json` (add `@sveltejs/adapter-cloudflare`, `wrangler`, `cf-deploy`)
+- Modify: `site/svelte.config.js` (switch from `adapter-static` to `adapter-cloudflare`)
+- Create: `site/wrangler.toml`
+- Modify: `site/AGENTS.md` (document deploy and login assumptions)
 
-- [ ] **Step 1: SPA fallback.** `site/_redirects` (or `site/static/_redirects` so it ends up in the build output):
-
-  ```
-  /*    /index.html   200
-  ```
-
-  This makes Pages serve `index.html` for any unknown path, letting the SvelteKit router handle 404s via `+error.svelte`.
-
-- [ ] **Step 2: `site/wrangler.toml`.**
-
-  ```toml
-  name = "ardenfall-archives"
-  compatibility_date = "2026-05-07"
-  pages_build_output_dir = "build"
-  ```
-
-- [ ] **Step 3: `cf-deploy` script.** In `site/package.json`:
+- [ ] **Step 1: Add Cloudflare deploy dependencies.** In `site/package.json`, add current stable `@sveltejs/adapter-cloudflare` and `wrangler` dev dependencies. Add:
 
   ```json
-  "scripts": {
-    "...": "...",
-    "cf-deploy": "wrangler pages deploy build --project-name ardenfall-archives"
-  }
+  "cf-deploy": "wrangler deploy"
   ```
 
-  Add `wrangler` to `site` devDependencies at a recent stable version.
+- [ ] **Step 2: Switch SvelteKit adapter.** `site/svelte.config.js` imports `@sveltejs/adapter-cloudflare` and configures `adapter: adapter({})`. Preserve the existing SPA behavior from `site/src/routes/+layout.ts` (`ssr = false`, `prerender = false`).
 
-- [ ] **Step 4: CI deploy job.** Append to `.github/workflows/ci.yml`:
+- [ ] **Step 3: Add `site/wrangler.toml`.** Model after Ancient Kingdoms:
 
-  ```yaml
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [lint, pipeline, site, fixtures]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with: { bun-version: 1.3.13 }
-      - run: bun install --frozen-lockfile
-      - run: bun run codegen:validators
-      - name: build synthetic sqlite for first deploy
-        run: bun run pipeline:run fixtures/synthetic/snapshot site/static
-      - run: bun run --cwd site build
-      - name: deploy to cloudflare pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy site/build --project-name ardenfall-archives
+  ```toml
+  name = "ardenfall-compendium-site"
+  main = ".svelte-kit/cloudflare/_worker.js"
+  compatibility_date = "2026-05-07"
+  compatibility_flags = ["nodejs_compat"]
+
+  workers_dev = false
+
+  [[routes]]
+  pattern = "ardenfall.compendiums.org"
+  custom_domain = true
+
+  [assets]
+  directory = ".svelte-kit/cloudflare"
+  binding = "ASSETS"
   ```
 
-  The `synthetic sqlite` fallback is a stop-gap until live snapshots are committed-via-archive in a later slice; it ensures the deploy has _some_ SQLite blob to serve so the site is functional even if no real extraction has been run since the last deploy.
+  `name` intentionally uses `ardenfall-compendium-site` to match the new domain/project naming direction.
 
-- [ ] **Step 5: Custom domain.** Configure `ardenfall.compendiums.org` as a custom domain on the Cloudflare Pages project (manual UI step; document the steps in `site/AGENTS.md`). DNS record management lives in the `compendiums.org` umbrella account.
+- [ ] **Step 4: Keep CI as verification, not deployment.** `.github/workflows/ci.yml` keeps building the site (including the synthetic SQLite copy step) but does **not** deploy. Deployment is local/operator-driven for Slice 1.5:
 
-- [ ] **Step 6: Update `site/AGENTS.md`** to document the deploy story (one-line summary of how a deploy happens; reference to the wrangler config).
+  ```sh
+  bun run pipeline:run fixtures/synthetic/snapshot site/static
+  bun run --cwd site build
+  bun run --cwd site cf-deploy
+  ```
 
-- [ ] **Step 7: Verify.** Push to a feature branch, watch the deploy job (it should _not_ run on PRs — only on `main` pushes per the `if:` clause). Merge, watch the deploy job run, verify `https://ardenfall.compendiums.org/items` resolves and renders the synthetic-fixture-derived data.
+  If automated deploys become necessary later, add a separate plan that explicitly chooses the GitHub Actions credential model. Do not smuggle `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` into this slice.
+
+- [ ] **Step 5: Custom domain.** Configure `ardenfall.compendiums.org` as a custom domain/route in the Cloudflare account if Wrangler does not create the route automatically on first deploy. DNS record management lives in the `compendiums.org` umbrella account.
+
+- [ ] **Step 6: Update `site/AGENTS.md`** to document:
+  - `bun run --cwd site cf-deploy` is the deploy command.
+  - The operator must be logged in with Wrangler (`wrangler login`) or otherwise have a valid Wrangler auth context.
+  - CI verifies the deployable build but does not deploy.
+
+- [ ] **Step 7: Verify.** From a Wrangler-authenticated shell, run the deploy commands in Step 4. Verify `https://ardenfall.compendiums.org/items` resolves and renders the synthetic-fixture-derived data. Verify an unknown URL reaches the SPA shell and renders `+error.svelte` after Phase D lands.
 
 - [ ] **Step 8: Commit (per logical chunk).**
 
   ```sh
-  git commit -m "feat(site): cloudflare pages deploy config (_redirects + wrangler.toml)"
-  git commit -m "ci(repo): deploy site to cloudflare pages on main"
-  git commit -m "docs(site): document the deploy workflow"
+  git commit -m "feat(site): cloudflare static assets deploy config"
+  git commit -m "docs(site): document wrangler deploy workflow"
   ```
 
-**Phase G gate:** `https://ardenfall.compendiums.org/items` returns the rendered overview page with the deployed SQLite blob's contents. `https://ardenfall.compendiums.org/items/<known-id>` returns the detail page. Unknown URLs hit the SPA fallback and render `+error.svelte` with status 404.
+**Phase G gate:** `https://ardenfall.compendiums.org/items` returns the rendered overview page with the deployed SQLite blob's contents. `https://ardenfall.compendiums.org/items/<known-id>` returns the detail page. Unknown URLs hit the SPA shell and render `+error.svelte` with status 404.
 
 ## Self-review
 
@@ -603,7 +598,7 @@ Cloudflare Pages with Direct Upload via `wrangler pages deploy` against `adapter
 | Site `+error.svelte`                   | D.1      |
 | Controller `game.quit`                 | E.1      |
 | `wait-for-world` automation            | F.1      |
-| Cloudflare Pages deployment            | G.1, G.2 |
+| Cloudflare Static Assets deployment    | G.1, G.2 |
 
 ### Bug-to-task trace
 
@@ -635,7 +630,7 @@ No `TODO`, `TBD`, "implement later" appear in implementation steps. The two genu
 ### Known risks remaining
 
 1. **Runtime-eval brittleness for `wait-for-world`.** If Mono runtime-eval through HotRepl is fragile against the menu's UnityEngine.UI hierarchy (renames, dynamic instantiation), the helper falls back to a typed `archive.continueFromMenu` command on the mod side. This decision is made in Task F.1 Step 1 once the eval target is identified.
-2. **Cloudflare Pages free tier limits.** 500 builds/month, unlimited bandwidth. Slice 1.5 has one deploy per merge to `main`; well within limits. If a later slice introduces preview deploys per PR, monitor.
+2. **Cloudflare Workers/Static Assets free tier limits.** Slice 1.5 has local/operator deploys only; CI does not deploy. If a later slice introduces automated deploys or preview deploys per PR, monitor Worker and build limits then.
 3. **Synthetic-fixture-derived deploy.** Until a real snapshot is archived externally and copied into CI, the deployed site only knows the 2 synthetic items. This is acceptable for Slice 1.5 (deployment exists; content thinness is real but not a deployment defect) and is fixed in Slice 13 (versioning + snapshot archive).
 
 ### Execution handoff
