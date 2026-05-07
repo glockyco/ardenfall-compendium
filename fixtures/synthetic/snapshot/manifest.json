@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "gameVersion": "Demo2025-test",
+  "buildIdentifier": "synthetic",
+  "extractorVersion": "0.0.0-test",
+  "extractedAt": "2026-05-03T12:00:00Z",
+  "preflight": {
+    "passed": true,
+    "completedAt": "2026-05-03T12:00:00Z",
+    "checks": [
+      { "name": "builtLookupTable", "ok": true, "reason": null },
+      { "name": "ardenfallGame", "ok": true },
+      { "name": "worldData", "ok": true },
+      { "name": "masterRecordTable", "ok": true }
+    ]
+  },
+  "counts": { "item": 2 },
+  "diagnostics": { "fatal": 0, "diagnostic": 0 },
+  "hashes": { "items.json": "0000000000000000000000000000000000000000000000000000000000000000" }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "armor",
+  "label": "Armor",
+  "unityType": "Ardenfall.Item.ArmorItemData",
+  "canonicalTable": "item_armor",
+  "parentVariantId": "equipment",
+  "position": 50,
+  "fields": [
+    {
+      "name": "armorRating",
+      "type": "number",
+      "from": "armorRating.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "armorDurabilityMax",
+      "type": "integer",
+      "from": "durabilityMax.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "coverageSlot",
+      "type": "string",
+      "from": "usableSlots.Get()",
+      "missingPolicy": "diagnostic"
+    }
+  ]
+}

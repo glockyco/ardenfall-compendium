@@ -1,0 +1,89 @@
+{
+  "entityId": "item",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "fixture-iron-sword",
+      "variant": "melee-weapon",
+      "fields": {
+        "id": "fixture-iron-sword",
+        "name": "Iron Sword",
+        "weight": 3.5,
+        "value": 25,
+        "iconRef": {
+          "kind": "lookupAsset",
+          "guid": "fixture-icon-iron-sword",
+          "unityType": "UnityEngine.Texture2D"
+        },
+        "description": "A simple iron blade.",
+        "equipSlot": "Weapon",
+        "animationSpeedMultiplier": 1.0,
+        "twoHanded": false,
+        "damage": 7.5,
+        "criticalHitChance": 0.05,
+        "meleeDurabilityMax": 100,
+        "canBlock": true
+      },
+      "tags": ["weapon", "metal"],
+      "provenance": {
+        "name": {
+          "kind": "parameter",
+          "source": "itemName.Get()",
+          "isSet": true,
+          "inherited": false,
+          "parent": null
+        },
+        "weight": {
+          "kind": "parameter",
+          "source": "weight.Get()",
+          "isSet": true,
+          "inherited": false
+        },
+        "value": {
+          "kind": "parameter",
+          "source": "moneyValue.Get()",
+          "isSet": true,
+          "inherited": false
+        }
+      },
+      "diagnostics": []
+    },
+    {
+      "id": "fixture-leather-tunic",
+      "variant": "armor",
+      "fields": {
+        "id": "fixture-leather-tunic",
+        "name": "Leather Tunic",
+        "weight": 4.0,
+        "value": 12,
+        "iconRef": {
+          "kind": "missing",
+          "reason": "lookupAssetGuidMissing",
+          "source": "ItemData.icon"
+        },
+        "description": "",
+        "equipSlot": "ChestArmor",
+        "armorRating": 6,
+        "armorDurabilityMax": 80,
+        "coverageSlot": "ChestArmor"
+      },
+      "tags": ["armor", "leather"],
+      "provenance": {
+        "iconRef": {
+          "kind": "missing",
+          "source": "ItemData.icon",
+          "isSet": false,
+          "inherited": false
+        }
+      },
+      "diagnostics": [
+        {
+          "severity": "diagnostic",
+          "code": "lookupAssetGuidMissing",
+          "field": "iconRef",
+          "message": "icon ref missing from BuiltLookupTable"
+        }
+      ]
+    }
+  ]
+}

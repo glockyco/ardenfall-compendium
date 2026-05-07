@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "hand-item",
+  "label": "Hand item",
+  "unityType": "Ardenfall.Item.HandItemData",
+  "canonicalTable": "item_hand_items",
+  "parentVariantId": "equipment",
+  "position": 20,
+  "fields": [
+    {
+      "name": "animationSpeedMultiplier",
+      "type": "number",
+      "from": "animationSpeedMultiplier.Get()",
+      "missingPolicy": "optional-empty"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ardenfall-archives.example/schemas/manifest.schema.json",
+  "title": "Snapshot manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "extractorVersion",
+    "extractedAt",
+    "preflight",
+    "counts",
+    "diagnostics",
+    "hashes"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "gameVersion": { "type": "string" },
+    "buildIdentifier": { "type": "string" },
+    "extractorVersion": { "type": "string", "minLength": 1 },
+    "extractedAt": { "type": "string", "format": "date-time" },
+    "preflight": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passed", "checks", "completedAt"],
+      "properties": {
+        "passed": { "type": "boolean" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "ok"],
+            "properties": {
+              "name": { "type": "string" },
+              "ok": { "type": "boolean" },
+              "reason": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fatal", "diagnostic"],
+      "properties": {
+        "fatal": { "type": "integer", "minimum": 0 },
+        "diagnostic": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "hashes": {
+      "type": "object",
+      "additionalProperties": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+    }
+  }
+}

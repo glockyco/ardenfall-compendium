@@ -1,0 +1,16 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "equipment",
+  "label": "Equipment",
+  "unityType": "Ardenfall.Item.EquipItemData",
+  "canonicalTable": "item_equipment",
+  "position": 10,
+  "fields": [
+    {
+      "name": "equipSlot",
+      "type": "string",
+      "from": "usableSlots.Get()",
+      "missingPolicy": "diagnostic"
+    }
+  ]
+}

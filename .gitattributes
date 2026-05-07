@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.png binary
+*.webp binary
+*.dll binary
+*.sqlite binary
+bun.lock -text

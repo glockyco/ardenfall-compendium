@@ -1,0 +1,41 @@
+{
+  "name": "ardenfall-archives",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "bun": ">=1.3.13"
+  },
+  "workspaces": [
+    "pipeline",
+    "site",
+    "controller"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "bunx tsgo --noEmit -p .",
+    "codegen:validators": "bun run pipeline/scripts/codegen-validators.ts",
+    "check:fixtures": "bun run pipeline/scripts/check-fixtures.ts",
+    "pipeline:run": "bun run pipeline/src/cli.ts run",
+    "controller:deploy": "bun run controller/src/deploy.ts",
+    "controller:export": "bun run controller/src/cli.ts export",
+    "controller:test": "bun test controller/test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/bun": "^1.3.13",
+    "@typescript/native-preview": "beta",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "eslint": "^10.3.0",
+    "eslint-plugin-svelte": "^3.17.1",
+    "globals": "^17.6.0",
+    "lefthook": "^2.1.6",
+    "prettier": "^3.8.3",
+    "prettier-plugin-svelte": "^3.5.1",
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.2"
+  }
+}

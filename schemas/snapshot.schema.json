@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ardenfall-archives.example/schemas/snapshot.schema.json",
+  "title": "Snapshot per-entity envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["entityId", "schemaVersion", "rows"],
+  "properties": {
+    "entityId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "fields"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "variant": { "type": "string" },
+          "fields": { "type": "object" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#/$defs/fieldProvenance" }
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/diagnostic" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "fieldProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "source", "isSet", "inherited"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "parameter",
+            "smartListParameter",
+            "lookupAsset",
+            "record",
+            "runtimeObject",
+            "missing"
+          ]
+        },
+        "source": { "type": "string" },
+        "isSet": { "type": "boolean" },
+        "inherited": { "type": "boolean" },
+        "parent": {
+          "type": ["object", "null"],
+          "properties": {
+            "kind": { "type": "string" },
+            "guid": { "type": "string" },
+            "unityType": { "type": "string" }
+          }
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "code", "field"],
+      "properties": {
+        "severity": { "enum": ["fatal", "diagnostic"] },
+        "code": { "type": "string" },
+        "field": { "type": "string" },
+        "message": { "type": "string" }
+      }
+    }
+  }
+}

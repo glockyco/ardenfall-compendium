@@ -1,0 +1,26 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: prettier
+      glob: "*.{ts,js,svelte,json,jsonc,md,css,yaml,yml}"
+      run: bunx prettier --write {staged_files}
+      stage_fixed: true
+    - name: eslint
+      glob: "*.{ts,js,svelte}"
+      exclude: ["pipeline/dist/**"]
+      run: bunx eslint --fix {staged_files}
+      stage_fixed: true
+    - name: dotnet-format
+      glob: "*.cs"
+      run: dotnet format mod/ArdenfallArchives.csproj --include {staged_files}
+      stage_fixed: true
+      skip:
+        - merge
+        - rebase
+
+pre-push:
+  jobs:
+    - name: typecheck
+      run: bun run typecheck
+    - name: tests
+      run: bun test --pass-with-no-tests

@@ -142,6 +142,7 @@ describe("item invariants", () => {
 **Status:** Accepted for Slice 1.
 
 **`shadcn-svelte` 1.2.7 (CLI copy-into-repo) + `bits-ui` 2.18.1 (headless primitives) + `tailwindcss` 4.2.4 with `@theme inline` token bridge.**
+Companion deps owned by the shadcn registry: `clsx` 2.1.1 + `tailwind-merge` 3.5.0 (the canonical `cn()` helper), `tailwind-variants` 3.2.2 (`tv()` for component variant maps), `@lucide/svelte` 1.x (icon library; supersedes the older `lucide-svelte`), `tw-animate-css` 1.4.0 (motion utilities), `@internationalized/date` 3.12.x (peer of bits-ui Calendar/DateField).
 
 ### Rationale
 
@@ -172,23 +173,23 @@ No evaluated library provides a sortable/filterable `Table` that consumes column
 @import "tailwindcss";
 
 @theme inline {
-  --color-background:        var(--background);
-  --color-foreground:        var(--foreground);
-  --color-primary:           var(--primary);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-muted:             var(--muted);
-  --color-muted-foreground:  var(--muted-foreground);
-  --color-border:            var(--border);
-  --color-ring:              var(--ring);
-  --radius-lg:               var(--radius);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --radius-lg: var(--radius);
 }
 
 :root {
-  --radius:           0.5rem;
-  --background:       oklch(0.10 0.02 260);
-  --foreground:       oklch(0.95 0.01 260);
-  --primary:          oklch(0.70 0.18 50);
-  --primary-foreground: oklch(0.10 0 0);
+  --radius: 0.5rem;
+  --background: oklch(0.1 0.02 260);
+  --foreground: oklch(0.95 0.01 260);
+  --primary: oklch(0.7 0.18 50);
+  --primary-foreground: oklch(0.1 0 0);
   /* ... */
 }
 ```
@@ -204,13 +205,13 @@ No evaluated library provides a sortable/filterable `Table` that consumes column
 
 **Status:** Accepted for Slice 1.
 
-**Prettier 3.5+ with `prettier-plugin-svelte` 3.5.1, ESLint 9 (flat config) with `eslint-plugin-svelte` 3.17.0 and `typescript-eslint` 8.x.** Biome is intentionally deferred.
+**Prettier 3.8+ with `prettier-plugin-svelte` 3.5.1, ESLint 10 (flat config) with `eslint-plugin-svelte` 3.17.1 and `typescript-eslint` 8.59+. `typescript` ^6.0.3 is installed at the root because `typescript-eslint` 8.x declares `typescript: >=4.8.4 <6.1.0` as a non-optional peer for `parserOptions.projectService` (used on `.svelte` files) and `@typescript/native-preview` does not satisfy that peer slot.** Biome is intentionally deferred.
 
 ### Rationale
 
 The user explicitly asked whether Biome is the right choice. As of 2026-05-03 it is not, for two reasons verified directly from biomejs.dev:
 
-1. **Svelte support is 🟡 experimental** in Biome 2.4.14. The official Biome internals page states: *"Biome doesn't do any particular parsing for language specific syntax, for example the control-flow syntax of Svelte e.g. `{#if } {/if}`. This means that formatting might not match the desired expectations, and lint rules might not detect some cases."* Enabling `.svelte` requires `html.experimentalFullSupportEnabled: true` and `overrides` to suppress false positives for `useConst`, `useImportType`, `noUnusedVariables`, `noUnusedImports`.
+1. **Svelte support is 🟡 experimental** in Biome 2.4.14. The official Biome internals page states: _"Biome doesn't do any particular parsing for language specific syntax, for example the control-flow syntax of Svelte e.g. `{#if } {/if}`. This means that formatting might not match the desired expectations, and lint rules might not detect some cases."_ Enabling `.svelte` requires `html.experimentalFullSupportEnabled: true` and `overrides` to suppress false positives for `useConst`, `useImportType`, `noUnusedVariables`, `noUnusedImports`.
 2. **Markdown is ⌛️ in progress** (no formatter or linter yet). The repository carries substantial Markdown across `docs/superpowers/specs/`, `docs/superpowers/plans/`, AGENTS.md, and READMEs.
 
 This is a Svelte-heavy, Markdown-heavy repository. Biome cannot robustly cover either today. Track [biomejs/biome discussion #6276](https://github.com/biomejs/biome/discussions/6276) for the Svelte support roadmap.
@@ -323,12 +324,12 @@ The repository is on GitHub. Actions has free minutes for public repositories, n
 
 ### Job layout
 
-| Job | Trigger paths | Steps |
-|---|---|---|
-| `mod` | `mod/**` | `actions/setup-dotnet@v4` → `dotnet build mod/ArdenfallArchives.csproj` |
-| `pipeline` | `pipeline/**`, `entities/**`, `schemas/**`, `bun.lock`, `package.json` | `oven-sh/setup-bun@v2` → `bun install --frozen-lockfile` → `bunx tsgo --noEmit -p pipeline` → `bun test pipeline/test` |
-| `site` | `site/**`, `entities/**`, `schemas/**`, `bun.lock`, `package.json` | setup-bun → `bun install --frozen-lockfile` → `bun run --cwd site check` (uses `svelte-check --tsgo`) → `bun run --cwd site build` |
-| `fixtures` | `fixtures/**`, `pipeline/scripts/check-fixtures.ts` | setup-bun → `bun run check:fixtures` (size budgets, manifest presence, no machine-local paths, no raw Unity JSON) |
+| Job        | Trigger paths                                                          | Steps                                                                                                                              |
+| ---------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `mod`      | `mod/**`                                                               | `actions/setup-dotnet@v4` → `dotnet build mod/ArdenfallArchives.csproj`                                                            |
+| `pipeline` | `pipeline/**`, `entities/**`, `schemas/**`, `bun.lock`, `package.json` | `oven-sh/setup-bun@v2` → `bun install --frozen-lockfile` → `bunx tsgo --noEmit -p pipeline` → `bun test pipeline/test`             |
+| `site`     | `site/**`, `entities/**`, `schemas/**`, `bun.lock`, `package.json`     | setup-bun → `bun install --frozen-lockfile` → `bun run --cwd site check` (uses `svelte-check --tsgo`) → `bun run --cwd site build` |
+| `fixtures` | `fixtures/**`, `pipeline/scripts/check-fixtures.ts`                    | setup-bun → `bun run check:fixtures` (size budgets, manifest presence, no machine-local paths, no raw Unity JSON)                  |
 
 Path filters use `paths:` on the workflow trigger so each job only runs when relevant files change.
 
@@ -348,7 +349,22 @@ Path filters use `paths:` on the workflow trigger so each job only runs when rel
 
 **Status:** Accepted for Slice 1.
 
-**`bun:sqlite` (built-in) for SQLite. `sharp` 0.34.5 for image processing.**
+**`bun:sqlite` (built-in) for the pipeline. `@sqlite.org/sqlite-wasm` 3.53.0-build1 for the site (in-browser SQLite). `sharp` 0.34.5 for image processing.**
+
+### Site-side SQLite (browser)
+
+`@sqlite.org/sqlite-wasm` is the official SQLite-project Wasm build, published by the SQLite team and tracking SQLite mainline (`3.53.0-build1`, 2026-04-21). It ships the full SQLite feature surface — including FTS5 — and is the only browser SQLite that the upstream project itself maintains. Slice 1 does not use FTS5 (Slice 7), but the choice forecloses a Slice 7 driver swap and avoids depending on an unmaintained fork.
+
+Rejected alternatives:
+
+- **`sql.js-fts5` 1.4.0** — last published 2021-01-06, unmaintained. The fork exists because upstream `sql.js` (1.14.1) compiles only with `-DSQLITE_ENABLE_FTS3`, not FTS5; verified in [sql-js/sql.js Makefile](https://github.com/sql-js/sql.js/blob/master/Makefile). An unmaintained dependency owning the site's data layer is unacceptable.
+- **`sql.js` 1.14.1** — actively maintained but FTS5-less. Picking it now means a driver swap in Slice 7.
+- **`wa-sqlite`** 1.0.0 — last published 2024-01; modern API but more complex VFS handling and no first-party SQLite-team backing.
+
+Caveats:
+
+- Slice 1 ships a single static `data.sqlite` blob fetched via `fetch("/data.sqlite")` and loaded into memory with `sqlite3.capi.sqlite3_deserialize`. This works in the main thread and **does not** require COOP/COEP headers. The COOP/COEP requirement only applies to the worker + OPFS variant (persistent client-side storage), which Slice 1 does not need.
+- Vite must list the package in `optimizeDeps.exclude` so its `.wasm` is served as a real asset, not pre-bundled.
 
 ### Rationale
 
@@ -370,12 +386,15 @@ Path filters use `paths:` on the workflow trigger so each job only runs when rel
 
 **Status:** Accepted for Slice 1; pin migrates to stable in ≤2 months.
 
-**Today**: `@typescript/native-preview@beta` providing the `tsgo` executable.
-**On release**: switch to `typescript@^7.0.x` providing `tsc`.
+**Today** (2026-05-06):
+
+- **Pipeline + root**: `@typescript/native-preview@beta` providing the `tsgo` executable. Used by `bun run typecheck` and `pipeline/test`.
+- **Site**: `svelte-check` invoked **without** `--tsgo`. svelte-check + tsgo currently fails to resolve `<script module>` named exports through Svelte's `*.svelte` ambient module declaration; the failure mode is `error TS2305: Module "*.svelte" has no exported member` on every shadcn-svelte primitive's `index.ts`. Tracked in [sveltejs/language-tools svelte-check README — `--tsgo` Subject to the same limitations as `--incremental`](https://github.com/sveltejs/language-tools/blob/master/packages/svelte-check/README.md). svelte-check defaults to vanilla TypeScript (`typescript` ^6.0.3 already installed for `typescript-eslint` per §6); 0-error sweep confirmed across 797 files.
+- **On TS 7 stable**: switch root + pipeline to `typescript@^7.0.x` providing `tsc`. Re-evaluate `svelte-check --tsgo` once the language-tools team lands the `<script module>` resolver fix; until then site keeps the vanilla TS path.
 
 ### Rationale
 
-TypeScript 7.0 was [announced 2026-04-21](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/) as a Go port of the existing TypeScript compiler. Type-checking semantics are structurally identical to TypeScript 6.0; in 19,926 of 20,000 compiler tests, output matches 6.0 exactly. The Microsoft team explicitly says: *"Don't let the 'beta' label fool you – you can probably start using this in your day-to-day work immediately."* Pre-release builds are tested at Bloomberg, Canva, Figma, Google, Linear, Notion, Slack, Vercel, and similar.
+TypeScript 7.0 was [announced 2026-04-21](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0-beta/) as a Go port of the existing TypeScript compiler. Type-checking semantics are structurally identical to TypeScript 6.0; in 19,926 of 20,000 compiler tests, output matches 6.0 exactly. The Microsoft team explicitly says: _"Don't let the 'beta' label fool you – you can probably start using this in your day-to-day work immediately."_ Pre-release builds are tested at Bloomberg, Canva, Figma, Google, Linear, Notion, Slack, Vercel, and similar.
 
 The stable release is announced for "within two months" from 2026-04-21, shipping under the `typescript` package with the `tsc` entry point. The migration when stable lands is a one-line dependency swap.
 
@@ -421,30 +440,44 @@ Vite 8 ships **Rolldown** (Rust-based bundler, currently rc.17) replacing Rollup
 
 ## 12. Pin manifest
 
-All versions verified on 2026-05-03 against npm registry, GitHub releases, or official docs. See per-section sources for citations.
+All versions re-verified on 2026-05-06 against npm registry, GitHub releases, or official docs. See per-section sources for citations.
 
-| Package | Pin | Notes |
-|---|---|---|
-| `@biomejs/biome` | — (not installed) | Track Svelte/Markdown support; revisit per §6 |
-| `@sveltejs/adapter-static` | `^3.0.10` | Static prerender |
-| `@sveltejs/kit` | `^2.59.0` | TS 6.0 supported since 2.56.0; works with TS 7 via `--tsgo` |
-| `@typescript/native-preview` | `beta` | Migrate to `typescript@^7.0.x` when stable |
-| `ajv` | `^8.20.0` | Use `dist/2020` entry; standalone codegen |
-| `ajv-formats` | `^3.0.1` | Treat as frozen — feature-complete, no patches expected |
-| `bits-ui` | `^2.18.1` | `peerDep: svelte ^5.33.0` |
-| `bun` | `1.3.13` | Runtime |
-| `eslint` | `^9.x` | Flat config |
-| `eslint-plugin-svelte` | `^3.17.0` | Svelte 5 runes via `svelteFeatures.runes` |
-| `fast-check` | `^4.7.0` | No adapter; plain under `bun:test` |
-| `lefthook` | `^2.1.6` | Go binary; replaces husky + lint-staged |
-| `prettier` | `^3.5` | |
-| `prettier-plugin-svelte` | `^3.5.1` | `peerDep: svelte ^5.0.0` |
-| `shadcn-svelte` | `1.2.7` | GitHub release tag — npm dist-tag may lag |
-| `sharp` | `^0.34.5` | Bun Node-API v9; spike before pipeline relies on it |
-| `svelte` | `^5.55.5` | Runes |
-| `tailwindcss` | `^4.2.4` | `@theme inline` token bridge |
-| `typescript-eslint` | `^8.x` | |
-| `vite` | `^8.0.10` | Ships Rolldown rc.17 |
+| Package                        | Pin               | Notes                                                                                |
+| ------------------------------ | ----------------- | ------------------------------------------------------------------------------------ |
+| `@biomejs/biome`               | — (not installed) | Track Svelte/Markdown support; revisit per §6                                        |
+| `@eslint/js`                   | `^10.0.1`         | Matches `eslint` major                                                               |
+| `@internationalized/date`      | `^3.12.1`         | Peer of `bits-ui` Calendar/DateField                                                 |
+| `@lucide/svelte`               | `^1.14.0`         | Modern Svelte 5 icon package; supersedes `lucide-svelte`                             |
+| `@sqlite.org/sqlite-wasm`      | `^3.53.0-build1`  | Official SQLite-team Wasm build; ships FTS5; site-side                               |
+| `@sveltejs/adapter-static`     | `^3.0.10`         | Static prerender                                                                     |
+| `@sveltejs/kit`                | `^2.59.1`         | Vite 8 supported in `peerDependencies.vite`                                          |
+| `@sveltejs/vite-plugin-svelte` | `^7.1.1`          | Vite 8 + Svelte 5.46.4+; v6.x targets vite ^6/^7 only                                |
+| `@tailwindcss/vite`            | `^4.2.4`          | Vite 8 supported via `vite ^5.2.0 \|\| ^6 \|\| ^7 \|\| ^8` peer                      |
+| `@typescript/native-preview`   | `beta`            | Pipeline + root only; site uses vanilla `typescript` (see §10)                       |
+| `ajv`                          | `^8.20.0`         | Use `dist/2020` entry; standalone codegen                                            |
+| `ajv-formats`                  | `^3.0.1`          | Feature-complete; no patches expected                                                |
+| `bits-ui`                      | `^2.18.1`         | `peerDep: svelte ^5.33.0`                                                            |
+| `bun`                          | `1.3.13`          | Runtime                                                                              |
+| `clsx`                         | `^2.1.1`          | Half of the canonical shadcn `cn()` helper                                           |
+| `eslint`                       | `^10.3.0`         | Flat config; introduced `preserve-caught-error` in recommended set                   |
+| `eslint-plugin-svelte`         | `^3.17.1`         | Svelte 5 runes via `svelteFeatures.runes`; ships `no-navigation-without-resolve`     |
+| `fast-check`                   | `^4.7.0`          | No adapter; plain under `bun:test`                                                   |
+| `globals`                      | `^17.6.0`         | Updated browser/node global maps                                                     |
+| `lefthook`                     | `^2.1.6`          | Go binary; replaces husky + lint-staged                                              |
+| `prettier`                     | `^3.8.3`          |                                                                                      |
+| `prettier-plugin-svelte`       | `^3.5.1`          | `peerDep: svelte ^5.0.0`                                                             |
+| `prettier-plugin-tailwindcss`  | `^0.8.0`          | Tailwind v4 ordering                                                                 |
+| `shadcn-svelte`                | `1.2.7`           | CLI **MUST** run under Node 22+ via `npx`, never `bunx --bun` (warns "unsupported")  |
+| `sharp`                        | `^0.34.5`         | Bun Node-API v9; spike before pipeline relies on it                                  |
+| `svelte`                       | `^5.55.5`         | Runes                                                                                |
+| `svelte-check`                 | `^4.4.8`          | Site `check` script omits `--tsgo` until language-tools resolver fix lands (see §10) |
+| `tailwind-merge`               | `^3.5.0`          | Half of the canonical shadcn `cn()` helper                                           |
+| `tailwind-variants`            | `^3.2.2`          | `tv()` for component variant maps                                                    |
+| `tailwindcss`                  | `^4.2.4`          | `@theme inline` token bridge                                                         |
+| `tw-animate-css`               | `^1.4.0`          | Motion utilities expected by shadcn-svelte registry                                  |
+| `typescript`                   | `^6.0.3`          | Required peer for `typescript-eslint` 8.x and svelte-check vanilla TS path           |
+| `typescript-eslint`            | `^8.59.2`         | Peer requires `typescript: <6.1.0` — pin `typescript` to ^6.0.x until v9 ships       |
+| `vite`                         | `^8.0.11`         | Ships Rolldown                                                                       |
 
 ## 13. Closed open questions
 

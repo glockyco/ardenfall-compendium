@@ -1,0 +1,30 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "melee-weapon",
+  "label": "Melee weapon",
+  "unityType": "Ardenfall.Item.MeleeItemData",
+  "canonicalTable": "item_melee_weapons",
+  "parentVariantId": "primary-hand",
+  "position": 40,
+  "fields": [
+    { "name": "damage", "type": "number", "from": "damage.Get()", "missingPolicy": "diagnostic" },
+    {
+      "name": "criticalHitChance",
+      "type": "number",
+      "from": "criticalHitChance.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "meleeDurabilityMax",
+      "type": "integer",
+      "from": "durabilityMax.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "canBlock",
+      "type": "boolean",
+      "from": "canBlock.Get()",
+      "missingPolicy": "optional-empty"
+    }
+  ]
+}
