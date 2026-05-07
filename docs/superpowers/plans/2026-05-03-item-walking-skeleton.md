@@ -66,7 +66,6 @@ README.md
 AGENTS.md                             ← repo-level pointer; minimal in Slice 1
 CLAUDE.md                             ← one-liner pointing at AGENTS.md
 .github/workflows/ci.yml              ← four path-filtered jobs
-.github/PULL_REQUEST_TEMPLATE.md      ← deferred; not in Slice 1
 ```
 
 ### Schemas
