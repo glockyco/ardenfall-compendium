@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": ["fixtureKind", "schemaVersion", "intendedAssertions", "selection", "hashes"],
   "properties": {
+    "$schema": { "type": "string" },
     "fixtureKind": {
       "enum": ["synthetic", "real-derived-curated", "digest", "boundary-certificate"]
     },
