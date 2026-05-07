@@ -246,11 +246,13 @@ Run:
 ```bash
 dotnet test tests/HotRepl.Tests/ --nologo -v q --filter GlobalControlCommandRegistryTests
 dotnet build src/HotRepl.BepInEx/ --nologo -v q
-dotnet build src/HotRepl.Host.MelonLoader/ --nologo -v q
+dotnet build src/HotRepl.Host.MelonLoader/HotRepl.Host.MelonLoader.csproj --nologo -v q \\
+  -p:MelonLoaderPath="/Users/joaichberger/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Ancient Kingdoms/MelonLoader" \\
+  -p:Il2CppAssembliesPath="/Users/joaichberger/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Ancient Kingdoms/MelonLoader/Il2CppAssemblies"
 dotnet format src/HotRepl.Core/ --verify-no-changes
 ```
 
-Expected: all exit 0.
+Expected: all exit 0. The BepInEx and MelonLoader host builds are both required; do not treat MelonLoader as optional.
 
 Commit:
 
