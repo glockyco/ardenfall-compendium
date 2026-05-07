@@ -1,4 +1,4 @@
-namespace ArdenfallArchives.Triggers;
+namespace ArdenfallCompendium.Triggers;
 
 public static class Hotkey
 {

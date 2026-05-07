@@ -4,7 +4,7 @@
 
 **Goal:** Replace the F8-only export path with typed HotRepl control-plane commands plus an external controller that deploys, launches, exports, validates, and runs the pipeline.
 
-**Architecture:** HotRepl stays game-agnostic and exposes a process-wide command registry for loaded game mods. Ardenfall Archives registers compiled command handlers that call shared extraction/run services. A Bun controller drives the HotRepl protocol, owns workflow sequencing, and validates artifacts before invoking the pipeline.
+**Architecture:** HotRepl stays game-agnostic and exposes a process-wide command registry for loaded game mods. Ardenfall Compendium registers compiled command handlers that call shared extraction/run services. A Bun controller drives the HotRepl protocol, owns workflow sequencing, and validates artifacts before invoking the pipeline.
 
 **Tech Stack:** HotRepl C# `netstandard2.1` control registry; Ardenfall BepInEx 5 mod on `netstandard2.1` for Unity 2022 compatibility with HotRepl control contracts; Newtonsoft.Json/JObject control payloads; Bun/TypeScript controller; existing pipeline validators and SQLite pipeline.
 
@@ -13,7 +13,7 @@
 ## Repositories and dependency order
 
 1. `/Users/joaichberger/Projects/HotRepl` — add the game-agnostic global command registry hook required for separate BepInEx mods to register commands.
-2. `/Users/joaichberger/Projects/ardenfall-archives/.worktrees/slice-1-item-walking-skeleton` — compile against HotRepl.Core from `mod/libs/HotRepl.Core.dll`, register Ardenfall commands, add controller, and deploy runtime DLLs into the game's `BepInEx/plugins/` directory.
+2. `/Users/joaichberger/Projects/ardenfall-compendium/.worktrees/slice-1-item-walking-skeleton` — compile against HotRepl.Core from `mod/libs/HotRepl.Core.dll`, register Ardenfall commands, add controller, and deploy runtime DLLs into the game's `BepInEx/plugins/` directory.
 
 Do not implement Ardenfall commands until Task 1 passes in HotRepl, the CrossOver Ardenfall bottle has a working BepInEx 5 install, and `HotRepl.Core.dll` is present in Ardenfall `mod/libs/` for compile-time reference.
 
@@ -21,17 +21,17 @@ Do not implement Ardenfall commands until Task 1 passes in HotRepl, the CrossOve
 
 All command names use version `1`.
 
-| Command              | Kind | Mutates | Args                               | Result                                                                       |
-| -------------------- | ---- | ------: | ---------------------------------- | ---------------------------------------------------------------------------- |
-| `archive.info`       | sync |      no | `{}`                               | `{ apiVersion, extractorVersion, gameVersion, supportedEntities }`           |
-| `archive.preflight`  | sync |      no | `{}`                               | `PreflightReport` plus `ready`                                               |
-| `run.begin`          | sync |     yes | `{ gameVersion?, outputBaseDir? }` | `{ runId, workspaceDir }`                                                    |
-| `run.status`         | sync |      no | `{ runId }`                        | `{ runId, state, counts, finalized, workspaceDir, publishedDir? }`           |
-| `entity.plan`        | sync |      no | `{ runId, entity }`                | `{ entity, total, batchSize, batches }`                                      |
-| `entity.exportBatch` | job  |     yes | `{ runId, entity, offset, limit }` | `{ entity, offset, limit, written, total }` plus chunk artifact              |
-| `run.finalize`       | sync |     yes | `{ runId }`                        | `{ runId, publishedDir, manifestPath }` plus `manifest` and entity artifacts |
-| `run.discard`        | sync |     yes | `{ runId }`                        | `{ runId, discarded: true }`                                                 |
-| `game.quit`          | sync |     yes | `{}`                               | `{ quitting: true }`                                                         |
+| Command                | Kind | Mutates | Args                               | Result                                                                       |
+| ---------------------- | ---- | ------: | ---------------------------------- | ---------------------------------------------------------------------------- |
+| `compendium.info`      | sync |      no | `{}`                               | `{ apiVersion, extractorVersion, gameVersion, supportedEntities }`           |
+| `compendium.preflight` | sync |      no | `{}`                               | `PreflightReport` plus `ready`                                               |
+| `run.begin`            | sync |     yes | `{ gameVersion?, outputBaseDir? }` | `{ runId, workspaceDir }`                                                    |
+| `run.status`           | sync |      no | `{ runId }`                        | `{ runId, state, counts, finalized, workspaceDir, publishedDir? }`           |
+| `entity.plan`          | sync |      no | `{ runId, entity }`                | `{ entity, total, batchSize, batches }`                                      |
+| `entity.exportBatch`   | job  |     yes | `{ runId, entity, offset, limit }` | `{ entity, offset, limit, written, total }` plus chunk artifact              |
+| `run.finalize`         | sync |     yes | `{ runId }`                        | `{ runId, publishedDir, manifestPath }` plus `manifest` and entity artifacts |
+| `run.discard`          | sync |     yes | `{ runId }`                        | `{ runId, discarded: true }`                                                 |
+| `game.quit`            | sync |     yes | `{}`                               | `{ quitting: true }`                                                         |
 
 Errors use HotRepl control error kinds: `validation_failed`, `precondition_failed`, `conflict`, `busy`, `artifact_missing`, `internal`.
 
@@ -82,19 +82,19 @@ public class GlobalControlCommandRegistryTests
     public void DisposeRegistration_RemovesHandler()
     {
         var registry = new GlobalControlCommandRegistry();
-        var registration = registry.Register(new Handler("archive.info"));
+        var registration = registry.Register(new Handler("compendium.info"));
         registration.Dispose();
 
-        Assert.False(registry.TryGet("archive.info", out _));
+        Assert.False(registry.TryGet("compendium.info", out _));
     }
 
     [Fact]
     public void Register_DuplicateNameThrows()
     {
         var registry = new GlobalControlCommandRegistry();
-        using var first = registry.Register(new Handler("archive.info"));
+        using var first = registry.Register(new Handler("compendium.info"));
 
-        Assert.Throws<InvalidOperationException>(() => registry.Register(new Handler("archive.info")));
+        Assert.Throws<InvalidOperationException>(() => registry.Register(new Handler("compendium.info")));
     }
 
     private sealed class Handler : IControlCommandHandler
@@ -315,7 +315,7 @@ git commit -m "docs(progress): record local bepinex setup"
 
 **Files in Ardenfall worktree:**
 
-- Modify: `mod/ArdenfallArchives.csproj`
+- Modify: `mod/ArdenfallCompendium.csproj`
 - Modify: `mod/scripts/copy-libs.sh`
 - Modify: `mod/AGENTS.md`
 
@@ -343,7 +343,7 @@ echo "copied $(find "$DEST" -maxdepth 1 -name '*.dll' | wc -l | tr -d ' ') dlls 
 
 - [ ] **Step 2: Add the csproj reference**
 
-Add this reference inside the existing reference `ItemGroup` in `mod/ArdenfallArchives.csproj`:
+Add this reference inside the existing reference `ItemGroup` in `mod/ArdenfallCompendium.csproj`:
 
 ```xml
 <Reference Include="HotRepl.Core">              <HintPath>libs\HotRepl.Core.dll</HintPath>              <Private>false</Private> </Reference>
@@ -356,7 +356,7 @@ Add to `mod/AGENTS.md`:
 ```markdown
 ## HotRepl dependency
 
-The Ardenfall mod references `mod/libs/HotRepl.Core.dll` at compile time. Runtime DLLs belong in the game's `BepInEx/plugins/` directory, not `mod/libs/`. Build HotRepl first, run `mod/scripts/copy-libs.sh <Ardenfall Managed dir> <HotRepl.Core output dir>` before `dotnet build mod/ArdenfallArchives.csproj`, and deploy the matching HotRepl and Ardenfall DLLs to `BepInEx/plugins/`.
+The Ardenfall mod references `mod/libs/HotRepl.Core.dll` at compile time. Runtime DLLs belong in the game's `BepInEx/plugins/` directory, not `mod/libs/`. Build HotRepl first, run `mod/scripts/copy-libs.sh <Ardenfall Managed dir> <HotRepl.Core output dir>` before `dotnet build mod/ArdenfallCompendium.csproj`, and deploy the matching HotRepl and Ardenfall DLLs to `BepInEx/plugins/`.
 ```
 
 - [ ] **Step 4: Verify and commit**
@@ -364,7 +364,7 @@ The Ardenfall mod references `mod/libs/HotRepl.Core.dll` at compile time. Runtim
 Run:
 
 ```bash
-dotnet build mod/ArdenfallArchives.csproj -c Debug
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
 ```
 
 Expected: exits 0 after `HotRepl.Core.dll` is present in `mod/libs/` as a compile-time reference.
@@ -372,7 +372,7 @@ Expected: exits 0 after `HotRepl.Core.dll` is present in `mod/libs/` as a compil
 Commit:
 
 ```bash
-git add mod/ArdenfallArchives.csproj mod/scripts/copy-libs.sh mod/AGENTS.md
+git add mod/ArdenfallCompendium.csproj mod/scripts/copy-libs.sh mod/AGENTS.md
 git commit -m "chore(mod): reference hotrepl control contracts"
 ```
 
@@ -395,7 +395,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 
-namespace ArdenfallArchives.Game;
+namespace ArdenfallCompendium.Game;
 
 public static class GameInfo
 {
@@ -423,12 +423,12 @@ public static class GameInfo
 Create `mod/src/Extraction/ExtractionRequest.cs`:
 
 ```csharp
-namespace ArdenfallArchives.Extraction;
+namespace ArdenfallCompendium.Extraction;
 
 public sealed class ExtractionRequest
 {
     public string OutputBaseDir { get; set; } = "";
-    public string GameVersion { get; set; } = ArdenfallArchives.Game.GameInfo.SnapshotVersionSegment;
+    public string GameVersion { get; set; } = ArdenfallCompendium.Game.GameInfo.SnapshotVersionSegment;
 }
 ```
 
@@ -436,9 +436,9 @@ Create `mod/src/Extraction/ExtractionResult.cs`:
 
 ```csharp
 using System.Collections.Generic;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 
-namespace ArdenfallArchives.Extraction;
+namespace ArdenfallCompendium.Extraction;
 
 public sealed class ExtractionResult
 {
@@ -460,12 +460,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ArdenfallArchives.Dtos;
-using ArdenfallArchives.Emit;
-using ArdenfallArchives.Entities.Item;
-using PreflightRunner = ArdenfallArchives.Preflight.Preflight;
+using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Emit;
+using ArdenfallCompendium.Entities.Item;
+using PreflightRunner = ArdenfallCompendium.Preflight.Preflight;
 
-namespace ArdenfallArchives.Extraction;
+namespace ArdenfallCompendium.Extraction;
 
 public sealed class ExtractionService
 {
@@ -556,15 +556,15 @@ if (!result.Success)
 Logger.LogInfo($"snapshot published: {result.PublishedDir} ({result.ItemCount} items, {result.DiagnosticCount} diagnostics)");
 ```
 
-Remove unused `using System.*`, `using ArdenfallArchives.*`, and `using PreflightRunner = ...` imports that no longer compile as used.
+Remove unused `using System.*`, `using ArdenfallCompendium.*`, and `using PreflightRunner = ...` imports that no longer compile as used.
 
 - [ ] **Step 4: Verify and commit**
 
 Run:
 
 ```bash
-dotnet build mod/ArdenfallArchives.csproj -c Debug
-dotnet format mod/ArdenfallArchives.csproj --verify-no-changes
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
+dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes
 ```
 
 Expected: both exit 0.
@@ -584,23 +584,23 @@ git commit -m "refactor(mod): extract shared snapshot service"
 
 **Files:**
 
-- Create: `mod/src/Control/ArchiveRun.cs`
-- Create: `mod/src/Control/ArchiveRunManager.cs`
-- Create: `mod/src/Control/ArchiveCommandSchemas.cs`
+- Create: `mod/src/Control/CompendiumRun.cs`
+- Create: `mod/src/Control/CompendiumRunManager.cs`
+- Create: `mod/src/Control/CompendiumCommandSchemas.cs`
 
 - [ ] **Step 1: Add run model**
 
-Create `mod/src/Control/ArchiveRun.cs`:
+Create `mod/src/Control/CompendiumRun.cs`:
 
 ```csharp
 using System.Collections.Generic;
 
-namespace ArdenfallArchives.Control;
+namespace ArdenfallCompendium.Control;
 
-public sealed class ArchiveRun
+public sealed class CompendiumRun
 {
     public string RunId { get; set; } = "";
-    public string GameVersion { get; set; } = ArdenfallArchives.Game.GameInfo.SnapshotVersionSegment;
+    public string GameVersion { get; set; } = ArdenfallCompendium.Game.GameInfo.SnapshotVersionSegment;
     public string WorkspaceDir { get; set; } = "";
     public string? PublishedDir { get; set; }
     public string State { get; set; } = "open";
@@ -611,32 +611,32 @@ public sealed class ArchiveRun
 
 - [ ] **Step 2: Add manager**
 
-Create `mod/src/Control/ArchiveRunManager.cs`:
+Create `mod/src/Control/CompendiumRunManager.cs`:
 
 ```csharp
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace ArdenfallArchives.Control;
+namespace ArdenfallCompendium.Control;
 
-public sealed class ArchiveRunManager
+public sealed class CompendiumRunManager
 {
     private readonly object _sync = new();
-    private readonly Dictionary<string, ArchiveRun> _runs = new();
+    private readonly Dictionary<string, CompendiumRun> _runs = new();
 
-    public ArchiveRun Begin(string baseDir, string gameVersion)
+    public CompendiumRun Begin(string baseDir, string gameVersion)
     {
         var runId = DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmssfffffff");
         var workspace = Path.Combine(baseDir, "runs", runId);
         Directory.CreateDirectory(Path.Combine(workspace, "control"));
         Directory.CreateDirectory(Path.Combine(workspace, "entities", "item", "chunks"));
-        var run = new ArchiveRun { RunId = runId, GameVersion = gameVersion, WorkspaceDir = workspace };
+        var run = new CompendiumRun { RunId = runId, GameVersion = gameVersion, WorkspaceDir = workspace };
         lock (_sync) _runs.Add(runId, run);
         return run;
     }
 
-    public bool TryGet(string runId, out ArchiveRun run)
+    public bool TryGet(string runId, out CompendiumRun run)
     {
         lock (_sync) return _runs.TryGetValue(runId, out run!);
     }
@@ -656,14 +656,14 @@ public sealed class ArchiveRunManager
 
 - [ ] **Step 3: Add JSON schemas helper**
 
-Create `mod/src/Control/ArchiveCommandSchemas.cs`:
+Create `mod/src/Control/CompendiumCommandSchemas.cs`:
 
 ```csharp
 using Newtonsoft.Json.Linq;
 
-namespace ArdenfallArchives.Control;
+namespace ArdenfallCompendium.Control;
 
-public static class ArchiveCommandSchemas
+public static class CompendiumCommandSchemas
 {
     public static JObject EmptyObject { get; } = JObject.Parse("{\"type\":\"object\",\"additionalProperties\":false}");
     public static JObject AnyObject { get; } = JObject.Parse("{\"type\":\"object\"}");
@@ -675,44 +675,44 @@ public static class ArchiveCommandSchemas
 Run:
 
 ```bash
-dotnet build mod/ArdenfallArchives.csproj -c Debug
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
 ```
 
 Commit:
 
 ```bash
-git add mod/src/Control/ArchiveRun.cs mod/src/Control/ArchiveRunManager.cs mod/src/Control/ArchiveCommandSchemas.cs
+git add mod/src/Control/CompendiumRun.cs mod/src/Control/CompendiumRunManager.cs mod/src/Control/CompendiumCommandSchemas.cs
 git commit -m "feat(mod): add archive run workspace manager"
 ```
 
-### Task 6: Register archive.info and archive.preflight
+### Task 6: Register compendium.info and compendium.preflight
 
 **Files:**
 
-- Create: `mod/src/Control/ArchiveCommandRegistry.cs`
-- Create: `mod/src/Control/Handlers/ArchiveInfoCommand.cs`
-- Create: `mod/src/Control/Handlers/ArchivePreflightCommand.cs`
+- Create: `mod/src/Control/CompendiumCommandRegistry.cs`
+- Create: `mod/src/Control/Handlers/CompendiumInfoCommand.cs`
+- Create: `mod/src/Control/Handlers/CompendiumPreflightCommand.cs`
 - Modify: `mod/src/Plugin.cs`
 
 - [ ] **Step 1: Add registry wrapper**
 
-Create `mod/src/Control/ArchiveCommandRegistry.cs`:
+Create `mod/src/Control/CompendiumCommandRegistry.cs`:
 
 ```csharp
 using System;
 using System.Collections.Generic;
 using HotRepl.Control;
 
-namespace ArdenfallArchives.Control;
+namespace ArdenfallCompendium.Control;
 
-public sealed class ArchiveCommandRegistry : IDisposable
+public sealed class CompendiumCommandRegistry : IDisposable
 {
     private readonly List<IDisposable> _registrations = new();
 
-    public ArchiveCommandRegistry(ArchiveRunManager runs, string outputBaseDir)
+    public CompendiumCommandRegistry(CompendiumRunManager runs, string outputBaseDir)
     {
-        Register(new Handlers.ArchiveInfoCommand());
-        Register(new Handlers.ArchivePreflightCommand());
+        Register(new Handlers.CompendiumInfoCommand());
+        Register(new Handlers.CompendiumPreflightCommand());
     }
 
     private void Register(IControlCommandHandler handler)
@@ -728,9 +728,9 @@ public sealed class ArchiveCommandRegistry : IDisposable
 }
 ```
 
-- [ ] **Step 2: Add `archive.info` handler**
+- [ ] **Step 2: Add `compendium.info` handler**
 
-Create `mod/src/Control/Handlers/ArchiveInfoCommand.cs`:
+Create `mod/src/Control/Handlers/CompendiumInfoCommand.cs`:
 
 ```csharp
 using System;
@@ -739,17 +739,17 @@ using System.Threading.Tasks;
 using HotRepl.Control;
 using Newtonsoft.Json.Linq;
 
-namespace ArdenfallArchives.Control.Handlers;
+namespace ArdenfallCompendium.Control.Handlers;
 
-public sealed class ArchiveInfoCommand : IControlCommandHandler
+public sealed class CompendiumInfoCommand : IControlCommandHandler
 {
     public ControlCommandDescriptor Descriptor { get; } = new(
-        "archive.info",
+        "compendium.info",
         1,
         ControlCommandKind.Synchronous,
         mutatesState: false,
-        argsSchema: ArchiveCommandSchemas.EmptyObject,
-        resultSchema: ArchiveCommandSchemas.AnyObject);
+        argsSchema: CompendiumCommandSchemas.EmptyObject,
+        resultSchema: CompendiumCommandSchemas.AnyObject);
 
     public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
     {
@@ -757,7 +757,7 @@ public sealed class ArchiveInfoCommand : IControlCommandHandler
         {
             ["apiVersion"] = 1,
             ["extractorVersion"] = Plugin.Version,
-            ["gameVersion"] = ArdenfallArchives.Game.GameInfo.Version,
+            ["gameVersion"] = ArdenfallCompendium.Game.GameInfo.Version,
             ["supportedEntities"] = new JArray("item"),
         };
         return new ValueTask<ControlCommandResult>(new ControlCommandResult(result, Array.Empty<HotRepl.Control.Artifacts.ArtifactRef>(), Array.Empty<ControlCommandError>()));
@@ -765,9 +765,9 @@ public sealed class ArchiveInfoCommand : IControlCommandHandler
 }
 ```
 
-- [ ] **Step 3: Add `archive.preflight` handler**
+- [ ] **Step 3: Add `compendium.preflight` handler**
 
-Create `mod/src/Control/Handlers/ArchivePreflightCommand.cs`:
+Create `mod/src/Control/Handlers/CompendiumPreflightCommand.cs`:
 
 ```csharp
 using System;
@@ -776,19 +776,19 @@ using System.Threading.Tasks;
 using HotRepl.Control;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using PreflightRunner = ArdenfallArchives.Preflight.Preflight;
+using PreflightRunner = ArdenfallCompendium.Preflight.Preflight;
 
-namespace ArdenfallArchives.Control.Handlers;
+namespace ArdenfallCompendium.Control.Handlers;
 
-public sealed class ArchivePreflightCommand : IControlCommandHandler
+public sealed class CompendiumPreflightCommand : IControlCommandHandler
 {
     public ControlCommandDescriptor Descriptor { get; } = new(
-        "archive.preflight",
+        "compendium.preflight",
         1,
         ControlCommandKind.Synchronous,
         mutatesState: false,
-        argsSchema: ArchiveCommandSchemas.EmptyObject,
-        resultSchema: ArchiveCommandSchemas.AnyObject);
+        argsSchema: CompendiumCommandSchemas.EmptyObject,
+        resultSchema: CompendiumCommandSchemas.AnyObject);
 
     public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
     {
@@ -805,15 +805,15 @@ public sealed class ArchivePreflightCommand : IControlCommandHandler
 In `mod/src/Plugin.cs`, add fields:
 
 ```csharp
-private Control.ArchiveRunManager _runs = null!;
-private Control.ArchiveCommandRegistry _commands = null!;
+private Control.CompendiumRunManager _runs = null!;
+private Control.CompendiumCommandRegistry _commands = null!;
 ```
 
 In `Awake()`, after `_outputDir` is bound:
 
 ```csharp
-_runs = new Control.ArchiveRunManager();
-_commands = new Control.ArchiveCommandRegistry(_runs, _outputDir.Value);
+_runs = new Control.CompendiumRunManager();
+_commands = new Control.CompendiumCommandRegistry(_runs, _outputDir.Value);
 ```
 
 In `OnDestroy()`, before `_readiness.Dispose();`:
@@ -827,7 +827,7 @@ _commands?.Dispose();
 Run:
 
 ```bash
-dotnet build mod/ArdenfallArchives.csproj -c Debug
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
 ```
 
 Commit:
@@ -844,11 +844,11 @@ git commit -m "feat(mod): register archive info and preflight commands"
 - Create: `mod/src/Control/Handlers/RunBeginCommand.cs`
 - Create: `mod/src/Control/Handlers/RunStatusCommand.cs`
 - Create: `mod/src/Control/Handlers/RunDiscardCommand.cs`
-- Modify: `mod/src/Control/ArchiveCommandRegistry.cs`
+- Modify: `mod/src/Control/CompendiumCommandRegistry.cs`
 
 - [ ] **Step 1: Add handlers and register them**
 
-Implement handlers that parse `runId`, `gameVersion`, and `outputBaseDir` from `JObject` args, return `validation_failed` diagnostics for missing `runId`, and use `ArchiveRunManager` for state. Register them in `ArchiveCommandRegistry`:
+Implement handlers that parse `runId`, `gameVersion`, and `outputBaseDir` from `JObject` args, return `validation_failed` diagnostics for missing `runId`, and use `CompendiumRunManager` for state. Register them in `CompendiumCommandRegistry`:
 
 ```csharp
 Register(new Handlers.RunBeginCommand(runs, outputBaseDir));
@@ -863,13 +863,13 @@ Each descriptor uses `ControlCommandKind.Synchronous`; `run.begin` and `run.disc
 Run:
 
 ```bash
-dotnet build mod/ArdenfallArchives.csproj -c Debug
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
 ```
 
 Commit:
 
 ```bash
-git add mod/src/Control/Handlers/RunBeginCommand.cs mod/src/Control/Handlers/RunStatusCommand.cs mod/src/Control/Handlers/RunDiscardCommand.cs mod/src/Control/ArchiveCommandRegistry.cs
+git add mod/src/Control/Handlers/RunBeginCommand.cs mod/src/Control/Handlers/RunStatusCommand.cs mod/src/Control/Handlers/RunDiscardCommand.cs mod/src/Control/CompendiumCommandRegistry.cs
 git commit -m "feat(mod): add archive run lifecycle commands"
 ```
 
@@ -881,7 +881,7 @@ git commit -m "feat(mod): add archive run lifecycle commands"
 - Create: `mod/src/Control/Handlers/EntityExportBatchCommand.cs`
 - Create: `mod/src/Control/Handlers/RunFinalizeCommand.cs`
 - Create: `mod/src/Control/Handlers/GameQuitCommand.cs`
-- Modify: `mod/src/Control/ArchiveCommandRegistry.cs`
+- Modify: `mod/src/Control/CompendiumCommandRegistry.cs`
 
 - [ ] **Step 1: Implement entity plan**
 
@@ -928,14 +928,14 @@ It returns artifact refs for `manifest` and `items`.
 Run:
 
 ```bash
-dotnet build mod/ArdenfallArchives.csproj -c Debug
-dotnet format mod/ArdenfallArchives.csproj --verify-no-changes
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
+dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes
 ```
 
 Commit:
 
 ```bash
-git add mod/src/Control/Handlers mod/src/Control/ArchiveCommandRegistry.cs
+git add mod/src/Control/Handlers mod/src/Control/CompendiumCommandRegistry.cs
 git commit -m "feat(mod): add entity export control commands"
 ```
 
@@ -1013,7 +1013,7 @@ git commit -m "feat(controller): add hotrepl protocol client"
 `export-orchestrator.ts` performs:
 
 ```text
-connect -> authenticate -> acquireLease -> describeCommands -> archive.preflight -> run.begin -> entity.plan -> entity.exportBatch jobs -> run.finalize -> validate artifacts -> pipeline:run
+connect -> authenticate -> acquireLease -> describeCommands -> compendium.preflight -> run.begin -> entity.plan -> entity.exportBatch jobs -> run.finalize -> validate artifacts -> pipeline:run
 ```
 
 It refuses to continue when any required command is missing or has a version other than `1`.
@@ -1062,7 +1062,7 @@ git commit -m "feat(controller): orchestrate ardenfall exports"
 
 - [ ] **Step 1: Implement deploy helper**
 
-`deploy.ts` copies HotRepl BepInEx output, `mcs.dll`, and `ArdenfallArchives.dll` into a supplied BepInEx plugins directory. It refuses to copy when any source DLL is missing.
+`deploy.ts` copies HotRepl BepInEx output, `mcs.dll`, and `ArdenfallCompendium.dll` into a supplied BepInEx plugins directory. It refuses to copy when any source DLL is missing.
 
 - [ ] **Step 2: Document the smoke**
 
@@ -1070,7 +1070,7 @@ Add README commands:
 
 ```bash
 dotnet build /Users/joaichberger/Projects/HotRepl/src/HotRepl.BepInEx/ --nologo -v q
-dotnet build mod/ArdenfallArchives.csproj -c Debug
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
 bun run controller:export -- --url ws://127.0.0.1:18590 --output ./snapshots --pipeline-out ./pipeline/dist
 ```
 
@@ -1097,8 +1097,8 @@ git commit -m "docs(controller): add hotrepl export smoke workflow"
 - [ ] **Step 1: Run static gates**
 
 ```bash
-dotnet build mod/ArdenfallArchives.csproj -c Debug
-dotnet format mod/ArdenfallArchives.csproj --verify-no-changes
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
+dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes
 bun run format:check
 bun run lint
 bun run typecheck

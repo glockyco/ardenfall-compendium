@@ -5,14 +5,14 @@ using System.Threading.Tasks;
 using HotRepl.Control;
 using Newtonsoft.Json.Linq;
 
-namespace ArdenfallArchives.Control.Handlers;
+namespace ArdenfallCompendium.Control.Handlers;
 
 public sealed class RunBeginCommand : IControlCommandHandler
 {
-    private readonly ArchiveRunManager _runs;
+    private readonly CompendiumRunManager _runs;
     private readonly string _defaultOutputBaseDir;
 
-    public RunBeginCommand(ArchiveRunManager runs, string defaultOutputBaseDir)
+    public RunBeginCommand(CompendiumRunManager runs, string defaultOutputBaseDir)
     {
         _runs = runs;
         _defaultOutputBaseDir = defaultOutputBaseDir;
@@ -23,18 +23,18 @@ public sealed class RunBeginCommand : IControlCommandHandler
         1,
         ControlCommandKind.Synchronous,
         mutatesState: true,
-        argsSchema: ArchiveCommandSchemas.AnyObject,
-        resultSchema: ArchiveCommandSchemas.AnyObject);
+        argsSchema: CompendiumCommandSchemas.AnyObject,
+        resultSchema: CompendiumCommandSchemas.AnyObject);
 
     public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
     {
         var outputBaseDir = OptionalString(args, "outputBaseDir") ?? _defaultOutputBaseDir;
         if (string.IsNullOrWhiteSpace(outputBaseDir))
-            return new ValueTask<ControlCommandResult>(ArchiveCommandResults.Validation("outputBaseDirRequired", "outputBaseDir is required."));
+            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Validation("outputBaseDirRequired", "outputBaseDir is required."));
 
         var gameVersion = SanitizeSegment(OptionalString(args, "gameVersion") ?? Game.GameInfo.SnapshotVersionSegment);
         var run = _runs.Begin(outputBaseDir, gameVersion);
-        return new ValueTask<ControlCommandResult>(ArchiveCommandResults.Ok(new JObject
+        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(new JObject
         {
             ["runId"] = run.RunId,
             ["workspaceDir"] = run.WorkspaceDir,

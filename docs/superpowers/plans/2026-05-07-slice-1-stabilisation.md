@@ -2,7 +2,7 @@
 
 Date: 2026-05-07
 Status: Ready
-Spec coverage: `docs/superpowers/specs/2026-05-07-investment-priorities.md` §3 (foundation hygiene before breadth); `docs/superpowers/specs/2026-04-28-ardenfall-archives-design.md` §16 open question 1 (deployment).
+Spec coverage: `docs/superpowers/specs/2026-05-07-investment-priorities.md` §3 (foundation hygiene before breadth); `docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md` §16 open question 1 (deployment).
 Predecessor: `docs/superpowers/plans/2026-05-03-item-walking-skeleton.md` (Slice 1, complete).
 Worktree branch (suggested): `slice/1.5-stabilisation` off `main`.
 
@@ -56,13 +56,13 @@ The five defects this slice fixes, all in `mod/src/Control/Handlers/`:
 **Symptom:** every `entity.exportBatch` call constructs `new ItemExtractor()` and walks the full asset list, then keeps only the slice `[offset, offset+limit]`.
 **Cost (today):** for a default batch size of 100 against 899 items, that is 9 batches × full walk = ~8,100 extractions to produce 899 rows. Combined with B2 that is ~9,000 extractions.
 **Worst-case cost (Slice 2 hypothesis):** if Slice 2 brings the item count to ~3,000 (full ItemData breadth), the same code does ~30 walks × 3,000 items = 90,000 extractions per run.
-**Fix:** the walker runs once per run, the produced rows are cached on `ArchiveRun`, and `entity.exportBatch` reads `Take(offset, limit)` from the cached list. The natural owner is a new `ItemExtractionService` that `entity.plan` invokes (lazily) and stores on the run; subsequent commands reuse it.
+**Fix:** the walker runs once per run, the produced rows are cached on `CompendiumRun`, and `entity.exportBatch` reads `Take(offset, limit)` from the cached list. The natural owner is a new `ItemExtractionService` that `entity.plan` invokes (lazily) and stores on the run; subsequent commands reuse it.
 
 ### B4 — Walker-level diagnostics dropped between batches
 
 **Same files as B2/B3.**
 **Symptom:** each `new ItemExtractor()` accumulates `Diagnostics` (including `Refs.Diagnostics` from ref-resolution failures; today this includes the 898 `lookupAssetGuidMissing` references that resolve to per-row diagnostics, but in general also includes failures that aren't bound to any specific row). The extractor instance is GC'd after the chunk slice is written; its walker-level `Diagnostics` go nowhere.
-**Fix:** caching the rows on `ArchiveRun` (B3 fix) also caches walker-level `Diagnostics` and `Refs.Diagnostics`. `RunFinalizeCommand` reads them and aggregates into the manifest totals (B1 fix) plus emits a `diagnostics.json` sibling if non-empty.
+**Fix:** caching the rows on `CompendiumRun` (B3 fix) also caches walker-level `Diagnostics` and `Refs.Diagnostics`. `RunFinalizeCommand` reads them and aggregates into the manifest totals (B1 fix) plus emits a `diagnostics.json` sibling if non-empty.
 
 ### B5 — Slicing depends on unverified iteration order
 
@@ -87,15 +87,15 @@ Phases run sequentially because the bug fixes share refactor surface. Within a p
 
 Without a C# test project for the mod, none of the bug fixes can be verified except by live smoke. Slice 1.5 adds the test project so future slices have a real regression substrate.
 
-#### Task A.1 — Create `mod-tests/ArdenfallArchives.Tests.csproj`
+#### Task A.1 — Create `mod-tests/ArdenfallCompendium.Tests.csproj`
 
 **Files:**
 
-- Create: `mod-tests/ArdenfallArchives.Tests.csproj`
+- Create: `mod-tests/ArdenfallCompendium.Tests.csproj`
 - Create: `mod-tests/.gitignore` (entries for `bin/`, `obj/`)
-- Modify: `AncientKingdomsMods.sln` is a sibling-project artifact and is **not** the Ardenfall solution; check whether `ardenfall-archives` has its own `.sln` or is dotnet-build'd via `mod/ArdenfallArchives.csproj` directly. If no solution file exists, the test project is built standalone via `dotnet test mod-tests/ArdenfallArchives.Tests.csproj`.
+- Modify: `AncientKingdomsMods.sln` is a sibling-project artifact and is **not** the Ardenfall solution; check whether `ardenfall-compendium` has its own `.sln` or is dotnet-build'd via `mod/ArdenfallCompendium.csproj` directly. If no solution file exists, the test project is built standalone via `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj`.
 
-- [ ] **Step 1: Decide framework.** Use `xunit` 2.9+ with `xunit.runner.visualstudio`. xUnit is the dotnet-ecosystem default and integrates cleanly with `dotnet test`. Target `net8.0` for the test project (test runner does not need to match the mod's `netstandard2.1`); the test project references the mod's source by `<ProjectReference Include="..\mod\ArdenfallArchives.csproj"/>` so test code can call mod types directly.
+- [ ] **Step 1: Decide framework.** Use `xunit` 2.9+ with `xunit.runner.visualstudio`. xUnit is the dotnet-ecosystem default and integrates cleanly with `dotnet test`. Target `net8.0` for the test project (test runner does not need to match the mod's `netstandard2.1`); the test project references the mod's source by `<ProjectReference Include="..\mod\ArdenfallCompendium.csproj"/>` so test code can call mod types directly.
 
 - [ ] **Step 2: Write the csproj.**
 
@@ -116,7 +116,7 @@ Without a C# test project for the mod, none of the bug fixes can be verified exc
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\mod\ArdenfallArchives.csproj" />
+    <ProjectReference Include="..\mod\ArdenfallCompendium.csproj" />
   </ItemGroup>
 </Project>
 ```
@@ -127,33 +127,33 @@ Without a C# test project for the mod, none of the bug fixes can be verified exc
 // mod-tests/SmokeTests.cs
 using Xunit;
 
-namespace ArdenfallArchives.Tests;
+namespace ArdenfallCompendium.Tests;
 
 public sealed class SmokeTests
 {
     [Fact]
-    public void TestProjectLinksMod() => Assert.Equal("ArdenfallArchives", typeof(ArdenfallArchives.Plugin).Assembly.GetName().Name);
+    public void TestProjectLinksMod() => Assert.Equal("ArdenfallCompendium", typeof(ArdenfallCompendium.Plugin).Assembly.GetName().Name);
 }
 ```
 
 - [ ] **Step 4: Verify build + run.**
 
 ```sh
-dotnet test mod-tests/ArdenfallArchives.Tests.csproj
+dotnet test mod-tests/ArdenfallCompendium.Tests.csproj
 ```
 
 Expected: `Passed: 1, Failed: 0`. The test project must build without `mod/libs/Assembly-CSharp.dll`-resolving code paths — the smoke test only touches `Plugin.Version` static and `Application.version`-free types; no Unity types are loaded.
 
-- [ ] **Step 5: Update CI.** Add a `mod-tests` job to `.github/workflows/ci.yml` that runs after the `mod` (format-check) job, calling `dotnet test mod-tests/ArdenfallArchives.Tests.csproj`. Path-filter on `mod/**` and `mod-tests/**`.
+- [ ] **Step 5: Update CI.** Add a `mod-tests` job to `.github/workflows/ci.yml` that runs after the `mod` (format-check) job, calling `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj`. Path-filter on `mod/**` and `mod-tests/**`.
 
 - [ ] **Step 6: Commit.**
 
 ```sh
 git add mod-tests/ .github/workflows/ci.yml
-git commit -m "test(mod): bootstrap xunit test project for ArdenfallArchives"
+git commit -m "test(mod): bootstrap xunit test project for ArdenfallCompendium"
 ```
 
-**Phase A gate:** `dotnet test mod-tests/ArdenfallArchives.Tests.csproj` passes locally. New CI job is wired and runs against the smoke test.
+**Phase A gate:** `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj` passes locally. New CI job is wired and runs against the smoke test.
 
 ### Phase B — Refactor for testability + cache rows on the run
 
@@ -162,7 +162,7 @@ git commit -m "test(mod): bootstrap xunit test project for ArdenfallArchives"
 **Files:**
 
 - Create: `mod/src/Extraction/ItemExtractionService.cs`
-- Modify: `mod/src/Control/ArchiveRun.cs`
+- Modify: `mod/src/Control/CompendiumRun.cs`
 
 The current `EntityPlanCommand` and `EntityExportBatchCommand` both call `new ItemExtractor().Walk()` directly. The fix is to make extraction a one-time-per-run operation owned by a service that caches its result on the run.
 
@@ -170,9 +170,9 @@ The current `EntityPlanCommand` and `EntityExportBatchCommand` both call `new It
 
 ```csharp
 // mod-tests/ItemExtractionServiceTests.cs
-using ArdenfallArchives.Control;
-using ArdenfallArchives.Entities.Item;
-using ArdenfallArchives.Extraction;
+using ArdenfallCompendium.Control;
+using ArdenfallCompendium.Entities.Item;
+using ArdenfallCompendium.Extraction;
 using Xunit;
 
 public sealed class ItemExtractionServiceTests
@@ -182,7 +182,7 @@ public sealed class ItemExtractionServiceTests
     {
         var source = new CountingItemAssetSource();
         var service = new ItemExtractionService(source);
-        var run = new ArchiveRun { RunId = "test" };
+        var run = new CompendiumRun { RunId = "test" };
 
         var first = service.GetOrExtract(run);
         var second = service.GetOrExtract(run);
@@ -199,7 +199,7 @@ public sealed class ItemExtractionServiceTests
 
 ```csharp
 // mod/src/Entities/Item/IItemAssetSource.cs
-namespace ArdenfallArchives.Entities.Item;
+namespace ArdenfallCompendium.Entities.Item;
 
 public interface IItemAssetSource
 {
@@ -211,7 +211,7 @@ The default production implementation:
 
 ```csharp
 // mod/src/Entities/Item/BuiltLookupTableItemAssetSource.cs
-namespace ArdenfallArchives.Entities.Item;
+namespace ArdenfallCompendium.Entities.Item;
 
 public sealed class BuiltLookupTableItemAssetSource : IItemAssetSource
 {
@@ -227,11 +227,11 @@ public sealed class BuiltLookupTableItemAssetSource : IItemAssetSource
 ```csharp
 // mod/src/Extraction/ItemExtractionService.cs
 using System.Collections.Generic;
-using ArdenfallArchives.Control;
-using ArdenfallArchives.Dtos;
-using ArdenfallArchives.Entities.Item;
+using ArdenfallCompendium.Control;
+using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities.Item;
 
-namespace ArdenfallArchives.Extraction;
+namespace ArdenfallCompendium.Extraction;
 
 public sealed class ItemExtractionService
 {
@@ -240,13 +240,13 @@ public sealed class ItemExtractionService
 
     public ItemExtractionService(IItemAssetSource source) { _source = source; }
 
-    public IReadOnlyList<ItemSnapshotRow> GetOrExtract(ArchiveRun run)
+    public IReadOnlyList<ItemSnapshotRow> GetOrExtract(CompendiumRun run)
         => GetState(run).Rows;
 
-    public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(ArchiveRun run)
+    public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run)
         => GetState(run).WalkerDiagnostics;
 
-    private ExtractionState GetState(ArchiveRun run)
+    private ExtractionState GetState(CompendiumRun run)
     {
         if (_byRun.TryGetValue(run.RunId, out var state)) return state;
         var extractor = new ItemExtractor(_source);
@@ -261,14 +261,14 @@ public sealed class ItemExtractionService
 }
 ```
 
-The service is instantiated once at plugin startup and registered with the same DI surface the command handlers use today (constructor injection through `ArchiveCommandRegistry`).
+The service is instantiated once at plugin startup and registered with the same DI surface the command handlers use today (constructor injection through `CompendiumCommandRegistry`).
 
-- [ ] **Step 4: Update `ArchiveCommandRegistry`** to construct and pass the `ItemExtractionService` to `EntityPlanCommand`, `EntityExportBatchCommand`, and `RunFinalizeCommand`. Verify the smoke test from Phase A still passes (no Unity type loading).
+- [ ] **Step 4: Update `CompendiumCommandRegistry`** to construct and pass the `ItemExtractionService` to `EntityPlanCommand`, `EntityExportBatchCommand`, and `RunFinalizeCommand`. Verify the smoke test from Phase A still passes (no Unity type loading).
 
 - [ ] **Step 5: Run.**
 
 ```sh
-dotnet test mod-tests/ArdenfallArchives.Tests.csproj
+dotnet test mod-tests/ArdenfallCompendium.Tests.csproj
 ```
 
 Expected: 2 pass (smoke + cache test). The cache test originally fails (red) until Step 3 lands.
@@ -314,7 +314,7 @@ git commit -m "fix(mod): entity.plan reads cached row count instead of re-walkin
 git commit -m "fix(mod): entity.exportBatch slices cached rows instead of re-walking"
 ```
 
-**Phase B gate:** `ItemExtractionServiceTests`, `EntityPlanCommandTests`, and `EntityExportBatchCommandTests` all pass. Walker invocation count is exactly 1 per run regardless of batch count. `dotnet build mod/ArdenfallArchives.csproj` exits 0/0/0; `dotnet format mod/ArdenfallArchives.csproj --verify-no-changes` exits 0.
+**Phase B gate:** `ItemExtractionServiceTests`, `EntityPlanCommandTests`, and `EntityExportBatchCommandTests` all pass. Walker invocation count is exactly 1 per run regardless of batch count. `dotnet build mod/ArdenfallCompendium.csproj` exits 0/0/0; `dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes` exits 0.
 
 ### Phase C — Diagnostic-counting fix
 
@@ -340,7 +340,7 @@ git commit -m "fix(mod): entity.exportBatch slices cached rows instead of re-wal
 - [ ] **Step 4: Run.**
 
 ```sh
-dotnet test mod-tests/ArdenfallArchives.Tests.csproj
+dotnet test mod-tests/ArdenfallCompendium.Tests.csproj
 bun test pipeline/test
 ```
 
@@ -467,14 +467,14 @@ git commit -m "feat(controller): invoke game.quit after export success or failur
   ```
 
   which, in order:
-  1. Polls `archive.preflight`. If it passes immediately (already in world), returns.
+  1. Polls `compendium.preflight`. If it passes immediately (already in world), returns.
   2. If preflight reports `ardenfallGame: not initialized`, eval-runs a snippet that finds the menu's continue button and clicks it.
-  3. Polls `archive.preflight` until it passes or `timeoutMs` elapses.
+  3. Polls `compendium.preflight` until it passes or `timeoutMs` elapses.
   4. Returns or throws a clear timeout error with the last preflight reason.
 
 - [ ] **Step 2: Write the failing test.** Mock the HotRepl client; assert the helper polls preflight, sends the eval command on first failure, and returns when preflight passes.
 
-- [ ] **Step 3: Implement.** Keep the eval snippet minimal and inspectable; do not embed long C# strings if a typed command would be clearer. (If the eval surface is too brittle, add a typed `archive.continueFromMenu` command to the mod instead — this is the more robust answer and is preferred if eval proves flaky.)
+- [ ] **Step 3: Implement.** Keep the eval snippet minimal and inspectable; do not embed long C# strings if a typed command would be clearer. (If the eval surface is too brittle, add a typed `compendium.continueFromMenu` command to the mod instead — this is the more robust answer and is preferred if eval proves flaky.)
 
 - [ ] **Step 4: Wire into `controller:export`.** The CLI gains `--wait-for-world` (default true for live runs, false in unit tests). The export orchestrator calls `waitForWorld(client, …)` after preflight reports not-ready and before `run.begin`.
 
@@ -619,17 +619,17 @@ Rationale:
 
 ### Placeholder scan
 
-No `TODO`, `TBD`, "implement later" appear in implementation steps. The two genuine deferrals are explicit: real-fixture curation (Slice 2 trigger), and the `archive.continueFromMenu` typed command (a fallback in Phase F if runtime-eval proves flaky in practice).
+No `TODO`, `TBD`, "implement later" appear in implementation steps. The two genuine deferrals are explicit: real-fixture curation (Slice 2 trigger), and the `compendium.continueFromMenu` typed command (a fallback in Phase F if runtime-eval proves flaky in practice).
 
 ### Type / signature consistency
 
 - `IItemAssetSource` is consistent across the production source (`BuiltLookupTableItemAssetSource`), the test fake (`CountingItemAssetSource`), and the consumer (`ItemExtractor`).
 - `DiagnosticTotals` shape (`{ fatal, diagnostic }`) matches across `mod/src/Dtos/Manifest.cs`, the new aggregation in `RunFinalizeCommand`, and `pipeline/src/stages/validate.ts`.
-- `ArchiveRun.Counts["item"]` semantics: kept as "items written so far" while a run is open; replaced with the cached row count on finalize.
+- `CompendiumRun.Counts["item"]` semantics: kept as "items written so far" while a run is open; replaced with the cached row count on finalize.
 
 ### Known risks remaining
 
-1. **Runtime-eval brittleness for `wait-for-world`.** If Mono runtime-eval through HotRepl is fragile against the menu's UnityEngine.UI hierarchy (renames, dynamic instantiation), the helper falls back to a typed `archive.continueFromMenu` command on the mod side. This decision is made in Task F.1 Step 1 once the eval target is identified.
+1. **Runtime-eval brittleness for `wait-for-world`.** If Mono runtime-eval through HotRepl is fragile against the menu's UnityEngine.UI hierarchy (renames, dynamic instantiation), the helper falls back to a typed `compendium.continueFromMenu` command on the mod side. This decision is made in Task F.1 Step 1 once the eval target is identified.
 2. **Cloudflare Workers/Static Assets free tier limits.** Slice 1.5 has local/operator deploys only; CI does not deploy. If a later slice introduces automated deploys or preview deploys per PR, monitor Worker and build limits then.
 3. **Synthetic-fixture-derived deploy.** Until a real snapshot is archived externally and copied into CI, the deployed site only knows the 2 synthetic items. This is acceptable for Slice 1.5 (deployment exists; content thinness is real but not a deployment defect) and is fixed in Slice 13 (versioning + snapshot archive).
 

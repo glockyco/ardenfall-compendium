@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 using UnityEngine;
 
-namespace ArdenfallArchives.Walker;
+namespace ArdenfallCompendium.Walker;
 
 /// <summary>Base for per-entity walkers. Provides cycle detection scaffolding and shared helpers.</summary>
 public abstract class WalkerBase<TSnapshot>

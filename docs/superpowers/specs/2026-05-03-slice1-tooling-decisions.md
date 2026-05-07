@@ -1,8 +1,8 @@
-# Ardenfall Archives — Slice 1 Tooling Decisions
+# Ardenfall Compendium — Slice 1 Tooling Decisions
 
 Date: 2026-05-03
 Status: Accepted for Slice 1; closes the "open questions deferred to implementation plan" tracker entries 2, 3, 4, 5 from the baseline design spec.
-Supersedes: nothing. Complements `2026-04-28-ardenfall-archives-design.md` and `2026-04-29-ardenfall-archives-implementation-decisions.md` by closing tooling questions both documents intentionally deferred.
+Supersedes: nothing. Complements `2026-04-28-ardenfall-compendium-design.md` and `2026-04-29-ardenfall-compendium-implementation-decisions.md` by closing tooling questions both documents intentionally deferred.
 
 ## Purpose
 
@@ -12,7 +12,7 @@ The high-level architecture is unchanged. This document does not reopen any lock
 
 ## Decision maturity levels
 
-Reusing the vocabulary established in `2026-04-29-ardenfall-archives-implementation-decisions.md`:
+Reusing the vocabulary established in `2026-04-29-ardenfall-compendium-implementation-decisions.md`:
 
 - **Locked invariant:** changing this reopens architecture.
 - **Accepted for Slice 1:** implement now; revisit only if a listed trigger fires.
@@ -301,7 +301,7 @@ pre-commit:
       stage_fixed: true
     - name: dotnet-format
       glob: "*.cs"
-      run: dotnet format mod/ArdenfallArchives.csproj --include {staged_files}
+      run: dotnet format mod/ArdenfallCompendium.csproj --include {staged_files}
       stage_fixed: true
 ```
 
@@ -326,7 +326,7 @@ The repository is on GitHub. Actions has free minutes for public repositories, n
 
 | Job        | Trigger paths                                                          | Steps                                                                                                                              |
 | ---------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `mod`      | `mod/**`                                                               | `actions/setup-dotnet@v4` → `dotnet build mod/ArdenfallArchives.csproj`                                                            |
+| `mod`      | `mod/**`                                                               | `actions/setup-dotnet@v4` → `dotnet build mod/ArdenfallCompendium.csproj`                                                          |
 | `pipeline` | `pipeline/**`, `entities/**`, `schemas/**`, `bun.lock`, `package.json` | `oven-sh/setup-bun@v2` → `bun install --frozen-lockfile` → `bunx tsgo --noEmit -p pipeline` → `bun test pipeline/test`             |
 | `site`     | `site/**`, `entities/**`, `schemas/**`, `bun.lock`, `package.json`     | setup-bun → `bun install --frozen-lockfile` → `bun run --cwd site check` (uses `svelte-check --tsgo`) → `bun run --cwd site build` |
 | `fixtures` | `fixtures/**`, `pipeline/scripts/check-fixtures.ts`                    | setup-bun → `bun run check:fixtures` (size budgets, manifest presence, no machine-local paths, no raw Unity JSON)                  |

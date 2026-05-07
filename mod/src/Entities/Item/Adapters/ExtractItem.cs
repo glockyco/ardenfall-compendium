@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using Ardenfall;
 using Ardenfall.Item;
-using ArdenfallArchives.Dtos;
-using ArdenfallArchives.Walker;
+using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Walker;
 
-namespace ArdenfallArchives.Entities.Item.Adapters;
+namespace ArdenfallCompendium.Entities.Item.Adapters;
 
 public static class ExtractItem
 {

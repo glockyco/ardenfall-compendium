@@ -1,5 +1,5 @@
 import { HotReplClient } from "./hotrepl-client";
-import { exportArchive } from "./export-orchestrator";
+import { exportCompendium } from "./export-orchestrator";
 
 interface CliOptions {
   url: string;
@@ -17,7 +17,7 @@ async function main(argv: string[]): Promise<void> {
   const options = parseArgs(args);
   const client = new HotReplClient(options.url);
   try {
-    const result = await exportArchive({
+    const result = await exportCompendium({
       client,
       outputBaseDir: options.outputBaseDir,
       pipelineOutDir: options.pipelineOutDir,

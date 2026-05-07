@@ -1,9 +1,9 @@
 using System;
 using System.IO;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 using Newtonsoft.Json;
 
-namespace ArdenfallArchives.Emit;
+namespace ArdenfallCompendium.Emit;
 
 public sealed class SnapshotWriter
 {

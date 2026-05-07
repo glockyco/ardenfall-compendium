@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ardenfall-archives.example/schemas/entity.schema.json",
+  "$id": "https://ardenfall-compendium.example/schemas/entity.schema.json",
   "title": "Entity descriptor",
   "type": "object",
   "additionalProperties": false,

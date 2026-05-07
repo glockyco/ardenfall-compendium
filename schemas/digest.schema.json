@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ardenfall-archives.example/schemas/digest.schema.json",
+  "$id": "https://ardenfall-compendium.example/schemas/digest.schema.json",
   "title": "Cross-version digest (stub for Slice 9)",
   "type": "object",
   "additionalProperties": false,

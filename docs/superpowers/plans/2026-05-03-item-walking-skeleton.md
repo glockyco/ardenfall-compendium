@@ -10,8 +10,8 @@
 
 **Reference specs:**
 
-- `docs/superpowers/specs/2026-04-28-ardenfall-archives-design.md`
-- `docs/superpowers/specs/2026-04-29-ardenfall-archives-implementation-decisions.md`
+- `docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md`
+- `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md`
 - `docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`
 
 The implementation decisions addendum is authoritative where it differs from the baseline design spec.
@@ -135,7 +135,7 @@ pipeline/test/fixtures/real-capsule/.gitkeep         ← capsule lands when firs
 ### Mod project (C# / BepInEx 5)
 
 ```
-mod/ArdenfallArchives.csproj
+mod/ArdenfallCompendium.csproj
 mod/src/Plugin.cs                            ← BepInEx [BepInPlugin], hot register, hotkey + commands
 mod/src/Triggers/Hotkey.cs
 mod/src/Triggers/ConsoleCommand.cs
@@ -301,8 +301,8 @@ Each phase ends with a passing-tests gate. Do not begin a later phase until the 
 - **C:** `bun run pipeline:validate-entities` passes against `entities/item/`.
 - **D:** `bun test pipeline/test/orchestrator.test.ts` passes; orchestrator runs an empty plan deterministically.
 - **E:** `bun test pipeline/test/canonicaliser.test.ts pipeline/test/site-metadata.test.ts pipeline/test/invariants/items.test.ts` passes against the synthetic fixture; `pipeline/dist/data.sqlite` is produced.
-- **F:** `dotnet build mod/ArdenfallArchives.csproj` succeeds; `mod/bin/.../ArdenfallArchives.dll` exists.
-- **G:** Local manual: install mod into Ardenfall demo, launch, observe `[ArdenfallArchives] preflight: ok`, run `/extract`, observe atomic snapshot at `snapshots/<game>-<ts>/`. Validate that snapshot through the pipeline; no diagnostics with severity ≥ `diagnostic`.
+- **F:** `dotnet build mod/ArdenfallCompendium.csproj` succeeds; `mod/bin/.../ArdenfallCompendium.dll` exists.
+- **G:** Local manual: install mod into Ardenfall demo, launch, observe `[ArdenfallCompendium] preflight: ok`, run `/extract`, observe atomic snapshot at `snapshots/<game>-<ts>/`. Validate that snapshot through the pipeline; no diagnostics with severity ≥ `diagnostic`.
 - **H:** `bun run --cwd site check` and `bun run --cwd site build` both succeed; `site/build/` contains static output.
 - **I:** Hitting `site/build/items/` in a static server renders the synthetic-fixture items; `/items/<known-id>/` renders detail with `fieldList` sections.
 - **J:** `bun run check:fixtures` passes; CI's `fixtures` job is green on a clean checkout.
@@ -331,7 +331,7 @@ Goal: clean, opinionated project skeleton; CI runs (no jobs do real work yet); l
 
 ```jsonc
 {
-  "name": "ardenfall-archives",
+  "name": "ardenfall-compendium",
   "private": true,
   "type": "module",
   "engines": { "bun": ">=1.3.13" },
@@ -609,7 +609,7 @@ pre-commit:
       stage_fixed: true
     - name: dotnet-format
       glob: "*.cs"
-      run: dotnet format mod/ArdenfallArchives.csproj --include {staged_files}
+      run: dotnet format mod/ArdenfallCompendium.csproj --include {staged_files}
       stage_fixed: true
       skip:
         - merge
@@ -686,7 +686,7 @@ Expected: a name string. Use it.
 - [ ] **Step 5: Write `README.md`**
 
 ````markdown
-# Ardenfall Archives
+# Ardenfall Compendium
 
 Static, agentic-first wiki and interactive map for the Unity-Mono game **Ardenfall** (Spellcast Studios).
 
@@ -705,8 +705,8 @@ Static, agentic-first wiki and interactive map for the Unity-Mono game **Ardenfa
 
 Read in order:
 
-1. `docs/superpowers/specs/2026-04-28-ardenfall-archives-design.md`
-2. `docs/superpowers/specs/2026-04-29-ardenfall-archives-implementation-decisions.md`
+1. `docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md`
+2. `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md`
 3. `docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`
 4. `docs/superpowers/roadmap.md`
 
@@ -724,7 +724,7 @@ Mod build (Mac/Linux requires `mono` or `dotnet`):
 
 ```sh
 mod/scripts/copy-libs.sh   # copies game DLLs from your local Ardenfall install
-dotnet build mod/ArdenfallArchives.csproj
+dotnet build mod/ArdenfallCompendium.csproj
 ```
 
 ## License
@@ -758,8 +758,8 @@ This repository is the static archive for the game Ardenfall. Its design is capt
 
 ## Where to look first
 
-- Design baseline: `docs/superpowers/specs/2026-04-28-ardenfall-archives-design.md`
-- Implementation decisions (authoritative where the baseline differs): `docs/superpowers/specs/2026-04-29-ardenfall-archives-implementation-decisions.md`
+- Design baseline: `docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md`
+- Implementation decisions (authoritative where the baseline differs): `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md`
 - Slice-1 tooling pins: `docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`
 - Living roadmap: `docs/superpowers/roadmap.md`
 - Active plan: `docs/superpowers/plans/<latest>.md`
@@ -875,7 +875,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: "8.0.x" }
-      - run: dotnet build mod/ArdenfallArchives.csproj -c Release -p:RestorePackagesWithLockFile=false
+      - run: dotnet build mod/ArdenfallCompendium.csproj -c Release -p:RestorePackagesWithLockFile=false
         env: { CI: "true" }
 
   fixtures:
@@ -927,7 +927,7 @@ Goal: every cross-subsystem contract is JSON-Schema-validated. Compiled validato
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ardenfall-archives.example/schemas/entity.schema.json",
+  "$id": "https://ardenfall-compendium.example/schemas/entity.schema.json",
   "title": "Entity descriptor",
   "type": "object",
   "additionalProperties": false,
@@ -1117,7 +1117,7 @@ git commit -m "feat(schemas): define entity descriptor schema"
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ardenfall-archives.example/schemas/variant.schema.json",
+  "$id": "https://ardenfall-compendium.example/schemas/variant.schema.json",
   "title": "Entity variant descriptor",
   "type": "object",
   "additionalProperties": false,
@@ -1139,7 +1139,7 @@ git commit -m "feat(schemas): define entity descriptor schema"
       "type": "array",
       "minItems": 1,
       "items": {
-        "$ref": "https://ardenfall-archives.example/schemas/entity.schema.json#/$defs/field",
+        "$ref": "https://ardenfall-compendium.example/schemas/entity.schema.json#/$defs/field",
       },
     },
   },
@@ -1170,7 +1170,7 @@ git commit -m "feat(schemas): define entity variant schema"
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ardenfall-archives.example/schemas/manifest.schema.json",
+  "$id": "https://ardenfall-compendium.example/schemas/manifest.schema.json",
   "title": "Snapshot manifest",
   "type": "object",
   "additionalProperties": false,
@@ -1239,7 +1239,7 @@ The snapshot per-entity files share a common envelope with entity-specific bodie
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ardenfall-archives.example/schemas/snapshot.schema.json",
+  "$id": "https://ardenfall-compendium.example/schemas/snapshot.schema.json",
   "title": "Snapshot per-entity envelope",
   "type": "object",
   "additionalProperties": false,
@@ -1341,7 +1341,7 @@ git commit -m "feat(schemas): define manifest and snapshot envelope"
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ardenfall-archives.example/schemas/digest.schema.json",
+  "$id": "https://ardenfall-compendium.example/schemas/digest.schema.json",
   "title": "Cross-version digest (stub for Slice 9)",
   "type": "object",
   "additionalProperties": false,
@@ -1372,7 +1372,7 @@ git commit -m "feat(schemas): define manifest and snapshot envelope"
 ```jsonc
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ardenfall-archives.example/schemas/fixture-manifest.schema.json",
+  "$id": "https://ardenfall-compendium.example/schemas/fixture-manifest.schema.json",
   "title": "Fixture pack manifest",
   "type": "object",
   "additionalProperties": false,
@@ -1792,7 +1792,7 @@ Goal: pipeline workspace exists, types are defined, registry merge + topo orches
 
 ```jsonc
 {
-  "name": "@ardenfall-archives/pipeline",
+  "name": "@ardenfall-compendium/pipeline",
   "private": true,
   "type": "module",
   "main": "src/cli.ts",
@@ -3740,20 +3740,20 @@ Goal: csproj compiles cleanly against `mod/libs/`. Walker base, ref resolver, pr
 
 **Files:**
 
-- Create: `mod/ArdenfallArchives.csproj`
+- Create: `mod/ArdenfallCompendium.csproj`
 - Create: `mod/nuget.config`
 - Create: `mod/scripts/copy-libs.sh`
 - Create: `mod/src/Emit/JsonSettings.cs`
 - Create: `mod/AGENTS.md`
 
-- [ ] **Step 1: Write `mod/ArdenfallArchives.csproj`**
+- [ ] **Step 1: Write `mod/ArdenfallCompendium.csproj`**
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <AssemblyName>ArdenfallArchives</AssemblyName>
-    <RootNamespace>ArdenfallArchives</RootNamespace>
+    <AssemblyName>ArdenfallCompendium</AssemblyName>
+    <RootNamespace>ArdenfallCompendium</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <NoWarn>CS1591</NoWarn>
@@ -3814,7 +3814,7 @@ Mark executable: `chmod +x mod/scripts/copy-libs.sh`.
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace ArdenfallArchives.Emit;
+namespace ArdenfallCompendium.Emit;
 
 public static class JsonSettings
 {
@@ -3852,19 +3852,19 @@ The mod walks live Ardenfall runtime objects and emits JSON snapshots. It is **n
 - `src/Entities/<E>/Adapters/` — per-layer extractor adapters.
 - `src/Emit/` — JSON + atomic snapshot writers.
 
-Read `docs/superpowers/specs/2026-04-29-ardenfall-archives-implementation-decisions.md` §11–§14 for the contract.
+Read `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md` §11–§14 for the contract.
 ```
 
 - [ ] **Step 5: Verify the project builds**
 
-Run: `bash mod/scripts/copy-libs.sh && dotnet build mod/ArdenfallArchives.csproj`
-Expected: `Build succeeded` with `0 Warning(s)` and `0 Error(s)`. The compiled `ArdenfallArchives.dll` lands in `mod/bin/Debug/net472/`.
+Run: `bash mod/scripts/copy-libs.sh && dotnet build mod/ArdenfallCompendium.csproj`
+Expected: `Build succeeded` with `0 Warning(s)` and `0 Error(s)`. The compiled `ArdenfallCompendium.dll` lands in `mod/bin/Debug/net472/`.
 
 - [ ] **Step 6: Commit**
 
 ```bash
 chmod +x mod/scripts/copy-libs.sh
-git add mod/ArdenfallArchives.csproj mod/nuget.config mod/scripts/copy-libs.sh mod/src/Emit/JsonSettings.cs mod/AGENTS.md
+git add mod/ArdenfallCompendium.csproj mod/nuget.config mod/scripts/copy-libs.sh mod/src/Emit/JsonSettings.cs mod/AGENTS.md
 git commit -m "feat(mod): bootstrap bepinex csproj and dll-copy helper"
 ```
 
@@ -3883,7 +3883,7 @@ git commit -m "feat(mod): bootstrap bepinex csproj and dll-copy helper"
 
 ```csharp
 using Newtonsoft.Json;
-namespace ArdenfallArchives.Dtos;
+namespace ArdenfallCompendium.Dtos;
 
 public sealed class SnapshotRef
 {
@@ -3917,7 +3917,7 @@ public sealed class SnapshotRef
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace ArdenfallArchives.Dtos;
+namespace ArdenfallCompendium.Dtos;
 
 public sealed class Manifest
 {
@@ -3945,7 +3945,7 @@ public sealed class DiagnosticTotals
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace ArdenfallArchives.Dtos;
+namespace ArdenfallCompendium.Dtos;
 
 public sealed class PreflightReport
 {
@@ -3966,7 +3966,7 @@ public sealed class PreflightCheck
 
 ```csharp
 using Newtonsoft.Json;
-namespace ArdenfallArchives.Dtos;
+namespace ArdenfallCompendium.Dtos;
 
 public sealed class Diagnostic
 {
@@ -3981,7 +3981,7 @@ public sealed class Diagnostic
 
 ```csharp
 using Newtonsoft.Json;
-namespace ArdenfallArchives.Dtos;
+namespace ArdenfallCompendium.Dtos;
 
 public sealed class Provenance
 {
@@ -4034,10 +4034,10 @@ git commit -m "feat(mod): shared snapshot dtos (ref, manifest, diagnostic, prove
 ```csharp
 using System.Collections.Generic;
 using Ardenfall;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 using UnityEngine;
 
-namespace ArdenfallArchives.Walker;
+namespace ArdenfallCompendium.Walker;
 
 /// <summary>Resolves Unity object references to SnapshotRefs, applying the missing-ref policy.</summary>
 public sealed class RefResolver
@@ -4090,8 +4090,8 @@ public enum MissingPolicy { Fatal, Diagnostic, OptionalEmpty }
 - [ ] **Step 2: Write `ProvenanceCapture.cs`**
 
 ```csharp
-using ArdenfallArchives.Dtos;
-namespace ArdenfallArchives.Walker;
+using ArdenfallCompendium.Dtos;
+namespace ArdenfallCompendium.Walker;
 
 /// <summary>Captures provenance for Parameter&lt;T&gt; and SmartListParameter&lt;T&gt; field resolution.</summary>
 public static class ProvenanceCapture
@@ -4116,10 +4116,10 @@ public static class ProvenanceCapture
 
 ```csharp
 using System.Collections.Generic;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 using UnityEngine;
 
-namespace ArdenfallArchives.Walker;
+namespace ArdenfallCompendium.Walker;
 
 /// <summary>Base for per-entity walkers. Provides cycle detection scaffolding and shared helpers.</summary>
 public abstract class WalkerBase<TSnapshot>
@@ -4142,8 +4142,8 @@ public abstract class WalkerBase<TSnapshot>
 
 - [ ] **Step 4: Compile-check (requires `mod/libs/` populated)**
 
-Run: `mod/scripts/copy-libs.sh && dotnet build mod/ArdenfallArchives.csproj -c Debug`
-Expected: build succeeds; `mod/bin/Debug/net46/ArdenfallArchives.dll` is produced. Any unresolved-symbol error against `Ardenfall.*` types means a member name in `RefResolver.cs` or `WalkerBase.cs` does not match the live DLL — fix locally and update this plan.
+Run: `mod/scripts/copy-libs.sh && dotnet build mod/ArdenfallCompendium.csproj -c Debug`
+Expected: build succeeds; `mod/bin/Debug/net46/ArdenfallCompendium.dll` is produced. Any unresolved-symbol error against `Ardenfall.*` types means a member name in `RefResolver.cs` or `WalkerBase.cs` does not match the live DLL — fix locally and update this plan.
 
 - [ ] **Step 5: Commit**
 
@@ -4164,9 +4164,9 @@ git commit -m "feat(mod): walker base, ref resolver, provenance capture"
 using System;
 using System.Linq;
 using Ardenfall;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 
-namespace ArdenfallArchives.Preflight;
+namespace ArdenfallCompendium.Preflight;
 
 /// <summary>
 /// Fail-fast preflight executed immediately before every snapshot write.
@@ -4233,14 +4233,14 @@ public static class Preflight
 - [ ] **Step 2: Build and commit**
 
 ```bash
-dotnet build mod/ArdenfallArchives.csproj -c Debug
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
 git add mod/src/Preflight/Preflight.cs
 git commit -m "feat(mod): fail-fast preflight gate"
 ```
 
 ### Phase F gate
 
-`dotnet build mod/ArdenfallArchives.csproj` succeeds locally. CI's `mod` job will be flaky until Phase G ships extraction (game DLLs are still required for compile); track this and accept until the entire mod compiles end-to-end.
+`dotnet build mod/ArdenfallCompendium.csproj` succeeds locally. CI's `mod` job will be flaky until Phase G ships extraction (game DLLs are still required for compile); track this and accept until the entire mod compiles end-to-end.
 
 ---
 
@@ -4264,10 +4264,10 @@ Goal: hot-installable BepInEx mod that walks `ItemData` assets and emits a compl
 
 ```csharp
 using System.Collections.Generic;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 using Newtonsoft.Json;
 
-namespace ArdenfallArchives.Entities.Item;
+namespace ArdenfallCompendium.Entities.Item;
 
 /// <summary>
 /// Wire shape per snapshot.schema.json: { id, variant, fields, tags, provenance, diagnostics }.
@@ -4299,7 +4299,7 @@ Each layer DTO carries only the fields introduced at that layer plus the parent 
 Example pattern (`ItemEquipmentSnapshot.cs`):
 
 ```csharp
-namespace ArdenfallArchives.Entities.Item;
+namespace ArdenfallCompendium.Entities.Item;
 
 public sealed record ItemEquipmentSnapshot(string Id, string EquipSlot);
 ```
@@ -4333,10 +4333,10 @@ using System;
 using System.Collections.Generic;
 using Ardenfall;
 using Ardenfall.Item;
-using ArdenfallArchives.Dtos;
-using ArdenfallArchives.Walker;
+using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Walker;
 
-namespace ArdenfallArchives.Entities.Item.Adapters;
+namespace ArdenfallCompendium.Entities.Item.Adapters;
 
 public static class ExtractItem
 {
@@ -4408,7 +4408,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Ardenfall.Item;
 
-namespace ArdenfallArchives.Entities.Item.Adapters;
+namespace ArdenfallCompendium.Entities.Item.Adapters;
 
 public static class ExtractEquipment
 {
@@ -4473,7 +4473,7 @@ public static class ExtractArmor
 - [ ] **Step 3: Build and commit**
 
 ```bash
-dotnet build mod/ArdenfallArchives.csproj -c Debug
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
 git add mod/src/Entities/Item/Adapters/
 git commit -m "feat(mod): item per-layer extractors"
 ```
@@ -4491,11 +4491,11 @@ using System;
 using System.Collections.Generic;
 using Ardenfall;
 using Ardenfall.Item;
-using ArdenfallArchives.Dtos;
-using ArdenfallArchives.Entities.Item.Adapters;
-using ArdenfallArchives.Walker;
+using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities.Item.Adapters;
+using ArdenfallCompendium.Walker;
 
-namespace ArdenfallArchives.Entities.Item;
+namespace ArdenfallCompendium.Entities.Item;
 
 public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
 {
@@ -4595,7 +4595,7 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
 - [ ] **Step 2: Build and commit**
 
 ```bash
-dotnet build mod/ArdenfallArchives.csproj -c Debug
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
 git add mod/src/Entities/Item/ItemExtractor.cs
 git commit -m "feat(mod): item extractor with variant dispatch"
 ```
@@ -4614,9 +4614,9 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 
-namespace ArdenfallArchives.Emit;
+namespace ArdenfallCompendium.Emit;
 
 public static class ManifestBuilder
 {
@@ -4656,10 +4656,10 @@ public static class ManifestBuilder
 ```csharp
 using System;
 using System.IO;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 using Newtonsoft.Json;
 
-namespace ArdenfallArchives.Emit;
+namespace ArdenfallCompendium.Emit;
 
 public sealed class SnapshotWriter
 {
@@ -4731,21 +4731,21 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ArdenfallArchives.Dtos;
-using ArdenfallArchives.Emit;
-using ArdenfallArchives.Entities.Item;
+using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Emit;
+using ArdenfallCompendium.Entities.Item;
 using BepInEx;
 using BepInEx.Configuration;
 using UnityEngine;
-using PreflightRunner = ArdenfallArchives.Preflight.Preflight;
+using PreflightRunner = ArdenfallCompendium.Preflight.Preflight;
 
-namespace ArdenfallArchives;
+namespace ArdenfallCompendium;
 
 [BepInPlugin(Guid, Name, Version)]
 public sealed class Plugin : BaseUnityPlugin
 {
-    public const string Guid = "com.ardenfall-archives.extractor";
-    public const string Name = "Ardenfall Archives Extractor";
+    public const string Guid = "ardenfall-compendium.extractor";
+    public const string Name = "Ardenfall Compendium Extractor";
     public const string Version = "0.1.0";
 
     private ConfigEntry<KeyboardShortcut> _hotkey = null!;
@@ -4755,7 +4755,7 @@ public sealed class Plugin : BaseUnityPlugin
     private void Awake()
     {
         _hotkey = Config.Bind("Triggers", "Hotkey", new KeyboardShortcut(KeyCode.F8), "Trigger snapshot extraction");
-        _outputDir = Config.Bind("Output", "BaseDir", Path.Combine(Paths.PluginPath, "ArdenfallArchives", "snapshots"), "Where to write snapshots");
+        _outputDir = Config.Bind("Output", "BaseDir", Path.Combine(Paths.PluginPath, "ArdenfallCompendium", "snapshots"), "Where to write snapshots");
         _readiness = new Triggers.ReadinessMonitor(Logger);
         Triggers.ConsoleCommand.TryRegister(Logger, this);
         Logger.LogInfo($"{Name} {Version} loaded; hotkey {_hotkey.Value} will extract.");
@@ -4825,7 +4825,7 @@ public sealed class Plugin : BaseUnityPlugin
 - [ ] **Step 2: Write `Triggers/Hotkey.cs`** — thin wrapper that calls back into Plugin
 
 ```csharp
-namespace ArdenfallArchives.Triggers;
+namespace ArdenfallCompendium.Triggers;
 
 public static class Hotkey
 {
@@ -4839,7 +4839,7 @@ BepInEx 5 has no built-in console command system; Ardenfall's own console (or th
 
 ```csharp
 using BepInEx.Logging;
-namespace ArdenfallArchives.Triggers;
+namespace ArdenfallCompendium.Triggers;
 
 public static class ConsoleCommand
 {
@@ -4860,9 +4860,9 @@ public static class ConsoleCommand
 using System;
 using BepInEx.Logging;
 using UnityEngine.SceneManagement;
-using PreflightRunner = ArdenfallArchives.Preflight.Preflight;
+using PreflightRunner = ArdenfallCompendium.Preflight.Preflight;
 
-namespace ArdenfallArchives.Triggers;
+namespace ArdenfallCompendium.Triggers;
 
 public sealed class ReadinessMonitor : IDisposable
 {
@@ -4896,7 +4896,7 @@ public sealed class ReadinessMonitor : IDisposable
 - [ ] **Step 5: Build and commit**
 
 ```bash
-dotnet build mod/ArdenfallArchives.csproj -c Debug
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
 git add mod/src/Plugin.cs mod/src/Triggers/
 git commit -m "feat(mod): plugin entry, hotkey trigger, readiness monitor"
 ```
@@ -4909,22 +4909,22 @@ Manual checkpoint, not a CI gate.
 
 - [ ] **Step 1: Install the mod**
 
-Copy `mod/bin/Debug/net472/ArdenfallArchives.dll` and `Newtonsoft.Json.dll` into Ardenfall's BepInEx plugins directory:
+Copy `mod/bin/Debug/net472/ArdenfallCompendium.dll` and `Newtonsoft.Json.dll` into Ardenfall's BepInEx plugins directory:
 
 ```sh
-PLUGINS_DIR="$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Ardenfall Demo/BepInEx/plugins/ArdenfallArchives"
+PLUGINS_DIR="$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Ardenfall Demo/BepInEx/plugins/ArdenfallCompendium"
 mkdir -p "$PLUGINS_DIR"
-cp mod/bin/Debug/net472/ArdenfallArchives.dll "$PLUGINS_DIR/"
+cp mod/bin/Debug/net472/ArdenfallCompendium.dll "$PLUGINS_DIR/"
 cp mod/bin/Debug/net472/Newtonsoft.Json.dll "$PLUGINS_DIR/"
 ```
 
 - [ ] **Step 2: Launch Ardenfall, observe BepInEx log**
 
-Expected: `Ardenfall Archives Extractor 0.1.0 loaded; F-key F8 will extract.` appears in BepInEx output. After loading a save, `[readiness] preflight now passing; extraction available`.
+Expected: `Ardenfall Compendium Extractor 0.1.0 loaded; F-key F8 will extract.` appears in BepInEx output. After loading a save, `[readiness] preflight now passing; extraction available`.
 
 - [ ] **Step 3: Press F8, observe snapshot output**
 
-Expected: log line `snapshot published: <plugins>/ArdenfallArchives/snapshots/Demo2025-<ts>` plus the count of items walked. Inspect the directory: `manifest.json` plus `items.json`.
+Expected: log line `snapshot published: <plugins>/ArdenfallCompendium/snapshots/Demo2025-<ts>` plus the count of items walked. Inspect the directory: `manifest.json` plus `items.json`.
 
 - [ ] **Step 4: Run pipeline against the real snapshot**
 
@@ -4978,7 +4978,7 @@ Goal: SvelteKit static workspace with Tailwind v4 tokens and shadcn-svelte primi
 
 ```jsonc
 {
-  "name": "@ardenfall-archives/site",
+  "name": "@ardenfall-compendium/site",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -5534,7 +5534,7 @@ Goal: `/items` and `/items/[id]` render correctly from the SQLite blob, driven b
 
 <header class="border-border bg-background border-b">
   <div class="container mx-auto flex items-center justify-between p-4">
-    <a href="/" class="text-lg font-semibold">Ardenfall Archives</a>
+    <a href="/" class="text-lg font-semibold">Ardenfall Compendium</a>
     <nav class="text-muted-foreground flex gap-4">
       <a href="/items">Items</a>
     </nav>
@@ -5552,7 +5552,7 @@ Goal: `/items` and `/items/[id]` render correctly from the SQLite blob, driven b
 <script lang="ts">
 </script>
 
-<h1 class="text-2xl font-bold">Ardenfall Archives</h1>
+<h1 class="text-2xl font-bold">Ardenfall Compendium</h1>
 <p class="text-muted-foreground mt-2">
   Static archive of Ardenfall game data. Slice 1 ships items only.
 </p>
@@ -5876,7 +5876,7 @@ export const sections: SectionMap = {
   });
 </script>
 
-<svelte:head><title>{name ?? "Item"} | Ardenfall Archives</title></svelte:head>
+<svelte:head><title>{name ?? "Item"} | Ardenfall Compendium</title></svelte:head>
 
 {#if loading}
   <p class="text-muted-foreground">Loading…</p>
@@ -6284,7 +6284,7 @@ mod:
     - uses: actions/setup-dotnet@v4
       with: { dotnet-version: "8.0.x" }
     - name: format-check
-      run: dotnet format mod/ArdenfallArchives.csproj --verify-no-changes
+      run: dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes
     # Full `dotnet build` requires Assembly-CSharp.dll which is not redistributable;
     # build is verified locally per mod/AGENTS.md. CI verifies formatting only until
     # Slice 9 wires up an external archive of buildable references.

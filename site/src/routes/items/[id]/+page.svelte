@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-  <title>{data.name ?? "Item"} | Ardenfall Archives</title>
+  <title>{data.name ?? "Item"} | Ardenfall Compendium</title>
 </svelte:head>
 
 <a class="text-sm underline" href={resolve("/items")}>← back to items</a>

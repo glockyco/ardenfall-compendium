@@ -4,9 +4,9 @@ using HotRepl.Control;
 using HotRepl.Control.Artifacts;
 using Newtonsoft.Json.Linq;
 
-namespace ArdenfallArchives.Control;
+namespace ArdenfallCompendium.Control;
 
-public static class ArchiveCommandResults
+public static class CompendiumCommandResults
 {
     public static ControlCommandResult Ok(JObject result) =>
         new(result, Array.Empty<ArtifactRef>(), Array.Empty<ControlCommandError>());

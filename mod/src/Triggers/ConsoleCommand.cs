@@ -1,6 +1,6 @@
 using BepInEx.Logging;
 
-namespace ArdenfallArchives.Triggers;
+namespace ArdenfallCompendium.Triggers;
 
 public static class ConsoleCommand
 {

@@ -1,8 +1,8 @@
-# Ardenfall Archives — Implementation Decisions Addendum
+# Ardenfall Compendium — Implementation Decisions Addendum
 
 Date: 2026-04-29
 Status: Accepted for Slice 1 planning
-Supersedes: implementation-level details in `2026-04-28-ardenfall-archives-design.md` where they conflict with this document.
+Supersedes: implementation-level details in `2026-04-28-ardenfall-compendium-design.md` where they conflict with this document.
 
 ## Purpose
 
@@ -29,7 +29,7 @@ Ardenfall runtime -> BepInEx extractor -> JSON snapshot -> TS/Bun pipeline -> SQ
 Use a Bun workspace monorepo for TypeScript:
 
 ```text
-ardenfall-archives/
+ardenfall-compendium/
   package.json          # Bun workspace root
   entities/             # descriptor-only public entity declarations
   schemas/

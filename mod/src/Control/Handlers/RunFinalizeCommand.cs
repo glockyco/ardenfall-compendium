@@ -3,21 +3,21 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using ArdenfallArchives.Dtos;
-using ArdenfallArchives.Emit;
-using ArdenfallArchives.Entities.Item;
+using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Emit;
+using ArdenfallCompendium.Entities.Item;
 using HotRepl.Control;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using PreflightRunner = ArdenfallArchives.Preflight.Preflight;
+using PreflightRunner = ArdenfallCompendium.Preflight.Preflight;
 
-namespace ArdenfallArchives.Control.Handlers;
+namespace ArdenfallCompendium.Control.Handlers;
 
 public sealed class RunFinalizeCommand : IControlCommandHandler
 {
-    private readonly ArchiveRunManager _runs;
+    private readonly CompendiumRunManager _runs;
 
-    public RunFinalizeCommand(ArchiveRunManager runs)
+    public RunFinalizeCommand(CompendiumRunManager runs)
     {
         _runs = runs;
     }
@@ -27,22 +27,22 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         1,
         ControlCommandKind.Synchronous,
         mutatesState: true,
-        argsSchema: ArchiveCommandSchemas.AnyObject,
-        resultSchema: ArchiveCommandSchemas.AnyObject);
+        argsSchema: CompendiumCommandSchemas.AnyObject,
+        resultSchema: CompendiumCommandSchemas.AnyObject);
 
     public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
     {
         var runId = args["runId"]?.Value<string>();
         if (string.IsNullOrWhiteSpace(runId))
-            return new ValueTask<ControlCommandResult>(ArchiveCommandResults.Validation("runIdRequired", "runId is required."));
+            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Validation("runIdRequired", "runId is required."));
         if (!_runs.TryGet(runId, out var run))
-            return new ValueTask<ControlCommandResult>(ArchiveCommandResults.Validation("unknownRun", $"Unknown run '{runId}'."));
+            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Validation("unknownRun", $"Unknown run '{runId}'."));
         if (run.Finalized)
-            return new ValueTask<ControlCommandResult>(ArchiveCommandResults.Precondition("runFinalized", $"Run '{runId}' is already finalized."));
+            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition("runFinalized", $"Run '{runId}' is already finalized."));
 
         var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "item", "chunks");
         if (!Directory.Exists(chunksDir))
-            return new ValueTask<ControlCommandResult>(ArchiveCommandResults.Precondition("chunksMissing", "No item chunks were exported."));
+            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition("chunksMissing", "No item chunks were exported."));
 
         var rows = new List<ItemSnapshotRow>();
         foreach (var chunk in Directory.GetFiles(chunksDir, "*.json").OrderBy(p => p))
@@ -54,7 +54,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
 
         var publishedDir = Path.Combine(run.OutputBaseDir, "snapshots", $"{run.GameVersion}-{run.RunId}");
         if (Directory.Exists(publishedDir))
-            return new ValueTask<ControlCommandResult>(ArchiveCommandResults.Precondition("snapshotExists", $"Snapshot directory already exists: {publishedDir}"));
+            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition("snapshotExists", $"Snapshot directory already exists: {publishedDir}"));
         Directory.CreateDirectory(publishedDir);
 
         var itemEnvelope = new ItemSnapshotEnvelope { Rows = rows };
@@ -86,9 +86,9 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             ["publishedDir"] = publishedDir,
             ["manifestPath"] = manifestPath,
         };
-        return new ValueTask<ControlCommandResult>(ArchiveCommandResults.Ok(
+        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(
             result,
-            ArchiveCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash),
-            ArchiveCommandResults.FileArtifact("items", itemsPath, "application/json", itemHash)));
+            CompendiumCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash),
+            CompendiumCommandResults.FileArtifact("items", itemsPath, "application/json", itemHash)));
     }
 }

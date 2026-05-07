@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <AssemblyName>ArdenfallArchives</AssemblyName>
-    <RootNamespace>ArdenfallArchives</RootNamespace>
+    <AssemblyName>ArdenfallCompendium</AssemblyName>
+    <RootNamespace>ArdenfallCompendium</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <NoWarn>CS1591</NoWarn>

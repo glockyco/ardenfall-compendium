@@ -4,27 +4,27 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using UnityEngine;
 
-namespace ArdenfallArchives;
+namespace ArdenfallCompendium;
 
 [BepInPlugin(Guid, Name, Version)]
 public sealed class Plugin : BaseUnityPlugin
 {
-    public const string Guid = "com.ardenfall-archives.extractor";
-    public const string Name = "Ardenfall Archives Extractor";
+    public const string Guid = "ardenfall-compendium.extractor";
+    public const string Name = "Ardenfall Compendium Extractor";
     public const string Version = "0.1.0";
 
     private ConfigEntry<KeyboardShortcut> _hotkey = null!;
     private ConfigEntry<string> _outputDir = null!;
     private Triggers.ReadinessMonitor _readiness = null!;
-    private Control.ArchiveRunManager _runs = null!;
-    private Control.ArchiveCommandRegistry _commands = null!;
+    private Control.CompendiumRunManager _runs = null!;
+    private Control.CompendiumCommandRegistry _commands = null!;
 
     private void Awake()
     {
         _hotkey = Config.Bind("Triggers", "Hotkey", new KeyboardShortcut(KeyCode.F8), "Trigger snapshot extraction");
-        _outputDir = Config.Bind("Output", "BaseDir", Path.Combine(Paths.PluginPath, "ArdenfallArchives", "snapshots"), "Where to write snapshots");
-        _runs = new Control.ArchiveRunManager();
-        _commands = new Control.ArchiveCommandRegistry(_runs, _outputDir.Value);
+        _outputDir = Config.Bind("Output", "BaseDir", Path.Combine(Paths.PluginPath, "ArdenfallCompendium", "snapshots"), "Where to write snapshots");
+        _runs = new Control.CompendiumRunManager();
+        _commands = new Control.CompendiumCommandRegistry(_runs, _outputDir.Value);
         _readiness = new Triggers.ReadinessMonitor(Logger);
         Triggers.ConsoleCommand.TryRegister(Logger, this);
         Logger.LogInfo($"{Name} {Version} loaded; hotkey {_hotkey.Value} will extract.");

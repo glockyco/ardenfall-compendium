@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "bun:test";
 import {
   buildPipelineCommand,
-  exportArchive,
+  exportCompendium,
   type ControllerClient,
 } from "../src/export-orchestrator";
 import { validateSnapshot } from "../src/validate-snapshot";
@@ -17,7 +17,7 @@ class FakeClient implements ControllerClient {
   readonly calls: Array<{ name: string; args: Record<string, unknown> }> = [];
   readonly jobs: Array<{ name: string; args: Record<string, unknown> }> = [];
   commands = [
-    command("archive.preflight"),
+    command("compendium.preflight"),
     command("run.begin", "sync", true),
     command("entity.plan"),
     command("entity.exportBatch", "job", true),
@@ -38,7 +38,7 @@ class FakeClient implements ControllerClient {
   }
   async call(name: string, args: Record<string, unknown>) {
     this.calls.push({ name, args });
-    if (name === "archive.preflight")
+    if (name === "compendium.preflight")
       return { status: "ok", result: this.preflightResult, artifacts: [], diagnostics: [] };
     if (name === "run.begin")
       return {
@@ -79,12 +79,12 @@ class FakeClient implements ControllerClient {
   async close() {}
 }
 
-describe("exportArchive", () => {
+describe("exportCompendium", () => {
   it("runs required HotRepl commands in order and batches entity export", async () => {
     const client = new FakeClient();
     const events: Array<Record<string, unknown>> = [];
 
-    const result = await exportArchive({
+    const result = await exportCompendium({
       client,
       outputBaseDir: "/tmp/out",
       pipelineOutDir: "/tmp/pipeline",
@@ -95,7 +95,7 @@ describe("exportArchive", () => {
 
     expect(result.publishedDir).toBe("/tmp/snapshot");
     expect(client.calls.map((call) => call.name)).toEqual([
-      "archive.preflight",
+      "compendium.preflight",
       "run.begin",
       "entity.plan",
       "run.finalize",
@@ -118,9 +118,9 @@ describe("exportArchive", () => {
     };
 
     await expect(
-      exportArchive({ client, outputBaseDir: "/tmp/out", pipelineOutDir: "/tmp/pipeline" }),
+      exportCompendium({ client, outputBaseDir: "/tmp/out", pipelineOutDir: "/tmp/pipeline" }),
     ).rejects.toThrow(
-      /archive\.preflight is not ready: ardenfallGame: ArdenfallGame\.instance is null; worldData: ArdenfallGame\.instance\.worldData is null/,
+      /compendium\.preflight is not ready: ardenfallGame: ArdenfallGame\.instance is null; worldData: ArdenfallGame\.instance\.worldData is null/,
     );
   });
 
@@ -129,7 +129,7 @@ describe("exportArchive", () => {
     client.publishedDir = `Z:${resolve("snapshots").replaceAll("/", "\\")}\\snapshots\\0.0.10.91-20260507`;
     const validated: string[] = [];
 
-    const result = await exportArchive({
+    const result = await exportCompendium({
       client,
       outputBaseDir: "./snapshots",
       pipelineOutDir: "/tmp/pipeline",
@@ -151,7 +151,7 @@ describe("exportArchive", () => {
     client.commands = client.commands.filter((descriptor) => descriptor.name !== "run.finalize");
 
     await expect(
-      exportArchive({ client, outputBaseDir: "/tmp/out", pipelineOutDir: "/tmp/pipeline" }),
+      exportCompendium({ client, outputBaseDir: "/tmp/out", pipelineOutDir: "/tmp/pipeline" }),
     ).rejects.toThrow(/Missing required HotRepl command: run\.finalize/);
   });
 

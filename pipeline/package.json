@@ -1,5 +1,5 @@
 {
-  "name": "@ardenfall-archives/pipeline",
+  "name": "@ardenfall-compendium/pipeline",
   "private": true,
   "type": "module",
   "main": "src/cli.ts",

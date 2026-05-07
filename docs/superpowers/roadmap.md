@@ -1,9 +1,9 @@
-# Ardenfall Archives — Implementation Roadmap
+# Ardenfall Compendium — Implementation Roadmap
 
 Living tracker for implementation of:
 
-- Baseline spec: `docs/superpowers/specs/2026-04-28-ardenfall-archives-design.md`
-- Slice 1 amendment: `docs/superpowers/specs/2026-04-29-ardenfall-archives-implementation-decisions.md`
+- Baseline spec: `docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md`
+- Slice 1 amendment: `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md`
 - Slice 1 tooling decisions: `docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`
 - Investment priorities: `docs/superpowers/specs/2026-05-07-investment-priorities.md`
 
@@ -32,7 +32,7 @@ Slice ordering is driven by `2026-05-07-investment-priorities.md`: items get the
 **Status:** done
 **Plan:** `docs/superpowers/plans/2026-05-03-item-walking-skeleton.md`
 **Worktree branch:** `slice/1-item-walking-skeleton` (at `.worktrees/slice-1-item-walking-skeleton/`)
-**Spec coverage:** baseline §4, §6–§9, §11, §14, §15; all implementation decisions in `2026-04-29-ardenfall-archives-implementation-decisions.md`; tooling decisions in `2026-05-03-slice1-tooling-decisions.md`.
+**Spec coverage:** baseline §4, §6–§9, §11, §14, §15; all implementation decisions in `2026-04-29-ardenfall-compendium-implementation-decisions.md`; tooling decisions in `2026-05-03-slice1-tooling-decisions.md`.
 
 **Delivered:**
 
@@ -44,7 +44,7 @@ Slice ordering is driven by `2026-05-07-investment-priorities.md`: items get the
 - Explicit snapshot DTOs; no raw Unity/Odin/game object JSON.
 - `Parameter<T>.Get()` and `SmartListParameter<T>.Get()` resolution for item fields.
 - Extraction preflight for lookup table, `ArdenfallGame.instance`, `worldData`, and `masterRecordTable` readiness.
-- HotRepl-driven extraction lifecycle: `archive.preflight`, `run.begin`, `entity.plan`, `entity.exportBatch`, `run.finalize`; F8 hotkey retained as fallback.
+- HotRepl-driven extraction lifecycle: `compendium.preflight`, `run.begin`, `entity.plan`, `entity.exportBatch`, `run.finalize`; F8 hotkey retained as fallback.
 - Atomic snapshot publish: only complete successful snapshots reach the canonical output path.
 - Snapshot manifest with game/build/extractor metadata, preflight result, counts.
 - Synthetic + capsule fixture infrastructure with manifest envelope, sha256 pinning, hygiene checks, and forbidden-paths enforcement in CI.
@@ -85,7 +85,7 @@ This set proves the variant model with one deep inheritance branch (`MeleeItemDa
 
 **Delivers:**
 
-- All five identified bugs in the HotRepl extraction path fixed at the source. Specifically: empty `DiagnosticTotals` in `RunFinalizeCommand`; full walker re-run in `EntityPlanCommand`; full walker re-run per batch in `EntityExportBatchCommand`; walker-level diagnostics dropped between batches; reliance on unstable iteration order from `BuiltLookupTable.GetAssetsOfType<T>()`. Walker runs once per run; rows and diagnostics are cached on `ArchiveRun` and aggregated into the manifest at finalize.
+- All five identified bugs in the HotRepl extraction path fixed at the source. Specifically: empty `DiagnosticTotals` in `RunFinalizeCommand`; full walker re-run in `EntityPlanCommand`; full walker re-run per batch in `EntityExportBatchCommand`; walker-level diagnostics dropped between batches; reliance on unstable iteration order from `BuiltLookupTable.GetAssetsOfType<T>()`. Walker runs once per run; rows and diagnostics are cached on `CompendiumRun` and aggregated into the manifest at finalize.
 - Site `+error.svelte` for SvelteKit error states (404 from `+page.ts` `error()`, sqlite fetch failures, deserialise failures), with a clear message and a path back to `/`.
 - Controller invokes `game.quit` on export success and on failure, so live runs no longer leave the game open.
 - Live deployment of the static site to `ardenfall.compendiums.org` via Cloudflare Workers Static Assets and `wrangler deploy`, modelled on the existing `compendiums.org` umbrella's wrangler setup. Initial deploy is local/operator-driven through Wrangler auth; CI verifies the build but does not deploy.
@@ -183,7 +183,7 @@ Each candidate gets its own slice number (7, 8, …), ordered by map-marker volu
 
 **Delivers:** FTS5 search routes + facet filtering (items + map-supporting entities by then have rich content fields populated); cross-cutting design tokens, lint rules, and primitive set extracted from the per-entity presentation work that landed earlier; generated read models for search/filter performance.
 
-**Why later than the AK precedent's design slice:** Ardenfall Archives bakes the design-system foundation into Slice 1 (Tailwind v4 `@theme inline` tokens + shadcn-svelte primitives). This slice extends that foundation; it does not introduce it.
+**Why later than the AK precedent's design slice:** Ardenfall Compendium bakes the design-system foundation into Slice 1 (Tailwind v4 `@theme inline` tokens + shadcn-svelte primitives). This slice extends that foundation; it does not introduce it.
 
 ### Slice 11 — Spells
 

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 
-namespace ArdenfallArchives.Extraction;
+namespace ArdenfallCompendium.Extraction;
 
 public sealed class ExtractionResult
 {

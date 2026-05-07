@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Ardenfall.Item;
 
-namespace ArdenfallArchives.Entities.Item.Adapters;
+namespace ArdenfallCompendium.Entities.Item.Adapters;
 
 public static class ExtractEquipment
 {

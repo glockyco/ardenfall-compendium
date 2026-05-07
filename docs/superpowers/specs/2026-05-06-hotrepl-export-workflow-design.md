@@ -2,7 +2,7 @@
 
 ## Status
 
-HotRepl provides the game-agnostic typed command/job/artifact control plane. Ardenfall Archives uses that control plane for automated exports and keeps the F8 trigger as a manual smoke fallback.
+HotRepl provides the game-agnostic typed command/job/artifact control plane. Ardenfall Compendium uses that control plane for automated exports and keeps the F8 trigger as a manual smoke fallback.
 
 ## Architecture
 
@@ -18,7 +18,7 @@ External orchestrator
   deploy -> launch -> connect -> preflight -> begin run -> export batches -> finalize -> validate -> pipeline
 ```
 
-HotRepl remains game-agnostic. The only HotRepl-side requirement for separate game mods is a global command registry that other loaded assemblies can register with. Ardenfall-specific behavior lives in the Ardenfall Archives mod and the external controller.
+HotRepl remains game-agnostic. The only HotRepl-side requirement for separate game mods is a global command registry that other loaded assemblies can register with. Ardenfall-specific behavior lives in the Ardenfall Compendium mod and the external controller.
 
 The local Ardenfall Demo installation in the Steam CrossOver bottle has a normal BepInEx 5 layout. Runtime mod DLLs are deployed to the game's `BepInEx/plugins/` directory. `mod/libs/` is only a compile-time reference cache for `dotnet build`.
 
@@ -27,8 +27,8 @@ The local Ardenfall Demo installation in the Steam CrossOver bottle has a normal
 The Ardenfall mod exposes narrow commands, not a full workflow:
 
 ```text
-archive.info
-archive.preflight
+compendium.info
+compendium.preflight
 run.begin
 run.status
 entity.plan
@@ -49,7 +49,7 @@ The external controller owns:
 1. launch Ardenfall;
 1. connect to HotRepl and acquire control lease;
 1. verify command registry names and API versions;
-1. poll `archive.preflight` until readiness is truthful;
+1. poll `compendium.preflight` until readiness is truthful;
 1. open a run with `run.begin`;
 1. call `entity.exportBatch` until each required entity is complete;
 1. call `run.finalize`;

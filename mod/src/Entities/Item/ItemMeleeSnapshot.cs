@@ -1,4 +1,4 @@
-namespace ArdenfallArchives.Entities.Item;
+namespace ArdenfallCompendium.Entities.Item;
 
 public sealed record ItemMeleeSnapshot(
     string Id,
