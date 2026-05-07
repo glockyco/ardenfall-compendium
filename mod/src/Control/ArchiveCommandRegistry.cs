@@ -14,7 +14,11 @@ public sealed class ArchiveCommandRegistry : IDisposable
         Register(new Handlers.ArchivePreflightCommand());
         Register(new Handlers.RunBeginCommand(runs, outputBaseDir));
         Register(new Handlers.RunStatusCommand(runs));
+        Register(new Handlers.EntityPlanCommand());
+        Register(new Handlers.EntityExportBatchCommand(runs));
+        Register(new Handlers.RunFinalizeCommand(runs));
         Register(new Handlers.RunDiscardCommand(runs));
+        Register(new Handlers.GameQuitCommand());
     }
 
     private void Register(IControlCommandHandler handler)
