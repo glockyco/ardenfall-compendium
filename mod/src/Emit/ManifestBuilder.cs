@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 
-namespace ArdenfallArchives.Emit;
+namespace ArdenfallCompendium.Emit;
 
 public static class ManifestBuilder
 {

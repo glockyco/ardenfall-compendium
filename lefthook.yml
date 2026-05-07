@@ -12,7 +12,7 @@ pre-commit:
       stage_fixed: true
     - name: dotnet-format
       glob: "*.cs"
-      run: dotnet format mod/ArdenfallArchives.csproj --include {staged_files}
+      run: dotnet format mod/ArdenfallCompendium.csproj --include {staged_files}
       stage_fixed: true
       skip:
         - merge

@@ -1,9 +1,9 @@
 using System;
 using System.Linq;
 using Ardenfall;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 
-namespace ArdenfallArchives.Preflight;
+namespace ArdenfallCompendium.Preflight;
 
 /// <summary>
 /// Fail-fast preflight executed immediately before every snapshot write.

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Ardenfall.Item;
 
-namespace ArdenfallArchives.Entities.Item.Adapters;
+namespace ArdenfallCompendium.Entities.Item.Adapters;
 
 public static class ExtractArmor
 {

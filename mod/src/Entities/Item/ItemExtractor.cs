@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using Ardenfall;
 using Ardenfall.Item;
-using ArdenfallArchives.Dtos;
-using ArdenfallArchives.Entities.Item.Adapters;
-using ArdenfallArchives.Walker;
+using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities.Item.Adapters;
+using ArdenfallCompendium.Walker;
 
-namespace ArdenfallArchives.Entities.Item;
+namespace ArdenfallCompendium.Entities.Item;
 
 public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
 {

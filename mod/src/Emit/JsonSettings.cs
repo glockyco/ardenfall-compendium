@@ -1,7 +1,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace ArdenfallArchives.Emit;
+namespace ArdenfallCompendium.Emit;
 
 public static class JsonSettings
 {

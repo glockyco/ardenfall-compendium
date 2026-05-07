@@ -2,7 +2,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 
-namespace ArdenfallArchives.Game;
+namespace ArdenfallCompendium.Game;
 
 public static class GameInfo
 {

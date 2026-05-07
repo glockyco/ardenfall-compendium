@@ -1,6 +1,6 @@
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 
-namespace ArdenfallArchives.Walker;
+namespace ArdenfallCompendium.Walker;
 
 /// <summary>Captures provenance for Parameter&lt;T&gt; and SmartListParameter&lt;T&gt; field resolution.</summary>
 public static class ProvenanceCapture

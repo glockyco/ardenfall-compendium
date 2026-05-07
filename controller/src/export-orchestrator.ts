@@ -45,14 +45,14 @@ export interface ExportResult {
 }
 
 const REQUIRED_COMMANDS = new Map<string, "sync" | "job">([
-  ["archive.preflight", "sync"],
+  ["compendium.preflight", "sync"],
   ["run.begin", "sync"],
   ["entity.plan", "sync"],
   ["entity.exportBatch", "job"],
   ["run.finalize", "sync"],
 ]);
 
-export async function exportArchive(options: ExportOptions): Promise<ExportResult> {
+export async function exportCompendium(options: ExportOptions): Promise<ExportResult> {
   const log = options.log ?? (() => undefined);
   const clientName = options.clientName ?? "ardenfall-controller";
   const outputBaseDir = toRuntimePath(resolve(options.outputBaseDir));
@@ -67,7 +67,7 @@ export async function exportArchive(options: ExportOptions): Promise<ExportResul
 
   assertRequiredCommands(await options.client.describeCommands());
 
-  const preflight = await options.client.call("archive.preflight", {});
+  const preflight = await options.client.call("compendium.preflight", {});
   if (preflight.result.ready !== true) throw new Error(formatPreflightFailure(preflight.result));
   log({ phase: "preflight", status: "completed" });
 
@@ -167,8 +167,8 @@ function formatPreflightFailure(result: Record<string, unknown>): string {
       return `${name}: ${reason}`;
     });
 
-  if (failedChecks.length === 0) return "archive.preflight is not ready";
-  return `archive.preflight is not ready: ${failedChecks.join("; ")}`;
+  if (failedChecks.length === 0) return "compendium.preflight is not ready";
+  return `compendium.preflight is not ready: ${failedChecks.join("; ")}`;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

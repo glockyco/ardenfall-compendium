@@ -7,7 +7,7 @@
 </script>
 
 <svelte:head>
-  <title>{data.label} | Ardenfall Archives</title>
+  <title>{data.label} | Ardenfall Compendium</title>
 </svelte:head>
 
 <h1 class="text-2xl font-bold">{data.label}</h1>

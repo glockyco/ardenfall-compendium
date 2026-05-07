@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Ardenfall;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 using UnityEngine;
 
-namespace ArdenfallArchives.Walker;
+namespace ArdenfallCompendium.Walker;
 
 /// <summary>Resolves Unity object references to SnapshotRefs, applying the missing-ref policy.</summary>
 public sealed class RefResolver

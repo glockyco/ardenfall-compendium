@@ -1,4 +1,4 @@
-# Ardenfall Archives
+# Ardenfall Compendium
 
 Static, agentic-first wiki and interactive map for the Unity-Mono game **Ardenfall** (Spellcast Studios).
 
@@ -18,8 +18,8 @@ Static, agentic-first wiki and interactive map for the Unity-Mono game **Ardenfa
 
 Read in order:
 
-1. `docs/superpowers/specs/2026-04-28-ardenfall-archives-design.md`
-2. `docs/superpowers/specs/2026-04-29-ardenfall-archives-implementation-decisions.md`
+1. `docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md`
+2. `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md`
 3. `docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`
 4. `docs/superpowers/roadmap.md`
 
@@ -36,14 +36,14 @@ Mod build (Mac/Linux requires `mono` or `dotnet`):
 
 ```sh
 mod/scripts/copy-libs.sh   # copies game DLLs from your local Ardenfall install
-dotnet build mod/ArdenfallArchives.csproj
+dotnet build mod/ArdenfallCompendium.csproj
 ```
 
 HotRepl export smoke:
 
 ```sh
 dotnet build /Users/joaichberger/Projects/HotRepl/src/HotRepl.BepInEx/ --nologo -v q
-dotnet build mod/ArdenfallArchives.csproj -c Debug
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
 
 PLUGINS_DIR="$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Ardenfall Demo/BepInEx/plugins"
 HOTREPL_TOKEN="$(openssl rand -hex 24)"

@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ArdenfallArchives.Dtos;
-using ArdenfallArchives.Emit;
-using ArdenfallArchives.Entities.Item;
-using PreflightRunner = ArdenfallArchives.Preflight.Preflight;
+using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Emit;
+using ArdenfallCompendium.Entities.Item;
+using PreflightRunner = ArdenfallCompendium.Preflight.Preflight;
 
-namespace ArdenfallArchives.Extraction;
+namespace ArdenfallCompendium.Extraction;
 
 public sealed class ExtractionService
 {

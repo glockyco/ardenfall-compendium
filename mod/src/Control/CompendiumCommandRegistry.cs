@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using HotRepl.Control;
 
-namespace ArdenfallArchives.Control;
+namespace ArdenfallCompendium.Control;
 
-public sealed class ArchiveCommandRegistry : IDisposable
+public sealed class CompendiumCommandRegistry : IDisposable
 {
     private readonly List<IDisposable> _registrations = new();
 
-    public ArchiveCommandRegistry(ArchiveRunManager runs, string outputBaseDir)
+    public CompendiumCommandRegistry(CompendiumRunManager runs, string outputBaseDir)
     {
-        Register(new Handlers.ArchiveInfoCommand());
-        Register(new Handlers.ArchivePreflightCommand());
+        Register(new Handlers.CompendiumInfoCommand());
+        Register(new Handlers.CompendiumPreflightCommand());
         Register(new Handlers.RunBeginCommand(runs, outputBaseDir));
         Register(new Handlers.RunStatusCommand(runs));
         Register(new Handlers.EntityPlanCommand());

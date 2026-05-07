@@ -14,7 +14,7 @@ export interface DeployResult {
 }
 
 const REQUIRED_HOTREPL_DLLS = ["HotRepl.BepInEx.dll", "HotRepl.Core.dll", "mcs.dll"];
-const ARDENFALL_DLLS = ["ArdenfallArchives.dll"];
+const ARDENFALL_DLLS = ["ArdenfallCompendium.dll"];
 
 export async function deployPlugins(options: DeployOptions): Promise<DeployResult> {
   for (const name of REQUIRED_HOTREPL_DLLS) await requireFile(join(options.hotReplOutDir, name));
@@ -23,7 +23,7 @@ export async function deployPlugins(options: DeployOptions): Promise<DeployResul
     ...ARDENFALL_DLLS.map((name) => ({
       name,
       source: join(options.ardenfallModOutDir, name),
-      target: join(options.pluginsDir, "ArdenfallArchives", name),
+      target: join(options.pluginsDir, "ArdenfallCompendium", name),
     })),
   ];
 

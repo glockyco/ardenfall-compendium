@@ -2,19 +2,19 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using ArdenfallArchives.Emit;
-using ArdenfallArchives.Entities.Item;
+using ArdenfallCompendium.Emit;
+using ArdenfallCompendium.Entities.Item;
 using HotRepl.Control;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace ArdenfallArchives.Control.Handlers;
+namespace ArdenfallCompendium.Control.Handlers;
 
 public sealed class EntityExportBatchCommand : IControlCommandHandler
 {
-    private readonly ArchiveRunManager _runs;
+    private readonly CompendiumRunManager _runs;
 
-    public EntityExportBatchCommand(ArchiveRunManager runs)
+    public EntityExportBatchCommand(CompendiumRunManager runs)
     {
         _runs = runs;
     }
@@ -24,8 +24,8 @@ public sealed class EntityExportBatchCommand : IControlCommandHandler
         1,
         ControlCommandKind.Job,
         mutatesState: true,
-        argsSchema: ArchiveCommandSchemas.AnyObject,
-        resultSchema: ArchiveCommandSchemas.AnyObject);
+        argsSchema: CompendiumCommandSchemas.AnyObject,
+        resultSchema: CompendiumCommandSchemas.AnyObject);
 
     public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
     {
@@ -53,12 +53,12 @@ public sealed class EntityExportBatchCommand : IControlCommandHandler
             ["written"] = slice.Count,
             ["total"] = rows.Count,
         };
-        return new ValueTask<ControlCommandResult>(ArchiveCommandResults.Ok(
+        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(
             result,
-            ArchiveCommandResults.FileArtifact($"item.chunk.{offset:D6}", path, "application/json", sha256)));
+            CompendiumCommandResults.FileArtifact($"item.chunk.{offset:D6}", path, "application/json", sha256)));
     }
 
-    private ControlCommandResult? Validate(JObject args, out ArchiveRun run, out int offset, out int limit)
+    private ControlCommandResult? Validate(JObject args, out CompendiumRun run, out int offset, out int limit)
     {
         run = null!;
         offset = args["offset"]?.Value<int?>() ?? -1;
@@ -66,17 +66,17 @@ public sealed class EntityExportBatchCommand : IControlCommandHandler
 
         var runId = args["runId"]?.Value<string>();
         if (string.IsNullOrWhiteSpace(runId))
-            return ArchiveCommandResults.Validation("runIdRequired", "runId is required.");
+            return CompendiumCommandResults.Validation("runIdRequired", "runId is required.");
         if (!_runs.TryGet(runId, out run))
-            return ArchiveCommandResults.Validation("unknownRun", $"Unknown run '{runId}'.");
+            return CompendiumCommandResults.Validation("unknownRun", $"Unknown run '{runId}'.");
         if (run.Finalized)
-            return ArchiveCommandResults.Precondition("runFinalized", $"Run '{runId}' is already finalized.");
+            return CompendiumCommandResults.Precondition("runFinalized", $"Run '{runId}' is already finalized.");
         if (args["entity"]?.Value<string>() != "item")
-            return ArchiveCommandResults.Validation("unsupportedEntity", "Only entity 'item' is supported.");
+            return CompendiumCommandResults.Validation("unsupportedEntity", "Only entity 'item' is supported.");
         if (offset < 0)
-            return ArchiveCommandResults.Validation("offsetInvalid", "offset must be zero or greater.");
+            return CompendiumCommandResults.Validation("offsetInvalid", "offset must be zero or greater.");
         if (limit <= 0)
-            return ArchiveCommandResults.Validation("limitInvalid", "limit must be greater than zero.");
+            return CompendiumCommandResults.Validation("limitInvalid", "limit must be greater than zero.");
         return null;
     }
 }

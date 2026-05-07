@@ -22,7 +22,7 @@ describe("deployPlugins", () => {
     await writeFile(join(hotrepl, "HotRepl.BepInEx.dll"), "hotrepl");
     await writeFile(join(hotrepl, "HotRepl.Core.dll"), "core");
     await writeFile(join(hotrepl, "mcs.dll"), "mcs");
-    await writeFile(join(mod, "ArdenfallArchives.dll"), "archive");
+    await writeFile(join(mod, "ArdenfallCompendium.dll"), "archive");
 
     const result = await deployPlugins({
       hotReplOutDir: hotrepl,
@@ -31,10 +31,10 @@ describe("deployPlugins", () => {
     });
 
     expect(result.copied.sort()).toEqual(
-      ["ArdenfallArchives.dll", "HotRepl.BepInEx.dll", "HotRepl.Core.dll", "mcs.dll"].sort(),
+      ["ArdenfallCompendium.dll", "HotRepl.BepInEx.dll", "HotRepl.Core.dll", "mcs.dll"].sort(),
     );
     await expect(
-      readFile(join(plugins, "ArdenfallArchives", "ArdenfallArchives.dll"), "utf8"),
+      readFile(join(plugins, "ArdenfallCompendium", "ArdenfallCompendium.dll"), "utf8"),
     ).resolves.toBe("archive");
     await expect(readFile(join(plugins, "HotRepl", "HotRepl.BepInEx.dll"), "utf8")).resolves.toBe(
       "hotrepl",
@@ -52,7 +52,7 @@ describe("deployPlugins", () => {
     await writeFile(join(hotrepl, "HotRepl.BepInEx.dll"), "hotrepl");
     await writeFile(join(hotrepl, "HotRepl.Core.dll"), "core");
     await writeFile(join(hotrepl, "mcs.dll"), "mcs");
-    await writeFile(join(mod, "ArdenfallArchives.dll"), "archive");
+    await writeFile(join(mod, "ArdenfallCompendium.dll"), "archive");
 
     await deployPlugins({
       hotReplOutDir: hotrepl,

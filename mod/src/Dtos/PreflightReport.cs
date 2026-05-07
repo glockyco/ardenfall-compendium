@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace ArdenfallArchives.Dtos;
+namespace ArdenfallCompendium.Dtos;
 
 public sealed class PreflightReport
 {

@@ -1,9 +1,9 @@
-# Ardenfall Archives — Design Spec
+# Ardenfall Compendium — Design Spec
 
 Date: 2026-04-28
-Status: Approved baseline; amended by `2026-04-29-ardenfall-archives-implementation-decisions.md`
+Status: Approved baseline; amended by `2026-04-29-ardenfall-compendium-implementation-decisions.md`
 
-> **Implementation note:** Later ILSpy inspection and implementation-level brainstorming refined several details in this baseline spec. For Slice 1 planning and implementation, `2026-04-29-ardenfall-archives-implementation-decisions.md` is authoritative where it differs from this document. In particular, it supersedes the original Spell-first walking skeleton, `entities/<id>/operations.ts`, side-effect TS registries, site-side descriptor reading, one-table-per-entity storage, and `name + type` stable-id fallback as primary identity.
+> **Implementation note:** Later ILSpy inspection and implementation-level brainstorming refined several details in this baseline spec. For Slice 1 planning and implementation, `2026-04-29-ardenfall-compendium-implementation-decisions.md` is authoritative where it differs from this document. In particular, it supersedes the original Spell-first walking skeleton, `entities/<id>/operations.ts`, side-effect TS registries, site-side descriptor reading, one-table-per-entity storage, and `name + type` stable-id fallback as primary identity.
 
 ## 1. Goal
 
@@ -45,7 +45,7 @@ Canonical artefact           (SQLite blob with FTS5 + WebP assets + tile pyramid
         │
         │  SvelteKit static build
         ▼
-ardenfall-archives.<deploy>  (entity pages + deck.gl OrthographicView map)
+ardenfall-compendium.<deploy>  (entity pages + deck.gl OrthographicView map)
 ```
 
 Each arrow is a one-way artefact handoff. The pipeline cannot reach back into the mod; the site cannot reach back into the pipeline. Each stage is independently re-runnable from its input.
@@ -76,7 +76,7 @@ This is shape **β** in the prior research synthesis (RePoE / PyPoE is the clean
 ## 6. Repository layout
 
 ```
-ardenfall-archives/
+ardenfall-compendium/
   AGENTS.md                          # repo-level orientation; CLAUDE.md is a pointer to it
   package.json                       # Bun workspace root: pipeline, site
   bun.lock
@@ -106,7 +106,7 @@ ardenfall-archives/
       Dtos/                          # typed shapes mirroring Assembly-CSharp
       Triggers/                      # hotkey, console command
       Emit/                          # JSON + asset writers
-    ArdenfallArchives.csproj
+    ArdenfallCompendium.csproj
     libs/                            # game DLLs (gitignored; copied locally for build)
 
   pipeline/                          # TypeScript on Bun
@@ -397,7 +397,7 @@ These are intentionally not decided here; they are decisions the implementation 
 
 1. **Deployment target.** Cloudflare Pages, Vercel, GitHub Pages, self-hosted? Affects build target, asset CDN strategy, and tile-pyramid serving.
 2. **Repo strategy.** Public from day one, or private until first usable build? CI tooling.
-3. **Future mod surface.** Where does a (hypothetical) gameplay mod live? Same repo with `mods/<name>/`? Separate repo entirely? The current repo's name (`ardenfall-archives`) accommodates either.
+3. **Future mod surface.** Where does a (hypothetical) gameplay mod live? Same repo with `mods/<name>/`? Separate repo entirely? The current repo's name (`ardenfall-compendium`) accommodates either.
 4. **Component library.** shadcn-svelte + tokens is the leading candidate; a one-page comparison against alternatives is owed in the first implementation slice.
 5. **JSON Schema validator.** Ajv is the dominant choice; pin specifically in the first slice.
 6. **Property-invariant test framework.** Bun's built-in test runner plus `fast-check` is the leading candidate; pin in first slice.

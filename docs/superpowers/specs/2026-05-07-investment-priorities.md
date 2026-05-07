@@ -1,8 +1,8 @@
-# Ardenfall Archives — Investment Priorities
+# Ardenfall Compendium — Investment Priorities
 
 Date: 2026-05-07
 Status: Locked invariant for slice ordering and presentation depth; concrete entity scopes inside map-supporting work remain provisional until real game data proves them out.
-Supersedes: nothing. Complements `2026-04-28-ardenfall-archives-design.md` and `2026-04-29-ardenfall-archives-implementation-decisions.md` by establishing how investment is sequenced across slices.
+Supersedes: nothing. Complements `2026-04-28-ardenfall-compendium-design.md` and `2026-04-29-ardenfall-compendium-implementation-decisions.md` by establishing how investment is sequenced across slices.
 
 ## Purpose
 
@@ -27,7 +27,7 @@ In descending order of expected user demand, derived from AK analytics:
 3. **Map-supporting entities.** A distant third individually, but collectively important because they make maps _useful_. The concrete set is **game-specific** and is not pre-decided here. For Ardenfall this is expected to include monsters, vendors, zone connections, location markers, and possibly resource nodes; the actual set is determined by what the game's data model exposes and what map markers users want.
 4. **Spells, quests, and other content systems.** Real demand exists but is materially lower than items/maps. These slot in after the item/map track is solid enough that adding a new entity type is a one-folder operation.
 
-**Derivation:** AK analytics show items as the dominant page class, maps second, monsters a distant third, with other content systems trailing. Ardenfall is a content-similar Unity Mono open-world RPG; the same shape is the reasonable prior. This will be revalidated against Ardenfall Archives' own analytics once deployment lands.
+**Derivation:** AK analytics show items as the dominant page class, maps second, monsters a distant third, with other content systems trailing. Ardenfall is a content-similar Unity Mono open-world RPG; the same shape is the reasonable prior. This will be revalidated against Ardenfall Compendium' own analytics once deployment lands.
 
 **What this does not say:**
 
@@ -90,18 +90,18 @@ A separate slice covers FTS5 search, filterable facets, and cross-cutting design
 - Filter facets on the items overview page are most valuable once item subtype breadth is in.
 - Cross-cutting design tokens benefit from one entity having had presentation depth work, so the abstractions are extracted from a real example rather than speculated.
 
-This slice is later in the order than the AK precedent because Ardenfall Archives bakes the design-system foundation into Slice 1 (Tailwind v4 `@theme inline` tokens + shadcn-svelte primitives). The "depth" slice extends that foundation rather than introducing it.
+This slice is later in the order than the AK precedent because Ardenfall Compendium bakes the design-system foundation into Slice 1 (Tailwind v4 `@theme inline` tokens + shadcn-svelte primitives). The "depth" slice extends that foundation rather than introducing it.
 
 ## 6. What this document does not change
 
-- The architecture from `2026-04-28-ardenfall-archives-design.md` (descriptor-driven uniformity, three-stage pipeline, descriptor-as-registry, generic UI primitives, declarative map layer construction).
-- The Slice 1 contract from `2026-04-29-ardenfall-archives-implementation-decisions.md` (item walking skeleton, variant model, site metadata table layout, snapshot manifest shape).
+- The architecture from `2026-04-28-ardenfall-compendium-design.md` (descriptor-driven uniformity, three-stage pipeline, descriptor-as-registry, generic UI primitives, declarative map layer construction).
+- The Slice 1 contract from `2026-04-29-ardenfall-compendium-implementation-decisions.md` (item walking skeleton, variant model, site metadata table layout, snapshot manifest shape).
 - The tooling pins from `2026-05-03-slice1-tooling-decisions.md`.
 
 It changes only the **ordering** of subsequent slices and adds **presentation depth** as an explicit, repeating slice category rather than a single distant slice.
 
 ## Revisit triggers
 
-- Site analytics from a deployed Ardenfall Archives show a materially different audience distribution than AK (e.g. spell traffic exceeding item traffic). Revisit §1.
+- Site analytics from a deployed Ardenfall Compendium show a materially different audience distribution than AK (e.g. spell traffic exceeding item traffic). Revisit §1.
 - The map system slice exposes a structural shape that makes map-supporting entities cheaper to land _en masse_ rather than one-at-a-time. Revisit §4.
 - A presentation-depth slice produces design system primitives that are obviously cross-cutting before the search/facets slice runs. Promote those primitives into a shared design slice and re-sequence the search slice accordingly.

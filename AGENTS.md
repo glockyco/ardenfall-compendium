@@ -1,11 +1,11 @@
 # Repo Agent Orientation
 
-This repository is the static archive for the game Ardenfall. Its design is captured in `docs/superpowers/specs/`. Read those before changing anything; they document non-obvious invariants this codebase enforces by design.
+This repository is the static compendium for the game Ardenfall. Its design is captured in `docs/superpowers/specs/`. Read those before changing anything; they document non-obvious invariants this codebase enforces by design.
 
 ## Where to look first
 
-- Design baseline: `docs/superpowers/specs/2026-04-28-ardenfall-archives-design.md`
-- Implementation decisions (authoritative where the baseline differs): `docs/superpowers/specs/2026-04-29-ardenfall-archives-implementation-decisions.md`
+- Design baseline: `docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md`
+- Implementation decisions (authoritative where the baseline differs): `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md`
 - Slice-1 tooling pins: `docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`
 - Living roadmap: `docs/superpowers/roadmap.md`
 - Active plan: `docs/superpowers/plans/<latest>.md`

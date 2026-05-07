@@ -37,7 +37,7 @@ function startFakeControlServer() {
                 id,
                 commands: [
                   {
-                    name: "archive.info",
+                    name: "compendium.info",
                     version: 1,
                     kind: "sync",
                     mutatesState: false,
@@ -49,7 +49,7 @@ function startFakeControlServer() {
             );
             break;
           case "command_call":
-            if (message.name === "archive.fail") {
+            if (message.name === "compendium.fail") {
               ws.send(
                 JSON.stringify({
                   type: "command_error",
@@ -157,10 +157,10 @@ describe("HotReplClient", () => {
     await client.acquireLease("ardenfall-controller");
 
     const commands = await client.describeCommands();
-    const result = await client.call("archive.info", { verbose: true });
+    const result = await client.call("compendium.info", { verbose: true });
     await client.close();
 
-    expect(commands[0]).toMatchObject({ name: "archive.info", version: 1, kind: "sync" });
+    expect(commands[0]).toMatchObject({ name: "compendium.info", version: 1, kind: "sync" });
     expect(result.result).toEqual({ ok: true });
     expect(server.messages.map((message) => message.type)).toEqual([
       "control_auth",
@@ -175,7 +175,7 @@ describe("HotReplClient", () => {
     });
     expect(server.messages[3]).toMatchObject({
       type: "command_call",
-      name: "archive.info",
+      name: "compendium.info",
       args: { verbose: true },
       leaseId: "lease-1",
     });
@@ -214,7 +214,7 @@ describe("HotReplClient", () => {
 
     let error: ControlCommandError | undefined;
     try {
-      await client.call("archive.fail", {});
+      await client.call("compendium.fail", {});
     } catch (err) {
       error = err as ControlCommandError;
     } finally {

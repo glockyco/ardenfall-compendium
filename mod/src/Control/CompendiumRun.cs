@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 
-namespace ArdenfallArchives.Control;
+namespace ArdenfallCompendium.Control;
 
-public sealed class ArchiveRun
+public sealed class CompendiumRun
 {
     public string RunId { get; set; } = "";
-    public string GameVersion { get; set; } = ArdenfallArchives.Game.GameInfo.SnapshotVersionSegment;
+    public string GameVersion { get; set; } = ArdenfallCompendium.Game.GameInfo.SnapshotVersionSegment;
     public string OutputBaseDir { get; set; } = "";
     public string WorkspaceDir { get; set; } = "";
     public string? PublishedDir { get; set; }

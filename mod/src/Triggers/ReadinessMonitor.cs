@@ -1,9 +1,9 @@
 using System;
 using BepInEx.Logging;
 using UnityEngine.SceneManagement;
-using PreflightRunner = ArdenfallArchives.Preflight.Preflight;
+using PreflightRunner = ArdenfallCompendium.Preflight.Preflight;
 
-namespace ArdenfallArchives.Triggers;
+namespace ArdenfallCompendium.Triggers;
 
 public sealed class ReadinessMonitor : IDisposable
 {

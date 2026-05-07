@@ -4,7 +4,7 @@ using HotRepl.Control;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-namespace ArdenfallArchives.Control.Handlers;
+namespace ArdenfallCompendium.Control.Handlers;
 
 public sealed class GameQuitCommand : IControlCommandHandler
 {
@@ -13,12 +13,12 @@ public sealed class GameQuitCommand : IControlCommandHandler
         1,
         ControlCommandKind.Synchronous,
         mutatesState: true,
-        argsSchema: ArchiveCommandSchemas.EmptyObject,
-        resultSchema: ArchiveCommandSchemas.AnyObject);
+        argsSchema: CompendiumCommandSchemas.EmptyObject,
+        resultSchema: CompendiumCommandSchemas.AnyObject);
 
     public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
     {
         Application.Quit();
-        return new ValueTask<ControlCommandResult>(ArchiveCommandResults.Ok(new JObject { ["quitting"] = true }));
+        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(new JObject { ["quitting"] = true }));
     }
 }

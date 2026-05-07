@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using ArdenfallArchives.Dtos;
+using ArdenfallCompendium.Dtos;
 using Newtonsoft.Json;
 
-namespace ArdenfallArchives.Entities.Item;
+namespace ArdenfallCompendium.Entities.Item;
 
 /// <summary>
 /// Wire shape per snapshot.schema.json: { id, variant, fields, tags, provenance, diagnostics }.
