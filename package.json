@@ -7,7 +7,8 @@
   },
   "workspaces": [
     "pipeline",
-    "site"
+    "site",
+    "controller"
   ],
   "scripts": {
     "lint": "eslint .",
@@ -16,7 +17,9 @@
     "typecheck": "bunx tsgo --noEmit -p .",
     "codegen:validators": "bun run pipeline/scripts/codegen-validators.ts",
     "check:fixtures": "bun run pipeline/scripts/check-fixtures.ts",
-    "pipeline:run": "bun run pipeline/src/cli.ts run"
+    "pipeline:run": "bun run pipeline/src/cli.ts run",
+    "controller:export": "bun run controller/src/cli.ts export",
+    "controller:test": "bun test controller/test"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
