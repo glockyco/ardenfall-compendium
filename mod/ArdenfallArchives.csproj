@@ -20,5 +20,6 @@
     <Reference Include="UnityEngine.IMGUIModule">     <HintPath>libs\UnityEngine.IMGUIModule.dll</HintPath>     <Private>false</Private> </Reference>
     <Reference Include="Sirenix.OdinInspector.Attributes"><HintPath>libs\Sirenix.OdinInspector.Attributes.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Sirenix.Serialization">       <HintPath>libs\Sirenix.Serialization.dll</HintPath>       <Private>false</Private> </Reference>
+    <Reference Include="HotRepl.Core">                <HintPath>libs\HotRepl.Core.dll</HintPath>                <Private>false</Private> </Reference>
   </ItemGroup>
 </Project>

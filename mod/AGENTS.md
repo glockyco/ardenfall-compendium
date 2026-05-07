@@ -8,6 +8,7 @@ The mod walks live Ardenfall runtime objects and emits JSON snapshots. It is **n
 - Stable ids come from `BuiltLookupTable.GetGuid(asset)`. Deterministic name-hash fallbacks are last resort and must be flagged unstable in the snapshot ref kind.
 - Preflight gates extraction. Every extraction path runs the full preflight immediately before writing — cached readiness state is **not** an authorization token.
 - Extraction output is atomic. Write to a staging path, then rename. The pipeline never reads partial files.
+- HotRepl integration is framework-neutral at the control-plane boundary. This BepInEx mod registers commands through `HotRepl.Control.GlobalControlCommandRegistry`; HotRepl itself must keep both BepInEx and MelonLoader host support green.
 
 ## Layout
 
@@ -20,3 +21,7 @@ The mod walks live Ardenfall runtime objects and emits JSON snapshots. It is **n
 - `src/Emit/` — JSON + atomic snapshot writers.
 
 Read `docs/superpowers/specs/2026-04-29-ardenfall-archives-implementation-decisions.md` §11–§14 for the contract.
+
+## HotRepl dependency
+
+The Ardenfall mod references `mod/libs/HotRepl.Core.dll` at compile time. Runtime DLLs belong in the game's `BepInEx/plugins/` directory, not `mod/libs/`. Build HotRepl first, run `mod/scripts/copy-libs.sh <Ardenfall Managed dir> <HotRepl.Core output dir>` before `dotnet build mod/ArdenfallArchives.csproj`, and deploy the matching HotRepl and Ardenfall DLLs to `BepInEx/plugins/`.
