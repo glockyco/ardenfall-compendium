@@ -15,7 +15,7 @@ public sealed class ArchiveRunManager
         var workspace = Path.Combine(baseDir, "runs", runId);
         Directory.CreateDirectory(Path.Combine(workspace, "control"));
         Directory.CreateDirectory(Path.Combine(workspace, "entities", "item", "chunks"));
-        var run = new ArchiveRun { RunId = runId, GameVersion = gameVersion, WorkspaceDir = workspace };
+        var run = new ArchiveRun { RunId = runId, GameVersion = gameVersion, OutputBaseDir = baseDir, WorkspaceDir = workspace };
         lock (_sync) _runs.Add(runId, run);
         return run;
     }

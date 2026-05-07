@@ -12,6 +12,9 @@ public sealed class ArchiveCommandRegistry : IDisposable
     {
         Register(new Handlers.ArchiveInfoCommand());
         Register(new Handlers.ArchivePreflightCommand());
+        Register(new Handlers.RunBeginCommand(runs, outputBaseDir));
+        Register(new Handlers.RunStatusCommand(runs));
+        Register(new Handlers.RunDiscardCommand(runs));
     }
 
     private void Register(IControlCommandHandler handler)
