@@ -2,30 +2,29 @@
 
 ## Status
 
-Direction approved 2026-05-06: improve HotRepl first, then build Ardenfall export automation on top of HotRepl's game-agnostic control plane.
-
-## Decision
-
-Ardenfall Archives will not continue toward a hardcoded in-game export orchestrator. The current F8/manual path remains a useful smoke fallback, but the next strategic work is HotRepl control-plane support in `/Users/joaichberger/Projects/HotRepl`.
-
-After HotRepl supports typed commands, jobs, artifacts, leases, and structured errors, Ardenfall will expose a compiled export API through that control plane. External tooling will own deploy, launch, command sequencing, validation, recovery, and pipeline ingestion.
+HotRepl provides the game-agnostic typed command/job/artifact control plane. Ardenfall Archives uses that control plane for automated exports and keeps the F8 trigger as a manual smoke fallback.
 
 ## Architecture
 
 ```text
 HotRepl control plane
   game-agnostic command/job/artifact transport
+  global command registry visible to BepInEx/MelonLoader host adapters
 
 Ardenfall export API
-  compiled BepInEx command handlers over current extractor/preflight/writer services
+  compiled BepInEx command handlers over extraction/preflight/writer services
 
 External orchestrator
   deploy -> launch -> connect -> preflight -> begin run -> export batches -> finalize -> validate -> pipeline
 ```
 
+HotRepl remains game-agnostic. The only HotRepl-side requirement for separate game mods is a global command registry that other loaded assemblies can register with. Ardenfall-specific behavior lives in the Ardenfall Archives mod and the external controller.
+
+The local Ardenfall Demo installation in the Steam CrossOver bottle has a normal BepInEx 5 layout. Runtime mod DLLs are deployed to the game's `BepInEx/plugins/` directory. `mod/libs/` is only a compile-time reference cache for `dotnet build`.
+
 ## In-game API boundary
 
-The Ardenfall mod should expose narrow commands, not a full workflow:
+The Ardenfall mod exposes narrow commands, not a full workflow:
 
 ```text
 archive.info
@@ -39,22 +38,23 @@ run.discard
 game.quit
 ```
 
-The mod may inspect game state and write snapshot artifacts. It must not decide release policy, pipeline ingestion, retries, or overall workflow ordering.
+The mod inspects game state and writes run artifacts. It does not decide release policy, pipeline ingestion, retries, or overall workflow ordering.
 
 ## External orchestration boundary
 
 The external controller owns:
 
-1. build and deploy HotRepl + Ardenfall export mod;
-2. launch Ardenfall;
-3. connect to HotRepl and acquire control lease;
-4. verify command registry and API versions;
-5. poll `archive.preflight` until truthful readiness;
-6. open a run with `run.begin`;
-7. call `entity.exportBatch` until each required entity is complete;
-8. call `run.finalize`;
-9. independently validate manifest, hashes, counts, and schemas;
-10. run `pipeline:run` only after snapshot validation passes.
+1. verify the one-time BepInEx 5 setup in the CrossOver bottle;
+1. build and deploy HotRepl plus the Ardenfall export mod;
+1. launch Ardenfall;
+1. connect to HotRepl and acquire control lease;
+1. verify command registry names and API versions;
+1. poll `archive.preflight` until readiness is truthful;
+1. open a run with `run.begin`;
+1. call `entity.exportBatch` until each required entity is complete;
+1. call `run.finalize`;
+1. independently validate manifest, hashes, counts, and schemas;
+1. run `pipeline:run` only after snapshot validation passes.
 
 ## Artifact model
 
@@ -99,19 +99,8 @@ Logs are diagnostic evidence only. They are never success criteria.
 
 ## Impact on current Slice 1 plan
 
-Current state: Phase G.1-G.5 produced a working F8/manual skeleton with item extraction, manifest writing, and snapshot publishing. Phase G.6 previously required a manual launch + F8 smoke.
+Phase G.1-G.5 produced a working F8/manual skeleton with item extraction, manifest writing, and snapshot publishing. The F8 path remains a fallback smoke. Primary automation uses typed HotRepl commands and an external controller.
 
-Updated direction:
+## Implementation plan
 
-- Do not invest further in the F8 path as the primary automation route.
-- Keep G.6 as a manual fallback smoke only.
-- Insert HotRepl control-plane work before any new automated export workflow.
-- After HotRepl lands, write a new Ardenfall implementation plan for registering export commands and building the external orchestrator.
-
-## Dependency
-
-HotRepl plan:
-
-`/Users/joaichberger/Projects/HotRepl/docs/superpowers/plans/2026-05-06-hotrepl-control-plane.md`
-
-Ardenfall command/orchestrator implementation depends on that plan being complete.
+`docs/superpowers/plans/2026-05-06-ardenfall-hotrepl-export-automation.md`
