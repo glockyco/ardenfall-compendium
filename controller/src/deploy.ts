@@ -1,10 +1,12 @@
-import { copyFile, mkdir, readdir, stat } from "node:fs/promises";
+import { copyFile, mkdir, readdir, stat, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
 export interface DeployOptions {
   hotReplOutDir: string;
   ardenfallModOutDir: string;
   pluginsDir: string;
+  bindHost?: string;
+  controlAuthToken?: string;
 }
 
 export interface DeployResult {
@@ -31,6 +33,7 @@ export async function deployPlugins(options: DeployOptions): Promise<DeployResul
     await mkdir(dirname(entry.target), { recursive: true });
     await copyFile(entry.source, entry.target);
   }
+  await writeHotReplConfig(options);
 
   return { copied: sources.map((entry) => entry.name) };
 }
@@ -56,6 +59,26 @@ async function requireFile(path: string): Promise<void> {
   }
 }
 
+async function writeHotReplConfig(options: DeployOptions): Promise<void> {
+  if (!options.bindHost && !options.controlAuthToken) return;
+  const configDir = join(dirname(options.pluginsDir), "config");
+  await mkdir(configDir, { recursive: true });
+  const token = options.controlAuthToken ?? "";
+  const requireAuth = token.length > 0;
+  const bindHost = options.bindHost ?? "127.0.0.1";
+  await writeFile(
+    join(configDir, "hotrepl.bepinex.cfg"),
+    `[Server]
+Port = 18590
+BindHost = ${bindHost}
+
+[Control]
+RequireAuth = ${requireAuth ? "true" : "false"}
+AuthToken = ${token}
+`,
+  );
+}
+
 function parseArgs(args: string[]): DeployOptions {
   const values = new Map<string, string>();
   for (let i = 0; i < args.length; i += 2) {
@@ -69,10 +92,15 @@ function parseArgs(args: string[]): DeployOptions {
   const hotReplOutDir = values.get("--hotrepl-out");
   const ardenfallModOutDir = values.get("--mod-out");
   const pluginsDir = values.get("--plugins");
+  const bindHost = values.get("--bind-host");
+  const controlAuthToken = values.get("--token");
   if (!hotReplOutDir) throw new Error("--hotrepl-out is required");
   if (!ardenfallModOutDir) throw new Error("--mod-out is required");
   if (!pluginsDir) throw new Error("--plugins is required");
-  return { hotReplOutDir, ardenfallModOutDir, pluginsDir };
+  const options: DeployOptions = { hotReplOutDir, ardenfallModOutDir, pluginsDir };
+  if (bindHost !== undefined) options.bindHost = bindHost;
+  if (controlAuthToken !== undefined) options.controlAuthToken = controlAuthToken;
+  return options;
 }
 
 if (import.meta.main) {

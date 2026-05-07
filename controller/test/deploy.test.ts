@@ -41,6 +41,33 @@ describe("deployPlugins", () => {
     );
   });
 
+  it("writes HotRepl BepInEx bind and auth config when requested", async () => {
+    const root = await mkdtemp(join(tmpdir(), "ardenfall-deploy-"));
+    roots.push(root);
+    const hotrepl = join(root, "hotrepl");
+    const mod = join(root, "mod");
+    const plugins = join(root, "BepInEx", "plugins");
+    await mkdir(hotrepl, { recursive: true });
+    await mkdir(mod, { recursive: true });
+    await writeFile(join(hotrepl, "HotRepl.BepInEx.dll"), "hotrepl");
+    await writeFile(join(hotrepl, "HotRepl.Core.dll"), "core");
+    await writeFile(join(hotrepl, "mcs.dll"), "mcs");
+    await writeFile(join(mod, "ArdenfallArchives.dll"), "archive");
+
+    await deployPlugins({
+      hotReplOutDir: hotrepl,
+      ardenfallModOutDir: mod,
+      pluginsDir: plugins,
+      bindHost: "0.0.0.0",
+      controlAuthToken: "local-token",
+    });
+
+    const config = await readFile(join(root, "BepInEx", "config", "hotrepl.bepinex.cfg"), "utf8");
+    expect(config).toContain("BindHost = 0.0.0.0");
+    expect(config).toContain("RequireAuth = true");
+    expect(config).toContain("AuthToken = local-token");
+  });
+
   it("refuses to deploy when a required source DLL is missing", async () => {
     const root = await mkdtemp(join(tmpdir(), "ardenfall-deploy-"));
     roots.push(root);

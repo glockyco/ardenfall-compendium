@@ -46,12 +46,15 @@ dotnet build /Users/joaichberger/Projects/HotRepl/src/HotRepl.BepInEx/ --nologo 
 dotnet build mod/ArdenfallArchives.csproj -c Debug
 
 PLUGINS_DIR="$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Ardenfall Demo/BepInEx/plugins"
+HOTREPL_TOKEN="$(openssl rand -hex 24)"
 bun run controller:deploy -- \
   --hotrepl-out /Users/joaichberger/Projects/HotRepl/src/HotRepl.BepInEx/bin/Debug/netstandard2.1 \
   --mod-out ./mod/bin/Debug/netstandard2.1 \
-  --plugins "$PLUGINS_DIR"
+  --plugins "$PLUGINS_DIR" \
+  --bind-host 0.0.0.0 \
+  --token "$HOTREPL_TOKEN"
 
-bun run controller:export -- --url ws://127.0.0.1:18590 --output ./snapshots --pipeline-out ./pipeline/dist
+bun run controller:export -- --url ws://127.0.0.1:18590 --token "$HOTREPL_TOKEN" --output ./snapshots --pipeline-out ./pipeline/dist
 ```
 
 ## License
