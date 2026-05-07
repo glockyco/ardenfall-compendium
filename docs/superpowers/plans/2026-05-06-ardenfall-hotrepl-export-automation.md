@@ -6,7 +6,7 @@
 
 **Architecture:** HotRepl stays game-agnostic and exposes a process-wide command registry for loaded game mods. Ardenfall Archives registers compiled command handlers that call shared extraction/run services. A Bun controller drives the HotRepl protocol, owns workflow sequencing, and validates artifacts before invoking the pipeline.
 
-**Tech Stack:** HotRepl C# `netstandard2.1` control registry; Ardenfall BepInEx 5 mod on `net472`; Newtonsoft.Json/JObject control payloads; Bun/TypeScript controller; existing pipeline validators and SQLite pipeline.
+**Tech Stack:** HotRepl C# `netstandard2.1` control registry; Ardenfall BepInEx 5 mod on `netstandard2.1` for Unity 2022 compatibility with HotRepl control contracts; Newtonsoft.Json/JObject control payloads; Bun/TypeScript controller; existing pipeline validators and SQLite pipeline.
 
 ---
 
