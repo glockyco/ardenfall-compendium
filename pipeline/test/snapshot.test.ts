@@ -6,7 +6,7 @@ import type { StageContext } from "$pipeline/types";
 
 const ctx: StageContext = {
   workspaceRoot: ".",
-  snapshotDir: "pipeline/test/fixtures/synthetic/snapshot",
+  snapshotDir: "fixtures/synthetic/snapshot",
   outDir: "pipeline/test/.tmp",
   log: () => undefined,
 };

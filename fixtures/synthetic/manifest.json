@@ -1,0 +1,27 @@
+{
+  "$schema": "../../schemas/fixture-manifest.schema.json",
+  "fixtureKind": "synthetic",
+  "schemaVersion": 1,
+  "extractorVersion": "0.0.0-test",
+  "intendedAssertions": [
+    "snapshot envelope shape",
+    "manifest preflight + counts",
+    "ItemData base + MeleeItemData branch + ArmorItemData branch coverage",
+    "lookupAsset and missing iconRef",
+    "Parameter<T> resolved/inherited shape",
+    "SmartListParameter<ItemTag> populated and empty cases"
+  ],
+  "selection": [
+    {
+      "entity": "item",
+      "ids": ["fixture-iron-sword", "fixture-leather-tunic"],
+      "rationale": "one melee branch + one armor branch"
+    }
+  ],
+  "scrubbing": "synthetic; no scrubbing required",
+  "minimization": "synthetic; minimal field coverage by design",
+  "hashes": {
+    "snapshot/manifest.json": "0000000000000000000000000000000000000000000000000000000000000000",
+    "snapshot/items.json": "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+}

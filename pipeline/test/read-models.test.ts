@@ -8,7 +8,7 @@ import { loadSnapshot } from "$pipeline/stages/load-snapshot";
 
 const ctx = {
   workspaceRoot: ".",
-  snapshotDir: "pipeline/test/fixtures/synthetic/snapshot",
+  snapshotDir: "fixtures/synthetic/snapshot",
   outDir: ".",
   log: () => undefined,
 };
