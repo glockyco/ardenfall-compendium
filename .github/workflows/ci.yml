@@ -58,20 +58,24 @@ jobs:
         with: { bun-version: 1.3.13 }
       - run: bun install --frozen-lockfile
       - run: bun run codegen:validators
+      - name: build synthetic sqlite for static prerender
+        run: bun run pipeline:run fixtures/synthetic/snapshot site/static
       - run: bun run --cwd site check
       - run: bun run --cwd site build
 
   mod:
     runs-on: ubuntu-latest
     needs: changes
-    continue-on-error: true
     if: github.event_name == 'push' || needs.changes.outputs.mod == 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: "8.0.x" }
-      - run: dotnet build mod/ArdenfallArchives.csproj -c Release -p:RestorePackagesWithLockFile=false
-        env: { CI: "true" }
+      - name: format-check
+        run: dotnet format mod/ArdenfallArchives.csproj --verify-no-changes
+      # Full `dotnet build` requires Assembly-CSharp.dll which is not redistributable;
+      # build is verified locally per mod/AGENTS.md. CI verifies formatting only until
+      # a later slice wires up an external archive of buildable references.
 
   fixtures:
     runs-on: ubuntu-latest
@@ -82,4 +86,6 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with: { bun-version: 1.3.13 }
       - run: bun install --frozen-lockfile
+      - run: bun run codegen:validators
       - run: bun run check:fixtures
+        env: { CI: "true" }
