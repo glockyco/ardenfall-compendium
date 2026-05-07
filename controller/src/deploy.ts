@@ -1,4 +1,4 @@
-import { copyFile, mkdir, stat } from "node:fs/promises";
+import { copyFile, mkdir, readdir, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
 export interface DeployOptions {
@@ -11,16 +11,13 @@ export interface DeployResult {
   copied: string[];
 }
 
-const HOTREPL_DLLS = ["HotRepl.BepInEx.dll", "HotRepl.Core.dll", "mcs.dll"];
+const REQUIRED_HOTREPL_DLLS = ["HotRepl.BepInEx.dll", "HotRepl.Core.dll", "mcs.dll"];
 const ARDENFALL_DLLS = ["ArdenfallArchives.dll"];
 
 export async function deployPlugins(options: DeployOptions): Promise<DeployResult> {
+  for (const name of REQUIRED_HOTREPL_DLLS) await requireFile(join(options.hotReplOutDir, name));
   const sources = [
-    ...HOTREPL_DLLS.map((name) => ({
-      name,
-      source: join(options.hotReplOutDir, name),
-      target: join(options.pluginsDir, "HotRepl", name),
-    })),
+    ...(await hotReplDllSources(options.hotReplOutDir, options.pluginsDir)),
     ...ARDENFALL_DLLS.map((name) => ({
       name,
       source: join(options.ardenfallModOutDir, name),
@@ -36,6 +33,17 @@ export async function deployPlugins(options: DeployOptions): Promise<DeployResul
   }
 
   return { copied: sources.map((entry) => entry.name) };
+}
+
+async function hotReplDllSources(hotReplOutDir: string, pluginsDir: string) {
+  const entries = await readdir(hotReplOutDir);
+  return entries
+    .filter((name) => name.endsWith(".dll"))
+    .map((name) => ({
+      name,
+      source: join(hotReplOutDir, name),
+      target: join(pluginsDir, "HotRepl", name),
+    }));
 }
 
 async function requireFile(path: string): Promise<void> {
