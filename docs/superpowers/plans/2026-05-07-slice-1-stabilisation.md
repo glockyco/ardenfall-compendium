@@ -25,8 +25,8 @@ This slice ships **no new entity coverage**, **no new presentation primitives** 
 - No tooltips, formatters, or inter-entity links (Slice 4 owns that).
 - No locations or maps (Slice 5+ owns that).
 - No FTS5 search or facets (Slice 10 owns that).
-- No deployment-time secrets management in the initial local/operator deploy path. Wrangler uses the operator's local Cloudflare login, matching the Ancient Kingdoms setup. If a later CI deploy is required, that later plan must explicitly choose GitHub Action credentials/secrets.
-- No deployment-time pivot beyond the Cloudflare adapter needed for `wrangler deploy`; the site remains an SPA shell (`ssr=false`, `prerender=false`) unless a later slice chooses SSR.
+- No deployment-time secrets management. Deployment is local/operator-driven through the operator's Wrangler auth context, matching the Ancient Kingdoms setup; GitHub Actions deploy credentials are not planned for Slice 1.5.
+- No deployment-time pivot beyond the Cloudflare adapter needed for `wrangler deploy`. The site remains an SPA shell (`ssr=false`, `prerender=false`); SSR and edge application logic are not planned.
 
 ## Bug inventory
 
@@ -516,7 +516,7 @@ Rationale:
 
 - This matches the existing `compendiums.org` umbrella pattern instead of introducing a second Cloudflare product path.
 - Wrangler owns project creation / upload / route binding after the initial Cloudflare login and custom-domain setup. No GitHub secrets are required for the initial deployment flow.
-- Ardenfall's site remains an SPA (`ssr=false`, `prerender=false`) even under `adapter-cloudflare`; the Worker is primarily the static-asset entrypoint plus routing shell. If a later slice wants SSR/edge code, the adapter is already compatible.
+- Ardenfall's site remains an SPA (`ssr=false`, `prerender=false`) even under `adapter-cloudflare`; the Worker is the Cloudflare Static Assets entrypoint and routing shell, not an SSR or edge-application surface.
 
 #### Task G.2 — Wire `adapter-cloudflare` + Wrangler deploy
 
@@ -564,7 +564,7 @@ Rationale:
   bun run --cwd site cf-deploy
   ```
 
-  If automated deploys become necessary later, add a separate plan that explicitly chooses the GitHub Actions credential model. Do not smuggle `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` into this slice.
+  Automated GitHub deploys, preview deploys, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_ACCOUNT_ID` are out of scope and unplanned for Slice 1.5. Add a separate operations plan before introducing any CI credential model.
 
 - [ ] **Step 5: Custom domain.** Configure `ardenfall.compendiums.org` as a custom domain/route in the Cloudflare account if Wrangler does not create the route automatically on first deploy. DNS record management lives in the `compendiums.org` umbrella account.
 
@@ -630,7 +630,7 @@ No `TODO`, `TBD`, "implement later" appear in implementation steps. The two genu
 ### Known risks remaining
 
 1. **Runtime-eval brittleness for `wait-for-world`.** If Mono runtime-eval through HotRepl is fragile against the menu's UnityEngine.UI hierarchy (renames, dynamic instantiation), the helper falls back to a typed `compendium.continueFromMenu` command on the mod side. This decision is made in Task F.1 Step 1 once the eval target is identified.
-2. **Cloudflare Workers/Static Assets free tier limits.** Slice 1.5 has local/operator deploys only; CI does not deploy. If a later slice introduces automated deploys or preview deploys per PR, monitor Worker and build limits then.
+2. **Cloudflare Workers/Static Assets free tier limits.** Slice 1.5 has local/operator deploys only; CI deploys and PR preview deploys are unplanned. Monitor Worker and build limits only if a future operations plan adds those deployment modes.
 3. **Synthetic-fixture-derived deploy.** Until a real snapshot is archived externally and copied into CI, the deployed site only knows the 2 synthetic items. This is acceptable for Slice 1.5 (deployment exists; content thinness is real but not a deployment defect) and is fixed in Slice 13 (versioning + snapshot archive).
 
 ### Execution handoff
