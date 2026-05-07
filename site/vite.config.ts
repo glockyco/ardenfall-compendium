@@ -4,5 +4,9 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [tailwindcss(), sveltekit()],
-  // sql.js-fts5 ships its wasm via ?url import; no further plugin needed.
+  optimizeDeps: {
+    // The official SQLite Wasm build must NOT be pre-bundled by Vite — its
+    // `.wasm` companion is fetched at runtime via the published exports.
+    exclude: ["@sqlite.org/sqlite-wasm"],
+  },
 });
