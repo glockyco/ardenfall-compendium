@@ -135,9 +135,8 @@ pipeline/test/fixtures/real-capsule/.gitkeep         ← capsule lands when firs
 
 ```
 mod/ArdenfallCompendium.csproj
-mod/src/Plugin.cs                            ← BepInEx [BepInPlugin], hot register, hotkey + commands
-mod/src/Triggers/Hotkey.cs
-mod/src/Triggers/ConsoleCommand.cs
+mod/src/Plugin.cs                            ← BepInEx [BepInPlugin], hotkey + HotRepl command registration
+mod/src/Triggers/Hotkey.cs                   ← fallback manual smoke trigger
 mod/src/Triggers/ReadinessMonitor.cs         ← advisory only
 mod/src/Preflight/Preflight.cs               ← gate before snapshot write
 mod/src/Walker/WalkerBase.cs                 ← cycle detection, ref resolution, JSON emit
@@ -301,7 +300,7 @@ Each phase ends with a passing-tests gate. Do not begin a later phase until the 
 - **D:** `bun test pipeline/test/orchestrator.test.ts` passes; orchestrator runs an empty plan deterministically.
 - **E:** `bun test pipeline/test/canonicaliser.test.ts pipeline/test/site-metadata.test.ts pipeline/test/invariants/items.test.ts` passes against the synthetic fixture; `pipeline/dist/data.sqlite` is produced.
 - **F:** `dotnet build mod/ArdenfallCompendium.csproj` succeeds; `mod/bin/.../ArdenfallCompendium.dll` exists.
-- **G:** Local manual: install mod into Ardenfall demo, launch, observe `[ArdenfallCompendium] preflight: ok`, run `/extract`, observe atomic snapshot at `snapshots/<game>-<ts>/`. Validate that snapshot through the pipeline; no diagnostics with severity ≥ `diagnostic`.
+- **G:** Local manual fallback: install mod into Ardenfall demo, launch, load into `world_Ardenfall`, press F8, and observe an atomic snapshot at `snapshots/<game>-<ts>/`. Validate that snapshot through the pipeline; no diagnostics with severity ≥ `diagnostic`. Primary automation uses the typed HotRepl control flow documented in the HotRepl export plan.
 - **H:** `bun run --cwd site check` and `bun run --cwd site build` both succeed; `site/build/` contains static output.
 - **I:** Hitting `site/build/items/` in a static server renders the synthetic-fixture items; `/items/<known-id>/` renders detail with `fieldList` sections.
 - **J:** `bun run check:fixtures` passes; CI's `fixtures` job is green on a clean checkout.
@@ -3844,7 +3843,7 @@ The mod walks live Ardenfall runtime objects and emits JSON snapshots. It is **n
 ## Layout
 
 - `src/Plugin.cs` — entry point, trigger registration.
-- `src/Triggers/` — hotkey, console command, advisory readiness monitor.
+- `src/Triggers/` — fallback hotkey and advisory readiness monitor.
 - `src/Preflight/` — fail-fast gate before snapshot creation.
 - `src/Walker/` — generic walker base, cycle detection, ref resolution, provenance.
 - `src/Dtos/` — shared DTOs (SnapshotRef, Manifest, Diagnostic).
@@ -4719,7 +4718,6 @@ git commit -m "feat(mod): atomic snapshot writer and manifest builder"
 **Files:**
 
 - Create: `mod/src/Triggers/Hotkey.cs`
-- Create: `mod/src/Triggers/ConsoleCommand.cs`
 - Create: `mod/src/Triggers/ReadinessMonitor.cs`
 - Create: `mod/src/Plugin.cs`
 
@@ -4756,7 +4754,6 @@ public sealed class Plugin : BaseUnityPlugin
         _hotkey = Config.Bind("Triggers", "Hotkey", new KeyboardShortcut(KeyCode.F8), "Trigger snapshot extraction");
         _outputDir = Config.Bind("Output", "BaseDir", Path.Combine(Paths.PluginPath, "ArdenfallCompendium", "snapshots"), "Where to write snapshots");
         _readiness = new Triggers.ReadinessMonitor(Logger);
-        Triggers.ConsoleCommand.TryRegister(Logger, this);
         Logger.LogInfo($"{Name} {Version} loaded; hotkey {_hotkey.Value} will extract.");
     }
 
@@ -4832,26 +4829,9 @@ public static class Hotkey
 }
 ```
 
-- [ ] **Step 3: Write `Triggers/ConsoleCommand.cs`** — registers `/extract` and `/status`
+- [ ] **Step 3: Do not add a game-console command**
 
-BepInEx 5 has no built-in console command system; Ardenfall's own console (or the game's chat input) is the registration point. Slice 1 ships a stub that logs an informational message; the real console wire-up is gated on identifying the game's console API (likely a singleton in `Ardenfall.Console` or similar). If the API is not discoverable in the live DLL, the hotkey is the only Slice 1 trigger and `/extract` is owed by Slice 2.
-
-```csharp
-using BepInEx.Logging;
-namespace ArdenfallCompendium.Triggers;
-
-public static class ConsoleCommand
-{
-    /// <summary>
-    /// Registers /extract and /status with the game console if a console API exists.
-    /// If not, this is a no-op and the hotkey is the only trigger.
-    /// </summary>
-    public static void TryRegister(ManualLogSource log, Plugin plugin)
-    {
-        log.LogInfo("console command registration: not implemented in slice 1; use F8 hotkey.");
-    }
-}
-```
+BepInEx 5 has no built-in console command system, and the later HotRepl control plane became the supported automation surface. Slice 1 keeps only the F8 hotkey as the manual smoke fallback; `/extract` and `/status` game-console commands are intentionally unplanned unless a future product requirement makes an in-game console workflow valuable.
 
 - [ ] **Step 4: Write `Triggers/ReadinessMonitor.cs`** — advisory only
 
@@ -4896,7 +4876,7 @@ public sealed class ReadinessMonitor : IDisposable
 
 ```bash
 dotnet build mod/ArdenfallCompendium.csproj -c Debug
-git add mod/src/Plugin.cs mod/src/Triggers/
+git add mod/src/Plugin.cs mod/src/Triggers/Hotkey.cs mod/src/Triggers/ReadinessMonitor.cs
 git commit -m "feat(mod): plugin entry, hotkey trigger, readiness monitor"
 ```
 
@@ -6362,14 +6342,14 @@ Trace each Slice 1 deliverable from `docs/superpowers/roadmap.md` and amendment 
 - Spells, locations, quests, map → Slices 4–6, 8.
 - Override mechanism → Slice 10 (deferred until trigger).
 - AGENTS.md fully populated with worked examples → Slice 11. Slice 1 ships honest stubs (A.4, F.1, H.1).
-- `/extract` console command → owed by Slice 1.5 if console API surfaces are not discoverable in Slice 1; F8 hotkey is the Slice 1 trigger.
+- Game-console `/extract` command → unplanned; HotRepl typed commands are the automation surface, and F8 is the manual fallback trigger.
 - Deployment target → first slice that publishes a built site.
 
 ### Placeholder scan
 
 No `TBD`, `TODO`, "implement later", "fill in details" appear in implementation steps. The two genuine deferrals are explicit:
 
-- Console command (Triggers/ConsoleCommand.cs) is a documented stub with a Slice 1.5 trigger condition.
+- Game-console command registration is intentionally unplanned; no stub is kept.
 - `curate-capsule.ts` exits 2 with a pointer to addendum §19; real curation lands when the first BepInEx snapshot exists.
 
 Both are honest "not in scope" deferrals, not hidden plan failures.

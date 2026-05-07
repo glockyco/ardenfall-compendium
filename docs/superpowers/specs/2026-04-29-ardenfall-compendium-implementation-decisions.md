@@ -486,13 +486,13 @@ Failed preflight writes no partial snapshot and reports a structured error.
 
 Extraction lifecycle uses a lean hybrid readiness model.
 
-Plugin initialization registers config, logging, hotkey/command surface, and lifecycle-hint observers. Plugin initialization must not assume Ardenfall runtime roots are ready and must not extract.
+Plugin initialization registers config, logging, HotRepl command handlers, the fallback hotkey, and lifecycle-hint observers. Plugin initialization must not assume Ardenfall runtime roots are ready and must not extract.
 
 The authoritative extraction gate is the preflight executed immediately before snapshot creation. Readiness monitor state is advisory UX only. Lifecycle events, scene/load hints, and bounded polling may trigger readiness rechecks and a single ready transition log, but no single event proves readiness.
 
-Slice 1 exposes manual `status` and `extract` commands. `status` reports current/last preflight checks and blocking reasons. `extract` may be invoked anytime, reruns full preflight, and either writes one complete snapshot or writes no consumable snapshot.
+Slice 1 exposes extraction through typed HotRepl control commands plus the fallback F8 hotkey. `compendium.preflight` reports current readiness and blocking reasons. The export flow (`run.begin` → `entity.plan` → `entity.exportBatch` → `run.finalize`) reruns full preflight before writing and either publishes one complete snapshot or writes no consumable snapshot.
 
-`extract-when-ready` / auto-extract is optional, default-off, and only for developer smoke testing. It must call the same extraction path and final preflight as manual extraction.
+A game-console `/extract` command is not planned. BepInEx 5 has no built-in console-command surface, and the HotRepl control plane is the supported automation boundary.
 
 Extraction output is atomic: after successful preflight, write to a staging/attempt path; complete entity files, diagnostics, manifest, counts, and hashes; then publish/rename to the final snapshot path. The pipeline ignores staging, failed, or incomplete attempts.
 

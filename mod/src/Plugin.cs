@@ -26,7 +26,6 @@ public sealed class Plugin : BaseUnityPlugin
         _runs = new Control.CompendiumRunManager();
         _commands = new Control.CompendiumCommandRegistry(_runs, _outputDir.Value);
         _readiness = new Triggers.ReadinessMonitor(Logger);
-        Triggers.ConsoleCommand.TryRegister(Logger, this);
         Logger.LogInfo($"{Name} {Version} loaded; hotkey {_hotkey.Value} will extract.");
     }
 

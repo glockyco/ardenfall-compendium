@@ -13,7 +13,7 @@ The mod walks live Ardenfall runtime objects and emits JSON snapshots. It is **n
 ## Layout
 
 - `src/Plugin.cs` — entry point, trigger registration.
-- `src/Triggers/` — hotkey, console command, advisory readiness monitor.
+- `src/Triggers/` — F8 hotkey fallback and advisory readiness monitor.
 - `src/Preflight/` — fail-fast gate before snapshot creation.
 - `src/Walker/` — generic walker base, cycle detection, ref resolution, provenance.
 - `src/Dtos/` — shared DTOs (SnapshotRef, Manifest, Diagnostic).

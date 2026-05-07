@@ -17,7 +17,7 @@ The site is the user-facing artefact. The mod and pipeline are the means.
 - Not a MediaWiki-backed wiki. The "auto-generated vs. hand-edited" merge problem is design debt we refuse to take on.
 - Not a static-decompilation extractor. AssetRipper-style flows (used in the Erenshor sister project) are slow to re-run on every game update and brittle against asset format changes. Ardenfall's runtime extraction surface is friendly enough — `Ardenfall.ArdenfallMasterData` singleton plus a flotilla of `*Manager.Instance` registries — that runtime extraction is the cheaper path.
 - Not a multi-language pipeline. Two languages live in this repo: C# in the mod and TypeScript everywhere else. Python is intentionally absent.
-- Not a live-watching extractor. Extraction is on-demand via hotkey or console command; no on-load auto-run.
+- Not a live-watching extractor. Extraction is on-demand via HotRepl control commands or the fallback F8 hotkey; no on-load auto-run.
 
 ## 3. Lessons applied
 
@@ -59,7 +59,7 @@ This is shape **β** in the prior research synthesis (RePoE / PyPoE is the clean
 
 | ID  | Component            | Owner stage           | Notes                                                                                                                         |
 | --- | -------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| C1  | Runtime hook         | Mod                   | BepInEx plugin lifecycle; hotkey + console-command triggers; never on-load                                                    |
+| C1  | Runtime hook         | Mod                   | BepInEx plugin lifecycle; HotRepl command registration plus fallback hotkey; never on-load                                    |
 | C2  | Extractor            | Mod                   | Typed DTOs over `Assembly-CSharp.dll`; generic walker base for cycle detection, ScriptableObject ID resolution, JSON emission |
 | C3  | Wire format          | Mod → Pipeline        | One JSON file per entity kind plus `manifest.json` carrying game version, build profile, extraction timestamp, content hashes |
 | C4  | Schema authority     | Repo (committed)      | `entities/<id>/entity.json` descriptors; one source of truth, validated by JSON Schema                                        |
@@ -104,7 +104,7 @@ ardenfall-compendium/
       Plugin.cs                      # entry point, trigger registration
       Walker/                        # generic walker base + helpers
       Dtos/                          # typed shapes mirroring Assembly-CSharp
-      Triggers/                      # hotkey, console command
+      Triggers/                      # fallback hotkey + readiness monitor
       Emit/                          # JSON + asset writers
     ArdenfallCompendium.csproj
     libs/                            # game DLLs (gitignored; copied locally for build)
@@ -270,8 +270,8 @@ The walker is generic; per-entity logic lives in the descriptor's `extraction.op
 
 ### 8.3 Triggers
 
-- **F8 hotkey** (configurable) for in-game one-shot extraction.
-- **`/extract` console command** with optional entity-kind filter (`/extract spells`).
+- **HotRepl control commands** (`compendium.preflight`, `run.begin`, `entity.plan`, `entity.exportBatch`, `run.finalize`) for automated extraction.
+- **F8 hotkey** (configurable) for manual smoke fallback.
 - No `Awake` / `Start` auto-run. Extraction is expensive and the player decides when.
 
 ### 8.4 Asset emission
