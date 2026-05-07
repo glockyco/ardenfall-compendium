@@ -341,7 +341,7 @@ Path filters use `paths:` on the workflow trigger so each job only runs when rel
 
 ### Revisit triggers
 
-- A second contributor joins. Add branch protection, PR templates, and a code-review configuration.
+- A second contributor joins. Add branch protection and a code-review configuration.
 - Free Actions minutes on a public repo become a constraint (extremely unlikely).
 - A CI step requires macOS-only behaviour. Slice 1 has none; tile capture is local-only by design.
 
