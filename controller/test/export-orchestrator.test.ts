@@ -2,7 +2,11 @@ import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "bun:test";
-import { exportArchive, type ControllerClient } from "../src/export-orchestrator";
+import {
+  buildPipelineCommand,
+  exportArchive,
+  type ControllerClient,
+} from "../src/export-orchestrator";
 import { validateSnapshot } from "../src/validate-snapshot";
 
 function command(name: string, kind: "sync" | "job" = "sync", mutatesState = false) {
@@ -108,6 +112,16 @@ describe("exportArchive", () => {
     await expect(
       exportArchive({ client, outputBaseDir: "/tmp/out", pipelineOutDir: "/tmp/pipeline" }),
     ).rejects.toThrow(/Missing required HotRepl command: run\.finalize/);
+  });
+
+  it("builds the pipeline command expected by pipeline/src/cli.ts", () => {
+    expect(buildPipelineCommand("/snapshot", "/out")).toEqual([
+      "bun",
+      "run",
+      "pipeline:run",
+      "/snapshot",
+      "/out",
+    ]);
   });
 });
 

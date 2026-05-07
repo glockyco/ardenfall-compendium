@@ -131,14 +131,15 @@ async function waitForJob(client: ControllerClient | HotReplClient, jobId: strin
   }
 }
 
+export function buildPipelineCommand(snapshotDir: string, pipelineOutDir: string): string[] {
+  return ["bun", "run", "pipeline:run", snapshotDir, pipelineOutDir];
+}
+
 async function runPipeline(snapshotDir: string, pipelineOutDir: string): Promise<void> {
-  const proc = Bun.spawn(
-    ["bun", "run", "pipeline:run", "--", "--snapshot", snapshotDir, "--out", pipelineOutDir],
-    {
-      stdout: "inherit",
-      stderr: "inherit",
-    },
-  );
+  const proc = Bun.spawn(buildPipelineCommand(snapshotDir, pipelineOutDir), {
+    stdout: "inherit",
+    stderr: "inherit",
+  });
   const exitCode = await proc.exited;
   if (exitCode !== 0) throw new Error(`pipeline:run exited ${exitCode}`);
 }
