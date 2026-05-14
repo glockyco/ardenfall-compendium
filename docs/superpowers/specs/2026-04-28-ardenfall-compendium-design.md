@@ -355,9 +355,9 @@ If the SQLite size becomes a complaint, the next step is `sql.js-httpvfs` for ra
 
 ## 12. Asset pipeline (C9)
 
-- Mod calls `Texture2D.EncodeToPNG()` and writes `snapshots/<…>/assets/<kind>/<sha256-truncated>.png`. Filename is the truncated content hash; duplicates at the source disappear by definition.
+- Mod exports behavior-selected `Sprite` assets as cropped PNGs and writes `snapshots/<…>/assets/<kind>/<sha256-truncated>.png`. Filename is the truncated content hash; duplicates at the source disappear by definition. For item icons, the source is the game UI display behavior (`GetIcon()`/overrides), not merely a raw `ItemData.icon` field.
 - Pipeline `emit-assets` stage reads each PNG, converts via `sharp` to WebP (quality knob in pipeline config), writes `site/static/assets/<hash>.webp`.
-- The canonical SQLite store carries an `asset_refs` table mapping `(entity_kind, entity_id, slot) → hash`. The site looks up `<hash>.webp` directly; no per-entity asset path computation.
+- The canonical SQLite store carries an `asset_refs` table mapping `(entity_kind, entity_id, slot) → hash` plus any slot metadata needed by renderers (for example item display icon color). The site looks up `<hash>.webp` directly; no per-entity asset path computation.
 - New game version with new icons: hash-by-content means unchanged assets are not re-emitted. Renamed icon with same pixels keeps its hash; renamed icon with new pixels gets a new hash and the old one becomes orphan, gc'd by a pipeline `prune-assets` task.
 
 ## 13. Versioning and diff (C11)

@@ -433,7 +433,7 @@ Rules:
 - Record-backed refs preserve `(table, subtable, id)`.
 - Missing refs use a field-level criticality policy: `fatal`, `diagnostic`, or `optional-empty`.
 - `fatal`: required identity/domain refs fail the current entity and increment fatal diagnostics. The pipeline rejects snapshots with fatal diagnostics. Examples: root item id, required variant discriminator, required foreign-key relation.
-- `diagnostic`: optional but notable refs emit an explicit `{ kind: "missing" }` ref plus a diagnostic. Extraction continues. Examples: item icon unexpectedly missing from `BuiltLookupTable`, tag/category ref not resolvable, optional equipment stat ref missing.
+- `diagnostic`: optional but notable refs emit an explicit `{ kind: "missing" }` ref plus a diagnostic. Extraction continues. Examples: item `iconRef` unexpectedly missing from `BuiltLookupTable`, tag/category ref not resolvable, optional equipment stat ref missing.
 - `optional-empty`: absence is normal and emits the normal empty value without a diagnostic. Examples: empty description, empty sounds list, absent pickup mesh, absent optional quickslot icon.
 
 Missing refs are never silent nulls. A null-like value is only valid when the field declares `optional-empty`.
@@ -442,7 +442,7 @@ Diagnostic example:
 
 ```json
 {
-  "field": "icon",
+  "field": "iconRef",
   "value": {
     "kind": "missing",
     "reason": "lookupAssetGuidMissing",
@@ -452,7 +452,7 @@ Diagnostic example:
     "severity": "diagnostic",
     "code": "lookupAssetGuidMissing",
     "entity": "item:<guid>",
-    "field": "icon"
+    "field": "iconRef"
   }
 }
 ```

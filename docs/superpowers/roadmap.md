@@ -144,20 +144,31 @@ Planned canonical tables:
 
 **Status:** planned
 **Spec coverage:** baseline §8.4, §9 (`emit-assets`), §12; amendment §13, §16; investment-priorities §2 (presentation depth follows breadth).
+**Audit:** `docs/superpowers/specs/2026-05-14-item-icon-tooltip-audit.md`; grounded in decompiled `ItemData`, `BaseItem`, item subclass, `ItemCategory`, and UI scripts after Slice 2 live smoke.
 
-**Delivers:** content-addressed PNG emission from the mod for item icon `Sprite` assets, WebP optimisation via `sharp`, `asset_refs` population, item icon rendering on `/items` and `/items/[id]`, generated asset manifest, asset diagnostics. Resolves the live-data observation that 898/899 items currently report `iconRef: { kind: "missing" }`.
+**Delivers:** content-addressed item icon emission from the mod, WebP optimisation via `sharp` (or `cwebp` fallback), `asset_refs`/asset manifest population, and item icon rendering on `/items` and `/items/[id]`. Slice 3 must export the behavior-derived display icon used by game UI (`BaseItem.GetIcon()` plus subclass overrides), not only raw `ItemData.icon`. It also records display icon colour and secondary icon slots where game UI uses `ISecondaryIconItem`.
+
+**Live baseline after Slice 2:** `snapshots/snapshots/0.0.10.91-20260514-1621097145580` has `1273` items, `1271 lookupAssetGuidMissing:iconRef`, `2 nullAsset:iconRef`, `127 lookupAssetGuidMissing:quickslotIconRef`, and `15 lookupAssetGuidMissing:projectileIconRef`. The old `898/899` icon-missing baseline is obsolete. `categoryRef`, `spellRef`, `fontRef`, and `projectileRef` diagnostics surfaced by Slice 2 are not all Slice 3 work; Slice 3 targets visible item image assets first.
 
 **Required precondition spike:** `sharp` under Bun's Node-API surface. The plan must include a 5-line spike per `2026-05-03-slice1-tooling-decisions.md` §9 caveats before the asset stage commits to it. Fallback: shell out to `cwebp` from libwebp via `Bun.spawnSync`.
+
+**Critical planning notes from audit:**
+
+- Display icon source order is behavior-specific: `BaseItem.GetIcon()` uses `itemData.icon` then `category.defaultItemIcon`; `SlateSpellItem.GetIcon()` prefers spell icon; `ThrowingPotion.GetIcon()` prefers the first status effect icon; UI consumes `GetIconColor()` alongside the sprite.
+- Export actual Sprite pixels and content hashes. Do not try to repair this through `BuiltLookupTable` GUID resolution alone; Slice 2 proved those refs are missing for nearly all item icon slots.
+- Crop atlas sprites by sprite rect/texture rect before hashing/encoding.
+- Keep raw refs (`iconRef`, `quickslotIconRef`, `projectileIconRef`, `categoryRef`) separate from behavior-derived display slots so future presentation can explain provenance.
 
 ### Slice 4 — Item presentation depth
 
 **Status:** planned
 **Spec coverage:** investment-priorities §1, §2; baseline §11, §14.
+**Audit dependency:** `docs/superpowers/specs/2026-05-14-item-icon-tooltip-audit.md` confirms rich tooltip rendering belongs here, not Slice 3.
 
 **Delivers:** the presentation track for items, executed after items have full data and icons.
 
-- Rich tooltip rendering on item links (hover anywhere `/items/[id]` is referenced and get name + key stats + icon without leaving the page).
-- Formatted item descriptions with safe richtext rendering (no raw Unity tooltip markup leaking into the DOM).
+- Rich tooltip rendering on item links (hover anywhere `/items/[id]` is referenced and get name + key stats + icon without leaving the page). Decompiled game UI builds tooltips from `ItemInfoListUI` calls into `GetTooltipDescription()`, `GetEffectsTooltip()`, `GetTooltipItemType()`, and `GetItemStatInfos()`; the Slice 4 plan must decide whether to export behavior-rendered tooltip strings from the mod or reconstruct safe site render data from structured fields.
+- Formatted item descriptions with safe richtext rendering (no raw Unity/TMP tooltip markup leaking into the DOM). Tooltip strings use `<color>`, `<b>`, sprite tokens, and master-data tooltip codes, so this needs a sanitizer/translator rather than direct HTML rendering.
 - Inter-entity links: item-to-item references where the data exposes them (set bonuses, recipe ingredients, ammunition for bows, etc.). Forward references to entities not yet shipped are rendered as inert text with a tracked diagnostic so they re-resolve once the target entity lands.
 - Reusable component primitives this slice extracts that will obviously be useful for later slices' presentation depth work: stat-block, tag-list, entity-link, tooltip-shell. These move into a shared design surface only when at least one other entity validates them — premature extraction is rejected.
 - Item overview enhancements: stable URL state for sort/filter, basic categorical filtering on variant. (Full FTS5 search + faceted filters lands in Slice 10; this slice does the cheap declarative versions only.)
