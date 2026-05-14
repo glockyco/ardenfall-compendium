@@ -254,14 +254,14 @@ Without a C# test project for the mod, none of the bug fixes can be verified exc
 - Create: `mod-tests/.gitignore` (entries for `bin/`, `obj/`)
 - Modify: no solution file exists; `ardenfall-compendium` is dotnet-built via `mod/ArdenfallCompendium.csproj` directly, so the test project is run standalone via `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj`.
 
-- [ ] **Step 1: Decide framework.** Use `xunit` 2.9+ with `xunit.runner.visualstudio`. xUnit is the dotnet-ecosystem default and integrates cleanly with `dotnet test`. Target `net8.0` for the test project (test runner does not need to match the mod's `netstandard2.1`); the test project references the mod's source by `<ProjectReference Include="..\mod\ArdenfallCompendium.csproj"/>` so test code can call mod types directly.
+- [ ] **Step 1: Decide framework.** Use `xunit` 2.9+ with `xunit.runner.visualstudio`. xUnit is the dotnet-ecosystem default and integrates cleanly with `dotnet test`. Target `net10.0` for the test project because the local toolchain only has the .NET 10 runtime installed (test runner does not need to match the mod's `netstandard2.1`); the test project references the mod's source by `<ProjectReference Include="..\mod\ArdenfallCompendium.csproj"/>` so test code can call mod types directly.
 
 - [ ] **Step 2: Write the csproj.**
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <LangVersion>latest</LangVersion>
@@ -285,13 +285,14 @@ Without a C# test project for the mod, none of the bug fixes can be verified exc
 ```csharp
 // mod-tests/SmokeTests.cs
 using Xunit;
+using ArdenfallCompendium.Dtos;
 
 namespace ArdenfallCompendium.Tests;
 
 public sealed class SmokeTests
 {
     [Fact]
-    public void TestProjectLinksMod() => Assert.Equal("ArdenfallCompendium", typeof(ArdenfallCompendium.Plugin).Assembly.GetName().Name);
+    public void TestProjectLinksMod() => Assert.Equal("ArdenfallCompendium", typeof(Manifest).Assembly.GetName().Name);
 }
 ```
 
