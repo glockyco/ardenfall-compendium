@@ -11,7 +11,7 @@ The amendment is authoritative where it differs from the baseline spec. The inve
 
 ## How this is organised
 
-The project spans three layered subsystems (BepInEx mod, TS/Bun pipeline, SvelteKit site) plus shared descriptor/schema infrastructure. Rather than one mega-plan, work is split into **slices**. Each slice gets its own plan under `docs/superpowers/plans/` and must produce working, testable software on its own.
+The project spans three layered subsystems (BepInEx mod, TS/Bun pipeline, SvelteKit site) plus shared descriptor/schema infrastructure. Rather than one mega-plan, work is split into **slices**. Each active slice may get an execution plan under `docs/superpowers/plans/` while work is live, but completed plans are removed from the working tree once the roadmap/specs capture the outcome; git history is the archive.
 
 Slice ordering is driven by `2026-05-07-investment-priorities.md`: items get the deepest investment first (data breadth, then assets, then presentation depth), maps come second (locations, map system, then map-supporting entities one-by-one), with spells/quests after. Each major entity gets a data slice plus a presentation depth slice; depth is not deferred to a single distant design-system slice.
 
@@ -22,7 +22,7 @@ Slice ordering is driven by `2026-05-07-investment-priorities.md`: items get the
 - **drafting** — plan being written
 - **ready** — plan written and committed, awaiting execution
 - **in-progress** — plan execution underway
-- **done** — plan executed and merged
+- **done** — slice executed and merged; completed execution plans are not retained in the working tree
 - **deferred** — explicitly parked until a stated trigger fires
 
 ## Slices
@@ -30,8 +30,7 @@ Slice ordering is driven by `2026-05-07-investment-priorities.md`: items get the
 ### Slice 1 — Item walking skeleton
 
 **Status:** done
-**Plan:** `docs/superpowers/plans/2026-05-03-item-walking-skeleton.md`
-**Worktree branch:** `slice/1-item-walking-skeleton` (at `.worktrees/slice-1-item-walking-skeleton/`)
+**Completed:** 2026-05-07 on `main`; merged as `41b8310 merge: slice 1 item walking skeleton`.
 **Spec coverage:** baseline §4, §6–§9, §11, §14, §15; all implementation decisions in `2026-04-29-ardenfall-compendium-implementation-decisions.md`; tooling decisions in `2026-05-03-slice1-tooling-decisions.md`.
 
 **Delivered:**
@@ -79,18 +78,21 @@ This set proves the variant model with one deep inheritance branch (`MeleeItemDa
 
 ### Slice 1.5 — Stabilisation, deployment, and operational hygiene
 
-**Status:** ready
-**Plan:** `docs/superpowers/plans/2026-05-07-slice-1-stabilisation.md`
-**Spec coverage:** investment-priorities §3 (foundation hygiene before breadth); design spec §16 open question 1 (deployment).
+**Status:** done
+**Completed:** 2026-05-14 on `main`; latest Slice 1.5 cleanup commit before this roadmap update was `6182f25 fix(repo): align local formatting checks with CI`.
+**Spec coverage:** investment-priorities §3 (foundation hygiene before breadth); design spec §16 open question 1 (deployment, now closed).
 
-**Delivers:**
+**Delivered:**
 
-- All five identified bugs in the HotRepl extraction path fixed at the source. Specifically: empty `DiagnosticTotals` in `RunFinalizeCommand`; full walker re-run in `EntityPlanCommand`; full walker re-run per batch in `EntityExportBatchCommand`; walker-level diagnostics dropped between batches; reliance on unstable iteration order from `BuiltLookupTable.GetAssetsOfType<T>()`. Walker runs once per run; rows and diagnostics are cached on `CompendiumRun` and aggregated into the manifest at finalize.
-- Site `+error.svelte` for SvelteKit error states (404 from `+page.ts` `error()`, sqlite fetch failures, deserialise failures), with a clear message and a path back to `/`.
-- Controller invokes `game.quit` on export success and on failure, so live runs no longer leave the game open.
-- Live deployment of the static site to `ardenfall.compendiums.org` via Cloudflare Workers Static Assets and `wrangler deploy`, modelled on the existing `compendiums.org` umbrella's wrangler setup. Initial deploy is local/operator-driven through Wrangler auth; CI verifies the build but does not deploy.
-- Operational helper for the controller to drive `MainMenu → continue → world_Ardenfall` via HotRepl runtime-eval, so unattended live smoke runs require no human click.
+- All five identified bugs in the HotRepl extraction path fixed at the source. Specifically: empty `DiagnosticTotals` in `RunFinalizeCommand`; full walker re-run in `EntityPlanCommand`; full walker re-run per batch in `EntityExportBatchCommand`; walker-level diagnostics dropped between batches; reliance on unstable iteration order from `BuiltLookupTable.GetAssetsOfType<T>()`. Walker rows and diagnostics are cached through `ItemExtractionService`; manifest totals aggregate row diagnostics plus walker diagnostics.
+- Local C# xUnit regression substrate under `mod-tests/`, including coverage for cached item extraction, entity planning, batch slicing, finalize diagnostics, diagnostic code naming, and run lifecycle behavior.
+- Site `+error.svelte` for SvelteKit error states, with `site/scripts/smoke-error-route.mjs` covering the unknown-item route.
+- Controller invokes `game.quit` after the `run.finalize` path; quit failures are logged and do not mask the original export result.
+- Live deployment of the site to `ardenfall.compendiums.org` via Cloudflare Workers Static Assets and local/operator `wrangler deploy`. CI verifies buildability; it does not deploy and assumes no Cloudflare secrets.
+- Operational helper for the controller to drive `MainMenu → continue → world_Ardenfall` through the typed `compendium.continueFromMenu` command, so unattended live smoke runs require no human click.
+- Runtime deploy cleanup removes the obsolete pre-rename `BepInEx/plugins/ArdenfallArchives` directory before copying current plugin DLLs.
 
+**Verification evidence:** local gates passed on 2026-05-14 (`bun run format:check`, `bun run typecheck`, `bun test`, `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj`, `bun run --cwd site check`). Live smoke against Ardenfall Demo `0.0.10.91` published `snapshots/snapshots/0.0.10.91-20260514-0632448862090` with `counts.item = 899`, `diagnostics = { fatal: 0, diagnostic: 1273 }`, wrote `pipeline/dist/data.sqlite` at 1,482,752 bytes, and `game.quit` closed HotRepl port 18590. Cloudflare version `d8bb5080-eaf8-4e69-9c1c-d223fb1ecdd7` served `/items`, `/items/fixture-iron-sword`, and `/items/does-not-exist` with the expected 404 error route.
 **Why this slice exists:** investment-priorities §3 mandates that known foundation bugs are fixed before breadth slices land. Slice 2 will multiply the volume of items extracted and amplify the missing-diagnostic visibility into other entity types; Slice 3 will make icons real and amplify the cost of any walker quadratic; Slice 4 will surface presentation defects that an opaque error route hides. Each downstream slice is cheaper if Slice 1.5 lands first.
 
 **Excludes:**
@@ -101,7 +103,7 @@ This set proves the variant model with one deep inheritance branch (`MeleeItemDa
 
 ### Slice 2 — Item subtype enrichment
 
-**Status:** planned
+**Status:** planned; next active planning target after this docs hygiene pass.
 **Spec coverage:** implementation addendum §9–§11, §16; investment-priorities §1 (item depth first).
 
 **Delivers:** broadens variant coverage to all `ItemData` subclasses Ardenfall exposes. The concrete set is enumerated by feeding the live mod once and reading the `itemSubtypeUnsupported` diagnostics, then turning each into a variant descriptor + adapter. Likely set:
@@ -223,25 +225,25 @@ Each candidate gets its own slice number (7, 8, …), ordered by map-marker volu
 
 ## Open questions tracker
 
-| #   | Question                               | Status               | Closes in slice                                                                        |
-| --- | -------------------------------------- | -------------------- | -------------------------------------------------------------------------------------- |
-| 1   | Deployment target                      | **closing in 1.5**   | Slice 1.5 (`2026-05-07-slice-1-stabilisation.md` deployment section)                   |
-| 2   | Repo strategy + CI tooling             | **closed**           | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §1, §8)                              |
-| 3   | Component library / primitive strategy | **closed (initial)** | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §5); design system depth in Slice 10 |
-| 4   | JSON Schema validator                  | **closed**           | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §3)                                  |
-| 5   | Property-test framework                | **closed**           | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §4)                                  |
-| 6   | Tile capture specifics                 | open                 | Slice 6                                                                                |
-| 7   | External archive backend               | open                 | Slice 13                                                                               |
-| 8   | Future gameplay-mod surface            | deferred             | indefinitely                                                                           |
-| 9   | Map-supporting entity ordering         | open                 | Slice 6 (firm-up)                                                                      |
+| #   | Question                               | Status               | Closes in slice                                                                                                   |
+| --- | -------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| 1   | Deployment target                      | **closed**           | Slice 1.5 deployed `ardenfall.compendiums.org` through local/operator Wrangler + Cloudflare Workers Static Assets |
+| 2   | Repo strategy + CI tooling             | **closed**           | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §1, §8)                                                         |
+| 3   | Component library / primitive strategy | **closed (initial)** | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §5); design system depth in Slice 10                            |
+| 4   | JSON Schema validator                  | **closed**           | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §3)                                                             |
+| 5   | Property-test framework                | **closed**           | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §4)                                                             |
+| 6   | Tile capture specifics                 | open                 | Slice 6                                                                                                           |
+| 7   | External archive backend               | open                 | Slice 13                                                                                                          |
+| 8   | Future gameplay-mod surface            | deferred             | indefinitely                                                                                                      |
+| 9   | Map-supporting entity ordering         | open                 | Slice 6 (firm-up)                                                                                                 |
 
 ## Update protocol
 
 When a slice transitions:
 
 - **Brainstorming → drafting:** all decisions that materially affect the slice are closed or marked provisional with revisit triggers.
-- **Drafting → ready:** plan link and commit hash recorded.
-- **Ready → in-progress:** worktree branch noted.
-- **In-progress → done:** completion date recorded; any spec deviations noted under the slice with rationale.
+- **Drafting → ready:** active plan location and commit hash recorded while the plan is live.
+- **Ready → in-progress:** branch noted when work does not happen directly on `main`.
+- **In-progress → done:** completion date recorded; any spec deviations noted under the slice with rationale; completed plan/progress artifacts removed from the working tree.
 - **Slice re-shaped:** old slice marked `superseded by Slice N`, new slice added.
 - **Investment priority shift:** evidence (analytics, user feedback, structural game change) recorded in `2026-05-07-investment-priorities.md` under "Revisit triggers"; affected slice ordering updated here.

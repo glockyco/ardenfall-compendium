@@ -8,7 +8,7 @@ This repository is the static compendium for the game Ardenfall. Its design is c
 - Implementation decisions (authoritative where the baseline differs): `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md`
 - Slice-1 tooling pins: `docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`
 - Living roadmap: `docs/superpowers/roadmap.md`
-- Active plan: `docs/superpowers/plans/<latest>.md`
+- Active plan, when one exists: `docs/superpowers/plans/<latest>.md`
 
 ## Subsystem entry points
 
