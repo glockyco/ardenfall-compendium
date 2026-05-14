@@ -143,14 +143,14 @@ Planned canonical tables:
 ### Slice 3 — Asset pipeline (item icons)
 
 **Status:** planned
-**Spec coverage:** baseline §8.4, §9 (`emit-assets`), §12; amendment §13, §16; investment-priorities §2 (presentation depth follows breadth).
+**Spec coverage:** baseline §8.4, §9 (`emit-assets`), §12; amendment §13, §16; investment-priorities §2 (presentation depth follows breadth); `docs/superpowers/specs/2026-05-14-slice3-item-icon-asset-design.md`.
 **Audit:** `docs/superpowers/specs/2026-05-14-item-icon-tooltip-audit.md`; grounded in decompiled `ItemData`, `BaseItem`, item subclass, `ItemCategory`, and UI scripts after Slice 2 live smoke.
 
-**Delivers:** content-addressed item icon emission from the mod, WebP optimisation via `sharp` (or `cwebp` fallback), `asset_refs`/asset manifest population, and item icon rendering on `/items` and `/items/[id]`. Slice 3 must export the behavior-derived display icon used by game UI (`BaseItem.GetIcon()` plus subclass overrides), not only raw `ItemData.icon`. It also records display icon colour and secondary icon slots where game UI uses `ISecondaryIconItem`.
+**Delivers:** content-addressed item icon emission from the mod, WebP optimisation via pinned direct `sharp`, `asset_refs`/asset manifest population, and item icon rendering on `/items` and `/items/[id]`. Slice 3 must export the behavior-derived display icon used by game UI (`BaseItem.GetIcon()` plus subclass overrides), not only raw `ItemData.icon`. It also records display icon colour and secondary icon slots where game UI uses `ISecondaryIconItem`.
 
 **Live baseline after Slice 2:** `snapshots/snapshots/0.0.10.91-20260514-1621097145580` has `1273` items, `1271 lookupAssetGuidMissing:iconRef`, `2 nullAsset:iconRef`, `127 lookupAssetGuidMissing:quickslotIconRef`, and `15 lookupAssetGuidMissing:projectileIconRef`. The old `898/899` icon-missing baseline is obsolete. `categoryRef`, `spellRef`, `fontRef`, and `projectileRef` diagnostics surfaced by Slice 2 are not all Slice 3 work; Slice 3 targets visible item image assets first.
 
-**Required precondition spike:** `sharp` under Bun's Node-API surface. The plan must include a 5-line spike per `2026-05-03-slice1-tooling-decisions.md` §9 caveats before the asset stage commits to it. Fallback: shell out to `cwebp` from libwebp via `Bun.spawnSync`.
+**Required precondition spike:** `sharp` under Bun's Node-API surface. The plan must include a 5-line spike per `2026-05-03-slice1-tooling-decisions.md` §9 caveats before the asset stage commits to it. Slice 3 uses one canonical converter path: pinned direct `sharp`. If the spike fails, stop and revise the design instead of adding a maintained `cwebp` fallback.
 
 **Critical planning notes from audit:**
 
