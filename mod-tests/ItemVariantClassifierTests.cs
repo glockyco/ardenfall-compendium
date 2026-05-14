@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Ardenfall.Item;
 using ArdenfallCompendium.Entities.Item;
@@ -33,5 +34,19 @@ public sealed class ItemVariantClassifierTests
         var classified = ItemVariantClassifier.Classify(item);
 
         Assert.Equal(expectedVariant, classified.VariantId);
+    }
+
+    [Theory]
+    [InlineData(typeof(ThrowingPotionData), new[] { "equipment", "hand-item", "primary-hand", "throwing-item", "throwing-potion" })]
+    [InlineData(typeof(BowItemData), new[] { "equipment", "hand-item", "primary-hand", "bow" })]
+    [InlineData(typeof(ArrowItemData), new[] { "equipment", "arrow" })]
+    [InlineData(typeof(ConsumableItemData), new[] { "consumable" })]
+    public void ReturnsOrderedAdapterLayersForConcreteType(Type itemType, string[] expectedLayers)
+    {
+        var item = (ItemData)RuntimeHelpers.GetUninitializedObject(itemType);
+
+        var classified = ItemVariantClassifier.Classify(item);
+
+        Assert.Equal(expectedLayers, classified.Layers.Select(layer => layer.VariantId));
     }
 }

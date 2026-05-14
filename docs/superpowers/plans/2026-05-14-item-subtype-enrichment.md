@@ -692,7 +692,7 @@ git commit -m "feat(items): extract equipment leaf subtypes"
 - Modify: `mod/src/Entities/Item/ItemExtractor.cs`
 - Test: `mod-tests/ItemVariantClassifierTests.cs`
 
-- [ ] **Step 1: Extend classifier tests**
+- [x] **Step 1: Extend classifier tests**
 
 Extend the existing `mod-tests/ItemVariantClassifierTests.cs` created in Task 2:
 
@@ -744,7 +744,7 @@ dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter ItemVariantClass
 
 Expected: fails for the subtype cases not implemented yet.
 
-- [ ] **Step 2: Extend classifier**
+- [x] **Step 2: Extend classifier**
 
 Modify `mod/src/Entities/Item/ItemVariantClassifier.cs`. The classifier must check concrete leaf types before ancestors in this order:
 
@@ -757,7 +757,7 @@ LockpickItemData, CurrencyItemData, NoteItemData, ConsumableItemData, ItemData
 
 Return a small object containing the `VariantId` and an ordered list of adapter extraction functions that each return `ItemAdapterResult`. Ancestor layers must still be merged for inheritance: e.g. `bow` merges equipment, hand, primary-hand, then bow.
 
-- [ ] **Step 3: Replace inline type ladder**
+- [x] **Step 3: Replace inline type ladder**
 
 Modify `ItemExtractor.Walk()` so the existing inline `if/else` variant ladder is replaced by:
 
@@ -771,7 +771,7 @@ Modify `ItemExtractor.Walk()` so the existing inline `if/else` variant ladder is
 
 Keep the unsupported diagnostic branch only as a defensive fallback for future game versions. After every layer, assert or enforce that `Refs.Diagnostics` has been drained; row-level resolver diagnostics must not leak into walker diagnostics with `rowId = null`.
 
-- [ ] **Step 4: Run classifier and extraction tests**
+- [x] **Step 4: Run classifier and extraction tests**
 
 Run:
 
@@ -780,6 +780,16 @@ dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter "ItemVariantClas
 ```
 
 Expected: exits 0.
+
+Observed Task 5 gate:
+
+```sh
+dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter "ItemVariantClassifierTests|ItemAdapterBehaviorTests|ItemExtractionServiceTests|EntityPlanCommandTests|EntityExportBatchCommandTests|RunFinalizeCommandTests|ItemDiagnosticCodesTests"
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
+bun run format:check
+```
+
+All exited 0. Reviewer reported no correctness blockers: classifier order matches the previous leaf-before-parent ladder, layer lists preserve parent-to-leaf extraction order, and residual resolver diagnostics remain row-local.
 
 - [ ] **Step 5: Commit**
 
