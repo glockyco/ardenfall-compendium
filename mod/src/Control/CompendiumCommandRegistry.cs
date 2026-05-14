@@ -16,6 +16,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
 
         Register(new Handlers.CompendiumInfoCommand());
         Register(new Handlers.CompendiumPreflightCommand());
+        Register(new Handlers.ContinueFromMenuCommand());
         Register(new Handlers.RunBeginCommand(runs, outputBaseDir));
         Register(new Handlers.RunStatusCommand(runs));
         Register(new Handlers.EntityPlanCommand(runs, items));

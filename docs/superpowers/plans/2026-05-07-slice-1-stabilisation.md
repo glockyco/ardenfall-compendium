@@ -618,14 +618,21 @@ git commit -m "feat(controller): invoke game.quit after export success or failur
 
 ### Phase F — `MainMenu → continue → world_Ardenfall` automation helper
 
-#### Task F.1 — HotRepl runtime-eval helper invoked from controller
+#### Task F.1 — Typed HotRepl continue helper invoked from controller
 
 **Files:**
 
-- Modify: `controller/src/cli.ts` or create `controller/src/wait-for-world.ts`
+- Create: `controller/src/wait-for-world.ts`
+- Modify: `controller/src/export-orchestrator.ts`
+- Modify: `controller/src/cli.ts`
 - Modify: `controller/test/wait-for-world.test.ts` (new)
+- Modify: `controller/test/export-orchestrator.test.ts`
+- Create: `mod/src/Control/Handlers/ContinueFromMenuCommand.cs`
+- Modify: `mod/src/Control/CompendiumCommandRegistry.cs`
+- Modify: `mod/ArdenfallCompendium.csproj`
+- Modify: `mod/scripts/copy-libs.sh`
 
-- [ ] **Step 1: Identify the eval target.** Per Slice 1's progress doc, the game starts in `MainMenu`; clicking the `continue` button loads `world_Ardenfall`. The HotRepl runtime-eval helper finds the continue button (likely a `UnityEngine.UI.Button` with a recognizable name path) and invokes its `onClick` event. Reference: `/Users/joaichberger/Projects/HotRepl/docs/superpowers/specs/...` for the eval surface; the runtime-eval contract takes a string of C# source, compiles it via Mono, and returns the result.
+- [ ] **Step 1: Identify the automation target.** The controller cannot use the eval REPL through `HotReplClient`'s typed-control surface, and typed commands are the supported automation API. Implement the robust path directly: a `compendium.continueFromMenu` command finds an active interactable `UnityEngine.UI.Button` whose name or child `Text` contains "continue" and invokes `onClick`.
 
   The helper exposes:
 
@@ -635,23 +642,23 @@ git commit -m "feat(controller): invoke game.quit after export success or failur
 
   which, in order:
   1. Polls `compendium.preflight`. If it passes immediately (already in world), returns.
-  2. If preflight reports `ardenfallGame: not initialized`, eval-runs a snippet that finds the menu's continue button and clicks it.
+  2. If preflight reports `ardenfallGame: not initialized`, calls typed command `compendium.continueFromMenu`.
   3. Polls `compendium.preflight` until it passes or `timeoutMs` elapses.
   4. Returns or throws a clear timeout error with the last preflight reason.
 
-- [ ] **Step 2: Write the failing test.** Mock the HotRepl client; assert the helper polls preflight, sends the eval command on first failure, and returns when preflight passes.
+- [ ] **Step 2: Write the failing tests.** Mock the HotRepl client; assert the helper polls preflight, sends `compendium.continueFromMenu` on first failure, and returns when preflight passes. Add an export-orchestrator test proving `waitForWorld: true` runs before `run.begin`.
 
-- [ ] **Step 3: Implement.** Keep the eval snippet minimal and inspectable; do not embed long C# strings if a typed command would be clearer. (If the eval surface is too brittle, add a typed `compendium.continueFromMenu` command to the mod instead — this is the more robust answer and is preferred if eval proves flaky.)
-
-- [ ] **Step 4: Wire into `controller:export`.** The CLI gains `--wait-for-world` (default true for live runs, false in unit tests). The export orchestrator calls `waitForWorld(client, …)` after preflight reports not-ready and before `run.begin`.
+- [ ] **Step 3: Implement.** Add `controller/src/wait-for-world.ts`, wire `exportCompendium({ waitForWorld: true })`, and make `controller:export` default to waiting for live runs with `--no-wait-for-world` as the unit-test/manual override.
 
 - [ ] **Step 5: Run + live-verify.**
 
 ```sh
 bun test controller/test
+bun run typecheck
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
 # then a live run:
 bun run controller:deploy …
-bun run controller:export … --wait-for-world
+bun run controller:export …
 ```
 
 Expected: live run succeeds without a human click on `Continue`.

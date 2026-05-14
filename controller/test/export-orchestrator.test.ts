@@ -18,6 +18,7 @@ class FakeClient implements ControllerClient {
   readonly jobs: Array<{ name: string; args: Record<string, unknown> }> = [];
   commands = [
     command("compendium.preflight"),
+    command("compendium.continueFromMenu", "sync", true),
     command("run.begin", "sync", true),
     command("entity.plan"),
     command("entity.exportBatch", "job", true),
@@ -25,6 +26,7 @@ class FakeClient implements ControllerClient {
     command("game.quit", "sync", true),
   ];
   preflightResult: Record<string, unknown> = { ready: true };
+  preflightResults: Record<string, unknown>[] = [];
   publishedDir = "/tmp/snapshot";
 
   finalizeError: Error | null = null;
@@ -40,8 +42,10 @@ class FakeClient implements ControllerClient {
   }
   async call(name: string, args: Record<string, unknown>) {
     this.calls.push({ name, args });
-    if (name === "compendium.preflight")
-      return { status: "ok", result: this.preflightResult, artifacts: [], diagnostics: [] };
+    if (name === "compendium.preflight") {
+      const result = this.preflightResults.shift() ?? this.preflightResult;
+      return { status: "ok", result, artifacts: [], diagnostics: [] };
+    }
     if (name === "run.begin")
       return {
         status: "ok",
@@ -53,6 +57,13 @@ class FakeClient implements ControllerClient {
       return {
         status: "ok",
         result: { entity: "item", total: 150, batchSize: 100, batches: 2 },
+        artifacts: [],
+        diagnostics: [],
+      };
+    if (name === "compendium.continueFromMenu")
+      return {
+        status: "ok",
+        result: { clicked: true },
         artifacts: [],
         diagnostics: [],
       };
@@ -150,6 +161,33 @@ describe("exportCompendium", () => {
     ).rejects.toThrow("finalize failed");
 
     expect(client.calls.map((call) => call.name).at(-1)).toBe("game.quit");
+  });
+
+  it("waits for world by clicking through the main menu before beginning a run", async () => {
+    const client = new FakeClient();
+    client.preflightResults = [
+      {
+        ready: false,
+        checks: [{ name: "ardenfallGame", ok: false, reason: "ArdenfallGame.instance is null" }],
+      },
+      { ready: true, checks: [] },
+    ];
+
+    await exportCompendium({
+      client,
+      outputBaseDir: "/tmp/out",
+      pipelineOutDir: "/tmp/pipeline",
+      validate: async () => ({ itemCount: 150 }),
+      runPipeline: async () => undefined,
+      waitForWorld: true,
+    });
+
+    expect(client.calls.map((call) => call.name).slice(0, 4)).toEqual([
+      "compendium.preflight",
+      "compendium.continueFromMenu",
+      "compendium.preflight",
+      "run.begin",
+    ]);
   });
 
   it("surfaces failed preflight check reasons", async () => {

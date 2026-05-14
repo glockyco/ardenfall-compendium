@@ -8,6 +8,7 @@ import type {
   JobStatus,
 } from "./hotrepl-client";
 import { validateSnapshot } from "./validate-snapshot";
+import { waitForWorld } from "./wait-for-world";
 
 export interface ControllerClient {
   connect(): Promise<void>;
@@ -38,6 +39,8 @@ export interface ExportOptions {
   validate?: (snapshotDir: string) => Promise<{ itemCount: number }>;
   log?: (event: ExportEvent) => void;
   noQuit?: boolean;
+  waitForWorld?: boolean;
+  waitForWorldTimeoutMs?: number;
 }
 
 export interface ExportResult {
@@ -47,6 +50,7 @@ export interface ExportResult {
 
 const REQUIRED_COMMANDS = new Map<string, "sync" | "job">([
   ["compendium.preflight", "sync"],
+  ["compendium.continueFromMenu", "sync"],
   ["run.begin", "sync"],
   ["entity.plan", "sync"],
   ["entity.exportBatch", "job"],
@@ -67,10 +71,20 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
   if (!lease.ok) throw new Error("HotRepl lease acquisition failed");
   log({ phase: "lease", status: "completed" });
 
-  assertRequiredCommands(await options.client.describeCommands(), options.noQuit === true);
+  const shouldWaitForWorld = options.waitForWorld === true;
+  assertRequiredCommands(
+    await options.client.describeCommands(),
+    options.noQuit === true,
+    shouldWaitForWorld,
+  );
 
-  const preflight = await options.client.call("compendium.preflight", {});
-  if (preflight.result.ready !== true) throw new Error(formatPreflightFailure(preflight.result));
+  if (shouldWaitForWorld) {
+    await waitForWorld(options.client, { timeoutMs: options.waitForWorldTimeoutMs ?? 60_000 });
+    log({ phase: "waitForWorld", status: "completed" });
+  } else {
+    const preflight = await options.client.call("compendium.preflight", {});
+    if (preflight.result.ready !== true) throw new Error(formatPreflightFailure(preflight.result));
+  }
   log({ phase: "preflight", status: "completed" });
 
   const begin = await options.client.call("run.begin", { outputBaseDir });
@@ -117,10 +131,15 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
   }
 }
 
-function assertRequiredCommands(commands: ControlCommandDescriptor[], noQuit: boolean): void {
+function assertRequiredCommands(
+  commands: ControlCommandDescriptor[],
+  noQuit: boolean,
+  waitForWorld: boolean,
+): void {
   const byName = new Map(commands.map((command) => [command.name, command]));
   for (const [name, kind] of REQUIRED_COMMANDS) {
     if (noQuit && name === "game.quit") continue;
+    if (!waitForWorld && name === "compendium.continueFromMenu") continue;
     const command = byName.get(name);
     if (!command) throw new Error(`Missing required HotRepl command: ${name}`);
     if (command.version !== 1)

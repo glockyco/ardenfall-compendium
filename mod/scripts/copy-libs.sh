@@ -6,7 +6,7 @@ SRC=${1:-"$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Prog
 HOTREPL_OUT=${2:-"$HOME/Projects/HotRepl/src/HotRepl.Core/bin/Debug/netstandard2.1"}
 DEST="$(dirname "$0")/../libs"
 mkdir -p "$DEST"
-for dll in Assembly-CSharp.dll UnityEngine.dll UnityEngine.CoreModule.dll UnityEngine.IMGUIModule.dll Sirenix.OdinInspector.Attributes.dll Sirenix.Serialization.dll Sirenix.Serialization.Config.dll; do
+for dll in Assembly-CSharp.dll UnityEngine.dll UnityEngine.CoreModule.dll UnityEngine.IMGUIModule.dll UnityEngine.UIModule.dll UnityEngine.UI.dll Sirenix.OdinInspector.Attributes.dll Sirenix.Serialization.dll Sirenix.Serialization.Config.dll; do
   cp "$SRC/$dll" "$DEST/$dll"
 done
 if [ -f "$HOTREPL_OUT/HotRepl.Core.dll" ]; then
