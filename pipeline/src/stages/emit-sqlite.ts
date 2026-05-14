@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, renameSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
 import type { Stage } from "../types.ts";
 import { buildDDL } from "../sql/ddl";
@@ -26,21 +26,32 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
   run: (inputs, ctx) => {
     const outputPath = `${ctx.outDir}/data.sqlite`;
     mkdirSync(dirname(outputPath), { recursive: true });
-    const db = new Database(outputPath, { create: true, readwrite: true });
-    db.exec("PRAGMA journal_mode = DELETE;");
-    db.exec(SITE_METADATA_DDL);
-    const desc = inputs["load-descriptors"];
-    const itemEntity = desc.entities.item;
-    const itemVariants = desc.variants.item;
-    const itemEnvelope = inputs["load-snapshot"].envelopes.item;
-    if (!itemEntity || !itemVariants || !itemEnvelope) {
-      throw new Error("emit-sqlite: missing item descriptor or envelope");
+    const tempPath = `${outputPath}.tmp-${process.pid}-${Date.now()}`;
+    rmSync(tempPath, { force: true });
+    let db: Database | undefined;
+    try {
+      db = new Database(tempPath, { create: true, readwrite: true });
+      db.exec("PRAGMA journal_mode = DELETE;");
+      db.exec(SITE_METADATA_DDL);
+      const desc = inputs["load-descriptors"];
+      const itemEntity = desc.entities.item;
+      const itemVariants = desc.variants.item;
+      const itemEnvelope = inputs["load-snapshot"].envelopes.item;
+      if (!itemEntity || !itemVariants || !itemEnvelope) {
+        throw new Error("emit-sqlite: missing item descriptor or envelope");
+      }
+      db.exec(buildDDL(itemEntity, itemVariants));
+      canonicaliseItems(db, itemEntity, itemVariants, itemEnvelope);
+      emitSiteMetadata(db, desc);
+      emitItemReadModels(db, desc);
+      db.close();
+      db = undefined;
+      renameSync(tempPath, outputPath);
+      return { outputPath, byteSize: Bun.file(outputPath).size };
+    } catch (error) {
+      db?.close();
+      rmSync(tempPath, { force: true });
+      throw error;
     }
-    db.exec(buildDDL(itemEntity, itemVariants));
-    canonicaliseItems(db, itemEntity, itemVariants, itemEnvelope);
-    emitSiteMetadata(db, desc);
-    emitItemReadModels(db, desc);
-    db.close();
-    return { outputPath, byteSize: Bun.file(outputPath).size };
   },
 };

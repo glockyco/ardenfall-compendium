@@ -103,10 +103,12 @@ This set proves the variant model with one deep inheritance branch (`MeleeItemDa
 
 ### Slice 2 — Item subtype enrichment
 
-**Status:** ready
+**Status:** done
+**Completed:** 2026-05-14 on `main`; implementation commits `8dc97f6..05e1887`, with the roadmap closeout commit recording live-smoke evidence.
 **Plan:** `docs/superpowers/plans/2026-05-14-item-subtype-enrichment.md`
 **Audit:** `docs/superpowers/specs/2026-05-14-item-subtype-audit.md`; completed in `8dc97f6 chore(items): add decompilation audit tooling`, reconciled into the active plan before implementation.
 **Spec coverage:** implementation addendum §9–§11, §16; investment-priorities §1 (item depth first).
+**Verification evidence:** local gates passed on 2026-05-14 (`bun run format:check`, `bun run typecheck`, `bun test`, `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj`, `dotnet build mod/ArdenfallCompendium.csproj -c Debug`, `bun run --cwd site check`). Live smoke against Ardenfall Demo `0.0.10.91` published `snapshots/snapshots/0.0.10.91-20260514-1621097145580` with `counts.item = 1273` (> audited baseline 899), `diagnostics = { fatal: 0, diagnostic: 3041 }`, `itemSubtypeUnsupported = 0`, wrote `pipeline/dist/data.sqlite` at 4,751,360 bytes, and `game.quit` completed. Audited collapsed samples recovered to leaf variants: `BASE Arrow -> arrow`, `BASE BOW -> bow`, `Base Throwing -> throwing-item`; live data also included 193 `throwing-potion` rows.
 
 **Delivers:** broadens variant coverage to every concrete item asset type in Ardenfall Demo `0.0.10.91`: `ItemData`, `CurrencyItemData`, `ConsumableItemData`, `LockpickItemData`, `NoteItemData`, `PotionRecipeItemData`, `RepairKitItemData`, `EquipItemData`, `ArrowItemData`, `HandItemData`, `PrimaryHandItemData`, `BowItemData`, `SlateSpellItemData`, `ThrowingItemData`, `ThrowingPotionData`, `MeleeItemData`, and `ArmorItemData`. Slice 2 is audit-gated by decompiled `mod/libs/Assembly-CSharp.dll` C#/IL plus live runtime diagnostics/data; runtime reflection is not an audit source of truth. The live Slice 1.5 snapshot reported 374 unsupported subtype diagnostics: `ItemData` 254, `NoteItemData` 65, `ConsumableItemData` 46, `CurrencyItemData` 4, `LockpickItemData` 2, `PotionRecipeItemData` 2, and `RepairKitItemData` 1. The audit also identified leaf subclasses currently collapsed by ancestor checks, including arrows, bows, throwing items, and `ThrowingPotionData`.
 

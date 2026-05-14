@@ -846,7 +846,7 @@ git diff --check
 
 All exited 0. `emitItemReadModels()` now rehydrates descriptor-declared `json` and `ref:*` columns from SQLite text before serializing `fields_json`; without this, subtype JSON fields reached the detail read model as double-encoded strings. Reviewer's fixture-shape finding was fixed by modeling the consumable `iconRef` as production extraction does: missing `SnapshotRef`, matching provenance, and row diagnostic.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```sh
 git add fixtures/synthetic/snapshot/items.json pipeline/test/invariants/items.test.ts pipeline/test/read-models.test.ts pipeline/test/snapshot.test.ts pipeline/test/canonicaliser.test.ts pipeline/test/end-to-end.test.ts pipeline/src/entities/item/canonicaliser.ts pipeline/src/stages/emit-read-models.ts pipeline/src/stages/emit-site-metadata.ts
@@ -862,7 +862,7 @@ If none of the pipeline source files changed, leave them out of `git add`.
 - Modify: `docs/superpowers/roadmap.md`
 - Generated locally, not committed: `snapshots/`, `pipeline/dist/data.sqlite`
 
-- [ ] **Step 1: Run local gates**
+- [x] **Step 1: Run local gates**
 
 Run:
 
@@ -877,11 +877,13 @@ bun run --cwd site check
 
 Expected: every command exits 0.
 
-- [ ] **Step 2: Deploy and run live export**
+- [x] **Step 2: Deploy and run live export**
 
 Deploy the current mod and HotRepl to the CrossOver Ardenfall Demo bottle, launch the game, and run the controller export with wait-for-world enabled. Use the existing deploy and launch command patterns documented in the handoff/current operator notes. Do not commit generated snapshots or SQLite files.
 
-- [ ] **Step 3: Verify subtype diagnostics, recovered rows, and leaf variants**
+Observed: deployed HotRepl + ArdenfallCompendium into the CrossOver Steam bottle, launched via `cxstart --bottle Steam --no-wait steam://rungameid/1837770`, then ran the controller export with wait-for-world enabled. The first export exposed an existing pipeline rerun defect (`data.sqlite` retained old tables); `emit-sqlite` now writes to a temp SQLite file and renames it into place only after successful emission, covered by `pipeline/test/end-to-end.test.ts`. The rerun completed and published `snapshots/snapshots/0.0.10.91-20260514-1621097145580`.
+
+- [x] **Step 3: Verify subtype diagnostics, recovered rows, and leaf variants**
 
 Parse the new `diagnostics.json` and `items.json` and assert:
 
@@ -912,9 +914,18 @@ if (!items.rows.some((row) => row.variant === "throwing-potion")) {
 
 Expected: `unsupported.length === 0`, item count is greater than 899, audited collapsed samples moved to leaf variants, and at least one throwing potion row exists.
 
+Observed live verification:
+
+- `manifest.counts.item = 1273` (> audited baseline 899).
+- `manifest.diagnostics = { fatal: 0, diagnostic: 3041 }`.
+- `itemSubtypeUnsupported = 0`.
+- `BASE Arrow -> arrow`, `BASE BOW -> bow`, `Base Throwing -> throwing-item`.
+- `throwing-potion` rows: 193.
+- `pipeline/dist/data.sqlite`: 4,751,360 bytes.
+
 Do not require `lookupAssetGuidMissing` to be zero; item icons are Slice 3.
 
-- [ ] **Step 4: Update roadmap**
+- [x] **Step 4: Update roadmap**
 
 In `docs/superpowers/roadmap.md`, update Slice 2 from active execution to done. Record:
 
@@ -925,8 +936,7 @@ In `docs/superpowers/roadmap.md`, update Slice 2 from active execution to done. 
 - diagnostic totals;
 - explicit evidence that `itemSubtypeUnsupported` count is zero.
 - explicit evidence that item count is above the audited baseline of 899;
-- explicit evidence that the audited collapsed samples now use leaf variants;
-
+- explicit evidence that the audited collapsed samples now use leaf variants.
 - [ ] **Step 5: Final commit**
 
 ```sh
