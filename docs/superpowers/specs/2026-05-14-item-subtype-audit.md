@@ -280,6 +280,7 @@ Applied during plan reconciliation after user review:
 4. Required classifier coverage for `ThrowingPotionData`, even though it does not end with `ItemData`.
 5. Required behavior-derived names for potion recipes, throwing potions, and slate spell items.
 6. Recorded full-project decompilation as best-effort in tooling; targeted item decompilation remains the authoritative audit corpus.
+7. Added expert-review deltas for row-scoped adapter diagnostics, optional-ref absence semantics, guarded invalid potion recipes, numeric throwing-potion visual levels, optional empty-area effect names, and explicit live row/leaf recovery assertions.
 
 ## Implementation acceptance criteria
 
@@ -288,7 +289,8 @@ Implementation is complete only when all of these are true:
 - every concrete item asset type listed in this audit has a descriptor-backed variant or an explicit committed deferral;
 - classifier tests cover every concrete type, including `ThrowingPotionData`;
 - descriptor ancestry tests prove every variant has the right ancestor chain;
-- DTO tests cover `LeveledStatusEffect.StackMode`, `PotionRecipe.RecipeName`, `ThrowingPotionData.VisualLevel`, `ThrowingPotionData.GetItemName()`, `SlateSpellItemData.GetItemName()`, and `LeveledSpellData.GetSecondaryLevel()`;
+- DTO tests cover `LeveledStatusEffect.StackMode`, guarded invalid `PotionRecipe.RecipeName`, `ThrowingPotionData.VisualLevel` as a number, empty-area `ThrowingPotionData.GetEffectName()`, `ThrowingPotionData.GetItemName()`, `SlateSpellItemData.GetItemName()`, and `LeveledSpellData.GetSecondaryLevel()`;
+- adapter tests prove nested asset-ref diagnostics remain row-scoped instead of leaking into walker diagnostics;
 - pipeline tests prove marker variants with zero fields create canonical tables;
 - live export produces zero current-code `itemSubtypeUnsupported` diagnostics;
 - live export row count is greater than the audited baseline of 899, because currently skipped unsupported items become emitted rows;

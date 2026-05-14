@@ -117,6 +117,9 @@ Plan-critical audit decisions:
 - `itemAIBehavior` is deferred as behavior/asset data, not exposed as a string.
 - `LeveledStatusEffect.StackMode` uses structured DTO fields `{ type, addLevel, maxLevel }`.
 - Public names and recipe/effect fields use game behavior (`GetItemName()`, `RecipeName`, `VisualLevel`, `GetEffectName()`, `GetSecondaryLevel()`) rather than raw field reads where audited methods encode semantics.
+- Optional asset refs are absent/null when the source object is absent; unresolved non-null refs stay visible with row-scoped diagnostics.
+- `PotionRecipe.RecipeName` is read only after validity/has-potion guards; invalid recipes emit `recipeName = null` instead of throwing.
+- `ThrowingPotionData.VisualLevel` remains numeric, not integer-truncated; empty-area potion effect names are optional.
 
 Planned canonical tables:
 

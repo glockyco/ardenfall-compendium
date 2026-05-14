@@ -101,6 +101,7 @@ Create during implementation:
 - `mod/src/Entities/Item/Adapters/ItemAdapterHelpers.cs`
 - `mod/src/Entities/Item/ItemVariantClassifier.cs`
 - `mod-tests/ItemVariantClassifierTests.cs`
+- `mod-tests/ItemAdapterBehaviorTests.cs`
 - `pipeline/test/item-subtypes.test.ts`
 
 Modify during implementation:
@@ -111,6 +112,11 @@ Modify during implementation:
 - `mod/src/Entities/Item/Adapters/ExtractItem.cs` — emit common fields added to the root descriptor and behavior-derived `name`.
 - `pipeline/test/invariants/items.test.ts` — assert descriptor/table coverage for new variants.
 - `pipeline/test/read-models.test.ts` — assert detail JSON includes a new subtype field.
+- `pipeline/test/load-descriptors.test.ts` — update expected item variant ids/order.
+- `pipeline/test/site-metadata.test.ts` — update expected item variant metadata.
+- `pipeline/test/snapshot.test.ts` — update fixture row counts and diagnostic totals when root fields change.
+- `pipeline/test/canonicaliser.test.ts` — update fixture row/table counts when subtype rows are added.
+- `pipeline/test/end-to-end.test.ts` — update overview/detail expectations when subtype rows are added.
 - `docs/superpowers/roadmap.md` — record audit reconciliation now; mark Slice 2 done only after live smoke passes.
 
 ---
@@ -195,6 +201,7 @@ This plan now treats the audit as authoritative. Reconciled deltas:
 - `LeveledStatusEffect.StackMode` uses structured DTO fields `{ type, addLevel, maxLevel }`.
 - `ThrowingPotionData` is explicitly covered as a concrete classifier leaf despite lacking the `ItemData` suffix.
 - behavior-derived names are required for public `name`, potion recipe names, throwing potion effect/item names, slate spell item names, and secondary spell levels.
+- expert review added row-scoped adapter diagnostics, optional-ref absence semantics, guarded invalid recipe names, numeric throwing-potion visual levels, optional empty-area effect names, fixture/test refresh requirements, and explicit live row/leaf recovery assertions.
 
 - [x] **Step 7: Verify no raw decompiled output is staged**
 
@@ -213,6 +220,10 @@ Expected: `.decompiled/` appears only as ignored output; no decompiled C#/IL out
 
 - Modify: `schemas/variant.schema.json`
 - Modify: `entities/item/entity.json`
+- Modify: `fixtures/synthetic/snapshot/items.json`
+- Modify: `pipeline/test/load-descriptors.test.ts`
+- Modify: `pipeline/test/site-metadata.test.ts`
+- Modify: `pipeline/test/snapshot.test.ts`
 - Create: `entities/item/variants/basic.json`
 - Create: `entities/item/variants/currency.json`
 - Test: `pipeline/test/item-subtypes.test.ts`
@@ -224,14 +235,14 @@ Create `pipeline/test/item-subtypes.test.ts` with these tests:
 ```ts
 import { describe, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
-import { loadDescriptors } from "../src/stages/load-descriptors.ts";
-import { emitSqlite } from "../src/stages/emit-sqlite.ts";
+import { loadDescriptors } from "$pipeline/stages/load-descriptors";
+import { buildDDL } from "$pipeline/sql/ddl";
 
-const descriptorRoot = new URL("../../entities", import.meta.url).pathname;
+const ctx = { workspaceRoot: ".", snapshotDir: "", outDir: ".", log: () => undefined };
 
 describe("item subtype descriptors", () => {
   test("loads zero-field marker variants", async () => {
-    const loaded = await loadDescriptors({ descriptorRoot });
+    const loaded = await loadDescriptors.run({}, ctx);
     const variants = loaded.variants.item ?? [];
 
     expect(variants.find((variant) => variant.variantId === "basic")?.fields).toEqual([]);
@@ -239,10 +250,13 @@ describe("item subtype descriptors", () => {
   });
 
   test("creates canonical tables for marker variants", async () => {
-    const loaded = await loadDescriptors({ descriptorRoot });
+    const loaded = await loadDescriptors.run({}, ctx);
     const db = new Database(":memory:");
+    const itemEntity = loaded.entities.item;
+    const itemVariants = loaded.variants.item ?? [];
+    if (!itemEntity) throw new Error("item descriptor missing");
 
-    emitSqlite(db, loaded);
+    db.exec(buildDDL(itemEntity, itemVariants));
 
     expect(
       db.query("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'item_basic'").get(),
@@ -301,6 +315,8 @@ Then keep the existing fields and add these root fields after `description`:
 
 Do not add `category:string`; the audited source type is `Parameter<ItemCategory>`. Also add these fields to the `summary` or a new `Flags` detail section only if the generic UI remains readable; otherwise leave the detail sections unchanged and rely on `fields_json` until Slice 4.
 
+Because these fields mostly use `missingPolicy: "diagnostic"`, update every existing row in `fixtures/synthetic/snapshot/items.json` in this same task. Add `stackable`, `hideInGui`, `questItem`, `notLootableChance`, `cannotBeOwned`, `quickslotIconRef`, `categoryRef`, and `isIllegal` to both `fixture-iron-sword` and `fixture-leather-tunic`; use `null` for absent optional refs. Update the `name` provenance source in that fixture from `itemName.Get()` to `GetItemName()`. Then update `pipeline/test/snapshot.test.ts` so its exact row-count and diagnostic-count assertions still describe intentional fixture behavior, not missing newly declared fields.
+
 - [ ] **Step 4: Add marker variant descriptors**
 
 Create `entities/item/variants/basic.json`:
@@ -345,7 +361,7 @@ Expected: passes.
 - [ ] **Step 6: Commit**
 
 ```sh
-git add schemas/variant.schema.json entities/item/entity.json entities/item/variants/basic.json entities/item/variants/currency.json pipeline/test/item-subtypes.test.ts
+git add schemas/variant.schema.json entities/item/entity.json fixtures/synthetic/snapshot/items.json entities/item/variants/basic.json entities/item/variants/currency.json pipeline/test/item-subtypes.test.ts pipeline/test/load-descriptors.test.ts pipeline/test/site-metadata.test.ts pipeline/test/snapshot.test.ts
 git commit -m "feat(items): add base item subtype descriptors"
 ```
 
@@ -366,6 +382,7 @@ git commit -m "feat(items): add base item subtype descriptors"
 - Create: `mod/src/Entities/Item/Adapters/ItemAdapterHelpers.cs`
 - Modify: `mod/src/Entities/Item/Adapters/ExtractItem.cs`
 - Test: `pipeline/test/item-subtypes.test.ts`
+- Test: `mod-tests/ItemAdapterBehaviorTests.cs`
 
 - [ ] **Step 1: Extend descriptor tests for unsupported live diagnostic types**
 
@@ -373,7 +390,7 @@ Add this case to `pipeline/test/item-subtypes.test.ts`:
 
 ```ts
 test("describes every non-equipment subtype found in live diagnostics", async () => {
-  const loaded = await loadDescriptors({ descriptorRoot });
+  const loaded = await loadDescriptors.run({}, ctx);
   const variantIds = new Set((loaded.variants.item ?? []).map((variant) => variant.variantId));
 
   expect(variantIds).toEqual(
@@ -398,25 +415,85 @@ bun test pipeline/test/item-subtypes.test.ts
 
 Expected: fails because the new descriptors do not exist.
 
+- [ ] **Step 1b: Write non-equipment adapter behavior tests**
+
+Create `mod-tests/ItemAdapterBehaviorTests.cs` with tests that fail until `ItemAdapterHelpers` and the non-equipment adapters exist:
+
+```csharp
+using Ardenfall;
+using Ardenfall.Item;
+using ArdenfallCompendium.Entities.Item.Adapters;
+using UnityEngine;
+using Xunit;
+
+namespace ArdenfallCompendium.Tests;
+
+public sealed class ItemAdapterBehaviorTests
+{
+    [Fact]
+    public void LeveledStatusEffectSnapshotIncludesStructuredStackMode()
+    {
+        var stackMode = new StatusEffectData.StackMode
+        {
+            type = StatusEffectData.StackModeType.AddLevel,
+            addLevel = 1,
+            maxLevel = 5,
+        };
+        var effect = new LeveledStatusEffect(statusEffect: null, level: 2, lifetime: 30, stackMode);
+
+        var dto = ItemAdapterHelpers.SnapshotLeveledStatusEffect(effect, refs: null, rowId: "fixture");
+
+        Assert.Equal("AddLevel", dto.StackMode?.Type);
+        Assert.Equal(1, dto.StackMode?.AddLevel);
+        Assert.Equal(5, dto.StackMode?.MaxLevel);
+    }
+
+    [Fact]
+    public void PotionRecipeSnapshotDoesNotReadRecipeNameWhenInvalid()
+    {
+        var recipe = ScriptableObject.CreateInstance<PotionRecipe>();
+
+        var dto = ItemAdapterHelpers.SnapshotPotionRecipe(recipe, refs: null, rowId: "fixture");
+
+        Assert.False(dto.IsValid);
+        Assert.False(dto.HasDrinkingPotions);
+        Assert.False(dto.HasThrowingPotions);
+        Assert.Null(dto.RecipeName);
+    }
+}
+```
+
+Run:
+
+```sh
+dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter ItemAdapterBehaviorTests
+```
+
+Expected: fails because the helper DTOs and methods do not exist yet.
+
 - [ ] **Step 2: Add non-equipment variant descriptors**
 
 Create descriptors with these exact variant ids and fields:
 
-| File                 | Parent  | Fields                                                                                                                                                                                                                                                                                                      |
-| -------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lockpick.json`      | `basic` | `successChance:number` from `successChance.Get()`                                                                                                                                                                                                                                                           |
-| `consumable.json`    | `basic` | `quickslotCooldownTime:number`, `statusEffectsJson:json`                                                                                                                                                                                                                                                    |
-| `note.json`          | `basic` | `noteTextRef:ref:asset`, `noteText:string`, `noteSectionsJson:json`, `fontRef:ref:asset`, `gainStatRef:ref:asset`, `gainStatCount:integer`                                                                                                                                                                  |
-| `potion-recipe.json` | `basic` | `recipeRef:ref:asset`, `recipeName:string` from `PotionRecipe.RecipeName`, `lockedByDefault:boolean`, `enableSkillRequirement:boolean`, `skillRequirement:integer`, `levelModifier:number`, `successModifier:number`, `ingredientsJson:json`, `drinkablePotionRefsJson:json`, `throwingPotionRefsJson:json` |
-| `repair-kit.json`    | `basic` | `repairAddAmount:integer`, `repairPercentageAmount:number`, `repairSkillAddAmount:number`, `repairSkillMultAmount:number`                                                                                                                                                                                   |
+| File                 | Parent  | Fields                                                                                                                                                                                                                                                                                                                                                                            |
+| -------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lockpick.json`      | `basic` | `successChance:number` from `successChance.Get()`                                                                                                                                                                                                                                                                                                                                 |
+| `consumable.json`    | `basic` | `quickslotCooldownTime:number`, `statusEffectsJson:json`                                                                                                                                                                                                                                                                                                                          |
+| `note.json`          | `basic` | `noteTextRef:ref:asset`, `noteText:string`, `noteSectionsJson:json`, `fontRef:ref:asset`, `gainStatRef:ref:asset`, `gainStatCount:integer`                                                                                                                                                                                                                                        |
+| `potion-recipe.json` | `basic` | `recipeRef:ref:asset`, `recipeName:string` with `optional-empty`, `isValid:boolean`, `hasDrinkingPotions:boolean`, `hasThrowingPotions:boolean`, `lockedByDefault:boolean`, `enableSkillRequirement:boolean`, `skillRequirement:integer`, `levelModifier:number`, `successModifier:number`, `ingredientsJson:json`, `drinkablePotionRefsJson:json`, `throwingPotionRefsJson:json` |
+| `repair-kit.json`    | `basic` | `repairAddAmount:integer`, `repairPercentageAmount:number`, `repairSkillAddAmount:number`, `repairSkillMultAmount:number`                                                                                                                                                                                                                                                         |
 
-Use `canonicalTable` names `item_lockpicks`, `item_consumables`, `item_notes`, `item_potion_recipes`, and `item_repair_kits`. Use positions 20, 30, 40, 50, and 60. The root `name` for potion recipe items must come from `PotionRecipeItemData.GetItemName()`, not a raw item-name field read.
+Use `canonicalTable` names `item_lockpicks`, `item_consumables`, `item_notes`, `item_potion_recipes`, and `item_repair_kits`. Use positions 20, 30, 40, 50, and 60. Potion-recipe extraction must compute `isValid`, `hasDrinkingPotions`, and `hasThrowingPotions` before reading `PotionRecipe.RecipeName`; emit `recipeName = null` when the recipe is null or invalid. The root `name` for valid potion recipe items must come from `PotionRecipeItemData.GetItemName()`, not a raw item-name field read; invalid recipes must fall back to the raw/base item name instead of throwing.
 
 - [ ] **Step 3: Add adapter helper DTOs**
 
 Create `mod/src/Entities/Item/Adapters/ItemAdapterHelpers.cs` with compact DTO helpers. Include these DTO shapes and do not serialize raw Unity objects:
 
 ```csharp
+internal sealed record ItemAdapterResult(
+    Dictionary<string, object?> Fields,
+    Dictionary<string, Provenance> Provenance,
+    List<Diagnostic> Diagnostics);
 internal sealed record StackModeSnapshot(string? Type, float AddLevel, float MaxLevel);
 internal sealed record LeveledStatusEffectSnapshot(object? StatusEffectRef, float Level, float Lifetime, StackModeSnapshot? StackMode);
 internal sealed record NoteSectionSnapshot(string? TextContent, object? ImageRef, bool Separator);
@@ -436,15 +513,15 @@ internal sealed record PotionRecipeSnapshot(
     List<object?> ThrowingPotionRefs);
 ```
 
-The helper methods should accept `RefResolver refs` and the current row id so nested Unity object references go through `refs.ResolveAsset(..., MissingPolicy.OptionalEmpty, source: ...)`.
+The helper methods should accept `RefResolver refs` and the current row id so nested Unity object references go through a row-scoped resolver helper. For optional refs, return `null` when the source object is absent; when a source object exists but cannot be resolved, emit a row diagnostic and return the missing-ref sentinel so the data loss is visible.
 
 - [ ] **Step 4: Extend common root extraction**
 
-Modify `ExtractItem.Extract` to populate the new root fields. Use `asset.GetItemName()` for `name`, `ProvenanceCapture.ForParameter<T>()` for `Parameter<T>` values, and `refs.ResolveAsset()` for `quickslotIconRef` and `categoryRef`.
+Modify `ExtractItem.Extract` to populate the new root fields. Use a safe behavior-derived name helper: call `GetItemName()` for normal assets, but guard `PotionRecipeItemData` so invalid/null recipes fall back to the base/raw item name instead of throwing. Use `ProvenanceCapture.ForParameter<T>()` for `Parameter<T>` values, and the optional-ref helper for `quickslotIconRef` and `categoryRef`.
 
 - [ ] **Step 5: Add non-equipment adapters**
 
-Create one adapter per non-equipment variant. Each adapter returns `IReadOnlyDictionary<string, object?>` and only emits fields declared by its descriptor.
+Create one adapter per non-equipment variant. Each adapter returns `ItemAdapterResult` and only emits fields declared by its descriptor. Drain `refs.Diagnostics` into the result before returning so row-scoped diagnostics stay attached to the current item row.
 
 - [ ] **Step 6: Run mod build**
 
@@ -452,9 +529,10 @@ Run:
 
 ```sh
 dotnet build mod/ArdenfallCompendium.csproj -c Debug
+dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter ItemAdapterBehaviorTests
 ```
 
-Expected: exits 0.
+Expected: both exit 0.
 
 - [ ] **Step 7: Run descriptor tests**
 
@@ -469,7 +547,7 @@ Expected: passes.
 - [ ] **Step 8: Commit**
 
 ```sh
-git add entities/item/variants/lockpick.json entities/item/variants/consumable.json entities/item/variants/note.json entities/item/variants/potion-recipe.json entities/item/variants/repair-kit.json mod/src/Entities/Item/Adapters pipeline/test/item-subtypes.test.ts mod/src/Entities/Item/Adapters/ExtractItem.cs
+git add entities/item/variants/lockpick.json entities/item/variants/consumable.json entities/item/variants/note.json entities/item/variants/potion-recipe.json entities/item/variants/repair-kit.json mod/src/Entities/Item/Adapters mod-tests/ItemAdapterBehaviorTests.cs pipeline/test/item-subtypes.test.ts mod/src/Entities/Item/Adapters/ExtractItem.cs
 git commit -m "feat(items): extract non-equipment item subtypes"
 ```
 
@@ -488,6 +566,7 @@ git commit -m "feat(items): extract non-equipment item subtypes"
 - Create: `mod/src/Entities/Item/Adapters/ExtractThrowingItem.cs`
 - Create: `mod/src/Entities/Item/Adapters/ExtractThrowingPotion.cs`
 - Test: `pipeline/test/item-subtypes.test.ts`
+- Test: `mod-tests/ItemAdapterBehaviorTests.cs`
 
 - [ ] **Step 1: Extend descriptor tests for equipment leaves**
 
@@ -495,7 +574,7 @@ Add this case to `pipeline/test/item-subtypes.test.ts`:
 
 ```ts
 test("describes equipment leaf subtypes before ancestor fallbacks", async () => {
-  const loaded = await loadDescriptors({ descriptorRoot });
+  const loaded = await loadDescriptors.run({}, ctx);
   const variants = loaded.variants.item ?? [];
   const byId = new Map(variants.map((variant) => [variant.variantId, variant]));
 
@@ -523,15 +602,15 @@ Create descriptors with these exact variant ids, canonical tables, parents, and 
 | ----------------- | ----------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `arrow`           | `item_arrows`           | `equipment`     | `damage:number`, `spawnVisualOnHitStatic:boolean`, `spawnVisualOnHitCharacter:boolean`, `respawnItemPickupChance:number`, `addItemToInventoryChance:number`, `projectileSettingsJson:json`, `projectileRef:ref:asset`                                                                                                                                                                                                                                                                                                                                                |
 | `bow`             | `item_bows`             | `primary-hand`  | `itemTypeTooltip:string`, `damage:number`, `bleedMultiplier:number`, `shootStaminaMultiplier:number`, `criticalHitChance:number`, `stunChance:number`, `bleedChance:number`, `critDamageMult:number`, `knockbackStrength:number`, `stealthHitMultiplier:number`, `ammoMassMultiplier:number`, `damageFalloffDistance:number`, `damageFalloff:number`, `durabilityMax:integer`, `projectileSlot:string`, `projectileIconRef:ref:asset`, `aimAnimationSpeedMultiplier:number`, `bleedStatusEffectJson:json`                                                            |
-| `slate-spell`     | `item_slate_spells`     | `primary-hand`  | `quickslotSecondaryColor:string`, `spellDataJson:json`, `secondarySpellDataJson:json`, `spawnWhenSheathed:boolean`, `spellItemType:string`, `durabilityMax:integer`, `manaCostMultiplier:number`                                                                                                                                                                                                                                                                                                                                                                     |
+| `slate-spell`     | `item_slate_spells`     | `primary-hand`  | `quickslotSecondaryColorJson:json`, `spellDataJson:json`, `secondarySpellDataJson:json`, `spawnWhenSheathed:boolean`, `spellItemType:string`, `durabilityMax:integer`, `manaCostMultiplier:number`                                                                                                                                                                                                                                                                                                                                                                   |
 | `throwing-item`   | `item_throwing_items`   | `primary-hand`  | `itemTypeTooltip:string`, `missileRef:ref:asset`, `missileRotationJson:json`, `damage:number`, `pierceArmor:boolean`, `bleedMultiplier:number`, `damageFalloffDistance:number`, `damageFalloff:number`, `critChance:number`, `stunChance:number`, `bleedChance:number`, `critDamageMult:number`, `quickslotCooldownTime:number`, `bleedStatusEffectJson:json`, `stealthHitMultiplier:number`, `spawnVisualOnHitStatic:boolean`, `spawnVisualOnHitCharacter:boolean`, `respawnItemPickupChance:number`, `addItemToInventoryChance:number`, `missileSettingsJson:json` |
-| `throwing-potion` | `item_throwing_potions` | `throwing-item` | `quickslotSecondaryColor:string`, `areaOfEffectRange:number`, `areaOfEffectJson:json`, `visualLevel:integer`, `effectName:string`, `isDrinkingPotion:boolean`                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `throwing-potion` | `item_throwing_potions` | `throwing-item` | `quickslotSecondaryColorJson:json`, `areaOfEffectRange:number`, `areaOfEffectJson:json`, `visualLevel:number`, `effectName:string` with `optional-empty`, `isDrinkingPotion:boolean`                                                                                                                                                                                                                                                                                                                                                                                 |
 
 Use positions 70, 80, 90, 100, and 110. Keep audio/material fields and `itemAIBehavior` out of this slice; asset/audio/rendering and behavior-object presentation are later work.
 
 - [ ] **Step 3: Add equipment leaf adapters**
 
-Create one adapter per leaf type. Use `refs.ResolveAsset` for Unity object fields, `Enum.ToString()` for enum fields, and compact JSON DTOs for `ProjectileSettings`, `Vector3`, `Color`, `LeveledStatusEffect`, and spell data. Do not use Newtonsoft to serialize game objects directly. `SlateSpellItemData` names must come from `GetItemName()`, `LeveledSpellData` snapshots must include `GetSecondaryLevel()`, `ThrowingPotionData.effectName` must come from `GetEffectName()`, `ThrowingPotionData.visualLevel` must come from `VisualLevel`, and the public root `name` for throwing potions must come from `GetItemName()`.
+Extend `mod-tests/ItemAdapterBehaviorTests.cs` before implementation with failing tests for `LeveledSpellData.GetSecondaryLevel()`, `ThrowingPotionData.VisualLevel` preserving non-integer levels, `ThrowingPotionData.GetEffectName()` returning `null` for empty area effects, and color serialization to `quickslotSecondaryColorJson` as `{ r, g, b, a }`. Then create one adapter per leaf type. Use `refs.ResolveAsset` for required/notable Unity object fields, `Enum.ToString()` for enum fields, and compact JSON DTOs for `ProjectileSettings`, `Vector3`, `Color`, `LeveledStatusEffect`, and spell data. Do not use Newtonsoft to serialize game objects directly. `SlateSpellItemData` names must come from `GetItemName()`, `LeveledSpellData` snapshots must include `GetSecondaryLevel()`, `ThrowingPotionData.effectName` must come from `GetEffectName()`, `ThrowingPotionData.visualLevel` must come from `VisualLevel` without integer truncation, and the public root `name` for throwing potions must come from `GetItemName()`.
 
 - [ ] **Step 4: Run mod build and descriptor tests**
 
@@ -539,15 +618,16 @@ Run:
 
 ```sh
 dotnet build mod/ArdenfallCompendium.csproj -c Debug
+dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter ItemAdapterBehaviorTests
 bun test pipeline/test/item-subtypes.test.ts
 ```
 
-Expected: both exit 0.
+Expected: all commands exit 0.
 
 - [ ] **Step 5: Commit**
 
 ```sh
-git add entities/item/variants/arrow.json entities/item/variants/bow.json entities/item/variants/slate-spell.json entities/item/variants/throwing-item.json entities/item/variants/throwing-potion.json mod/src/Entities/Item/Adapters pipeline/test/item-subtypes.test.ts
+git add entities/item/variants/arrow.json entities/item/variants/bow.json entities/item/variants/slate-spell.json entities/item/variants/throwing-item.json entities/item/variants/throwing-potion.json mod/src/Entities/Item/Adapters mod-tests/ItemAdapterBehaviorTests.cs pipeline/test/item-subtypes.test.ts
 git commit -m "feat(items): extract equipment leaf subtypes"
 ```
 
@@ -621,25 +701,28 @@ HandItemData, EquipItemData, RepairKitItemData, PotionRecipeItemData,
 LockpickItemData, CurrencyItemData, NoteItemData, ConsumableItemData, ItemData
 ```
 
-Return a small object containing the `VariantId` and an ordered list of adapter extraction functions to merge. Ancestor layers must still be merged for inheritance: e.g. `bow` merges equipment, hand, primary-hand, then bow.
+Return a small object containing the `VariantId` and an ordered list of adapter extraction functions that each return `ItemAdapterResult`. Ancestor layers must still be merged for inheritance: e.g. `bow` merges equipment, hand, primary-hand, then bow.
 
 - [ ] **Step 3: Replace inline type ladder**
 
 Modify `ItemExtractor.Walk()` so the existing inline `if/else` variant ladder is replaced by:
 
 1. `var classified = ItemVariantClassifier.Classify(asset);`
-2. merge each layer returned by the classifier into `fields`;
-3. set `variantId = classified.VariantId`;
-4. never emit `ItemDiagnosticCodes.UnsupportedSubtype` for a concrete subclass present in the classifier.
+2. call each adapter layer returned by the classifier;
+3. merge each layer's `Fields` into the row fields;
+4. merge each layer's `Provenance` into the row provenance;
+5. append each layer's drained `Diagnostics` into the current row diagnostics;
+6. set `variantId = classified.VariantId`;
+7. never emit `ItemDiagnosticCodes.UnsupportedSubtype` for a concrete subclass present in the classifier.
 
-Keep the unsupported diagnostic branch only as a defensive fallback for future game versions.
+Keep the unsupported diagnostic branch only as a defensive fallback for future game versions. After every layer, assert or enforce that `Refs.Diagnostics` has been drained; row-level resolver diagnostics must not leak into walker diagnostics with `rowId = null`.
 
 - [ ] **Step 4: Run classifier and extraction tests**
 
 Run:
 
 ```sh
-dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter "ItemVariantClassifierTests|ItemExtractionServiceTests|EntityPlanCommandTests|EntityExportBatchCommandTests|RunFinalizeCommandTests|ItemDiagnosticCodesTests"
+dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter "ItemVariantClassifierTests|ItemAdapterBehaviorTests|ItemExtractionServiceTests|EntityPlanCommandTests|EntityExportBatchCommandTests|RunFinalizeCommandTests|ItemDiagnosticCodesTests"
 ```
 
 Expected: exits 0.
@@ -655,8 +738,12 @@ git commit -m "feat(items): classify item subtypes by concrete type"
 
 **Files:**
 
+- Modify: `fixtures/synthetic/snapshot/items.json`
 - Modify: `pipeline/test/invariants/items.test.ts`
 - Modify: `pipeline/test/read-models.test.ts`
+- Modify: `pipeline/test/snapshot.test.ts`
+- Modify: `pipeline/test/canonicaliser.test.ts`
+- Modify: `pipeline/test/end-to-end.test.ts`
 - Modify only if tests expose a real defect: `pipeline/src/entities/item/canonicaliser.ts`, `pipeline/src/stages/emit-read-models.ts`, `pipeline/src/stages/emit-site-metadata.ts`
 
 - [ ] **Step 1: Assert all descriptor variants produce tables**
@@ -665,7 +752,7 @@ Extend `pipeline/test/invariants/items.test.ts` so it loads descriptors, emits S
 
 - [ ] **Step 2: Add a subtype fixture row**
 
-Extend the synthetic fixture snapshot with one representative `consumable` row that includes `quickslotCooldownTime` and `statusEffectsJson`. Do not change the fixture's default item names in a way that breaks existing UI smoke assumptions.
+Extend the synthetic fixture snapshot with one representative `consumable` row that includes all root diagnostic fields plus `quickslotCooldownTime` and `statusEffectsJson`. Do not change the fixture's existing item names in a way that breaks UI smoke assumptions. Because this increases the synthetic item count, update `pipeline/test/snapshot.test.ts`, `pipeline/test/canonicaliser.test.ts`, and `pipeline/test/end-to-end.test.ts` exact count assertions in the same step.
 
 - [ ] **Step 3: Assert subtype fields reach detail read models**
 
@@ -676,7 +763,7 @@ Extend `pipeline/test/read-models.test.ts` to assert the `consumable` fixture's 
 Run:
 
 ```sh
-bun test pipeline/test/item-subtypes.test.ts pipeline/test/invariants/items.test.ts pipeline/test/read-models.test.ts pipeline/test/end-to-end.test.ts
+bun test pipeline/test/item-subtypes.test.ts pipeline/test/invariants/items.test.ts pipeline/test/read-models.test.ts pipeline/test/snapshot.test.ts pipeline/test/canonicaliser.test.ts pipeline/test/end-to-end.test.ts
 ```
 
 Expected: exits 0.
@@ -684,7 +771,7 @@ Expected: exits 0.
 - [ ] **Step 5: Commit**
 
 ```sh
-git add fixtures/synthetic/snapshot/items.json pipeline/test/invariants/items.test.ts pipeline/test/read-models.test.ts pipeline/src/entities/item/canonicaliser.ts pipeline/src/stages/emit-read-models.ts pipeline/src/stages/emit-site-metadata.ts
+git add fixtures/synthetic/snapshot/items.json pipeline/test/invariants/items.test.ts pipeline/test/read-models.test.ts pipeline/test/snapshot.test.ts pipeline/test/canonicaliser.test.ts pipeline/test/end-to-end.test.ts pipeline/src/entities/item/canonicaliser.ts pipeline/src/stages/emit-read-models.ts pipeline/src/stages/emit-site-metadata.ts
 git commit -m "test(items): cover subtype canonicalisation"
 ```
 
@@ -716,16 +803,36 @@ Expected: every command exits 0.
 
 Deploy the current mod and HotRepl to the CrossOver Ardenfall Demo bottle, launch the game, and run the controller export with wait-for-world enabled. Use the existing deploy and launch command patterns documented in the handoff/current operator notes. Do not commit generated snapshots or SQLite files.
 
-- [ ] **Step 3: Verify subtype diagnostics are eliminated**
+- [ ] **Step 3: Verify subtype diagnostics, recovered rows, and leaf variants**
 
-Parse the new `diagnostics.json` and assert:
+Parse the new `diagnostics.json` and `items.json` and assert:
 
 ```ts
 const unsupported = diagnostics.filter((d) => d.code === "itemSubtypeUnsupported");
 if (unsupported.length !== 0) throw new Error(JSON.stringify(unsupported.slice(0, 20), null, 2));
+
+if (manifest.counts.item <= 899) {
+  throw new Error(`expected item count above audited baseline 899, got ${manifest.counts.item}`);
+}
+
+const byName = new Map(items.rows.map((row) => [row.fields.name, row.variant]));
+const expectedLeafVariants = [
+  ["BASE Arrow", "arrow"],
+  ["BASE BOW", "bow"],
+  ["Base Throwing", "throwing-item"],
+] as const;
+for (const [name, variant] of expectedLeafVariants) {
+  if (byName.get(name) !== variant) {
+    throw new Error(`${name} expected variant ${variant}, got ${byName.get(name) ?? "<missing>"}`);
+  }
+}
+
+if (!items.rows.some((row) => row.variant === "throwing-potion")) {
+  throw new Error("expected at least one throwing-potion row");
+}
 ```
 
-Expected: `unsupported.length === 0`.
+Expected: `unsupported.length === 0`, item count is greater than 899, audited collapsed samples moved to leaf variants, and at least one throwing potion row exists.
 
 Do not require `lookupAssetGuidMissing` to be zero; item icons are Slice 3.
 
@@ -739,6 +846,8 @@ In `docs/superpowers/roadmap.md`, update Slice 2 from active execution to done. 
 - item count;
 - diagnostic totals;
 - explicit evidence that `itemSubtypeUnsupported` count is zero.
+- explicit evidence that item count is above the audited baseline of 899;
+- explicit evidence that the audited collapsed samples now use leaf variants;
 
 - [ ] **Step 5: Final commit**
 
