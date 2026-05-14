@@ -108,4 +108,26 @@ describe("item canonical invariants", () => {
       { numRuns: 30 },
     );
   });
+
+  it("creates a canonical table for every item variant descriptor", async () => {
+    const desc = await loadDescriptors.run({}, ctx);
+    const itemEntity = desc.entities.item;
+    const itemVariants = desc.variants.item;
+    if (!itemEntity || !itemVariants) throw new Error("fixture missing item descriptor");
+
+    const db = new Database(":memory:");
+    db.exec(buildDDL(itemEntity, itemVariants));
+
+    for (const variant of itemVariants) {
+      const table = db
+        .query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
+        .get(variant.canonicalTable);
+      expect(table).toBeTruthy();
+
+      const columns = db.query(`PRAGMA table_info("${variant.canonicalTable}")`).all() as {
+        name: string;
+      }[];
+      expect(columns.some((column) => column.name === "id")).toBe(true);
+    }
+  });
 });

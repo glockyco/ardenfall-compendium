@@ -17,6 +17,8 @@ CREATE TABLE item_detail_rows (
 );
 `;
 
+type DescriptorField = { name: string; type: string };
+
 export function emitItemReadModels(db: Database, desc: LoadDescriptorsOutput): void {
   db.exec(ITEM_READ_MODEL_DDL);
   db.run(
@@ -28,6 +30,7 @@ export function emitItemReadModels(db: Database, desc: LoadDescriptorsOutput): v
   // ancestor variant tables. We do this with a per-row loop so SQLite stays
   // schema-agnostic and the test owns the contract.
   const variants = desc.variants.item ?? [];
+  const rootFields = desc.entities.item?.fields ?? [];
   const items = db.query("SELECT id, name, variant FROM items").all() as {
     id: string;
     name: string;
@@ -37,16 +40,35 @@ export function emitItemReadModels(db: Database, desc: LoadDescriptorsOutput): v
     `INSERT INTO item_detail_rows (id, name, variant, fields_json) VALUES (?, ?, ?, ?)`,
   );
 
-  function ancestry(variantId: string): string[] {
-    const chain: string[] = [];
+  function ancestry(variantId: string) {
+    const chain = [];
     let cur = variants.find((v) => v.variantId === variantId);
     while (cur) {
-      chain.unshift(cur.canonicalTable);
+      chain.unshift(cur);
       cur = cur.parentVariantId
         ? variants.find((v) => v.variantId === cur!.parentVariantId)
         : undefined;
     }
     return chain;
+  }
+
+  function assignFields(
+    target: Record<string, unknown>,
+    row: Record<string, unknown>,
+    descriptors: DescriptorField[],
+  ): void {
+    for (const [key, value] of Object.entries(row)) {
+      const descriptor = descriptors.find((field) => field.name === key);
+      if (
+        typeof value === "string" &&
+        descriptor &&
+        (descriptor.type === "json" || descriptor.type.startsWith("ref:"))
+      ) {
+        target[key] = JSON.parse(value);
+      } else {
+        target[key] = value;
+      }
+    }
   }
 
   const tx = db.transaction(() => {
@@ -56,12 +78,12 @@ export function emitItemReadModels(db: Database, desc: LoadDescriptorsOutput): v
         string,
         unknown
       >;
-      Object.assign(fields, root);
-      for (const tableName of ancestry(item.variant)) {
-        const layer = db.query(`SELECT * FROM "${tableName}" WHERE id = ?`).get(item.id) as
-          | Record<string, unknown>
-          | undefined;
-        if (layer) Object.assign(fields, layer);
+      assignFields(fields, root, rootFields);
+      for (const variant of ancestry(item.variant)) {
+        const layer = db
+          .query(`SELECT * FROM "${variant.canonicalTable}" WHERE id = ?`)
+          .get(item.id) as Record<string, unknown> | undefined;
+        if (layer) assignFields(fields, layer, variant.fields);
       }
       insertDetail.run(item.id, item.name, item.variant, JSON.stringify(fields));
     }

@@ -37,11 +37,11 @@ describe("end-to-end pipeline", () => {
         ).c;
         expect(entityCount).toBeGreaterThan(0);
 
-        // Read models are populated for the synthetic two-item fixture.
+        // Read models are populated for the synthetic three-item fixture.
         const overviewCount = (
           db.query("SELECT COUNT(*) c FROM item_overview_rows").get() as { c: number }
         ).c;
-        expect(overviewCount).toBe(2);
+        expect(overviewCount).toBe(3);
 
         // Variant ancestry is consistent for the melee row.
         const orphans = db

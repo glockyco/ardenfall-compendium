@@ -14,7 +14,7 @@
       { "name": "masterRecordTable", "ok": true }
     ]
   },
-  "counts": { "item": 2 },
+  "counts": { "item": 3 },
   "diagnostics": { "fatal": 0, "diagnostic": 0 },
   "hashes": { "items.json": "0000000000000000000000000000000000000000000000000000000000000000" }
 }

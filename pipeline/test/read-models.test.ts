@@ -31,7 +31,7 @@ describe("emitItemReadModels", () => {
     const overview = db
       .query("SELECT id, name, variant FROM item_overview_rows ORDER BY name")
       .all() as { id: string; name: string; variant: string }[];
-    expect(overview.map((r) => r.name)).toEqual(["Iron Sword", "Leather Tunic"]);
+    expect(overview.map((r) => r.name)).toEqual(["Iron Sword", "Leather Tunic", "Stamina Draught"]);
 
     const detail = db
       .query("SELECT id, fields_json FROM item_detail_rows WHERE id = 'fixture-iron-sword'")
@@ -39,5 +39,23 @@ describe("emitItemReadModels", () => {
     const fields = JSON.parse(detail.fields_json) as Record<string, unknown>;
     expect(fields.damage).toBe(7.5);
     expect(fields.weight).toBe(3.5);
+    const consumableDetail = db
+      .query("SELECT id, fields_json FROM item_detail_rows WHERE id = 'fixture-stamina-draught'")
+      .get() as { id: string; fields_json: string };
+    const consumableFields = JSON.parse(consumableDetail.fields_json) as Record<string, unknown>;
+    expect(consumableFields.quickslotCooldownTime).toBe(12.5);
+    expect(consumableFields.iconRef).toEqual({
+      kind: "missing",
+      reason: "lookupAssetGuidMissing",
+      source: "ItemData.icon",
+    });
+    expect(consumableFields.statusEffectsJson).toEqual([
+      {
+        statusEffectRef: null,
+        level: 1,
+        lifetime: 30,
+        stackMode: { type: "Refresh", addLevel: 0, maxLevel: 0 },
+      },
+    ]);
   });
 });

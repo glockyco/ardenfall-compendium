@@ -100,6 +100,74 @@
           "message": "icon ref missing from BuiltLookupTable"
         }
       ]
+    },
+    {
+      "id": "fixture-stamina-draught",
+      "variant": "consumable",
+      "fields": {
+        "id": "fixture-stamina-draught",
+        "name": "Stamina Draught",
+        "weight": 0.25,
+        "value": 9,
+        "iconRef": {
+          "kind": "missing",
+          "reason": "lookupAssetGuidMissing",
+          "source": "ItemData.icon"
+        },
+        "description": "A small draught used to test consumable subtype fields.",
+        "stackable": true,
+        "hideInGui": false,
+        "questItem": false,
+        "notLootableChance": 0,
+        "cannotBeOwned": false,
+        "quickslotIconRef": null,
+        "categoryRef": null,
+        "isIllegal": false,
+        "quickslotCooldownTime": 12.5,
+        "statusEffectsJson": [
+          {
+            "statusEffectRef": null,
+            "level": 1,
+            "lifetime": 30,
+            "stackMode": { "type": "Refresh", "addLevel": 0, "maxLevel": 0 }
+          }
+        ]
+      },
+      "tags": ["consumable", "stamina"],
+      "provenance": {
+        "name": {
+          "kind": "parameter",
+          "source": "GetItemName()",
+          "isSet": true,
+          "inherited": false
+        },
+        "iconRef": {
+          "kind": "missing",
+          "source": "ItemData.icon",
+          "isSet": false,
+          "inherited": false
+        },
+        "quickslotCooldownTime": {
+          "kind": "parameter",
+          "source": "quickslotCooldownTime.Get()",
+          "isSet": true,
+          "inherited": false
+        },
+        "statusEffectsJson": {
+          "kind": "parameter",
+          "source": "statusEffects.Get()",
+          "isSet": true,
+          "inherited": false
+        }
+      },
+      "diagnostics": [
+        {
+          "severity": "diagnostic",
+          "code": "lookupAssetGuidMissing",
+          "field": "iconRef",
+          "message": "icon ref missing from BuiltLookupTable"
+        }
+      ]
     }
   ]
 }

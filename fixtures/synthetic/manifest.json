@@ -7,6 +7,7 @@
     "snapshot envelope shape",
     "manifest preflight + counts",
     "ItemData base + MeleeItemData branch + ArmorItemData branch coverage",
+    "Consumable subtype canonicalisation and read-model field coverage",
     "lookupAsset and missing iconRef",
     "Parameter<T> resolved/inherited shape",
     "SmartListParameter<ItemTag> populated and empty cases"
@@ -14,14 +15,14 @@
   "selection": [
     {
       "entity": "item",
-      "ids": ["fixture-iron-sword", "fixture-leather-tunic"],
-      "rationale": "one melee branch + one armor branch"
+      "ids": ["fixture-iron-sword", "fixture-leather-tunic", "fixture-stamina-draught"],
+      "rationale": "one melee branch + one armor branch + one consumable subtype branch"
     }
   ],
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "f099b9faddb1b4924ad6d23d9b8a1939597d7a51141e1c7fd381fcf4e74d7346",
-    "snapshot/items.json": "0eb7c0aec124f1a5949a8f12cbd8b75b50e7183c67abb16afc5b0468c38b8166"
+    "snapshot/manifest.json": "c7d99bf25e035f212d4035150c38ca478c11a93837b75dc0147d60cdfa037ad5",
+    "snapshot/items.json": "213f624cdf23254a01720c7882a0b911fbcfada73578064b2fb8a78d63868289"
   }
 }

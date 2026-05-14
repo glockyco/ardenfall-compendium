@@ -20,7 +20,7 @@ describe("loadSnapshot", () => {
     expect(out.manifest.preflight.passed).toBe(true);
     const items = out.envelopes["item"];
     if (!items) throw new Error("item envelope not loaded");
-    expect(items.rows.length).toBe(2);
+    expect(items.rows.length).toBe(3);
   });
 
   it("loads sibling diagnostics artifact and validation counts its entries", async () => {
@@ -52,7 +52,7 @@ describe("loadSnapshot", () => {
 
       const desc = await loadDescriptors.run({}, ctx);
       const result = await validate.run({ "load-snapshot": snap, "load-descriptors": desc }, ctx);
-      expect(result.countsBySeverity.diagnostic).toBe(2);
+      expect(result.countsBySeverity.diagnostic).toBe(3);
       expect(result.errors).toContainEqual({
         entity: "snapshot",
         code: "walkerDiagnostic",

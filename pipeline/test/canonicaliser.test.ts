@@ -31,7 +31,7 @@ describe("canonicaliseItems", () => {
       name: string;
       variant: string;
     }[];
-    expect(items.length).toBe(2);
+    expect(items.length).toBe(3);
     expect(items.find((r) => r.id === "fixture-iron-sword")?.variant).toBe("melee-weapon");
 
     const equipRows = db.query("SELECT id, equipSlot FROM item_equipment").all() as {
@@ -48,10 +48,20 @@ describe("canonicaliseItems", () => {
     const armorRows = db.query("SELECT id FROM item_armor").all() as { id: string }[];
     expect(armorRows.find((r) => r.id === "fixture-leather-tunic")).toBeDefined();
 
+    const consumableRows = db
+      .query("SELECT id, quickslotCooldownTime FROM item_consumables")
+      .all() as {
+      id: string;
+      quickslotCooldownTime: number;
+    }[];
+    expect(
+      consumableRows.find((r) => r.id === "fixture-stamina-draught")?.quickslotCooldownTime,
+    ).toBe(12.5);
+
     const tagRows = db.query("SELECT item_id, tag FROM item_tags ORDER BY item_id, tag").all() as {
       item_id: string;
       tag: string;
     }[];
-    expect(tagRows.length).toBe(4); // 2 + 2
+    expect(tagRows.length).toBe(6); // 2 + 2 + 2
   });
 });

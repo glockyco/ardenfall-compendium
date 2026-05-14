@@ -802,27 +802,29 @@ git commit -m "feat(items): classify item subtypes by concrete type"
 
 **Files:**
 
+- Modify: `fixtures/synthetic/manifest.json`
 - Modify: `fixtures/synthetic/snapshot/items.json`
+- Modify: `fixtures/synthetic/snapshot/manifest.json`
 - Modify: `pipeline/test/invariants/items.test.ts`
 - Modify: `pipeline/test/read-models.test.ts`
 - Modify: `pipeline/test/snapshot.test.ts`
 - Modify: `pipeline/test/canonicaliser.test.ts`
 - Modify: `pipeline/test/end-to-end.test.ts`
-- Modify only if tests expose a real defect: `pipeline/src/entities/item/canonicaliser.ts`, `pipeline/src/stages/emit-read-models.ts`, `pipeline/src/stages/emit-site-metadata.ts`
+- Modify: `pipeline/src/stages/emit-read-models.ts`
 
-- [ ] **Step 1: Assert all descriptor variants produce tables**
+- [x] **Step 1: Assert all descriptor variants produce tables**
 
 Extend `pipeline/test/invariants/items.test.ts` so it loads descriptors, emits SQLite, and asserts every `item` variant canonical table exists with at least an `id` column. This protects marker variants and future zero-field variants.
 
-- [ ] **Step 2: Add a subtype fixture row**
+- [x] **Step 2: Add a subtype fixture row**
 
 Extend the synthetic fixture snapshot with one representative `consumable` row that includes all root diagnostic fields plus `quickslotCooldownTime` and `statusEffectsJson`. Do not change the fixture's existing item names in a way that breaks UI smoke assumptions. Because this increases the synthetic item count, update `pipeline/test/snapshot.test.ts`, `pipeline/test/canonicaliser.test.ts`, and `pipeline/test/end-to-end.test.ts` exact count assertions in the same step.
 
-- [ ] **Step 3: Assert subtype fields reach detail read models**
+- [x] **Step 3: Assert subtype fields reach detail read models**
 
-Extend `pipeline/test/read-models.test.ts` to assert the `consumable` fixture's `fields_json` contains `quickslotCooldownTime` and `statusEffectsJson` after `emitItemReadModels()`.
+Extend `pipeline/test/read-models.test.ts` to assert the `consumable` fixture's `fields_json` contains `quickslotCooldownTime`, `statusEffectsJson`, and a rehydrated missing `iconRef` after `emitItemReadModels()`.
 
-- [ ] **Step 4: Run pipeline tests**
+- [x] **Step 4: Run pipeline tests**
 
 Run:
 
@@ -831,6 +833,18 @@ bun test pipeline/test/item-subtypes.test.ts pipeline/test/invariants/items.test
 ```
 
 Expected: exits 0.
+
+Observed Task 6 gate:
+
+```sh
+bun test pipeline/test/item-subtypes.test.ts pipeline/test/invariants/items.test.ts pipeline/test/read-models.test.ts pipeline/test/snapshot.test.ts pipeline/test/canonicaliser.test.ts pipeline/test/end-to-end.test.ts
+bun run typecheck
+bun run format:check
+bun run check:fixtures
+git diff --check
+```
+
+All exited 0. `emitItemReadModels()` now rehydrates descriptor-declared `json` and `ref:*` columns from SQLite text before serializing `fields_json`; without this, subtype JSON fields reached the detail read model as double-encoded strings. Reviewer's fixture-shape finding was fixed by modeling the consumable `iconRef` as production extraction does: missing `SnapshotRef`, matching provenance, and row diagnostic.
 
 - [ ] **Step 5: Commit**
 
