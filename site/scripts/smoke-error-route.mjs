@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 const sourcePath = join(import.meta.dirname, "..", "src", "routes", "+error.svelte");
 const source = readFileSync(sourcePath, "utf8");
-const requiredSnippets = ["Error {page.status}", "That item doesn't exist", "Back to home", "window.location.reload"];
+const requiredSnippets = ["Error {status}", "That item doesn't exist", "Back to home", "window.location.reload"];
 
 for (const snippet of requiredSnippets) {
   if (!source.includes(snippet)) {

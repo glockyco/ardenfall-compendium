@@ -16,3 +16,9 @@ SvelteKit static; data is shipped as `static/data.sqlite` and queried in-browser
 - `src/lib/entities/<id>/` — per-entity custom renderers.
 - `src/lib/store/` — SQLite glue and accessors.
 - `src/routes/` — pages.
+
+## Deployment
+
+- Deploy with `bun run --cwd site cf-deploy` after `bun run --cwd site build`.
+- Wrangler auth is operator-local: run `wrangler login` (or otherwise provide a valid Wrangler auth context) before deploying.
+- CI verifies the deployable build; it does not deploy and does not assume Cloudflare API token/account secrets.

@@ -13,7 +13,7 @@ export interface ResolvedSection {
 
 export const load = async ({ params }: { params: { id: string } }) => {
   const detail = await getItemDetail(params.id);
-  if (!detail) error(404, `No item with id ${params.id}`);
+  if (!detail) throw error(404, "Item not found");
 
   const allFields = JSON.parse(detail.fields_json) as Record<string, unknown>;
   const sectionsMeta = await listDetailSections("item");

@@ -700,6 +700,7 @@ Rationale:
 - Modify: `site/svelte.config.js` (switch from `adapter-static` to `adapter-cloudflare`)
 - Create: `site/wrangler.toml`
 - Modify: `site/AGENTS.md` (document deploy and login assumptions)
+- Modify: `site/src/routes/items/[id]/+page.ts` and `site/src/routes/+error.svelte` (deployment verification found the unknown-item SPA path surfaced status 500 unless the error route derives item-not-found display state from the thrown error message)
 
 - [ ] **Step 1: Add Cloudflare deploy dependencies.** In `site/package.json`, add current stable `@sveltejs/adapter-cloudflare` and `wrangler` dev dependencies. Add:
 
@@ -733,7 +734,10 @@ Rationale:
 - [ ] **Step 4: Keep CI as verification, not deployment.** `.github/workflows/ci.yml` keeps building the site (including the synthetic SQLite copy step) but does **not** deploy. Deployment is local/operator-driven for Slice 1.5:
 
   ```sh
+  rm -f site/static/data.sqlite
   bun run pipeline:run fixtures/synthetic/snapshot site/static
+  bun run --cwd site smoke:error-route
+  bun run --cwd site check
   bun run --cwd site build
   bun run --cwd site cf-deploy
   ```
@@ -747,7 +751,7 @@ Rationale:
   - The operator must be logged in with Wrangler (`wrangler login`) or otherwise have a valid Wrangler auth context.
   - CI verifies the deployable build but does not deploy.
 
-- [ ] **Step 7: Verify.** From a Wrangler-authenticated shell, run the deploy commands in Step 4. Verify `https://ardenfall.compendiums.org/items` resolves and renders the synthetic-fixture-derived data. Verify an unknown URL reaches the SPA shell and renders `+error.svelte` after Phase D lands.
+- [ ] **Step 7: Verify.** From a Wrangler-authenticated shell, run the deploy commands in Step 4. Verify `https://ardenfall.compendiums.org/items` resolves and renders the synthetic-fixture-derived data. Verify a known detail route renders. Verify an unknown item URL reaches the SPA shell and renders `+error.svelte` with visible `ERROR 404`.
 
 - [ ] **Step 8: Commit (per logical chunk).**
 
@@ -757,6 +761,8 @@ Rationale:
   ```
 
 **Phase G gate:** `https://ardenfall.compendiums.org/items` returns the rendered overview page with the deployed SQLite blob's contents. `https://ardenfall.compendiums.org/items/<known-id>` returns the detail page. Unknown URLs hit the SPA shell and render `+error.svelte` with status 404.
+
+Deployment note: deployed `ardenfall-compendium-site` to Cloudflare version `d8bb5080-eaf8-4e69-9c1c-d223fb1ecdd7` on 2026-05-14. Browser verification observed `/items` rendering both synthetic items, `/items/fixture-iron-sword` rendering the detail page, and `/items/does-not-exist` rendering `+error.svelte` with visible `ERROR 404`.
 
 ## Self-review
 
