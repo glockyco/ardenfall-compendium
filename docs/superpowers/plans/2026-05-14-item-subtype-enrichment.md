@@ -161,7 +161,7 @@ Run:
 
 ```sh
 mkdir -p "$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd"
-dotnet tool update --tool-path "$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd" ilspycmd --version 10.1.0.8361
+dotnet tool update --tool-path "$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd" ilspycmd --version 10.0.1.8346
 ```
 
 Expected: exits 0 and makes `$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd/ilspycmd` available.

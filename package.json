@@ -21,7 +21,8 @@
     "pipeline:run": "bun run pipeline/src/cli.ts run",
     "controller:deploy": "bun run controller/src/deploy.ts",
     "controller:export": "bun run controller/src/cli.ts export",
-    "controller:test": "bun test controller/test"
+    "controller:test": "bun test controller/test",
+    "decompile:game": "bun run scripts/decompile-ardenfall.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
