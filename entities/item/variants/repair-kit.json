@@ -1,0 +1,35 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "repair-kit",
+  "label": "Repair kit",
+  "unityType": "Ardenfall.Item.RepairKitItemData",
+  "canonicalTable": "item_repair_kits",
+  "parentVariantId": "basic",
+  "position": 60,
+  "fields": [
+    {
+      "name": "repairAddAmount",
+      "type": "integer",
+      "from": "repairAddAmount.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "repairPercentageAmount",
+      "type": "number",
+      "from": "repairPercentageAmount.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "repairSkillAddAmount",
+      "type": "number",
+      "from": "repairSkillAddAmount.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "repairSkillMultAmount",
+      "type": "number",
+      "from": "repairSkillMultAmount.Get()",
+      "missingPolicy": "diagnostic"
+    }
+  ]
+}

@@ -17,16 +17,21 @@ describe("loadDescriptors", () => {
     if (!item) throw new Error("item entity not loaded");
     if (!itemVariants) throw new Error("item variants not loaded");
     expect(item.id).toBe("item");
-    expect(itemVariants.length).toBe(7);
+    expect(itemVariants.length).toBe(12);
     const ids = itemVariants.map((v) => v.variantId).sort();
     expect(ids).toEqual([
       "armor",
       "basic",
+      "consumable",
       "currency",
       "equipment",
       "hand-item",
+      "lockpick",
       "melee-weapon",
+      "note",
+      "potion-recipe",
       "primary-hand",
+      "repair-kit",
     ]);
   });
 

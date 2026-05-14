@@ -15,7 +15,12 @@ public static class ItemVariantClassifier
             HandItemData => "hand-item",
             ArmorItemData => "armor",
             EquipItemData => "equipment",
+            RepairKitItemData => "repair-kit",
+            PotionRecipeItemData => "potion-recipe",
+            LockpickItemData => "lockpick",
             CurrencyItemData => "currency",
+            NoteItemData => "note",
+            ConsumableItemData => "consumable",
             _ when asset.GetType() == typeof(ItemData) => "basic",
             _ => "unsupported",
         };

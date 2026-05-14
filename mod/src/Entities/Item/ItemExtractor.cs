@@ -80,9 +80,34 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
                 Merge(fields, ExtractEquipment.Extract(equip));
                 variantId = "equipment";
             }
+            else if (asset is RepairKitItemData repairKit)
+            {
+                Merge(fields, provenance, diagnostics, ExtractRepairKit.Extract(repairKit, Refs));
+                variantId = "repair-kit";
+            }
+            else if (asset is PotionRecipeItemData potionRecipe)
+            {
+                Merge(fields, provenance, diagnostics, ExtractPotionRecipe.Extract(potionRecipe, Refs, guid));
+                variantId = "potion-recipe";
+            }
+            else if (asset is LockpickItemData lockpick)
+            {
+                Merge(fields, provenance, diagnostics, ExtractLockpick.Extract(lockpick, Refs));
+                variantId = "lockpick";
+            }
             else if (asset is CurrencyItemData)
             {
                 variantId = "currency";
+            }
+            else if (asset is NoteItemData note)
+            {
+                Merge(fields, provenance, diagnostics, ExtractNote.Extract(note, Refs, guid));
+                variantId = "note";
+            }
+            else if (asset is ConsumableItemData consumable)
+            {
+                Merge(fields, provenance, diagnostics, ExtractConsumable.Extract(consumable, Refs, guid));
+                variantId = "consumable";
             }
             else if (asset.GetType() == typeof(ItemData))
             {
@@ -118,5 +143,16 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
     private static void Merge(Dictionary<string, object?> dst, IReadOnlyDictionary<string, object?> src)
     {
         foreach (var entry in src) dst[entry.Key] = entry.Value;
+    }
+
+    private static void Merge(
+        Dictionary<string, object?> fields,
+        Dictionary<string, Provenance> provenance,
+        List<Diagnostic> diagnostics,
+        ItemAdapterResult result)
+    {
+        Merge(fields, result.Fields);
+        foreach (var entry in result.Provenance) provenance[entry.Key] = entry.Value;
+        diagnostics.AddRange(result.Diagnostics);
     }
 }

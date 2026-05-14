@@ -405,6 +405,11 @@ git commit -m "feat(items): add base item subtype descriptors"
 - Modify: `mod/src/Entities/Item/Adapters/ExtractItem.cs`
 - Test: `pipeline/test/item-subtypes.test.ts`
 - Test: `mod-tests/ItemAdapterBehaviorTests.cs`
+- Modify: `mod/src/Entities/Item/ItemExtractor.cs`
+- Modify: `mod/src/Entities/Item/ItemVariantClassifier.cs`
+- Test: `mod-tests/ItemVariantClassifierTests.cs`
+- Modify: `pipeline/test/load-descriptors.test.ts`
+- Modify: `pipeline/test/site-metadata.test.ts`
 
 - [ ] **Step 1: Extend descriptor tests for unsupported live diagnostic types**
 
@@ -413,7 +418,7 @@ Add this case to `pipeline/test/item-subtypes.test.ts`:
 ```ts
 test("describes every non-equipment subtype found in live diagnostics", async () => {
   const loaded = await loadDescriptors.run({}, ctx);
-  const variantIds = new Set((loaded.variants.item ?? []).map((variant) => variant.variantId));
+  const variantIds = (loaded.variants.item ?? []).map((variant) => variant.variantId);
 
   expect(variantIds).toEqual(
     expect.arrayContaining([
@@ -539,11 +544,13 @@ The helper methods should accept `RefResolver refs` and the current row id so ne
 
 - [ ] **Step 4: Extend common root extraction**
 
-Modify `ExtractItem.Extract` to populate the new root fields. Use a safe behavior-derived name helper: call `GetItemName()` for normal assets, but guard `PotionRecipeItemData` so invalid/null recipes fall back to the base/raw item name instead of throwing. Use `ProvenanceCapture.ForParameter<T>()` for `Parameter<T>` values, and the optional-ref helper for `quickslotIconRef` and `categoryRef`.
+Modify `ExtractItem.Extract` to populate the new root fields. Use a safe behavior-derived name helper: call `GetItemName()` for normal assets, but guard `PotionRecipeItemData`, `SlateSpellItemData`, and `ThrowingPotionData` so invalid/null nested payloads fall back to the base/raw item name instead of throwing. Use `ProvenanceCapture.ForParameter<T>()` for `Parameter<T>` values, and the optional-ref helper for `quickslotIconRef` and `categoryRef`.
 
 - [ ] **Step 5: Add non-equipment adapters**
 
 Create one adapter per non-equipment variant. Each adapter returns `ItemAdapterResult` and only emits fields declared by its descriptor. Drain `refs.Diagnostics` into the result before returning so row-scoped diagnostics stay attached to the current item row.
+
+Extend `mod/src/Entities/Item/ItemVariantClassifier.cs` and `mod-tests/ItemVariantClassifierTests.cs` for the non-equipment concrete types in this task so descriptors do not get ahead of exporter classification.
 
 - [ ] **Step 6: Run mod build**
 
@@ -569,7 +576,7 @@ Expected: passes.
 - [ ] **Step 8: Commit**
 
 ```sh
-git add entities/item/variants/lockpick.json entities/item/variants/consumable.json entities/item/variants/note.json entities/item/variants/potion-recipe.json entities/item/variants/repair-kit.json mod/src/Entities/Item/Adapters mod-tests/ItemAdapterBehaviorTests.cs pipeline/test/item-subtypes.test.ts mod/src/Entities/Item/Adapters/ExtractItem.cs
+git add entities/item/variants/lockpick.json entities/item/variants/consumable.json entities/item/variants/note.json entities/item/variants/potion-recipe.json entities/item/variants/repair-kit.json mod/src/Entities/Item/Adapters mod/src/Entities/Item/ItemExtractor.cs mod/src/Entities/Item/ItemVariantClassifier.cs mod-tests/ItemAdapterBehaviorTests.cs mod-tests/ItemVariantClassifierTests.cs pipeline/test/item-subtypes.test.ts pipeline/test/load-descriptors.test.ts pipeline/test/site-metadata.test.ts pipeline/dist/validate-variant.mjs
 git commit -m "feat(items): extract non-equipment item subtypes"
 ```
 

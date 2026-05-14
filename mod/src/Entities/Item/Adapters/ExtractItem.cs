@@ -19,10 +19,10 @@ public static class ExtractItem
 
         fields["id"] = id;
 
-        var nameResolved = GetItemNameSafe(asset);
+        var (nameResolved, nameSource) = GetItemNameSafe(asset);
         var nameIsSet = asset.itemName.IsSet;
         fields["name"] = nameResolved;
-        provenance["name"] = ProvenanceCapture.ForParameter<string>("GetItemName()", nameIsSet, inherited: !nameIsSet);
+        provenance["name"] = ProvenanceCapture.ForParameter<string>(nameSource, nameIsSet, inherited: !nameIsSet);
 
         var weightResolved = asset.weight.Get();
         var weightIsSet = asset.weight.IsSet;
@@ -113,21 +113,42 @@ public static class ExtractItem
         return (fields, provenance, diagnostics, tags);
     }
 
-    private static string GetItemNameSafe(ItemData asset)
+    private static (string Name, string Source) GetItemNameSafe(ItemData asset)
     {
         if (asset is PotionRecipeItemData potionRecipe)
         {
             var recipe = potionRecipe.recipe.Get();
-            if (recipe == null || !HasPotionNameSource(recipe))
+            if (ReferenceEquals(recipe, null) || !HasPotionNameSource(recipe))
             {
-                return potionRecipe.itemName.Get() ?? "";
+                return (potionRecipe.itemName.Get() ?? "", "itemName.Get()");
             }
         }
 
-        return asset.GetItemName();
+        if (asset is SlateSpellItemData slateSpell)
+        {
+            var spell = slateSpell.spellData.Get();
+            if (ReferenceEquals(spell, null) || ReferenceEquals(spell.spellData, null))
+            {
+                return (slateSpell.itemName.Get() ?? "", "itemName.Get()");
+            }
+        }
+
+        if (asset is ThrowingPotionData throwingPotion)
+        {
+            var effects = throwingPotion.areaOfEffect.Get();
+            if (effects == null ||
+                effects.Length == 0 ||
+                effects[0] == null ||
+                ReferenceEquals(effects[0].StatusEffect, null))
+            {
+                return (throwingPotion.itemName.Get() ?? "", "itemName.Get()");
+            }
+        }
+
+        return (asset.GetItemName(), "GetItemName()");
     }
 
     private static bool HasPotionNameSource(PotionRecipe recipe) =>
-        (recipe.drinkablePotions != null && recipe.drinkablePotions.Count > 0 && recipe.drinkablePotions[0] != null) ||
-        (recipe.throwingPotions != null && recipe.throwingPotions.Count > 0 && recipe.throwingPotions[0] != null);
+        (recipe.drinkablePotions != null && recipe.drinkablePotions.Count > 0 && !ReferenceEquals(recipe.drinkablePotions[0], null)) ||
+        (recipe.throwingPotions != null && recipe.throwingPotions.Count > 0 && !ReferenceEquals(recipe.throwingPotions[0], null));
 }

@@ -32,4 +32,21 @@ describe("item subtype descriptors", () => {
         .get(),
     ).toBeTruthy();
   });
+
+  test("describes every non-equipment subtype found in live diagnostics", async () => {
+    const loaded = await loadDescriptors.run({}, ctx);
+    const variantIds = (loaded.variants.item ?? []).map((variant) => variant.variantId);
+
+    expect(variantIds).toEqual(
+      expect.arrayContaining([
+        "basic",
+        "currency",
+        "lockpick",
+        "consumable",
+        "note",
+        "potion-recipe",
+        "repair-kit",
+      ]),
+    );
+  });
 });

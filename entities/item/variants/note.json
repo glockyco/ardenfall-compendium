@@ -1,0 +1,47 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "note",
+  "label": "Note",
+  "unityType": "Ardenfall.Item.NoteItemData",
+  "canonicalTable": "item_notes",
+  "parentVariantId": "basic",
+  "position": 40,
+  "fields": [
+    {
+      "name": "noteTextRef",
+      "type": "ref:asset",
+      "from": "noteTextContents.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "noteText",
+      "type": "string",
+      "from": "noteTextContents.Get().text",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "noteSectionsJson",
+      "type": "json",
+      "from": "noteContents.Get().sections",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "fontRef",
+      "type": "ref:asset",
+      "from": "fontAsset.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "gainStatRef",
+      "type": "ref:asset",
+      "from": "gainStat.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "gainStatCount",
+      "type": "integer",
+      "from": "gainStatCount.Get()",
+      "missingPolicy": "optional-empty"
+    }
+  ]
+}

@@ -14,6 +14,11 @@ public sealed class ItemVariantClassifierTests
     [InlineData(typeof(HandItemData), "hand-item")]
     [InlineData(typeof(ArmorItemData), "armor")]
     [InlineData(typeof(EquipItemData), "equipment")]
+    [InlineData(typeof(RepairKitItemData), "repair-kit")]
+    [InlineData(typeof(PotionRecipeItemData), "potion-recipe")]
+    [InlineData(typeof(LockpickItemData), "lockpick")]
+    [InlineData(typeof(NoteItemData), "note")]
+    [InlineData(typeof(ConsumableItemData), "consumable")]
     [InlineData(typeof(CurrencyItemData), "currency")]
     [InlineData(typeof(ItemData), "basic")]
     public void ClassifiesCurrentlyDescriptorBackedItemTypes(Type itemType, string expectedVariant)

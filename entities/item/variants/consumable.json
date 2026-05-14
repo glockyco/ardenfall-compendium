@@ -1,0 +1,23 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "consumable",
+  "label": "Consumable",
+  "unityType": "Ardenfall.Item.ConsumableItemData",
+  "canonicalTable": "item_consumables",
+  "parentVariantId": "basic",
+  "position": 30,
+  "fields": [
+    {
+      "name": "quickslotCooldownTime",
+      "type": "number",
+      "from": "quickslotCooldownTime.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "statusEffectsJson",
+      "type": "json",
+      "from": "statusEffects.Get()",
+      "missingPolicy": "optional-empty"
+    }
+  ]
+}

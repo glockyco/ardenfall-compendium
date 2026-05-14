@@ -41,9 +41,14 @@ describe("emitSiteMetadata", () => {
       "currency",
       "equipment",
       "hand-item",
+      "lockpick",
+      "consumable",
       "primary-hand",
       "melee-weapon",
+      "note",
       "armor",
+      "potion-recipe",
+      "repair-kit",
     ]);
   });
 });

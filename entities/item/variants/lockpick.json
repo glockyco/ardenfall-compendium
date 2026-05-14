@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "lockpick",
+  "label": "Lockpick",
+  "unityType": "Ardenfall.Item.LockpickItemData",
+  "canonicalTable": "item_lockpicks",
+  "parentVariantId": "basic",
+  "position": 20,
+  "fields": [
+    {
+      "name": "successChance",
+      "type": "number",
+      "from": "successChance.Get()",
+      "missingPolicy": "diagnostic"
+    }
+  ]
+}
