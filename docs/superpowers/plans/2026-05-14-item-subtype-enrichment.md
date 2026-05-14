@@ -28,15 +28,20 @@ Unsupported diagnostics in the live snapshot:
 | `PotionRecipeItemData` |     2 |
 | `RepairKitItemData`    |     1 |
 
-Assembly reflection also shows item subclasses currently collapsed into ancestor variants because the extractor checks `PrimaryHandItemData` and `EquipItemData` before leaf types:
+The implementation plan below contains draft subtype and field hypotheses. They are not authoritative until Task 1 completes a decompilation-first audit of the actual game implementation and reconciles it with live runtime data. Success for the implementation slice means a fresh live smoke has zero `itemSubtypeUnsupported` diagnostics and recovers both currently skipped unsupported items and currently collapsed leaf subtypes.
 
-- `ArrowItemData : EquipItemData`
-- `BowItemData : PrimaryHandItemData`
-- `SlateSpellItemData : PrimaryHandItemData`
-- `ThrowingItemData : PrimaryHandItemData`
-- `ThrowingPotionData : ThrowingItemData`
+## Audit-first gate
 
-This slice handles both groups. Success means a fresh live smoke has zero `itemSubtypeUnsupported` diagnostics.
+Task 1 is mandatory before any subtype implementation. It must inspect both sources of truth:
+
+1. **Actual game implementation:** decompiled `mod/libs/Assembly-CSharp.dll` C#/IL. Runtime reflection is forbidden as the source of truth for the audit.
+2. **Runtime data:** the latest live `diagnostics.json` and `items.json`, regenerated with current runtime code when possible so diagnostic codes and counts reflect `ItemDiagnosticCodes.UnsupportedSubtype`.
+
+The audit must produce `docs/superpowers/specs/2026-05-14-item-subtype-audit.md` and then reconcile this plan before Task 2. If the audit contradicts any field set, table, type order, or DTO shape below, update this plan in the same commit as the audit before writing extraction code. Do not implement guessed fields just because they appear in this draft.
+
+Raw decompiled sources and IL are not our code and must not be committed, pasted into docs as method/class bodies, or wired into the public repo through a submodule/subtree. The default storage model is an operator-local cache outside the repo root. A private raw-source repo is allowed only as a last-resort collaboration cache for trusted contributors; it must not be referenced from this public repo or CI. Committed audit notes may contain hashes, commands, identifiers, transformed behavior summaries, field inventories, DTO decisions, and runtime-backed conclusions.
+
+Tasks 2–7 are provisional implementation scaffolding. They must be regenerated or corrected from the committed audit matrix before coding if the audit changes any detail.
 
 ## Scope boundaries
 
@@ -58,6 +63,9 @@ Excluded:
 ## File structure
 
 Create:
+
+- `docs/superpowers/specs/2026-05-14-item-subtype-audit.md`
+- `scripts/decompile-ardenfall.mjs`
 
 - `entities/item/variants/basic.json`
 - `entities/item/variants/currency.json`
@@ -88,6 +96,9 @@ Create:
 
 Modify:
 
+- `.gitignore` — defense-in-depth ignores for accidental repo-local decompile output.
+- `package.json` — add a Bun script for reproducible local decompilation.
+
 - `schemas/variant.schema.json` — allow marker variants with zero variant-specific fields.
 - `entities/item/entity.json` — add common `ItemData` fields and detail metadata.
 - `mod/src/Entities/Item/ItemExtractor.cs` — delegate variant selection and layer extraction to `ItemVariantClassifier`.
@@ -98,7 +109,159 @@ Modify:
 
 ---
 
-### Task 1: Descriptor foundation and zero-field marker variants
+### Task 1: Decompilation setup and item subtype audit
+
+**Files:**
+
+- Create: `scripts/decompile-ardenfall.mjs`
+- Create: `docs/superpowers/specs/2026-05-14-item-subtype-audit.md`
+- Modify: `.gitignore`
+- Modify: `package.json`
+- Modify: `docs/superpowers/plans/2026-05-14-item-subtype-enrichment.md`
+- Modify: `docs/superpowers/roadmap.md`
+
+- [ ] **Step 1: Add repo safety guards**
+
+Add these ignores to `.gitignore` even though the default output path is outside the repo:
+
+```gitignore
+# Decompiled third-party game sources are local-only analysis inputs.
+/decompiled/
+/decompile-output/
+/local-decompiled/
+```
+
+Do not add a `.gitmodules` entry or any submodule/subtree for decompiled sources.
+
+- [ ] **Step 2: Add reproducible decompile script**
+
+Create `scripts/decompile-ardenfall.mjs`. The script must:
+
+- accept `--assembly`, `--game-version`, and optional `--out-root`;
+- default `--assembly` to `mod/libs/Assembly-CSharp.dll`;
+- default `--out-root` to `$HOME/.local/share/ardenfall-compendium/decompiled`;
+- compute the assembly SHA-256 using `Bun.CryptoHasher`;
+- write output under `<out-root>/<gameVersion>-<sha12>/`;
+- refuse to write inside the git worktree unless `--allow-repo-output` is passed;
+- run `ilspycmd --disable-updatecheck --nested-directories -p -r mod/libs -o <out>/csharp <assembly>`;
+- run `ilspycmd --disable-updatecheck -l c <assembly>` and write stdout to `<out>/meta/classes.txt`;
+- run targeted `ilspycmd --disable-updatecheck -t <type> <assembly>` for every item and nested payload type named in Step 5;
+- run targeted `ilspycmd --disable-updatecheck --ilcode -t <type> <assembly>` for behavior-sensitive types;
+- run `ikdasm <assembly> -out=<out>/il/Assembly-CSharp.il` only when `--full-il` is passed, because full IL dumps are large and local-only;
+- write `<out>/meta/manifest.json` containing assembly path, game version, SHA-256, tool commands, tool exit codes, and timestamp.
+
+Add this root script to `package.json`:
+
+```json
+"decompile:game": "bun run scripts/decompile-ardenfall.mjs"
+```
+
+- [ ] **Step 3: Install decompiler tooling locally**
+
+Run:
+
+```sh
+mkdir -p "$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd"
+dotnet tool update --tool-path "$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd" ilspycmd --version 10.1.0.8361
+```
+
+Expected: exits 0 and makes `$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd/ilspycmd` available.
+
+- [ ] **Step 4: Generate local decompiled sources**
+
+Run:
+
+```sh
+PATH="$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd:$PATH" \
+  bun run decompile:game -- \
+  --assembly mod/libs/Assembly-CSharp.dll \
+  --game-version 0.0.10.91
+```
+
+Expected: exits 0, writes under `$HOME/.local/share/ardenfall-compendium/decompiled/`, and does not create repo-local C#/IL output.
+
+- [ ] **Step 5: Audit game implementation from decompiled sources**
+
+Inspect the decompiled output, not reflection. The audit must cover:
+
+- concrete item inheritance for `ItemData`, `EquipItemData`, `HandItemData`, `PrimaryHandItemData`, `MeleeItemData`, `ArmorItemData`, `ArrowItemData`, `BowItemData`, `SlateSpellItemData`, `ThrowingItemData`, `ThrowingPotionData`, `ConsumableItemData`, `CurrencyItemData`, `LockpickItemData`, `NoteItemData`, `PotionRecipeItemData`, and `RepairKitItemData`;
+- root `ItemData` declared fields and whether each is included, represented as `ref:asset`, represented as compact JSON, or deferred;
+- subtype declared fields and inherited ancestry;
+- behavior-sensitive methods/getters: `ThrowingPotionData.VisualLevel`, `ThrowingPotionData.GetEffectName()`, `ThrowingPotionData.GetItemName()`, `PotionRecipe.RecipeName`, `PotionRecipeItemData.GetItemName()`, and `LeveledSpellData.GetSecondaryLevel()`;
+- nested payloads: `LeveledStatusEffect`, `StatusEffectData.StackMode`, `ProjectileSettings`, `NoteItem.NoteContents`, `NoteItem.NoteSection`, `PotionRecipe`, `RecipeItem`, `LeveledSpellData`, and `SpellData.SubSpellData`.
+
+- [ ] **Step 6: Audit runtime evidence**
+
+Use the latest live snapshot artifacts. If a fresh export with current code is available, prefer it. Otherwise use `snapshots/snapshots/0.0.10.91-20260514-0632448862090/` and explicitly record that it predates the diagnostic-code rename.
+
+Record:
+
+- unsupported subtype counts, mapping legacy `itemSubtypeUnsupportedInSlice1` to current `itemSubtypeUnsupported` only in the written analysis;
+- current emitted row count and variant counts;
+- representative skipped item ids from unsupported diagnostics;
+- known collapsed samples in `items.json` such as `BASE Arrow`, `BASE BOW`, `Base Throwing`, and `Throwing Potion of {lvl} {name}`;
+- expected post-implementation acceptance: item count increases above the audited baseline, collapsed samples move to leaf variants, and `itemSubtypeUnsupported` count is zero.
+
+- [ ] **Step 7: Write the committed audit artifact**
+
+Create `docs/superpowers/specs/2026-05-14-item-subtype-audit.md` with these sections:
+
+```markdown
+# Item Subtype Audit
+
+## Sources and hashes
+
+## Decompiler setup
+
+## Concrete subtype inventory
+
+## Runtime evidence
+
+## Root ItemData field decisions
+
+## Per-variant field matrix
+
+## Nested DTO contracts
+
+## Behavior-derived extraction rules
+
+## Deferrals
+
+## Plan deltas applied
+
+## Implementation acceptance criteria
+```
+
+The audit must summarize behavior and field decisions in authored prose/tables. Do not paste decompiled method bodies, full class bodies, full IL dumps, or large string tables.
+
+- [ ] **Step 8: Reconcile the active plan before implementation**
+
+Update this plan and `docs/superpowers/roadmap.md` in the same commit as the audit if the audit changes any variant id, canonical table, field name/type, DTO contract, classifier order, or slice boundary. Known draft assumptions that must be checked and corrected if needed:
+
+- `category` is likely an asset reference, not a string field.
+- `itemAIBehavior` is likely an asset reference or deferral, not a string field.
+- `LeveledStatusEffect.StackMode` likely needs a structured DTO decision.
+- Behavior-derived values from `ThrowingPotionData`, `PotionRecipe`, and `LeveledSpellData` must not be reduced to raw field reads when methods encode semantics.
+
+- [ ] **Step 9: Verify no raw decompiled output is staged**
+
+Run:
+
+```sh
+git status --short --ignored
+git diff --cached --name-only
+```
+
+Expected: staged files are limited to authored repo files such as `.gitignore`, `package.json`, the decompile script, the audit doc, this plan, and roadmap updates. No decompiled C#/IL output, DLLs, snapshots, SQLite databases, `.gitmodules`, or generated local caches are staged.
+
+- [ ] **Step 10: Commit audit setup and plan reconciliation**
+
+```sh
+git add .gitignore package.json scripts/decompile-ardenfall.mjs docs/superpowers/specs/2026-05-14-item-subtype-audit.md docs/superpowers/plans/2026-05-14-item-subtype-enrichment.md docs/superpowers/roadmap.md
+git commit -m "docs(items): audit item subtype implementation"
+```
+
+### Task 2: Descriptor foundation and zero-field marker variants
 
 **Files:**
 
@@ -234,7 +397,7 @@ git add schemas/variant.schema.json entities/item/entity.json entities/item/vari
 git commit -m "feat(items): add base item subtype descriptors"
 ```
 
-### Task 2: Non-equipment subtype descriptors and adapters
+### Task 3: Non-equipment subtype descriptors and adapters
 
 **Files:**
 
@@ -357,7 +520,7 @@ git add entities/item/variants/lockpick.json entities/item/variants/consumable.j
 git commit -m "feat(items): extract non-equipment item subtypes"
 ```
 
-### Task 3: Equipment leaf subtype descriptors and adapters
+### Task 4: Equipment leaf subtype descriptors and adapters
 
 **Files:**
 
@@ -435,7 +598,7 @@ git add entities/item/variants/arrow.json entities/item/variants/bow.json entiti
 git commit -m "feat(items): extract equipment leaf subtypes"
 ```
 
-### Task 4: Most-derived item classification
+### Task 5: Most-derived item classification
 
 **Files:**
 
@@ -534,7 +697,7 @@ git add mod/src/Entities/Item/ItemVariantClassifier.cs mod/src/Entities/Item/Ite
 git commit -m "feat(items): classify item subtypes by concrete type"
 ```
 
-### Task 5: Pipeline canonicalisation and read-model coverage
+### Task 6: Pipeline canonicalisation and read-model coverage
 
 **Files:**
 
@@ -573,7 +736,7 @@ git commit -m "test(items): cover subtype canonicalisation"
 
 If none of the pipeline source files changed, leave them out of `git add`.
 
-### Task 6: Live smoke and roadmap closeout
+### Task 7: Live smoke and roadmap closeout
 
 **Files:**
 

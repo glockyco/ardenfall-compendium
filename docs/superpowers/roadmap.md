@@ -107,7 +107,7 @@ This set proves the variant model with one deep inheritance branch (`MeleeItemDa
 **Plan:** `docs/superpowers/plans/2026-05-14-item-subtype-enrichment.md`
 **Spec coverage:** implementation addendum §9–§11, §16; investment-priorities §1 (item depth first).
 
-**Delivers:** broadens variant coverage to every concrete `ItemData` subclass in the current Ardenfall assembly, using live diagnostics plus reflection to avoid both skipped rows and ancestor-only collapse. The live Slice 1.5 snapshot reported 374 unsupported subtype diagnostics: `ItemData` 254, `NoteItemData` 65, `ConsumableItemData` 46, `CurrencyItemData` 4, `LockpickItemData` 2, `PotionRecipeItemData` 2, and `RepairKitItemData` 1. Assembly reflection also identified leaf subclasses currently hidden behind ancestor checks: `ArrowItemData`, `BowItemData`, `SlateSpellItemData`, `ThrowingItemData`, and `ThrowingPotionData`.
+**Delivers:** broadens variant coverage to every concrete `ItemData` subclass in the current Ardenfall assembly. Slice 2 starts with a decompilation-first audit of `mod/libs/Assembly-CSharp.dll` plus live runtime diagnostics/data; runtime reflection is not an audit source of truth. The live Slice 1.5 snapshot reported 374 unsupported subtype diagnostics: `ItemData` 254, `NoteItemData` 65, `ConsumableItemData` 46, `CurrencyItemData` 4, `LockpickItemData` 2, `PotionRecipeItemData` 2, and `RepairKitItemData` 1. The audit must also identify leaf subclasses that current ancestor checks may collapse before implementation proceeds.
 
 Planned canonical tables:
 
