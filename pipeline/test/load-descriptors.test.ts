@@ -17,9 +17,17 @@ describe("loadDescriptors", () => {
     if (!item) throw new Error("item entity not loaded");
     if (!itemVariants) throw new Error("item variants not loaded");
     expect(item.id).toBe("item");
-    expect(itemVariants.length).toBe(5);
+    expect(itemVariants.length).toBe(7);
     const ids = itemVariants.map((v) => v.variantId).sort();
-    expect(ids).toEqual(["armor", "equipment", "hand-item", "melee-weapon", "primary-hand"]);
+    expect(ids).toEqual([
+      "armor",
+      "basic",
+      "currency",
+      "equipment",
+      "hand-item",
+      "melee-weapon",
+      "primary-hand",
+    ]);
   });
 
   it("rejects an invalid descriptor with a JSON Pointer in the error", async () => {

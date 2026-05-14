@@ -221,9 +221,14 @@ Expected: `.decompiled/` appears only as ignored output; no decompiled C#/IL out
 - Modify: `schemas/variant.schema.json`
 - Modify: `entities/item/entity.json`
 - Modify: `fixtures/synthetic/snapshot/items.json`
+- Modify: `fixtures/synthetic/manifest.json`
 - Modify: `pipeline/test/load-descriptors.test.ts`
 - Modify: `pipeline/test/site-metadata.test.ts`
 - Modify: `pipeline/test/snapshot.test.ts`
+- Modify: `mod/src/Entities/Item/Adapters/ExtractItem.cs`
+- Modify: `mod/src/Entities/Item/ItemExtractor.cs`
+- Create: `mod/src/Entities/Item/ItemVariantClassifier.cs`
+- Test: `mod-tests/ItemVariantClassifierTests.cs`
 - Create: `entities/item/variants/basic.json`
 - Create: `entities/item/variants/currency.json`
 - Test: `pipeline/test/item-subtypes.test.ts`
@@ -315,7 +320,7 @@ Then keep the existing fields and add these root fields after `description`:
 
 Do not add `category:string`; the audited source type is `Parameter<ItemCategory>`. Also add these fields to the `summary` or a new `Flags` detail section only if the generic UI remains readable; otherwise leave the detail sections unchanged and rely on `fields_json` until Slice 4.
 
-Because these fields mostly use `missingPolicy: "diagnostic"`, update every existing row in `fixtures/synthetic/snapshot/items.json` in this same task. Add `stackable`, `hideInGui`, `questItem`, `notLootableChance`, `cannotBeOwned`, `quickslotIconRef`, `categoryRef`, and `isIllegal` to both `fixture-iron-sword` and `fixture-leather-tunic`; use `null` for absent optional refs. Update the `name` provenance source in that fixture from `itemName.Get()` to `GetItemName()`. Then update `pipeline/test/snapshot.test.ts` so its exact row-count and diagnostic-count assertions still describe intentional fixture behavior, not missing newly declared fields.
+Because these fields mostly use `missingPolicy: "diagnostic"`, update every existing row in `fixtures/synthetic/snapshot/items.json` in this same task. Add `stackable`, `hideInGui`, `questItem`, `notLootableChance`, `cannotBeOwned`, `quickslotIconRef`, `categoryRef`, and `isIllegal` to both `fixture-iron-sword` and `fixture-leather-tunic`; use `null` for absent optional refs. Update the `name` provenance source in that fixture from `itemName.Get()` to `GetItemName()`. Update `fixtures/synthetic/manifest.json` with the new `snapshot/items.json` hash. Then update `pipeline/test/snapshot.test.ts` so its exact row-count and diagnostic-count assertions still describe intentional fixture behavior, not missing newly declared fields.
 
 - [ ] **Step 4: Add marker variant descriptors**
 
@@ -348,6 +353,23 @@ Create `entities/item/variants/currency.json`:
 }
 ```
 
+- [ ] **Step 4b: Keep descriptors and current exporter support in sync**
+
+Because `basic`/`currency` descriptors and new root fields are visible to validation immediately, implement the matching runtime extraction in this task rather than leaving descriptors ahead of the exporter:
+
+- create `mod/src/Entities/Item/ItemVariantClassifier.cs` with coverage for currently descriptor-backed variants: `MeleeItemData`, `PrimaryHandItemData`, `HandItemData`, `ArmorItemData`, `EquipItemData`, `CurrencyItemData`, and exact `ItemData`;
+- add `mod-tests/ItemVariantClassifierTests.cs` using `RuntimeHelpers.GetUninitializedObject(...)` rather than `ScriptableObject.CreateInstance(...)`, because Unity `ScriptableObject` creation is not available in plain `dotnet test`;
+- update `ExtractItem.Extract` to emit `GetItemName()` plus every new root field declared above; guard `PotionRecipeItemData` names here because root extraction runs before unsupported subtype branching;
+- update `ItemExtractor.Walk()` so `CurrencyItemData` emits `currency` and exact `ItemData` emits `basic` instead of `itemSubtypeUnsupported`.
+
+Run:
+
+```sh
+dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter ItemVariantClassifierTests
+```
+
+Expected: exits 0.
+
 - [ ] **Step 5: Run descriptor tests**
 
 Run:
@@ -361,7 +383,7 @@ Expected: passes.
 - [ ] **Step 6: Commit**
 
 ```sh
-git add schemas/variant.schema.json entities/item/entity.json fixtures/synthetic/snapshot/items.json entities/item/variants/basic.json entities/item/variants/currency.json pipeline/test/item-subtypes.test.ts pipeline/test/load-descriptors.test.ts pipeline/test/site-metadata.test.ts pipeline/test/snapshot.test.ts
+git add schemas/variant.schema.json entities/item/entity.json fixtures/synthetic/snapshot/items.json fixtures/synthetic/manifest.json entities/item/variants/basic.json entities/item/variants/currency.json pipeline/dist/validate-variant.mjs pipeline/test/item-subtypes.test.ts pipeline/test/load-descriptors.test.ts pipeline/test/site-metadata.test.ts pipeline/test/snapshot.test.ts mod/src/Entities/Item/Adapters/ExtractItem.cs mod/src/Entities/Item/ItemExtractor.cs mod/src/Entities/Item/ItemVariantClassifier.cs mod-tests/ItemVariantClassifierTests.cs
 git commit -m "feat(items): add base item subtype descriptors"
 ```
 
@@ -635,18 +657,19 @@ git commit -m "feat(items): extract equipment leaf subtypes"
 
 **Files:**
 
-- Create: `mod/src/Entities/Item/ItemVariantClassifier.cs`
+- Modify: `mod/src/Entities/Item/ItemVariantClassifier.cs`
 - Modify: `mod/src/Entities/Item/ItemExtractor.cs`
 - Test: `mod-tests/ItemVariantClassifierTests.cs`
 
-- [ ] **Step 1: Write classifier tests**
+- [ ] **Step 1: Extend classifier tests**
 
-Create `mod-tests/ItemVariantClassifierTests.cs`:
+Extend the existing `mod-tests/ItemVariantClassifierTests.cs` created in Task 2:
 
 ```csharp
+using System;
+using System.Runtime.CompilerServices;
 using Ardenfall.Item;
 using ArdenfallCompendium.Entities.Item;
-using UnityEngine;
 using Xunit;
 
 namespace ArdenfallCompendium.Tests;
@@ -673,7 +696,7 @@ public sealed class ItemVariantClassifierTests
     [InlineData(typeof(ItemData), "basic")]
     public void ClassifiesConcreteItemTypesBeforeAncestors(Type itemType, string expectedVariant)
     {
-        var item = (ItemData)ScriptableObject.CreateInstance(itemType);
+        var item = (ItemData)RuntimeHelpers.GetUninitializedObject(itemType);
 
         var classified = ItemVariantClassifier.Classify(item);
 
@@ -688,11 +711,11 @@ Run:
 dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter ItemVariantClassifierTests
 ```
 
-Expected: fails because `ItemVariantClassifier` does not exist.
+Expected: fails for the subtype cases not implemented yet.
 
-- [ ] **Step 2: Implement classifier**
+- [ ] **Step 2: Extend classifier**
 
-Create `mod/src/Entities/Item/ItemVariantClassifier.cs`. The classifier must check concrete leaf types before ancestors in this order:
+Modify `mod/src/Entities/Item/ItemVariantClassifier.cs`. The classifier must check concrete leaf types before ancestors in this order:
 
 ```csharp
 ThrowingPotionData, ThrowingItemData, SlateSpellItemData, BowItemData,

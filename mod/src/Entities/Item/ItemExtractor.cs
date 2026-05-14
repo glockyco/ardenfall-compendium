@@ -80,6 +80,14 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
                 Merge(fields, ExtractEquipment.Extract(equip));
                 variantId = "equipment";
             }
+            else if (asset is CurrencyItemData)
+            {
+                variantId = "currency";
+            }
+            else if (asset.GetType() == typeof(ItemData))
+            {
+                variantId = "basic";
+            }
             else
             {
                 Diagnostics.Add(new Diagnostic

@@ -37,6 +37,8 @@ describe("emitSiteMetadata", () => {
       .query("SELECT variant_id, parent_variant_id FROM item_variants ORDER BY position")
       .all() as { variant_id: string; parent_variant_id: string | null }[];
     expect(variants.map((v) => v.variant_id)).toEqual([
+      "basic",
+      "currency",
       "equipment",
       "hand-item",
       "primary-hand",

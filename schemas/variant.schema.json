@@ -20,7 +20,7 @@
     "position": { "type": "integer", "minimum": 0 },
     "fields": {
       "type": "array",
-      "minItems": 1,
+      "minItems": 0,
       "items": {
         "$ref": "https://ardenfall-compendium.example/schemas/entity.schema.json#/$defs/field"
       }

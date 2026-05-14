@@ -1,0 +1,9 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "basic",
+  "label": "Basic Item",
+  "unityType": "Ardenfall.Item.ItemData",
+  "canonicalTable": "item_basic",
+  "position": 1,
+  "fields": []
+}

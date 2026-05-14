@@ -1,0 +1,10 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "currency",
+  "label": "Currency",
+  "unityType": "Ardenfall.Item.CurrencyItemData",
+  "canonicalTable": "item_currency",
+  "parentVariantId": "basic",
+  "position": 2,
+  "fields": []
+}

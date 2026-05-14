@@ -13,7 +13,7 @@
 
   "fields": [
     { "name": "id", "type": "id", "from": "guid", "missingPolicy": "fatal" },
-    { "name": "name", "type": "string", "from": "itemName.Get()", "missingPolicy": "diagnostic" },
+    { "name": "name", "type": "string", "from": "GetItemName()", "missingPolicy": "diagnostic" },
     {
       "name": "weight",
       "type": "number",
@@ -32,9 +32,56 @@
       "type": "string",
       "from": "description.Get()",
       "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "stackable",
+      "type": "boolean",
+      "from": "stackable.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "hideInGui",
+      "type": "boolean",
+      "from": "hideInGUI.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "questItem",
+      "type": "boolean",
+      "from": "questItem.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "notLootableChance",
+      "type": "number",
+      "from": "notLootableChance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "cannotBeOwned",
+      "type": "boolean",
+      "from": "cannotBeOwned.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "quickslotIconRef",
+      "type": "ref:asset",
+      "from": "quickslotIcon.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "categoryRef",
+      "type": "ref:asset",
+      "from": "category.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "isIllegal",
+      "type": "boolean",
+      "from": "isIllegal.Get()",
+      "missingPolicy": "diagnostic"
     }
   ],
-
   "variants": { "dir": "variants" },
 
   "site": {

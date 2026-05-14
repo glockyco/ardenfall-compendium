@@ -17,18 +17,26 @@
         },
         "description": "A simple iron blade.",
         "equipSlot": "Weapon",
-        "animationSpeedMultiplier": 1.0,
+        "animationSpeedMultiplier": 1,
         "twoHanded": false,
         "damage": 7.5,
         "criticalHitChance": 0.05,
         "meleeDurabilityMax": 100,
-        "canBlock": true
+        "canBlock": true,
+        "stackable": false,
+        "hideInGui": false,
+        "questItem": false,
+        "notLootableChance": 0,
+        "cannotBeOwned": false,
+        "quickslotIconRef": null,
+        "categoryRef": null,
+        "isIllegal": false
       },
       "tags": ["weapon", "metal"],
       "provenance": {
         "name": {
           "kind": "parameter",
-          "source": "itemName.Get()",
+          "source": "GetItemName()",
           "isSet": true,
           "inherited": false,
           "parent": null
@@ -54,7 +62,7 @@
       "fields": {
         "id": "fixture-leather-tunic",
         "name": "Leather Tunic",
-        "weight": 4.0,
+        "weight": 4,
         "value": 12,
         "iconRef": {
           "kind": "missing",
@@ -65,7 +73,15 @@
         "equipSlot": "ChestArmor",
         "armorRating": 6,
         "armorDurabilityMax": 80,
-        "coverageSlot": "ChestArmor"
+        "coverageSlot": "ChestArmor",
+        "stackable": false,
+        "hideInGui": false,
+        "questItem": false,
+        "notLootableChance": 0,
+        "cannotBeOwned": false,
+        "quickslotIconRef": null,
+        "categoryRef": null,
+        "isIllegal": false
       },
       "tags": ["armor", "leather"],
       "provenance": {
