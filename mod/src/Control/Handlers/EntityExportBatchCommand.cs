@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
+using ArdenfallCompendium.Extraction;
 using HotRepl.Control;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -13,10 +14,13 @@ namespace ArdenfallCompendium.Control.Handlers;
 public sealed class EntityExportBatchCommand : IControlCommandHandler
 {
     private readonly CompendiumRunManager _runs;
+    private readonly ItemExtractionService _items;
 
-    public EntityExportBatchCommand(CompendiumRunManager runs)
+
+    public EntityExportBatchCommand(CompendiumRunManager runs, ItemExtractionService items)
     {
         _runs = runs;
+        _items = items;
     }
 
     public ControlCommandDescriptor Descriptor { get; } = new(
@@ -34,7 +38,7 @@ public sealed class EntityExportBatchCommand : IControlCommandHandler
             return new ValueTask<ControlCommandResult>(validation);
 
         cancellationToken.ThrowIfCancellationRequested();
-        var rows = new ItemExtractor().Walk().ToList();
+        var rows = _items.GetOrExtract(run);
         var slice = rows.Skip(offset).Take(limit).ToList();
         var envelope = new ItemSnapshotEnvelope { Rows = slice };
         var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "item", "chunks");
