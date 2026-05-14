@@ -804,19 +804,19 @@ Deployment note: deployed `ardenfall-compendium-site` to Cloudflare version `d8b
 
 ### Placeholder scan
 
-No placeholder markers appear in implementation steps. The genuine deferrals are explicit: real-fixture curation (Slice 2 trigger), and the `compendium.continueFromMenu` typed command (a fallback in Phase F if runtime-eval proves flaky in practice).
+No placeholder markers appear in implementation steps. The genuine deferrals are explicit: real-fixture curation (Slice 2 trigger) and deployment automation beyond local Wrangler.
 
 ### Type / signature consistency
 
 - `IItemAssetSource` is consistent across the production source (`BuiltLookupTableItemAssetSource`), the test fake (`CountingItemAssetSource`), and the consumer (`ItemExtractor`).
 - `DiagnosticTotals` shape (`{ fatal, diagnostic }`) matches across `mod/src/Dtos/Manifest.cs`, the new aggregation in `RunFinalizeCommand`, and `pipeline/src/stages/validate.ts`.
 - `CompendiumRun.Counts["item"]` semantics: kept as "items written so far" while a run is open; replaced with the cached row count on finalize.
+- Active unsupported-item diagnostic naming is slice-neutral: `ItemDiagnosticCodes.UnsupportedSubtype = "itemSubtypeUnsupported"`. The old slice-specific diagnostic code is removed from runtime code before Slice 2 starts.
 
 ### Known risks remaining
 
-1. **Runtime-eval brittleness for `wait-for-world`.** If Mono runtime-eval through HotRepl is fragile against the menu's UnityEngine.UI hierarchy (renames, dynamic instantiation), the helper falls back to a typed `compendium.continueFromMenu` command on the mod side. This decision is made in Task F.1 Step 1 once the eval target is identified.
-2. **Cloudflare Workers/Static Assets free tier limits.** Slice 1.5 has local/operator deploys only; CI deploys and PR preview deploys are unplanned. Monitor Worker and build limits only if a future operations plan adds those deployment modes.
-3. **Synthetic-fixture-derived deploy.** Until a real snapshot is archived externally and copied into CI, the deployed site only knows the 2 synthetic items. This is acceptable for Slice 1.5 (deployment exists; content thinness is real but not a deployment defect) and is fixed in Slice 13 (versioning + snapshot archive).
+1. **Cloudflare Workers/Static Assets free tier limits.** Slice 1.5 has local/operator deploys only; CI deploys and PR preview deploys are unplanned. Monitor Worker and build limits only if a future operations plan adds those deployment modes.
+2. **Synthetic-fixture-derived deploy.** Until a real snapshot is archived externally and copied into CI, the deployed site only knows the 2 synthetic items. This is acceptable for Slice 1.5 (deployment exists; content thinness is real but not a deployment defect) and is fixed in Slice 13 (versioning + snapshot archive).
 
 ### Execution handoff
 

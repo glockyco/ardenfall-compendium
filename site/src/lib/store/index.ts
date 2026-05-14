@@ -14,7 +14,7 @@ let dbPromise: Promise<Database> | null = null;
  * Loads the bytes into a transient in-memory database via
  * `sqlite3_deserialize`. The main-thread variant of `@sqlite.org/sqlite-wasm`
  * does not require COOP/COEP headers — those are only needed for the worker +
- * OPFS variant, which Slice 1 does not use.
+ * OPFS variant, which the current site runtime does not use.
  */
 export async function getDb(): Promise<Database> {
   if (!browser) throw new Error("getDb only runs in the browser");

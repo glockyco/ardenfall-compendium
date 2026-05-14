@@ -85,7 +85,7 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
                 Diagnostics.Add(new Diagnostic
                 {
                     Severity = "diagnostic",
-                    Code = "itemSubtypeUnsupportedInSlice1",
+                    Code = ItemDiagnosticCodes.UnsupportedSubtype,
                     Field = "variant",
                     Message = $"item '{guid}' is type {asset.GetType().Name}; not yet supported",
                 });

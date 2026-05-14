@@ -106,7 +106,7 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
           }
         });
       }
-      // Read models (Slice 1 declares two; emission lands in Task E.5).
+      // Default read models consumed by the item overview and detail routes.
       insertReadModel.run("item_overview_rows", "item_overview_rows", entityId, "overview");
       insertReadModel.run("item_detail_rows", "item_detail_rows", entityId, "detail");
     }

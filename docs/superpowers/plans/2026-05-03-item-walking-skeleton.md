@@ -2949,8 +2949,8 @@ git commit -m "feat(pipeline): site metadata ddl"
 import type { OperationMap } from "../../registry.ts";
 
 export const operations: OperationMap = {
-  // No item-specific operations needed in Slice 1.
-  // Spell.formatTooltip etc. land with the spells slice (currently Slice 11).
+  // No item-specific operations are needed yet.
+  // Spell.formatTooltip etc. land with spell support.
 };
 ```
 
@@ -3279,7 +3279,7 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
           }
         });
       }
-      // Read models (Slice 1 declares two; emission lands in Task E.5).
+      // Default read models consumed by the item overview and detail routes.
       insertReadModel.run("item_overview_rows", "item_overview_rows", entityId, "overview");
       insertReadModel.run("item_detail_rows", "item_detail_rows", entityId, "detail");
     }
@@ -4558,11 +4558,11 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
             }
             else
             {
-                // Outside Slice 1's coverage; emit a diagnostic so Slice 2 picks it up.
+                // Outside current coverage; emit a diagnostic so item subtype enrichment picks it up.
                 Diagnostics.Add(new Diagnostic
                 {
                     Severity = "diagnostic",
-                    Code = "itemSubtypeUnsupportedInSlice1",
+                    Code = "itemSubtypeUnsupported",
                     Field = "variant",
                     Message = $"item '{guid}' is type {asset.GetType().Name}; not yet supported",
                 });
@@ -5533,7 +5533,7 @@ Goal: `/items` and `/items/[id]` render correctly from the SQLite blob, driven b
 
 <h1 class="text-2xl font-bold">Ardenfall Compendium</h1>
 <p class="text-muted-foreground mt-2">
-  Static archive of Ardenfall game data. Slice 1 ships items only.
+  Static compendium of Ardenfall game data. Currently focused on items.
 </p>
 <a class="mt-4 inline-block underline" href="/items">Browse items →</a>
 ```
@@ -6129,13 +6129,13 @@ Expected: pass with `fixtures ok: NNNN bytes total`.
 /**
  * curate-capsule: deterministic curation of a real-derived boundary capsule.
  *
- * Slice 1 ships this as a stub. Real curation lands once the first BepInEx-extracted
- * snapshot is in hand: select a small number of stable, representative item ids,
- * write a `fixtures/real-capsule/snapshot/items.json` containing only their rows
- * (no scrubbing of the runtime values), copy the manifest with a curated counts map,
- * and emit a fixture-manifest.json envelope listing the selected ids and rationale.
+ * Real curation starts from a stable BepInEx-extracted snapshot: select a small
+ * number of representative item ids, write a `fixtures/real-capsule/snapshot/items.json`
+ * containing only their rows (no scrubbing of runtime values), copy the manifest with
+ * a curated counts map, and emit a fixture-manifest.json envelope listing the selected
+ * ids and rationale.
  */
-console.error("curate-capsule: not implemented in slice 1; see addendum §19");
+console.error("curate-capsule: real-capsule curation is not implemented yet");
 process.exit(2);
 ```
 

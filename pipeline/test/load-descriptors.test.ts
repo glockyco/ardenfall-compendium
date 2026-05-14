@@ -23,8 +23,8 @@ describe("loadDescriptors", () => {
   });
 
   it("rejects an invalid descriptor with a JSON Pointer in the error", async () => {
-    // arranged by writing a temporary entity. Skip if we can't safely sandbox.
-    // For Slice 1 we accept that this exercise lives in invariants/items.test.ts.
+    // This behavior is covered by invariants/items.test.ts; keep this case
+    // as the future home for a sandboxed invalid-descriptor fixture.
     expect(true).toBe(true);
   });
 });

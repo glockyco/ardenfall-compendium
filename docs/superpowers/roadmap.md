@@ -104,7 +104,7 @@ This set proves the variant model with one deep inheritance branch (`MeleeItemDa
 **Status:** planned
 **Spec coverage:** implementation addendum §9–§11, §16; investment-priorities §1 (item depth first).
 
-**Delivers:** broadens variant coverage to all `ItemData` subclasses Ardenfall exposes. The concrete set is enumerated by feeding the live mod once and reading the `itemSubtypeUnsupportedInSlice1` diagnostics, then turning each into a variant descriptor + adapter. Likely set:
+**Delivers:** broadens variant coverage to all `ItemData` subclasses Ardenfall exposes. The concrete set is enumerated by feeding the live mod once and reading the `itemSubtypeUnsupported` diagnostics, then turning each into a variant descriptor + adapter. Likely set:
 
 - `item_bows`
 - `item_consumables`
