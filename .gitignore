@@ -2,6 +2,9 @@
 .worktrees/
 worktrees/
 
+# Decompiled third-party game sources (local analysis only; never committed)
+.decompiled/
+
 # Bun + Node
 node_modules/
 .bun/

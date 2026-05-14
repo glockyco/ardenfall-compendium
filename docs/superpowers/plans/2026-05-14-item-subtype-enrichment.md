@@ -39,7 +39,7 @@ Task 1 is mandatory before any subtype implementation. It must inspect both sour
 
 The audit must produce `docs/superpowers/specs/2026-05-14-item-subtype-audit.md` and then reconcile this plan before Task 2. If the audit contradicts any field set, table, type order, or DTO shape below, update this plan in the same commit as the audit before writing extraction code. Do not implement guessed fields just because they appear in this draft.
 
-Raw decompiled sources and IL are not our code and must not be committed, pasted into docs as method/class bodies, or wired into the public repo through a submodule/subtree. The default storage model is an operator-local cache outside the repo root. A private raw-source repo is allowed only as a last-resort collaboration cache for trusted contributors; it must not be referenced from this public repo or CI. Committed audit notes may contain hashes, commands, identifiers, transformed behavior summaries, field inventories, DTO decisions, and runtime-backed conclusions.
+Raw decompiled sources and IL are not our code and must not be committed, pasted into docs as method/class bodies, or wired into the public repo through a submodule/subtree. The default storage model is a repo-local `.decompiled/` cache that is gitignored and explicitly verified before commits. A private raw-source repo is allowed only as a last-resort collaboration cache for trusted contributors; it must not be referenced from this public repo or CI. Committed audit notes may contain hashes, commands, identifiers, transformed behavior summaries, field inventories, DTO decisions, and runtime-backed conclusions.
 
 Tasks 2–7 are provisional implementation scaffolding. They must be regenerated or corrected from the committed audit matrix before coding if the audit changes any detail.
 
@@ -96,7 +96,7 @@ Create:
 
 Modify:
 
-- `.gitignore` — defense-in-depth ignores for accidental repo-local decompile output.
+- `.gitignore` — ignore the repo-local decompilation cache.
 - `package.json` — add a Bun script for reproducible local decompilation.
 
 - `schemas/variant.schema.json` — allow marker variants with zero variant-specific fields.
@@ -122,13 +122,11 @@ Modify:
 
 - [ ] **Step 1: Add repo safety guards**
 
-Add these ignores to `.gitignore` even though the default output path is outside the repo:
+Add this ignore to `.gitignore`:
 
 ```gitignore
-# Decompiled third-party game sources are local-only analysis inputs.
-/decompiled/
-/decompile-output/
-/local-decompiled/
+# Decompiled third-party game sources (local analysis only; never committed)
+.decompiled/
 ```
 
 Do not add a `.gitmodules` entry or any submodule/subtree for decompiled sources.
@@ -139,15 +137,16 @@ Create `scripts/decompile-ardenfall.mjs`. The script must:
 
 - accept `--assembly`, `--game-version`, and optional `--out-root`;
 - default `--assembly` to `mod/libs/Assembly-CSharp.dll`;
-- default `--out-root` to `$HOME/.local/share/ardenfall-compendium/decompiled`;
+- default `--out-root` to `.decompiled`;
 - compute the assembly SHA-256 using `Bun.CryptoHasher`;
 - write output under `<out-root>/<gameVersion>-<sha12>/`;
-- refuse to write inside the git worktree unless `--allow-repo-output` is passed;
+- refuse to write outside `.decompiled/` unless `--allow-external-output` is passed;
+- refuse to write inside the git worktree unless `git check-ignore` confirms the output directory is ignored;
 - run `ilspycmd --disable-updatecheck --nested-directories -p -r mod/libs -o <out>/csharp <assembly>`;
 - run `ilspycmd --disable-updatecheck -l c <assembly>` and write stdout to `<out>/meta/classes.txt`;
 - run targeted `ilspycmd --disable-updatecheck -t <type> <assembly>` for every item and nested payload type named in Step 5;
 - run targeted `ilspycmd --disable-updatecheck --ilcode -t <type> <assembly>` for behavior-sensitive types;
-- run `ikdasm <assembly> -out=<out>/il/Assembly-CSharp.il` only when `--full-il` is passed, because full IL dumps are large and local-only;
+- run `ikdasm <assembly> -out=<out>/il/Assembly-CSharp.il` only when `--full-il` is passed, because full IL dumps are local-only and must remain ignored;
 - write `<out>/meta/manifest.json` containing assembly path, game version, SHA-256, tool commands, tool exit codes, and timestamp.
 
 Add this root script to `package.json`:
@@ -178,7 +177,7 @@ PATH="$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd:$PATH" \
   --game-version 0.0.10.91
 ```
 
-Expected: exits 0, writes under `$HOME/.local/share/ardenfall-compendium/decompiled/`, and does not create repo-local C#/IL output.
+Expected: exits 0, writes under `.decompiled/0.0.10.91-<sha12>/`, and `git check-ignore .decompiled/0.0.10.91-<sha12>/` confirms the output is ignored.
 
 - [ ] **Step 5: Audit game implementation from decompiled sources**
 
@@ -252,7 +251,7 @@ git status --short --ignored
 git diff --cached --name-only
 ```
 
-Expected: staged files are limited to authored repo files such as `.gitignore`, `package.json`, the decompile script, the audit doc, this plan, and roadmap updates. No decompiled C#/IL output, DLLs, snapshots, SQLite databases, `.gitmodules`, or generated local caches are staged.
+Expected: staged files are limited to authored repo files such as `.gitignore`, `package.json`, the decompile script, the audit doc, this plan, and roadmap updates. `git status --ignored` may show `.decompiled/` as ignored; that is expected. No decompiled C#/IL output, DLLs, snapshots, SQLite databases, `.gitmodules`, or generated local caches are staged.
 
 - [ ] **Step 10: Commit audit setup and plan reconciliation**
 
