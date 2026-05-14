@@ -1,0 +1,126 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "throwing-item",
+  "label": "Throwing item",
+  "unityType": "Ardenfall.Item.ThrowingItemData",
+  "canonicalTable": "item_throwing_items",
+  "parentVariantId": "primary-hand",
+  "position": 100,
+  "fields": [
+    {
+      "name": "itemTypeTooltip",
+      "type": "string",
+      "from": "itemTypeTooltip.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "missileRef",
+      "type": "ref:asset",
+      "from": "missilePrefab.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "missileRotationJson",
+      "type": "json",
+      "from": "missileRotation.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    { "name": "damage", "type": "number", "from": "damage.Get()", "missingPolicy": "diagnostic" },
+    {
+      "name": "pierceArmor",
+      "type": "boolean",
+      "from": "pierceArmor.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "bleedMultiplier",
+      "type": "number",
+      "from": "bleedMultiplier.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "damageFalloffDistance",
+      "type": "number",
+      "from": "damageFalloffDistance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "damageFalloff",
+      "type": "number",
+      "from": "damageFalloff.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "critChance",
+      "type": "number",
+      "from": "critChance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "stunChance",
+      "type": "number",
+      "from": "stunChance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "bleedChance",
+      "type": "number",
+      "from": "bleedChance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "critDamageMult",
+      "type": "number",
+      "from": "critDamageMult.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "quickslotCooldownTime",
+      "type": "number",
+      "from": "quickslotCooldownTime.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "bleedStatusEffectJson",
+      "type": "json",
+      "from": "bleedStatusEffect.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "stealthHitMultiplier",
+      "type": "number",
+      "from": "stealthHitMultiplier.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "spawnVisualOnHitStatic",
+      "type": "boolean",
+      "from": "spawnVisualOnHitStatic.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "spawnVisualOnHitCharacter",
+      "type": "boolean",
+      "from": "spawnVisualOnHitCharacter.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "respawnItemPickupChance",
+      "type": "number",
+      "from": "respawnItemPickupChance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "addItemToInventoryChance",
+      "type": "number",
+      "from": "addItemToInventoryChance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "missileSettingsJson",
+      "type": "json",
+      "from": "missileSettings.Get()",
+      "missingPolicy": "optional-empty"
+    }
+  ]
+}

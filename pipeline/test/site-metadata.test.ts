@@ -49,6 +49,25 @@ describe("emitSiteMetadata", () => {
       "armor",
       "potion-recipe",
       "repair-kit",
+      "arrow",
+      "bow",
+      "slate-spell",
+      "throwing-item",
+      "throwing-potion",
+    ]);
+
+    const leafDamageFields = db
+      .query(
+        "SELECT field_id, source_table, source_column FROM site_entity_fields WHERE field_id IN ('bow.damage', 'throwing-item.damage') ORDER BY field_id",
+      )
+      .all() as { field_id: string; source_table: string; source_column: string }[];
+    expect(leafDamageFields).toEqual([
+      { field_id: "bow.damage", source_table: "item_bows", source_column: "damage" },
+      {
+        field_id: "throwing-item.damage",
+        source_table: "item_throwing_items",
+        source_column: "damage",
+      },
     ]);
   });
 });

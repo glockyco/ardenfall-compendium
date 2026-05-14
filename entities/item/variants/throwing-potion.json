@@ -1,0 +1,47 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "throwing-potion",
+  "label": "Throwing potion",
+  "unityType": "Ardenfall.Item.ThrowingPotionData",
+  "canonicalTable": "item_throwing_potions",
+  "parentVariantId": "throwing-item",
+  "position": 110,
+  "fields": [
+    {
+      "name": "quickslotSecondaryColorJson",
+      "type": "json",
+      "from": "quickslotSecondaryColor.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "areaOfEffectRange",
+      "type": "number",
+      "from": "areaOfEffectRange.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "areaOfEffectJson",
+      "type": "json",
+      "from": "areaOfEffect.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "visualLevel",
+      "type": "number",
+      "from": "VisualLevel",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "effectName",
+      "type": "string",
+      "from": "GetEffectName()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "isDrinkingPotion",
+      "type": "boolean",
+      "from": "isDrinkingPotion.Get()",
+      "missingPolicy": "diagnostic"
+    }
+  ]
+}

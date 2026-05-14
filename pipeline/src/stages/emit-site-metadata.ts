@@ -59,7 +59,7 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
         for (const f of v.fields) {
           insertField.run(
             entityId,
-            f.name,
+            `${v.variantId}.${f.name}`,
             v.canonicalTable,
             f.name,
             f.label ?? f.name,

@@ -1,0 +1,48 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "arrow",
+  "label": "Arrow",
+  "unityType": "Ardenfall.Item.ArrowItemData",
+  "canonicalTable": "item_arrows",
+  "parentVariantId": "equipment",
+  "position": 70,
+  "fields": [
+    { "name": "damage", "type": "number", "from": "damage.Get()", "missingPolicy": "diagnostic" },
+    {
+      "name": "spawnVisualOnHitStatic",
+      "type": "boolean",
+      "from": "spawnVisualOnHitStatic.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "spawnVisualOnHitCharacter",
+      "type": "boolean",
+      "from": "spawnVisualOnHitCharacter.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "respawnItemPickupChance",
+      "type": "number",
+      "from": "respawnItemPickupChance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "addItemToInventoryChance",
+      "type": "number",
+      "from": "addItemToInventoryChance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "projectileSettingsJson",
+      "type": "json",
+      "from": "projectileSettings.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "projectileRef",
+      "type": "ref:asset",
+      "from": "projectilePrefab.Get()",
+      "missingPolicy": "optional-empty"
+    }
+  ]
+}

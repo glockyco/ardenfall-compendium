@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Ardenfall;
 using Ardenfall.Item;
 using ArdenfallCompendium.Entities.Item.Adapters;
+using UnityEngine;
 using Xunit;
 
 namespace ArdenfallCompendium.Tests;
@@ -23,7 +25,6 @@ public sealed class ItemAdapterBehaviorTests
         var dto = ItemAdapterHelpers.SnapshotLeveledStatusEffect(effect, refs: null, rowId: "fixture");
         Assert.NotNull(dto);
 
-
         Assert.Equal("AddLevel", dto.StackMode?.Type);
         Assert.Equal(1, dto.StackMode?.AddLevel);
         Assert.Equal(5, dto.StackMode?.MaxLevel);
@@ -40,10 +41,53 @@ public sealed class ItemAdapterBehaviorTests
         var dto = ItemAdapterHelpers.SnapshotPotionRecipe(recipe, refs: null, rowId: "fixture");
         Assert.NotNull(dto);
 
-
         Assert.False(dto.IsValid);
         Assert.False(dto.HasDrinkingPotions);
         Assert.False(dto.HasThrowingPotions);
         Assert.Null(dto.RecipeName);
+    }
+
+    [Fact]
+    public void LeveledSpellSnapshotUsesBehaviorDerivedSecondaryLevel()
+    {
+        var spell = (SpellData)RuntimeHelpers.GetUninitializedObject(typeof(SpellData));
+        spell.spellName = "Spark";
+        spell.subSpells = new List<SpellData.SubSpellData>();
+        var leveled = new LeveledSpellData { spellData = spell, level = 3 };
+        typeof(LeveledSpellData)
+            .GetField("enableSecondaryLevel", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(leveled, true);
+        typeof(LeveledSpellData)
+            .GetField("secondaryLevel", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(leveled, 7f);
+
+        var dto = ItemAdapterHelpers.SnapshotLeveledSpellData(leveled, refs: null, rowId: "fixture");
+
+        Assert.Equal(3, dto?.Level);
+        Assert.Equal(7, dto?.SecondaryLevel);
+        Assert.Equal("Spark", dto?.SpellName);
+    }
+
+
+    [Fact]
+    public void ThrowingPotionEffectNameReturnsNullWhenFirstStatusEffectMissing()
+    {
+        var effects = new[] { new LeveledStatusEffect(statusEffect: null, level: 2.5f, lifetime: 10f) };
+
+        Assert.Null(ExtractThrowingPotion.GetEffectNameSafe(effects, visualLevel: 0));
+    }
+
+
+    [Fact]
+    public void ColorSnapshotSerializesRgbaChannels()
+    {
+        var color = new Color(0.1f, 0.2f, 0.3f, 0.4f);
+
+        var dto = ItemAdapterHelpers.SnapshotColor(color);
+
+        Assert.Equal(0.1f, dto.R);
+        Assert.Equal(0.2f, dto.G);
+        Assert.Equal(0.3f, dto.B);
+        Assert.Equal(0.4f, dto.A);
     }
 }

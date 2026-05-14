@@ -47,6 +47,55 @@ public sealed record PotionRecipeSnapshot(
     [property: JsonProperty("drinkablePotionRefs")] List<object?> DrinkablePotionRefs,
     [property: JsonProperty("throwingPotionRefs")] List<object?> ThrowingPotionRefs);
 
+public sealed record ColorSnapshot(
+    [property: JsonProperty("r")] float R,
+    [property: JsonProperty("g")] float G,
+    [property: JsonProperty("b")] float B,
+    [property: JsonProperty("a")] float A);
+
+public sealed record Vector3Snapshot(
+    [property: JsonProperty("x")] float X,
+    [property: JsonProperty("y")] float Y,
+    [property: JsonProperty("z")] float Z);
+
+public sealed record ProjectileSettingsSnapshot(
+    [property: JsonProperty("mass")] float Mass,
+    [property: JsonProperty("speed")] float Speed,
+    [property: JsonProperty("radius")] float Radius,
+    [property: JsonProperty("offset")] Vector3Snapshot Offset,
+    [property: JsonProperty("lifetime")] float Lifetime,
+    [property: JsonProperty("destroyOnHit")] bool DestroyOnHit,
+    [property: JsonProperty("goThroughStatics")] bool GoThroughStatics,
+    [property: JsonProperty("goThroughWater")] bool GoThroughWater,
+    [property: JsonProperty("enableCustomCollisionRadius")] bool EnableCustomCollisionRadius,
+    [property: JsonProperty("customCollisionRadius")] float CustomCollisionRadius,
+    [property: JsonProperty("launchPointLerpTime")] float LaunchPointLerpTime,
+    [property: JsonProperty("enableSpawnFallback")] bool EnableSpawnFallback,
+    [property: JsonProperty("spawnFallbackOffset")] float SpawnFallbackOffset,
+    [property: JsonProperty("enableBounce")] bool EnableBounce,
+    [property: JsonProperty("enableDestructable")] bool EnableDestructable,
+    [property: JsonProperty("destructableHealth")] float DestructableHealth,
+    [property: JsonProperty("enableDeflect")] bool EnableDeflect,
+    [property: JsonProperty("deflectSpeed")] float DeflectSpeed,
+    [property: JsonProperty("deflectMass")] float DeflectMass,
+    [property: JsonProperty("knockbackForce")] float KnockbackForce,
+    [property: JsonProperty("enableForce")] bool EnableForce,
+    [property: JsonProperty("onlyApplyForceToHitObject")] bool OnlyApplyForceToHitObject,
+    [property: JsonProperty("forceAmount")] float ForceAmount,
+    [property: JsonProperty("forceRange")] float ForceRange,
+    [property: JsonProperty("forceOffset")] float ForceOffset);
+
+public sealed record LeveledSpellDataSnapshot(
+    [property: JsonProperty("spellRef")] object? SpellRef,
+    [property: JsonProperty("spellName")] string? SpellName,
+    [property: JsonProperty("level")] float Level,
+    [property: JsonProperty("secondaryLevel")] float SecondaryLevel,
+    [property: JsonProperty("subSpells")] List<SubSpellSnapshot> SubSpells);
+
+public sealed record SubSpellSnapshot(
+    [property: JsonProperty("name")] string? Name,
+    [property: JsonProperty("effectTypeNames")] List<string> EffectTypeNames);
+
 public static class ItemAdapterHelpers
 {
     public static ItemAdapterResult EmptyResult() =>
@@ -150,6 +199,73 @@ public static class ItemAdapterHelpers
         return snapshots;
     }
 
+
+    public static ColorSnapshot SnapshotColor(Color color) => new(color.r, color.g, color.b, color.a);
+
+    public static Vector3Snapshot SnapshotVector3(Vector3 value) => new(value.x, value.y, value.z);
+
+    public static ProjectileSettingsSnapshot? SnapshotProjectileSettings(ProjectileSettings? settings)
+    {
+        if (settings == null) return null;
+        return new ProjectileSettingsSnapshot(
+            settings.mass,
+            settings.speed,
+            settings.radius,
+            SnapshotVector3(settings.offset),
+            settings.lifetime,
+            settings.destroyOnHit,
+            settings.goThroughStatics,
+            settings.goThroughWater,
+            settings.enableCustomCollisionRadius,
+            settings.customCollisionRadius,
+            settings.launchPointLerpTime,
+            settings.enableSpawnFallback,
+            settings.spawnFallbackOffset,
+            settings.enableBounce,
+            settings.enableDestructable,
+            settings.destructableHealth,
+            settings.enableDeflect,
+            settings.deflectSpeed,
+            settings.deflectMass,
+            settings.knockbackForce,
+            settings.enableForce,
+            settings.onlyApplyForceToHitObject,
+            settings.forceAmount,
+            settings.forceRange,
+            settings.forceOffset);
+    }
+
+    public static LeveledSpellDataSnapshot? SnapshotLeveledSpellData(LeveledSpellData? spell, RefResolver? refs, string rowId)
+    {
+        if (spell == null) return null;
+        var spellData = spell.spellData;
+        return new LeveledSpellDataSnapshot(
+            ResolveOptionalAsset(refs, spellData, "spellRef", rowId, "LeveledSpellData.spellData"),
+            spellData?.spellName,
+            spell.level,
+            spell.GetSecondaryLevel(),
+            SnapshotSubSpells(spellData));
+    }
+
+    public static List<SubSpellSnapshot> SnapshotSubSpells(SpellData? spellData)
+    {
+        var snapshots = new List<SubSpellSnapshot>();
+        if (spellData?.subSpells == null) return snapshots;
+        foreach (var subSpell in spellData.subSpells)
+        {
+            if (subSpell == null) continue;
+            var effectNames = new List<string>();
+            if (subSpell.effects != null)
+            {
+                foreach (var effect in subSpell.effects)
+                {
+                    if (effect != null) effectNames.Add(effect.GetType().Name);
+                }
+            }
+            snapshots.Add(new SubSpellSnapshot(subSpell.name, effectNames));
+        }
+        return snapshots;
+    }
     public static List<object?> SnapshotRefs<T>(List<T>? assets, RefResolver? refs, string field, string rowId, string source)
         where T : Object
     {

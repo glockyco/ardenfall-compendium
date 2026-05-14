@@ -10,6 +10,11 @@ public static class ItemVariantClassifier
     {
         var variantId = asset switch
         {
+            ThrowingPotionData => "throwing-potion",
+            ThrowingItemData => "throwing-item",
+            SlateSpellItemData => "slate-spell",
+            BowItemData => "bow",
+            ArrowItemData => "arrow",
             MeleeItemData => "melee-weapon",
             PrimaryHandItemData => "primary-hand",
             HandItemData => "hand-item",

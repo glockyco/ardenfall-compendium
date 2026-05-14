@@ -17,11 +17,13 @@ describe("loadDescriptors", () => {
     if (!item) throw new Error("item entity not loaded");
     if (!itemVariants) throw new Error("item variants not loaded");
     expect(item.id).toBe("item");
-    expect(itemVariants.length).toBe(12);
+    expect(itemVariants.length).toBe(17);
     const ids = itemVariants.map((v) => v.variantId).sort();
     expect(ids).toEqual([
       "armor",
+      "arrow",
       "basic",
+      "bow",
       "consumable",
       "currency",
       "equipment",
@@ -32,6 +34,9 @@ describe("loadDescriptors", () => {
       "potion-recipe",
       "primary-hand",
       "repair-kit",
+      "slate-spell",
+      "throwing-item",
+      "throwing-potion",
     ]);
   });
 

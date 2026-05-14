@@ -597,7 +597,14 @@ git commit -m "feat(items): extract non-equipment item subtypes"
 - Test: `pipeline/test/item-subtypes.test.ts`
 - Test: `mod-tests/ItemAdapterBehaviorTests.cs`
 
-- [ ] **Step 1: Extend descriptor tests for equipment leaves**
+- Modify: `mod/src/Entities/Item/ItemExtractor.cs`
+- Modify: `mod/src/Entities/Item/ItemVariantClassifier.cs`
+- Modify: `mod-tests/ItemVariantClassifierTests.cs`
+- Modify: `mod-tests/ArdenfallCompendium.Tests.csproj`
+- Modify: `pipeline/src/stages/emit-site-metadata.ts`
+- Test: `pipeline/test/load-descriptors.test.ts`
+- Test: `pipeline/test/site-metadata.test.ts`
+- [x] **Step 1: Extend descriptor tests for equipment leaves**
 
 Add this case to `pipeline/test/item-subtypes.test.ts`:
 
@@ -623,7 +630,7 @@ bun test pipeline/test/item-subtypes.test.ts
 
 Expected: fails because the descriptors do not exist.
 
-- [ ] **Step 2: Add equipment leaf descriptors**
+- [x] **Step 2: Add equipment leaf descriptors**
 
 Create descriptors with these exact variant ids, canonical tables, parents, and field sets:
 
@@ -637,11 +644,11 @@ Create descriptors with these exact variant ids, canonical tables, parents, and 
 
 Use positions 70, 80, 90, 100, and 110. Keep audio/material fields and `itemAIBehavior` out of this slice; asset/audio/rendering and behavior-object presentation are later work.
 
-- [ ] **Step 3: Add equipment leaf adapters**
+- [x] **Step 3: Add equipment leaf adapters**
 
-Extend `mod-tests/ItemAdapterBehaviorTests.cs` before implementation with failing tests for `LeveledSpellData.GetSecondaryLevel()`, `ThrowingPotionData.VisualLevel` preserving non-integer levels, `ThrowingPotionData.GetEffectName()` returning `null` for empty area effects, and color serialization to `quickslotSecondaryColorJson` as `{ r, g, b, a }`. Then create one adapter per leaf type. Use `refs.ResolveAsset` for required/notable Unity object fields, `Enum.ToString()` for enum fields, and compact JSON DTOs for `ProjectileSettings`, `Vector3`, `Color`, `LeveledStatusEffect`, and spell data. Do not use Newtonsoft to serialize game objects directly. `SlateSpellItemData` names must come from `GetItemName()`, `LeveledSpellData` snapshots must include `GetSecondaryLevel()`, `ThrowingPotionData.effectName` must come from `GetEffectName()`, `ThrowingPotionData.visualLevel` must come from `VisualLevel` without integer truncation, and the public root `name` for throwing potions must come from `GetItemName()`.
+Extend `mod-tests/ItemAdapterBehaviorTests.cs` before implementation with failing tests for `LeveledSpellData.GetSecondaryLevel()`, guarded throwing-potion effect-name extraction when the first `StatusEffect` is missing, and color serialization to `quickslotSecondaryColorJson` as `{ r, g, b, a }`. `ThrowingPotionData.VisualLevel` and `effectName` descriptor coverage lives in `pipeline/test/item-subtypes.test.ts` because `Parameter<Color>.Get()` cannot be exercised in plain dotnet tests after referencing `UnityEngine.CoreModule` (`ProfilerMarker` ECall static initialization). Then create one adapter per leaf type. Use `refs.ResolveAsset` for required/notable Unity object fields, `Enum.ToString()` for enum fields, and compact JSON DTOs for `ProjectileSettings`, `Vector3`, `Color`, `LeveledStatusEffect`, and spell data. Do not use Newtonsoft to serialize game objects directly. `SlateSpellItemData` names must come from `GetItemName()` through root extraction, `LeveledSpellData` snapshots must include `GetSecondaryLevel()`, `ThrowingPotionData.effectName` must use guarded `GetEffectName()` semantics, `ThrowingPotionData.visualLevel` must come from `VisualLevel` without integer truncation, and the public root `name` for throwing potions must come from `GetItemName()`.
 
-- [ ] **Step 4: Run mod build and descriptor tests**
+- [x] **Step 4: Run mod build and descriptor tests**
 
 Run:
 
@@ -652,6 +659,23 @@ bun test pipeline/test/item-subtypes.test.ts
 ```
 
 Expected: all commands exit 0.
+
+Observed Task 4 gate:
+
+```sh
+bun test pipeline/test/item-subtypes.test.ts pipeline/test/load-descriptors.test.ts pipeline/test/site-metadata.test.ts
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
+dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter "ItemAdapterBehaviorTests|ItemVariantClassifierTests|ItemExtractionServiceTests|EntityPlanCommandTests|EntityExportBatchCommandTests|RunFinalizeCommandTests|ItemDiagnosticCodesTests"
+bun run typecheck
+bun run format:check
+bun run check:fixtures
+```
+
+All exited 0 after Task 4 review fix. The reviewer found `ExtractThrowingPotion` could throw when `areaOfEffect[0].StatusEffect` was null; the adapter now returns `null` for `effectName` in that case while preserving `VisualLevel` for the numeric field.
+
+Task 4 intentionally pulled leaf-before-parent classifier/extractor branches forward so descriptors and exporter behavior stay in sync. Task 5 still owns the cleanup cutover from the inline ladder to classifier-returned adapter layers.
+
+Pipeline site metadata now qualifies variant field ids as `${variantId}.${fieldName}` while keeping `source_column = fieldName`; this is required because leaf subtypes legitimately share column names such as `damage`.
 
 - [ ] **Step 5: Commit**
 

@@ -49,4 +49,23 @@ describe("item subtype descriptors", () => {
       ]),
     );
   });
+
+  test("describes equipment leaf subtypes before ancestor fallbacks", async () => {
+    const loaded = await loadDescriptors.run({}, ctx);
+    const variants = loaded.variants.item ?? [];
+    const byId = new Map(variants.map((variant) => [variant.variantId, variant]));
+
+    expect(byId.get("arrow")?.parentVariantId).toBe("equipment");
+    expect(byId.get("bow")?.parentVariantId).toBe("primary-hand");
+    expect(byId.get("slate-spell")?.parentVariantId).toBe("primary-hand");
+    expect(byId.get("throwing-item")?.parentVariantId).toBe("primary-hand");
+    expect(byId.get("throwing-potion")?.parentVariantId).toBe("throwing-item");
+
+    const throwingPotionFields = new Map(
+      (byId.get("throwing-potion")?.fields ?? []).map((field) => [field.name, field]),
+    );
+    expect(throwingPotionFields.get("visualLevel")?.type).toBe("number");
+    expect(throwingPotionFields.get("effectName")?.missingPolicy).toBe("optional-empty");
+    expect(throwingPotionFields.get("quickslotSecondaryColorJson")?.type).toBe("json");
+  });
 });

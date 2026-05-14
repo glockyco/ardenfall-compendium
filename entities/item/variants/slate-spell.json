@@ -1,0 +1,53 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "slate-spell",
+  "label": "Slate spell",
+  "unityType": "Ardenfall.Item.SlateSpellItemData",
+  "canonicalTable": "item_slate_spells",
+  "parentVariantId": "primary-hand",
+  "position": 90,
+  "fields": [
+    {
+      "name": "quickslotSecondaryColorJson",
+      "type": "json",
+      "from": "quickslotSecondaryColor.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "spellDataJson",
+      "type": "json",
+      "from": "spellData.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "secondarySpellDataJson",
+      "type": "json",
+      "from": "secondarySpellData.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "spawnWhenSheathed",
+      "type": "boolean",
+      "from": "spawnWhenSheathed.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "spellItemType",
+      "type": "string",
+      "from": "spellItemType.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "durabilityMax",
+      "type": "integer",
+      "from": "durabilityMax.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "manaCostMultiplier",
+      "type": "number",
+      "from": "manaCostMultiplier.Get()",
+      "missingPolicy": "diagnostic"
+    }
+  ]
+}

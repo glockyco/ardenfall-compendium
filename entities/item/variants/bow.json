@@ -1,0 +1,114 @@
+{
+  "$schema": "../../../schemas/variant.schema.json",
+  "variantId": "bow",
+  "label": "Bow",
+  "unityType": "Ardenfall.Item.BowItemData",
+  "canonicalTable": "item_bows",
+  "parentVariantId": "primary-hand",
+  "position": 80,
+  "fields": [
+    {
+      "name": "itemTypeTooltip",
+      "type": "string",
+      "from": "itemTypeTooltip.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    { "name": "damage", "type": "number", "from": "damage.Get()", "missingPolicy": "diagnostic" },
+    {
+      "name": "bleedMultiplier",
+      "type": "number",
+      "from": "bleedMultiplier.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "shootStaminaMultiplier",
+      "type": "number",
+      "from": "shootStaminaMultiplier.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "criticalHitChance",
+      "type": "number",
+      "from": "criticalHitChance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "stunChance",
+      "type": "number",
+      "from": "stunChance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "bleedChance",
+      "type": "number",
+      "from": "bleedChance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "critDamageMult",
+      "type": "number",
+      "from": "critDamageMult.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "knockbackStrength",
+      "type": "number",
+      "from": "knockbackStrength.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "stealthHitMultiplier",
+      "type": "number",
+      "from": "stealthHitMultiplier.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "ammoMassMultiplier",
+      "type": "number",
+      "from": "ammoMassMultiplier.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "damageFalloffDistance",
+      "type": "number",
+      "from": "damageFalloffDistance.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "damageFalloff",
+      "type": "number",
+      "from": "damageFalloff.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "durabilityMax",
+      "type": "integer",
+      "from": "durabilityMax.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "projectileSlot",
+      "type": "string",
+      "from": "projectileSlot.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "projectileIconRef",
+      "type": "ref:asset",
+      "from": "projectileIcon.Get()",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "aimAnimationSpeedMultiplier",
+      "type": "number",
+      "from": "aimAnimationSpeedMultiplier.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "bleedStatusEffectJson",
+      "type": "json",
+      "from": "bleedStatusEffect.Get()",
+      "missingPolicy": "optional-empty"
+    }
+  ]
+}

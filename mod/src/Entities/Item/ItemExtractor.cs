@@ -48,7 +48,46 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
             var (fields, provenance, diagnostics, tags) = ExtractItem.Extract(asset, Refs, guid);
 
             string variantId;
-            if (asset is MeleeItemData melee)
+            if (asset is ThrowingPotionData throwingPotion)
+            {
+                Merge(fields, ExtractEquipment.Extract(throwingPotion));
+                Merge(fields, ExtractHandItem.Extract(throwingPotion));
+                Merge(fields, ExtractPrimaryHand.Extract(throwingPotion));
+                Merge(fields, provenance, diagnostics, ExtractThrowingItem.Extract(throwingPotion, Refs, guid));
+                Merge(fields, provenance, diagnostics, ExtractThrowingPotion.Extract(throwingPotion, Refs, guid));
+                variantId = "throwing-potion";
+            }
+            else if (asset is ThrowingItemData throwingItem)
+            {
+                Merge(fields, ExtractEquipment.Extract(throwingItem));
+                Merge(fields, ExtractHandItem.Extract(throwingItem));
+                Merge(fields, ExtractPrimaryHand.Extract(throwingItem));
+                Merge(fields, provenance, diagnostics, ExtractThrowingItem.Extract(throwingItem, Refs, guid));
+                variantId = "throwing-item";
+            }
+            else if (asset is SlateSpellItemData slateSpell)
+            {
+                Merge(fields, ExtractEquipment.Extract(slateSpell));
+                Merge(fields, ExtractHandItem.Extract(slateSpell));
+                Merge(fields, ExtractPrimaryHand.Extract(slateSpell));
+                Merge(fields, provenance, diagnostics, ExtractSlateSpell.Extract(slateSpell, Refs, guid));
+                variantId = "slate-spell";
+            }
+            else if (asset is BowItemData bow)
+            {
+                Merge(fields, ExtractEquipment.Extract(bow));
+                Merge(fields, ExtractHandItem.Extract(bow));
+                Merge(fields, ExtractPrimaryHand.Extract(bow));
+                Merge(fields, provenance, diagnostics, ExtractBow.Extract(bow, Refs, guid));
+                variantId = "bow";
+            }
+            else if (asset is ArrowItemData arrow)
+            {
+                Merge(fields, ExtractEquipment.Extract(arrow));
+                Merge(fields, provenance, diagnostics, ExtractArrow.Extract(arrow, Refs, guid));
+                variantId = "arrow";
+            }
+            else if (asset is MeleeItemData melee)
             {
                 Merge(fields, ExtractEquipment.Extract(melee));
                 Merge(fields, ExtractHandItem.Extract(melee));
