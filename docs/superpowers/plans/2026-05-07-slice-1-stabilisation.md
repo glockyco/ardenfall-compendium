@@ -532,15 +532,10 @@ git commit -m "fix(mod): aggregate per-row + walker diagnostics into manifest to
 **Files:**
 
 - Create: `site/src/routes/+error.svelte`
-- Modify: `site/src/routes/items/[id]/+page.ts` (verify error throw shape is consumable by the route)
+- Create: `site/scripts/smoke-error-route.mjs`
+- Modify: `site/package.json`
 
-- [ ] **Step 1: Write a failing visual test.** Add a Playwright (or puppeteer-based) script to `site/test/error-route.spec.ts` that:
-  1. Builds the site with `bun run --cwd site build`.
-  2. Serves it via `bunx serve build`.
-  3. Navigates to `/items/this-id-does-not-exist`.
-  4. Asserts the rendered page shows "Item not found" (or equivalent), `status` is 404 visible to the user, and a link back to `/` is present.
-
-  If Playwright is too heavyweight for this slice, use the existing puppeteer pattern documented in the prior handoff and commit a smoke script under `site/scripts/`.
+- [ ] **Step 1: Write a failing smoke test.** Add `site/scripts/smoke-error-route.mjs` and `site/package.json` script `smoke:error-route`. The script must fail while `site/src/routes/+error.svelte` is absent, then pass once the route includes status text, 404 copy, the home link, and reload affordance.
 
 - [ ] **Step 2: Implement `+error.svelte`** with status-keyed messaging:
 
@@ -575,11 +570,12 @@ git commit -m "fix(mod): aggregate per-row + walker diagnostics into manifest to
 - [ ] **Step 3: Verify.**
 
 ```sh
+bun run --cwd site smoke:error-route
 bun run --cwd site check
 bun run --cwd site build
 ```
 
-Expected: 0 errors / 0 warnings; build emits successfully. Smoke script (Step 1) passes.
+Expected: smoke script passes, Svelte check reports 0 errors / 0 warnings, and build emits successfully. Local browser verification against Vite preview should exercise the route; if the SQLite WASM loader fails first, the page should still render the non-404 branch of `+error.svelte`.
 
 - [ ] **Step 4: Commit.**
 
