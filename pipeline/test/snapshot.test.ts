@@ -1,4 +1,7 @@
 import { describe, expect, it } from "bun:test";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { loadSnapshot } from "$pipeline/stages/load-snapshot";
 import { validate } from "$pipeline/stages/validate";
@@ -18,6 +21,47 @@ describe("loadSnapshot", () => {
     const items = out.envelopes["item"];
     if (!items) throw new Error("item envelope not loaded");
     expect(items.rows.length).toBe(2);
+  });
+
+  it("loads sibling diagnostics artifact and validation counts its entries", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "ardenfall-snapshot-"));
+    try {
+      writeFileSync(
+        join(dir, "manifest.json"),
+        readFileSync("fixtures/synthetic/snapshot/manifest.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "items.json"),
+        readFileSync("fixtures/synthetic/snapshot/items.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "diagnostics.json"),
+        JSON.stringify([
+          {
+            rowId: null,
+            severity: "diagnostic",
+            code: "walkerDiagnostic",
+            field: "refs",
+            message: "walker diagnostic",
+          },
+        ]),
+      );
+
+      const snap = await loadSnapshot.run({}, { ...ctx, snapshotDir: dir });
+      expect(snap.diagnostics).toHaveLength(1);
+
+      const desc = await loadDescriptors.run({}, ctx);
+      const result = await validate.run({ "load-snapshot": snap, "load-descriptors": desc }, ctx);
+      expect(result.countsBySeverity.diagnostic).toBe(2);
+      expect(result.errors).toContainEqual({
+        entity: "snapshot",
+        code: "walkerDiagnostic",
+        field: "refs",
+        message: "walker diagnostic",
+      });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

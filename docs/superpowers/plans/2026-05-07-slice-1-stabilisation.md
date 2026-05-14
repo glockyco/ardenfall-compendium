@@ -487,9 +487,15 @@ git commit -m "fix(mod): entity.exportBatch slices cached rows instead of re-wal
 **Files:**
 
 - Modify: `mod/src/Control/Handlers/RunFinalizeCommand.cs`
+- Modify: `mod/src/Extraction/ItemExtractionService.cs`
+- Create: `mod/src/Extraction/IItemExtractionCache.cs`
 - Modify: `mod-tests/RunFinalizeCommandTests.cs` (new)
-- Modify: `mod/src/Emit/ManifestBuilder.cs` if helper methods are added
-
+- Create: `schemas/diagnostics.schema.json`
+- Modify: `pipeline/scripts/codegen-validators.ts`
+- Modify: `pipeline/src/stages/load-snapshot.ts`
+- Modify: `pipeline/src/stages/validate.ts`
+- Modify: `pipeline/src/types.ts`
+- Modify: `pipeline/test/snapshot.test.ts`
 - [ ] **Step 1: Write the failing test.** Set up a workspace dir with a chunks dir containing two chunks: chunk A has one row with two `diagnostic`-severity diagnostics, chunk B has one row with one `fatal` diagnostic. Walker-level diagnostics list contains one `diagnostic`. Invoke `RunFinalizeCommand.ExecuteAsync`. Assert the published manifest has `diagnostics: { fatal: 1, diagnostic: 3 }`. Assert a `diagnostics.json` sibling exists with all four entries.
 
 - [ ] **Step 2: Refactor.** `RunFinalizeCommand`:
@@ -499,13 +505,14 @@ git commit -m "fix(mod): entity.exportBatch slices cached rows instead of re-wal
   4. Writes `diagnostics.json` next to `items.json` if any diagnostics exist (per-row + walker-level entries combined into one stream, each tagged with its source: `"rowId"` for per-row, `null` for walker-level).
   5. Passes the aggregated totals to `ManifestBuilder.Build`.
 
-- [ ] **Step 3: Update the snapshot schema** (`schemas/snapshot.schema.json`) to accept the new optional `diagnostics.json` artifact. Update `pipeline/src/stages/load-snapshot.ts` to read it if present and surface the entries. Update the validate stage to count them if applicable. Regenerate validators.
+- [ ] **Step 3: Add the diagnostics artifact contract.** Add `schemas/diagnostics.schema.json` for the optional `diagnostics.json` sibling. `pipeline/src/stages/load-snapshot.ts` skips it as an entity envelope, validates it when present, and exposes its entries as `SnapshotDiagnosticArtifactEntry[]`. `pipeline/src/stages/validate.ts` counts those entries alongside row diagnostics. Regenerate validators.
 
 - [ ] **Step 4: Run.**
 
 ```sh
 dotnet test mod-tests/ArdenfallCompendium.Tests.csproj
 bun test pipeline/test
+bun run typecheck
 ```
 
 Expected: all green. The pipeline tests should not regress because the synthetic fixture has no diagnostics; if pipeline tests need updating to read the new artifact, do it as part of this task.

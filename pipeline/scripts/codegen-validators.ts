@@ -10,6 +10,7 @@ const targets = [
   { schema: "schemas/variant.schema.json", out: "pipeline/dist/validate-variant.mjs" },
   { schema: "schemas/manifest.schema.json", out: "pipeline/dist/validate-manifest.mjs" },
   { schema: "schemas/snapshot.schema.json", out: "pipeline/dist/validate-snapshot.mjs" },
+  { schema: "schemas/diagnostics.schema.json", out: "pipeline/dist/validate-diagnostics.mjs" },
   { schema: "schemas/digest.schema.json", out: "pipeline/dist/validate-digest.mjs" },
   {
     schema: "schemas/fixture-manifest.schema.json",

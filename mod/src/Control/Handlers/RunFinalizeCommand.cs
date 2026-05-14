@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
+using ArdenfallCompendium.Extraction;
 using HotRepl.Control;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -16,10 +17,12 @@ namespace ArdenfallCompendium.Control.Handlers;
 public sealed class RunFinalizeCommand : IControlCommandHandler
 {
     private readonly CompendiumRunManager _runs;
+    private readonly IItemExtractionCache _items;
 
-    public RunFinalizeCommand(CompendiumRunManager runs)
+    public RunFinalizeCommand(CompendiumRunManager runs, IItemExtractionCache items)
     {
         _runs = runs;
+        _items = items;
     }
 
     public ControlCommandDescriptor Descriptor { get; } = new(
@@ -45,11 +48,21 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition("chunksMissing", "No item chunks were exported."));
 
         var rows = new List<ItemSnapshotRow>();
+        var diagnosticTotals = new DiagnosticTotals();
+        var diagnostics = new List<JObject>();
         foreach (var chunk in Directory.GetFiles(chunksDir, "*.json").OrderBy(p => p))
         {
             var json = File.ReadAllText(chunk);
             var envelope = JsonConvert.DeserializeObject<ItemSnapshotEnvelope>(json, JsonSettings.Default);
-            if (envelope?.Rows != null) rows.AddRange(envelope.Rows);
+            if (envelope?.Rows == null) continue;
+            foreach (var row in envelope.Rows)
+            {
+                rows.Add(row);
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
+            }
         }
 
         var publishedDir = Path.Combine(run.OutputBaseDir, "snapshots", $"{run.GameVersion}-{run.RunId}");
@@ -63,11 +76,28 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         File.WriteAllText(itemsPath, itemsJson);
         var itemHash = ManifestBuilder.Sha256Hex(itemsJson);
 
+        foreach (var diagnostic in _items.GetWalkerDiagnostics(run))
+        {
+            AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+        }
+
+        var hashes = new Dictionary<string, string> { ["items.json"] = itemHash };
+        string? diagnosticsPath = null;
+        string? diagnosticsHash = null;
+        if (diagnostics.Count > 0)
+        {
+            var diagnosticsJson = JsonConvert.SerializeObject(diagnostics, JsonSettings.Default);
+            diagnosticsPath = Path.Combine(publishedDir, "diagnostics.json");
+            File.WriteAllText(diagnosticsPath, diagnosticsJson);
+            diagnosticsHash = ManifestBuilder.Sha256Hex(diagnosticsJson);
+            hashes["diagnostics.json"] = diagnosticsHash;
+        }
+
         var manifest = ManifestBuilder.Build(
             PreflightRunner.Run(),
             counts: new Dictionary<string, int> { ["item"] = rows.Count },
-            diagnostics: new DiagnosticTotals(),
-            contentHashes: new Dictionary<string, string> { ["items.json"] = itemHash },
+            diagnostics: diagnosticTotals,
+            contentHashes: hashes,
             extractorVersion: Plugin.Version,
             gameVersion: run.GameVersion,
             buildIdentifier: run.RunId);
@@ -86,9 +116,24 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             ["publishedDir"] = publishedDir,
             ["manifestPath"] = manifestPath,
         };
-        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(
-            result,
-            CompendiumCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash),
-            CompendiumCommandResults.FileArtifact("items", itemsPath, "application/json", itemHash)));
+        var artifacts = diagnosticsPath is null || diagnosticsHash is null
+            ? new[] { CompendiumCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash), CompendiumCommandResults.FileArtifact("items", itemsPath, "application/json", itemHash) }
+            : new[] { CompendiumCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash), CompendiumCommandResults.FileArtifact("items", itemsPath, "application/json", itemHash), CompendiumCommandResults.FileArtifact("diagnostics", diagnosticsPath, "application/json", diagnosticsHash) };
+        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(result, artifacts));
+    }
+
+    private static void AddDiagnostic(DiagnosticTotals totals, List<JObject> sink, string? rowId, Diagnostic diagnostic)
+    {
+        if (diagnostic.Severity == "fatal") totals.Fatal++;
+        else totals.Diagnostic++;
+
+        sink.Add(new JObject
+        {
+            ["rowId"] = rowId is null ? JValue.CreateNull() : rowId,
+            ["severity"] = diagnostic.Severity,
+            ["code"] = diagnostic.Code,
+            ["field"] = diagnostic.Field,
+            ["message"] = diagnostic.Message,
+        });
     }
 }

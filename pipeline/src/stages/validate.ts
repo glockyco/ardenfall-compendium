@@ -68,6 +68,18 @@ export const validate: Stage<ValidateInputs, ValidateOutput> = {
         }
       }
     }
+
+    for (const d of inputs["load-snapshot"].diagnostics) {
+      if (d.severity === "fatal") fatal++;
+      else diagnostic++;
+      errors.push({
+        entity: "snapshot",
+        row: d.rowId ?? undefined,
+        field: d.field,
+        code: d.code,
+        message: d.message ?? d.code,
+      });
+    }
     return { errors, countsBySeverity: { fatal, diagnostic } };
   },
 };

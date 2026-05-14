@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ardenfall-compendium.example/schemas/diagnostics.schema.json",
+  "title": "Snapshot diagnostics artifact",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["rowId", "severity", "code", "field"],
+    "properties": {
+      "rowId": { "type": ["string", "null"] },
+      "severity": { "enum": ["fatal", "diagnostic"] },
+      "code": { "type": "string" },
+      "field": { "type": "string" },
+      "message": { "type": "string" }
+    }
+  }
+}

@@ -1,12 +1,19 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import validateDiagnostics from "../../dist/validate-diagnostics.mjs";
 import validateManifest from "../../dist/validate-manifest.mjs";
 import validateSnapshot from "../../dist/validate-snapshot.mjs";
-import type { SnapshotEnvelope, SnapshotManifest, Stage } from "../types.ts";
+import type {
+  SnapshotDiagnosticArtifactEntry,
+  SnapshotEnvelope,
+  SnapshotManifest,
+  Stage,
+} from "../types.ts";
 
 export interface LoadSnapshotOutput {
   manifest: SnapshotManifest;
   envelopes: Record<string, SnapshotEnvelope>;
+  diagnostics: SnapshotDiagnosticArtifactEntry[];
 }
 
 export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
@@ -24,8 +31,10 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
     }
 
     const envelopes: Record<string, SnapshotEnvelope> = {};
+    const diagnosticsPath = join(dir, "diagnostics.json");
+    let diagnostics: SnapshotDiagnosticArtifactEntry[] = [];
     for (const fileName of readdirSync(dir)) {
-      if (fileName === "manifest.json") continue;
+      if (fileName === "manifest.json" || fileName === "diagnostics.json") continue;
       if (!fileName.endsWith(".json")) continue;
       const path = join(dir, fileName);
       const env = JSON.parse(readFileSync(path, "utf8")) as SnapshotEnvelope;
@@ -37,6 +46,18 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
       }
       envelopes[env.entityId] = env;
     }
-    return { manifest, envelopes };
+
+    if (readdirSync(dir).includes("diagnostics.json")) {
+      diagnostics = JSON.parse(
+        readFileSync(diagnosticsPath, "utf8"),
+      ) as SnapshotDiagnosticArtifactEntry[];
+      if (!validateDiagnostics(diagnostics)) {
+        const detail = (validateDiagnostics.errors ?? [])
+          .map((e) => `${diagnosticsPath}#${e.instancePath} — ${e.message}`)
+          .join("\n");
+        throw new Error(`invalid snapshot diagnostics at ${diagnosticsPath}:\n${detail}`);
+      }
+    }
+    return { manifest, envelopes, diagnostics };
   },
 };

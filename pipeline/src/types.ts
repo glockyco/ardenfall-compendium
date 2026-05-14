@@ -165,6 +165,10 @@ export interface SnapshotDiagnostic {
   message?: string;
 }
 
+export interface SnapshotDiagnosticArtifactEntry extends SnapshotDiagnostic {
+  rowId: string | null;
+}
+
 // Snapshot refs (canonical)
 
 export type SnapshotRef =

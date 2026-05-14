@@ -20,7 +20,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         Register(new Handlers.RunStatusCommand(runs));
         Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs, items));
-        Register(new Handlers.RunFinalizeCommand(runs));
+        Register(new Handlers.RunFinalizeCommand(runs, items));
         Register(new Handlers.RunDiscardCommand(runs));
         Register(new Handlers.GameQuitCommand());
     }

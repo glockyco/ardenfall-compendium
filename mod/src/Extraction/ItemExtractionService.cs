@@ -5,7 +5,7 @@ using ArdenfallCompendium.Entities.Item;
 
 namespace ArdenfallCompendium.Extraction;
 
-public sealed class ItemExtractionService
+public sealed class ItemExtractionService : IItemExtractionCache
 {
     private readonly IItemAssetSource _source;
     private readonly Dictionary<string, ExtractionState> _byRun = new();
