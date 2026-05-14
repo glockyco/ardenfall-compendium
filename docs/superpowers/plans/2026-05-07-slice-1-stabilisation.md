@@ -315,6 +315,8 @@ git commit -m "test(mod): bootstrap xunit test project for ArdenfallCompendium"
 
 **Phase A gate:** `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj` passes locally with `mod/libs/` populated. CI remains format-only for `mod/**`.
 
+Implementation note: the test project targets `net10.0` because this workstation has only the .NET 10 runtime installed. The smoke test links through `ArdenfallCompendium.Dtos.Manifest` rather than `Plugin` so local tests do not force UnityEngine native calls during assembly loading. `mod/scripts/copy-libs.sh` now copies `Sirenix.Serialization.Config.dll`, and `mod-tests/ArdenfallCompendium.Tests.csproj` copies the game references it needs into the test output.
+
 ### Phase B — Refactor for testability + cache rows on the run
 
 #### Task B.1 — Extract `ItemExtractionService`
@@ -354,6 +356,8 @@ public sealed class ItemExtractionServiceTests
 ```
 
 `CountingItemAssetSource` is a fake implementing the new `IItemAssetSource` interface; for this test it returns an empty enumerable but increments `WalkCount` on each enumeration.
+
+Implementation note: `CompendiumRun.GameVersion` now defaults to `"unknown"` instead of eagerly reading `UnityEngine.Application.version`; `RunBeginCommand` remains the runtime path that stamps the real sanitized game version. This keeps command/service tests executable outside Unity.
 
 - [ ] **Step 2: Add the `IItemAssetSource` seam.**
 

@@ -10,15 +10,27 @@ namespace ArdenfallCompendium.Entities.Item;
 
 public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
 {
+    private readonly IItemAssetSource _source;
+
+    public ItemExtractor()
+        : this(new BuiltLookupTableItemAssetSource())
+    {
+    }
+
+    public ItemExtractor(IItemAssetSource source)
+    {
+        _source = source;
+    }
+
     public override IEnumerable<ItemSnapshotRow> Walk()
     {
-        var lookup = BuiltLookupTable.Instance;
-        if (lookup == null) yield break;
-
-        foreach (var asset in BuiltLookupTable.GetAssetsOfType<ItemData>())
+        foreach (var asset in _source.EnumerateItems())
         {
             if (asset == null) continue;
             if (!MarkVisited(asset)) continue;
+
+            var lookup = BuiltLookupTable.Instance;
+            if (lookup == null) yield break;
 
             var guid = lookup.GetGuid(asset);
             if (guid is null || guid.Length == 0)

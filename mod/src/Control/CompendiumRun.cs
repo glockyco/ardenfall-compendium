@@ -5,7 +5,7 @@ namespace ArdenfallCompendium.Control;
 public sealed class CompendiumRun
 {
     public string RunId { get; set; } = "";
-    public string GameVersion { get; set; } = ArdenfallCompendium.Game.GameInfo.SnapshotVersionSegment;
+    public string GameVersion { get; set; } = "unknown";
     public string OutputBaseDir { get; set; } = "";
     public string WorkspaceDir { get; set; } = "";
     public string? PublishedDir { get; set; }
