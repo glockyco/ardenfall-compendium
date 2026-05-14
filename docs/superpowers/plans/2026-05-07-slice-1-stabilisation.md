@@ -1,14 +1,19 @@
 # Slice 1.5 — Stabilisation, Deployment, and Operational Hygiene
 
+> **For agentic workers:** REQUIRED SUB-SKILL: Use `skill://executing-plans` for inline execution or `skill://subagent-driven-development` for parallel task execution. Steps use checkbox (`- [ ]`) syntax for tracking.
+
 Date: 2026-05-07
-Status: Ready
+Updated: 2026-05-14 after implementation-state audit.
+Status: Ready after Phase 0 cleanup lands on `main`.
 Spec coverage: `docs/superpowers/specs/2026-05-07-investment-priorities.md` §3 (foundation hygiene before breadth); `docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md` §16 open question 1 (deployment).
 Predecessor: `docs/superpowers/plans/2026-05-03-item-walking-skeleton.md` (Slice 1, complete).
-Worktree branch (suggested): `slice/1.5-stabilisation` off `main`.
+Worktree branch: `slice/1.5-stabilisation` at `.worktrees/slice-1-5-stabilisation/`.
 
 ## Goal
 
 Close the loose ends from Slice 1 before Slice 2 multiplies their cost. Specifically:
+
+0. Merge the 2026-05-14 plan-hygiene cleanup and add a root `dev` script so operators do not accidentally use pnpm.
 
 1. Fix five identified defects in the HotRepl extraction path so manifest counts, walker work, and diagnostic context tell the truth.
 2. Add a real error route to the site so failures during data fetch or unknown ids surface with intent rather than a generic SvelteKit error shell.
@@ -27,6 +32,31 @@ This slice ships **no new entity coverage**, **no new presentation primitives** 
 - No FTS5 search or facets (Slice 10 owns that).
 - No deployment-time secrets management. Deployment is local/operator-driven through the operator's Wrangler auth context, matching the Ancient Kingdoms setup; GitHub Actions deploy credentials are not planned for Slice 1.5.
 - No deployment-time pivot beyond the Cloudflare adapter needed for `wrangler deploy`. The site remains an SPA shell (`ssr=false`, `prerender=false`); SSR and edge application logic are not planned.
+- No pnpm support. This repository is a Bun workspace; root scripts should make the Bun path obvious instead of adding a second package-manager contract.
+
+## Current observed implementation state
+
+Verified on `main` at `7f8177d` before this plan update:
+
+- Root branch `main` was clean and pushed to `origin`.
+- Cleanup branch `slice/1.5-stabilisation` contained seven doc/plan hygiene commits through `d177e11`; those commits were not yet on `main`.
+- `bun run typecheck` passed.
+- `bun test pipeline/test` passed: 20 tests, 123 expectations.
+- `bun test controller/test` passed: 13 tests, 30 expectations.
+- `bun run --cwd site check` passed: 816 files, 0 errors, 0 warnings.
+- `dotnet build mod/ArdenfallCompendium.csproj -c Debug` passed: 0 warnings, 0 errors.
+- `bun run pipeline:run fixtures/synthetic/snapshot site/static && bun run --cwd site build` passed with `@sveltejs/adapter-static`.
+
+Actual missing work on `main`:
+
+- Root `package.json` has no `dev` script; the supported site dev command is currently `bun run --cwd site dev`.
+- `mod/src/Control/Handlers/EntityPlanCommand.cs` still performs `new ItemExtractor().Walk().Count()`.
+- `mod/src/Control/Handlers/EntityExportBatchCommand.cs` still performs a full `new ItemExtractor().Walk().ToList()` per batch.
+- `mod/src/Control/Handlers/RunFinalizeCommand.cs` still passes an empty `new DiagnosticTotals()` to `ManifestBuilder.Build`.
+- There is no `mod-tests/` project on `main`.
+- `controller/src/export-orchestrator.ts` does not call `game.quit` and has no `waitForWorld` flow.
+- `site/src/routes/+error.svelte` does not exist.
+- `site/svelte.config.js` still uses `@sveltejs/adapter-static`; `site/wrangler.toml` does not exist.
 
 ## Bug inventory
 
@@ -81,7 +111,136 @@ The five defects this slice fixes, all in `mod/src/Control/Handlers/`:
 
 ## Phases
 
-Phases run sequentially because the bug fixes share refactor surface. Within a phase, tasks parallelise where indicated.
+Phases run sequentially through Phase C because the bug fixes share refactor surface. Phase 0 is operational cleanup that must land before implementation resumes. Within a phase, tasks parallelise where indicated.
+
+### Phase 0 — Plan hygiene and root developer command
+
+#### Task 0.1 — Merge the plan-hygiene cleanup branch to `main`
+
+**Files:**
+
+- Already modified on branch `slice/1.5-stabilisation`:
+  - `.github/workflows/ci.yml`
+  - `docs/superpowers/plans/2026-05-03-item-walking-skeleton.md`
+  - `docs/superpowers/plans/2026-05-07-slice-1-stabilisation.md`
+  - `docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md`
+  - `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md`
+  - `docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`
+  - `mod/AGENTS.md`
+  - `mod/src/Plugin.cs`
+  - `mod/src/Triggers/ConsoleCommand.cs`
+
+- [ ] **Step 1: Verify branch relationship**
+
+Run from repository root:
+
+```sh
+git status --short --branch
+git log --oneline main..slice/1.5-stabilisation
+```
+
+Expected: `main` is clean, and the branch log contains the cleanup commits ending at `d177e11 docs(specs): close resolved baseline questions`.
+
+- [ ] **Step 2: Fast-forward `main`**
+
+Run from repository root:
+
+```sh
+git switch main
+git merge --ff-only slice/1.5-stabilisation
+```
+
+Expected: `main` advances to `d177e11`; no merge commit is created.
+
+- [ ] **Step 3: Verify cleanup build safety**
+
+Run:
+
+```sh
+bun run format:check
+dotnet build mod/ArdenfallCompendium.csproj -c Debug
+```
+
+Expected: format check passes, and the mod build exits with `0 Warning(s)` and `0 Error(s)`. The build proves deleting `mod/src/Triggers/ConsoleCommand.cs` left no dangling C# references.
+
+- [ ] **Step 4: Push**
+
+Run:
+
+```sh
+git push origin main
+```
+
+Expected: pre-push typecheck and tests pass; `origin/main` advances to `d177e11`.
+
+#### Task 0.2 — Add a root `dev` script for the SvelteKit site
+
+**Files:**
+
+- Modify: `package.json`
+
+- [ ] **Step 1: Verify the current root command fails for the right reason**
+
+Run:
+
+```sh
+bun run dev -- --help
+```
+
+Expected before implementation: Bun reports that script `dev` is not found at the workspace root. This captures the operator-facing gap without introducing pnpm support.
+
+- [ ] **Step 2: Add the root script**
+
+Modify the root `package.json` `scripts` block to include `dev`:
+
+```json
+{
+  "scripts": {
+    "dev": "bun run --cwd site dev",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "bunx tsgo --noEmit -p .",
+    "codegen:validators": "bun run pipeline/scripts/codegen-validators.ts",
+    "check:fixtures": "bun run pipeline/scripts/check-fixtures.ts",
+    "pipeline:run": "bun run pipeline/src/cli.ts run",
+    "controller:deploy": "bun run controller/src/deploy.ts",
+    "controller:export": "bun run controller/src/cli.ts export",
+    "controller:test": "bun test controller/test"
+  }
+}
+```
+
+Do not add `pnpm-workspace.yaml`; Bun remains the single package-manager contract.
+
+- [ ] **Step 3: Verify the root command reaches Vite**
+
+Run:
+
+```sh
+bun run dev -- --help
+```
+
+Expected after implementation: Vite prints its help text and exits successfully.
+
+- [ ] **Step 4: Verify package JSON formatting**
+
+Run:
+
+```sh
+bun run format:check package.json
+```
+
+Expected: Prettier reports `All matched files use Prettier code style!`.
+
+- [ ] **Step 5: Commit**
+
+```sh
+git add package.json
+git commit -m "chore(repo): add root site dev script"
+```
+
+**Phase 0 gate:** `main` contains the plan-hygiene cleanup commits, `mod/src/Triggers/ConsoleCommand.cs` is gone, `bun run dev -- --help` reaches Vite, and `dotnet build mod/ArdenfallCompendium.csproj -c Debug` exits 0/0/0.
 
 ### Phase A — C# test project foundation
 
@@ -590,6 +749,8 @@ Rationale:
 
 | Deliverable                            | Task     |
 | -------------------------------------- | -------- |
+| Plan-hygiene cleanup merged to `main`  | 0.1      |
+| Root Bun `dev` script                  | 0.2      |
 | C# test project foundation             | A.1      |
 | `ItemExtractionService` cache          | B.1      |
 | `entity.plan` reads cached count       | B.2      |
@@ -619,7 +780,7 @@ Rationale:
 
 ### Placeholder scan
 
-No `TODO`, `TBD`, "implement later" appear in implementation steps. The two genuine deferrals are explicit: real-fixture curation (Slice 2 trigger), and the `compendium.continueFromMenu` typed command (a fallback in Phase F if runtime-eval proves flaky in practice).
+No placeholder markers appear in implementation steps. The genuine deferrals are explicit: real-fixture curation (Slice 2 trigger), and the `compendium.continueFromMenu` typed command (a fallback in Phase F if runtime-eval proves flaky in practice).
 
 ### Type / signature consistency
 
@@ -635,9 +796,13 @@ No `TODO`, `TBD`, "implement later" appear in implementation steps. The two genu
 
 ### Execution handoff
 
-Plan complete. Two execution options:
+Plan complete. Execute in this order:
 
-1. **Subagent-driven** — dispatch a fresh subagent per task; review between tasks; fast iteration. Best fit for this slice.
-2. **Inline execution** — execute tasks in this session using `skill://superpowers:executing-plans`; batch execution with checkpoints.
+1. **Phase 0 inline on `main`** — merge the cleanup branch and add the root `dev` script.
+2. **Phases A → C** — execute sequentially because they share refactor surface and tests.
+3. **Phases D → G** — parallelise across separate agents only after Phase C is green.
 
-Phases A → B → C are sequential because they share refactor surface; Phases D, E, F, G can parallelise across separate subagents once Phase C is in.
+Two execution options for Phases A onward:
+
+1. **Subagent-driven** — dispatch a fresh subagent per task, review between tasks, fast iteration. Best fit after Phase C dependencies are clear.
+2. **Inline execution** — execute tasks in this session using `skill://executing-plans`, batch execution with checkpoints.
