@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "bun:test";
@@ -39,6 +39,30 @@ describe("deployPlugins", () => {
     await expect(readFile(join(plugins, "HotRepl", "HotRepl.BepInEx.dll"), "utf8")).resolves.toBe(
       "hotrepl",
     );
+  });
+
+  it("removes the stale pre-rename ArdenfallArchives plugin directory", async () => {
+    const root = await mkdtemp(join(tmpdir(), "ardenfall-deploy-"));
+    roots.push(root);
+    const hotrepl = join(root, "hotrepl");
+    const mod = join(root, "mod");
+    const plugins = join(root, "plugins");
+    await mkdir(hotrepl, { recursive: true });
+    await mkdir(mod, { recursive: true });
+    await mkdir(join(plugins, "ArdenfallArchives"), { recursive: true });
+    await writeFile(join(hotrepl, "HotRepl.BepInEx.dll"), "hotrepl");
+    await writeFile(join(hotrepl, "HotRepl.Core.dll"), "core");
+    await writeFile(join(hotrepl, "mcs.dll"), "mcs");
+    await writeFile(join(mod, "ArdenfallCompendium.dll"), "compendium");
+    await writeFile(join(plugins, "ArdenfallArchives", "ArdenfallArchives.dll"), "archive");
+
+    await deployPlugins({
+      hotReplOutDir: hotrepl,
+      ardenfallModOutDir: mod,
+      pluginsDir: plugins,
+    });
+
+    await expect(stat(join(plugins, "ArdenfallArchives"))).rejects.toThrow();
   });
 
   it("writes HotRepl BepInEx bind and auth config when requested", async () => {

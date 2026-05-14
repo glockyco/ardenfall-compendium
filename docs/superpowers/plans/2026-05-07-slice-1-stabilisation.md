@@ -632,6 +632,7 @@ git commit -m "feat(controller): invoke game.quit after export success or failur
 - Modify: `mod/ArdenfallCompendium.csproj`
 - Modify: `mod/scripts/copy-libs.sh`
 
+- Modify: `controller/src/deploy.ts` and `controller/test/deploy.test.ts` (live smoke found the pre-rename `ArdenfallArchives` runtime plugin directory still present in the CrossOver bottle; deploy now removes that obsolete plugin directory before copying current DLLs)
 - [ ] **Step 1: Identify the automation target.** The controller cannot use the eval REPL through `HotReplClient`'s typed-control surface, and typed commands are the supported automation API. Implement the robust path directly: a `compendium.continueFromMenu` command finds an active interactable `UnityEngine.UI.Button` whose name or child `Text` contains "continue" and invokes `onClick`.
 
   The helper exposes:
@@ -648,7 +649,7 @@ git commit -m "feat(controller): invoke game.quit after export success or failur
 
 - [ ] **Step 2: Write the failing tests.** Mock the HotRepl client; assert the helper polls preflight, sends `compendium.continueFromMenu` on first failure, and returns when preflight passes. Add an export-orchestrator test proving `waitForWorld: true` runs before `run.begin`.
 
-- [ ] **Step 3: Implement.** Add `controller/src/wait-for-world.ts`, wire `exportCompendium({ waitForWorld: true })`, and make `controller:export` default to waiting for live runs with `--no-wait-for-world` as the unit-test/manual override.
+- [ ] **Step 3: Implement.** Add `controller/src/wait-for-world.ts`, wire `exportCompendium({ waitForWorld: true })`, and make `controller:export` default to waiting for live runs with `--no-wait-for-world` as the unit-test/manual override. Retry `compendium.continueFromMenu` while preflight remains not-ready because a freshly launched game can accept HotRepl connections before the menu's Continue button exists.
 
 - [ ] **Step 5: Run + live-verify.**
 
@@ -662,6 +663,8 @@ bun run controller:export …
 ```
 
 Expected: live run succeeds without a human click on `Continue`.
+
+Live smoke note: initial live attempt exposed two runtime hygiene issues not visible in unit tests. First, the CrossOver bottle still had the obsolete `BepInEx/plugins/ArdenfallArchives` directory, causing the old plugin to load alongside `ArdenfallCompendium`; `controller:deploy` now removes that directory. Second, HotRepl can accept connections before the menu Continue button exists, so `waitForWorld` now retries `compendium.continueFromMenu` until preflight passes or the timeout expires. Verified live on 2026-05-14: fresh CrossOver launch, `waitForWorld` completed, nine item batches exported, snapshot `snapshots/snapshots/0.0.10.91-20260514-0630464614460` published with `counts.item = 899`, `diagnostics = { fatal: 0, diagnostic: 1273 }`, `pipeline/dist/data.sqlite` written at 1,482,752 bytes, and `game.quit` closed HotRepl port 18590.
 
 - [ ] **Step 6: Commit.**
 

@@ -15,20 +15,21 @@ export async function waitForWorld(
 ): Promise<void> {
   const pollIntervalMs = options.pollIntervalMs ?? 1_000;
   const deadline = Date.now() + options.timeoutMs;
-  let lastReason: string;
-
-  const first = await client.call("compendium.preflight", {});
-  if (first.result.ready === true) return;
-  lastReason = formatPreflightFailure(first.result);
-
-  await client.call("compendium.continueFromMenu", {});
+  let lastReason = "compendium.preflight is not ready";
 
   for (;;) {
     if (Date.now() > deadline) throw new Error(`Timed out waiting for world: ${lastReason}`);
-    if (pollIntervalMs > 0) await Bun.sleep(pollIntervalMs);
+
     const preflight = await client.call("compendium.preflight", {});
     if (preflight.result.ready === true) return;
     lastReason = formatPreflightFailure(preflight.result);
+
+    const continueResult = await client.call("compendium.continueFromMenu", {});
+    if (continueResult.diagnostics.length > 0) {
+      lastReason = continueResult.diagnostics.map((diagnostic) => diagnostic.message).join("; ");
+    }
+
+    if (pollIntervalMs > 0) await Bun.sleep(pollIntervalMs);
   }
 }
 
