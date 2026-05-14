@@ -2,7 +2,7 @@ pre-commit:
   parallel: true
   jobs:
     - name: prettier
-      glob: "*.{ts,js,svelte,json,jsonc,md,css,yaml,yml}"
+      glob: "*.{ts,js,mjs,svelte,json,jsonc,md,css,yaml,yml}"
       run: bunx prettier --write {staged_files}
       stage_fixed: true
     - name: eslint
