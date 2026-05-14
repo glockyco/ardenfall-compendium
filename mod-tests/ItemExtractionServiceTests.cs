@@ -1,7 +1,4 @@
-using System.Collections.Generic;
-using Ardenfall.Item;
 using ArdenfallCompendium.Control;
-using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Extraction;
 using Xunit;
 
@@ -21,16 +18,5 @@ public sealed class ItemExtractionServiceTests
 
         Assert.Same(first, second);
         Assert.Equal(1, source.WalkCount);
-    }
-
-    private sealed class CountingItemAssetSource : IItemAssetSource
-    {
-        public int WalkCount { get; private set; }
-
-        public IEnumerable<ItemData> EnumerateItems()
-        {
-            WalkCount++;
-            yield break;
-        }
     }
 }

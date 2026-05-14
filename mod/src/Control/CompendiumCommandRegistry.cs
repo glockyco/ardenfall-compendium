@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using HotRepl.Control;
+using ArdenfallCompendium.Entities.Item;
+using ArdenfallCompendium.Extraction;
 
 namespace ArdenfallCompendium.Control;
 
@@ -10,11 +12,13 @@ public sealed class CompendiumCommandRegistry : IDisposable
 
     public CompendiumCommandRegistry(CompendiumRunManager runs, string outputBaseDir)
     {
+        var items = new ItemExtractionService(new BuiltLookupTableItemAssetSource());
+
         Register(new Handlers.CompendiumInfoCommand());
         Register(new Handlers.CompendiumPreflightCommand());
         Register(new Handlers.RunBeginCommand(runs, outputBaseDir));
         Register(new Handlers.RunStatusCommand(runs));
-        Register(new Handlers.EntityPlanCommand());
+        Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs));
         Register(new Handlers.RunFinalizeCommand(runs));
         Register(new Handlers.RunDiscardCommand(runs));
