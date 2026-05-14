@@ -103,21 +103,26 @@ This set proves the variant model with one deep inheritance branch (`MeleeItemDa
 
 ### Slice 2 — Item subtype enrichment
 
-**Status:** planned; next active planning target after this docs hygiene pass.
+**Status:** ready
+**Plan:** `docs/superpowers/plans/2026-05-14-item-subtype-enrichment.md`
 **Spec coverage:** implementation addendum §9–§11, §16; investment-priorities §1 (item depth first).
 
-**Delivers:** broadens variant coverage to all `ItemData` subclasses Ardenfall exposes. The concrete set is enumerated by feeding the live mod once and reading the `itemSubtypeUnsupported` diagnostics, then turning each into a variant descriptor + adapter. Likely set:
+**Delivers:** broadens variant coverage to every concrete `ItemData` subclass in the current Ardenfall assembly, using live diagnostics plus reflection to avoid both skipped rows and ancestor-only collapse. The live Slice 1.5 snapshot reported 374 unsupported subtype diagnostics: `ItemData` 254, `NoteItemData` 65, `ConsumableItemData` 46, `CurrencyItemData` 4, `LockpickItemData` 2, `PotionRecipeItemData` 2, and `RepairKitItemData` 1. Assembly reflection also identified leaf subclasses currently hidden behind ancestor checks: `ArrowItemData`, `BowItemData`, `SlateSpellItemData`, `ThrowingItemData`, and `ThrowingPotionData`.
 
-- `item_bows`
+Planned canonical tables:
+
+- `item_basic`
+- `item_currency`
+- `item_lockpicks`
 - `item_consumables`
-- `item_throwing_items`
-- `item_throwing_potions`
-- `item_slate_spells`
 - `item_notes`
 - `item_potion_recipes`
 - `item_repair_kits`
 - `item_arrows`
-- any additional `ItemData` subclasses found during full enumeration.
+- `item_bows`
+- `item_slate_spells`
+- `item_throwing_items`
+- `item_throwing_potions`
 
 **Trigger for breakdown:** if a subtype touches spells, notes/books, potion/status effects, or other domains deeply, it becomes its own plan (e.g. `item_slate_spells` may need a forward reference to the Slice 11 spell data; the plan resolves it as a typed JSON leaf for now and revisits when spells land).
 
