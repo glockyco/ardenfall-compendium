@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "bun run sync:data && vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "smoke:error-route": "bun run scripts/smoke-error-route.mjs",
-    "cf-deploy": "wrangler deploy"
+    "sync:data": "bun run scripts/sync-data-sqlite.mjs",
+    "cf-deploy": "bun run build && wrangler deploy"
   },
   "dependencies": {
     "@sqlite.org/sqlite-wasm": "^3.53.0-build1"
