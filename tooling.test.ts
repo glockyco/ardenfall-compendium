@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import { syncDataSqlite } from "./site/scripts/sync-data-sqlite.mjs";
 const gitignore = readFileSync(".gitignore", "utf8");
 const lefthook = readFileSync("lefthook.yml", "utf8");
+const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
 const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
   scripts: Record<string, string>;
 };
@@ -23,6 +24,15 @@ describe("format tooling", () => {
   it("ignores generated mod test build output", () => {
     expect(prettierIgnore).toContain("mod-tests/bin/");
     expect(prettierIgnore).toContain("mod-tests/obj/");
+  });
+});
+
+describe("ci site build tooling", () => {
+  it("builds the CI SQLite output where the site build sync expects it", () => {
+    expect(ciWorkflow).toContain("bun run pipeline:run fixtures/synthetic/snapshot pipeline/dist");
+    expect(ciWorkflow).not.toContain(
+      "bun run pipeline:run fixtures/synthetic/snapshot site/static",
+    );
   });
 });
 

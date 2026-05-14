@@ -59,7 +59,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run codegen:validators
       - name: build synthetic sqlite for static prerender
-        run: bun run pipeline:run fixtures/synthetic/snapshot site/static
+        run: bun run pipeline:run fixtures/synthetic/snapshot pipeline/dist
       - run: bun run --cwd site check
       - run: bun run --cwd site build
 
