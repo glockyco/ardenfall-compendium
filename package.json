@@ -11,6 +11,7 @@
     "controller"
   ],
   "scripts": {
+    "dev": "bun run --cwd site dev",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
