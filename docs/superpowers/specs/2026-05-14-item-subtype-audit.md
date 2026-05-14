@@ -272,16 +272,14 @@ Defer these even when they appear on item classes:
 
 ## Plan deltas applied
 
-Not applied yet by instruction. This audit intentionally stops before reconciling `docs/superpowers/plans/2026-05-14-item-subtype-enrichment.md`.
+Applied during plan reconciliation after user review:
 
-Required plan deltas before implementation:
-
-1. Replace `category:string` with `categoryRef:ref:asset` or explicitly defer category.
-2. Treat `itemAIBehavior` as an asset reference or deferral, not a string.
-3. Add `StackMode` structured DTO fields `{ type, addLevel, maxLevel }`.
-4. Ensure classifier coverage includes `ThrowingPotionData`, even though it does not end with `ItemData`.
-5. Ensure name extraction uses behavior-derived names for potion recipes, throwing potions, and slate spell items.
-6. Mark full-project decompilation as best-effort in the script/plan if needed; targeted item decompilation is the authoritative audit corpus.
+1. Replaced `category:string` with `categoryRef:ref:asset` in the active implementation plan.
+2. Removed `itemAIBehavior:string` from Slice 2 descriptor fields and deferred behavior assets.
+3. Added `StackMode` structured DTO fields `{ type, addLevel, maxLevel }` to helper DTO planning.
+4. Required classifier coverage for `ThrowingPotionData`, even though it does not end with `ItemData`.
+5. Required behavior-derived names for potion recipes, throwing potions, and slate spell items.
+6. Recorded full-project decompilation as best-effort in tooling; targeted item decompilation remains the authoritative audit corpus.
 
 ## Implementation acceptance criteria
 

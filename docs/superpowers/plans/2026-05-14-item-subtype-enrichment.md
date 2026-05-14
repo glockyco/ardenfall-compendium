@@ -28,20 +28,24 @@ Unsupported diagnostics in the live snapshot:
 | `PotionRecipeItemData` |     2 |
 | `RepairKitItemData`    |     1 |
 
-The implementation plan below contains draft subtype and field hypotheses. They are not authoritative until Task 1 completes a decompilation-first audit of the actual game implementation and reconciles it with live runtime data. Success for the implementation slice means a fresh live smoke has zero `itemSubtypeUnsupported` diagnostics and recovers both currently skipped unsupported items and currently collapsed leaf subtypes.
+The decompilation-first audit is complete and committed as `docs/superpowers/specs/2026-05-14-item-subtype-audit.md` in `8dc97f6 chore(items): add decompilation audit tooling`. The implementation plan below is reconciled to that audit. Success for the implementation slice means a fresh live smoke has zero current-code `itemSubtypeUnsupported` diagnostics and recovers both currently skipped unsupported items and currently collapsed leaf subtypes.
 
 ## Audit-first gate
 
-Task 1 is mandatory before any subtype implementation. It must inspect both sources of truth:
+The audit inspected both sources of truth:
 
 1. **Actual game implementation:** decompiled `mod/libs/Assembly-CSharp.dll` C#/IL. Runtime reflection is forbidden as the source of truth for the audit.
-2. **Runtime data:** the latest live `diagnostics.json` and `items.json`, regenerated with current runtime code when possible so diagnostic codes and counts reflect `ItemDiagnosticCodes.UnsupportedSubtype`.
+2. **Runtime data:** `snapshots/snapshots/0.0.10.91-20260514-0632448862090/diagnostics.json` and `items.json`.
 
-The audit must produce `docs/superpowers/specs/2026-05-14-item-subtype-audit.md` and then reconcile this plan before Task 2. If the audit contradicts any field set, table, type order, or DTO shape below, update this plan in the same commit as the audit before writing extraction code. Do not implement guessed fields just because they appear in this draft.
+The committed audit found several plan-critical facts now reflected below:
+
+- `ThrowingPotionData` is a concrete item leaf even though its name does not end in `ItemData`; suffix-only discovery is invalid.
+- `ItemData.category` is `Parameter<ItemCategory>` and must be represented as `categoryRef:ref:asset` or explicitly deferred, never as `category:string`.
+- `itemAIBehavior` fields are behavior asset references or deferrals, never strings. This Slice 2 plan defers them because no current query or presentation need justifies exposing behavior assets before the asset/presentation slices.
+- `LeveledStatusEffect.StackMode` is a structured payload `{ type, addLevel, maxLevel }`.
+- Public item names must use game behavior (`GetItemName()` and related getters/properties) where subclasses override raw fields.
 
 Raw decompiled sources and IL are not our code and must not be committed, pasted into docs as method/class bodies, or wired into the public repo through a submodule/subtree. The default storage model is a repo-local `.decompiled/` cache that is gitignored and explicitly verified before commits. A private raw-source repo is allowed only as a last-resort collaboration cache for trusted contributors; it must not be referenced from this public repo or CI. Committed audit notes may contain hashes, commands, identifiers, transformed behavior summaries, field inventories, DTO decisions, and runtime-backed conclusions.
-
-Tasks 2–7 are provisional implementation scaffolding. They must be regenerated or corrected from the committed audit matrix before coding if the audit changes any detail.
 
 ## Scope boundaries
 
@@ -62,10 +66,15 @@ Excluded:
 
 ## File structure
 
-Create:
+Already completed by the audit/tooling commit:
 
-- `docs/superpowers/specs/2026-05-14-item-subtype-audit.md`
-- `scripts/decompile-ardenfall.mjs`
+- `.gitignore` — ignores the repo-local decompilation cache.
+- `package.json` — exposes `bun run decompile:game`.
+- `scripts/decompile-ardenfall.mjs` — reproducible local decompilation command planner/runner.
+- `docs/superpowers/specs/2026-05-14-item-subtype-audit.md` — committed transformed audit findings, no raw decompiled source.
+- `tooling.test.ts` — regression coverage for decompilation safety and command planning.
+
+Create during implementation:
 
 - `entities/item/variants/basic.json`
 - `entities/item/variants/currency.json`
@@ -94,35 +103,36 @@ Create:
 - `mod-tests/ItemVariantClassifierTests.cs`
 - `pipeline/test/item-subtypes.test.ts`
 
-Modify:
-
-- `.gitignore` — ignore the repo-local decompilation cache.
-- `package.json` — add a Bun script for reproducible local decompilation.
+Modify during implementation:
 
 - `schemas/variant.schema.json` — allow marker variants with zero variant-specific fields.
-- `entities/item/entity.json` — add common `ItemData` fields and detail metadata.
+- `entities/item/entity.json` — add common `ItemData` fields and switch public item name extraction to `GetItemName()`.
 - `mod/src/Entities/Item/ItemExtractor.cs` — delegate variant selection and layer extraction to `ItemVariantClassifier`.
-- `mod/src/Entities/Item/Adapters/ExtractItem.cs` — emit common fields added to the root descriptor.
+- `mod/src/Entities/Item/Adapters/ExtractItem.cs` — emit common fields added to the root descriptor and behavior-derived `name`.
 - `pipeline/test/invariants/items.test.ts` — assert descriptor/table coverage for new variants.
 - `pipeline/test/read-models.test.ts` — assert detail JSON includes a new subtype field.
-- `docs/superpowers/roadmap.md` — mark Slice 2 as in-progress during execution and done after live smoke passes.
+- `docs/superpowers/roadmap.md` — record audit reconciliation now; mark Slice 2 done only after live smoke passes.
 
 ---
 
-### Task 1: Decompilation setup and item subtype audit
+### Task 1: Completed decompilation setup, audit, and reconciliation gate
 
-**Files:**
+**Files completed in `8dc97f6 chore(items): add decompilation audit tooling`:**
 
-- Create: `scripts/decompile-ardenfall.mjs`
-- Create: `docs/superpowers/specs/2026-05-14-item-subtype-audit.md`
-- Modify: `.gitignore`
-- Modify: `package.json`
+- Created: `scripts/decompile-ardenfall.mjs`
+- Created: `docs/superpowers/specs/2026-05-14-item-subtype-audit.md`
+- Modified: `.gitignore`
+- Modified: `package.json`
+- Added/modified: `tooling.test.ts`
+
+**Files completed by this reconciliation task:**
+
 - Modify: `docs/superpowers/plans/2026-05-14-item-subtype-enrichment.md`
 - Modify: `docs/superpowers/roadmap.md`
 
-- [ ] **Step 1: Add repo safety guards**
+- [x] **Step 1: Add repo safety guards**
 
-Add this ignore to `.gitignore`:
+`.gitignore` contains:
 
 ```gitignore
 # Decompiled third-party game sources (local analysis only; never committed)
@@ -131,44 +141,19 @@ Add this ignore to `.gitignore`:
 
 Do not add a `.gitmodules` entry or any submodule/subtree for decompiled sources.
 
-- [ ] **Step 2: Add reproducible decompile script**
+- [x] **Step 2: Add reproducible decompile script**
 
-Create `scripts/decompile-ardenfall.mjs`. The script must:
-
-- accept `--assembly`, `--game-version`, and optional `--out-root`;
-- default `--assembly` to `mod/libs/Assembly-CSharp.dll`;
-- default `--out-root` to `.decompiled`;
-- compute the assembly SHA-256 using `Bun.CryptoHasher`;
-- write output under `<out-root>/<gameVersion>-<sha12>/`;
-- refuse to write outside `.decompiled/` unless `--allow-external-output` is passed;
-- refuse to write inside the git worktree unless `git check-ignore` confirms the output directory is ignored;
-- run `ilspycmd --disable-updatecheck --nested-directories -p -r mod/libs -o <out>/csharp <assembly>`;
-- run `ilspycmd --disable-updatecheck -l c <assembly>` and write stdout to `<out>/meta/classes.txt`;
-- run targeted `ilspycmd --disable-updatecheck -t <type> <assembly>` for every item and nested payload type named in Step 5;
-- run targeted `ilspycmd --disable-updatecheck --ilcode -t <type> <assembly>` for behavior-sensitive types;
-- run `ikdasm <assembly> -out=<out>/il/Assembly-CSharp.il` only when `--full-il` is passed, because full IL dumps are local-only and must remain ignored;
-- write `<out>/meta/manifest.json` containing assembly path, game version, SHA-256, tool commands, tool exit codes, and timestamp.
-
-Add this root script to `package.json`:
+`scripts/decompile-ardenfall.mjs` exists and the root `package.json` exposes:
 
 ```json
 "decompile:game": "bun run scripts/decompile-ardenfall.mjs"
 ```
 
-- [ ] **Step 3: Install decompiler tooling locally**
+The script writes repo-local output under `.decompiled/<gameVersion>-<sha12>/`, verifies ignored output with `git check-ignore`, emits targeted C#/IL files for audited types, and records command metadata in `meta/manifest.json`.
 
-Run:
+- [x] **Step 3: Generate local decompiled sources**
 
-```sh
-mkdir -p "$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd"
-dotnet tool update --tool-path "$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd" ilspycmd --version 10.0.1.8346
-```
-
-Expected: exits 0 and makes `$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd/ilspycmd` available.
-
-- [ ] **Step 4: Generate local decompiled sources**
-
-Run:
+Observed command:
 
 ```sh
 PATH="$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd:$PATH" \
@@ -177,88 +162,50 @@ PATH="$HOME/.local/share/ardenfall-compendium/decompile-tools/ilspycmd:$PATH" \
   --game-version 0.0.10.91
 ```
 
-Expected: exits 0, writes under `.decompiled/0.0.10.91-<sha12>/`, and `git check-ignore .decompiled/0.0.10.91-<sha12>/` confirms the output is ignored.
+Observed output:
 
-- [ ] **Step 5: Audit game implementation from decompiled sources**
-
-Inspect the decompiled output, not reflection. The audit must cover:
-
-- concrete item inheritance for `ItemData`, `EquipItemData`, `HandItemData`, `PrimaryHandItemData`, `MeleeItemData`, `ArmorItemData`, `ArrowItemData`, `BowItemData`, `SlateSpellItemData`, `ThrowingItemData`, `ThrowingPotionData`, `ConsumableItemData`, `CurrencyItemData`, `LockpickItemData`, `NoteItemData`, `PotionRecipeItemData`, and `RepairKitItemData`;
-- root `ItemData` declared fields and whether each is included, represented as `ref:asset`, represented as compact JSON, or deferred;
-- subtype declared fields and inherited ancestry;
-- behavior-sensitive methods/getters: `ThrowingPotionData.VisualLevel`, `ThrowingPotionData.GetEffectName()`, `ThrowingPotionData.GetItemName()`, `PotionRecipe.RecipeName`, `PotionRecipeItemData.GetItemName()`, and `LeveledSpellData.GetSecondaryLevel()`;
-- nested payloads: `LeveledStatusEffect`, `StatusEffectData.StackMode`, `ProjectileSettings`, `NoteItem.NoteContents`, `NoteItem.NoteSection`, `PotionRecipe`, `RecipeItem`, `LeveledSpellData`, and `SpellData.SubSpellData`.
-
-- [ ] **Step 6: Audit runtime evidence**
-
-Use the latest live snapshot artifacts. If a fresh export with current code is available, prefer it. Otherwise use `snapshots/snapshots/0.0.10.91-20260514-0632448862090/` and explicitly record that it predates the diagnostic-code rename.
-
-Record:
-
-- unsupported subtype counts, mapping legacy `itemSubtypeUnsupportedInSlice1` to current `itemSubtypeUnsupported` only in the written analysis;
-- current emitted row count and variant counts;
-- representative skipped item ids from unsupported diagnostics;
-- known collapsed samples in `items.json` such as `BASE Arrow`, `BASE BOW`, `Base Throwing`, and `Throwing Potion of {lvl} {name}`;
-- expected post-implementation acceptance: item count increases above the audited baseline, collapsed samples move to leaf variants, and `itemSubtypeUnsupported` count is zero.
-
-- [ ] **Step 7: Write the committed audit artifact**
-
-Create `docs/superpowers/specs/2026-05-14-item-subtype-audit.md` with these sections:
-
-```markdown
-# Item Subtype Audit
-
-## Sources and hashes
-
-## Decompiler setup
-
-## Concrete subtype inventory
-
-## Runtime evidence
-
-## Root ItemData field decisions
-
-## Per-variant field matrix
-
-## Nested DTO contracts
-
-## Behavior-derived extraction rules
-
-## Deferrals
-
-## Plan deltas applied
-
-## Implementation acceptance criteria
+```text
+.decompiled/0.0.10.91-63c576261184/
+sha256 63c57626118485d98c8f78614fe77f14723ad57e663c4055b8989a8cb82147c3
 ```
 
-The audit must summarize behavior and field decisions in authored prose/tables. Do not paste decompiled method bodies, full class bodies, full IL dumps, or large string tables.
+`git check-ignore .decompiled/0.0.10.91-63c576261184` confirmed the generated source cache is ignored.
 
-- [ ] **Step 8: Reconcile the active plan before implementation**
+- [x] **Step 4: Audit game implementation from decompiled sources**
 
-Update this plan and `docs/superpowers/roadmap.md` in the same commit as the audit if the audit changes any variant id, canonical table, field name/type, DTO contract, classifier order, or slice boundary. Known draft assumptions that must be checked and corrected if needed:
+The committed audit covers:
 
-- `category` is likely an asset reference, not a string field.
-- `itemAIBehavior` is likely an asset reference or deferral, not a string field.
-- `LeveledStatusEffect.StackMode` likely needs a structured DTO decision.
-- Behavior-derived values from `ThrowingPotionData`, `PotionRecipe`, and `LeveledSpellData` must not be reduced to raw field reads when methods encode semantics.
+- every concrete item asset type found in the audited assembly, including `ThrowingPotionData`;
+- related helper types that are not item assets (`CountedItemData`, `WeightedItemData`, `BaseWeightedItemData`);
+- root `ItemData` field decisions;
+- subtype field and ancestry decisions;
+- behavior-sensitive methods/getters;
+- nested payload contracts for status effects, projectile settings, notes, recipes, and spell references.
 
-- [ ] **Step 9: Verify no raw decompiled output is staged**
+- [x] **Step 5: Audit runtime evidence**
 
-Run:
+The audit records the live Slice 1.5 baseline: 899 emitted items, 374 legacy unsupported-subtype diagnostics, and known collapsed leaf samples (`BASE Arrow`, `BASE BOW`, `Base Throwing`, throwing potion template).
+
+- [x] **Step 6: Reconcile the active plan before implementation**
+
+This plan now treats the audit as authoritative. Reconciled deltas:
+
+- `category:string` was replaced by `categoryRef:ref:asset`.
+- `itemAIBehavior:string` was removed from Slice 2 descriptor fields and deferred.
+- `LeveledStatusEffect.StackMode` uses structured DTO fields `{ type, addLevel, maxLevel }`.
+- `ThrowingPotionData` is explicitly covered as a concrete classifier leaf despite lacking the `ItemData` suffix.
+- behavior-derived names are required for public `name`, potion recipe names, throwing potion effect/item names, slate spell item names, and secondary spell levels.
+
+- [x] **Step 7: Verify no raw decompiled output is staged**
+
+Before any Slice 2 implementation commit, re-run:
 
 ```sh
-git status --short --ignored
+git status --short --ignored .decompiled/0.0.10.91-63c576261184
 git diff --cached --name-only
 ```
 
-Expected: staged files are limited to authored repo files such as `.gitignore`, `package.json`, the decompile script, the audit doc, this plan, and roadmap updates. `git status --ignored` may show `.decompiled/` as ignored; that is expected. No decompiled C#/IL output, DLLs, snapshots, SQLite databases, `.gitmodules`, or generated local caches are staged.
-
-- [ ] **Step 10: Commit audit setup and plan reconciliation**
-
-```sh
-git add .gitignore package.json scripts/decompile-ardenfall.mjs docs/superpowers/specs/2026-05-14-item-subtype-audit.md docs/superpowers/plans/2026-05-14-item-subtype-enrichment.md docs/superpowers/roadmap.md
-git commit -m "docs(items): audit item subtype implementation"
-```
+Expected: `.decompiled/` appears only as ignored output; no decompiled C#/IL output, DLLs, snapshots, SQLite databases, `.gitmodules`, or generated local caches are staged.
 
 ### Task 2: Descriptor foundation and zero-field marker variants
 
@@ -331,9 +278,15 @@ to:
 "minItems": 0,
 ```
 
-- [ ] **Step 3: Add common root item fields**
+- [ ] **Step 3: Add common root item fields and behavior-derived name metadata**
 
-In `entities/item/entity.json`, keep the existing fields and add these root fields after `description`:
+In `entities/item/entity.json`, change the existing `name` field source from `itemName.Get()` to `GetItemName()` so subclass overrides drive public names. Keep the field name and type unchanged:
+
+```json
+{ "name": "name", "type": "string", "from": "GetItemName()", "missingPolicy": "diagnostic" }
+```
+
+Then keep the existing fields and add these root fields after `description`:
 
 ```json
 { "name": "stackable", "type": "boolean", "from": "stackable.Get()", "missingPolicy": "diagnostic" },
@@ -341,12 +294,12 @@ In `entities/item/entity.json`, keep the existing fields and add these root fiel
 { "name": "questItem", "type": "boolean", "from": "questItem.Get()", "missingPolicy": "diagnostic" },
 { "name": "notLootableChance", "type": "number", "from": "notLootableChance.Get()", "missingPolicy": "diagnostic" },
 { "name": "cannotBeOwned", "type": "boolean", "from": "cannotBeOwned.Get()", "missingPolicy": "diagnostic" },
-{ "name": "quickslotIconRef", "type": "ref:asset", "from": "quickslotIcon", "missingPolicy": "optional-empty" },
-{ "name": "category", "type": "string", "from": "category.Get()", "missingPolicy": "optional-empty" },
+{ "name": "quickslotIconRef", "type": "ref:asset", "from": "quickslotIcon.Get()", "missingPolicy": "optional-empty" },
+{ "name": "categoryRef", "type": "ref:asset", "from": "category.Get()", "missingPolicy": "optional-empty" },
 { "name": "isIllegal", "type": "boolean", "from": "isIllegal.Get()", "missingPolicy": "diagnostic" }
 ```
 
-Also add these fields to the `summary` or a new `Flags` detail section only if the generic UI remains readable; otherwise leave the detail sections unchanged and rely on `fields_json` until Slice 4.
+Do not add `category:string`; the audited source type is `Parameter<ItemCategory>`. Also add these fields to the `summary` or a new `Flags` detail section only if the generic UI remains readable; otherwise leave the detail sections unchanged and rely on `fields_json` until Slice 4.
 
 - [ ] **Step 4: Add marker variant descriptors**
 
@@ -449,22 +402,23 @@ Expected: fails because the new descriptors do not exist.
 
 Create descriptors with these exact variant ids and fields:
 
-| File                 | Parent  | Fields                                                                                                                                                                                                                                                                       |
-| -------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lockpick.json`      | `basic` | `successChance:number` from `successChance.Get()`                                                                                                                                                                                                                            |
-| `consumable.json`    | `basic` | `quickslotCooldownTime:number`, `statusEffectsJson:json`                                                                                                                                                                                                                     |
-| `note.json`          | `basic` | `noteTextRef:ref:asset`, `noteText:string`, `noteSectionsJson:json`, `fontRef:ref:asset`, `gainStatRef:ref:asset`, `gainStatCount:integer`                                                                                                                                   |
-| `potion-recipe.json` | `basic` | `recipeRef:ref:asset`, `recipeName:string`, `lockedByDefault:boolean`, `enableSkillRequirement:boolean`, `skillRequirement:integer`, `levelModifier:number`, `successModifier:number`, `ingredientsJson:json`, `drinkablePotionRefsJson:json`, `throwingPotionRefsJson:json` |
-| `repair-kit.json`    | `basic` | `repairAddAmount:integer`, `repairPercentageAmount:number`, `repairSkillAddAmount:number`, `repairSkillMultAmount:number`                                                                                                                                                    |
+| File                 | Parent  | Fields                                                                                                                                                                                                                                                                                                      |
+| -------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lockpick.json`      | `basic` | `successChance:number` from `successChance.Get()`                                                                                                                                                                                                                                                           |
+| `consumable.json`    | `basic` | `quickslotCooldownTime:number`, `statusEffectsJson:json`                                                                                                                                                                                                                                                    |
+| `note.json`          | `basic` | `noteTextRef:ref:asset`, `noteText:string`, `noteSectionsJson:json`, `fontRef:ref:asset`, `gainStatRef:ref:asset`, `gainStatCount:integer`                                                                                                                                                                  |
+| `potion-recipe.json` | `basic` | `recipeRef:ref:asset`, `recipeName:string` from `PotionRecipe.RecipeName`, `lockedByDefault:boolean`, `enableSkillRequirement:boolean`, `skillRequirement:integer`, `levelModifier:number`, `successModifier:number`, `ingredientsJson:json`, `drinkablePotionRefsJson:json`, `throwingPotionRefsJson:json` |
+| `repair-kit.json`    | `basic` | `repairAddAmount:integer`, `repairPercentageAmount:number`, `repairSkillAddAmount:number`, `repairSkillMultAmount:number`                                                                                                                                                                                   |
 
-Use `canonicalTable` names `item_lockpicks`, `item_consumables`, `item_notes`, `item_potion_recipes`, and `item_repair_kits`. Use positions 20, 30, 40, 50, and 60.
+Use `canonicalTable` names `item_lockpicks`, `item_consumables`, `item_notes`, `item_potion_recipes`, and `item_repair_kits`. Use positions 20, 30, 40, 50, and 60. The root `name` for potion recipe items must come from `PotionRecipeItemData.GetItemName()`, not a raw item-name field read.
 
 - [ ] **Step 3: Add adapter helper DTOs**
 
 Create `mod/src/Entities/Item/Adapters/ItemAdapterHelpers.cs` with compact DTO helpers. Include these DTO shapes and do not serialize raw Unity objects:
 
 ```csharp
-internal sealed record LeveledStatusEffectSnapshot(object? StatusEffectRef, float Level, float Lifetime, string? StackMode);
+internal sealed record StackModeSnapshot(string? Type, float AddLevel, float MaxLevel);
+internal sealed record LeveledStatusEffectSnapshot(object? StatusEffectRef, float Level, float Lifetime, StackModeSnapshot? StackMode);
 internal sealed record NoteSectionSnapshot(string? TextContent, object? ImageRef, bool Separator);
 internal sealed record RecipeIngredientSnapshot(object? TagRef, int Count);
 internal sealed record PotionRecipeSnapshot(
@@ -486,7 +440,7 @@ The helper methods should accept `RefResolver refs` and the current row id so ne
 
 - [ ] **Step 4: Extend common root extraction**
 
-Modify `ExtractItem.Extract` to populate the new root fields. Use `ProvenanceCapture.ForParameter<T>()` for `Parameter<T>` values and `refs.ResolveAsset()` for `quickslotIconRef` and `category`.
+Modify `ExtractItem.Extract` to populate the new root fields. Use `asset.GetItemName()` for `name`, `ProvenanceCapture.ForParameter<T>()` for `Parameter<T>` values, and `refs.ResolveAsset()` for `quickslotIconRef` and `categoryRef`.
 
 - [ ] **Step 5: Add non-equipment adapters**
 
@@ -565,19 +519,19 @@ Expected: fails because the descriptors do not exist.
 
 Create descriptors with these exact variant ids, canonical tables, parents, and field sets:
 
-| Variant           | Canonical table         | Parent          | Fields                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| ----------------- | ----------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `arrow`           | `item_arrows`           | `equipment`     | `damage:number`, `spawnVisualOnHitStatic:boolean`, `spawnVisualOnHitCharacter:boolean`, `respawnItemPickupChance:number`, `addItemToInventoryChance:number`, `projectileSettingsJson:json`, `projectileRef:ref:asset`, `hitMaterialSoundRef:ref:asset`                                                                                                                                                                                                                                                                                                                                        |
-| `bow`             | `item_bows`             | `primary-hand`  | `itemTypeTooltip:string`, `damage:number`, `bleedMultiplier:number`, `shootStaminaMultiplier:number`, `criticalHitChance:number`, `stunChance:number`, `bleedChance:number`, `critDamageMult:number`, `knockbackStrength:number`, `stealthHitMultiplier:number`, `ammoMassMultiplier:number`, `damageFalloffDistance:number`, `damageFalloff:number`, `durabilityMax:integer`, `projectileSlot:string`, `projectileIconRef:ref:asset`, `aimAnimationSpeedMultiplier:number`, `bleedStatusEffectJson:json`, `itemAIBehavior:string`                                                            |
-| `slate-spell`     | `item_slate_spells`     | `primary-hand`  | `quickslotSecondaryColor:string`, `spellDataJson:json`, `secondarySpellDataJson:json`, `spawnWhenSheathed:boolean`, `spellItemType:string`, `durabilityMax:integer`, `manaCostMultiplier:number`                                                                                                                                                                                                                                                                                                                                                                                              |
-| `throwing-item`   | `item_throwing_items`   | `primary-hand`  | `itemTypeTooltip:string`, `missileRef:ref:asset`, `missileRotationJson:json`, `damage:number`, `pierceArmor:boolean`, `bleedMultiplier:number`, `damageFalloffDistance:number`, `damageFalloff:number`, `critChance:number`, `stunChance:number`, `bleedChance:number`, `critDamageMult:number`, `quickslotCooldownTime:number`, `bleedStatusEffectJson:json`, `stealthHitMultiplier:number`, `spawnVisualOnHitStatic:boolean`, `spawnVisualOnHitCharacter:boolean`, `respawnItemPickupChance:number`, `addItemToInventoryChance:number`, `missileSettingsJson:json`, `itemAIBehavior:string` |
-| `throwing-potion` | `item_throwing_potions` | `throwing-item` | `quickslotSecondaryColor:string`, `areaOfEffectRange:number`, `areaOfEffectJson:json`, `visualLevel:integer`, `isDrinkingPotion:boolean`                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Variant           | Canonical table         | Parent          | Fields                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------------- | ----------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `arrow`           | `item_arrows`           | `equipment`     | `damage:number`, `spawnVisualOnHitStatic:boolean`, `spawnVisualOnHitCharacter:boolean`, `respawnItemPickupChance:number`, `addItemToInventoryChance:number`, `projectileSettingsJson:json`, `projectileRef:ref:asset`                                                                                                                                                                                                                                                                                                                                                |
+| `bow`             | `item_bows`             | `primary-hand`  | `itemTypeTooltip:string`, `damage:number`, `bleedMultiplier:number`, `shootStaminaMultiplier:number`, `criticalHitChance:number`, `stunChance:number`, `bleedChance:number`, `critDamageMult:number`, `knockbackStrength:number`, `stealthHitMultiplier:number`, `ammoMassMultiplier:number`, `damageFalloffDistance:number`, `damageFalloff:number`, `durabilityMax:integer`, `projectileSlot:string`, `projectileIconRef:ref:asset`, `aimAnimationSpeedMultiplier:number`, `bleedStatusEffectJson:json`                                                            |
+| `slate-spell`     | `item_slate_spells`     | `primary-hand`  | `quickslotSecondaryColor:string`, `spellDataJson:json`, `secondarySpellDataJson:json`, `spawnWhenSheathed:boolean`, `spellItemType:string`, `durabilityMax:integer`, `manaCostMultiplier:number`                                                                                                                                                                                                                                                                                                                                                                     |
+| `throwing-item`   | `item_throwing_items`   | `primary-hand`  | `itemTypeTooltip:string`, `missileRef:ref:asset`, `missileRotationJson:json`, `damage:number`, `pierceArmor:boolean`, `bleedMultiplier:number`, `damageFalloffDistance:number`, `damageFalloff:number`, `critChance:number`, `stunChance:number`, `bleedChance:number`, `critDamageMult:number`, `quickslotCooldownTime:number`, `bleedStatusEffectJson:json`, `stealthHitMultiplier:number`, `spawnVisualOnHitStatic:boolean`, `spawnVisualOnHitCharacter:boolean`, `respawnItemPickupChance:number`, `addItemToInventoryChance:number`, `missileSettingsJson:json` |
+| `throwing-potion` | `item_throwing_potions` | `throwing-item` | `quickslotSecondaryColor:string`, `areaOfEffectRange:number`, `areaOfEffectJson:json`, `visualLevel:integer`, `effectName:string`, `isDrinkingPotion:boolean`                                                                                                                                                                                                                                                                                                                                                                                                        |
 
-Use positions 70, 80, 90, 100, and 110. Keep audio fields out of this slice; asset/audio rendering is Slice 3/presentation depth work.
+Use positions 70, 80, 90, 100, and 110. Keep audio/material fields and `itemAIBehavior` out of this slice; asset/audio/rendering and behavior-object presentation are later work.
 
 - [ ] **Step 3: Add equipment leaf adapters**
 
-Create one adapter per leaf type. Use `refs.ResolveAsset` for Unity object fields, `Enum.ToString()` for enum fields, and compact JSON DTOs for `ProjectileSettings`, `Vector3`, `Color`, `LeveledStatusEffect`, and spell data. Do not use Newtonsoft to serialize game objects directly.
+Create one adapter per leaf type. Use `refs.ResolveAsset` for Unity object fields, `Enum.ToString()` for enum fields, and compact JSON DTOs for `ProjectileSettings`, `Vector3`, `Color`, `LeveledStatusEffect`, and spell data. Do not use Newtonsoft to serialize game objects directly. `SlateSpellItemData` names must come from `GetItemName()`, `LeveledSpellData` snapshots must include `GetSecondaryLevel()`, `ThrowingPotionData.effectName` must come from `GetEffectName()`, `ThrowingPotionData.visualLevel` must come from `VisualLevel`, and the public root `name` for throwing potions must come from `GetItemName()`.
 
 - [ ] **Step 4: Run mod build and descriptor tests**
 
@@ -612,6 +566,7 @@ Create `mod-tests/ItemVariantClassifierTests.cs`:
 ```csharp
 using Ardenfall.Item;
 using ArdenfallCompendium.Entities.Item;
+using UnityEngine;
 using Xunit;
 
 namespace ArdenfallCompendium.Tests;
@@ -624,10 +579,10 @@ public sealed class ItemVariantClassifierTests
     [InlineData(typeof(SlateSpellItemData), "slate-spell")]
     [InlineData(typeof(BowItemData), "bow")]
     [InlineData(typeof(MeleeItemData), "melee-weapon")]
-    [InlineData(typeof(PrimaryHandItemData), "primary-hand")]
-    [InlineData(typeof(HandItemData), "hand-item")]
     [InlineData(typeof(ArrowItemData), "arrow")]
     [InlineData(typeof(ArmorItemData), "armor")]
+    [InlineData(typeof(PrimaryHandItemData), "primary-hand")]
+    [InlineData(typeof(HandItemData), "hand-item")]
     [InlineData(typeof(EquipItemData), "equipment")]
     [InlineData(typeof(RepairKitItemData), "repair-kit")]
     [InlineData(typeof(PotionRecipeItemData), "potion-recipe")]
@@ -638,7 +593,7 @@ public sealed class ItemVariantClassifierTests
     [InlineData(typeof(ItemData), "basic")]
     public void ClassifiesConcreteItemTypesBeforeAncestors(Type itemType, string expectedVariant)
     {
-        var item = (ItemData)Activator.CreateInstance(itemType)!;
+        var item = (ItemData)ScriptableObject.CreateInstance(itemType);
 
         var classified = ItemVariantClassifier.Classify(item);
 
@@ -661,8 +616,8 @@ Create `mod/src/Entities/Item/ItemVariantClassifier.cs`. The classifier must che
 
 ```csharp
 ThrowingPotionData, ThrowingItemData, SlateSpellItemData, BowItemData,
-MeleeItemData, PrimaryHandItemData, HandItemData, ArrowItemData,
-ArmorItemData, EquipItemData, RepairKitItemData, PotionRecipeItemData,
+MeleeItemData, ArrowItemData, ArmorItemData, PrimaryHandItemData,
+HandItemData, EquipItemData, RepairKitItemData, PotionRecipeItemData,
 LockpickItemData, CurrencyItemData, NoteItemData, ConsumableItemData, ItemData
 ```
 
