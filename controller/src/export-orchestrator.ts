@@ -37,6 +37,7 @@ export interface ExportOptions {
   runPipeline?: (snapshotDir: string, pipelineOutDir: string) => Promise<void>;
   validate?: (snapshotDir: string) => Promise<{ itemCount: number }>;
   log?: (event: ExportEvent) => void;
+  noQuit?: boolean;
 }
 
 export interface ExportResult {
@@ -50,6 +51,7 @@ const REQUIRED_COMMANDS = new Map<string, "sync" | "job">([
   ["entity.plan", "sync"],
   ["entity.exportBatch", "job"],
   ["run.finalize", "sync"],
+  ["game.quit", "sync"],
 ]);
 
 export async function exportCompendium(options: ExportOptions): Promise<ExportResult> {
@@ -65,7 +67,7 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
   if (!lease.ok) throw new Error("HotRepl lease acquisition failed");
   log({ phase: "lease", status: "completed" });
 
-  assertRequiredCommands(await options.client.describeCommands());
+  assertRequiredCommands(await options.client.describeCommands(), options.noQuit === true);
 
   const preflight = await options.client.call("compendium.preflight", {});
   if (preflight.result.ready !== true) throw new Error(formatPreflightFailure(preflight.result));
@@ -75,45 +77,50 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
   const runId = requireString(begin.result.runId, "run.begin result.runId");
   log({ phase: "run", status: "begun", runId });
 
-  const plan = await options.client.call("entity.plan", { runId, entity: "item" });
-  const total = requireNumber(plan.result.total, "entity.plan result.total");
-  const batchSize = requireNumber(plan.result.batchSize, "entity.plan result.batchSize");
-  for (let offset = 0; offset < total; offset += batchSize) {
-    const accepted = await options.client.startJob("entity.exportBatch", {
-      runId,
-      entity: "item",
-      offset,
-      limit: batchSize,
+  try {
+    const plan = await options.client.call("entity.plan", { runId, entity: "item" });
+    const total = requireNumber(plan.result.total, "entity.plan result.total");
+    const batchSize = requireNumber(plan.result.batchSize, "entity.plan result.batchSize");
+    for (let offset = 0; offset < total; offset += batchSize) {
+      const accepted = await options.client.startJob("entity.exportBatch", {
+        runId,
+        entity: "item",
+        offset,
+        limit: batchSize,
+      });
+      await waitForJob(options.client, accepted.jobId);
+      await options.client.jobResult(accepted.jobId);
+      log({ phase: "entity.exportBatch", status: "completed", runId, offset });
+    }
+
+    const finalized = await options.client.call("run.finalize", { runId });
+
+    const publishedDir = normalizeControllerPath(
+      requireString(finalized.result.publishedDir, "run.finalize result.publishedDir"),
+    );
+    const validate = options.validate ?? validateSnapshot;
+    await validate(publishedDir);
+    log({ phase: "validate", status: "completed", publishedDir });
+
+    if (options.runPipeline) await options.runPipeline(publishedDir, options.pipelineOutDir);
+    else await runPipeline(publishedDir, options.pipelineOutDir);
+    log({
+      phase: "pipeline",
+      status: "completed",
+      publishedDir,
+      pipelineOutDir: options.pipelineOutDir,
     });
-    await waitForJob(options.client, accepted.jobId);
-    await options.client.jobResult(accepted.jobId);
-    log({ phase: "entity.exportBatch", status: "completed", runId, offset });
+
+    return { runId, publishedDir };
+  } finally {
+    if (options.noQuit !== true) await quitGame(options.client, log);
   }
-
-  const finalized = await options.client.call("run.finalize", { runId });
-
-  const publishedDir = normalizeControllerPath(
-    requireString(finalized.result.publishedDir, "run.finalize result.publishedDir"),
-  );
-  const validate = options.validate ?? validateSnapshot;
-  await validate(publishedDir);
-  log({ phase: "validate", status: "completed", publishedDir });
-
-  if (options.runPipeline) await options.runPipeline(publishedDir, options.pipelineOutDir);
-  else await runPipeline(publishedDir, options.pipelineOutDir);
-  log({
-    phase: "pipeline",
-    status: "completed",
-    publishedDir,
-    pipelineOutDir: options.pipelineOutDir,
-  });
-
-  return { runId, publishedDir };
 }
 
-function assertRequiredCommands(commands: ControlCommandDescriptor[]): void {
+function assertRequiredCommands(commands: ControlCommandDescriptor[], noQuit: boolean): void {
   const byName = new Map(commands.map((command) => [command.name, command]));
   for (const [name, kind] of REQUIRED_COMMANDS) {
+    if (noQuit && name === "game.quit") continue;
     const command = byName.get(name);
     if (!command) throw new Error(`Missing required HotRepl command: ${name}`);
     if (command.version !== 1)
@@ -123,6 +130,21 @@ function assertRequiredCommands(commands: ControlCommandDescriptor[]): void {
   }
 }
 
+async function quitGame(
+  client: ControllerClient | HotReplClient,
+  log: (event: ExportEvent) => void,
+): Promise<void> {
+  try {
+    await client.call("game.quit", {});
+    log({ phase: "game.quit", status: "completed" });
+  } catch (error) {
+    log({
+      phase: "game.quit",
+      status: "failed",
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
 async function waitForJob(client: ControllerClient | HotReplClient, jobId: string): Promise<void> {
   for (;;) {
     const status = await client.jobStatus(jobId);

@@ -22,10 +22,12 @@ class FakeClient implements ControllerClient {
     command("entity.plan"),
     command("entity.exportBatch", "job", true),
     command("run.finalize", "sync", true),
+    command("game.quit", "sync", true),
   ];
   preflightResult: Record<string, unknown> = { ready: true };
   publishedDir = "/tmp/snapshot";
 
+  finalizeError: Error | null = null;
   async connect() {}
   async authenticate() {
     return { ok: true, sessionId: "session-1" };
@@ -54,13 +56,22 @@ class FakeClient implements ControllerClient {
         artifacts: [],
         diagnostics: [],
       };
-    if (name === "run.finalize")
+    if (name === "game.quit")
+      return {
+        status: "ok",
+        result: {},
+        artifacts: [],
+        diagnostics: [],
+      };
+    if (name === "run.finalize") {
+      if (this.finalizeError) throw this.finalizeError;
       return {
         status: "ok",
         result: { runId: "run-1", publishedDir: this.publishedDir },
         artifacts: [],
         diagnostics: [],
       };
+    }
     throw new Error(`unexpected call ${name}`);
   }
   async startJob(name: string, args: Record<string, unknown>) {
@@ -99,12 +110,46 @@ describe("exportCompendium", () => {
       "run.begin",
       "entity.plan",
       "run.finalize",
+      "game.quit",
     ]);
     expect(client.jobs.map((job) => job.args)).toEqual([
       { runId: "run-1", entity: "item", offset: 0, limit: 100 },
       { runId: "run-1", entity: "item", offset: 100, limit: 100 },
     ]);
-    expect(events.at(-1)).toMatchObject({ phase: "pipeline", status: "completed" });
+    expect(events).toContainEqual(
+      expect.objectContaining({ phase: "pipeline", status: "completed" }),
+    );
+  });
+
+  it("calls game.quit after a successful export", async () => {
+    const client = new FakeClient();
+
+    await exportCompendium({
+      client,
+      outputBaseDir: "/tmp/out",
+      pipelineOutDir: "/tmp/pipeline",
+      validate: async () => ({ itemCount: 150 }),
+      runPipeline: async () => undefined,
+    });
+
+    expect(client.calls.map((call) => call.name).at(-1)).toBe("game.quit");
+  });
+
+  it("calls game.quit after finalize failure without masking the original error", async () => {
+    const client = new FakeClient();
+    client.finalizeError = new Error("finalize failed");
+
+    await expect(
+      exportCompendium({
+        client,
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+        validate: async () => ({ itemCount: 150 }),
+        runPipeline: async () => undefined,
+      }),
+    ).rejects.toThrow("finalize failed");
+
+    expect(client.calls.map((call) => call.name).at(-1)).toBe("game.quit");
   });
 
   it("surfaces failed preflight check reasons", async () => {
