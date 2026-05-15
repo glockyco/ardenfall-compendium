@@ -47,6 +47,25 @@ describe("ci site build tooling", () => {
   });
 });
 
+describe("snapshot provenance", () => {
+  it("requires snapshot manifests to declare source provenance", () => {
+    const schema = JSON.parse(readFileSync("schemas/manifest.schema.json", "utf8")) as {
+      required: string[];
+      properties: Record<string, unknown>;
+    };
+    const fixtureManifest = JSON.parse(
+      readFileSync("fixtures/synthetic/snapshot/manifest.json", "utf8"),
+    ) as { source?: { kind?: string; fixtureName?: string } };
+
+    expect(schema.required).toContain("source");
+    expect(schema.properties.source).toBeDefined();
+    expect(fixtureManifest.source).toEqual({
+      kind: "synthetic-fixture",
+      fixtureName: "synthetic",
+    });
+  });
+});
+
 describe("site deployment tooling", () => {
   it("deploys by syncing generated pipeline artifacts before build", () => {
     expect(sitePackageJson.scripts["sync:generated"]).toBe(

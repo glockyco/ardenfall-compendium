@@ -4,6 +4,10 @@
   "buildIdentifier": "synthetic",
   "extractorVersion": "0.0.0-test",
   "extractedAt": "2026-05-03T12:00:00Z",
+  "source": {
+    "kind": "synthetic-fixture",
+    "fixtureName": "synthetic"
+  },
   "preflight": {
     "passed": true,
     "completedAt": "2026-05-03T12:00:00Z",

@@ -29,7 +29,7 @@
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "794946b3d90ed63a5efb351f7e53ec35b583518f1720df514838dd35fbe3ee46",
+    "snapshot/manifest.json": "2a62b8b0743d419c4711ba6b67ec8463ae9b0715defaf50a685e2b14cc9634f3",
     "snapshot/items.json": "b9f72ed8f1fb48b4c6fc52e86732327a3e4ba98e141e5db5256df91678b4dd88",
     "snapshot/asset-manifest.json": "5b3aac7ceeabe0ae87db96b7cb750fb31fd3396c8644d003612b43a0b93ea8e5",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",

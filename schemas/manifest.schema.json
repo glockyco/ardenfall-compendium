@@ -8,6 +8,7 @@
     "schemaVersion",
     "extractorVersion",
     "extractedAt",
+    "source",
     "preflight",
     "counts",
     "diagnostics",
@@ -19,6 +20,27 @@
     "buildIdentifier": { "type": "string" },
     "extractorVersion": { "type": "string", "minLength": 1 },
     "extractedAt": { "type": "string", "format": "date-time" },
+    "source": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "const": "live-game-export" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "fixtureName"],
+          "properties": {
+            "kind": { "const": "synthetic-fixture" },
+            "fixtureName": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
     "preflight": {
       "type": "object",
       "additionalProperties": false,

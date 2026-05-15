@@ -75,7 +75,9 @@ export interface SiteMap {
   tooltip?: string[];
 }
 
-// Snapshot
+export type SnapshotSource =
+  | { kind: "live-game-export" }
+  | { kind: "synthetic-fixture"; fixtureName: string };
 
 export interface SnapshotManifest {
   schemaVersion: number;
@@ -83,6 +85,7 @@ export interface SnapshotManifest {
   buildIdentifier?: string;
   extractorVersion: string;
   extractedAt: string;
+  source: SnapshotSource;
   preflight: {
     passed: boolean;
     completedAt: string;

@@ -22,6 +22,7 @@ public static class ManifestBuilder
             GameVersion = gameVersion,
             BuildIdentifier = buildIdentifier,
             ExtractedAt = DateTimeOffset.UtcNow.ToString("O"),
+            Source = new SnapshotSource { Kind = "live-game-export" },
             Preflight = preflight,
             Counts = new Dictionary<string, int>(counts),
             Diagnostics = diagnostics,
