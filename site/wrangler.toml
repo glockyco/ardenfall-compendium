@@ -9,6 +9,11 @@ workers_dev = false
 pattern = "ardenfall.compendiums.org"
 custom_domain = true
 
+# adapter-cloudflare emits both the Worker entry and static asset bundle into
+# .svelte-kit/cloudflare. Leave run_worker_first unset so Cloudflare serves
+# matching prerendered HTML, data.sqlite, and WebP assets without invoking the
+# Worker. Routes should opt out of prerendering only when they genuinely need
+# request-time computation.
 [assets]
 directory = ".svelte-kit/cloudflare"
 binding = "ASSETS"

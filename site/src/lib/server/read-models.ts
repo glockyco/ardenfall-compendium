@@ -5,6 +5,8 @@ const DB_PATH = fileURLToPath(new URL("../../../static/data.sqlite", import.meta
 
 let db: Database.Database | null = null;
 
+type SqlParams = readonly unknown[] | Record<string, unknown>;
+
 const assetSrc = (hash: string | null): string | null => (hash ? `/assets/${hash}.webp` : null);
 
 function getDb(): Database.Database {
@@ -12,12 +14,16 @@ function getDb(): Database.Database {
   return db;
 }
 
-function all<T>(sql: string, params: Database.BindParameters = []): T[] {
-  return getDb().prepare(sql).all(params) as T[];
+function all<T>(sql: string, params: SqlParams = []): T[] {
+  return getDb()
+    .prepare(sql)
+    .all(...(Array.isArray(params) ? params : [params])) as T[];
 }
 
-function get<T>(sql: string, params: Database.BindParameters = []): T | undefined {
-  return getDb().prepare(sql).get(params) as T | undefined;
+function get<T>(sql: string, params: SqlParams = []): T | undefined {
+  return getDb()
+    .prepare(sql)
+    .get(...(Array.isArray(params) ? params : [params])) as T | undefined;
 }
 
 export interface SiteEntity {

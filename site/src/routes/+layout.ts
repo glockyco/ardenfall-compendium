@@ -1,7 +1,6 @@
-// SQLite-driven data is queried in-browser via @sqlite.org/sqlite-wasm
-// (sqlite3InitModule loads the .wasm at runtime). Server-side rendering would
-// fail at module load. The site ships as an SPA hydrated against
-// `static/data.sqlite`; adapter-static emits a single `index.html` fallback
-// per the kit config in svelte.config.js.
-export const ssr = false;
-export const prerender = false;
+// Generated compendium pages are deterministic for a given snapshot. Render
+// them at build time and ship static HTML by default. Re-enable CSR only for a
+// route that documents a real browser-interactivity requirement.
+export const ssr = true;
+export const prerender = true;
+export const csr = false;
