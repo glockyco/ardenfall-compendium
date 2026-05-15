@@ -3,12 +3,12 @@ pre-commit:
   jobs:
     - name: prettier
       glob: "*.{ts,js,mjs,svelte,json,jsonc,md,css,yaml,yml}"
-      run: bunx prettier --write {staged_files}
+      run: PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH" bunx prettier --write {staged_files}
       stage_fixed: true
     - name: eslint
       glob: "*.{ts,js,svelte}"
       exclude: ["pipeline/dist/**"]
-      run: bunx eslint --fix {staged_files}
+      run: PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH" bunx eslint --fix {staged_files}
       stage_fixed: true
     - name: dotnet-format
       glob: "*.cs"
@@ -21,6 +21,6 @@ pre-commit:
 pre-push:
   jobs:
     - name: typecheck
-      run: bun run typecheck
+      run: PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH" bun run typecheck
     - name: tests
-      run: bun test --pass-with-no-tests
+      run: PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH" bun test --pass-with-no-tests
