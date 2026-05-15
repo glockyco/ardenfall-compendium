@@ -67,7 +67,7 @@ Modify during implementation:
 - Modify: `bun.lock`
 - Test: `pipeline/test/assets.test.ts`
 
-- [ ] **Step 1: Add the failing converter spike test**
+- [x] **Step 1: Add the failing converter spike test**
 
 Create `pipeline/test/assets.test.ts` if it does not exist. Start with this test and helper. The base64 fixture is a 1x1 transparent PNG; it keeps the test independent of snapshot fixtures.
 
@@ -97,7 +97,7 @@ describe("asset conversion", () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test and observe the dependency failure**
+- [x] **Step 2: Run the focused test and observe the dependency failure**
 
 Run:
 
@@ -107,7 +107,7 @@ bun test pipeline/test/assets.test.ts
 
 Expected before adding the dependency: failure resolving `sharp` from `pipeline/test/assets.test.ts`.
 
-- [ ] **Step 3: Add `sharp` as the single direct pipeline dependency**
+- [x] **Step 3: Add `sharp` as the single direct pipeline dependency**
 
 Run:
 
@@ -119,7 +119,7 @@ Expected: `pipeline/package.json` gains a direct dependency on `sharp`; `bun.loc
 
 If this command installs `sharp` anywhere other than `pipeline/package.json`, stop and correct the package manager invocation before continuing. Do not add `cwebp` or any fallback dependency.
 
-- [ ] **Step 4: Re-run the converter spike**
+- [x] **Step 4: Re-run the converter spike**
 
 Run:
 
