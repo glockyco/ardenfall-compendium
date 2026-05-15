@@ -12,10 +12,28 @@
 </svelte:head>
 
 <a class="text-sm underline" href={resolve("/items")}>← back to items</a>
-<h1 class="mt-2 text-2xl font-bold">{data.name ?? data.id}</h1>
-{#if data.variant}
-  <p class="text-muted-foreground">{data.variant}</p>
-{/if}
+<div class="mt-2 flex items-center gap-3">
+  <div
+    class="item-icon bg-muted border-border flex size-14 shrink-0 items-center justify-center rounded border"
+    aria-hidden="true"
+  >
+    {#if data.displayIconSrc}
+      <img
+        class="size-11 object-contain"
+        src={data.displayIconSrc}
+        alt=""
+        loading="eager"
+        decoding="async"
+      />
+    {/if}
+  </div>
+  <div>
+    <h1 class="text-2xl font-bold">{data.name ?? data.id}</h1>
+    {#if data.variant}
+      <p class="text-muted-foreground">{data.variant}</p>
+    {/if}
+  </div>
+</div>
 
 <div class="mt-6 grid gap-4">
   {#each data.sections as section (section.id)}

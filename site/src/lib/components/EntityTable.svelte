@@ -1,5 +1,11 @@
 <script lang="ts" generics="T extends { id: string | number }">
-  type Column = { id: string; label: string; field: keyof T & string };
+  type Column = {
+    id: string;
+    label: string;
+    field: keyof T & string;
+    renderer?: "text" | "itemNameWithIcon";
+    sortable?: boolean;
+  };
 
   type Props = {
     rows: T[];
@@ -25,7 +31,9 @@
     });
   });
 
-  function toggleSort(field: keyof T & string) {
+  function toggleSort(col: Column) {
+    if (col.sortable === false) return;
+    const field = col.field;
     if (sortField === field) {
       sortDir = sortDir === "asc" ? "desc" : "asc";
     } else {
@@ -34,9 +42,14 @@
     }
   }
 
-  function ariaSort(field: keyof T & string): "ascending" | "descending" | "none" {
-    if (sortField !== field) return "none";
+  function ariaSort(col: Column): "ascending" | "descending" | "none" {
+    if (col.sortable === false || sortField !== col.field) return "none";
     return sortDir === "asc" ? "ascending" : "descending";
+  }
+
+  function iconSrc(row: T): string | null {
+    const value = (row as T & { displayIconSrc?: unknown }).displayIconSrc;
+    return typeof value === "string" && value.length > 0 ? value : null;
   }
 </script>
 
@@ -46,12 +59,14 @@
       {#each columns as col (col.id)}
         <th
           scope="col"
-          aria-sort={ariaSort(col.field)}
-          class="hover:bg-secondary cursor-pointer p-2 select-none"
-          onclick={() => toggleSort(col.field)}
+          aria-sort={ariaSort(col)}
+          class={col.sortable === false
+            ? "p-2 select-none"
+            : "hover:bg-secondary cursor-pointer p-2 select-none"}
+          onclick={() => toggleSort(col)}
         >
           {col.label}
-          {#if sortField === col.field}
+          {#if sortField === col.field && col.sortable !== false}
             <span aria-hidden="true">{sortDir === "asc" ? "▲" : "▼"}</span>
           {/if}
         </th>
@@ -63,7 +78,30 @@
       <tr class="border-border hover:bg-muted/40 border-b">
         {#each columns as col, i (col.id)}
           <td class="p-2">
-            {#if i === 0 && rowHref}
+            {#if col.renderer === "itemNameWithIcon"}
+              <span class="flex items-center gap-2">
+                <span
+                  class="bg-muted border-border flex size-8 shrink-0 items-center justify-center rounded border"
+                  aria-hidden="true"
+                >
+                  {#if iconSrc(row)}
+                    <img
+                      class="size-6 object-contain"
+                      src={iconSrc(row)!}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  {/if}
+                </span>
+                {#if i === 0 && rowHref}
+                  <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the rowHref callback is caller-supplied and is expected to wrap with resolve() at the call site -->
+                  <a href={rowHref(row)} class="underline">{row[col.field] ?? ""}</a>
+                {:else}
+                  <span>{row[col.field] ?? ""}</span>
+                {/if}
+              </span>
+            {:else if i === 0 && rowHref}
               <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the rowHref callback is caller-supplied and is expected to wrap with resolve() at the call site -->
               <a href={rowHref(row)} class="underline">{row[col.field] ?? ""}</a>
             {:else}

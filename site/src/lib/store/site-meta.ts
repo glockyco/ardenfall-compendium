@@ -13,6 +13,8 @@ export interface SiteOverviewColumn {
   column_id: string;
   field_id: string;
   position: number;
+  renderer: "text" | "itemNameWithIcon";
+  sortable: number;
 }
 
 export interface SiteDetailSection {

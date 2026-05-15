@@ -15,6 +15,8 @@ export const load = async () => {
         id: c.column_id,
         label: field?.label ?? c.field_id,
         field: c.field_id as keyof ItemOverviewRow & string,
+        renderer: c.renderer,
+        sortable: c.sortable !== 0,
       };
     }),
   );

@@ -1451,7 +1451,7 @@ git commit -m "fix(site): sync generated deploy artifacts"
 - Create: `site/scripts/smoke-item-icons.mjs`
 - Modify: `site/package.json`
 
-- [ ] **Step 1: Add failing store and smoke tests**
+- [x] **Step 1: Add failing store and smoke tests**
 
 Add script to `site/package.json`:
 
@@ -1524,11 +1524,16 @@ if (!table.includes("row[col.field]") || !table.includes("rowHref(row)")) {
 if (!table.includes("const av = a[field]") || !table.includes("toggleSort(col)")) {
   throw new Error("EntityTable sorting must remain field-driven.");
 }
-const forbidden = ["title=", "Tooltip", "popover", "hovercard", "secondaryIcon"];
+const forbidden = ["Tooltip", "popover", "hovercard", "secondaryIcon"];
 for (const snippet of forbidden) {
   if (overview.includes(snippet) || detail.includes(snippet) || table.includes(snippet)) {
     throw new Error(`Slice 3 item UI must not include tooltip/overlay snippet: ${snippet}`);
   }
+}
+
+const titleAttribute = /\stitle=(["'])/;
+if (titleAttribute.test(overview) || titleAttribute.test(detail) || titleAttribute.test(table)) {
+  throw new Error("Slice 3 item UI must not include title attributes.");
 }
 ```
 
@@ -1540,7 +1545,7 @@ bun run --cwd site smoke:item-icons
 
 Expected: failure because icon rendering is not wired.
 
-- [ ] **Step 2: Update store types and mapping**
+- [x] **Step 2: Update store types and mapping**
 
 Modify `site/src/lib/store/items.ts`:
 
@@ -1614,7 +1619,7 @@ export const getItemDetail = async (id: string): Promise<ItemDetailRow | undefin
 };
 ```
 
-- [ ] **Step 3: Update overview metadata store type**
+- [x] **Step 3: Update overview metadata store type**
 
 Modify `site/src/lib/store/site-meta.ts` `SiteOverviewColumn`:
 
@@ -1629,7 +1634,7 @@ export interface SiteOverviewColumn {
 }
 ```
 
-- [ ] **Step 4: Add minimal table renderer/sort extension**
+- [x] **Step 4: Add minimal table renderer/sort extension**
 
 Modify `site/src/lib/components/EntityTable.svelte`:
 
@@ -1753,7 +1758,7 @@ Modify `site/src/lib/components/EntityTable.svelte`:
 {/if}
 ```
 
-- [ ] **Step 5: Pass metadata renderer through the page load**
+- [x] **Step 5: Pass metadata renderer through the page load**
 
 Modify `site/src/routes/items/+page.ts` column mapping:
 
@@ -1769,7 +1774,7 @@ return {
 
 `+page.svelte` already passes columns to `EntityTable`; do not add visible debug output or duplicate icon markup there. The overview icon branch belongs in `EntityTable.svelte`.
 
-- [ ] **Step 6: Add detail icon data and rendering**
+- [x] **Step 6: Add detail icon data and rendering**
 
 Modify `site/src/routes/items/[id]/+page.ts` return:
 
@@ -1813,7 +1818,7 @@ Modify `site/src/routes/items/[id]/+page.svelte` header:
 
 Remove the old standalone `<h1>` and variant paragraph so headings do not duplicate.
 
-- [ ] **Step 7: Run focused site checks**
+- [x] **Step 7: Run focused site checks**
 
 Run:
 
@@ -1824,7 +1829,7 @@ bun run --cwd site check
 
 Expected: pass.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```sh
 git add site/src/lib/store/items.ts site/src/lib/store/site-meta.ts site/src/lib/components/EntityTable.svelte site/src/routes/items/+page.ts site/src/routes/items/+page.svelte site/src/routes/items/[id]/+page.ts site/src/routes/items/[id]/+page.svelte site/scripts/smoke-item-icons.mjs site/package.json

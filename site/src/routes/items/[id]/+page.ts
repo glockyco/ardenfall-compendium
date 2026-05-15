@@ -46,6 +46,7 @@ export const load = async ({ params }: { params: { id: string } }) => {
     id: detail.id,
     name: detail.name,
     variant: detail.variant,
+    displayIconSrc: detail.displayIconSrc,
     sections,
   };
 };
