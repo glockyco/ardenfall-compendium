@@ -201,13 +201,16 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 
 ### Slice 3.6 — Artifact provenance release contract
 
-**Status:** planned  
-**Spec:** `docs/superpowers/specs/2026-05-15-artifact-provenance-release-design.md`  
+**Status:** done
+**Completed:** 2026-05-15 on `main`; implementation commits `ace3f3f..e3227c1`. Production deployment completed as Cloudflare version `50c8bd69-d461-4b40-be00-3e4cf4a9e408` from release artifact `0.0.10.91-20260515-1414238114030`.
+**Spec:** `docs/superpowers/specs/2026-05-15-artifact-provenance-release-design.md`
 **Plan:** `docs/superpowers/plans/2026-05-15-artifact-provenance-release.md`
 
 **Why this interrupts the roadmap:** Slice 3.5 proved static prerendering works, but the first production deploy exposed that fixture and release artifacts shared `pipeline/dist`. Production deploys need provenance and artifact identity before further content slices add more generated pages.
 
 **Acceptance criteria:** fixture builds emit fixture artifacts and remain fast; release builds emit release artifacts with Git/source/hash/count/probe metadata; production deploy scripts reject fixture artifacts; `/_release.json`, `/data.sqlite`, `/items`, an item detail route, and a representative asset are smoked against the same release manifest after deploy.
+
+**Verification evidence:** final local gates passed (`bun run codegen:validators`, `bun run typecheck`, `bun test tooling.test.ts`, `bun test pipeline/test`, `bun test controller/test`, `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj`, `bun run --cwd site check`, `bun run --cwd site build:fixture`, `bun run --cwd site smoke:prerender`, `bun run format:check`, `bun run lint`, `git diff --check`). Pre-push hook passed typecheck and 83 Bun tests. Release artifact `pipeline/artifacts/releases/0.0.10.91-20260515-1414238114030` recorded Git commit `e3227c14a3f893fad7393814451fbe49bb65d053`, `dirty: false`, SQLite hash `35ad46d4e421a8ed885ed54cdf05760601ed56e07fe93b66ae2081ac3192fa65`, 1,273 item overview rows, 1,273 item detail rows, 1,745 asset refs, and probe item `055b284f8d0701643bc93d0879ebf85e.11400000` / `A Treatise On The Nature of The Darvaki I` / `1f004d6a9f4e47565f6fc037205f0815a1a7b1651fed6027bf86e68d232f0e80`. Production deploy command `bun run --cwd site deploy:production ../pipeline/artifacts/releases/0.0.10.91-20260515-1414238114030` completed and ran release smoke against `https://ardenfall.compendiums.org`, verifying `/_release.json`, `/data.sqlite`, `/items`, `/items/055b284f8d0701643bc93d0879ebf85e.11400000`, and the probe WebP asset against the same manifest.
 
 ### Slice 4 — Item presentation depth
 
