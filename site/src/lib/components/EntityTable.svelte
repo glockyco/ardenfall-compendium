@@ -14,38 +14,6 @@
   };
 
   let { rows, columns, rowHref }: Props = $props();
-  let sortField = $state<(keyof T & string) | null>(null);
-  let sortDir = $state<"asc" | "desc">("asc");
-
-  const sortedRows = $derived.by(() => {
-    if (!sortField) return rows;
-    const field = sortField;
-    return [...rows].sort((a, b) => {
-      const av = a[field];
-      const bv = b[field];
-      if (av == null && bv == null) return 0;
-      if (av == null) return 1;
-      if (bv == null) return -1;
-      const cmp = av < bv ? -1 : av > bv ? 1 : 0;
-      return sortDir === "asc" ? cmp : -cmp;
-    });
-  });
-
-  function toggleSort(col: Column) {
-    if (col.sortable === false) return;
-    const field = col.field;
-    if (sortField === field) {
-      sortDir = sortDir === "asc" ? "desc" : "asc";
-    } else {
-      sortField = field;
-      sortDir = "asc";
-    }
-  }
-
-  function ariaSort(col: Column): "ascending" | "descending" | "none" {
-    if (col.sortable === false || sortField !== col.field) return "none";
-    return sortDir === "asc" ? "ascending" : "descending";
-  }
 
   function iconSrc(row: T): string | null {
     const value = (row as T & { displayIconSrc?: unknown }).displayIconSrc;
@@ -57,24 +25,12 @@
   <thead class="bg-muted text-muted-foreground">
     <tr>
       {#each columns as col (col.id)}
-        <th
-          scope="col"
-          aria-sort={ariaSort(col)}
-          class={col.sortable === false
-            ? "p-2 select-none"
-            : "hover:bg-secondary cursor-pointer p-2 select-none"}
-          onclick={() => toggleSort(col)}
-        >
-          {col.label}
-          {#if sortField === col.field && col.sortable !== false}
-            <span aria-hidden="true">{sortDir === "asc" ? "▲" : "▼"}</span>
-          {/if}
-        </th>
+        <th scope="col" class="p-2">{col.label}</th>
       {/each}
     </tr>
   </thead>
   <tbody>
-    {#each sortedRows as row (row.id)}
+    {#each rows as row (row.id)}
       <tr class="border-border hover:bg-muted/40 border-b">
         {#each columns as col, i (col.id)}
           <td class="p-2">

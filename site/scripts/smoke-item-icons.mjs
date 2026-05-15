@@ -57,8 +57,13 @@ if (!detail.slice(detailWrapperIndex, detailImageGuardIndex).includes('aria-hidd
 if (!table.includes("row[col.field]") || !table.includes("rowHref(row)")) {
   throw new Error("EntityTable must keep the row field as linked accessible text.");
 }
-if (!table.includes("const av = a[field]") || !table.includes("toggleSort(col)")) {
-  throw new Error("EntityTable sorting must remain field-driven.");
+if (table.includes("$state") || table.includes("onclick=") || table.includes("toggleSort")) {
+  throw new Error(
+    "EntityTable must remain static by default; interactive sorting belongs in a CSR opt-in route.",
+  );
+}
+if (!table.includes("rowHref(row)")) {
+  throw new Error("EntityTable must keep static linked row text.");
 }
 const forbidden = ["Tooltip", "popover", "hovercard", "secondaryIcon"];
 for (const snippet of forbidden) {
