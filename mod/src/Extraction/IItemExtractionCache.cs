@@ -9,5 +9,7 @@ public interface IItemExtractionCache
 {
     IReadOnlyList<ItemSnapshotRow> GetOrExtract(CompendiumRun run);
 
+    ItemIconAssetPlan GetAssetPlan(CompendiumRun run);
+
     IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run);
 }

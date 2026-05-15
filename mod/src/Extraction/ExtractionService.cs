@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ArdenfallCompendium.Assets;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
@@ -22,11 +23,15 @@ public sealed class ExtractionService
         var staging = writer.BeginStaging(request.GameVersion);
         try
         {
-            var extractor = new ItemExtractor();
+            var assetPlan = new ItemIconAssetPlan();
+            var extractor = new ItemExtractor(new BuiltLookupTableItemAssetSource(), assetPlan);
             var rows = extractor.Walk().ToList();
             var envelope = new ItemSnapshotEnvelope { Rows = rows };
             var path = writer.WriteEntityFile(staging, "item", envelope);
             var json = File.ReadAllText(path);
+            new ItemAssetManifestWriter(new SpriteAssetExporter()).WriteSlots(staging, assetPlan);
+            writer.WriteAssetManifest(staging, assetPlan.Manifest);
+            var assetManifestJson = File.ReadAllText(Path.Combine(staging, "asset-manifest.json"));
 
             var totals = new DiagnosticTotals();
             foreach (var diagnostic in extractor.Diagnostics)
@@ -40,7 +45,11 @@ public sealed class ExtractionService
                 preflight,
                 counts: new Dictionary<string, int> { ["item"] = rows.Count },
                 diagnostics: totals,
-                contentHashes: new Dictionary<string, string> { ["items.json"] = ManifestBuilder.Sha256Hex(json) },
+                contentHashes: new Dictionary<string, string>
+                {
+                    ["items.json"] = ManifestBuilder.Sha256Hex(json),
+                    ["asset-manifest.json"] = ManifestBuilder.Sha256Hex(assetManifestJson),
+                },
                 extractorVersion: Plugin.Version,
                 gameVersion: request.GameVersion);
             writer.WriteManifest(staging, manifest);

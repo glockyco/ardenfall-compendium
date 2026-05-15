@@ -36,6 +36,12 @@ public sealed class SnapshotWriter
         File.WriteAllText(Path.Combine(stagingDir, "manifest.json"), json);
     }
 
+    public void WriteAssetManifest(string stagingDir, AssetManifest manifest)
+    {
+        var json = JsonConvert.SerializeObject(manifest, JsonSettings.Default);
+        File.WriteAllText(Path.Combine(stagingDir, "asset-manifest.json"), json);
+    }
+
     public string Publish(string stagingDir, string gameVersion)
     {
         var finalDir = Path.Combine(_baseDir, $"{gameVersion}-{Timestamp()}");

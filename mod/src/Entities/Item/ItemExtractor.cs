@@ -11,15 +11,22 @@ namespace ArdenfallCompendium.Entities.Item;
 public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
 {
     private readonly IItemAssetSource _source;
+    private readonly ItemIconAssetPlan? _assetPlan;
 
     public ItemExtractor()
-        : this(new BuiltLookupTableItemAssetSource())
+        : this(new BuiltLookupTableItemAssetSource(), assetPlan: null)
     {
     }
 
     public ItemExtractor(IItemAssetSource source)
+        : this(source, assetPlan: null)
+    {
+    }
+
+    public ItemExtractor(IItemAssetSource source, ItemIconAssetPlan? assetPlan)
     {
         _source = source;
+        _assetPlan = assetPlan;
     }
 
     public override IEnumerable<ItemSnapshotRow> Walk()
@@ -71,6 +78,7 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
             }
 
             var variantId = classified.VariantId;
+            if (_assetPlan != null) ItemIconAssetPlanner.CaptureItem(_assetPlan, asset, guid);
 
             yield return new ItemSnapshotRow
             {

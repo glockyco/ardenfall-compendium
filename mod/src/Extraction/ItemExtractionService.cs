@@ -19,18 +19,24 @@ public sealed class ItemExtractionService : IItemExtractionCache
 
     public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => GetState(run).WalkerDiagnostics;
 
+    public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => GetState(run).AssetPlan;
+
     private ExtractionState GetState(CompendiumRun run)
     {
         if (_byRun.TryGetValue(run.RunId, out var state)) return state;
 
-        var extractor = new ItemExtractor(_source);
+        var assetPlan = new ItemIconAssetPlan();
+        var extractor = new ItemExtractor(_source, assetPlan);
         var rows = new List<ItemSnapshotRow>();
         foreach (var row in extractor.Walk()) rows.Add(row);
 
-        state = new ExtractionState(rows, extractor.Diagnostics.AsReadOnly());
+        state = new ExtractionState(rows, assetPlan, extractor.Diagnostics.AsReadOnly());
         _byRun[run.RunId] = state;
         return state;
     }
 
-    private sealed record ExtractionState(IReadOnlyList<ItemSnapshotRow> Rows, IReadOnlyList<Diagnostic> WalkerDiagnostics);
+    private sealed record ExtractionState(
+        IReadOnlyList<ItemSnapshotRow> Rows,
+        ItemIconAssetPlan AssetPlan,
+        IReadOnlyList<Diagnostic> WalkerDiagnostics);
 }

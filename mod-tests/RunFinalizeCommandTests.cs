@@ -57,6 +57,41 @@ public sealed class RunFinalizeCommandTests
         Assert.Contains(diagnostics, d => d["rowId"]!.Type == JTokenType.Null && d["code"]?.Value<string>() == "walkerDiagnostic");
     }
 
+
+    [Fact]
+    public async Task WritesAssetManifestArtifactAndHash()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-assets-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+        var assetPlan = new ItemIconAssetPlan();
+        assetPlan.Manifest.ItemIconMetadata.Add(new ItemIconMetadataEntry
+        {
+            EntityId = "item",
+            RowId = "item-a",
+            DisplayIconColor = new AssetColorSnapshot(),
+        });
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan));
+
+        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+
+        Assert.Empty(result.Diagnostics);
+        var manifestPath = result.Result["manifestPath"]!.Value<string>()!;
+        var publishedDir = Path.GetDirectoryName(manifestPath)!;
+        var assetManifestPath = Path.Combine(publishedDir, "asset-manifest.json");
+        Assert.True(File.Exists(assetManifestPath));
+        var assetManifest = JsonConvert.DeserializeObject<AssetManifest>(File.ReadAllText(assetManifestPath), JsonSettings.Default)!;
+        Assert.Empty(assetManifest.Assets);
+        Assert.Single(assetManifest.ItemIconMetadata);
+        Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "asset-manifest");
+        var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
+        Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(assetManifestPath)), manifest.Hashes["asset-manifest.json"]);
+    }
     private static Diagnostic Diagnostic(string severity, string code) => new()
     {
         Severity = severity,
@@ -76,13 +111,17 @@ public sealed class RunFinalizeCommandTests
     private sealed class FakeItemExtractionCache : IItemExtractionCache
     {
         private readonly IReadOnlyList<Diagnostic> _diagnostics;
+        private readonly ItemIconAssetPlan _assetPlan;
 
-        public FakeItemExtractionCache(IReadOnlyList<Diagnostic> diagnostics)
+        public FakeItemExtractionCache(IReadOnlyList<Diagnostic> diagnostics, ItemIconAssetPlan? assetPlan = null)
         {
             _diagnostics = diagnostics;
+            _assetPlan = assetPlan ?? new ItemIconAssetPlan();
         }
 
         public IReadOnlyList<ItemSnapshotRow> GetOrExtract(CompendiumRun run) => new List<ItemSnapshotRow>();
+
+        public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => _diagnostics;
     }

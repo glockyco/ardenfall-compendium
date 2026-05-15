@@ -1855,11 +1855,11 @@ git commit -m "feat(site): render item display icons"
 - Create: `mod-tests/SpriteAssetExporterTests.cs`
 - Modify: `mod-tests/RunFinalizeCommandTests.cs`
 
-- [ ] **Step 1: Confirm the snapshot finalization path**
+- [x] **Step 1: Confirm the snapshot finalization path**
 
 The normal control-plane publication path is `ItemExtractionService` → `EntityExportBatchCommand` chunk files → `RunFinalizeCommand` published snapshot. The older `ExtractionService` direct path also writes snapshots, but it is not the path used by `run.finalize`. Thread in-memory asset planning through `ItemExtractionService`/`IItemExtractionCache` and write assets plus `asset-manifest.json` in `RunFinalizeCommand`; then mirror the same helper into `ExtractionService` so both paths stay equivalent.
 
-- [ ] **Step 2: Write failing icon slot behavior tests**
+- [x] **Step 2: Write failing icon slot behavior tests**
 
 Create `mod-tests/ItemIconSlotTests.cs` with tests that do not require full spell/status-effect export:
 
@@ -1907,7 +1907,7 @@ public sealed class ItemIconSlotTests
 }
 ```
 
-- [ ] **Step 3: Write failing sprite crop/hash tests**
+- [x] **Step 3: Write failing sprite crop/hash tests**
 
 Create `mod-tests/SpriteAssetExporterTests.cs` around a pure helper that takes raw RGBA bytes, width, height, and crop rect:
 
@@ -1943,7 +1943,7 @@ public sealed class SpriteAssetExporterTests
 }
 ```
 
-- [ ] **Step 4: Run mod tests and observe failures**
+- [x] **Step 4: Run mod tests and observe failures**
 
 Run:
 
@@ -1953,7 +1953,7 @@ dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter "ItemIconSlotTes
 
 Expected: compile failures for missing classes.
 
-- [ ] **Step 5: Add asset manifest DTOs**
+- [x] **Step 5: Add asset manifest DTOs**
 
 Create `mod/src/Dtos/AssetManifest.cs`:
 
@@ -2000,9 +2000,11 @@ public sealed class AssetColorSnapshot
 }
 ```
 
-- [ ] **Step 6: Add sprite exporter helpers**
+- [x] **Step 6: Add sprite exporter helpers**
 
 Create `mod/src/Assets/SpriteAssetExporter.cs`:
+
+Implementation note: the available local Unity references do not expose `Texture2D.EncodeToPNG`/`ImageConversion`; keep PNG writing self-contained with a private `EncodeRgbaPng(byte[] rgba, int width, int height)` helper that writes valid PNG chunks from cropped RGBA bytes.
 
 ```csharp
 using System;
@@ -2058,11 +2060,8 @@ public sealed class SpriteAssetExporter
             var readable = new Texture2D(texture.width, texture.height, TextureFormat.RGBA32, false);
             readable.ReadPixels(new Rect(0, 0, texture.width, texture.height), 0, 0);
             readable.Apply();
-            var cropped = CropRgba(readable.GetRawTextureData().ToArray(), readable.width, readable.height, x, y, width, height);
-            var croppedTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
-            croppedTexture.LoadRawTextureData(cropped);
-            croppedTexture.Apply();
-            var png = croppedTexture.EncodeToPNG();
+            var cropped = CropRgba(readable.GetRawTextureData(), readable.width, readable.height, x, y, width, height);
+            var png = EncodeRgbaPng(cropped, width, height);
             var hash = Sha256Hex(png);
             var relativePath = $"assets/{entityId}/{hash}.png";
             var fullPath = Path.Combine(stagingDir, relativePath.Replace('/', Path.DirectorySeparatorChar));
@@ -2079,7 +2078,7 @@ public sealed class SpriteAssetExporter
 }
 ```
 
-- [ ] **Step 7: Add icon slot behavior helpers**
+- [x] **Step 7: Add icon slot behavior helpers**
 
 Create `mod/src/Entities/Item/ItemIconSlots.cs`:
 
@@ -2101,11 +2100,11 @@ public static class ItemIconSlots
     public static Color ThrowingPotionDisplayColor(Color? statusEffectIconColor) => statusEffectIconColor ?? Color.white;
 
     private static Color? SlateSpellIconColor(SlateSpellItemData slate) =>
-        slate.spellData.Get()?.spellData?.Color?.IconColor;
+        slate.spellData?.Get()?.spellData?.Color?.IconColor;
 
     private static Color? ThrowingPotionIconColor(ThrowingPotionData potion)
     {
-        var effects = potion.areaOfEffect.Get();
+        var effects = potion.areaOfEffect?.Get();
         return effects != null && effects.Length > 0 ? effects[0]?.StatusEffect?.Color?.IconColor : null;
     }
 
@@ -2113,16 +2112,16 @@ public static class ItemIconSlots
     {
         if (item is SlateSpellItemData slate)
         {
-            var spellIcon = slate.spellData.Get()?.spellData?.icon;
+            var spellIcon = slate.spellData?.Get()?.spellData?.icon;
             if (spellIcon != null) return spellIcon;
         }
         if (item is ThrowingPotionData potion)
         {
-            var effects = potion.areaOfEffect.Get();
+            var effects = potion.areaOfEffect?.Get();
             var statusIcon = effects != null && effects.Length > 0 ? effects[0]?.StatusEffect?.statusEffectIcon : null;
             if (statusIcon != null) return statusIcon;
         }
-        return item.icon.Get() ?? item.category.Get()?.defaultItemIcon;
+        return item.icon?.Get() ?? item.category?.Get()?.defaultItemIcon;
     }
 
     public static Color DisplayColor(ItemData item)
@@ -2132,19 +2131,19 @@ public static class ItemIconSlots
         {
             return ThrowingPotionDisplayColor(ThrowingPotionIconColor(potion));
         }
-        return BaseDisplayColor(item.category.Get());
+        return BaseDisplayColor(item.category?.Get());
     }
 
     public static Sprite? SecondaryIcon(ItemData item)
     {
-        if (item is SlateSpellItemData || item is ThrowingPotionData) return item.icon.Get();
+        if (item is SlateSpellItemData || item is ThrowingPotionData) return item.icon?.Get();
         return null;
     }
 
     public static Color? SecondaryColor(ItemData item)
     {
-        if (item is SlateSpellItemData slate) return slate.quickslotSecondaryColor.Get();
-        if (item is ThrowingPotionData potion) return potion.quickslotSecondaryColor.Get();
+        if (item is SlateSpellItemData slate) return slate.quickslotSecondaryColor?.Get();
+        if (item is ThrowingPotionData potion) return potion.quickslotSecondaryColor?.Get();
         return null;
     }
 }
@@ -2207,7 +2206,7 @@ public sealed class ItemAssetManifestWriter
 }
 ```
 
-- [ ] **Step 8: Thread asset manifest writing through snapshot finalization**
+- [x] **Step 8: Thread asset manifest writing through snapshot finalization**
 
 Extend `SnapshotWriter` with:
 
@@ -2258,7 +2257,7 @@ ItemIconAssetPlan GetAssetPlan(CompendiumRun run);
 IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run);
 ```
 
-Update `mod-tests/RunFinalizeCommandTests.cs` in the same step: add `GetAssetPlan(CompendiumRun run)` to its fake `IItemExtractionCache` implementation and return an `ItemIconAssetPlan`. Existing tests that do not cover assets use an empty plan. Add one focused finalize test with a fake plan containing one `ItemIconAssetSlot` and assert `run.finalize` writes `asset-manifest.json`, returns it in artifacts, and keeps the manifest hash in the published snapshot manifest.
+Update `mod-tests/RunFinalizeCommandTests.cs` in the same step: add `GetAssetPlan(CompendiumRun run)` to its fake `IItemExtractionCache` implementation and return an `ItemIconAssetPlan`. Existing tests that do not cover assets use an empty plan. Add one focused finalize test with a fake metadata-only plan and assert `run.finalize` writes `asset-manifest.json`, keeps metadata in that file, and records the manifest hash in the published snapshot manifest.
 
 Modify `mod/src/Extraction/ItemExtractionService.cs` state creation:
 
@@ -2310,7 +2309,7 @@ Mirror the same `ItemIconAssetPlan`/`ItemAssetManifestWriter` wiring in `mod/src
 
 Keep asset writes out of `entity.plan`; only `run.finalize` and the legacy direct extraction path write PNGs or `asset-manifest.json`.
 
-- [ ] **Step 9: Keep color metadata out of canonical item fields**
+- [x] **Step 9: Keep color metadata out of canonical item fields**
 
 Do not add `displayIconColorJson` or `secondaryIconColorJson` to `entities/item/entity.json`, and do not write those values from `ExtractItem.Extract`. The approved boundary is the asset/read-model contract, not canonical gameplay fields.
 
@@ -2318,7 +2317,7 @@ The color metadata is emitted by `ItemIconAssetPlanner.CaptureItem(...)` into `A
 
 Add an assertion to `mod-tests/ItemIconSlotTests.cs` that `ItemIconAssetPlanner.CaptureItem(...)` appends one `ItemIconMetadataEntry` for an item even when no icon sprite is exported. Use the smallest constructible item fixture already used by existing mod tests, and assert the plan has zero `slots` entries, zero manifest `assets` entries, and one `itemIconMetadata` entry.
 
-- [ ] **Step 10: Run focused mod tests**
+- [x] **Step 10: Run focused mod tests**
 
 Run:
 

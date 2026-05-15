@@ -3,11 +3,13 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ArdenfallCompendium.Assets;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Extraction;
 using HotRepl.Control;
+using HotRepl.Control.Artifacts;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PreflightRunner = ArdenfallCompendium.Preflight.Preflight;
@@ -76,12 +78,24 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         File.WriteAllText(itemsPath, itemsJson);
         var itemHash = ManifestBuilder.Sha256Hex(itemsJson);
 
+
+        var assetPlan = _items.GetAssetPlan(run);
+        new ItemAssetManifestWriter(new SpriteAssetExporter()).WriteSlots(publishedDir, assetPlan);
+        var assetManifest = assetPlan.Manifest;
+        var assetManifestJson = JsonConvert.SerializeObject(assetManifest, JsonSettings.Default);
+        var assetManifestPath = Path.Combine(publishedDir, "asset-manifest.json");
+        File.WriteAllText(assetManifestPath, assetManifestJson);
+        var assetManifestHash = ManifestBuilder.Sha256Hex(assetManifestJson);
         foreach (var diagnostic in _items.GetWalkerDiagnostics(run))
         {
             AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
         }
 
-        var hashes = new Dictionary<string, string> { ["items.json"] = itemHash };
+        var hashes = new Dictionary<string, string>
+        {
+            ["items.json"] = itemHash,
+            ["asset-manifest.json"] = assetManifestHash,
+        };
         string? diagnosticsPath = null;
         string? diagnosticsHash = null;
         if (diagnostics.Count > 0)
@@ -116,10 +130,17 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             ["publishedDir"] = publishedDir,
             ["manifestPath"] = manifestPath,
         };
-        var artifacts = diagnosticsPath is null || diagnosticsHash is null
-            ? new[] { CompendiumCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash), CompendiumCommandResults.FileArtifact("items", itemsPath, "application/json", itemHash) }
-            : new[] { CompendiumCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash), CompendiumCommandResults.FileArtifact("items", itemsPath, "application/json", itemHash), CompendiumCommandResults.FileArtifact("diagnostics", diagnosticsPath, "application/json", diagnosticsHash) };
-        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(result, artifacts));
+        var artifacts = new List<ArtifactRef>
+        {
+            CompendiumCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash),
+            CompendiumCommandResults.FileArtifact("items", itemsPath, "application/json", itemHash),
+            CompendiumCommandResults.FileArtifact("asset-manifest", assetManifestPath, "application/json", assetManifestHash),
+        };
+        if (diagnosticsPath is not null && diagnosticsHash is not null)
+        {
+            artifacts.Add(CompendiumCommandResults.FileArtifact("diagnostics", diagnosticsPath, "application/json", diagnosticsHash));
+        }
+        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(result, artifacts.ToArray()));
     }
 
     private static void AddDiagnostic(DiagnosticTotals totals, List<JObject> sink, string? rowId, Diagnostic diagnostic)
