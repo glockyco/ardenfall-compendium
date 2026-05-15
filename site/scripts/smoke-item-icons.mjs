@@ -14,14 +14,14 @@ const table = readFileSync(
   join(import.meta.dirname, "..", "src", "lib", "components", "EntityTable.svelte"),
   "utf8",
 );
-const store = readFileSync(
-  join(import.meta.dirname, "..", "src", "lib", "store", "items.ts"),
+const readModels = readFileSync(
+  join(import.meta.dirname, "..", "src", "lib", "server", "read-models.ts"),
   "utf8",
 );
 
 const required = [
-  [store, "displayIconSrc"],
-  [store, "display_icon_hash"],
+  [readModels, "displayIconSrc"],
+  [readModels, "display_icon_hash"],
   [table, "itemNameWithIcon"],
   [table, "sortable?: boolean"],
   [detail, "item-icon"],
