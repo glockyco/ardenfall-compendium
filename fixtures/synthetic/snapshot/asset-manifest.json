@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "assets": [
+    {
+      "entityId": "item",
+      "rowId": "fixture-iron-sword",
+      "slot": "displayIcon",
+      "kind": "image",
+      "pngHash": "fixture-red-png",
+      "sourcePath": "assets/items/fixture-icon-red.png"
+    },
+    {
+      "entityId": "item",
+      "rowId": "fixture-slate-spell",
+      "slot": "displayIcon",
+      "kind": "image",
+      "pngHash": "fixture-blue-png",
+      "sourcePath": "assets/items/fixture-icon-blue.png"
+    },
+    {
+      "entityId": "item",
+      "rowId": "fixture-throwing-potion",
+      "slot": "displayIcon",
+      "kind": "image",
+      "pngHash": "fixture-blue-png",
+      "sourcePath": "assets/items/fixture-icon-blue.png"
+    },
+    {
+      "entityId": "item",
+      "rowId": "fixture-throwing-potion",
+      "slot": "secondaryIcon",
+      "kind": "image",
+      "pngHash": "fixture-red-png",
+      "sourcePath": "assets/items/fixture-icon-red.png"
+    }
+  ],
+  "itemIconMetadata": [
+    {
+      "entityId": "item",
+      "rowId": "fixture-iron-sword",
+      "displayIconColor": { "r": 1, "g": 1, "b": 1, "a": 1 },
+      "secondaryIconColor": null
+    },
+    {
+      "entityId": "item",
+      "rowId": "fixture-leather-tunic",
+      "displayIconColor": { "r": 0.25, "g": 0.2, "b": 0.15, "a": 1 },
+      "secondaryIconColor": null
+    },
+    {
+      "entityId": "item",
+      "rowId": "fixture-slate-spell",
+      "displayIconColor": { "r": 0.2, "g": 0.4, "b": 1, "a": 1 },
+      "secondaryIconColor": { "r": 0.9, "g": 0.8, "b": 0.2, "a": 1 }
+    },
+    {
+      "entityId": "item",
+      "rowId": "fixture-throwing-potion",
+      "displayIconColor": { "r": 0.1, "g": 0.8, "b": 0.2, "a": 1 },
+      "secondaryIconColor": { "r": 0.8, "g": 0.1, "b": 0.1, "a": 1 }
+    }
+  ]
+}

@@ -31,7 +31,13 @@ describe("emitItemReadModels", () => {
     const overview = db
       .query("SELECT id, name, variant FROM item_overview_rows ORDER BY name")
       .all() as { id: string; name: string; variant: string }[];
-    expect(overview.map((r) => r.name)).toEqual(["Iron Sword", "Leather Tunic", "Stamina Draught"]);
+    expect(overview.map((r) => r.name)).toEqual([
+      "Fire Flask",
+      "Iron Sword",
+      "Leather Tunic",
+      "Spark Slate",
+      "Stamina Draught",
+    ]);
 
     const detail = db
       .query("SELECT id, fields_json FROM item_detail_rows WHERE id = 'fixture-iron-sword'")

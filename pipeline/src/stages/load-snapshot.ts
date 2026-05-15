@@ -1,9 +1,11 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import validateAssetManifest from "../../dist/validate-asset-manifest.mjs";
 import validateDiagnostics from "../../dist/validate-diagnostics.mjs";
 import validateManifest from "../../dist/validate-manifest.mjs";
 import validateSnapshot from "../../dist/validate-snapshot.mjs";
 import type {
+  SnapshotAssetManifest,
   SnapshotDiagnosticArtifactEntry,
   SnapshotEnvelope,
   SnapshotManifest,
@@ -14,6 +16,7 @@ export interface LoadSnapshotOutput {
   manifest: SnapshotManifest;
   envelopes: Record<string, SnapshotEnvelope>;
   diagnostics: SnapshotDiagnosticArtifactEntry[];
+  assetManifest?: SnapshotAssetManifest;
 }
 
 export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
@@ -34,7 +37,13 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
     const diagnosticsPath = join(dir, "diagnostics.json");
     let diagnostics: SnapshotDiagnosticArtifactEntry[] = [];
     for (const fileName of readdirSync(dir)) {
-      if (fileName === "manifest.json" || fileName === "diagnostics.json") continue;
+      if (
+        fileName === "manifest.json" ||
+        fileName === "diagnostics.json" ||
+        fileName === "asset-manifest.json"
+      ) {
+        continue;
+      }
       if (!fileName.endsWith(".json")) continue;
       const path = join(dir, fileName);
       const env = JSON.parse(readFileSync(path, "utf8")) as SnapshotEnvelope;
@@ -58,6 +67,18 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
         throw new Error(`invalid snapshot diagnostics at ${diagnosticsPath}:\n${detail}`);
       }
     }
-    return { manifest, envelopes, diagnostics };
+
+    const assetManifestPath = join(dir, "asset-manifest.json");
+    let assetManifest: SnapshotAssetManifest | undefined;
+    if (existsSync(assetManifestPath)) {
+      assetManifest = JSON.parse(readFileSync(assetManifestPath, "utf8")) as SnapshotAssetManifest;
+      if (!validateAssetManifest(assetManifest)) {
+        const detail = (validateAssetManifest.errors ?? [])
+          .map((e) => `${assetManifestPath}#${e.instancePath} — ${e.message}`)
+          .join("\n");
+        throw new Error(`invalid snapshot asset manifest at ${assetManifestPath}:\n${detail}`);
+      }
+    }
+    return { manifest, envelopes, diagnostics, assetManifest };
   },
 };

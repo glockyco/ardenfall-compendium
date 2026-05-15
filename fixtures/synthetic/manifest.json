@@ -10,19 +10,29 @@
     "Consumable subtype canonicalisation and read-model field coverage",
     "lookupAsset and missing iconRef",
     "Parameter<T> resolved/inherited shape",
-    "SmartListParameter<ItemTag> populated and empty cases"
+    "SmartListParameter<ItemTag> populated and empty cases",
+    "Item icon asset slots and color metadata"
   ],
   "selection": [
     {
       "entity": "item",
-      "ids": ["fixture-iron-sword", "fixture-leather-tunic", "fixture-stamina-draught"],
-      "rationale": "one melee branch + one armor branch + one consumable subtype branch"
+      "ids": [
+        "fixture-iron-sword",
+        "fixture-leather-tunic",
+        "fixture-stamina-draught",
+        "fixture-slate-spell",
+        "fixture-throwing-potion"
+      ],
+      "rationale": "one melee branch + one armor branch + one consumable subtype branch + slate spell and throwing potion icon behavior branches"
     }
   ],
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "c7d99bf25e035f212d4035150c38ca478c11a93837b75dc0147d60cdfa037ad5",
-    "snapshot/items.json": "213f624cdf23254a01720c7882a0b911fbcfada73578064b2fb8a78d63868289"
+    "snapshot/manifest.json": "794946b3d90ed63a5efb351f7e53ec35b583518f1720df514838dd35fbe3ee46",
+    "snapshot/items.json": "b9f72ed8f1fb48b4c6fc52e86732327a3e4ba98e141e5db5256df91678b4dd88",
+    "snapshot/asset-manifest.json": "5b3aac7ceeabe0ae87db96b7cb750fb31fd3396c8644d003612b43a0b93ea8e5",
+    "snapshot/assets/items/fixture-icon-red.png": "54a6f041879d2c5b474388e9390a41cc8757cd93c8559a8998bb25315dbca70c",
+    "snapshot/assets/items/fixture-icon-blue.png": "c0d8039dde40faa0d1147cc75a4d07e505156f05b2dcb53e47816e412be6ef24"
   }
 }

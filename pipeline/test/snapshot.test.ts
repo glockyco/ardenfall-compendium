@@ -20,7 +20,7 @@ describe("loadSnapshot", () => {
     expect(out.manifest.preflight.passed).toBe(true);
     const items = out.envelopes["item"];
     if (!items) throw new Error("item envelope not loaded");
-    expect(items.rows.length).toBe(3);
+    expect(items.rows.length).toBe(5);
   });
 
   it("loads sibling diagnostics artifact and validation counts its entries", async () => {

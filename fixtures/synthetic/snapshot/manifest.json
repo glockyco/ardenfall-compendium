@@ -8,13 +8,34 @@
     "passed": true,
     "completedAt": "2026-05-03T12:00:00Z",
     "checks": [
-      { "name": "builtLookupTable", "ok": true, "reason": null },
-      { "name": "ardenfallGame", "ok": true },
-      { "name": "worldData", "ok": true },
-      { "name": "masterRecordTable", "ok": true }
+      {
+        "name": "builtLookupTable",
+        "ok": true,
+        "reason": null
+      },
+      {
+        "name": "ardenfallGame",
+        "ok": true
+      },
+      {
+        "name": "worldData",
+        "ok": true
+      },
+      {
+        "name": "masterRecordTable",
+        "ok": true
+      }
     ]
   },
-  "counts": { "item": 3 },
-  "diagnostics": { "fatal": 0, "diagnostic": 0 },
-  "hashes": { "items.json": "0000000000000000000000000000000000000000000000000000000000000000" }
+  "counts": {
+    "item": 5
+  },
+  "diagnostics": {
+    "fatal": 0,
+    "diagnostic": 0
+  },
+  "hashes": {
+    "items.json": "b9f72ed8f1fb48b4c6fc52e86732327a3e4ba98e141e5db5256df91678b4dd88",
+    "asset-manifest.json": "5b3aac7ceeabe0ae87db96b7cb750fb31fd3396c8644d003612b43a0b93ea8e5"
+  }
 }

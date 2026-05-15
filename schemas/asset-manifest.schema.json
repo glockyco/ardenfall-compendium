@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ardenfall-compendium.example/schemas/asset-manifest.schema.json",
+  "title": "Snapshot asset manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "assets", "itemIconMetadata"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["entityId", "rowId", "slot", "kind", "pngHash", "sourcePath"],
+        "properties": {
+          "entityId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "rowId": { "type": "string", "minLength": 1 },
+          "slot": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" },
+          "kind": { "enum": ["image"] },
+          "pngHash": { "type": "string", "minLength": 1 },
+          "sourcePath": { "type": "string", "pattern": "^assets/[^\\0]+\\.png$" }
+        }
+      }
+    },
+    "itemIconMetadata": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["entityId", "rowId", "displayIconColor", "secondaryIconColor"],
+        "properties": {
+          "entityId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "rowId": { "type": "string", "minLength": 1 },
+          "displayIconColor": { "$ref": "#/$defs/color" },
+          "secondaryIconColor": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/color" }] }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "color": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["r", "g", "b", "a"],
+      "properties": {
+        "r": { "type": "number" },
+        "g": { "type": "number" },
+        "b": { "type": "number" },
+        "a": { "type": "number" }
+      }
+    }
+  }
+}

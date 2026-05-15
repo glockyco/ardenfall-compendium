@@ -157,7 +157,7 @@ git commit -m "chore(pipeline): pin sharp for asset conversion"
 - Create: `fixtures/synthetic/snapshot/assets/items/fixture-icon-red.png`
 - Create: `fixtures/synthetic/snapshot/assets/items/fixture-icon-blue.png`
 
-- [ ] **Step 1: Write the failing loader test**
+- [x] **Step 1: Write the failing loader test**
 
 Append this test to `pipeline/test/assets.test.ts`:
 
@@ -222,7 +222,7 @@ describe("asset manifest loading", () => {
 });
 ```
 
-- [ ] **Step 2: Add synthetic manifest and PNG fixtures**
+- [x] **Step 2: Add synthetic manifest and PNG fixtures**
 
 Create `fixtures/synthetic/snapshot/asset-manifest.json`:
 
@@ -298,7 +298,7 @@ Create the fixture files with this one-off command. It writes two tiny valid PNG
 bun -e 'const { mkdirSync, writeFileSync } = require("node:fs"); mkdirSync("fixtures/synthetic/snapshot/assets/items", { recursive: true }); writeFileSync("fixtures/synthetic/snapshot/assets/items/fixture-icon-red.png", Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/lK3Q6wAAAABJRU5ErkJggg==", "base64")); writeFileSync("fixtures/synthetic/snapshot/assets/items/fixture-icon-blue.png", Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwAFAgJ/lk8H2QAAAABJRU5ErkJggg==", "base64"));'
 ```
 
-- [ ] **Step 3: Expand synthetic item rows and fixture manifest**
+- [x] **Step 3: Expand synthetic item rows and fixture manifest**
 
 Add synthetic rows in `fixtures/synthetic/snapshot/items.json` for `fixture-slate-spell` (`variant: "slate-spell"`) and `fixture-throwing-potion` (`variant: "throwing-potion"`) with the variant fields already required by their descriptors. Keep the existing three rows and add only minimal descriptor-valid fields. Update all existing fixture-count expectations from three rows to five rows in `pipeline/test/snapshot.test.ts`, `pipeline/test/canonicaliser.test.ts`, `pipeline/test/read-models.test.ts`, and both affected assertions in `pipeline/test/end-to-end.test.ts`.
 
@@ -318,7 +318,7 @@ bun run check:fixtures
 
 Expected before manifest updates: failure listing undeclared hashes for `snapshot/asset-manifest.json` and PNGs. Expected after manifest updates: pass.
 
-- [ ] **Step 4: Run the focused test and observe schema/loader failure**
+- [x] **Step 4: Run the focused test and observe schema/loader failure**
 
 Run:
 
@@ -328,7 +328,7 @@ bun test pipeline/test/assets.test.ts
 
 Expected: failure because `loadSnapshot` has no `assetManifest` output and no validator.
 
-- [ ] **Step 5: Add the asset manifest schema**
+- [x] **Step 5: Add the asset manifest schema**
 
 Create `schemas/asset-manifest.schema.json`:
 
@@ -403,7 +403,7 @@ bun run codegen:validators
 
 Expected: writes `pipeline/dist/validate-asset-manifest.mjs` and `.d.mts`.
 
-- [ ] **Step 6: Add TypeScript manifest types**
+- [x] **Step 6: Add TypeScript manifest types**
 
 Add to `pipeline/src/types.ts` near the snapshot types:
 
@@ -438,7 +438,7 @@ export interface SnapshotItemIconMetadata {
 }
 ```
 
-- [ ] **Step 7: Load and validate the optional manifest**
+- [x] **Step 7: Load and validate the optional manifest**
 
 Modify `pipeline/src/stages/load-snapshot.ts`:
 
@@ -498,7 +498,7 @@ Return:
 return { manifest, envelopes, diagnostics, assetManifest };
 ```
 
-- [ ] **Step 8: Re-run the focused test**
+- [x] **Step 8: Re-run the focused test**
 
 Run:
 
@@ -508,10 +508,10 @@ bun test pipeline/test/assets.test.ts
 
 Expected: pass.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```sh
-git add schemas/asset-manifest.schema.json pipeline/scripts/codegen-validators.ts pipeline/src/types.ts pipeline/src/stages/load-snapshot.ts pipeline/test/assets.test.ts fixtures/synthetic/snapshot/asset-manifest.json fixtures/synthetic/snapshot/assets/items/fixture-icon-red.png fixtures/synthetic/snapshot/assets/items/fixture-icon-blue.png pipeline/dist/validate-asset-manifest.mjs pipeline/dist/validate-asset-manifest.d.mts
+git add schemas/asset-manifest.schema.json pipeline/scripts/codegen-validators.ts pipeline/src/types.ts pipeline/src/stages/load-snapshot.ts pipeline/test/assets.test.ts pipeline/test/snapshot.test.ts pipeline/test/canonicaliser.test.ts pipeline/test/read-models.test.ts pipeline/test/end-to-end.test.ts fixtures/synthetic/manifest.json fixtures/synthetic/snapshot/manifest.json fixtures/synthetic/snapshot/items.json fixtures/synthetic/snapshot/asset-manifest.json fixtures/synthetic/snapshot/assets/items/fixture-icon-red.png fixtures/synthetic/snapshot/assets/items/fixture-icon-blue.png pipeline/dist/validate-asset-manifest.mjs pipeline/dist/validate-asset-manifest.d.mts pipeline/dist/validate-diagnostics.mjs pipeline/dist/validate-digest.mjs pipeline/dist/validate-fixture-manifest.mjs
 git commit -m "feat(pipeline): load snapshot asset manifests"
 ```
 

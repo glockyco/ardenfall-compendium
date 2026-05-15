@@ -168,6 +168,125 @@
           "message": "icon ref missing from BuiltLookupTable"
         }
       ]
+    },
+    {
+      "id": "fixture-slate-spell",
+      "variant": "slate-spell",
+      "fields": {
+        "id": "fixture-slate-spell",
+        "name": "Spark Slate",
+        "weight": 1.2,
+        "value": 40,
+        "iconRef": {
+          "kind": "missing",
+          "reason": "lookupAssetGuidMissing",
+          "source": "ItemData.icon"
+        },
+        "description": "A slate spell used to test secondary icon color metadata.",
+        "stackable": false,
+        "hideInGui": false,
+        "questItem": false,
+        "notLootableChance": 0,
+        "cannotBeOwned": false,
+        "quickslotIconRef": null,
+        "categoryRef": null,
+        "isIllegal": false,
+        "equipSlot": "Weapon",
+        "animationSpeedMultiplier": 1,
+        "twoHanded": false,
+        "quickslotSecondaryColorJson": { "r": 0.9, "g": 0.8, "b": 0.2, "a": 1 },
+        "spellDataJson": { "id": "fixture-spark", "name": "Spark" },
+        "secondarySpellDataJson": { "id": "fixture-ward", "name": "Ward" },
+        "spawnWhenSheathed": false,
+        "spellItemType": "Offensive",
+        "durabilityMax": 60,
+        "manaCostMultiplier": 1.1
+      },
+      "tags": ["spell", "slate"],
+      "provenance": {
+        "name": {
+          "kind": "parameter",
+          "source": "GetItemName()",
+          "isSet": true,
+          "inherited": false
+        },
+        "quickslotSecondaryColorJson": {
+          "kind": "parameter",
+          "source": "quickslotSecondaryColor.Get()",
+          "isSet": true,
+          "inherited": false
+        }
+      },
+      "diagnostics": []
+    },
+    {
+      "id": "fixture-throwing-potion",
+      "variant": "throwing-potion",
+      "fields": {
+        "id": "fixture-throwing-potion",
+        "name": "Fire Flask",
+        "weight": 0.5,
+        "value": 18,
+        "iconRef": {
+          "kind": "missing",
+          "reason": "lookupAssetGuidMissing",
+          "source": "ItemData.icon"
+        },
+        "description": "A throwing potion used to test display and secondary icon slots.",
+        "stackable": false,
+        "hideInGui": false,
+        "questItem": false,
+        "notLootableChance": 0,
+        "cannotBeOwned": false,
+        "quickslotIconRef": null,
+        "categoryRef": null,
+        "isIllegal": false,
+        "equipSlot": "Weapon",
+        "animationSpeedMultiplier": 1,
+        "twoHanded": false,
+        "itemTypeTooltip": "Throwing potion",
+        "missileRef": null,
+        "missileRotationJson": { "x": 0, "y": 0, "z": 0 },
+        "damage": 4.5,
+        "pierceArmor": false,
+        "bleedMultiplier": 0,
+        "damageFalloffDistance": 15,
+        "damageFalloff": 0.5,
+        "critChance": 0.1,
+        "stunChance": 0,
+        "bleedChance": 0,
+        "critDamageMult": 1.5,
+        "quickslotCooldownTime": 8,
+        "bleedStatusEffectJson": null,
+        "stealthHitMultiplier": 1,
+        "spawnVisualOnHitStatic": true,
+        "spawnVisualOnHitCharacter": true,
+        "respawnItemPickupChance": 0,
+        "addItemToInventoryChance": 0,
+        "missileSettingsJson": { "speed": 10 },
+        "quickslotSecondaryColorJson": { "r": 0.8, "g": 0.1, "b": 0.1, "a": 1 },
+        "areaOfEffectRange": 3.5,
+        "areaOfEffectJson": { "shape": "sphere" },
+        "visualLevel": 2,
+        "effectName": "Burning",
+        "isDrinkingPotion": false
+      },
+      "tags": ["potion", "throwing"],
+      "provenance": {
+        "name": {
+          "kind": "parameter",
+          "source": "GetItemName()",
+          "isSet": true,
+          "inherited": false
+        },
+        "quickslotSecondaryColorJson": {
+          "kind": "parameter",
+          "source": "quickslotSecondaryColor.Get()",
+          "isSet": true,
+          "inherited": false
+        }
+      },
+      "diagnostics": []
     }
   ]
 }

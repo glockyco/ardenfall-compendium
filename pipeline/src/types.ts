@@ -169,6 +169,35 @@ export interface SnapshotDiagnosticArtifactEntry extends SnapshotDiagnostic {
   rowId: string | null;
 }
 
+export interface SnapshotAssetManifest {
+  schemaVersion: number;
+  assets: SnapshotAssetEntry[];
+  itemIconMetadata: SnapshotItemIconMetadata[];
+}
+
+export interface SnapshotAssetEntry {
+  entityId: string;
+  rowId: string;
+  slot: string;
+  kind: "image";
+  pngHash: string;
+  sourcePath: string;
+}
+
+export interface SnapshotColor {
+  r: number;
+  g: number;
+  b: number;
+  a: number;
+}
+
+export interface SnapshotItemIconMetadata {
+  entityId: string;
+  rowId: string;
+  displayIconColor: SnapshotColor;
+  secondaryIconColor: SnapshotColor | null;
+}
+
 // Snapshot refs (canonical)
 
 export type SnapshotRef =
