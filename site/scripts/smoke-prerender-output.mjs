@@ -1,22 +1,35 @@
 #!/usr/bin/env bun
-import { Database } from "bun:sqlite";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const outputDir = join(import.meta.dirname, "..", ".svelte-kit", "cloudflare");
-const sqlitePath = join(import.meta.dirname, "..", "static", "data.sqlite");
+const releasePath = join(import.meta.dirname, "..", "static", "_release.json");
+const outputReleasePath = join(outputDir, "_release.json");
 const overviewPath = firstExisting([
   join(outputDir, "items", "index.html"),
   join(outputDir, "items.html"),
 ]);
 
+if (!existsSync(releasePath)) throw new Error(`missing staged release metadata: ${releasePath}`);
+if (!existsSync(outputReleasePath)) {
+  throw new Error(`missing built release metadata: ${outputReleasePath}`);
+}
 if (!overviewPath) {
   throw new Error(`missing prerendered item overview under ${outputDir}`);
 }
 
-const sample = readSampleItem(sqlitePath);
+const manifest = JSON.parse(readFileSync(releasePath, "utf8"));
+const builtManifest = JSON.parse(readFileSync(outputReleasePath, "utf8"));
+if (builtManifest.artifactId !== manifest.artifactId) {
+  throw new Error(
+    `built release metadata mismatch: expected ${manifest.artifactId}, got ${builtManifest.artifactId}`,
+  );
+}
+const probe = manifest.probes.items[0];
+if (!probe) throw new Error("release metadata contains no item probes");
+
 const overview = readFileSync(overviewPath, "utf8");
-for (const snippet of [sample.name, "/assets/", "item-icon"]) {
+for (const snippet of [probe.name, "/assets/", "item-icon"]) {
   if (!overview.includes(snippet)) throw new Error(`overview HTML missing ${snippet}`);
 }
 for (const forbidden of ["_app/immutable/entry/app", "data.sqlite", "sqlite-wasm"]) {
@@ -25,37 +38,22 @@ for (const forbidden of ["_app/immutable/entry/app", "data.sqlite", "sqlite-wasm
 }
 
 const detailPath = firstExisting([
-  join(outputDir, "items", `${sample.id}.html`),
-  join(outputDir, "items", sample.id, "index.html"),
+  join(outputDir, "items", `${probe.id}.html`),
+  join(outputDir, "items", probe.id, "index.html"),
 ]);
-if (!detailPath) throw new Error(`missing prerendered detail page for ${sample.id}`);
+if (!detailPath) throw new Error(`missing prerendered detail page for ${probe.id}`);
 
 const detail = readFileSync(detailPath, "utf8");
-for (const snippet of [sample.name, "item-icon", "/assets/"]) {
+for (const snippet of [probe.name, "item-icon", "/assets/"]) {
   if (!detail.includes(snippet)) throw new Error(`detail HTML missing ${snippet}`);
 }
 if (detail.includes("_app/immutable/entry/app")) {
   throw new Error("detail page should not ship Svelte hydration entry by default");
 }
 
-function readSampleItem(path) {
-  if (!existsSync(path)) throw new Error(`missing generated SQLite at ${path}`);
-  const db = new Database(path, { readonly: true });
-  try {
-    const row = db
-      .query(
-        `SELECT id, name
-         FROM item_overview_rows
-         WHERE name IS NOT NULL AND display_icon_hash IS NOT NULL
-         ORDER BY name
-         LIMIT 1`,
-      )
-      .get();
-    if (!row?.id || !row?.name) throw new Error("missing item overview row with display icon");
-    return row;
-  } finally {
-    db.close();
-  }
+if (probe.displayIconHash) {
+  const assetPath = join(outputDir, "assets", `${probe.displayIconHash}.webp`);
+  if (!existsSync(assetPath)) throw new Error(`missing probe asset: ${assetPath}`);
 }
 
 function firstExisting(paths) {

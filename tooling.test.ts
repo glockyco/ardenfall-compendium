@@ -256,7 +256,24 @@ describe("site prerender architecture", () => {
     const smoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
     expect(smoke).not.toContain("fixture-iron-sword");
     expect(smoke).not.toContain("Iron Sword");
-    expect(smoke).toContain("item_overview_rows");
+    expect(smoke).toContain("manifest.probes.items");
+  });
+
+  it("uses release metadata for local and production smokes", () => {
+    const localSmoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
+    expect(localSmoke).toContain("_release.json");
+    expect(localSmoke).toContain("manifest.probes.items");
+
+    expect(existsSync("site/scripts/smoke-production-release.mjs")).toBe(true);
+    const remoteSmoke = readFileSync("site/scripts/smoke-production-release.mjs", "utf8");
+    expect(remoteSmoke).toContain("/_release.json");
+    expect(remoteSmoke).toContain("data.sqlite");
+    expect(remoteSmoke).toContain("manifest.outputs.sqlite.sha256");
+
+    const deploy = readFileSync("site/scripts/deploy-production.mjs", "utf8");
+    expect(deploy).toContain("stageArtifact");
+    expect(deploy).toContain("wrangler deploy");
+    expect(deploy).toContain("smoke-production-release.mjs");
   });
 
   it("keeps generated SQLite reads server-only", () => {
