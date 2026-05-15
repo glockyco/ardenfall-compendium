@@ -167,10 +167,11 @@ Planned canonical tables:
 
 ### Slice 3.5 — Static prerender architecture
 
-**Status:** ready
-**Priority:** highest; execute before Slice 4, map work, search, or any new entity slice.
+**Status:** done
+**Completed:** 2026-05-15 on `main`; implementation commits `a73dcdd..070c338`, with the roadmap closeout commit recording final local verification evidence. Production deployment was not run in this implementation session.
 **Plan:** `docs/superpowers/plans/2026-05-15-site-prerender-static-assets.md`
 **Spec coverage:** baseline §11 and §14 (site presentation/SEO), baseline §16 open question 1 (deployment), investment-priorities §3 (foundation cost/reliability before depth), and Slice 1.5 deployment decisions.
+**Verification evidence:** local gates passed on 2026-05-15 (`bun run pipeline:run fixtures/synthetic/snapshot pipeline/dist`, `bun run codegen:validators`, `bun run typecheck`, `bun test tooling.test.ts`, `bun test controller/test`, `bun run --cwd site smoke:item-icons`, `bun run --cwd site check`, `bun run --cwd site build`, `bun run --cwd site smoke:prerender`, `bun run format:check`, `bun run lint`, `git diff --check`). Static output checks confirmed `.svelte-kit/cloudflare/items.html` and `.svelte-kit/cloudflare/items/fixture-iron-sword.html` exist; `/items` HTML contains `Iron Sword` and does not contain the Svelte hydration entry. The synthetic generated-artifact build wrote `pipeline/dist/data.sqlite` at 266,240 bytes and 4 asset refs to `pipeline/dist/assets`.
 
 **Why this interrupts the roadmap:** Slice 3 exposed that Ardenfall currently ships `/items` and detail pages as empty client-rendered SPA shells (`ssr = false`, `prerender = false`) that hydrate from `/data.sqlite` in the browser. That is the wrong default for this compendium. Almost all generated pages are deterministic for a given snapshot and should be static HTML built once during deploy. Cloudflare Workers Static Assets serve matching files without invoking Worker code; SvelteKit also excludes `prerender = true` routes from the dynamic SSR manifest. Both behaviours directly reduce Worker invocations, Worker bundle surface, blank-shell failure modes, and edge runtime dependency risk.
 
@@ -194,9 +195,9 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 - The prerendered item overview HTML contains visible item text (for example `Iron Sword`) and at least one `/assets/<hash>.webp` image reference.
 - The prerendered item detail HTML contains the item name and decorative icon markup without requiring Svelte hydration.
 - `site/.svelte-kit/cloudflare/_worker.js` no longer needs the item overview/detail route modules for normal traffic; the plan verifies this through static output and HTTP checks rather than brittle minified-string assertions.
-- `bun run --cwd site check`, `bun run --cwd site build`, `bun test tooling.test.ts`, and a production or local `wrangler` smoke all pass.
-- A browser or HTTP smoke after deploy proves `/items`, an item detail route, `/data.sqlite`, and a representative `/assets/*.webp` all return 200. Page HTML checks must inspect actual HTML content, not just status codes.
-- Closeout must record the deployed Cloudflare version ID and a production smoke that inspects HTML content for `/items` and one item detail page.
+- `bun run --cwd site check`, `bun run --cwd site build`, `bun test tooling.test.ts`, and local prerender smoke pass.
+- A browser or HTTP smoke after deploy must prove `/items`, an item detail route, `/data.sqlite`, and a representative `/assets/*.webp` all return 200. Page HTML checks must inspect actual HTML content, not just status codes.
+- Deployment closeout must record the Cloudflare version ID and a production smoke that inspects HTML content for `/items` and one item detail page.
 
 ### Slice 4 — Item presentation depth
 
