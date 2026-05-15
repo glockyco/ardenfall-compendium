@@ -42,6 +42,10 @@ bun run --cwd site smoke:prerender
 
 The production site is static-assets-first: generated pages are prerendered to HTML and should be served by Cloudflare Static Assets without Worker invocation; the Worker is retained only for exceptional non-prerendered routes.
 
+Production deploys must use `pipeline/dist` generated from a real snapshot, not `fixtures/synthetic`.
+`bun run --cwd site cf-deploy` runs a production-data guard before build/deploy and refuses
+fixture-sized SQLite outputs (default minimum: 1000 item overview rows).
+
 Mod build (Mac/Linux requires `mono` or `dotnet`):
 
 ```sh

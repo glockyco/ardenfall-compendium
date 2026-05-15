@@ -31,7 +31,8 @@
     "smoke:item-icons": "bun run scripts/smoke-item-icons.mjs",
     "smoke:prerender": "bun run scripts/smoke-prerender-output.mjs",
     "sync:generated": "bun run scripts/sync-generated-artifacts.mjs",
-    "cf-deploy": "bun run build && wrangler deploy"
+    "assert:production-data": "bun run scripts/assert-production-data.mjs",
+    "cf-deploy": "bun run assert:production-data && bun run build && wrangler deploy"
   },
   "type": "module"
 }

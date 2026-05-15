@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "bun:test";
+import { Database } from "bun:sqlite";
 import { join } from "node:path";
 import { buildCommandPlan, defaultOptions } from "./scripts/decompile-ardenfall.mjs";
 import { tmpdir } from "node:os";
@@ -52,8 +53,14 @@ describe("site deployment tooling", () => {
       "bun run scripts/sync-generated-artifacts.mjs",
     );
     expect(sitePackageJson.scripts.build).toBe("bun run sync:generated && vite build");
-    expect(sitePackageJson.scripts["cf-deploy"]).toBe("bun run build && wrangler deploy");
+    expect(sitePackageJson.scripts["assert:production-data"]).toBe(
+      "bun run scripts/assert-production-data.mjs",
+    );
+    expect(sitePackageJson.scripts["cf-deploy"]).toBe(
+      "bun run assert:production-data && bun run build && wrangler deploy",
+    );
     expect(existsSync("site/scripts/sync-generated-artifacts.mjs")).toBe(true);
+    expect(existsSync("site/scripts/assert-production-data.mjs")).toBe(true);
   });
 
   it("copies SQLite and assets while pruning stale managed assets", () => {
@@ -99,6 +106,31 @@ describe("site deployment tooling", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it("rejects fixture-sized generated SQLite before production deploy", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-production-data-invalid-"));
+    try {
+      const dbPath = join(root, "data.sqlite");
+      const db = new Database(dbPath);
+      db.exec("CREATE TABLE item_overview_rows (id TEXT PRIMARY KEY, name TEXT)");
+      for (let i = 0; i < 5; i += 1) {
+        db.query("INSERT INTO item_overview_rows (id, name) VALUES (?, ?)").run(
+          `fixture-${i}`,
+          `Fixture ${i}`,
+        );
+      }
+      db.close();
+
+      const { assertProductionData } =
+        (await import("./site/scripts/assert-production-data.mjs")) as typeof import("./site/scripts/assert-production-data.mjs");
+
+      expect(() => assertProductionData({ sqlitePath: dbPath })).toThrow(
+        /expected at least 1000 item overview rows, found 5/,
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("site prerender architecture", () => {
@@ -121,6 +153,13 @@ describe("site prerender architecture", () => {
     expect(sitePackageJson.scripts["smoke:prerender"]).toBe(
       "bun run scripts/smoke-prerender-output.mjs",
     );
+  });
+
+  it("keeps prerender smoke independent of synthetic fixture names", () => {
+    const smoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
+    expect(smoke).not.toContain("fixture-iron-sword");
+    expect(smoke).not.toContain("Iron Sword");
+    expect(smoke).toContain("item_overview_rows");
   });
 
   it("keeps generated SQLite reads server-only", () => {
