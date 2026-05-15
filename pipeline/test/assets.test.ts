@@ -1,8 +1,12 @@
 import { describe, expect, it } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Database } from "bun:sqlite";
 import sharp from "sharp";
+import { emitAssets } from "$pipeline/stages/emit-assets";
+import { emitSqlite } from "$pipeline/stages/emit-sqlite";
+import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { loadSnapshot } from "$pipeline/stages/load-snapshot";
 import type { StageContext } from "$pipeline/types";
 
@@ -25,6 +29,10 @@ const ctx: StageContext = {
   outDir: "pipeline/test/.tmp",
   log: () => undefined,
 };
+
+function tempOut(prefix: string): string {
+  return mkdtempSync(join(tmpdir(), prefix));
+}
 
 describe("asset conversion", () => {
   it("converts PNG to WebP through the pinned sharp dependency", async () => {
@@ -76,6 +84,117 @@ describe("asset manifest loading", () => {
       );
     } finally {
       rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("emitAssets", () => {
+  it("converts manifest PNGs to content-addressed WebP files", async () => {
+    const outDir = tempOut("ardenfall-assets-");
+    try {
+      const snap = await loadSnapshot.run({}, ctx);
+      const result = await emitAssets.run({ "load-snapshot": snap }, { ...ctx, outDir });
+
+      expect(result.refs).toHaveLength(4);
+      expect(result.refs.every((ref) => ref.assetHash.match(/^[a-f0-9]{64}$/))).toBe(true);
+      for (const ref of result.refs) {
+        expect(existsSync(join(outDir, "assets", `${ref.assetHash}.webp`))).toBe(true);
+      }
+      expect(result.refs).toContainEqual(
+        expect.objectContaining({
+          entityId: "item",
+          entityRowId: "fixture-iron-sword",
+          slot: "displayIcon",
+          assetKind: "image",
+        }),
+      );
+      expect(result.refs).toContainEqual(
+        expect.objectContaining({
+          entityId: "item",
+          entityRowId: "fixture-throwing-potion",
+          slot: "secondaryIcon",
+          assetKind: "image",
+        }),
+      );
+      const uniqueHashes = new Set(result.refs.map((ref) => ref.assetHash));
+      expect(uniqueHashes.size).toBe(2);
+    } finally {
+      rmSync(outDir, { recursive: true, force: true });
+    }
+  });
+
+  it("fails loudly when a referenced PNG is missing", async () => {
+    const outDir = tempOut("ardenfall-assets-missing-");
+    try {
+      const snap = await loadSnapshot.run({}, ctx);
+      const badSnap = {
+        ...snap,
+        assetManifest: {
+          schemaVersion: 1,
+          assets: [
+            {
+              entityId: "item",
+              rowId: "fixture-iron-sword",
+              slot: "displayIcon",
+              kind: "image" as const,
+              pngHash: "missing",
+              sourcePath: "assets/items/missing.png",
+            },
+          ],
+          itemIconMetadata: [],
+        },
+      };
+
+      await expect(
+        emitAssets.run({ "load-snapshot": badSnap }, { ...ctx, outDir }),
+      ).rejects.toThrow(/missing snapshot asset/);
+    } finally {
+      rmSync(outDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("asset_refs", () => {
+  it("persists emitted asset references into SQLite", async () => {
+    const outDir = tempOut("ardenfall-asset-refs-");
+    try {
+      const desc = await loadDescriptors.run({}, ctx);
+      const snap = await loadSnapshot.run({}, ctx);
+      const emitted = await emitAssets.run({ "load-snapshot": snap }, { ...ctx, outDir });
+
+      await emitSqlite.run(
+        { "load-descriptors": desc, "load-snapshot": snap, "emit-assets": emitted },
+        { ...ctx, outDir },
+      );
+
+      const db = new Database(join(outDir, "data.sqlite"), { readonly: true });
+      try {
+        const refs = db
+          .query(
+            "SELECT entity_id, entity_row_id, slot, asset_kind, asset_hash FROM asset_refs ORDER BY entity_row_id, slot",
+          )
+          .all();
+        expect(refs).toContainEqual(
+          expect.objectContaining({
+            entity_id: "item",
+            entity_row_id: "fixture-iron-sword",
+            slot: "displayIcon",
+            asset_kind: "image",
+          }),
+        );
+        expect(refs).toContainEqual(
+          expect.objectContaining({
+            entity_id: "item",
+            entity_row_id: "fixture-throwing-potion",
+            slot: "secondaryIcon",
+            asset_kind: "image",
+          }),
+        );
+      } finally {
+        db.close();
+      }
+    } finally {
+      rmSync(outDir, { recursive: true, force: true });
     }
   });
 });

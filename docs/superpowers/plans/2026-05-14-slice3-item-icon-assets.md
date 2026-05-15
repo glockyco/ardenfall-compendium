@@ -292,10 +292,10 @@ Create `fixtures/synthetic/snapshot/asset-manifest.json`:
 }
 ```
 
-Create the fixture files with this one-off command. It writes two tiny valid PNGs and avoids committing generated binary blobs from an external source:
+Create the fixture files with this one-off command. It writes two tiny valid PNGs through the pinned `sharp` dependency so the same decoder used by `emit-assets` accepts them:
 
 ```sh
-bun -e 'const { mkdirSync, writeFileSync } = require("node:fs"); mkdirSync("fixtures/synthetic/snapshot/assets/items", { recursive: true }); writeFileSync("fixtures/synthetic/snapshot/assets/items/fixture-icon-red.png", Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/lK3Q6wAAAABJRU5ErkJggg==", "base64")); writeFileSync("fixtures/synthetic/snapshot/assets/items/fixture-icon-blue.png", Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwAFAgJ/lk8H2QAAAABJRU5ErkJggg==", "base64"));'
+bun --cwd pipeline -e 'const sharp = require("sharp"); await sharp({ create: { width: 1, height: 1, channels: 4, background: { r: 255, g: 0, b: 0, alpha: 1 } } }).png().toFile("../fixtures/synthetic/snapshot/assets/items/fixture-icon-red.png"); await sharp({ create: { width: 1, height: 1, channels: 4, background: { r: 0, g: 0, b: 255, alpha: 1 } } }).png().toFile("../fixtures/synthetic/snapshot/assets/items/fixture-icon-blue.png");'
 ```
 
 - [x] **Step 3: Expand synthetic item rows and fixture manifest**
@@ -527,7 +527,7 @@ git commit -m "feat(pipeline): load snapshot asset manifests"
 - Modify: `pipeline/test/assets.test.ts`
 - Modify: `pipeline/test/end-to-end.test.ts`
 
-- [ ] **Step 1: Write failing asset stage tests**
+- [x] **Step 1: Write failing asset stage tests**
 
 Append to `pipeline/test/assets.test.ts`:
 
@@ -654,7 +654,7 @@ describe("asset_refs", () => {
 });
 ```
 
-- [ ] **Step 2: Run tests and observe missing stage failures**
+- [x] **Step 2: Run tests and observe missing stage failures**
 
 Run:
 
@@ -664,7 +664,7 @@ bun test pipeline/test/assets.test.ts
 
 Expected: TypeScript/import failures for `emit-assets` and `emitSqlite` input shape.
 
-- [ ] **Step 3: Add emitted asset types**
+- [x] **Step 3: Add emitted asset types**
 
 Add to `pipeline/src/types.ts`:
 
@@ -679,7 +679,7 @@ export interface EmittedAssetRef {
 }
 ```
 
-- [ ] **Step 4: Implement `emit-assets`**
+- [x] **Step 4: Implement `emit-assets`**
 
 Create `pipeline/src/stages/emit-assets.ts`:
 
@@ -762,7 +762,7 @@ export const emitAssets: Stage<EmitAssetsInputs, EmitAssetsOutput> = {
 };
 ```
 
-- [ ] **Step 5: Wire SQLite insertion**
+- [x] **Step 5: Wire SQLite insertion**
 
 Modify `pipeline/src/stages/emit-sqlite.ts` imports:
 
@@ -793,7 +793,7 @@ for (const ref of inputs["emit-assets"]?.refs ?? []) {
 }
 ```
 
-- [ ] **Step 6: Wire CLI stage order**
+- [x] **Step 6: Wire CLI stage order**
 
 Modify `pipeline/src/cli.ts`:
 
@@ -817,7 +817,7 @@ const a = result["emit-assets"] as { refs: unknown[]; assetsDir: string };
 console.warn(`wrote ${a.refs.length} asset refs to ${a.assetsDir}`);
 ```
 
-- [ ] **Step 7: Update end-to-end pipeline test**
+- [x] **Step 7: Update end-to-end pipeline test**
 
 In `pipeline/test/end-to-end.test.ts`, import `emitAssets` and add it to all stage arrays:
 
@@ -845,7 +845,7 @@ Before closing the temp dir, assert at least one WebP file exists:
 expect(existsSync(join(out, "assets"))).toBe(true);
 ```
 
-- [ ] **Step 8: Run focused tests**
+- [x] **Step 8: Run focused tests**
 
 Run:
 
@@ -855,7 +855,7 @@ bun test pipeline/test/assets.test.ts pipeline/test/end-to-end.test.ts
 
 Expected: pass.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```sh
 git add pipeline/src/types.ts pipeline/src/stages/emit-assets.ts pipeline/src/stages/emit-sqlite.ts pipeline/src/cli.ts pipeline/test/assets.test.ts pipeline/test/end-to-end.test.ts

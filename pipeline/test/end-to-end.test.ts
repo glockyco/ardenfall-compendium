@@ -1,6 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runStages } from "$pipeline/orchestrator";
@@ -8,6 +8,7 @@ import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { loadSnapshot } from "$pipeline/stages/load-snapshot";
 import { validate } from "$pipeline/stages/validate";
 import { emitSqlite } from "$pipeline/stages/emit-sqlite";
+import { emitAssets } from "$pipeline/stages/emit-assets";
 import type { Stage } from "$pipeline/types";
 
 describe("end-to-end pipeline", () => {
@@ -20,7 +21,7 @@ describe("end-to-end pipeline", () => {
         outDir: out,
         log: () => undefined,
       };
-      const stages = [loadDescriptors, loadSnapshot, validate, emitSqlite] as Stage<
+      const stages = [loadDescriptors, loadSnapshot, validate, emitAssets, emitSqlite] as Stage<
         unknown,
         unknown
       >[];
@@ -42,6 +43,9 @@ describe("end-to-end pipeline", () => {
           db.query("SELECT COUNT(*) c FROM item_overview_rows").get() as { c: number }
         ).c;
         expect(overviewCount).toBe(5);
+        const assetRefCount = (db.query("SELECT COUNT(*) c FROM asset_refs").get() as { c: number })
+          .c;
+        expect(assetRefCount).toBe(4);
 
         // Variant ancestry is consistent for the melee row.
         const orphans = db
@@ -57,6 +61,7 @@ describe("end-to-end pipeline", () => {
           )
           .all();
         expect(orphans).toEqual([]);
+        expect(existsSync(join(out, "assets"))).toBe(true);
       } finally {
         db.close();
       }
@@ -74,7 +79,7 @@ describe("end-to-end pipeline", () => {
         outDir: out,
         log: () => undefined,
       };
-      const stages = [loadDescriptors, loadSnapshot, validate, emitSqlite] as Stage<
+      const stages = [loadDescriptors, loadSnapshot, validate, emitAssets, emitSqlite] as Stage<
         unknown,
         unknown
       >[];
@@ -99,7 +104,7 @@ describe("end-to-end pipeline", () => {
         outDir: out,
         log: () => undefined,
       };
-      const stages = [loadDescriptors, loadSnapshot, validate, emitSqlite] as Stage<
+      const stages = [loadDescriptors, loadSnapshot, validate, emitAssets, emitSqlite] as Stage<
         unknown,
         unknown
       >[];

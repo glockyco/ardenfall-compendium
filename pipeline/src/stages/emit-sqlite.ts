@@ -9,10 +9,12 @@ import { emitSiteMetadata } from "./emit-site-metadata";
 import { emitItemReadModels } from "./emit-read-models";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type { LoadSnapshotOutput } from "./load-snapshot.ts";
+import type { EmitAssetsOutput } from "./emit-assets.ts";
 
 export interface EmitSqliteInputs {
   "load-descriptors": LoadDescriptorsOutput;
   "load-snapshot": LoadSnapshotOutput;
+  "emit-assets"?: EmitAssetsOutput;
 }
 
 export interface EmitSqliteOutput {
@@ -22,7 +24,7 @@ export interface EmitSqliteOutput {
 
 export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
   id: "emit-sqlite",
-  inputs: ["load-descriptors", "load-snapshot"],
+  inputs: ["load-descriptors", "load-snapshot", "emit-assets"],
   run: (inputs, ctx) => {
     const outputPath = `${ctx.outDir}/data.sqlite`;
     mkdirSync(dirname(outputPath), { recursive: true });
@@ -44,6 +46,12 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
       canonicaliseItems(db, itemEntity, itemVariants, itemEnvelope);
       emitSiteMetadata(db, desc);
       emitItemReadModels(db, desc);
+      const assetRefInsert = db.prepare(
+        `INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)`,
+      );
+      for (const ref of inputs["emit-assets"]?.refs ?? []) {
+        assetRefInsert.run(ref.entityId, ref.entityRowId, ref.slot, ref.assetKind, ref.assetHash);
+      }
       db.close();
       db = undefined;
       renameSync(tempPath, outputPath);

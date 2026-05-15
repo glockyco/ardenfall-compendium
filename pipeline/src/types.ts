@@ -198,6 +198,15 @@ export interface SnapshotItemIconMetadata {
   secondaryIconColor: SnapshotColor | null;
 }
 
+export interface EmittedAssetRef {
+  entityId: string;
+  entityRowId: string;
+  slot: string;
+  assetKind: "image";
+  assetHash: string;
+  outputPath: string;
+}
+
 // Snapshot refs (canonical)
 
 export type SnapshotRef =
