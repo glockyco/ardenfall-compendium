@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
-const DB_PATH = fileURLToPath(new URL("../../../static/data.sqlite", import.meta.url));
+const DB_PATH = join(process.cwd(), "static", "data.sqlite");
 
 let db: Database.Database | null = null;
 

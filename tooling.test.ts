@@ -126,7 +126,7 @@ describe("site prerender architecture", () => {
     expect(existsSync("site/src/lib/server/read-models.ts")).toBe(true);
     const readModels = readFileSync("site/src/lib/server/read-models.ts", "utf8");
     expect(readModels).toContain("better-sqlite3");
-    expect(readModels).toContain("static/data.sqlite");
+    expect(readModels).toContain('"static", "data.sqlite"');
     expect(readModels).not.toContain("$app/environment");
     expect(readModels).not.toContain("@sqlite.org/sqlite-wasm");
   });

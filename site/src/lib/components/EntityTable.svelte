@@ -37,7 +37,7 @@
             {#if col.renderer === "itemNameWithIcon"}
               <span class="flex items-center gap-2">
                 <span
-                  class="bg-muted border-border flex size-8 shrink-0 items-center justify-center rounded border"
+                  class="item-icon bg-muted border-border flex size-8 shrink-0 items-center justify-center rounded border"
                   aria-hidden="true"
                 >
                   {#if iconSrc(row)}
