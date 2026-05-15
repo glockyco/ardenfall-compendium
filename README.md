@@ -4,15 +4,15 @@ Static, agentic-first wiki and interactive map for the Unity-Mono game **Ardenfa
 
 ## Repository shape
 
-| Path                | Subsystem                                                                                   | Toolchain           |
-| ------------------- | ------------------------------------------------------------------------------------------- | ------------------- |
-| `mod/`              | BepInEx 5 plugin that walks live game objects and emits JSON snapshots                      | C# / `dotnet build` |
-| `pipeline/`         | TypeScript pipeline that validates snapshots and produces canonical SQLite + WebP assets    | Bun                 |
-| `controller/`       | HotRepl controller that deploys runtime DLLs and drives typed export commands               | Bun                 |
-| `site/`             | SvelteKit static site that ships the SQLite blob and renders entity pages + interactive map | Bun + Vite          |
-| `entities/`         | Filesystem-as-registry of entity descriptors                                                | JSON                |
-| `schemas/`          | JSON Schema authority for descriptors, snapshots, manifests                                 | JSON Schema 2020-12 |
-| `docs/superpowers/` | Specs, plans, and roadmap                                                                   | Markdown            |
+| Path                | Subsystem                                                                                         | Toolchain           |
+| ------------------- | ------------------------------------------------------------------------------------------------- | ------------------- |
+| `mod/`              | BepInEx 5 plugin that walks live game objects and emits JSON snapshots                            | C# / `dotnet build` |
+| `pipeline/`         | TypeScript pipeline that validates snapshots and produces canonical SQLite + WebP assets          | Bun                 |
+| `controller/`       | HotRepl controller that deploys runtime DLLs and drives typed export commands                     | Bun                 |
+| `site/`             | SvelteKit static-assets-first site with prerendered entity pages and synced SQLite/WebP artifacts | Bun + Vite          |
+| `entities/`         | Filesystem-as-registry of entity descriptors                                                      | JSON                |
+| `schemas/`          | JSON Schema authority for descriptors, snapshots, manifests                                       | JSON Schema 2020-12 |
+| `docs/superpowers/` | Specs, plans, and roadmap                                                                         | Markdown            |
 
 ## Design documents
 
@@ -31,6 +31,16 @@ bunx lefthook install
 bun run typecheck
 bun test
 ```
+
+Site prerender smoke:
+
+```sh
+bun run pipeline:run fixtures/synthetic/snapshot pipeline/dist
+bun run --cwd site build
+bun run --cwd site smoke:prerender
+```
+
+The production site is static-assets-first: generated pages are prerendered to HTML and should be served by Cloudflare Static Assets without Worker invocation; the Worker is retained only for exceptional non-prerendered routes.
 
 Mod build (Mac/Linux requires `mono` or `dotnet`):
 

@@ -190,12 +190,13 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 
 **Acceptance criteria:**
 
-- `bun run --cwd site build` produces `.svelte-kit/cloudflare/items/index.html` and at least one `.svelte-kit/cloudflare/items/<id>/index.html` from the synthetic fixture.
-- The prerendered `/items/index.html` contains visible item text (for example `Fixture Iron Sword`) and at least one `/assets/<hash>.webp` image reference.
+- `bun run --cwd site build` produces static item overview HTML and at least one static item detail HTML file from the synthetic fixture. With SvelteKit's default `trailingSlash = "never"`, those files are `.svelte-kit/cloudflare/items.html` and `.svelte-kit/cloudflare/items/<id>.html`; do not force directory-style `index.html` output unless canonical URL policy changes.
+- The prerendered item overview HTML contains visible item text (for example `Iron Sword`) and at least one `/assets/<hash>.webp` image reference.
 - The prerendered item detail HTML contains the item name and decorative icon markup without requiring Svelte hydration.
 - `site/.svelte-kit/cloudflare/_worker.js` no longer needs the item overview/detail route modules for normal traffic; the plan verifies this through static output and HTTP checks rather than brittle minified-string assertions.
 - `bun run --cwd site check`, `bun run --cwd site build`, `bun test tooling.test.ts`, and a production or local `wrangler` smoke all pass.
 - A browser or HTTP smoke after deploy proves `/items`, an item detail route, `/data.sqlite`, and a representative `/assets/*.webp` all return 200. Page HTML checks must inspect actual HTML content, not just status codes.
+- Closeout must record the deployed Cloudflare version ID and a production smoke that inspects HTML content for `/items` and one item detail page.
 
 ### Slice 4 — Item presentation depth
 

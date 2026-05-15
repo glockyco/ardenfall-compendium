@@ -725,10 +725,13 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const outputDir = join(import.meta.dirname, "..", ".svelte-kit", "cloudflare");
-const overviewPath = join(outputDir, "items", "index.html");
+const overviewPath = firstExisting([
+  join(outputDir, "items", "index.html"),
+  join(outputDir, "items.html"),
+]);
 
-if (!existsSync(overviewPath)) {
-  throw new Error(`missing prerendered item overview: ${overviewPath}`);
+if (!overviewPath) {
+  throw new Error(`missing prerendered item overview under ${outputDir}`);
 }
 
 const overview = readFileSync(overviewPath, "utf8");
@@ -740,7 +743,12 @@ for (const forbidden of ["_app/immutable/entry/app", "data.sqlite", "sqlite-wasm
     throw new Error(`overview should not be a hydrated SQLite SPA: ${forbidden}`);
 }
 
-const detailHtmlPaths = listHtml(join(outputDir, "items")).filter((path) => path !== overviewPath);
+const detailHtmlPaths = listHtml(join(outputDir, "items"));
+for (const path of listHtml(outputDir)) {
+  if (path.includes(`${join("items", "fixture-")}`) && !detailHtmlPaths.includes(path)) {
+    detailHtmlPaths.push(path);
+  }
+}
 if (detailHtmlPaths.length === 0) throw new Error("missing prerendered item detail pages");
 
 const ironSwordPath = detailHtmlPaths.find((path) => path.includes("fixture-iron-sword"));
@@ -753,6 +761,10 @@ if (ironSword.includes("_app/immutable/entry/app")) {
   throw new Error("detail page should not ship Svelte hydration entry by default");
 }
 
+function firstExisting(paths) {
+  return paths.find((path) => existsSync(path)) ?? null;
+}
+
 function listHtml(dir) {
   if (!existsSync(dir)) return [];
   const results = [];
@@ -760,7 +772,7 @@ function listHtml(dir) {
     const path = join(dir, entry);
     const info = statSync(path);
     if (info.isDirectory()) results.push(...listHtml(path));
-    else if (entry === "index.html") results.push(path);
+    else if (entry === "index.html" || entry.endsWith(".html")) results.push(path);
   }
   return results;
 }
@@ -800,8 +812,8 @@ bun run --cwd site smoke:prerender
 Expected:
 
 - build completes;
-- `site/.svelte-kit/cloudflare/items/index.html` exists;
-- `site/.svelte-kit/cloudflare/items/fixture-iron-sword/index.html` exists;
+- `site/.svelte-kit/cloudflare/items.html` exists with the default `trailingSlash = "never"` policy;
+- `site/.svelte-kit/cloudflare/items/fixture-iron-sword.html` exists with the default `trailingSlash = "never"` policy;
 - smoke passes and confirms the HTML is not an empty hydrated SPA shell.
 
 - [ ] **Step 5: Run guardrails**
@@ -1007,9 +1019,9 @@ Expected: all commands exit zero. `bun run lint` may print existing warnings onl
 Run:
 
 ```sh
-test -f site/.svelte-kit/cloudflare/items/index.html
-test -f site/.svelte-kit/cloudflare/items/fixture-iron-sword/index.html
-bun -e 'const fs=require("node:fs"); const html=fs.readFileSync("site/.svelte-kit/cloudflare/items/index.html","utf8"); if (!html.includes("Iron Sword") || html.includes("_app/immutable/entry/app")) process.exit(1);'
+test -f site/.svelte-kit/cloudflare/items.html
+test -f site/.svelte-kit/cloudflare/items/fixture-iron-sword.html
+bun -e 'const fs=require("node:fs"); const html=fs.readFileSync("site/.svelte-kit/cloudflare/items.html","utf8"); if (!html.includes("Iron Sword") || html.includes("_app/immutable/entry/app")) process.exit(1);'
 ```
 
 Expected: all commands exit zero.
