@@ -12,6 +12,7 @@ node_modules/
 # SvelteKit
 .svelte-kit/
 site/build/
+site/.wrangler/
 
 # Pipeline outputs
 pipeline/dist/*.mjs.tmp
