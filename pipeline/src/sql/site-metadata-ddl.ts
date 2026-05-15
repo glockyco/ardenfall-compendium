@@ -23,6 +23,8 @@ CREATE TABLE site_overview_columns (
   column_id        TEXT NOT NULL,
   field_id         TEXT NOT NULL,
   position         INTEGER NOT NULL,
+  renderer         TEXT NOT NULL DEFAULT 'text',
+  sortable         INTEGER NOT NULL DEFAULT 1,
   PRIMARY KEY (entity_id, column_id)
 );
 CREATE TABLE site_detail_sections (

@@ -20,10 +20,15 @@ describe("emitSiteMetadata", () => {
 
     const cols = db
       .query(
-        "SELECT field_id FROM site_overview_columns WHERE entity_id = 'item' ORDER BY position",
+        "SELECT field_id, renderer, sortable FROM site_overview_columns WHERE entity_id = 'item' ORDER BY position",
       )
-      .all() as { field_id: string }[];
-    expect(cols.map((c) => c.field_id)).toEqual(["name", "value", "weight", "variant"]);
+      .all() as { field_id: string; renderer: string; sortable: number }[];
+    expect(cols).toEqual([
+      { field_id: "name", renderer: "itemNameWithIcon", sortable: 1 },
+      { field_id: "value", renderer: "text", sortable: 1 },
+      { field_id: "weight", renderer: "text", sortable: 1 },
+      { field_id: "variant", renderer: "text", sortable: 1 },
+    ]);
 
     const sections = db
       .query(

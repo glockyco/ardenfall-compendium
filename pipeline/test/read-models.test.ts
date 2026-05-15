@@ -26,11 +26,51 @@ describe("emitItemReadModels", () => {
     const db = new Database(":memory:");
     db.exec(buildDDL(itemEntity, itemVariants));
     canonicaliseItems(db, itemEntity, itemVariants, itemEnvelope);
-    emitItemReadModels(db, desc);
+    db.exec(`
+      CREATE TABLE asset_refs (
+        entity_id TEXT NOT NULL,
+        entity_row_id TEXT NOT NULL,
+        slot TEXT NOT NULL,
+        asset_kind TEXT NOT NULL,
+        asset_hash TEXT NOT NULL,
+        PRIMARY KEY (entity_id, entity_row_id, slot)
+      );
+    `);
+    db.run(
+      "INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)",
+      "item",
+      "fixture-iron-sword",
+      "displayIcon",
+      "image",
+      "a".repeat(64),
+    );
+    const iconMetadata = [
+      {
+        entityId: "item",
+        rowId: "fixture-iron-sword",
+        displayIconColor: { r: 1, g: 1, b: 1, a: 1 },
+        secondaryIconColor: null,
+      },
+      {
+        entityId: "item",
+        rowId: "fixture-leather-tunic",
+        displayIconColor: { r: 0.25, g: 0.2, b: 0.15, a: 1 },
+        secondaryIconColor: null,
+      },
+    ];
+    emitItemReadModels(db, desc, iconMetadata);
 
     const overview = db
-      .query("SELECT id, name, variant FROM item_overview_rows ORDER BY name")
-      .all() as { id: string; name: string; variant: string }[];
+      .query(
+        "SELECT id, name, variant, display_icon_hash, display_icon_color FROM item_overview_rows ORDER BY name",
+      )
+      .all() as {
+      id: string;
+      name: string;
+      variant: string;
+      display_icon_hash: string | null;
+      display_icon_color: string | null;
+    }[];
     expect(overview.map((r) => r.name)).toEqual([
       "Fire Flask",
       "Iron Sword",
@@ -38,6 +78,24 @@ describe("emitItemReadModels", () => {
       "Spark Slate",
       "Stamina Draught",
     ]);
+    expect(overview.find((r) => r.id === "fixture-iron-sword")?.display_icon_hash).toBe(
+      "a".repeat(64),
+    );
+    expect(overview.find((r) => r.id === "fixture-leather-tunic")?.display_icon_hash).toBeNull();
+    expect(overview.find((r) => r.id === "fixture-iron-sword")?.display_icon_color).toBe(
+      JSON.stringify({ r: 1, g: 1, b: 1, a: 1 }),
+    );
+    expect(overview.find((r) => r.id === "fixture-leather-tunic")?.display_icon_color).toBe(
+      JSON.stringify({ r: 0.25, g: 0.2, b: 0.15, a: 1 }),
+    );
+
+    const detailIcon = db
+      .query(
+        "SELECT display_icon_hash, display_icon_color FROM item_detail_rows WHERE id = 'fixture-iron-sword'",
+      )
+      .get() as { display_icon_hash: string | null; display_icon_color: string | null };
+    expect(detailIcon.display_icon_hash).toBe("a".repeat(64));
+    expect(detailIcon.display_icon_color).toBe(JSON.stringify({ r: 1, g: 1, b: 1, a: 1 }));
 
     const detail = db
       .query("SELECT id, fields_json FROM item_detail_rows WHERE id = 'fixture-iron-sword'")

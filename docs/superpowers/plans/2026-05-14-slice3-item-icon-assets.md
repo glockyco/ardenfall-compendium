@@ -875,7 +875,7 @@ git commit -m "feat(pipeline): emit item icon webp assets"
 - Modify: `pipeline/test/read-models.test.ts`
 - Modify: `pipeline/test/site-metadata.test.ts`
 
-- [ ] **Step 1: Write failing read-model assertions**
+- [x] **Step 1: Write failing read-model assertions**
 
 In `pipeline/test/read-models.test.ts`, update the setup to include asset refs before `emitItemReadModels`:
 
@@ -950,7 +950,7 @@ expect(detailIcon.display_icon_hash).toBe("a".repeat(64));
 expect(detailIcon.display_icon_color).toBe(JSON.stringify({ r: 1, g: 1, b: 1, a: 1 }));
 ```
 
-- [ ] **Step 2: Write failing metadata assertions**
+- [x] **Step 2: Write failing metadata assertions**
 
 In `pipeline/test/site-metadata.test.ts`, update the overview column query:
 
@@ -968,7 +968,7 @@ expect(cols).toEqual([
 ]);
 ```
 
-- [ ] **Step 3: Run focused tests and observe failures**
+- [x] **Step 3: Run focused tests and observe failures**
 
 Run:
 
@@ -978,7 +978,7 @@ bun test pipeline/test/read-models.test.ts pipeline/test/site-metadata.test.ts
 
 Expected: failures for missing columns `display_icon_hash`, `display_icon_color`, `renderer`, and `sortable`.
 
-- [ ] **Step 4: Extend overview metadata DDL and types**
+- [x] **Step 4: Extend overview metadata DDL and types**
 
 Modify `pipeline/src/sql/site-metadata-ddl.ts` `site_overview_columns` table:
 
@@ -996,7 +996,7 @@ CREATE TABLE site_overview_columns (
 
 Do not change `entity.json` for overview column metadata in this task. Emit deterministic metadata for the item name column from `emit-site-metadata.ts` so the existing descriptor schema remains stable.
 
-- [ ] **Step 5: Emit explicit renderer metadata**
+- [x] **Step 5: Emit explicit renderer metadata**
 
 Modify `pipeline/src/stages/emit-site-metadata.ts` insert statement:
 
@@ -1017,7 +1017,7 @@ overview.columns.forEach((field, i) => {
 
 This keeps the descriptor as the source for visible columns while declaring the media renderer in emitted site metadata.
 
-- [ ] **Step 6: Extend read-model DDL and inserts**
+- [x] **Step 6: Extend read-model DDL and inserts**
 
 Modify `pipeline/src/stages/emit-read-models.ts` `ITEM_READ_MODEL_DDL`:
 
@@ -1129,7 +1129,7 @@ insertDetail.run(
 );
 ```
 
-- [ ] **Step 7: Ensure `emit-sqlite` inserts refs before read models**
+- [x] **Step 7: Ensure `emit-sqlite` inserts refs before read models**
 
 In `pipeline/src/stages/emit-sqlite.ts`, move asset ref insertion before read models and pass color metadata from `emit-assets`:
 
@@ -1144,7 +1144,7 @@ for (const ref of inputs["emit-assets"]?.refs ?? []) {
 emitItemReadModels(db, desc, inputs["emit-assets"]?.itemIconMetadata ?? []);
 ```
 
-- [ ] **Step 8: Run focused tests**
+- [x] **Step 8: Run focused tests**
 
 Run:
 
@@ -1154,7 +1154,7 @@ bun test pipeline/test/read-models.test.ts pipeline/test/site-metadata.test.ts p
 
 Expected: pass.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```sh
 git add pipeline/src/stages/emit-read-models.ts pipeline/src/stages/emit-site-metadata.ts pipeline/src/sql/site-metadata-ddl.ts pipeline/src/types.ts pipeline/test/read-models.test.ts pipeline/test/site-metadata.test.ts pipeline/src/stages/emit-sqlite.ts

@@ -19,7 +19,7 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
     `INSERT INTO site_entity_fields (entity_id, field_id, source_table, source_column, label, value_kind, null_policy) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
   const insertColumn = db.prepare(
-    `INSERT INTO site_overview_columns (entity_id, column_id, field_id, position) VALUES (?, ?, ?, ?)`,
+    `INSERT INTO site_overview_columns (entity_id, column_id, field_id, position, renderer, sortable) VALUES (?, ?, ?, ?, ?, ?)`,
   );
   const insertSection = db.prepare(
     `INSERT INTO site_detail_sections (entity_id, section_id, kind, title, position, renderer_key, payload_json) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -81,9 +81,10 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
 
       const overview = entity.site?.overview;
       if (overview) {
-        overview.columns.forEach((field, i) =>
-          insertColumn.run(entityId, `col_${field}`, field, i),
-        );
+        overview.columns.forEach((field, i) => {
+          const renderer = entityId === "item" && field === "name" ? "itemNameWithIcon" : "text";
+          insertColumn.run(entityId, `col_${field}`, field, i, renderer, 1);
+        });
       }
       const detail = entity.site?.detail;
       if (detail) {
