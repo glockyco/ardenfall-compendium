@@ -24,15 +24,18 @@
   "private": true,
   "scripts": {
     "dev": "vite dev",
-    "build": "bun run sync:generated && vite build",
+    "build": "bun run build:fixture",
+    "build:prepared": "vite build",
+    "build:fixture": "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "smoke:error-route": "bun run scripts/smoke-error-route.mjs",
     "smoke:item-icons": "bun run scripts/smoke-item-icons.mjs",
     "smoke:prerender": "bun run scripts/smoke-prerender-output.mjs",
     "sync:generated": "bun run scripts/sync-generated-artifacts.mjs",
-    "assert:production-data": "bun run scripts/assert-production-data.mjs",
-    "cf-deploy": "bun run assert:production-data && bun run build && wrangler deploy"
+    "stage:artifact": "bun run scripts/stage-artifact.mjs",
+    "deploy:production": "bun run scripts/deploy-production.mjs",
+    "cf-deploy": "bun run deploy:production"
   },
   "type": "module"
 }

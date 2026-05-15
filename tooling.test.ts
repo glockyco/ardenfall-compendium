@@ -1,6 +1,5 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "bun:test";
-import { Database } from "bun:sqlite";
 import { join } from "node:path";
 import { buildCommandPlan, defaultOptions } from "./scripts/decompile-ardenfall.mjs";
 import { tmpdir } from "node:os";
@@ -101,19 +100,18 @@ describe("snapshot provenance", () => {
 });
 
 describe("site deployment tooling", () => {
-  it("deploys by syncing generated pipeline artifacts before build", () => {
-    expect(sitePackageJson.scripts["sync:generated"]).toBe(
-      "bun run scripts/sync-generated-artifacts.mjs",
+  it("deploys by staging an explicit artifact before build", () => {
+    expect(sitePackageJson.scripts["stage:artifact"]).toBe("bun run scripts/stage-artifact.mjs");
+    expect(sitePackageJson.scripts["build:prepared"]).toBe("vite build");
+    expect(sitePackageJson.scripts["build:fixture"]).toBe(
+      "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
     );
-    expect(sitePackageJson.scripts.build).toBe("bun run sync:generated && vite build");
-    expect(sitePackageJson.scripts["assert:production-data"]).toBe(
-      "bun run scripts/assert-production-data.mjs",
+    expect(sitePackageJson.scripts.build).toBe("bun run build:fixture");
+    expect(sitePackageJson.scripts["deploy:production"]).toBe(
+      "bun run scripts/deploy-production.mjs",
     );
-    expect(sitePackageJson.scripts["cf-deploy"]).toBe(
-      "bun run assert:production-data && bun run build && wrangler deploy",
-    );
-    expect(existsSync("site/scripts/sync-generated-artifacts.mjs")).toBe(true);
-    expect(existsSync("site/scripts/assert-production-data.mjs")).toBe(true);
+    expect(sitePackageJson.scripts["cf-deploy"]).toBe("bun run deploy:production");
+    expect(existsSync("site/scripts/stage-artifact.mjs")).toBe(true);
   });
 
   it("copies SQLite and assets while pruning stale managed assets", () => {
@@ -160,26 +158,72 @@ describe("site deployment tooling", () => {
     }
   });
 
-  it("rejects fixture-sized generated SQLite before production deploy", async () => {
-    const root = mkdtempSync(join(tmpdir(), "ardenfall-production-data-invalid-"));
+  it("stages site builds from explicit artifact directories", () => {
+    expect(sitePackageJson.scripts["stage:artifact"]).toBe("bun run scripts/stage-artifact.mjs");
+    expect(sitePackageJson.scripts["build:prepared"]).toBe("vite build");
+    expect(sitePackageJson.scripts["build:fixture"]).toBe(
+      "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
+    );
+    expect(sitePackageJson.scripts.build).toBe("bun run build:fixture");
+    expect(sitePackageJson.scripts["deploy:production"]).toBe(
+      "bun run scripts/deploy-production.mjs",
+    );
+    expect(sitePackageJson.scripts["cf-deploy"]).toBe("bun run deploy:production");
+  });
+
+  it("production staging rejects fixture artifacts by manifest kind", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-fixture-"));
     try {
-      const dbPath = join(root, "data.sqlite");
-      const db = new Database(dbPath);
-      db.exec("CREATE TABLE item_overview_rows (id TEXT PRIMARY KEY, name TEXT)");
-      for (let i = 0; i < 5; i += 1) {
-        db.query("INSERT INTO item_overview_rows (id, name) VALUES (?, ?)").run(
-          `fixture-${i}`,
-          `Fixture ${i}`,
-        );
-      }
-      db.close();
-
-      const { assertProductionData } =
-        (await import("./site/scripts/assert-production-data.mjs")) as typeof import("./site/scripts/assert-production-data.mjs");
-
-      expect(() => assertProductionData({ sqlitePath: dbPath })).toThrow(
-        /expected at least 1000 item overview rows, found 5/,
+      const artifact = join(root, "artifact");
+      const target = join(root, "static");
+      mkdirSync(join(artifact, "assets"), { recursive: true });
+      writeFileSync(
+        join(artifact, "data.sqlite"),
+        "not sqlite but hashed for manifest rejection order",
       );
+      writeFileSync(
+        join(artifact, "artifact-manifest.json"),
+        JSON.stringify({
+          schemaVersion: 1,
+          artifactKind: "fixture",
+          artifactId: "synthetic",
+          createdAt: "2026-05-15T00:00:00.000Z",
+          source: {
+            kind: "synthetic-fixture",
+            fixtureName: "synthetic",
+            snapshotId: "synthetic",
+            gameVersion: "fixture",
+            buildIdentifier: "synthetic",
+            extractorVersion: "0.1.0",
+            snapshotManifestSha256: "a".repeat(64),
+          },
+          git: {
+            repository: "glockyco/ardenfall-compendium",
+            commit: "b".repeat(40),
+            branch: "main",
+            dirty: false,
+          },
+          diagnostics: { fatal: 0, diagnostic: 0 },
+          counts: {},
+          outputs: {
+            sqlite: { path: "data.sqlite", bytes: 48, sha256: "c".repeat(64) },
+            assets: { path: "assets", count: 0, treeSha256: "d".repeat(64) },
+          },
+          probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
+        }),
+      );
+
+      const { stageArtifact } = (await import("./site/scripts/stage-artifact.mjs")) as {
+        stageArtifact: (options: {
+          artifactDir: string;
+          targetDir: string;
+          mode: "fixture" | "release";
+        }) => Promise<unknown>;
+      };
+
+      await expect(
+        stageArtifact({ artifactDir: artifact, targetDir: target, mode: "release" }),
+      ).rejects.toThrow(/release staging requires artifactKind release/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
