@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "bun run sync:data && vite build",
+    "build": "bun run sync:generated && vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "smoke:error-route": "bun run scripts/smoke-error-route.mjs",
-    "sync:data": "bun run scripts/sync-data-sqlite.mjs",
+    "sync:generated": "bun run scripts/sync-generated-artifacts.mjs",
     "cf-deploy": "bun run build && wrangler deploy"
   },
   "dependencies": {

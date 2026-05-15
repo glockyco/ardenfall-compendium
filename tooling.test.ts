@@ -1,10 +1,10 @@
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "bun:test";
 import { join } from "node:path";
 import { buildCommandPlan, defaultOptions } from "./scripts/decompile-ardenfall.mjs";
 import { tmpdir } from "node:os";
 
-import { syncDataSqlite } from "./site/scripts/sync-data-sqlite.mjs";
+import { syncGeneratedArtifacts } from "./site/scripts/sync-generated-artifacts.mjs";
 const gitignore = readFileSync(".gitignore", "utf8");
 const lefthook = readFileSync("lefthook.yml", "utf8");
 const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
@@ -33,34 +33,71 @@ describe("ci site build tooling", () => {
     expect(ciWorkflow).not.toContain(
       "bun run pipeline:run fixtures/synthetic/snapshot site/static",
     );
+    expect(ciWorkflow).toContain("bun test tooling.test.ts");
+    expect(ciWorkflow).toContain("site: ${{ steps.filter.outputs.site }}");
+    expect(ciWorkflow).toContain("- 'site/**'");
+    expect(ciWorkflow).toContain("- 'tooling.test.ts'");
+    expect(ciWorkflow).toContain("needs.changes.outputs.site == 'true'");
+    expect(ciWorkflow).toContain("needs.changes.outputs.fixtures == 'true'");
+  });
+});
+
+describe("site deployment tooling", () => {
+  it("deploys by syncing generated pipeline artifacts before build", () => {
+    expect(sitePackageJson.scripts["sync:generated"]).toBe(
+      "bun run scripts/sync-generated-artifacts.mjs",
+    );
+    expect(sitePackageJson.scripts.build).toBe("bun run sync:generated && vite build");
+    expect(sitePackageJson.scripts["cf-deploy"]).toBe("bun run build && wrangler deploy");
+    expect(existsSync("site/scripts/sync-generated-artifacts.mjs")).toBe(true);
+  });
+
+  it("copies SQLite and assets while pruning stale managed assets", () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-site-generated-"));
+    try {
+      const source = join(root, "pipeline", "dist");
+      const target = join(root, "site", "static");
+      mkdirSync(join(source, "assets"), { recursive: true });
+      mkdirSync(join(target, "assets"), { recursive: true });
+      writeFileSync(join(source, "data.sqlite"), "sqlite bytes");
+      writeFileSync(join(source, "assets", "fresh.webp"), "fresh");
+      writeFileSync(join(target, "assets", "stale.webp"), "stale");
+
+      const result = syncGeneratedArtifacts({ sourceDir: source, targetDir: target });
+
+      expect(result.sqliteBytes).toBe(12);
+      expect(readFileSync(join(target, "data.sqlite"), "utf8")).toBe("sqlite bytes");
+      expect(readFileSync(join(target, "assets", "fresh.webp"), "utf8")).toBe("fresh");
+      expect(existsSync(join(target, "assets", "stale.webp"))).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects missing and empty generated asset bundles", () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-site-generated-invalid-"));
+    try {
+      const source = join(root, "pipeline", "dist");
+      const target = join(root, "site", "static");
+      mkdirSync(source, { recursive: true });
+      writeFileSync(join(source, "data.sqlite"), "sqlite bytes");
+
+      expect(() => syncGeneratedArtifacts({ sourceDir: source, targetDir: target })).toThrow(
+        /Missing generated asset bundle/,
+      );
+
+      mkdirSync(join(source, "assets"), { recursive: true });
+      writeFileSync(join(source, "assets", "empty.webp"), "");
+      expect(() => syncGeneratedArtifacts({ sourceDir: source, targetDir: target })).toThrow(
+        /Invalid generated asset/,
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 
 describe("decompilation tooling", () => {
-  describe("site deployment tooling", () => {
-    it("deploys by building with the latest pipeline SQLite output", () => {
-      expect(sitePackageJson.scripts["sync:data"]).toBe("bun run scripts/sync-data-sqlite.mjs");
-      expect(sitePackageJson.scripts.build).toBe("bun run sync:data && vite build");
-      expect(sitePackageJson.scripts["cf-deploy"]).toBe("bun run build && wrangler deploy");
-      expect(existsSync("site/scripts/sync-data-sqlite.mjs")).toBe(true);
-    });
-
-    it("copies the pipeline SQLite blob into site static assets", () => {
-      const root = mkdtempSync(join(tmpdir(), "ardenfall-site-data-"));
-      try {
-        const source = join(root, "pipeline.sqlite");
-        const target = join(root, "static", "data.sqlite");
-        writeFileSync(source, "sqlite bytes");
-
-        const result = syncDataSqlite({ source, target });
-
-        expect(result.bytes).toBe(12);
-        expect(readFileSync(target, "utf8")).toBe("sqlite bytes");
-      } finally {
-        rmSync(root, { recursive: true, force: true });
-      }
-    });
-  });
   it("keeps the local decompiled source cache out of git", () => {
     expect(gitignore).toContain(".decompiled/");
   });

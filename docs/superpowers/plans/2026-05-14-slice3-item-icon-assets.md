@@ -1174,7 +1174,7 @@ git commit -m "feat(pipeline): expose item icon read models"
 - Modify: `.github/workflows/ci.yml`
 - Modify: `site/AGENTS.md`
 
-- [ ] **Step 1: Write failing tooling tests for artifact sync**
+- [x] **Step 1: Write failing tooling tests for artifact sync**
 
 Modify `tooling.test.ts` imports:
 
@@ -1258,7 +1258,7 @@ expect(ciWorkflow).toContain("needs.changes.outputs.site == 'true'");
 expect(ciWorkflow).toContain("needs.changes.outputs.fixtures == 'true'");
 ```
 
-- [ ] **Step 2: Run tooling tests and observe failure**
+- [x] **Step 2: Run tooling tests and observe failure**
 
 Run:
 
@@ -1268,7 +1268,7 @@ bun test tooling.test.ts
 
 Expected: import/package/CI assertions fail.
 
-- [ ] **Step 3: Implement generated artifact sync**
+- [x] **Step 3: Implement generated artifact sync**
 
 Create `site/scripts/sync-generated-artifacts.mjs`:
 
@@ -1349,7 +1349,7 @@ if (import.meta.main) {
 }
 ```
 
-- [ ] **Step 4: Update site scripts and guidance**
+- [x] **Step 4: Update site scripts and guidance**
 
 Modify `site/package.json` scripts:
 
@@ -1363,7 +1363,7 @@ Remove `sync:data`.
 
 Update `site/AGENTS.md` deployment line to say the script syncs `pipeline/dist/data.sqlite` and `pipeline/dist/assets/` into `site/static`.
 
-- [ ] **Step 5: Update CI filters and tooling test execution**
+- [x] **Step 5: Update CI filters and tooling test execution**
 
 Modify `.github/workflows/ci.yml` `changes.outputs`:
 
@@ -1403,7 +1403,7 @@ Keep the site job generating into `pipeline/dist`:
   run: bun run pipeline:run fixtures/synthetic/snapshot pipeline/dist
 ```
 
-- [ ] **Step 6: Remove old sync script**
+- [x] **Step 6: Remove old sync script**
 
 After tests pass with the new script, delete:
 
@@ -1411,7 +1411,7 @@ After tests pass with the new script, delete:
 site/scripts/sync-data-sqlite.mjs
 ```
 
-- [ ] **Step 7: Run focused tests**
+- [x] **Step 7: Run focused tests**
 
 Run:
 
@@ -1427,7 +1427,7 @@ Expected:
 - pipeline run writes `pipeline/dist/data.sqlite` and `pipeline/dist/assets/`;
 - site build syncs both SQLite and assets before Vite build.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```sh
 git add site/scripts/sync-generated-artifacts.mjs site/package.json site/AGENTS.md tooling.test.ts .github/workflows/ci.yml

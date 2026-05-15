@@ -10,6 +10,7 @@ jobs:
       pipeline: ${{ steps.filter.outputs.pipeline }}
       mod: ${{ steps.filter.outputs.mod }}
       fixtures: ${{ steps.filter.outputs.fixtures }}
+      site: ${{ steps.filter.outputs.site }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -26,6 +27,13 @@ jobs:
               - 'fixtures/**'
               - 'pipeline/scripts/check-fixtures.ts'
 
+            site:
+              - 'site/**'
+              - 'tooling.test.ts'
+              - '.github/workflows/ci.yml'
+              - 'package.json'
+              - 'bun.lock'
+              - 'fixtures/**'
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -35,6 +43,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run format:check
       - run: bun run lint
+      - run: bun test tooling.test.ts
 
   pipeline:
     runs-on: ubuntu-latest
@@ -51,14 +60,15 @@ jobs:
 
   site:
     runs-on: ubuntu-latest
-    needs: pipeline
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.pipeline == 'true' || needs.changes.outputs.site == 'true' || needs.changes.outputs.fixtures == 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with: { bun-version: 1.3.13 }
       - run: bun install --frozen-lockfile
       - run: bun run codegen:validators
-      - name: build synthetic sqlite for static prerender
+      - name: build synthetic generated artifacts for static prerender
         run: bun run pipeline:run fixtures/synthetic/snapshot pipeline/dist
       - run: bun run --cwd site check
       - run: bun run --cwd site build
