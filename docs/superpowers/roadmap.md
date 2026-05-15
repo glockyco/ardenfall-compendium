@@ -199,6 +199,16 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 - A browser or HTTP smoke after deploy must prove `/items`, an item detail route, `/data.sqlite`, and a representative `/assets/*.webp` all return 200. Page HTML checks must inspect actual HTML content, not just status codes.
 - Deployment closeout must record the Cloudflare version ID and a production smoke that inspects HTML content for `/items` and one item detail page.
 
+### Slice 3.6 — Artifact provenance release contract
+
+**Status:** planned  
+**Spec:** `docs/superpowers/specs/2026-05-15-artifact-provenance-release-design.md`  
+**Plan:** `docs/superpowers/plans/2026-05-15-artifact-provenance-release.md`
+
+**Why this interrupts the roadmap:** Slice 3.5 proved static prerendering works, but the first production deploy exposed that fixture and release artifacts shared `pipeline/dist`. Production deploys need provenance and artifact identity before further content slices add more generated pages.
+
+**Acceptance criteria:** fixture builds emit fixture artifacts and remain fast; release builds emit release artifacts with Git/source/hash/count/probe metadata; production deploy scripts reject fixture artifacts; `/_release.json`, `/data.sqlite`, `/items`, an item detail route, and a representative asset are smoked against the same release manifest after deploy.
+
 ### Slice 4 — Item presentation depth
 
 **Status:** planned

@@ -32,19 +32,24 @@ bun run typecheck
 bun test
 ```
 
-Site prerender smoke:
+Fixture site prerender smoke:
 
 ```sh
-bun run pipeline:run fixtures/synthetic/snapshot pipeline/dist
-bun run --cwd site build
+bun run artifact:fixture synthetic fixtures/synthetic/snapshot
+bun run --cwd site build:fixture
 bun run --cwd site smoke:prerender
+```
+
+Production release deploy:
+
+```sh
+bun run artifact:release snapshots/snapshots/<snapshot-id>
+bun run --cwd site deploy:production ../pipeline/artifacts/releases/<snapshot-id>
 ```
 
 The production site is static-assets-first: generated pages are prerendered to HTML and should be served by Cloudflare Static Assets without Worker invocation; the Worker is retained only for exceptional non-prerendered routes.
 
-Production deploys must use `pipeline/dist` generated from a real snapshot, not `fixtures/synthetic`.
-`bun run --cwd site cf-deploy` runs a production-data guard before build/deploy and refuses
-fixture-sized SQLite outputs (default minimum: 1000 item overview rows).
+Production deploys require a release artifact with `artifact-manifest.json`. `site/static` is a staging cache populated from the artifact; it is not source-of-truth. Fixture artifacts are valid for tests but must never be accepted by production deploy scripts.
 
 Mod build (Mac/Linux requires `mono` or `dotnet`):
 

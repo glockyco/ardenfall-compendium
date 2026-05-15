@@ -12,6 +12,8 @@ const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
   scripts: Record<string, string>;
 };
 const prettierIgnore = readFileSync(".prettierignore", "utf8");
+const rootAgents = readFileSync("AGENTS.md", "utf8");
+const siteAgents = readFileSync("site/AGENTS.md", "utf8");
 
 const sitePackageJson = JSON.parse(readFileSync("site/package.json", "utf8")) as {
   scripts: Record<string, string>;
@@ -249,6 +251,22 @@ describe("site prerender architecture", () => {
   it("has a prerender smoke script wired into the site package", () => {
     expect(sitePackageJson.scripts["smoke:prerender"]).toBe(
       "bun run scripts/smoke-prerender-output.mjs",
+    );
+  });
+
+  it("documents release artifact provenance as the deploy contract", () => {
+    const readme = readFileSync("README.md", "utf8");
+
+    for (const text of [rootAgents, siteAgents, readme]) {
+      expect(text).toContain("artifact-manifest.json");
+      expect(text).toContain("site/static");
+      expect(text).toContain("staging cache");
+    }
+
+    expect(readme).toContain("bun run artifact:fixture synthetic fixtures/synthetic/snapshot");
+    expect(readme).toContain("bun run artifact:release snapshots/snapshots/<snapshot-id>");
+    expect(readme).toContain(
+      "bun run --cwd site deploy:production ../pipeline/artifacts/releases/<snapshot-id>",
     );
   });
 

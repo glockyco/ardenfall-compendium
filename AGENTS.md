@@ -23,5 +23,7 @@ This repository is the static compendium for the game Ardenfall. Its design is c
 - The site reads pipeline-emitted SQLite metadata only. It does not parse descriptors directly.
 - No raw Unity / Odin / game-object JSON in snapshots. The mod walks live runtime graphs and emits explicit DTOs.
 - Pre-commit runs Prettier, ESLint, and `dotnet format` via lefthook. Do not bypass with `--no-verify` for routine work.
+- Generated deploy artifacts are identified by `artifact-manifest.json`. Production deploys consume only release artifacts under `pipeline/artifacts/releases/*`; fixture artifacts under `pipeline/artifacts/fixtures/*` are never deployable.
+- `site/static` is a staging cache populated from a validated artifact. Do not treat it as source-of-truth and do not manually edit generated files there.
 
 If you find this document outdated, update it in the same commit as the change that outdates it.

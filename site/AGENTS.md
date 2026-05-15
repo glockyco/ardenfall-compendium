@@ -20,7 +20,9 @@ SvelteKit static-first site. Generated data is shipped as `static/data.sqlite` p
 
 ## Deployment
 
-- Deploy with `bun run --cwd site cf-deploy`; the script syncs `pipeline/dist/data.sqlite` and `pipeline/dist/assets/` into `site/static`, builds, then runs Wrangler.
+- Production deploys use `bun run --cwd site deploy:production ../pipeline/artifacts/releases/<snapshot-id>`. The command validates `artifact-manifest.json`, stages generated files into `site/static`, builds, smokes, deploys, and runs production release smoke.
+- `site/static` is a staging cache. Its generated files must come from exactly one validated artifact and can be deleted/recreated at any time.
+- Fixture builds use `bun run --cwd site build:fixture` after `bun run artifact:fixture synthetic fixtures/synthetic/snapshot`; fixture artifacts are valid for tests but must never be accepted by production deploy scripts.
 - `bun run --cwd site build` must leave generated HTML under `.svelte-kit/cloudflare` for ordinary routes such as `/items` and `/items/[id]`; these should be static assets, not empty SPA shells.
 - Wrangler auth is operator-local: run `wrangler login` (or otherwise provide a valid Wrangler auth context) before deploying.
-- CI verifies the deployable build; it does not deploy and does not assume Cloudflare API token/account secrets.
+- CI verifies the fixture build; it does not deploy and does not assume Cloudflare API token/account secrets.
