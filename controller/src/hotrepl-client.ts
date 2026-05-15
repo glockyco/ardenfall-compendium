@@ -79,8 +79,24 @@ export class HotReplClient {
     this.url = url;
   }
 
-  async connect(): Promise<void> {
+  async connect(options: { timeoutMs?: number; retryIntervalMs?: number } = {}): Promise<void> {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) return;
+    const deadline = Date.now() + (options.timeoutMs ?? 0);
+    const retryIntervalMs = options.retryIntervalMs ?? 1_000;
+    for (;;) {
+      try {
+        await this.connectOnce();
+        return;
+      } catch (error) {
+        this.ws?.close();
+        this.ws = undefined;
+        if (options.timeoutMs === undefined || Date.now() >= deadline) throw error;
+        await Bun.sleep(Math.min(retryIntervalMs, Math.max(0, deadline - Date.now())));
+      }
+    }
+  }
+
+  private async connectOnce(): Promise<void> {
     const ws = new WebSocket(this.url);
     this.ws = ws;
     ws.addEventListener("message", (event) => this.handleMessage(event));
@@ -204,10 +220,14 @@ export class HotReplClient {
     return payload;
   }
 
-  private async request(payload: JsonObject, timeoutMs = 10_000): Promise<JsonObject> {
+  private async request(payload: JsonObject): Promise<JsonObject> {
     const ws = this.ws;
     if (!ws || ws.readyState !== WebSocket.OPEN) throw new Error("HotReplClient is not connected.");
     const id = String(payload.id);
+    const timeoutMs =
+      typeof payload.timeoutMs === "number" && Number.isFinite(payload.timeoutMs)
+        ? Math.max(1, payload.timeoutMs)
+        : 10_000;
     const promise = new Promise<JsonObject>((resolve, reject) => {
       const timeout = setTimeout(() => {
         this.pending.delete(id);

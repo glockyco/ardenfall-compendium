@@ -3,10 +3,10 @@ import { HotReplClient, type ControlCommandError } from "../src/hotrepl-client";
 
 type RecordedMessage = Record<string, unknown>;
 
-function startFakeControlServer() {
+function startFakeControlServer(options: { commandDelayMs?: number; port?: number } = {}) {
   const messages: RecordedMessage[] = [];
   const server = Bun.serve<{ url: string }>({
-    port: 0,
+    port: options.port ?? 0,
     fetch(req, server) {
       if (server.upgrade(req)) return undefined;
       return new Response("expected websocket", { status: 426 });
@@ -15,9 +15,11 @@ function startFakeControlServer() {
       open(ws) {
         ws.send(JSON.stringify({ type: "hello", protocolVersion: 1 }));
       },
-      message(ws, raw) {
+      async message(ws, raw) {
         const message = JSON.parse(String(raw)) as RecordedMessage;
         messages.push(message);
+        if (options.commandDelayMs && message.type === "command_call")
+          await Bun.sleep(options.commandDelayMs);
         const id = message.id;
         switch (message.type) {
           case "control_auth":
@@ -227,5 +229,30 @@ describe("HotReplClient", () => {
       message: "bad args",
       retryable: false,
     });
+  });
+
+  it("applies command timeoutMs to the local response wait", async () => {
+    const server = startFakeControlServer({ commandDelayMs: 30 });
+    servers.push(server);
+    const client = new HotReplClient(server.url);
+    await client.connect();
+
+    await expect(client.call("compendium.info", {}, { timeoutMs: 5 })).rejects.toThrow(
+      "Timed out waiting for command_call",
+    );
+    await client.close();
+  });
+
+  it("waits for a delayed HotRepl listener during first startup", async () => {
+    let server: ReturnType<typeof startFakeControlServer> | undefined;
+    const port = 18591;
+    setTimeout(() => {
+      server = startFakeControlServer({ port });
+      servers.push(server);
+    }, 30);
+    const client = new HotReplClient(`ws://127.0.0.1:${port}`);
+
+    await client.connect({ timeoutMs: 500, retryIntervalMs: 10 });
+    await client.close();
   });
 });

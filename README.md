@@ -54,6 +54,9 @@ bun run controller:deploy -- \
   --bind-host 0.0.0.0 \
   --token "$HOTREPL_TOKEN"
 
+
+Launch Ardenfall before exporting. First Steam/CrossOver startup can take a few minutes on a cold or slow network path; `controller:export` waits up to five minutes for the HotRepl listener before failing, so start the export command immediately after launch instead of hand-timing readiness.
+
 bun run controller:export -- --url ws://127.0.0.1:18590 --token "$HOTREPL_TOKEN" --output ./snapshots --pipeline-out ./pipeline/dist
 ```
 

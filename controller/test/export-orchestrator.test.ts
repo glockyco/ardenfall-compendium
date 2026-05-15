@@ -14,7 +14,11 @@ function command(name: string, kind: "sync" | "job" = "sync", mutatesState = fal
 }
 
 class FakeClient implements ControllerClient {
-  readonly calls: Array<{ name: string; args: Record<string, unknown> }> = [];
+  readonly calls: Array<{
+    name: string;
+    args: Record<string, unknown>;
+    options?: Record<string, unknown>;
+  }> = [];
   readonly jobs: Array<{ name: string; args: Record<string, unknown> }> = [];
   commands = [
     command("compendium.preflight"),
@@ -40,8 +44,8 @@ class FakeClient implements ControllerClient {
   async describeCommands() {
     return this.commands;
   }
-  async call(name: string, args: Record<string, unknown>) {
-    this.calls.push({ name, args });
+  async call(name: string, args: Record<string, unknown>, options?: Record<string, unknown>) {
+    this.calls.push({ name, args, options });
     if (name === "compendium.preflight") {
       const result = this.preflightResults.shift() ?? this.preflightResult;
       return { status: "ok", result, artifacts: [], diagnostics: [] };
@@ -161,6 +165,22 @@ describe("exportCompendium", () => {
     ).rejects.toThrow("finalize failed");
 
     expect(client.calls.map((call) => call.name).at(-1)).toBe("game.quit");
+  });
+
+  it("allows asset-heavy finalization to run longer than ordinary commands", async () => {
+    const client = new FakeClient();
+
+    await exportCompendium({
+      client,
+      outputBaseDir: "/tmp/out",
+      pipelineOutDir: "/tmp/pipeline",
+      validate: async () => ({ itemCount: 150 }),
+      runPipeline: async () => undefined,
+    });
+
+    expect(client.calls.find((call) => call.name === "run.finalize")?.options).toEqual({
+      timeoutMs: 300_000,
+    });
   });
 
   it("waits for world by clicking through the main menu before beginning a run", async () => {

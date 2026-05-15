@@ -10,13 +10,31 @@ import type {
 import { validateSnapshot } from "./validate-snapshot";
 import { waitForWorld } from "./wait-for-world";
 
+export interface ControllerConnectOptions {
+  timeoutMs?: number;
+  retryIntervalMs?: number;
+}
+
+export interface ControllerCallOptions {
+  timeoutMs?: number;
+  idempotencyKey?: string;
+}
+
 export interface ControllerClient {
-  connect(): Promise<void>;
+  connect(options?: ControllerConnectOptions): Promise<void>;
   authenticate(token?: string): Promise<{ ok: boolean; sessionId?: string }>;
   acquireLease(clientName: string): Promise<{ ok: boolean; leaseId?: string }>;
   describeCommands(): Promise<ControlCommandDescriptor[]>;
-  call(name: string, args: Record<string, unknown>): Promise<CommandResult>;
-  startJob(name: string, args: Record<string, unknown>): Promise<CommandAccepted>;
+  call(
+    name: string,
+    args: Record<string, unknown>,
+    options?: ControllerCallOptions,
+  ): Promise<CommandResult>;
+  startJob(
+    name: string,
+    args: Record<string, unknown>,
+    options?: ControllerCallOptions,
+  ): Promise<CommandAccepted>;
   jobStatus(jobId: string): Promise<JobStatus>;
   jobResult(jobId: string): Promise<CommandResult>;
   cancelJob(jobId: string): Promise<JobCancelResult>;
@@ -41,6 +59,8 @@ export interface ExportOptions {
   noQuit?: boolean;
   waitForWorld?: boolean;
   waitForWorldTimeoutMs?: number;
+  connectTimeoutMs?: number;
+  finalizeTimeoutMs?: number;
 }
 
 export interface ExportResult {
@@ -58,11 +78,16 @@ const REQUIRED_COMMANDS = new Map<string, "sync" | "job">([
   ["game.quit", "sync"],
 ]);
 
+const DEFAULT_CONNECT_TIMEOUT_MS = 300_000;
+const DEFAULT_FINALIZE_TIMEOUT_MS = 300_000;
+
 export async function exportCompendium(options: ExportOptions): Promise<ExportResult> {
   const log = options.log ?? (() => undefined);
   const clientName = options.clientName ?? "ardenfall-controller";
   const outputBaseDir = toRuntimePath(resolve(options.outputBaseDir));
-  await options.client.connect();
+  await options.client.connect({
+    timeoutMs: options.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS,
+  });
   log({ phase: "connect", status: "completed" });
 
   const auth = await options.client.authenticate(options.token);
@@ -107,7 +132,11 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
       log({ phase: "entity.exportBatch", status: "completed", runId, offset });
     }
 
-    const finalized = await options.client.call("run.finalize", { runId });
+    const finalized = await options.client.call(
+      "run.finalize",
+      { runId },
+      { timeoutMs: options.finalizeTimeoutMs ?? DEFAULT_FINALIZE_TIMEOUT_MS },
+    );
 
     const publishedDir = normalizeControllerPath(
       requireString(finalized.result.publishedDir, "run.finalize result.publishedDir"),
