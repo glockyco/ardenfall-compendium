@@ -64,6 +64,26 @@ describe("snapshot provenance", () => {
       fixtureName: "synthetic",
     });
   });
+
+  it("defines the artifact manifest schema used by release staging", () => {
+    expect(existsSync("schemas/artifact-manifest.schema.json")).toBe(true);
+    const schema = JSON.parse(readFileSync("schemas/artifact-manifest.schema.json", "utf8")) as {
+      required: string[];
+      properties: Record<string, unknown>;
+    };
+    expect(schema.required).toEqual([
+      "schemaVersion",
+      "artifactKind",
+      "artifactId",
+      "createdAt",
+      "source",
+      "git",
+      "diagnostics",
+      "counts",
+      "outputs",
+      "probes",
+    ]);
+  });
 });
 
 describe("site deployment tooling", () => {

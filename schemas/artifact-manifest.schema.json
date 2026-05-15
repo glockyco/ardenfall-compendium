@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ardenfall-compendium.example/schemas/artifact-manifest.schema.json",
+  "title": "Generated artifact manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "artifactKind",
+    "artifactId",
+    "createdAt",
+    "source",
+    "git",
+    "diagnostics",
+    "counts",
+    "outputs",
+    "probes"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "artifactKind": { "enum": ["fixture", "release"] },
+    "artifactId": { "type": "string", "minLength": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "snapshotId",
+        "gameVersion",
+        "buildIdentifier",
+        "extractorVersion",
+        "snapshotManifestSha256"
+      ],
+      "properties": {
+        "kind": { "enum": ["live-game-export", "synthetic-fixture"] },
+        "fixtureName": { "type": "string", "minLength": 1 },
+        "snapshotId": { "type": "string", "minLength": 1 },
+        "gameVersion": { "type": "string", "minLength": 1 },
+        "buildIdentifier": { "type": "string", "minLength": 1 },
+        "extractorVersion": { "type": "string", "minLength": 1 },
+        "snapshotManifestSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "git": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit", "branch", "dirty"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "branch": { "type": "string", "minLength": 1 },
+        "dirty": { "type": "boolean" }
+      }
+    },
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fatal", "diagnostic"],
+      "properties": {
+        "fatal": { "type": "integer", "minimum": 0 },
+        "diagnostic": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sqlite", "assets"],
+      "properties": {
+        "sqlite": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "bytes", "sha256"],
+          "properties": {
+            "path": { "const": "data.sqlite" },
+            "bytes": { "type": "integer", "minimum": 1 },
+            "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
+        },
+        "assets": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "count", "treeSha256"],
+          "properties": {
+            "path": { "const": "assets" },
+            "count": { "type": "integer", "minimum": 0 },
+            "treeSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          }
+        }
+      }
+    },
+    "probes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items"],
+      "properties": {
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "name"],
+            "properties": {
+              "id": { "type": "string", "minLength": 1 },
+              "name": { "type": "string", "minLength": 1 },
+              "displayIconHash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -210,6 +210,38 @@ export interface EmittedAssetRef {
   outputPath: string;
 }
 
+export type ArtifactKind = "fixture" | "release";
+
+export interface ArtifactManifest {
+  schemaVersion: number;
+  artifactKind: ArtifactKind;
+  artifactId: string;
+  createdAt: string;
+  source: {
+    kind: "live-game-export" | "synthetic-fixture";
+    fixtureName?: string;
+    snapshotId: string;
+    gameVersion: string;
+    buildIdentifier: string;
+    extractorVersion: string;
+    snapshotManifestSha256: string;
+  };
+  git: {
+    repository: string;
+    commit: string;
+    branch: string;
+    dirty: boolean;
+  };
+  toolchain?: Record<string, string>;
+  diagnostics: { fatal: number; diagnostic: number };
+  counts: Record<string, number>;
+  outputs: {
+    sqlite: { path: "data.sqlite"; bytes: number; sha256: string };
+    assets: { path: "assets"; count: number; treeSha256: string };
+  };
+  probes: { items: { id: string; name: string; displayIconHash: string | null }[] };
+}
+
 // Snapshot refs (canonical)
 
 export type SnapshotRef =

@@ -14,6 +14,10 @@ const targets = [
     schema: "schemas/asset-manifest.schema.json",
     out: "pipeline/dist/validate-asset-manifest.mjs",
   },
+  {
+    schema: "schemas/artifact-manifest.schema.json",
+    out: "pipeline/dist/validate-artifact-manifest.mjs",
+  },
   { schema: "schemas/diagnostics.schema.json", out: "pipeline/dist/validate-diagnostics.mjs" },
   { schema: "schemas/digest.schema.json", out: "pipeline/dist/validate-digest.mjs" },
   {
