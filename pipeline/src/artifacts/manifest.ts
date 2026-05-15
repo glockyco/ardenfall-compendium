@@ -1,6 +1,7 @@
 import { Database } from "bun:sqlite";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
+import validateArtifactManifest from "../../dist/validate-artifact-manifest.mjs";
 import { sha256File, sha256Json, sha256Tree } from "./hash";
 import type { ArtifactKind, ArtifactManifest } from "../types";
 import type { EmitAssetsOutput } from "../stages/emit-assets";
@@ -31,6 +32,16 @@ export async function buildArtifactManifest(
   const assetsDir = join(input.artifactDir, "assets");
   const probes = readItemProbes(sqlitePath);
   const uniqueAssetHashes = new Set(input.assetsOutput.refs.map((ref) => ref.assetHash));
+  const git = readGitIdentity();
+  const snapshotId = `${input.snapshot.manifest.gameVersion ?? "unknown"}-${input.snapshot.manifest.buildIdentifier ?? "unknown"}`;
+  writeArtifactMetadata(sqlitePath, {
+    artifactKind: input.artifactKind,
+    artifactId: input.artifactId,
+    sourceKind,
+    sourceSnapshotId: snapshotId,
+    gitCommit: git.commit,
+  });
+  const sqliteBytes = Bun.file(sqlitePath).size;
   const manifest: ArtifactManifest = {
     schemaVersion: 1,
     artifactKind: input.artifactKind,
@@ -38,17 +49,16 @@ export async function buildArtifactManifest(
     createdAt: new Date().toISOString(),
     source: {
       kind: sourceKind,
-      fixtureName:
-        input.snapshot.manifest.source.kind === "synthetic-fixture"
-          ? input.snapshot.manifest.source.fixtureName
-          : undefined,
-      snapshotId: `${input.snapshot.manifest.gameVersion ?? "unknown"}-${input.snapshot.manifest.buildIdentifier ?? "unknown"}`,
+      ...(input.snapshot.manifest.source.kind === "synthetic-fixture"
+        ? { fixtureName: input.snapshot.manifest.source.fixtureName }
+        : {}),
+      snapshotId,
       gameVersion: input.snapshot.manifest.gameVersion ?? "unknown",
       buildIdentifier: input.snapshot.manifest.buildIdentifier ?? "unknown",
       extractorVersion: input.snapshot.manifest.extractorVersion,
       snapshotManifestSha256: sha256Json(input.snapshot.manifest),
     },
-    git: readGitIdentity(),
+    git,
     diagnostics: input.snapshot.manifest.diagnostics,
     counts: {
       snapshotItems: input.snapshot.manifest.counts.item ?? 0,
@@ -60,7 +70,7 @@ export async function buildArtifactManifest(
     outputs: {
       sqlite: {
         path: "data.sqlite",
-        bytes: input.sqliteOutput.byteSize,
+        bytes: sqliteBytes,
         sha256: await sha256File(sqlitePath),
       },
       assets: {
@@ -71,6 +81,12 @@ export async function buildArtifactManifest(
     },
     probes: { items: probes },
   };
+  if (!validateArtifactManifest(manifest)) {
+    const detail = (validateArtifactManifest.errors ?? [])
+      .map((error) => `artifact-manifest.json#${error.instancePath} — ${error.message}`)
+      .join("\n");
+    throw new Error(`invalid artifact manifest:\n${detail}`);
+  }
   writeFileSync(
     join(input.artifactDir, "artifact-manifest.json"),
     `${JSON.stringify(manifest, null, 2)}\n`,
@@ -106,6 +122,35 @@ function countRows(sqlitePath: string, table: string): number {
       count: number;
     } | null;
     return row?.count ?? 0;
+  } finally {
+    db.close();
+  }
+}
+
+function writeArtifactMetadata(
+  sqlitePath: string,
+  values: {
+    artifactKind: ArtifactManifest["artifactKind"];
+    artifactId: string;
+    sourceKind: ArtifactManifest["source"]["kind"];
+    sourceSnapshotId: string;
+    gitCommit: string;
+  },
+): void {
+  const db = new Database(sqlitePath);
+  try {
+    db.exec(
+      "CREATE TABLE IF NOT EXISTS artifact_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
+    );
+    const upsert = db.prepare(
+      "INSERT INTO artifact_metadata (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+    );
+    upsert.run("schemaVersion", "1");
+    upsert.run("artifactKind", values.artifactKind);
+    upsert.run("artifactId", values.artifactId);
+    upsert.run("sourceKind", values.sourceKind);
+    upsert.run("sourceSnapshotId", values.sourceSnapshotId);
+    upsert.run("gitCommit", values.gitCommit);
   } finally {
     db.close();
   }

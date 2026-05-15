@@ -71,6 +71,19 @@ describe("artifact manifest emission", () => {
       expect(manifest.probes.items).toEqual([
         { id: "item-a", name: "Item A", displayIconHash: "a".repeat(64) },
       ]);
+
+      const metadataDb = new Database(join(root, "data.sqlite"), { readonly: true });
+      try {
+        const metadata = metadataDb
+          .query("SELECT key, value FROM artifact_metadata ORDER BY key")
+          .all() as { key: string; value: string }[];
+        expect(metadata).toContainEqual({ key: "artifactKind", value: "release" });
+        expect(metadata).toContainEqual({ key: "artifactId", value: "0.0.10.91-run-a" });
+        expect(metadata).toContainEqual({ key: "sourceKind", value: "live-game-export" });
+        expect(metadata.find((row) => row.key === "gitCommit")?.value).toMatch(/^[a-f0-9]{40}$/);
+      } finally {
+        metadataDb.close();
+      }
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

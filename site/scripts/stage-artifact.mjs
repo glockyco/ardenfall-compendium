@@ -11,11 +11,18 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import validateArtifactManifest from "../../pipeline/dist/validate-artifact-manifest.mjs";
 
 export async function stageArtifact({ artifactDir, targetDir, mode }) {
   const manifestPath = join(artifactDir, "artifact-manifest.json");
   if (!existsSync(manifestPath)) throw new Error(`missing artifact manifest: ${manifestPath}`);
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  if (!validateArtifactManifest(manifest)) {
+    const detail = (validateArtifactManifest.errors ?? [])
+      .map((error) => `artifact-manifest.json#${error.instancePath} — ${error.message}`)
+      .join("\n");
+    throw new Error(`invalid artifact manifest:\n${detail}`);
+  }
 
   if (mode === "release" && manifest.artifactKind !== "release") {
     throw new Error(`release staging requires artifactKind release, got ${manifest.artifactKind}`);
@@ -37,6 +44,7 @@ export async function stageArtifact({ artifactDir, targetDir, mode }) {
   assertFileHash(sqlitePath, manifest.outputs.sqlite.sha256, manifest.outputs.sqlite.bytes);
   assertAssetTree(assetsDir, manifest.outputs.assets.treeSha256);
   assertSqliteCounts(sqlitePath, manifest.counts);
+  assertArtifactMetadata(sqlitePath, manifest);
 
   mkdirSync(targetDir, { recursive: true });
   rmSync(join(targetDir, "data.sqlite"), { force: true });
@@ -105,6 +113,30 @@ function assertSqliteCounts(path, counts) {
     }
     if (counts.itemDetailRows !== undefined && detail !== counts.itemDetailRows) {
       throw new Error(`itemDetailRows mismatch: expected ${counts.itemDetailRows}, got ${detail}`);
+    }
+  } finally {
+    db.close();
+  }
+}
+
+function assertArtifactMetadata(path, manifest) {
+  const db = new Database(path, { readonly: true });
+  try {
+    const rows = db.query("SELECT key, value FROM artifact_metadata").all();
+    const metadata = new Map(rows.map((row) => [row.key, row.value]));
+    const expected = {
+      artifactKind: manifest.artifactKind,
+      artifactId: manifest.artifactId,
+      sourceKind: manifest.source.kind,
+      sourceSnapshotId: manifest.source.snapshotId,
+      gitCommit: manifest.git.commit,
+    };
+    for (const [key, value] of Object.entries(expected)) {
+      if (metadata.get(key) !== value) {
+        throw new Error(
+          `artifact metadata mismatch for ${key}: expected ${value}, got ${metadata.get(key) ?? "missing"}`,
+        );
+      }
     }
   } finally {
     db.close();
