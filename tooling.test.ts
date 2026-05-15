@@ -121,6 +121,15 @@ describe("site prerender architecture", () => {
       "bun run scripts/smoke-prerender-output.mjs",
     );
   });
+
+  it("keeps generated SQLite reads server-only", () => {
+    expect(existsSync("site/src/lib/server/read-models.ts")).toBe(true);
+    const readModels = readFileSync("site/src/lib/server/read-models.ts", "utf8");
+    expect(readModels).toContain("better-sqlite3");
+    expect(readModels).toContain("static/data.sqlite");
+    expect(readModels).not.toContain("$app/environment");
+    expect(readModels).not.toContain("@sqlite.org/sqlite-wasm");
+  });
 });
 
 describe("decompilation tooling", () => {
