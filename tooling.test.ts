@@ -16,6 +16,9 @@ const prettierIgnore = readFileSync(".prettierignore", "utf8");
 const sitePackageJson = JSON.parse(readFileSync("site/package.json", "utf8")) as {
   scripts: Record<string, string>;
 };
+const siteLayout = readFileSync("site/src/routes/+layout.ts", "utf8");
+const siteSvelteConfig = readFileSync("site/svelte.config.js", "utf8");
+const siteWranglerConfig = readFileSync("site/wrangler.toml", "utf8");
 describe("format tooling", () => {
   it("formats mjs files in the pre-commit prettier hook", () => {
     expect(lefthook).toContain("mjs");
@@ -94,6 +97,29 @@ describe("site deployment tooling", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+describe("site prerender architecture", () => {
+  it("defaults routes to static prerendered SSR without client hydration", () => {
+    expect(siteLayout).toContain("export const ssr = true");
+    expect(siteLayout).toContain("export const prerender = true");
+    expect(siteLayout).toContain("export const csr = false");
+    expect(siteLayout).not.toContain("ssr = false");
+    expect(siteLayout).not.toContain("prerender = false");
+  });
+
+  it("keeps Cloudflare static assets ahead of Worker execution", () => {
+    expect(siteSvelteConfig).toContain("adapter({})");
+    expect(siteWranglerConfig).toContain('directory = ".svelte-kit/cloudflare"');
+    expect(siteWranglerConfig).toContain('binding = "ASSETS"');
+    expect(siteWranglerConfig).not.toContain("run_worker_first = true");
+  });
+
+  it("has a prerender smoke script wired into the site package", () => {
+    expect(sitePackageJson.scripts["smoke:prerender"]).toBe(
+      "bun run scripts/smoke-prerender-output.mjs",
+    );
   });
 });
 

@@ -10,6 +10,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "smoke:error-route": "bun run scripts/smoke-error-route.mjs",
     "smoke:item-icons": "bun run scripts/smoke-item-icons.mjs",
+    "smoke:prerender": "bun run scripts/smoke-prerender-output.mjs",
     "sync:generated": "bun run scripts/sync-generated-artifacts.mjs",
     "cf-deploy": "bun run build && wrangler deploy"
   },
@@ -23,6 +24,8 @@
     "@sveltejs/kit": "^2.59.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.1",
     "@tailwindcss/vite": "^4.2.4",
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.10.0",
     "bits-ui": "^2.18.1",
     "clsx": "^2.1.1",
     "svelte": "^5.55.5",
