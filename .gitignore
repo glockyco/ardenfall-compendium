@@ -15,6 +15,7 @@ site/build/
 
 # Pipeline outputs
 pipeline/dist/*.mjs.tmp
+pipeline/artifacts/
 site/static/data.sqlite
 site/static/data.sqlite-wal
 site/static/data.sqlite-shm

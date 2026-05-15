@@ -33,8 +33,11 @@ describe("format tooling", () => {
 });
 
 describe("ci site build tooling", () => {
-  it("builds the CI SQLite output where the site build sync expects it", () => {
-    expect(ciWorkflow).toContain("bun run pipeline:run fixtures/synthetic/snapshot pipeline/dist");
+  it("builds fixture artifacts where the site fixture build expects them", () => {
+    expect(ciWorkflow).toContain("bun run artifact:fixture synthetic fixtures/synthetic/snapshot");
+    expect(ciWorkflow).not.toContain(
+      "bun run pipeline:run fixtures/synthetic/snapshot pipeline/dist",
+    );
     expect(ciWorkflow).not.toContain(
       "bun run pipeline:run fixtures/synthetic/snapshot site/static",
     );
@@ -44,6 +47,17 @@ describe("ci site build tooling", () => {
     expect(ciWorkflow).toContain("- 'tooling.test.ts'");
     expect(ciWorkflow).toContain("needs.changes.outputs.site == 'true'");
     expect(ciWorkflow).toContain("needs.changes.outputs.fixtures == 'true'");
+  });
+
+  it("separates fixture artifact builds from release artifact builds", () => {
+    expect(packageJson.scripts["artifact:fixture"]).toBe(
+      "bun run pipeline/src/cli.ts build-fixture",
+    );
+    expect(packageJson.scripts["artifact:release"]).toBe(
+      "bun run pipeline/src/cli.ts build-release",
+    );
+    expect(ciWorkflow).toContain("bun run artifact:fixture synthetic fixtures/synthetic/snapshot");
+    expect(ciWorkflow).not.toContain("fixtures/synthetic/snapshot pipeline/dist");
   });
 });
 

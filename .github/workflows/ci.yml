@@ -68,8 +68,8 @@ jobs:
         with: { bun-version: 1.3.13 }
       - run: bun install --frozen-lockfile
       - run: bun run codegen:validators
-      - name: build synthetic generated artifacts for static prerender
-        run: bun run pipeline:run fixtures/synthetic/snapshot pipeline/dist
+      - name: build synthetic fixture artifact for static prerender
+        run: bun run artifact:fixture synthetic fixtures/synthetic/snapshot
       - run: bun run --cwd site check
       - run: bun run --cwd site build
 
