@@ -15,6 +15,7 @@ const prettierIgnore = readFileSync(".prettierignore", "utf8");
 
 const sitePackageJson = JSON.parse(readFileSync("site/package.json", "utf8")) as {
   scripts: Record<string, string>;
+  dependencies?: Record<string, string>;
 };
 const siteLayout = readFileSync("site/src/routes/+layout.ts", "utf8");
 const siteSvelteConfig = readFileSync("site/svelte.config.js", "utf8");
@@ -129,6 +130,18 @@ describe("site prerender architecture", () => {
     expect(readModels).toContain('"static", "data.sqlite"');
     expect(readModels).not.toContain("$app/environment");
     expect(readModels).not.toContain("@sqlite.org/sqlite-wasm");
+  });
+
+  it("does not depend on browser SQLite for static pages", () => {
+    expect(sitePackageJson.dependencies?.["@sqlite.org/sqlite-wasm"]).toBeUndefined();
+    const overviewRoute = existsSync("site/src/routes/items/+page.ts")
+      ? readFileSync("site/src/routes/items/+page.ts", "utf8")
+      : "";
+    const detailRoute = existsSync("site/src/routes/items/[id]/+page.ts")
+      ? readFileSync("site/src/routes/items/[id]/+page.ts", "utf8")
+      : "";
+    expect(overviewRoute).not.toContain("$lib/store");
+    expect(detailRoute).not.toContain("$lib/store");
   });
 });
 
