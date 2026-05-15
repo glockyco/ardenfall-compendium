@@ -52,6 +52,9 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
         assetRefInsert.run(ref.entityId, ref.entityRowId, ref.slot, ref.assetKind, ref.assetHash);
       }
       emitItemReadModels(db, desc, inputs["emit-assets"]?.itemIconMetadata ?? []);
+      db.exec(`CREATE TABLE artifact_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);`);
+      const metadataInsert = db.prepare("INSERT INTO artifact_metadata (key, value) VALUES (?, ?)");
+      metadataInsert.run("schemaVersion", "1");
       db.close();
       db = undefined;
       renameSync(tempPath, outputPath);
