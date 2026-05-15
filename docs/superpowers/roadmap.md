@@ -142,17 +142,23 @@ Planned canonical tables:
 
 ### Slice 3 — Asset pipeline (item icons)
 
-**Status:** planned
+**Status:** done
+**Completed:** 2026-05-14 on `main`; implementation commits `c0623ca..4fb4b17`, with this roadmap closeout commit recording final local verification evidence.
+**Plan:** `docs/superpowers/plans/2026-05-14-slice3-item-icon-assets.md`
 **Spec coverage:** baseline §8.4, §9 (`emit-assets`), §12; amendment §13, §16; investment-priorities §2 (presentation depth follows breadth); `docs/superpowers/specs/2026-05-14-slice3-item-icon-asset-design.md`.
 **Audit:** `docs/superpowers/specs/2026-05-14-item-icon-tooltip-audit.md`; grounded in decompiled `ItemData`, `BaseItem`, item subclass, `ItemCategory`, and UI scripts after Slice 2 live smoke.
+**Verification evidence:** local gates passed on 2026-05-14 (`bun run codegen:validators`, `bun run typecheck`, `bun test pipeline/test`, `bun test tooling.test.ts`, `bun run check:fixtures`, `bun run pipeline:run fixtures/synthetic/snapshot pipeline/dist`, `bun run --cwd site smoke:item-icons`, `bun run --cwd site check`, `bun run --cwd site build`, `dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes`, `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj`, `bun run format:check`, `bun run lint`, `git diff --check`). Synthetic generated-artifact build wrote `pipeline/dist/data.sqlite` at 266,240 bytes and 4 asset refs to `pipeline/dist/assets`; site build sync copied `data.sqlite` and 2 WebP assets into `site/static`.
 
-**Delivers:** content-addressed item icon emission from the mod, WebP optimisation via pinned direct `sharp`, `asset_refs`/asset manifest population, and item icon rendering on `/items` and `/items/[id]`. Slice 3 must export the behavior-derived display icon used by game UI (`BaseItem.GetIcon()` plus subclass overrides), not only raw `ItemData.icon`. It also records display icon colour and secondary icon slots where game UI uses `ISecondaryIconItem`.
+**Delivered:**
 
-**Live baseline after Slice 2:** `snapshots/snapshots/0.0.10.91-20260514-1621097145580` has `1273` items, `1271 lookupAssetGuidMissing:iconRef`, `2 nullAsset:iconRef`, `127 lookupAssetGuidMissing:quickslotIconRef`, and `15 lookupAssetGuidMissing:projectileIconRef`. The old `898/899` icon-missing baseline is obsolete. `categoryRef`, `spellRef`, `fontRef`, and `projectileRef` diagnostics surfaced by Slice 2 are not all Slice 3 work; Slice 3 targets visible item image assets first.
+- Content-addressed item icon emission from the mod, with behavior-derived display icons matching game UI source order (`BaseItem.GetIcon()` plus slate spell/status-effect overrides), cropped sprite PNG export, display icon colour metadata, and secondary icon slots for future presentation depth.
+- Pipeline asset manifest ingestion, WebP optimisation via pinned direct `sharp`, `asset_refs` population, and generated read-model fields for icon hashes/colours.
+- Fully automated generated-artifact sync: `pipeline/dist/{data.sqlite,assets/*.webp}` is copied into `site/static` during site build, with stale managed assets pruned and no direct pipeline writes into `site/static`.
+- Visible decorative item icon rendering on `/items` and `/items/[id]`, while deliberately excluding Slice 4 tooltip/hover-card work.
 
-**Required precondition spike:** `sharp` under Bun's Node-API surface. The plan must include a 5-line spike per `2026-05-03-slice1-tooling-decisions.md` §9 caveats before the asset stage commits to it. Slice 3 uses one canonical converter path: pinned direct `sharp`. If the spike fails, stop and revise the design instead of adding a maintained `cwebp` fallback.
+**Live baseline after Slice 2:** `snapshots/snapshots/0.0.10.91-20260514-1621097145580` has `1273` items, `1271 lookupAssetGuidMissing:iconRef`, `2 nullAsset:iconRef`, `127 lookupAssetGuidMissing:quickslotIconRef`, and `15 lookupAssetGuidMissing:projectileIconRef`. The old `898/899` icon-missing baseline is obsolete. `categoryRef`, `spellRef`, `fontRef`, and `projectileRef` diagnostics surfaced by Slice 2 are not all Slice 3 work; Slice 3 targeted visible item image assets first.
 
-**Critical planning notes from audit:**
+**Critical implementation notes from audit:**
 
 - Display icon source order is behavior-specific: `BaseItem.GetIcon()` uses `itemData.icon` then `category.defaultItemIcon`; `SlateSpellItem.GetIcon()` prefers spell icon; `ThrowingPotion.GetIcon()` prefers the first status effect icon; UI consumes `GetIconColor()` alongside the sprite.
 - Export actual Sprite pixels and content hashes. Do not try to repair this through `BuiltLookupTable` GUID resolution alone; Slice 2 proved those refs are missing for nearly all item icon slots.

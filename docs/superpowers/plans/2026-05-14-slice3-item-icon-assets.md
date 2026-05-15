@@ -2327,7 +2327,7 @@ dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --filter "ItemIconSlotTes
 
 Expected: pass.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```sh
 git add mod/src/Dtos/AssetManifest.cs mod/src/Assets/SpriteAssetExporter.cs mod/src/Entities/Item/ItemIconSlots.cs mod/src/Entities/Item/ItemExtractor.cs mod/src/Extraction/IItemExtractionCache.cs mod/src/Extraction/ItemExtractionService.cs mod/src/Extraction/ExtractionService.cs mod/src/Control/Handlers/RunFinalizeCommand.cs mod/src/Emit/SnapshotWriter.cs mod-tests/ItemIconSlotTests.cs mod-tests/SpriteAssetExporterTests.cs mod-tests/RunFinalizeCommandTests.cs
@@ -2342,7 +2342,7 @@ git commit -m "feat(mods): export item icon asset slots"
 
 - Modify: `docs/superpowers/roadmap.md`
 
-- [ ] **Step 1: Run generated validator and type gates**
+- [x] **Step 1: Run generated validator and type gates**
 
 Run:
 
@@ -2353,7 +2353,7 @@ bun run typecheck
 
 Expected: both pass.
 
-- [ ] **Step 2: Run pipeline and tooling tests**
+- [x] **Step 2: Run pipeline and tooling tests**
 
 Run:
 
@@ -2365,7 +2365,7 @@ bun run check:fixtures
 
 Expected: all tests pass.
 
-- [ ] **Step 3: Run site checks and build through generated artifact sync**
+- [x] **Step 3: Run site checks and build through generated artifact sync**
 
 Run:
 
@@ -2384,7 +2384,7 @@ Expected:
 - build syncs generated SQLite/assets and completes.
 - `site/static/data.sqlite` exists after build and at least one `site/static/assets/*.webp` exists after sync;
 
-- [ ] **Step 4: Run mod formatting/tests where local libs are available**
+- [x] **Step 4: Run mod formatting/tests where local libs are available**
 
 Run:
 
@@ -2395,7 +2395,7 @@ dotnet test mod-tests/ArdenfallCompendium.Tests.csproj
 
 Expected: pass when `mod/libs/` contains local Ardenfall/Unity/HotRepl DLLs. If the environment lacks redistributable game DLLs, record the exact missing reference error and still complete all JS/site gates.
 
-- [ ] **Step 5: Run full lint/format gates**
+- [x] **Step 5: Run full lint/format gates**
 
 Run:
 
@@ -2407,20 +2407,20 @@ git diff --check
 
 Expected: pass. Existing allowed warnings in decompile tooling may remain only if lint exits zero.
 
-- [ ] **Step 6: Update roadmap status**
+- [x] **Step 6: Update roadmap status**
 
 After all applicable gates pass, update `docs/superpowers/roadmap.md` Slice 3 status from `planned` to `done` and add a concise evidence note naming the successful synthetic pipeline/site build and any live smoke snapshot if one was run.
 
 Do not mark Slice 3 done if generated assets do not flow through `site build` or if item pages do not render icons/placeholders.
 
-- [ ] **Step 7: Commit closeout**
+- [x] **Step 7: Commit closeout**
 
 ```sh
 git add docs/superpowers/roadmap.md
 git commit -m "docs(items): mark item icon slice complete"
 ```
 
-- [ ] **Step 8: Final status check**
+- [x] **Step 8: Final status check**
 
 Run:
 
