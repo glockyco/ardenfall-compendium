@@ -13,7 +13,7 @@ The amendment is authoritative where it differs from the baseline spec. The inve
 
 The project spans three layered subsystems (BepInEx mod, TS/Bun pipeline, SvelteKit site) plus shared descriptor/schema infrastructure. Rather than one mega-plan, work is split into **slices**. Each active slice may get an execution plan under `docs/superpowers/plans/` while work is live, but completed plans are removed from the working tree once the roadmap/specs capture the outcome; git history is the archive.
 
-Slice ordering is driven by `2026-05-07-investment-priorities.md`: items get the deepest investment first (data breadth, then assets, then presentation depth), maps come second (locations, map system, then map-supporting entities one-by-one), with spells/quests after. Each major entity gets a data slice plus a presentation depth slice; depth is not deferred to a single distant design-system slice.
+Slice ordering is driven by `2026-05-07-investment-priorities.md`: items get the deepest investment first (data breadth, then assets, then presentation depth), maps come second (locations, map system, then map-supporting entities one-by-one), with spells/quests after. Each major entity gets a data slice plus a presentation depth slice; depth is not deferred to a single distant design-system slice. One operational override currently sits above all content work: the site must return to a static-assets-first SvelteKit architecture before Slice 4 or any new entity slice, because avoidable Worker invocations threaten the Cloudflare Workers free-tier envelope and make production failures look like blank client shells.
 
 ## Status legend
 
@@ -164,6 +164,38 @@ Planned canonical tables:
 - Export actual Sprite pixels and content hashes. Do not try to repair this through `BuiltLookupTable` GUID resolution alone; Slice 2 proved those refs are missing for nearly all item icon slots.
 - Crop atlas sprites by sprite rect/texture rect before hashing/encoding.
 - Keep raw refs (`iconRef`, `quickslotIconRef`, `projectileIconRef`, `categoryRef`) separate from behavior-derived display slots so future presentation can explain provenance.
+
+### Slice 3.5 — Static prerender architecture
+
+**Status:** ready
+**Priority:** highest; execute before Slice 4, map work, search, or any new entity slice.
+**Plan:** `docs/superpowers/plans/2026-05-15-site-prerender-static-assets.md`
+**Spec coverage:** baseline §11 and §14 (site presentation/SEO), baseline §16 open question 1 (deployment), investment-priorities §3 (foundation cost/reliability before depth), and Slice 1.5 deployment decisions.
+
+**Why this interrupts the roadmap:** Slice 3 exposed that Ardenfall currently ships `/items` and detail pages as empty client-rendered SPA shells (`ssr = false`, `prerender = false`) that hydrate from `/data.sqlite` in the browser. That is the wrong default for this compendium. Almost all generated pages are deterministic for a given snapshot and should be static HTML built once during deploy. Cloudflare Workers Static Assets serve matching files without invoking Worker code; SvelteKit also excludes `prerender = true` routes from the dynamic SSR manifest. Both behaviours directly reduce Worker invocations, Worker bundle surface, blank-shell failure modes, and edge runtime dependency risk.
+
+**Research notes:**
+
+Cloudflare Workers Static Assets documentation states that matching files in the configured assets directory are served without invoking Worker code, and only non-matching requests fall through to the Worker. SvelteKit page-options documentation states that `ssr = false` renders an empty shell and is not the right mode for static generation; prerendered routes are generated at build time and excluded from dynamic SSR manifests. SvelteKit dynamic routes require either crawler-discovered links or an `entries()` generator. `adapter-cloudflare` remains the correct adapter because it emits a Worker plus the static asset bundle for Workers Static Assets; the target is not "no Worker exists", but "normal page and asset traffic resolves as static assets before Worker execution".
+
+**Target architecture:**
+
+- Root layout defaults to `ssr = true`, `prerender = true`, and `csr = false` for static pages. Re-enable CSR only for a route whose user value requires browser interactivity; such routes must document why Worker/static HTML alone is insufficient.
+- Route data moves from browser `@sqlite.org/sqlite-wasm` access to server/build-time `+page.server.ts` loads backed by a server-only SQLite reader over `site/static/data.sqlite`.
+- `/items` is prerendered as static HTML containing the overview table and decorative item icons.
+- `/items/[id]` exports `entries()` from generated item IDs and prerenders every current item detail page.
+- `/data.sqlite` and `/assets/*.webp` remain deployed static artifacts for future interactive routes and downloadable/debug use, but the initial item pages must not require fetching `/data.sqlite` in the browser.
+- `EntityTable` becomes static HTML in this slice. Client sorting/filtering is deferred until Slice 10 unless a route explicitly opts into CSR with a measured need.
+- Cloudflare deployment keeps `[assets] directory = ".svelte-kit/cloudflare"` and `run_worker_first` unset/false so matching static assets short-circuit the Worker.
+
+**Acceptance criteria:**
+
+- `bun run --cwd site build` produces `.svelte-kit/cloudflare/items/index.html` and at least one `.svelte-kit/cloudflare/items/<id>/index.html` from the synthetic fixture.
+- The prerendered `/items/index.html` contains visible item text (for example `Fixture Iron Sword`) and at least one `/assets/<hash>.webp` image reference.
+- The prerendered item detail HTML contains the item name and decorative icon markup without requiring Svelte hydration.
+- `site/.svelte-kit/cloudflare/_worker.js` no longer needs the item overview/detail route modules for normal traffic; the plan verifies this through static output and HTTP checks rather than brittle minified-string assertions.
+- `bun run --cwd site check`, `bun run --cwd site build`, `bun test tooling.test.ts`, and a production or local `wrangler` smoke all pass.
+- A browser or HTTP smoke after deploy proves `/items`, an item detail route, `/data.sqlite`, and a representative `/assets/*.webp` all return 200. Page HTML checks must inspect actual HTML content, not just status codes.
 
 ### Slice 4 — Item presentation depth
 
