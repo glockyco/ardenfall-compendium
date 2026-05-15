@@ -4,7 +4,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "bun:test";
-import { buildArtifactManifest } from "../src/artifacts/manifest";
+import { buildArtifactManifest, isTrackedWorktreeDirty } from "../src/artifacts/manifest";
 import type { LoadSnapshotOutput } from "../src/stages/load-snapshot";
 
 describe("artifact manifest emission", () => {
@@ -87,6 +87,14 @@ describe("artifact manifest emission", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+describe("git provenance", () => {
+  it("does not mark release artifacts dirty for untracked local deploy state", () => {
+    expect(isTrackedWorktreeDirty("?? site/.wrangler/state/v3/cache.sqlite\n")).toBe(false);
+    expect(isTrackedWorktreeDirty(" M pipeline/src/artifacts/manifest.ts\n")).toBe(true);
+    expect(isTrackedWorktreeDirty("M  site/package.json\n")).toBe(true);
   });
 });
 

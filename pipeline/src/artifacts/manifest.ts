@@ -160,7 +160,12 @@ function readGitIdentity(): ArtifactManifest["git"] {
   const commit = Bun.spawnSync(["git", "rev-parse", "HEAD"]).stdout.toString().trim();
   const branch =
     Bun.spawnSync(["git", "branch", "--show-current"]).stdout.toString().trim() || "detached";
-  const status = Bun.spawnSync(["git", "status", "--porcelain"]).stdout.toString();
+  const status = Bun.spawnSync([
+    "git",
+    "status",
+    "--porcelain",
+    "--untracked-files=no",
+  ]).stdout.toString();
   const remote = Bun.spawnSync(["git", "config", "--get", "remote.origin.url"])
     .stdout.toString()
     .trim();
@@ -168,6 +173,13 @@ function readGitIdentity(): ArtifactManifest["git"] {
     repository: remote.replace(/^https:\/\/github.com\//, "").replace(/\.git$/, ""),
     commit,
     branch,
-    dirty: status.length > 0,
+    dirty: isTrackedWorktreeDirty(status),
   };
+}
+
+export function isTrackedWorktreeDirty(statusPorcelain: string): boolean {
+  return statusPorcelain
+    .split("\n")
+    .filter((line) => line.length > 0)
+    .some((line) => !line.startsWith("??"));
 }
