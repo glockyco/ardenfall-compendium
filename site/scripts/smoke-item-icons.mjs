@@ -2,77 +2,53 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const overview = readFileSync(
-  join(import.meta.dirname, "..", "src", "routes", "items", "+page.svelte"),
-  "utf8",
-);
-const detail = readFileSync(
-  join(import.meta.dirname, "..", "src", "routes", "items", "[id]", "+page.svelte"),
-  "utf8",
-);
-const table = readFileSync(
-  join(import.meta.dirname, "..", "src", "lib", "components", "EntityTable.svelte"),
-  "utf8",
-);
-const readModels = readFileSync(
-  join(import.meta.dirname, "..", "src", "lib", "server", "read-models.ts"),
-  "utf8",
-);
+const source = (path) => readFileSync(join(import.meta.dirname, "..", ...path), "utf8");
+
+const overview = source(["src", "routes", "items", "+page.svelte"]);
+const detail = source(["src", "routes", "items", "[id]", "+page.svelte"]);
+const table = source(["src", "lib", "components", "EntityTable.svelte"]);
+const itemIcon = source(["src", "lib", "components", "items", "ItemIcon.svelte"]);
+const itemHeader = source(["src", "lib", "components", "items", "ItemHeader.svelte"]);
+const tooltipCard = source(["src", "lib", "components", "items", "ItemTooltipCard.svelte"]);
+const richTextNode = source(["src", "lib", "components", "content", "RichTextNode.svelte"]);
+const readModels = source(["src", "lib", "server", "read-models.ts"]);
 
 const required = [
   [readModels, "displayIconSrc"],
   [readModels, "display_icon_hash"],
   [table, "itemNameWithIcon"],
   [table, "sortable?: boolean"],
-  [detail, "item-icon"],
-  [detail, "{#if data.displayIconSrc}"],
-  [detail, 'aria-hidden="true"'],
-  [detail, 'alt=""'],
+  [table, "ItemTooltipCard"],
+  [itemIcon, "item-icon"],
+  [itemIcon, "aria-hidden={alt.length === 0}"],
+  [itemIcon, "{#if src}"],
+  [itemIcon, "alt"],
+  [itemHeader, "<ItemIcon"],
+  [tooltipCard, "<ItemIcon"],
+  [detail, "ItemHeader"],
+  [detail, "ItemPresentationPanel"],
 ];
 
-for (const [source, snippet] of required) {
-  if (!source.includes(snippet)) throw new Error(`missing item icon snippet: ${snippet}`);
+for (const [fileSource, snippet] of required) {
+  if (!fileSource.includes(snippet))
+    throw new Error(`missing item presentation snippet: ${snippet}`);
 }
 
-const overviewIconRequired = ['aria-hidden="true"', 'alt=""', "iconSrc(row)"];
+const overviewIconRequired = ["ItemIcon", "iconSrc(row)", "row[col.field]", "rowHref(row)"];
 for (const snippet of overviewIconRequired) {
   if (!table.includes(snippet)) {
     throw new Error(`overview item icon must stay decorative and data-driven: ${snippet}`);
   }
 }
 
-const detailWrapperIndex = detail.indexOf('class="item-icon');
-const detailImageGuardIndex = detail.indexOf("{#if data.displayIconSrc}");
-if (
-  detailWrapperIndex < 0 ||
-  detailImageGuardIndex < 0 ||
-  detailWrapperIndex > detailImageGuardIndex
-) {
-  throw new Error("detail placeholder wrapper must exist outside the displayIconSrc branch.");
+if (detail.includes("item_detail_rows") || detail.includes("fields_json")) {
+  throw new Error("detail route must not use legacy item_detail_rows fields_json plumbing.");
 }
-if (!detail.slice(detailWrapperIndex, detailImageGuardIndex).includes('aria-hidden="true"')) {
-  throw new Error("detail placeholder wrapper must remain decorative.");
-}
-
-if (!table.includes("row[col.field]") || !table.includes("rowHref(row)")) {
-  throw new Error("EntityTable must keep the row field as linked accessible text.");
-}
-if (table.includes("$state") || table.includes("onclick=") || table.includes("toggleSort")) {
-  throw new Error(
-    "EntityTable must remain static by default; interactive sorting belongs in a CSR opt-in route.",
-  );
-}
-if (!table.includes("rowHref(row)")) {
-  throw new Error("EntityTable must keep static linked row text.");
-}
-const forbidden = ["Tooltip", "popover", "hovercard", "secondaryIcon"];
-for (const snippet of forbidden) {
-  if (overview.includes(snippet) || detail.includes(snippet) || table.includes(snippet)) {
-    throw new Error(`Slice 3 item UI must not include tooltip/overlay snippet: ${snippet}`);
-  }
+if (overview.includes("{@html") || detail.includes("{@html") || richTextNode.includes("{@html")) {
+  throw new Error("item presentation must render rich_text_v1 nodes without raw {@html}.");
 }
 
 const titleAttribute = /\stitle=(["'])/;
 if (titleAttribute.test(overview) || titleAttribute.test(detail) || titleAttribute.test(table)) {
-  throw new Error("Slice 3 item UI must not include title attributes.");
+  throw new Error("Item UI must not use browser title attributes for tooltip content.");
 }
