@@ -214,7 +214,8 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 
 ### Slice 4 — Item presentation depth
 
-**Status:** implemented locally
+**Status:** done
+**Completed:** 2026-05-19 on `main`; implementation commits `dd2cff2..234f454`, with production deployment completed as Cloudflare version `57fa31fe-14d3-4dbf-bab3-35f2ff9a2305` from release artifact `0.0.10.91-20260519-1949114509380`.
 **Spec coverage:** investment-priorities §1, §2; baseline §11, §14.
 **Design draft:** `docs/superpowers/specs/2026-05-19-item-presentation-depth-design.md`.
 **Implementation plan:** `docs/superpowers/plans/2026-05-19-item-presentation-depth.md`.
@@ -228,6 +229,8 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 - Generated relationship graph foundation: canonical nodes, aliases, redirects, disambiguations, typed edges, relationship sections, and link audit. Deferred/future entity targets render as inert text or diagnostics, not broken public links.
 - Governed UI seed: token-backed shared components, component catalog/intake gate, static tooltip/focus-card presentation, and route files that assemble components instead of duplicating item header/stat/effect/link markup.
 - Item overview enhancements: static fallback plus bounded canonical URL-state sorting/filtering on generated facts. Full cross-entity FTS5/Pagefind search and broad facets remain Slice 10 work.
+
+**Verification evidence:** final local gates passed (`bun run codegen:validators`, `bun run check:fixtures`, `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj`, `bun test pipeline/test`, `bun test tooling.test.ts`, `bun test controller/test`, `bun run typecheck`, `bun run --cwd site check`, `bun run artifact:fixture synthetic fixtures/synthetic/snapshot`, `bun run --cwd site build:fixture`, `bun run --cwd site smoke:prerender`, `bun run --cwd site smoke:item-icons`, `bun run format:check`, `bun run lint`, `git diff --check`). Pre-push hooks passed typecheck and 94 Bun tests. Fresh live export published `snapshots/snapshots/0.0.10.91-20260519-1949114509380` with `items.json.schemaVersion = 2`, `counts.item = 1273`, and `diagnostics = { fatal: 0, diagnostic: 3041 }`. Release artifact `pipeline/artifacts/releases/0.0.10.91-20260519-1949114509380` recorded Git commit `234f45401a831e11e66c9a2509e568778cd227f0`, `dirty: false`, SQLite hash `ad6acdc880808cf21e4105b3f9e7a73c3995c3917c03d3a2a57c6cb1e1e6590c`, 1,273 item overview rows, 1,273 item presentation rows, 1,289 entity nodes, 1,273 relationship sections, 0 relationship diagnostics, 1,745 asset refs, and 85 WebP assets. Production deploy command `bun run --cwd site deploy:production ../pipeline/artifacts/releases/0.0.10.91-20260519-1949114509380` completed and smoke-verified `/_release.json`, `/data.sqlite`, `/items`, `/items/055b284f8d0701643bc93d0879ebf85e.11400000`, and the probe WebP asset against the same manifest.
 
 **Why before maps:** items are the dominant audience surface (investment-priorities §1). Investing in their presentation before locations/maps maximises return on the most-visited pages.
 
