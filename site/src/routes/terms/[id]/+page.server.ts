@@ -2,7 +2,7 @@ import { error } from "@sveltejs/kit";
 import { getTerm, listTermIds } from "$lib/server/read-models";
 import type { EntryGenerator, PageServerLoad } from "./$types";
 
-export const prerender = true;
+export const prerender = "auto";
 
 export const entries: EntryGenerator = () => listTermIds().map((id) => ({ id }));
 
