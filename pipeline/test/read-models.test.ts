@@ -124,5 +124,38 @@ describe("emitItemReadModels", () => {
     expect(JSON.parse(presentation.effect_facts_json)).toContainEqual(
       expect.objectContaining({ kind: "status-effect", label: "Status effects" }),
     );
+
+    const variantSection = db
+      .query(
+        "SELECT title, edges_json FROM entity_relationship_sections WHERE source_type = 'item' AND source_id = 'fixture-iron-sword' AND predicate = 'variant_of'",
+      )
+      .get() as { title: string; edges_json: string };
+    expect(variantSection.title).toBe("Variant");
+    expect(JSON.parse(variantSection.edges_json)).toContainEqual(
+      expect.objectContaining({
+        targetType: "item-variant",
+        targetId: "melee-weapon",
+        targetRoutePath: "/items/variant/melee-weapon",
+      }),
+    );
+
+    const termEdge = db
+      .query(
+        "SELECT target_type, target_id, predicate FROM entity_edges WHERE source_id = 'fixture-stamina-draught' AND predicate = 'references_term'",
+      )
+      .get() as { target_type: string; target_id: string; predicate: string };
+    expect(termEdge).toEqual({
+      target_type: "term",
+      target_id: "stamina",
+      predicate: "references_term",
+    });
+
+    expect(
+      db
+        .query(
+          "SELECT count(*) AS count FROM pipeline_diagnostics WHERE source = 'relationship-graph'",
+        )
+        .get(),
+    ).toEqual({ count: 0 });
   });
 });

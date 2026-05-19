@@ -36,6 +36,18 @@ describe("artifact manifest emission", () => {
       db.exec(`
         CREATE TABLE item_overview_rows (id TEXT PRIMARY KEY, name TEXT, display_icon_hash TEXT);
         INSERT INTO item_overview_rows VALUES ('item-a', 'Item A', '${"a".repeat(64)}');
+        CREATE TABLE item_presentation_rows (id TEXT PRIMARY KEY, diagnostics_json TEXT NOT NULL);
+        INSERT INTO item_presentation_rows VALUES ('item-a', '[{"severity":"diagnostic","code":"fixture"}]');
+        CREATE TABLE entity_nodes (entity_type TEXT, entity_id TEXT);
+        INSERT INTO entity_nodes VALUES ('item', 'item-a');
+        CREATE TABLE entity_aliases (alias_key TEXT, target_type TEXT, target_id TEXT);
+        INSERT INTO entity_aliases VALUES ('item-a', 'item', 'item-a');
+        CREATE TABLE entity_edges (edge_id TEXT PRIMARY KEY);
+        INSERT INTO entity_edges VALUES ('edge-a');
+        CREATE TABLE entity_relationship_sections (section_id TEXT PRIMARY KEY);
+        INSERT INTO entity_relationship_sections VALUES ('section-a');
+        CREATE TABLE pipeline_diagnostics (source TEXT NOT NULL);
+        INSERT INTO pipeline_diagnostics VALUES ('rich-text');
       `);
       db.close();
 
@@ -67,6 +79,14 @@ describe("artifact manifest emission", () => {
       expect(manifest.artifactKind).toBe("release");
       expect(manifest.source.kind).toBe("live-game-export");
       expect(manifest.counts.itemOverviewRows).toBe(1);
+      expect(manifest.counts.itemPresentationRows).toBe(1);
+      expect(manifest.counts.entityNodes).toBe(1);
+      expect(manifest.counts.entityAliases).toBe(1);
+      expect(manifest.counts.entityEdges).toBe(1);
+      expect(manifest.counts.relationshipSections).toBe(1);
+      expect(manifest.counts.itemPresentationDiagnostics).toBe(1);
+      expect(manifest.counts.relationshipDiagnostics).toBe(0);
+      expect(manifest.counts.richTextDiagnostics).toBe(1);
       expect(manifest.outputs.sqlite.bytes).toBeGreaterThan(0);
       expect(manifest.probes.items).toEqual([
         { id: "item-a", name: "Item A", displayIconHash: "a".repeat(64) },

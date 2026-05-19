@@ -64,6 +64,13 @@ export async function buildArtifactManifest(
       snapshotItems: input.snapshot.manifest.counts.item ?? 0,
       itemOverviewRows: countRows(sqlitePath, "item_overview_rows"),
       itemPresentationRows: countRows(sqlitePath, "item_presentation_rows"),
+      entityNodes: countRows(sqlitePath, "entity_nodes"),
+      entityAliases: countRows(sqlitePath, "entity_aliases"),
+      entityEdges: countRows(sqlitePath, "entity_edges"),
+      relationshipSections: countRows(sqlitePath, "entity_relationship_sections"),
+      itemPresentationDiagnostics: countItemPresentationDiagnostics(sqlitePath),
+      relationshipDiagnostics: countPipelineDiagnostics(sqlitePath, "relationship-graph"),
+      richTextDiagnostics: countPipelineDiagnostics(sqlitePath, "rich-text"),
       assetRefs: input.assetsOutput.refs.length,
       webpAssets: uniqueAssetHashes.size,
     },
@@ -151,6 +158,40 @@ function writeArtifactMetadata(
     upsert.run("sourceKind", values.sourceKind);
     upsert.run("sourceSnapshotId", values.sourceSnapshotId);
     upsert.run("gitCommit", values.gitCommit);
+  } finally {
+    db.close();
+  }
+}
+
+function countPipelineDiagnostics(sqlitePath: string, source: string): number {
+  const db = new Database(sqlitePath, { readonly: true });
+  try {
+    return (
+      db
+        .query<
+          { count: number },
+          [string]
+        >("SELECT COUNT(*) AS count FROM pipeline_diagnostics WHERE source = ?")
+        .get(source)?.count ?? 0
+    );
+  } finally {
+    db.close();
+  }
+}
+
+function countItemPresentationDiagnostics(sqlitePath: string): number {
+  const db = new Database(sqlitePath, { readonly: true });
+  try {
+    const rows = db
+      .query<
+        { diagnostics_json: string },
+        []
+      >("SELECT diagnostics_json FROM item_presentation_rows")
+      .all();
+    return rows.reduce((count, row) => {
+      const diagnostics = JSON.parse(row.diagnostics_json) as unknown[];
+      return count + diagnostics.length;
+    }, 0);
   } finally {
     db.close();
   }

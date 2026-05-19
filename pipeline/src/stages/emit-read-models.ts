@@ -6,6 +6,12 @@ import type {
   SnapshotItemIconMetadata,
 } from "../types.ts";
 import { translateRichTextV1 } from "../rich-text/rich-text-v1.ts";
+import {
+  ENTITY_GRAPH_DDL,
+  auditEntityGraph,
+  insertPipelineDiagnostics,
+} from "../relationships/relationship-graph.ts";
+import type { RichTextNode } from "../rich-text/rich-text-v1.ts";
 
 export const ITEM_READ_MODEL_DDL = `
 CREATE TABLE item_overview_rows (
@@ -42,12 +48,13 @@ CREATE TABLE item_presentation_rows (
 
 export function emitItemReadModels(
   db: Database,
-  _desc: LoadDescriptorsOutput,
+  desc: LoadDescriptorsOutput,
   itemIconMetadata: SnapshotItemIconMetadata[] = [],
   itemEnvelope?: SnapshotEnvelope,
   masterTooltip?: MasterTooltipDictionary,
 ): void {
   db.exec(ITEM_READ_MODEL_DDL);
+  db.exec(ENTITY_GRAPH_DDL);
   const colorByItem = new Map(
     itemIconMetadata
       .filter((entry) => entry.entityId === "item")
@@ -114,6 +121,19 @@ export function emitItemReadModels(
       value, weight, diagnostics_json
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
+  const nodeInsert = db.prepare(
+    `INSERT OR IGNORE INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, is_public) VALUES (?, ?, ?, ?, ?, ?)`,
+  );
+  const aliasInsert = db.prepare(
+    `INSERT OR IGNORE INTO entity_aliases (alias_key, target_type, target_id, label, source) VALUES (?, ?, ?, ?, ?)`,
+  );
+  const edgeInsert = db.prepare(
+    `INSERT OR IGNORE INTO entity_edges (edge_id, source_type, source_id, target_type, target_id, predicate, label, weight, evidence_json, anchor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
+  const sectionInsert = db.prepare(
+    `INSERT OR REPLACE INTO entity_relationship_sections (section_id, source_type, source_id, title, predicate, edges_json, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  );
+  const richTextDiagnostics: Parameters<typeof insertPipelineDiagnostics>[1] = [];
   const tx = db.transaction(() => {
     for (const snapshotRow of itemEnvelope.rows) {
       const presentation = snapshotRow.presentation;
@@ -123,6 +143,17 @@ export function emitItemReadModels(
         tooltipCodes: masterTooltip?.tooltipCodes,
         tooltipColors: masterTooltip?.tooltipColors,
       });
+      const itemLabel = item?.name ?? presentation.displayName;
+      const variantId = item?.variant ?? snapshotRow.variant;
+      nodeInsert.run(
+        "item",
+        snapshotRow.id,
+        itemLabel,
+        `/items/${snapshotRow.id}`,
+        snapshotRow.id,
+        1,
+      );
+      aliasInsert.run(aliasKey(itemLabel), "item", snapshotRow.id, itemLabel, "item-presentation");
       presentationInsert.run(
         snapshotRow.id,
         item?.name ?? presentation.displayName,
@@ -144,7 +175,138 @@ export function emitItemReadModels(
         presentation.weight,
         JSON.stringify([...presentation.diagnostics, ...description.diagnostics]),
       );
+
+      for (const diagnostic of description.diagnostics) {
+        richTextDiagnostics.push({
+          severity: diagnostic.severity,
+          source: "rich-text",
+          code: diagnostic.code,
+          message: diagnostic.message,
+          entityType: "item",
+          entityId: snapshotRow.id,
+          field: diagnostic.field,
+        });
+      }
+
+      const variant = desc.variants.item?.find((candidate) => candidate.variantId === variantId);
+      const variantLabel = variant?.label ?? titleCase(variantId);
+      nodeInsert.run(
+        "item-variant",
+        variantId,
+        variantLabel,
+        `/items/variant/${variantId}`,
+        variantId,
+        1,
+      );
+      aliasInsert.run(
+        aliasKey(variantLabel),
+        "item-variant",
+        variantId,
+        variantLabel,
+        "item-variant",
+      );
+      const variantEdge = {
+        targetType: "item-variant",
+        targetId: variantId,
+        targetLabel: variantLabel,
+        targetRoutePath: `/items/variant/${variantId}`,
+        predicate: "variant_of",
+        label: "Variant",
+        weight: 1,
+        anchor: "item-header",
+      };
+      edgeInsert.run(
+        `${snapshotRow.id}:variant_of:item-variant:${variantId}`,
+        "item",
+        snapshotRow.id,
+        "item-variant",
+        variantId,
+        "variant_of",
+        "Variant",
+        1,
+        JSON.stringify({ source: "items.variant" }),
+        "item-header",
+      );
+      sectionInsert.run(
+        `${snapshotRow.id}:variant_of`,
+        "item",
+        snapshotRow.id,
+        "Variant",
+        "variant_of",
+        JSON.stringify([variantEdge]),
+        10,
+      );
+
+      const termEdges = [];
+      for (const term of collectTermLinks(description.nodes)) {
+        const termLabel = masterTooltip?.tooltipCodes[term.termId] ?? term.label;
+        nodeInsert.run("term", term.termId, termLabel, `/terms/${term.termId}`, term.termId, 1);
+        aliasInsert.run(aliasKey(termLabel), "term", term.termId, termLabel, "master-tooltip");
+        edgeInsert.run(
+          `${snapshotRow.id}:references_term:term:${term.termId}`,
+          "item",
+          snapshotRow.id,
+          "term",
+          term.termId,
+          "references_term",
+          termLabel,
+          0.5,
+          JSON.stringify({ source: "presentation.descriptionSource" }),
+          "description",
+        );
+        termEdges.push({
+          targetType: "term",
+          targetId: term.termId,
+          targetLabel: termLabel,
+          targetRoutePath: `/terms/${term.termId}`,
+          predicate: "references_term",
+          label: termLabel,
+          weight: 0.5,
+          anchor: "description",
+        });
+      }
+      if (termEdges.length > 0) {
+        sectionInsert.run(
+          `${snapshotRow.id}:references_term`,
+          "item",
+          snapshotRow.id,
+          "Referenced terms",
+          "references_term",
+          JSON.stringify(termEdges),
+          90,
+        );
+      }
     }
   });
   tx();
+  insertPipelineDiagnostics(db, richTextDiagnostics, "item-presentation-read-model");
+  insertPipelineDiagnostics(db, auditEntityGraph(db), "item-presentation-read-model");
+}
+
+function collectTermLinks(nodes: RichTextNode[]): { termId: string; label: string }[] {
+  const terms: { termId: string; label: string }[] = [];
+  for (const node of nodes) {
+    if (node.type === "termLink") {
+      terms.push({ termId: node.termId, label: node.label });
+    } else if ("children" in node) {
+      terms.push(...collectTermLinks(node.children));
+    }
+  }
+  return terms;
+}
+
+function aliasKey(label: string): string {
+  return label
+    .trim()
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/^-|-$/g, "");
+}
+
+function titleCase(value: string): string {
+  return value
+    .split("-")
+    .filter(Boolean)
+    .map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`)
+    .join(" ");
 }
