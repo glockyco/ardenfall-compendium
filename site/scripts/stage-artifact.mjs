@@ -108,6 +108,10 @@ function assertSqliteCounts(path, counts) {
     const presentation = db
       .query("SELECT COUNT(*) AS count FROM item_presentation_rows")
       .get().count;
+    const filters = db.query("SELECT COUNT(*) AS count FROM item_overview_filters").get().count;
+    const categories = db
+      .query("SELECT COUNT(*) AS count FROM item_overview_categories")
+      .get().count;
     if (counts.itemOverviewRows !== undefined && overview !== counts.itemOverviewRows) {
       throw new Error(
         `itemOverviewRows mismatch: expected ${counts.itemOverviewRows}, got ${overview}`,
@@ -116,6 +120,19 @@ function assertSqliteCounts(path, counts) {
     if (counts.itemPresentationRows !== undefined && presentation !== counts.itemPresentationRows) {
       throw new Error(
         `itemPresentationRows mismatch: expected ${counts.itemPresentationRows}, got ${presentation}`,
+      );
+    }
+    if (counts.itemOverviewFilters !== undefined && filters !== counts.itemOverviewFilters) {
+      throw new Error(
+        `itemOverviewFilters mismatch: expected ${counts.itemOverviewFilters}, got ${filters}`,
+      );
+    }
+    if (
+      counts.itemOverviewCategories !== undefined &&
+      categories !== counts.itemOverviewCategories
+    ) {
+      throw new Error(
+        `itemOverviewCategories mismatch: expected ${counts.itemOverviewCategories}, got ${categories}`,
       );
     }
   } finally {

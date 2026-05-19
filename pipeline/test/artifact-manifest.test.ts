@@ -38,6 +38,10 @@ describe("artifact manifest emission", () => {
         INSERT INTO item_overview_rows VALUES ('item-a', 'Item A', '${"a".repeat(64)}');
         CREATE TABLE item_presentation_rows (id TEXT PRIMARY KEY, diagnostics_json TEXT NOT NULL);
         INSERT INTO item_presentation_rows VALUES ('item-a', '[{"severity":"diagnostic","code":"fixture"}]');
+        CREATE TABLE item_overview_filters (filter_id TEXT PRIMARY KEY);
+        INSERT INTO item_overview_filters VALUES ('variant');
+        CREATE TABLE item_overview_categories (category_id TEXT PRIMARY KEY);
+        INSERT INTO item_overview_categories VALUES ('melee-weapon');
         CREATE TABLE entity_nodes (entity_type TEXT, entity_id TEXT);
         INSERT INTO entity_nodes VALUES ('item', 'item-a');
         CREATE TABLE entity_aliases (alias_key TEXT, target_type TEXT, target_id TEXT);
@@ -80,6 +84,8 @@ describe("artifact manifest emission", () => {
       expect(manifest.source.kind).toBe("live-game-export");
       expect(manifest.counts.itemOverviewRows).toBe(1);
       expect(manifest.counts.itemPresentationRows).toBe(1);
+      expect(manifest.counts.itemOverviewFilters).toBe(1);
+      expect(manifest.counts.itemOverviewCategories).toBe(1);
       expect(manifest.counts.entityNodes).toBe(1);
       expect(manifest.counts.entityAliases).toBe(1);
       expect(manifest.counts.entityEdges).toBe(1);

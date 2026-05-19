@@ -2,6 +2,8 @@ import {
   getEntity,
   getEntityField,
   listItemsOverview,
+  listItemOverviewCategories,
+  listItemOverviewFilters,
   listOverviewColumns,
   type ItemOverviewRow,
 } from "$lib/server/read-models";
@@ -29,5 +31,7 @@ export const load: PageServerLoad = () => {
     label: entity?.plural_label ?? "Items",
     columns,
     rows,
+    categories: listItemOverviewCategories(),
+    filters: listItemOverviewFilters(),
   };
 };

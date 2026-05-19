@@ -1,24 +1,56 @@
 {
   "schemaVersion": 1,
   "components": [
-    { "id": "content.RichText", "path": "content/RichText.svelte", "layer": "content" },
-    { "id": "items.ItemIcon", "path": "items/ItemIcon.svelte", "layer": "items" },
-    { "id": "items.ItemHeader", "path": "items/ItemHeader.svelte", "layer": "items" },
-    { "id": "items.ItemStatRow", "path": "items/ItemStatRow.svelte", "layer": "items" },
-    { "id": "items.ItemStatBlock", "path": "items/ItemStatBlock.svelte", "layer": "items" },
+    {
+      "id": "content.RichText",
+      "path": "content/RichText.svelte",
+      "layer": "content"
+    },
+    {
+      "id": "items.ItemIcon",
+      "path": "items/ItemIcon.svelte",
+      "layer": "items"
+    },
+    {
+      "id": "items.ItemHeader",
+      "path": "items/ItemHeader.svelte",
+      "layer": "items"
+    },
+    {
+      "id": "items.ItemStatRow",
+      "path": "items/ItemStatRow.svelte",
+      "layer": "items"
+    },
+    {
+      "id": "items.ItemStatBlock",
+      "path": "items/ItemStatBlock.svelte",
+      "layer": "items"
+    },
     {
       "id": "items.ItemRequirementList",
       "path": "items/ItemRequirementList.svelte",
       "layer": "items"
     },
-    { "id": "items.ItemEffectList", "path": "items/ItemEffectList.svelte", "layer": "items" },
-    { "id": "items.ItemStateFacts", "path": "items/ItemStateFacts.svelte", "layer": "items" },
+    {
+      "id": "items.ItemEffectList",
+      "path": "items/ItemEffectList.svelte",
+      "layer": "items"
+    },
+    {
+      "id": "items.ItemStateFacts",
+      "path": "items/ItemStateFacts.svelte",
+      "layer": "items"
+    },
     {
       "id": "items.ItemPresentationPanel",
       "path": "items/ItemPresentationPanel.svelte",
       "layer": "items"
     },
-    { "id": "items.ItemTooltipCard", "path": "items/ItemTooltipCard.svelte", "layer": "items" },
+    {
+      "id": "items.ItemTooltipCard",
+      "path": "items/ItemTooltipCard.svelte",
+      "layer": "items"
+    },
     {
       "id": "relationships.EntityLink",
       "path": "relationships/EntityLink.svelte",
@@ -33,6 +65,11 @@
       "id": "relationships.RelationshipSection",
       "path": "relationships/RelationshipSection.svelte",
       "layer": "relationships"
+    },
+    {
+      "id": "items.ItemOverviewFilters",
+      "path": "items/ItemOverviewFilters.svelte",
+      "layer": "items"
     }
   ]
 }

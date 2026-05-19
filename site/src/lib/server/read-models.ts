@@ -83,6 +83,21 @@ interface ItemOverviewRecord {
   display_icon_color: string | null;
 }
 
+interface ItemOverviewCategoryRecord {
+  category_id: string;
+  label: string;
+  href: string;
+  item_count: number;
+  sort_order: number;
+}
+
+interface ItemOverviewFilterRecord {
+  filter_id: string;
+  label: string;
+  kind: "multi-select";
+  options_json: string;
+}
+
 interface ItemPresentationRecord {
   id: string;
   name: string | null;
@@ -231,6 +246,27 @@ export interface RelationshipEdge {
   anchor: string | null;
 }
 
+export interface ItemOverviewCategory {
+  id: string;
+  label: string;
+  href: string;
+  itemCount: number;
+}
+
+export interface ItemOverviewFilter {
+  id: string;
+  label: string;
+  kind: "multi-select";
+  options: { value: string; label: string; count: number }[];
+}
+
+export interface EntityNode {
+  entityType: string;
+  entityId: string;
+  label: string;
+  routePath: string;
+}
+
 export const getEntity = (id: string): SiteEntity | undefined =>
   get<SiteEntity>("SELECT * FROM site_entities WHERE entity_id = ?", [id]);
 
@@ -269,6 +305,29 @@ export const listItemsOverview = (): ItemOverviewRow[] =>
     displayIconColor: row.display_icon_color,
     tooltip: getItemPresentation(row.id),
   }));
+
+export const listItemsByVariant = (variant: string): ItemOverviewRow[] =>
+  listItemsOverview().filter((row) => row.variant === variant);
+
+export const listItemOverviewCategories = (): ItemOverviewCategory[] =>
+  all<ItemOverviewCategoryRecord>(
+    "SELECT * FROM item_overview_categories ORDER BY sort_order, label",
+  ).map((row) => ({
+    id: row.category_id,
+    label: row.label,
+    href: row.href,
+    itemCount: row.item_count,
+  }));
+
+export const listItemOverviewFilters = (): ItemOverviewFilter[] =>
+  all<ItemOverviewFilterRecord>("SELECT * FROM item_overview_filters ORDER BY filter_id").map(
+    (row) => ({
+      id: row.filter_id,
+      label: row.label,
+      kind: row.kind,
+      options: JSON.parse(row.options_json) as ItemOverviewFilter["options"],
+    }),
+  );
 
 export const listItemIds = (): string[] =>
   all<{ id: string }>("SELECT id FROM item_presentation_rows ORDER BY id").map((row) => row.id);
@@ -320,3 +379,27 @@ export const listRelationshipSections = (
     predicate: row.predicate,
     edges: JSON.parse(row.edges_json) as RelationshipEdge[],
   }));
+
+export const listTermIds = (): string[] =>
+  all<{ entity_id: string }>(
+    "SELECT entity_id FROM entity_nodes WHERE entity_type = 'term' AND is_public = 1 ORDER BY entity_id",
+  ).map((row) => row.entity_id);
+
+export const getTerm = (id: string): EntityNode | undefined => {
+  const row = get<{
+    entity_type: string;
+    entity_id: string;
+    label: string;
+    route_path: string;
+  }>(
+    "SELECT entity_type, entity_id, label, route_path FROM entity_nodes WHERE entity_type = 'term' AND entity_id = ? AND is_public = 1",
+    [id],
+  );
+  if (!row) return undefined;
+  return {
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    label: row.label,
+    routePath: row.route_path,
+  };
+};

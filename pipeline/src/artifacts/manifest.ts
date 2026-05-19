@@ -64,6 +64,8 @@ export async function buildArtifactManifest(
       snapshotItems: input.snapshot.manifest.counts.item ?? 0,
       itemOverviewRows: countRows(sqlitePath, "item_overview_rows"),
       itemPresentationRows: countRows(sqlitePath, "item_presentation_rows"),
+      itemOverviewFilters: countRows(sqlitePath, "item_overview_filters"),
+      itemOverviewCategories: countRows(sqlitePath, "item_overview_categories"),
       entityNodes: countRows(sqlitePath, "entity_nodes"),
       entityAliases: countRows(sqlitePath, "entity_aliases"),
       entityEdges: countRows(sqlitePath, "entity_edges"),

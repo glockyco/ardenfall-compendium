@@ -157,5 +157,27 @@ describe("emitItemReadModels", () => {
         )
         .get(),
     ).toEqual({ count: 0 });
+
+    const categories = db
+      .query(
+        "SELECT category_id, label, href, item_count FROM item_overview_categories ORDER BY category_id",
+      )
+      .all() as { category_id: string; label: string; href: string; item_count: number }[];
+    expect(categories).toContainEqual({
+      category_id: "melee-weapon",
+      label: "Melee Weapon",
+      href: "/items/variant/melee-weapon",
+      item_count: 1,
+    });
+
+    const variantFilter = db
+      .query(
+        "SELECT filter_id, kind, options_json FROM item_overview_filters WHERE filter_id = 'variant'",
+      )
+      .get() as { filter_id: string; kind: string; options_json: string };
+    expect(variantFilter.kind).toBe("multi-select");
+    expect(JSON.parse(variantFilter.options_json)).toContainEqual(
+      expect.objectContaining({ value: "melee-weapon", label: "Melee Weapon", count: 1 }),
+    );
   });
 });

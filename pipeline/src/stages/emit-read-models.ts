@@ -44,6 +44,19 @@ CREATE TABLE item_presentation_rows (
   weight                      REAL,
   diagnostics_json            TEXT NOT NULL
 );
+CREATE TABLE item_overview_filters (
+  filter_id     TEXT NOT NULL PRIMARY KEY,
+  label         TEXT NOT NULL,
+  kind          TEXT NOT NULL,
+  options_json  TEXT NOT NULL
+);
+CREATE TABLE item_overview_categories (
+  category_id  TEXT NOT NULL PRIMARY KEY,
+  label        TEXT NOT NULL,
+  href         TEXT NOT NULL,
+  item_count   INTEGER NOT NULL,
+  sort_order   INTEGER NOT NULL
+);
 `;
 
 export function emitItemReadModels(
@@ -92,6 +105,29 @@ export function emitItemReadModels(
       colorByItem.get(row.id) ?? null,
     );
   }
+  const categories = new Map<string, { label: string; count: number }>();
+  for (const row of overviewSource) {
+    if (!row.variant) continue;
+    const current = categories.get(row.variant) ?? {
+      label: titleCase(row.variant),
+      count: 0,
+    };
+    current.count++;
+    categories.set(row.variant, current);
+  }
+  const categoryInsert = db.prepare(
+    `INSERT INTO item_overview_categories (category_id, label, href, item_count, sort_order) VALUES (?, ?, ?, ?, ?)`,
+  );
+  const filterInsert = db.prepare(
+    `INSERT INTO item_overview_filters (filter_id, label, kind, options_json) VALUES (?, ?, ?, ?)`,
+  );
+  const categoryOptions = [...categories.entries()]
+    .sort((a, b) => a[1].label.localeCompare(b[1].label))
+    .map(([id, category], index) => {
+      categoryInsert.run(id, category.label, `/items/variant/${id}`, category.count, index);
+      return { value: id, label: category.label, count: category.count };
+    });
+  filterInsert.run("variant", "Variant", "multi-select", JSON.stringify(categoryOptions));
 
   if (!itemEnvelope) {
     throw new Error("emitItemReadModels: missing item envelope for item presentation rows");
