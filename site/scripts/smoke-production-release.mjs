@@ -40,8 +40,14 @@ const overview = await fetchText(`${origin}/items`);
 if (!overview.includes(probe.name) || !overview.includes("/assets/")) {
   throw new Error("production overview HTML does not contain release probe content");
 }
-if (overview.includes("_app/immutable/entry/app") || overview.includes("sqlite-wasm")) {
+if (overview.includes("sqlite-wasm")) {
   throw new Error("production overview HTML should not be hydrated SQLite SPA output");
+}
+if (overview.includes("_app/immutable/entry/app")) {
+  const csrOptIn = readFileSync("src/routes/items/+page.ts", "utf8");
+  if (!csrOptIn.includes("export const csr = true")) {
+    throw new Error("production overview hydration requires an explicit /items CSR opt-in.");
+  }
 }
 
 const detail = await fetchText(`${origin}/items/${probe.id}`);
