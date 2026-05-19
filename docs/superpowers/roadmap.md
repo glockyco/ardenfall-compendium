@@ -214,9 +214,10 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 
 ### Slice 4 — Item presentation depth
 
-**Status:** brainstorming
+**Status:** implemented locally
 **Spec coverage:** investment-priorities §1, §2; baseline §11, §14.
 **Design draft:** `docs/superpowers/specs/2026-05-19-item-presentation-depth-design.md`.
+**Implementation plan:** `docs/superpowers/plans/2026-05-19-item-presentation-depth.md`.
 **Audit dependency:** `docs/superpowers/specs/2026-05-14-item-icon-tooltip-audit.md` confirms rich tooltip rendering belongs here, not Slice 3. `docs/superpowers/specs/2026-05-15-tooltip-and-ui-surface-audit.md` traces the game tooltip code and adjacent UI surfaces that should shape the Slice 4 design.
 
 **Delivers:** the presentation-contract, linking-contract, and UI-governance track for items, executed after items have full data and icons.
