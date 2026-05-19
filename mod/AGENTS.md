@@ -6,6 +6,7 @@ The mod walks live Ardenfall runtime objects and emits JSON snapshots. It is **n
 
 - DTOs are explicit. Never serialize Unity objects, Odin containers, `Parameter<T>`, `SmartListParameter<T>`, `RecordID`, or game records directly. Pull values via `.Get()` and put them on a typed snapshot DTO.
 - Stable ids come from `BuiltLookupTable.GetGuid(asset)`. Deterministic name-hash fallbacks are last resort and must be flagged unstable in the snapshot ref kind.
+- UI-derived presentation DTOs must be deterministic and base-state-only. Use a versioned render context, keep presentation separate from canonical fields, emit omissions/diagnostics instead of faking player/inventory/merchant state, and never instantiate UI panels or trigger hover side effects just to obtain text.
 - Preflight gates extraction. Every extraction path runs the full preflight immediately before writing — cached readiness state is **not** an authorization token.
 - Extraction output is atomic. Write to a staging path, then rename. The pipeline never reads partial files.
 - HotRepl integration is framework-neutral at the control-plane boundary. This BepInEx mod registers commands through `HotRepl.Control.GlobalControlCommandRegistry`; HotRepl itself must keep both BepInEx and MelonLoader host support green.

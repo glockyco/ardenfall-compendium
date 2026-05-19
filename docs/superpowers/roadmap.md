@@ -219,13 +219,14 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 **Design draft:** `docs/superpowers/specs/2026-05-19-item-presentation-depth-design.md`.
 **Audit dependency:** `docs/superpowers/specs/2026-05-14-item-icon-tooltip-audit.md` confirms rich tooltip rendering belongs here, not Slice 3. `docs/superpowers/specs/2026-05-15-tooltip-and-ui-surface-audit.md` traces the game tooltip code and adjacent UI surfaces that should shape the Slice 4 design.
 
-**Delivers:** the presentation track for items, executed after items have full data and icons.
+**Delivers:** the presentation-contract, linking-contract, and UI-governance track for items, executed after items have full data and icons.
 
-- Rich tooltip rendering on item links (hover anywhere `/items/[id]` is referenced and get name + key stats + icon without leaving the page). Decompiled game UI builds tooltips from `ItemInfoListUI` calls into `GetTooltipDescription()`, `GetEffectsTooltip()`, `GetTooltipItemType()`, and `GetItemStatInfos()`; the Slice 4 plan must decide whether to export behavior-rendered tooltip strings from the mod or reconstruct safe site render data from structured fields.
-- Formatted item descriptions with safe richtext rendering (no raw Unity/TMP tooltip markup leaking into the DOM). Tooltip strings use `<color>`, `<b>`, sprite tokens, and master-data tooltip codes, so this needs a sanitizer/translator rather than direct HTML rendering.
-- Inter-entity links: item-to-item references where the data exposes them (set bonuses, recipe ingredients, ammunition for bows, etc.). Forward references to entities not yet shipped are rendered as inert text with a tracked diagnostic so they re-resolve once the target entity lands.
-- Reusable component primitives this slice extracts that will obviously be useful for later slices' presentation depth work: stat-block, tag-list, entity-link, tooltip-shell. These move into a shared design surface only when at least one other entity validates them — premature extraction is rejected.
-- Item overview enhancements: stable URL state for sort/filter, basic categorical filtering on variant. (Full FTS5 search + faceted filters lands in Slice 10; this slice does the cheap declarative versions only.)
+- `item_presentation_rows` as the public item page and tooltip contract, with clean cutover from old `item_detail_rows.fields_json` public plumbing.
+- Behavior-grounded, deterministic item presentation under `item-presentation-v1`: display name/type provenance, rich descriptions/effects, base stat rows, requirements, durability facts, state facts, omissions, and diagnostics.
+- Safe `rich_text_v1` translation for TMP/game strings. Raw Unity/TMP markup and sanitized HTML strings are retained only as source/debug evidence, never as the DOM contract.
+- Generated relationship graph foundation: canonical nodes, aliases, redirects, disambiguations, typed edges, relationship sections, and link audit. Deferred/future entity targets render as inert text or diagnostics, not broken public links.
+- Governed UI seed: token-backed shared components, component catalog/intake gate, static tooltip/focus-card presentation, and route files that assemble components instead of duplicating item header/stat/effect/link markup.
+- Item overview enhancements: static fallback plus bounded canonical URL-state sorting/filtering on generated facts. Full cross-entity FTS5/Pagefind search and broad facets remain Slice 10 work.
 
 **Why before maps:** items are the dominant audience surface (investment-priorities §1). Investing in their presentation before locations/maps maximises return on the most-visited pages.
 
@@ -262,21 +263,23 @@ Each candidate gets its own slice number (7, 8, …), ordered by map-marker volu
 
 **Trigger to firm up:** Slice 6's plan must enumerate the candidate set and propose an order. That decision then folds into this roadmap as a non-provisional ordering for the next planning horizon.
 
+Any map-supporting entity slice that ships public detail pages must reuse Slice 4's presentation, rich-text, component, and relationship contracts. Marker-only slices can stay map/read-model focused; public pages must not invent route-local link or tooltip systems.
+
 ### Slice 10 — Search, facets, and cross-cutting design depth
 
 **Status:** planned
 **Spec coverage:** baseline §11, §14, §15 P5; amendment §16; investment-priorities §5.
 
-**Delivers:** FTS5 search routes + facet filtering (items + map-supporting entities by then have rich content fields populated); cross-cutting design tokens, lint rules, and primitive set extracted from the per-entity presentation work that landed earlier; generated read models for search/filter performance.
+**Delivers:** Cross-entity FTS5/Pagefind search routes, broad facets, generated search/filter read models, and scale-up governance only if accumulated Slice 4+ pressure proves it necessary: lint rules, Storybook, visual regression, or richer catalog automation. It does not introduce the design-system foundation; it extends the Slice 4 catalog/component/token contract when the lighter dev-gallery path stops being cheaper.
 
-**Why later than the AK precedent's design slice:** Ardenfall Compendium bakes the design-system foundation into Slice 1 (Tailwind v4 `@theme inline` tokens + shadcn-svelte primitives). This slice extends that foundation; it does not introduce it.
+**Why later than the AK precedent's design slice:** Ardenfall Compendium seeds design-system governance in Slice 4 beside the first deep content surface. Slice 10 waits for enough cross-entity content and component volume to justify search infrastructure and heavier governance automation.
 
 ### Slice 11 — Spells
 
 **Status:** planned
 **Spec coverage:** amendment §18; investment-priorities §1 (spells after items/maps).
 
-**Delivers:** `SpellData` extraction and canonicalisation: typed `spells` root table; generated tooltips if feasible; references to `StatType`; type-tagged validated JSON for `SpellEffect` / `SubSpellData.effects`; link from `SlateSpellItemData` to spells once both sides exist.
+**Delivers:** `SpellData` extraction and canonicalisation: typed `spells` root table; generated tooltips through the shared `rich_text_v1` contract when feasible; references to `StatType`; type-tagged validated JSON for `SpellEffect` / `SubSpellData.effects`; public spell nodes/routes in the shared relationship graph; resolution of Slice 4 slate-spell item references without introducing a spell-specific HTML or link pipeline.
 
 **Note:** the original roadmap had spells at Slice 4. Investment-priorities §1 reorders this; spells run after the items + maps + map-supporting-entities tracks.
 
@@ -285,7 +288,7 @@ Each candidate gets its own slice number (7, 8, …), ordered by map-marker volu
 **Status:** planned
 **Spec coverage:** amendment §18; investment-priorities §1.
 
-**Delivers:** typed `quests` root table; child tables for stable phases/objectives/events/rewards where practical; validated type-tagged JSON for FlowCanvas/Odin graph internals until queries prove typed tables are warranted.
+**Delivers:** typed `quests` root table; child tables for stable phases/objectives/events/rewards where practical; validated type-tagged JSON for FlowCanvas/Odin graph internals until queries prove typed tables are warranted. Public quest links, aliases, redirects, disambiguation, and related-entity sections reuse the Slice 4 relationship-graph contract; internal quest logic graphs do not become a second public link graph.
 
 ### Slice 13 — Versioning, diff, and snapshot archive
 
@@ -305,21 +308,21 @@ Each candidate gets its own slice number (7, 8, …), ordered by map-marker volu
 **Status:** planned
 **Spec coverage:** baseline §15 P8.
 
-**Delivers:** repo-level and per-subsystem agent guidance with explicit good/bad examples. Earlier slices may land minimal stubs; this slice fills them in once architecture has stopped moving.
+**Delivers:** repo-level and per-subsystem agent guidance with explicit good/bad examples. Earlier slices may land minimal stubs; this slice fills them in once architecture has stopped moving. Examples should cover generated presentation/read-model cutovers, typed rich-text rendering with no raw `{@html}`, relationship-graph link governance, and component-intake decisions.
 
 ## Open questions tracker
 
-| #   | Question                               | Status               | Closes in slice                                                                                                   |
-| --- | -------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| 1   | Deployment target                      | **closed**           | Slice 1.5 deployed `ardenfall.compendiums.org` through local/operator Wrangler + Cloudflare Workers Static Assets |
-| 2   | Repo strategy + CI tooling             | **closed**           | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §1, §8)                                                         |
-| 3   | Component library / primitive strategy | **closed (initial)** | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §5); design system depth in Slice 10                            |
-| 4   | JSON Schema validator                  | **closed**           | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §3)                                                             |
-| 5   | Property-test framework                | **closed**           | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §4)                                                             |
-| 6   | Tile capture specifics                 | open                 | Slice 6                                                                                                           |
-| 7   | External archive backend               | open                 | Slice 13                                                                                                          |
-| 8   | Future gameplay-mod surface            | deferred             | indefinitely                                                                                                      |
-| 9   | Map-supporting entity ordering         | open                 | Slice 6 (firm-up)                                                                                                 |
+| #   | Question                               | Status                                    | Closes in slice                                                                                                                                                   |
+| --- | -------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Deployment target                      | **closed**                                | Slice 1.5 deployed `ardenfall.compendiums.org` through local/operator Wrangler + Cloudflare Workers Static Assets                                                 |
+| 2   | Repo strategy + CI tooling             | **closed**                                | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §1, §8)                                                                                                         |
+| 3   | Component library / primitive strategy | **closed (foundation + governance seed)** | Slice 1 chose Tailwind v4/shadcn-svelte/Bits primitives; Slice 4 seeds component catalog, token, and intake governance; Slice 10 scales automation only if needed |
+| 4   | JSON Schema validator                  | **closed**                                | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §3)                                                                                                             |
+| 5   | Property-test framework                | **closed**                                | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §4)                                                                                                             |
+| 6   | Tile capture specifics                 | open                                      | Slice 6                                                                                                                                                           |
+| 7   | External archive backend               | open                                      | Slice 13                                                                                                                                                          |
+| 8   | Future gameplay-mod surface            | deferred                                  | indefinitely                                                                                                                                                      |
+| 9   | Map-supporting entity ordering         | open                                      | Slice 6 (firm-up)                                                                                                                                                 |
 
 ## Update protocol
 
@@ -329,5 +332,6 @@ When a slice transitions:
 - **Drafting → ready:** active plan location and commit hash recorded while the plan is live.
 - **Ready → in-progress:** branch noted when work does not happen directly on `main`.
 - **In-progress → done:** completion date recorded; any spec deviations noted under the slice with rationale; completed plan/progress artifacts removed from the working tree.
+- **Public-contract replacement:** when a slice replaces a public read model, route contract, rich-text/link contract, or shared UI primitive, remove old public fallback/plumbing in the same slice. Temporary inspection surfaces must be private/debug-only, and downstream slice entries must reference the new contract.
 - **Slice re-shaped:** old slice marked `superseded by Slice N`, new slice added.
 - **Investment priority shift:** evidence (analytics, user feedback, structural game change) recorded in `2026-05-07-investment-priorities.md` under "Revisit triggers"; affected slice ordering updated here.

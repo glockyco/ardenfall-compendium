@@ -5,8 +5,8 @@ SvelteKit static-first site. Generated data is shipped as `static/data.sqlite` p
 ## Hard rules
 
 - Default route architecture is SSR + prerender + no CSR. Generated compendium pages should be static HTML served by Cloudflare Workers Static Assets. Opt into CSR or request-time Worker rendering only with a documented route-level reason.
-- Build-time SQLite access goes through `src/lib/server/read-models.ts`. Components must not open SQLite directly.
-- Design tokens live in `src/app.css`. Component styling references token names (`bg-primary`, etc.), never inline colours.
+- Build-time SQLite access goes through `src/lib/server/read-models.ts`. Route loaders shape emitted JSON once; components receive typed props and must not open SQLite, parse descriptors, parse raw TMP/HTML, or assemble durable cross-entity links.
+- Design tokens live in `src/app.css`. Component styling uses token-backed Tailwind utilities or CSS variables; do not hardcode colours, shadows, or one-off spacing systems.
 - shadcn-svelte components are owned: edit `src/lib/components/ui/*` freely; do not depend on a specific upstream version.
 - Renderer registries (`sections`, etc.) merge typed exported maps at boot. No global `register()` calls.
 
@@ -17,6 +17,12 @@ SvelteKit static-first site. Generated data is shipped as `static/data.sqlite` p
 - `src/lib/entities/<id>/` — per-entity custom renderers.
 - `src/lib/server/` — server-only build-time read models for prerendering.
 - `src/routes/` — pages.
+
+## UI governance
+
+- Route files assemble resolved data and shared components. Repeated entity header, stat, effect, tooltip, or relationship markup belongs in shared component layers under `src/lib/`, not inline in `src/routes/`.
+- Before adding a shared UI component, check the component catalog when it exists; when adding one, record metadata, a canonical example, typed props, token-backed styling, and accessibility notes.
+- Keep Storybook and visual regression deferred until the component catalog plus static/dev gallery stops being the cheaper maintenance path.
 
 ## Deployment
 
