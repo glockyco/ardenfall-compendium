@@ -14,7 +14,7 @@ const ctx = {
 };
 
 describe("emitItemReadModels", () => {
-  it("builds item_overview_rows and item_detail_rows", async () => {
+  it("builds item_overview_rows and item_presentation_rows without legacy fields_json", async () => {
     const desc = await loadDescriptors.run({}, ctx);
     const snap = await loadSnapshot.run({}, ctx);
     const itemEntity = desc.entities.item;
@@ -58,7 +58,7 @@ describe("emitItemReadModels", () => {
         secondaryIconColor: null,
       },
     ];
-    emitItemReadModels(db, desc, iconMetadata);
+    emitItemReadModels(db, desc, iconMetadata, itemEnvelope, snap.masterTooltip);
 
     const overview = db
       .query(
@@ -89,37 +89,40 @@ describe("emitItemReadModels", () => {
       JSON.stringify({ r: 0.25, g: 0.2, b: 0.15, a: 1 }),
     );
 
-    const detailIcon = db
+    const legacyDetail = db
+      .query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'item_detail_rows'")
+      .get();
+    expect(legacyDetail).toBeNull();
+
+    const presentationIcon = db
       .query(
-        "SELECT display_icon_hash, display_icon_color FROM item_detail_rows WHERE id = 'fixture-iron-sword'",
+        "SELECT display_icon_hash, display_icon_color FROM item_presentation_rows WHERE id = 'fixture-iron-sword'",
       )
       .get() as { display_icon_hash: string | null; display_icon_color: string | null };
-    expect(detailIcon.display_icon_hash).toBe("a".repeat(64));
-    expect(detailIcon.display_icon_color).toBe(JSON.stringify({ r: 1, g: 1, b: 1, a: 1 }));
+    expect(presentationIcon.display_icon_hash).toBe("a".repeat(64));
+    expect(presentationIcon.display_icon_color).toBe(JSON.stringify({ r: 1, g: 1, b: 1, a: 1 }));
 
-    const detail = db
-      .query("SELECT id, fields_json FROM item_detail_rows WHERE id = 'fixture-iron-sword'")
-      .get() as { id: string; fields_json: string };
-    const fields = JSON.parse(detail.fields_json) as Record<string, unknown>;
-    expect(fields.damage).toBe(7.5);
-    expect(fields.weight).toBe(3.5);
-    const consumableDetail = db
-      .query("SELECT id, fields_json FROM item_detail_rows WHERE id = 'fixture-stamina-draught'")
-      .get() as { id: string; fields_json: string };
-    const consumableFields = JSON.parse(consumableDetail.fields_json) as Record<string, unknown>;
-    expect(consumableFields.quickslotCooldownTime).toBe(12.5);
-    expect(consumableFields.iconRef).toEqual({
-      kind: "missing",
-      reason: "lookupAssetGuidMissing",
-      source: "ItemData.icon",
-    });
-    expect(consumableFields.statusEffectsJson).toEqual([
-      {
-        statusEffectRef: null,
-        level: 1,
-        lifetime: 30,
-        stackMode: { type: "Refresh", addLevel: 0, maxLevel: 0 },
-      },
-    ]);
+    const presentation = db
+      .query(
+        "SELECT id, render_context, description_rich_text_json, stat_rows_json, effect_facts_json FROM item_presentation_rows WHERE id = 'fixture-stamina-draught'",
+      )
+      .get() as {
+      id: string;
+      render_context: string;
+      description_rich_text_json: string;
+      stat_rows_json: string;
+      effect_facts_json: string;
+    };
+    expect(presentation.render_context).toBe("item-presentation-v1");
+    expect(JSON.parse(presentation.description_rich_text_json)).toEqual(
+      expect.objectContaining({
+        schemaVersion: 1,
+        nodes: expect.arrayContaining([expect.objectContaining({ type: "strong" })]),
+      }),
+    );
+    expect(JSON.parse(presentation.stat_rows_json)).toEqual([]);
+    expect(JSON.parse(presentation.effect_facts_json)).toContainEqual(
+      expect.objectContaining({ kind: "status-effect", label: "Status effects" }),
+    );
   });
 });

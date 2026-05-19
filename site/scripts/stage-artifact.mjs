@@ -105,14 +105,18 @@ function assertSqliteCounts(path, counts) {
   const db = new Database(path, { readonly: true });
   try {
     const overview = db.query("SELECT COUNT(*) AS count FROM item_overview_rows").get().count;
-    const detail = db.query("SELECT COUNT(*) AS count FROM item_detail_rows").get().count;
+    const presentation = db
+      .query("SELECT COUNT(*) AS count FROM item_presentation_rows")
+      .get().count;
     if (counts.itemOverviewRows !== undefined && overview !== counts.itemOverviewRows) {
       throw new Error(
         `itemOverviewRows mismatch: expected ${counts.itemOverviewRows}, got ${overview}`,
       );
     }
-    if (counts.itemDetailRows !== undefined && detail !== counts.itemDetailRows) {
-      throw new Error(`itemDetailRows mismatch: expected ${counts.itemDetailRows}, got ${detail}`);
+    if (counts.itemPresentationRows !== undefined && presentation !== counts.itemPresentationRows) {
+      throw new Error(
+        `itemPresentationRows mismatch: expected ${counts.itemPresentationRows}, got ${presentation}`,
+      );
     }
   } finally {
     db.close();

@@ -63,7 +63,7 @@ export async function buildArtifactManifest(
     counts: {
       snapshotItems: input.snapshot.manifest.counts.item ?? 0,
       itemOverviewRows: countRows(sqlitePath, "item_overview_rows"),
-      itemDetailRows: countRows(sqlitePath, "item_detail_rows"),
+      itemPresentationRows: countRows(sqlitePath, "item_presentation_rows"),
       assetRefs: input.assetsOutput.refs.length,
       webpAssets: uniqueAssetHashes.size,
     },

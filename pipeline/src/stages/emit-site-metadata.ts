@@ -109,7 +109,7 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
       }
       // Default read models consumed by the item overview and detail routes.
       insertReadModel.run("item_overview_rows", "item_overview_rows", entityId, "overview");
-      insertReadModel.run("item_detail_rows", "item_detail_rows", entityId, "detail");
+      insertReadModel.run("item_presentation_rows", "item_presentation_rows", entityId, "detail");
     }
 
     for (const v of desc.variants.item ?? []) {
