@@ -32,9 +32,18 @@ const overview = readFileSync(overviewPath, "utf8");
 for (const snippet of [probe.name, "/assets/", "item-icon"]) {
   if (!overview.includes(snippet)) throw new Error(`overview HTML missing ${snippet}`);
 }
-for (const forbidden of ["_app/immutable/entry/app", "data.sqlite", "sqlite-wasm"]) {
+for (const forbidden of ["data.sqlite", "sqlite-wasm"]) {
   if (overview.includes(forbidden))
     throw new Error(`overview should not be a hydrated SQLite SPA: ${forbidden}`);
+}
+if (overview.includes("_app/immutable/entry/app")) {
+  const csrOptIn = readFileSync(
+    join(import.meta.dirname, "..", "src", "routes", "items", "+page.ts"),
+    "utf8",
+  );
+  if (!csrOptIn.includes("export const csr = true")) {
+    throw new Error("overview hydration requires an explicit /items CSR opt-in.");
+  }
 }
 
 const detailPath = firstExisting([
