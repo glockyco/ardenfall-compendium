@@ -36,3 +36,11 @@
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.95 0 0);
 }
+
+.rich-token-positive {
+  color: oklch(0.78 0.18 145);
+}
+
+.rich-token-negative {
+  color: oklch(0.68 0.2 28);
+}

@@ -1,4 +1,7 @@
 <script lang="ts" generics="T extends { id: string | number }">
+  import ItemIcon from "$lib/components/items/ItemIcon.svelte";
+  import ItemTooltipCard from "$lib/components/items/ItemTooltipCard.svelte";
+  import type { ItemPresentationRow } from "$lib/server/read-models";
   type Column = {
     id: string;
     label: string;
@@ -19,6 +22,11 @@
     const value = (row as T & { displayIconSrc?: unknown }).displayIconSrc;
     return typeof value === "string" && value.length > 0 ? value : null;
   }
+
+  function tooltip(row: T): ItemPresentationRow | null {
+    const value = (row as T & { tooltip?: unknown }).tooltip;
+    return value && typeof value === "object" ? (value as ItemPresentationRow) : null;
+  }
 </script>
 
 <table class="w-full text-left text-sm">
@@ -35,21 +43,15 @@
         {#each columns as col, i (col.id)}
           <td class="p-2">
             {#if col.renderer === "itemNameWithIcon"}
-              <span class="flex items-center gap-2">
-                <span
-                  class="item-icon bg-muted border-border flex size-8 shrink-0 items-center justify-center rounded border"
-                  aria-hidden="true"
-                >
-                  {#if iconSrc(row)}
-                    <img
-                      class="size-6 object-contain"
-                      src={iconSrc(row)!}
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  {/if}
-                </span>
+              <span class="group relative flex items-center gap-2">
+                <ItemIcon src={iconSrc(row)} size="sm" />
+                {#if tooltip(row)}
+                  <span
+                    class="absolute top-9 left-0 z-20 hidden group-focus-within:block group-hover:block"
+                  >
+                    <ItemTooltipCard item={tooltip(row)!} />
+                  </span>
+                {/if}
                 {#if i === 0 && rowHref}
                   <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the rowHref callback is caller-supplied and is expected to wrap with resolve() at the call site -->
                   <a href={rowHref(row)} class="underline">{row[col.field] ?? ""}</a>

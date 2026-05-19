@@ -83,13 +83,26 @@ interface ItemOverviewRecord {
   display_icon_color: string | null;
 }
 
-interface ItemDetailRecord {
+interface ItemPresentationRecord {
   id: string;
   name: string | null;
   variant: string | null;
+  item_type: string | null;
+  render_context: "item-presentation-v1";
   display_icon_hash: string | null;
   display_icon_color: string | null;
-  fields_json: string;
+  description_source: string;
+  description_rich_text_json: string;
+  effects_source: string;
+  effect_facts_json: string;
+  stat_rows_json: string;
+  requirements_json: string;
+  durability_json: string | null;
+  state_facts_json: string;
+  omissions_json: string;
+  value: number | null;
+  weight: number | null;
+  diagnostics_json: string;
 }
 
 export interface ItemOverviewRow {
@@ -100,15 +113,122 @@ export interface ItemOverviewRow {
   variant: string | null;
   displayIconSrc: string | null;
   displayIconColor: string | null;
+  tooltip: ItemPresentationRow | undefined;
 }
 
-export interface ItemDetailRow {
+export interface ItemPresentationRow {
   id: string;
   name: string | null;
   variant: string | null;
+  itemType: string | null;
+  renderContext: "item-presentation-v1";
   displayIconSrc: string | null;
   displayIconColor: string | null;
-  fields_json: string;
+  description: RichTextDocument;
+  effectsSource: string;
+  effects: ItemPresentationEffect[];
+  statRows: ItemPresentationStatRow[];
+  requirements: ItemPresentationRequirement[];
+  durability: ItemPresentationDurability | null;
+  stateFacts: ItemPresentationStateFact[];
+  omissions: ItemPresentationOmission[];
+  value: number | null;
+  weight: number | null;
+  diagnostics: ItemPresentationDiagnostic[];
+}
+
+export interface RichTextDocument {
+  schemaVersion: 1;
+  sourceHash: string;
+  nodes: RichTextNode[];
+  diagnostics: ItemPresentationDiagnostic[];
+}
+
+export type RichTextNode =
+  | { type: "text"; text: string }
+  | { type: "lineBreak" }
+  | { type: "strong" | "emphasis" | "strike"; children: RichTextNode[] }
+  | { type: "color"; token: string | null; color: string | null; children: RichTextNode[] }
+  | { type: "sprite"; name: string }
+  | {
+      type: "termLink";
+      termId: string;
+      label: string;
+      targetType?: string;
+      targetId?: string;
+      targetLabel?: string;
+      targetRoutePath?: string;
+      targetIsPublic?: boolean;
+    };
+
+export interface ItemPresentationStatRow {
+  id: string;
+  label: string;
+  value: number | null;
+  valueText: string;
+  suffix: string | null;
+  size: string;
+  indent: number;
+  comparison: string | null;
+  source: string;
+}
+
+export interface ItemPresentationRequirement {
+  id: string;
+  label: string;
+  valueText: string;
+  source: string;
+}
+
+export interface ItemPresentationEffect {
+  kind: string;
+  label: string;
+  targetType: string | null;
+  targetId: string | null;
+  source: string;
+}
+
+export interface ItemPresentationDurability {
+  kind: string;
+  max: number;
+  source: string;
+}
+
+export interface ItemPresentationStateFact {
+  kind: string;
+  label: string;
+  description: string;
+}
+
+export interface ItemPresentationOmission {
+  code: string;
+  severity: "diagnostic";
+  message: string;
+}
+
+export interface ItemPresentationDiagnostic {
+  severity: "fatal" | "diagnostic";
+  code: string;
+  field: string;
+  message: string;
+}
+
+export interface RelationshipSection {
+  id: string;
+  title: string;
+  predicate: string;
+  edges: RelationshipEdge[];
+}
+
+export interface RelationshipEdge {
+  targetType: string;
+  targetId: string;
+  targetLabel: string;
+  targetRoutePath: string;
+  predicate: string;
+  label: string;
+  weight: number;
+  anchor: string | null;
 }
 
 export const getEntity = (id: string): SiteEntity | undefined =>
@@ -147,20 +267,56 @@ export const listItemsOverview = (): ItemOverviewRow[] =>
     variant: row.variant,
     displayIconSrc: assetSrc(row.display_icon_hash),
     displayIconColor: row.display_icon_color,
+    tooltip: getItemPresentation(row.id),
   }));
 
 export const listItemIds = (): string[] =>
-  all<{ id: string }>("SELECT id FROM item_detail_rows ORDER BY id").map((row) => row.id);
+  all<{ id: string }>("SELECT id FROM item_presentation_rows ORDER BY id").map((row) => row.id);
 
-export const getItemDetail = (id: string): ItemDetailRow | undefined => {
-  const row = get<ItemDetailRecord>("SELECT * FROM item_detail_rows WHERE id = ?", [id]);
+export const getItemPresentation = (id: string): ItemPresentationRow | undefined => {
+  const row = get<ItemPresentationRecord>("SELECT * FROM item_presentation_rows WHERE id = ?", [
+    id,
+  ]);
   if (!row) return undefined;
   return {
     id: row.id,
     name: row.name,
     variant: row.variant,
+    itemType: row.item_type,
+    renderContext: row.render_context,
     displayIconSrc: assetSrc(row.display_icon_hash),
     displayIconColor: row.display_icon_color,
-    fields_json: row.fields_json,
+    description: JSON.parse(row.description_rich_text_json) as RichTextDocument,
+    effectsSource: row.effects_source,
+    effects: JSON.parse(row.effect_facts_json) as ItemPresentationEffect[],
+    statRows: JSON.parse(row.stat_rows_json) as ItemPresentationStatRow[],
+    requirements: JSON.parse(row.requirements_json) as ItemPresentationRequirement[],
+    durability: row.durability_json
+      ? (JSON.parse(row.durability_json) as ItemPresentationDurability)
+      : null,
+    stateFacts: JSON.parse(row.state_facts_json) as ItemPresentationStateFact[],
+    omissions: JSON.parse(row.omissions_json) as ItemPresentationOmission[],
+    value: row.value,
+    weight: row.weight,
+    diagnostics: JSON.parse(row.diagnostics_json) as ItemPresentationDiagnostic[],
   };
 };
+
+export const listRelationshipSections = (
+  sourceType: string,
+  sourceId: string,
+): RelationshipSection[] =>
+  all<{
+    section_id: string;
+    title: string;
+    predicate: string;
+    edges_json: string;
+  }>(
+    "SELECT section_id, title, predicate, edges_json FROM entity_relationship_sections WHERE source_type = ? AND source_id = ? ORDER BY sort_order, title",
+    [sourceType, sourceId],
+  ).map((row) => ({
+    id: row.section_id,
+    title: row.title,
+    predicate: row.predicate,
+    edges: JSON.parse(row.edges_json) as RelationshipEdge[],
+  }));
