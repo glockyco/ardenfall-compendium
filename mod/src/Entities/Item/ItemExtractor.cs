@@ -78,6 +78,7 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
             }
 
             var variantId = classified.VariantId;
+            var presentation = ItemPresentationBuilder.FromExtractedFields(guid, variantId, fields, provenance);
             if (_assetPlan != null) ItemIconAssetPlanner.CaptureItem(_assetPlan, asset, guid);
 
             yield return new ItemSnapshotRow
@@ -86,6 +87,7 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
                 Variant = variantId,
                 Fields = fields,
                 Tags = tags,
+                Presentation = presentation,
                 Provenance = provenance,
                 Diagnostics = diagnostics,
             };
