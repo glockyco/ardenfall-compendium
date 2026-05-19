@@ -39,7 +39,8 @@
     "diagnostic": 0
   },
   "hashes": {
-    "items.json": "b9f72ed8f1fb48b4c6fc52e86732327a3e4ba98e141e5db5256df91678b4dd88",
-    "asset-manifest.json": "5b3aac7ceeabe0ae87db96b7cb750fb31fd3396c8644d003612b43a0b93ea8e5"
+    "items.json": "304c5fa7effd335d8d7fadc3f94f81eb0638ba14a89bb507a3470a769cfb8356",
+    "asset-manifest.json": "5b3aac7ceeabe0ae87db96b7cb750fb31fd3396c8644d003612b43a0b93ea8e5",
+    "master-tooltip.json": "bbe27fe54cd01f9c5e1940bcbd856940f57bd07ce46dfe9bdf4113f8c5bdb156"
   }
 }

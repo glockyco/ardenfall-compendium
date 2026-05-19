@@ -23,6 +23,52 @@ describe("loadSnapshot", () => {
     expect(items.rows.length).toBe(5);
   });
 
+  it("requires every item row to carry item-presentation-v1", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "ardenfall-missing-presentation-"));
+    try {
+      writeFileSync(
+        join(dir, "manifest.json"),
+        readFileSync("fixtures/synthetic/snapshot/manifest.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "asset-manifest.json"),
+        readFileSync("fixtures/synthetic/snapshot/asset-manifest.json", "utf8"),
+      );
+      const items = JSON.parse(readFileSync("fixtures/synthetic/snapshot/items.json", "utf8")) as {
+        rows: { presentation?: unknown }[];
+      };
+      delete items.rows[0].presentation;
+      writeFileSync(join(dir, "items.json"), `${JSON.stringify(items, null, 2)}\n`);
+
+      const snap = await loadSnapshot.run({}, { ...ctx, snapshotDir: dir });
+      const desc = await loadDescriptors.run({}, ctx);
+      const result = await validate.run({ "load-snapshot": snap, "load-descriptors": desc }, ctx);
+
+      expect(result.countsBySeverity.fatal).toBeGreaterThan(0);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          entity: "item",
+          row: "fixture-iron-sword",
+          field: "presentation",
+          code: "missingItemPresentation",
+        }),
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("loads synthetic item presentations with schema version 2", async () => {
+    const out = await loadSnapshot.run({}, ctx);
+    const items = out.envelopes.item;
+    if (!items) throw new Error("item envelope not loaded");
+
+    expect(items.schemaVersion).toBe(2);
+    expect(
+      items.rows.every((row) => row.presentation?.renderContext === "item-presentation-v1"),
+    ).toBe(true);
+  });
+
   it("loads sibling diagnostics artifact and validation counts its entries", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ardenfall-snapshot-"));
     try {

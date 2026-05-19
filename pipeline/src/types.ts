@@ -109,6 +109,85 @@ export interface SnapshotRow<F = Record<string, unknown>> {
   tags?: string[];
   provenance?: Record<string, FieldProvenance>;
   diagnostics?: SnapshotDiagnostic[];
+  presentation?: ItemPresentationSnapshot;
+}
+
+export interface ItemPresentationSnapshot {
+  schemaVersion: 1;
+  renderContext: "item-presentation-v1";
+  displayName: string;
+  displayNameSourceMethod: string;
+  itemType: string | null;
+  itemTypeSourceMethod: string | null;
+  descriptionSource: string;
+  effectsSource: string;
+  effects: ItemPresentationEffect[];
+  statRows: ItemPresentationStatRow[];
+  requirements: ItemPresentationRequirement[];
+  durability: ItemPresentationDurability | null;
+  stateFacts: ItemPresentationStateFact[];
+  omissions: ItemPresentationOmission[];
+  value: number | null;
+  weight: number | null;
+  diagnostics: ItemPresentationDiagnostic[];
+}
+
+export interface ItemPresentationStatRow {
+  id: string;
+  label: string;
+  value: number | null;
+  valueText: string;
+  suffix: string | null;
+  size: string;
+  indent: number;
+  comparison: string | null;
+  source: string;
+}
+
+export interface ItemPresentationRequirement {
+  id: string;
+  label: string;
+  valueText: string;
+  source: string;
+}
+
+export interface ItemPresentationEffect {
+  kind: string;
+  label: string;
+  targetType: string | null;
+  targetId: string | null;
+  source: string;
+}
+
+export interface ItemPresentationDurability {
+  kind: string;
+  max: number;
+  source: string;
+}
+
+export interface ItemPresentationStateFact {
+  kind: string;
+  label: string;
+  description: string;
+}
+
+export interface ItemPresentationOmission {
+  code: string;
+  severity: "diagnostic";
+  message: string;
+}
+
+export interface ItemPresentationDiagnostic {
+  severity: "fatal" | "diagnostic";
+  code: string;
+  field: string;
+  message: string;
+}
+
+export interface MasterTooltipDictionary {
+  schemaVersion: 1;
+  tooltipCodes: Record<string, string>;
+  tooltipColors: Record<string, string>;
 }
 
 export type FieldProvenance =

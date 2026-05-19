@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "tooltipCodes": {
+    "stamina": "Stamina"
+  },
+  "tooltipColors": {
+    "p": "positive",
+    "n": "negative"
+  }
+}

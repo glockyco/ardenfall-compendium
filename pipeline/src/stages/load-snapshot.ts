@@ -8,6 +8,7 @@ import type {
   SnapshotAssetManifest,
   SnapshotDiagnosticArtifactEntry,
   SnapshotEnvelope,
+  MasterTooltipDictionary,
   SnapshotManifest,
   Stage,
 } from "../types.ts";
@@ -17,6 +18,7 @@ export interface LoadSnapshotOutput {
   envelopes: Record<string, SnapshotEnvelope>;
   diagnostics: SnapshotDiagnosticArtifactEntry[];
   assetManifest?: SnapshotAssetManifest;
+  masterTooltip?: MasterTooltipDictionary;
 }
 
 export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
@@ -35,12 +37,15 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
 
     const envelopes: Record<string, SnapshotEnvelope> = {};
     const diagnosticsPath = join(dir, "diagnostics.json");
+    const masterTooltipPath = join(dir, "master-tooltip.json");
+    let masterTooltip: MasterTooltipDictionary | undefined;
     let diagnostics: SnapshotDiagnosticArtifactEntry[] = [];
     for (const fileName of readdirSync(dir)) {
       if (
         fileName === "manifest.json" ||
         fileName === "diagnostics.json" ||
-        fileName === "asset-manifest.json"
+        fileName === "asset-manifest.json" ||
+        fileName === "master-tooltip.json"
       ) {
         continue;
       }
@@ -79,6 +84,16 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
         throw new Error(`invalid snapshot asset manifest at ${assetManifestPath}:\n${detail}`);
       }
     }
-    return { manifest, envelopes, diagnostics, assetManifest };
+    if (existsSync(masterTooltipPath)) {
+      masterTooltip = JSON.parse(
+        readFileSync(masterTooltipPath, "utf8"),
+      ) as MasterTooltipDictionary;
+      if (masterTooltip.schemaVersion !== 1) {
+        throw new Error(
+          `invalid master tooltip dictionary at ${masterTooltipPath}: unsupported schemaVersion`,
+        );
+      }
+    }
+    return { manifest, envelopes, diagnostics, assetManifest, masterTooltip };
   },
 };

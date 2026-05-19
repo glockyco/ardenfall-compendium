@@ -6,25 +6,50 @@
   "additionalProperties": false,
   "required": ["entityId", "schemaVersion", "rows"],
   "properties": {
-    "entityId": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "entityId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
     "rows": {
       "type": "array",
       "items": {
         "type": "object",
         "required": ["id", "fields"],
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "variant": { "type": "string" },
-          "fields": { "type": "object" },
-          "tags": { "type": "array", "items": { "type": "string" } },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "variant": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "object"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "provenance": {
             "type": "object",
-            "additionalProperties": { "$ref": "#/$defs/fieldProvenance" }
+            "additionalProperties": {
+              "$ref": "#/$defs/fieldProvenance"
+            }
           },
           "diagnostics": {
             "type": "array",
-            "items": { "$ref": "#/$defs/diagnostic" }
+            "items": {
+              "$ref": "#/$defs/diagnostic"
+            }
+          },
+          "presentation": {
+            "$ref": "#/$defs/itemPresentation"
           }
         }
       }
@@ -46,15 +71,27 @@
             "missing"
           ]
         },
-        "source": { "type": "string" },
-        "isSet": { "type": "boolean" },
-        "inherited": { "type": "boolean" },
+        "source": {
+          "type": "string"
+        },
+        "isSet": {
+          "type": "boolean"
+        },
+        "inherited": {
+          "type": "boolean"
+        },
         "parent": {
           "type": ["object", "null"],
           "properties": {
-            "kind": { "type": "string" },
-            "guid": { "type": "string" },
-            "unityType": { "type": "string" }
+            "kind": {
+              "type": "string"
+            },
+            "guid": {
+              "type": "string"
+            },
+            "unityType": {
+              "type": "string"
+            }
           }
         }
       }
@@ -64,10 +101,250 @@
       "additionalProperties": false,
       "required": ["severity", "code", "field"],
       "properties": {
-        "severity": { "enum": ["fatal", "diagnostic"] },
-        "code": { "type": "string" },
-        "field": { "type": "string" },
-        "message": { "type": "string" }
+        "severity": {
+          "enum": ["fatal", "diagnostic"]
+        },
+        "code": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "itemPresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "renderContext",
+        "displayName",
+        "displayNameSourceMethod",
+        "descriptionSource",
+        "effectsSource",
+        "effects",
+        "statRows",
+        "requirements",
+        "durability",
+        "stateFacts",
+        "omissions",
+        "value",
+        "weight",
+        "diagnostics"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "renderContext": {
+          "const": "item-presentation-v1"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "displayNameSourceMethod": {
+          "type": "string"
+        },
+        "itemType": {
+          "type": ["string", "null"]
+        },
+        "itemTypeSourceMethod": {
+          "type": ["string", "null"]
+        },
+        "descriptionSource": {
+          "type": "string"
+        },
+        "effectsSource": {
+          "type": "string"
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/itemPresentationEffect"
+          }
+        },
+        "statRows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/itemPresentationStatRow"
+          }
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/itemPresentationRequirement"
+          }
+        },
+        "durability": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/itemPresentationDurability"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stateFacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/itemPresentationStateFact"
+          }
+        },
+        "omissions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/itemPresentationOmission"
+          }
+        },
+        "value": {
+          "type": ["integer", "null"]
+        },
+        "weight": {
+          "type": ["number", "null"]
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnostic"
+          }
+        }
+      }
+    },
+    "itemPresentationStatRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "value",
+        "valueText",
+        "suffix",
+        "size",
+        "indent",
+        "comparison",
+        "source"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": ["number", "null"]
+        },
+        "valueText": {
+          "type": "string"
+        },
+        "suffix": {
+          "type": ["string", "null"]
+        },
+        "size": {
+          "type": "string"
+        },
+        "indent": {
+          "type": "integer"
+        },
+        "comparison": {
+          "type": ["string", "null"]
+        },
+        "source": {
+          "type": "string"
+        }
+      }
+    },
+    "itemPresentationRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "valueText", "source"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "valueText": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      }
+    },
+    "itemPresentationEffect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "label", "targetType", "targetId", "source"],
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "targetType": {
+          "type": ["string", "null"]
+        },
+        "targetId": {
+          "type": ["string", "null"]
+        },
+        "source": {
+          "type": "string"
+        }
+      }
+    },
+    "itemPresentationDurability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "max", "source"],
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "max": {
+          "type": "number"
+        },
+        "source": {
+          "type": "string"
+        }
+      }
+    },
+    "itemPresentationStateFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "label", "description"],
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "itemPresentationOmission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "message"],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "severity": {
+          "enum": ["diagnostic"]
+        },
+        "message": {
+          "type": "string"
+        }
       }
     }
   }

@@ -1,6 +1,6 @@
 {
   "entityId": "item",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "rows": [
     {
       "id": "fixture-iron-sword",
@@ -54,7 +54,61 @@
           "inherited": false
         }
       },
-      "diagnostics": []
+      "diagnostics": [],
+      "presentation": {
+        "schemaVersion": 1,
+        "renderContext": "item-presentation-v1",
+        "displayName": "Iron Sword",
+        "displayNameSourceMethod": "GetItemName()",
+        "itemType": "Melee weapon",
+        "itemTypeSourceMethod": "variant:melee-weapon",
+        "descriptionSource": "A simple iron blade.",
+        "effectsSource": "",
+        "effects": [],
+        "statRows": [
+          {
+            "id": "damage",
+            "label": "Damage",
+            "value": 7.5,
+            "valueText": "7.5",
+            "suffix": null,
+            "size": "large",
+            "indent": 0,
+            "comparison": null,
+            "source": "MeleeItem.GetItemStatInfos()"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "strength",
+            "label": "Strength",
+            "valueText": "5",
+            "source": "EquipItem.GetMinimumStat()"
+          }
+        ],
+        "durability": {
+          "kind": "max-durability",
+          "max": 100,
+          "source": "meleeDurabilityMax"
+        },
+        "stateFacts": [
+          {
+            "kind": "canonical-state",
+            "label": "Canonical compendium state",
+            "description": "Base item, no player or inventory context."
+          }
+        ],
+        "omissions": [
+          {
+            "code": "equippedComparisonOmitted",
+            "severity": "diagnostic",
+            "message": "Equipped comparison requires player inventory state."
+          }
+        ],
+        "value": 25,
+        "weight": 3.5,
+        "diagnostics": []
+      }
     },
     {
       "id": "fixture-leather-tunic",
@@ -99,7 +153,54 @@
           "field": "iconRef",
           "message": "icon ref missing from BuiltLookupTable"
         }
-      ]
+      ],
+      "presentation": {
+        "schemaVersion": 1,
+        "renderContext": "item-presentation-v1",
+        "displayName": "Leather Tunic",
+        "displayNameSourceMethod": "fields.name",
+        "itemType": "Armor",
+        "itemTypeSourceMethod": "variant:armor",
+        "descriptionSource": "",
+        "effectsSource": "",
+        "effects": [],
+        "statRows": [
+          {
+            "id": "armorRating",
+            "label": "Armor",
+            "value": 6,
+            "valueText": "6",
+            "suffix": null,
+            "size": "large",
+            "indent": 0,
+            "comparison": null,
+            "source": "ArmorItem.GetItemStatInfos()"
+          }
+        ],
+        "requirements": [],
+        "durability": {
+          "kind": "max-durability",
+          "max": 80,
+          "source": "armorDurabilityMax"
+        },
+        "stateFacts": [
+          {
+            "kind": "canonical-state",
+            "label": "Canonical compendium state",
+            "description": "Base item, no player or inventory context."
+          }
+        ],
+        "omissions": [
+          {
+            "code": "equippedComparisonOmitted",
+            "severity": "diagnostic",
+            "message": "Equipped comparison requires player inventory state."
+          }
+        ],
+        "value": 12,
+        "weight": 4,
+        "diagnostics": []
+      }
     },
     {
       "id": "fixture-stamina-draught",
@@ -114,7 +215,7 @@
           "reason": "lookupAssetGuidMissing",
           "source": "ItemData.icon"
         },
-        "description": "A small draught used to test consumable subtype fields.",
+        "description": "A <b>small</b> <color=#7CFF8A>draught</color> that restores <link=\"tooltip_stamina\">Stamina</link>.",
         "stackable": true,
         "hideInGui": false,
         "questItem": false,
@@ -129,7 +230,11 @@
             "statusEffectRef": null,
             "level": 1,
             "lifetime": 30,
-            "stackMode": { "type": "Refresh", "addLevel": 0, "maxLevel": 0 }
+            "stackMode": {
+              "type": "Refresh",
+              "addLevel": 0,
+              "maxLevel": 0
+            }
           }
         ]
       },
@@ -167,7 +272,47 @@
           "field": "iconRef",
           "message": "icon ref missing from BuiltLookupTable"
         }
-      ]
+      ],
+      "presentation": {
+        "schemaVersion": 1,
+        "renderContext": "item-presentation-v1",
+        "displayName": "Stamina Draught",
+        "displayNameSourceMethod": "GetItemName()",
+        "itemType": "Consumable",
+        "itemTypeSourceMethod": "variant:consumable",
+        "descriptionSource": "A <b>small</b> <color=#7CFF8A>draught</color> that restores <link=\"tooltip_stamina\">Stamina</link>.",
+        "effectsSource": "Applies status effects",
+        "effects": [
+          {
+            "kind": "status-effect",
+            "label": "Status effects",
+            "targetType": "status-effect",
+            "targetId": null,
+            "source": "statusEffectsJson"
+          }
+        ],
+        "statRows": [],
+        "requirements": [],
+        "durability": null,
+        "stateFacts": [
+          {
+            "kind": "canonical-state",
+            "label": "Canonical compendium state",
+            "description": "Base item, no player or inventory context."
+          }
+        ],
+        "omissions": [],
+        "value": 9,
+        "weight": 0.25,
+        "diagnostics": [
+          {
+            "severity": "diagnostic",
+            "code": "unresolvedEffectTarget",
+            "field": "presentation.effects",
+            "message": "Status effect target is not public in Slice 4."
+          }
+        ]
+      }
     },
     {
       "id": "fixture-slate-spell",
@@ -194,9 +339,20 @@
         "equipSlot": "Weapon",
         "animationSpeedMultiplier": 1,
         "twoHanded": false,
-        "quickslotSecondaryColorJson": { "r": 0.9, "g": 0.8, "b": 0.2, "a": 1 },
-        "spellDataJson": { "id": "fixture-spark", "name": "Spark" },
-        "secondarySpellDataJson": { "id": "fixture-ward", "name": "Ward" },
+        "quickslotSecondaryColorJson": {
+          "r": 0.9,
+          "g": 0.8,
+          "b": 0.2,
+          "a": 1
+        },
+        "spellDataJson": {
+          "id": "fixture-spark",
+          "name": "Spark"
+        },
+        "secondarySpellDataJson": {
+          "id": "fixture-ward",
+          "name": "Ward"
+        },
         "spawnWhenSheathed": false,
         "spellItemType": "Offensive",
         "durabilityMax": 60,
@@ -217,7 +373,50 @@
           "inherited": false
         }
       },
-      "diagnostics": []
+      "diagnostics": [],
+      "presentation": {
+        "schemaVersion": 1,
+        "renderContext": "item-presentation-v1",
+        "displayName": "Spark Slate",
+        "displayNameSourceMethod": "GetItemName()",
+        "itemType": "Slate spell",
+        "itemTypeSourceMethod": "variant:slate-spell",
+        "descriptionSource": "A slate spell used to test secondary icon color metadata.",
+        "effectsSource": "Casts Spark",
+        "effects": [
+          {
+            "kind": "spell",
+            "label": "Spark",
+            "targetType": "spell",
+            "targetId": "fixture-spark",
+            "source": "spellDataJson"
+          }
+        ],
+        "statRows": [],
+        "requirements": [],
+        "durability": {
+          "kind": "max-durability",
+          "max": 60,
+          "source": "durabilityMax"
+        },
+        "stateFacts": [
+          {
+            "kind": "canonical-state",
+            "label": "Canonical compendium state",
+            "description": "Base item, no player or inventory context."
+          }
+        ],
+        "omissions": [
+          {
+            "code": "equippedComparisonOmitted",
+            "severity": "diagnostic",
+            "message": "Equipped comparison requires player inventory state."
+          }
+        ],
+        "value": 40,
+        "weight": 1.2,
+        "diagnostics": []
+      }
     },
     {
       "id": "fixture-throwing-potion",
@@ -246,7 +445,11 @@
         "twoHanded": false,
         "itemTypeTooltip": "Throwing potion",
         "missileRef": null,
-        "missileRotationJson": { "x": 0, "y": 0, "z": 0 },
+        "missileRotationJson": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
         "damage": 4.5,
         "pierceArmor": false,
         "bleedMultiplier": 0,
@@ -263,10 +466,19 @@
         "spawnVisualOnHitCharacter": true,
         "respawnItemPickupChance": 0,
         "addItemToInventoryChance": 0,
-        "missileSettingsJson": { "speed": 10 },
-        "quickslotSecondaryColorJson": { "r": 0.8, "g": 0.1, "b": 0.1, "a": 1 },
+        "missileSettingsJson": {
+          "speed": 10
+        },
+        "quickslotSecondaryColorJson": {
+          "r": 0.8,
+          "g": 0.1,
+          "b": 0.1,
+          "a": 1
+        },
         "areaOfEffectRange": 3.5,
-        "areaOfEffectJson": { "shape": "sphere" },
+        "areaOfEffectJson": {
+          "shape": "sphere"
+        },
         "visualLevel": 2,
         "effectName": "Burning",
         "isDrinkingPotion": false
@@ -286,7 +498,70 @@
           "inherited": false
         }
       },
-      "diagnostics": []
+      "diagnostics": [],
+      "presentation": {
+        "schemaVersion": 1,
+        "renderContext": "item-presentation-v1",
+        "displayName": "Fire Flask",
+        "displayNameSourceMethod": "GetItemName()",
+        "itemType": "Throwing potion",
+        "itemTypeSourceMethod": "itemTypeTooltip",
+        "descriptionSource": "A throwing potion used to test display and secondary icon slots.",
+        "effectsSource": "Effect: Burning <shake>volatile</shake>",
+        "effects": [
+          {
+            "kind": "status-effect",
+            "label": "Burning",
+            "targetType": "status-effect",
+            "targetId": null,
+            "source": "effectName"
+          }
+        ],
+        "statRows": [
+          {
+            "id": "damage",
+            "label": "Damage",
+            "value": 4.5,
+            "valueText": "4.5",
+            "suffix": null,
+            "size": "large",
+            "indent": 0,
+            "comparison": null,
+            "source": "ThrowingItem.GetItemStatInfos()"
+          }
+        ],
+        "requirements": [],
+        "durability": null,
+        "stateFacts": [
+          {
+            "kind": "canonical-state",
+            "label": "Canonical compendium state",
+            "description": "Base item, no player or inventory context."
+          },
+          {
+            "kind": "potion-use-mode",
+            "label": "Throwing potion",
+            "description": "Uses throwing potion behavior."
+          }
+        ],
+        "omissions": [
+          {
+            "code": "equippedComparisonOmitted",
+            "severity": "diagnostic",
+            "message": "Equipped comparison requires player inventory state."
+          }
+        ],
+        "value": 18,
+        "weight": 0.5,
+        "diagnostics": [
+          {
+            "severity": "diagnostic",
+            "code": "unresolvedEffectTarget",
+            "field": "presentation.effects",
+            "message": "Burning status target is not public in Slice 4."
+          }
+        ]
+      }
     }
   ]
 }

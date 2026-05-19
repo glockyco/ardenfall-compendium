@@ -55,6 +55,27 @@ export const validate: Stage<ValidateInputs, ValidateOutput> = {
             diagnostic++;
           }
         }
+        if (entityId === "item") {
+          if (!row.presentation) {
+            errors.push({
+              entity: entityId,
+              row: row.id,
+              field: "presentation",
+              code: "missingItemPresentation",
+              message: `public item '${row.id}' is missing item-presentation-v1`,
+            });
+            fatal++;
+          } else if (row.presentation.renderContext !== "item-presentation-v1") {
+            errors.push({
+              entity: entityId,
+              row: row.id,
+              field: "presentation.renderContext",
+              code: "invalidItemPresentationContext",
+              message: `public item '${row.id}' uses unsupported presentation context '${row.presentation.renderContext}'`,
+            });
+            fatal++;
+          }
+        }
         for (const d of row.diagnostics ?? []) {
           if (d.severity === "fatal") fatal++;
           else diagnostic++;
