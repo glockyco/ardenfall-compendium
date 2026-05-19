@@ -68,15 +68,17 @@ public static class ItemPresentationBuilder
     private static List<ItemPresentationRequirementSnapshot> BuildRequirements(IReadOnlyDictionary<string, object?> fields)
     {
         var rows = new List<ItemPresentationRequirementSnapshot>();
-        var minimumStat = IntField(fields, "minimumStat");
-        if (minimumStat != null)
+        var minimumSkill = IntField(fields, "minimumSkill");
+        if (minimumSkill != null && minimumSkill.Value > 0)
         {
+            var statType = StringField(fields, "statType");
+            var label = string.IsNullOrWhiteSpace(statType) ? "Minimum skill" : statType!;
             rows.Add(new ItemPresentationRequirementSnapshot
             {
-                Id = "minimum-stat",
-                Label = "Minimum stat",
-                ValueText = minimumStat.Value.ToString(CultureInfo.InvariantCulture),
-                Source = "EquipItem.GetMinimumStat()",
+                Id = "minimum-skill",
+                Label = label,
+                ValueText = minimumSkill.Value.ToString(CultureInfo.InvariantCulture),
+                Source = "EquipItemData.minimumSkill/statType",
             });
         }
         return rows;

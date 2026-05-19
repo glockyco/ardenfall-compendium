@@ -34,6 +34,7 @@ CREATE TABLE item_presentation_rows (
   description_source          TEXT NOT NULL,
   description_rich_text_json  TEXT NOT NULL,
   effects_source              TEXT NOT NULL,
+  effects_source_rich_text_json TEXT NOT NULL,
   effect_facts_json           TEXT NOT NULL,
   stat_rows_json              TEXT NOT NULL,
   requirements_json           TEXT NOT NULL,
@@ -152,10 +153,10 @@ export function emitItemReadModels(
   const presentationInsert = db.prepare(
     `INSERT INTO item_presentation_rows (
       id, name, variant, item_type, render_context, display_icon_hash, display_icon_color,
-      description_source, description_rich_text_json, effects_source, effect_facts_json,
-      stat_rows_json, requirements_json, durability_json, state_facts_json, omissions_json,
-      value, weight, diagnostics_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      description_source, description_rich_text_json, effects_source, effects_source_rich_text_json,
+      effect_facts_json, stat_rows_json, requirements_json, durability_json, state_facts_json,
+      omissions_json, value, weight, diagnostics_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const nodeInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, is_public) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -178,6 +179,28 @@ export function emitItemReadModels(
       const description = translateRichTextV1(presentation.descriptionSource, {
         tooltipCodes: masterTooltip?.tooltipCodes,
         tooltipColors: masterTooltip?.tooltipColors,
+        resolveTerm: (termId, label) => ({
+          termId,
+          label,
+          targetType: "term",
+          targetId: termId,
+          targetLabel: masterTooltip?.tooltipCodes[termId] ?? label,
+          targetRoutePath: `/terms/${termId}`,
+          targetIsPublic: true,
+        }),
+      });
+      const effectsSource = translateRichTextV1(presentation.effectsSource, {
+        tooltipCodes: masterTooltip?.tooltipCodes,
+        tooltipColors: masterTooltip?.tooltipColors,
+        resolveTerm: (termId, label) => ({
+          termId,
+          label,
+          targetType: "term",
+          targetId: termId,
+          targetLabel: masterTooltip?.tooltipCodes[termId] ?? label,
+          targetRoutePath: `/terms/${termId}`,
+          targetIsPublic: true,
+        }),
       });
       const itemLabel = item?.name ?? presentation.displayName;
       const variantId = item?.variant ?? snapshotRow.variant;
@@ -201,6 +224,7 @@ export function emitItemReadModels(
         presentation.descriptionSource,
         JSON.stringify(description),
         presentation.effectsSource,
+        JSON.stringify(effectsSource),
         JSON.stringify(presentation.effects),
         JSON.stringify(presentation.statRows),
         JSON.stringify(presentation.requirements),
@@ -209,10 +233,14 @@ export function emitItemReadModels(
         JSON.stringify(presentation.omissions),
         presentation.value,
         presentation.weight,
-        JSON.stringify([...presentation.diagnostics, ...description.diagnostics]),
+        JSON.stringify([
+          ...presentation.diagnostics,
+          ...description.diagnostics,
+          ...effectsSource.diagnostics,
+        ]),
       );
 
-      for (const diagnostic of description.diagnostics) {
+      for (const diagnostic of [...description.diagnostics, ...effectsSource.diagnostics]) {
         richTextDiagnostics.push({
           severity: diagnostic.severity,
           source: "rich-text",

@@ -1,14 +1,16 @@
 <script lang="ts">
-  import type { ItemPresentationEffect } from "$lib/server/read-models";
+  import RichText from "$lib/components/content/RichText.svelte";
+  import type { ItemPresentationEffect, RichTextDocument } from "$lib/server/read-models";
 
-  let { effects, source }: { effects: ItemPresentationEffect[]; source: string } = $props();
+  let { effects, source }: { effects: ItemPresentationEffect[]; source: RichTextDocument } =
+    $props();
 </script>
 
-{#if source || effects.length > 0}
+{#if source.nodes.length > 0 || effects.length > 0}
   <section class="border-border rounded-lg border p-4">
     <h2 class="font-semibold">Effects</h2>
-    {#if source}
-      <p class="text-muted-foreground mt-2 text-sm">{source}</p>
+    {#if source.nodes.length > 0}
+      <p class="text-muted-foreground mt-2 text-sm"><RichText richText={source} /></p>
     {/if}
     {#if effects.length > 0}
       <ul class="mt-3 grid gap-2 text-sm">

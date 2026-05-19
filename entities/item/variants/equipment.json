@@ -11,6 +11,18 @@
       "type": "string",
       "from": "usableSlots.Get()",
       "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "minimumSkill",
+      "type": "int",
+      "from": "minimumSkill.Get()",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "statType",
+      "type": "string",
+      "from": "statType.Get()",
+      "missingPolicy": "diagnostic"
     }
   ]
 }

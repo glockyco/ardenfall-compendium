@@ -20,7 +20,7 @@
   <div class="grid gap-4">
     <ItemStatBlock rows={item.statRows} />
     <ItemRequirementList requirements={item.requirements} />
-    <ItemEffectList effects={item.effects} source={item.effectsSource} />
+    <ItemEffectList effects={item.effects} source={item.effectsSourceRichText} />
     <ItemStateFacts facts={item.stateFacts} durability={item.durability} />
   </div>
 </div>

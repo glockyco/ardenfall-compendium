@@ -114,12 +114,14 @@ describe("emitItemReadModels", () => {
       effect_facts_json: string;
     };
     expect(presentation.render_context).toBe("item-presentation-v1");
-    expect(JSON.parse(presentation.description_rich_text_json)).toEqual(
+    const richDescription = JSON.parse(presentation.description_rich_text_json);
+    expect(richDescription).toEqual(
       expect.objectContaining({
         schemaVersion: 1,
         nodes: expect.arrayContaining([expect.objectContaining({ type: "strong" })]),
       }),
     );
+    expect(JSON.stringify(richDescription.nodes)).toContain("/terms/stamina");
     expect(JSON.parse(presentation.stat_rows_json)).toEqual([]);
     expect(JSON.parse(presentation.effect_facts_json)).toContainEqual(
       expect.objectContaining({ kind: "status-effect", label: "Status effects" }),

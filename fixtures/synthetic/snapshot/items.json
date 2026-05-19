@@ -30,7 +30,9 @@
         "cannotBeOwned": false,
         "quickslotIconRef": null,
         "categoryRef": null,
-        "isIllegal": false
+        "isIllegal": false,
+        "minimumSkill": 5,
+        "statType": "Strength"
       },
       "tags": ["weapon", "metal"],
       "provenance": {
@@ -80,10 +82,10 @@
         ],
         "requirements": [
           {
-            "id": "strength",
+            "id": "minimum-skill",
             "label": "Strength",
             "valueText": "5",
-            "source": "EquipItem.GetMinimumStat()"
+            "source": "EquipItemData.minimumSkill/statType"
           }
         ],
         "durability": {
@@ -135,7 +137,9 @@
         "cannotBeOwned": false,
         "quickslotIconRef": null,
         "categoryRef": null,
-        "isIllegal": false
+        "isIllegal": false,
+        "minimumSkill": 0,
+        "statType": "Endurance"
       },
       "tags": ["armor", "leather"],
       "provenance": {

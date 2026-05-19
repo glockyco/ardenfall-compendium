@@ -18,6 +18,8 @@ public sealed class ItemPresentationTests
             ["weight"] = 3.5f,
             ["damage"] = 7.5f,
             ["meleeDurabilityMax"] = 100,
+            ["minimumSkill"] = 5,
+            ["statType"] = "Strength",
         };
         var provenance = new Dictionary<string, Provenance>
         {
@@ -48,6 +50,8 @@ public sealed class ItemPresentationTests
         Assert.Contains(presentation.StatRows, row =>
             row.Id == "damage" && row.Label == "Damage" && row.ValueText == "7.5" && row.Comparison == null);
         Assert.Equal("max-durability", presentation.Durability?.Kind);
+        Assert.Contains(presentation.Requirements, row =>
+            row.Id == "minimum-skill" && row.Label == "Strength" && row.ValueText == "5");
         Assert.Equal(100, presentation.Durability?.Max);
         Assert.Contains(presentation.StateFacts, fact => fact.Kind == "canonical-state");
         Assert.Contains(presentation.Omissions, omission => omission.Code == "equippedComparisonOmitted");

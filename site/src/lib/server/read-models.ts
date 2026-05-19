@@ -109,6 +109,7 @@ interface ItemPresentationRecord {
   description_source: string;
   description_rich_text_json: string;
   effects_source: string;
+  effects_source_rich_text_json: string;
   effect_facts_json: string;
   stat_rows_json: string;
   requirements_json: string;
@@ -141,6 +142,7 @@ export interface ItemPresentationRow {
   displayIconColor: string | null;
   description: RichTextDocument;
   effectsSource: string;
+  effectsSourceRichText: RichTextDocument;
   effects: ItemPresentationEffect[];
   statRows: ItemPresentationStatRow[];
   requirements: ItemPresentationRequirement[];
@@ -347,6 +349,7 @@ export const getItemPresentation = (id: string): ItemPresentationRow | undefined
     displayIconColor: row.display_icon_color,
     description: JSON.parse(row.description_rich_text_json) as RichTextDocument,
     effectsSource: row.effects_source,
+    effectsSourceRichText: JSON.parse(row.effects_source_rich_text_json) as RichTextDocument,
     effects: JSON.parse(row.effect_facts_json) as ItemPresentationEffect[],
     statRows: JSON.parse(row.stat_rows_json) as ItemPresentationStatRow[],
     requirements: JSON.parse(row.requirements_json) as ItemPresentationRequirement[],
