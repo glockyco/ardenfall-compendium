@@ -152,6 +152,26 @@ describe("emitItemReadModels", () => {
       predicate: "references_term",
     });
 
+    const itemNode = db
+      .query(
+        "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item' AND entity_id = 'fixture-iron-sword'",
+      )
+      .get() as { route_path: string; canonical_slug: string; short_id: string };
+    expect(itemNode.route_path).toBe("/items/fixture-iron-sword");
+    expect(itemNode.canonical_slug).toMatch(/^iron-sword--[0-9a-f]{8}$/);
+    expect(itemNode.short_id).toMatch(/^[0-9a-f]{8}$/);
+
+    const termNode = db
+      .query(
+        "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'term' AND entity_id = 'stamina'",
+      )
+      .get() as { route_path: string; canonical_slug: string; short_id: string };
+    expect(termNode).toEqual({
+      route_path: "/terms/stamina",
+      canonical_slug: "stamina",
+      short_id: "stamina",
+    });
+
     expect(
       db
         .query(

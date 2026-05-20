@@ -7,9 +7,14 @@ CREATE TABLE IF NOT EXISTS entity_nodes (
   label TEXT NOT NULL,
   route_path TEXT NOT NULL,
   canonical_slug TEXT NOT NULL,
+  short_id TEXT NOT NULL,
   is_public INTEGER NOT NULL DEFAULT 1,
   PRIMARY KEY (entity_type, entity_id)
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_entity_nodes_slug
+  ON entity_nodes (entity_type, canonical_slug);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_entity_nodes_short_id
+  ON entity_nodes (entity_type, short_id);
 CREATE TABLE IF NOT EXISTS entity_aliases (
   alias_key TEXT NOT NULL,
   target_type TEXT NOT NULL,
@@ -64,6 +69,10 @@ CREATE TABLE IF NOT EXISTS pipeline_diagnostics (
   evidence_json TEXT NOT NULL DEFAULT '{}'
 );
 `;
+
+export function buildRelationshipDDL(): string {
+  return ENTITY_GRAPH_DDL;
+}
 
 export type PipelineDiagnostic = {
   severity: "fatal" | "diagnostic";

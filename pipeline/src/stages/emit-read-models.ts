@@ -1,4 +1,5 @@
 import type { Database } from "bun:sqlite";
+import { createHash } from "node:crypto";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type {
   MasterTooltipVocabulary,
@@ -12,6 +13,7 @@ import {
   insertPipelineDiagnostics,
 } from "../relationships/relationship-graph.ts";
 import type { RichTextNode } from "../rich-text/rich-text-v1.ts";
+import { deriveShortId, deriveSlug, kebab } from "../slug/derive-slug.ts";
 
 export const ITEM_READ_MODEL_DDL = `
 CREATE TABLE item_overview_rows (
@@ -159,7 +161,7 @@ export function emitItemReadModels(
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const nodeInsert = db.prepare(
-    `INSERT OR IGNORE INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, is_public) VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT OR IGNORE INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
   const aliasInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_aliases (alias_key, target_type, target_id, label, source) VALUES (?, ?, ?, ?, ?)`,
@@ -204,12 +206,14 @@ export function emitItemReadModels(
       });
       const itemLabel = item?.name ?? presentation.displayName;
       const variantId = item?.variant ?? snapshotRow.variant;
+      const itemSlug = deriveEntityNodeSlug(itemLabel, snapshotRow.id);
       nodeInsert.run(
         "item",
         snapshotRow.id,
         itemLabel,
         `/items/${snapshotRow.id}`,
-        snapshotRow.id,
+        itemSlug.canonicalSlug,
+        itemSlug.shortId,
         1,
       );
       aliasInsert.run(aliasKey(itemLabel), "item", snapshotRow.id, itemLabel, "item-presentation");
@@ -260,6 +264,7 @@ export function emitItemReadModels(
         variantLabel,
         `/items/variant/${variantId}`,
         variantId,
+        variantId,
         1,
       );
       aliasInsert.run(
@@ -304,7 +309,15 @@ export function emitItemReadModels(
       const termEdges = [];
       for (const term of collectTermLinks(description.nodes)) {
         const termLabel = masterTooltip?.tooltipCodes[term.termId] ?? term.label;
-        nodeInsert.run("term", term.termId, termLabel, `/terms/${term.termId}`, term.termId, 1);
+        nodeInsert.run(
+          "term",
+          term.termId,
+          termLabel,
+          `/terms/${term.termId}`,
+          term.termId,
+          term.termId,
+          1,
+        );
         aliasInsert.run(aliasKey(termLabel), "term", term.termId, termLabel, "master-tooltip");
         edgeInsert.run(
           `${snapshotRow.id}:references_term:term:${term.termId}`,
@@ -357,6 +370,22 @@ function collectTermLinks(nodes: RichTextNode[]): { termId: string; label: strin
     }
   }
   return terms;
+}
+
+function deriveEntityNodeSlug(
+  displayName: string,
+  entityId: string,
+): { canonicalSlug: string; shortId: string } {
+  try {
+    return {
+      canonicalSlug: deriveSlug({ displayName, assetId: entityId }),
+      shortId: deriveShortId(entityId),
+    };
+  } catch {
+    const shortId = createHash("sha256").update(entityId).digest("hex").slice(0, 8);
+    const head = kebab(displayName) || "entity";
+    return { canonicalSlug: `${head}--${shortId}`, shortId };
+  }
 }
 
 function aliasKey(label: string): string {

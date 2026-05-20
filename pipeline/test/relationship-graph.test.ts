@@ -3,6 +3,7 @@ import { Database } from "bun:sqlite";
 import {
   ENTITY_GRAPH_DDL,
   auditEntityGraph,
+  buildRelationshipDDL,
   countPipelineDiagnostics,
   insertDisambiguationForDuplicateAliases,
   insertPipelineDiagnostics,
@@ -13,12 +14,13 @@ describe("relationship graph", () => {
     const db = new Database(":memory:");
     db.exec(ENTITY_GRAPH_DDL);
     db.run(
-      "INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, is_public) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public) VALUES (?, ?, ?, ?, ?, ?, ?)",
       "item",
       "source",
       "Source",
-      "/items/source",
-      "source",
+      "/items/source--abc12345",
+      "source--abc12345",
+      "abc12345",
       1,
     );
     db.run(
@@ -72,5 +74,35 @@ describe("relationship graph", () => {
 
     expect(countPipelineDiagnostics(db, "rich-text")).toBe(1);
     expect(countPipelineDiagnostics(db, "relationship-graph")).toBe(1);
+  });
+
+  it("enforces (entity_type, canonical_slug) uniqueness on entity_nodes", () => {
+    const db = new Database(":memory:");
+    db.exec(buildRelationshipDDL());
+    db.run(
+      `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+       VALUES ('item', 'a', 'A', '/items/a--abc12345', 'a--abc12345', 'abc12345', 1)`,
+    );
+    expect(() =>
+      db.run(
+        `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+         VALUES ('item', 'b', 'B', '/items/a--abc12345', 'a--abc12345', 'def67890', 1)`,
+      ),
+    ).toThrow(/UNIQUE/);
+  });
+
+  it("enforces (entity_type, short_id) uniqueness on entity_nodes", () => {
+    const db = new Database(":memory:");
+    db.exec(buildRelationshipDDL());
+    db.run(
+      `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+       VALUES ('item', 'a', 'A', '/items/foo--abc12345', 'foo--abc12345', 'abc12345', 1)`,
+    );
+    expect(() =>
+      db.run(
+        `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+         VALUES ('item', 'b', 'B', '/items/bar--abc12345', 'bar--abc12345', 'abc12345', 1)`,
+      ),
+    ).toThrow(/UNIQUE/);
   });
 });
