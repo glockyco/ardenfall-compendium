@@ -1,7 +1,7 @@
 import type { Database } from "bun:sqlite";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type {
-  MasterTooltipDictionary,
+  MasterTooltipVocabulary,
   SnapshotEnvelope,
   SnapshotItemIconMetadata,
 } from "../types.ts";
@@ -65,7 +65,7 @@ export function emitItemReadModels(
   desc: LoadDescriptorsOutput,
   itemIconMetadata: SnapshotItemIconMetadata[] = [],
   itemEnvelope?: SnapshotEnvelope,
-  masterTooltip?: MasterTooltipDictionary,
+  masterTooltip?: MasterTooltipVocabulary,
 ): void {
   db.exec(ITEM_READ_MODEL_DDL);
   db.exec(ENTITY_GRAPH_DDL);

@@ -49,12 +49,12 @@ describe("translateRichTextV1", () => {
 
   it("expands known tooltip color/code dictionaries and diagnoses unknown keys", () => {
     const rich = translateRichTextV1("[p +10] {stamina}", {
-      tooltipColors: { p: "positive" },
+      tooltipColors: { p: { color: "#6FCF6F", text: "positive" } },
       tooltipCodes: { stamina: "Stamina" },
     });
 
     expect(rich.nodes).toContainEqual(
-      expect.objectContaining({ type: "color", token: "positive", color: null }),
+      expect.objectContaining({ type: "color", token: "positive", color: "#6FCF6F" }),
     );
     expect(JSON.stringify(rich.nodes)).toContain("Stamina");
     expect(translateRichTextV1("{missing_code}").diagnostics).toContainEqual(

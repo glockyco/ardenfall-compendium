@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import type { MasterTooltipColorToken } from "../types.ts";
 
 export type RichTextV1 = {
   schemaVersion: 1;
@@ -36,7 +37,7 @@ export type TermResolution = {
 
 export type RichTextOptions = {
   tooltipCodes?: Record<string, string>;
-  tooltipColors?: Record<string, string>;
+  tooltipColors?: Record<string, MasterTooltipColorToken>;
   resolveTerm?: (termId: string, label: string) => TermResolution | undefined;
 };
 
@@ -241,14 +242,14 @@ function normalizeAttribute(raw: string): string {
 
 function translateTooltipColor(
   token: string,
-  tooltipColors: Record<string, string> | undefined,
+  tooltipColors: Record<string, MasterTooltipColorToken> | undefined,
   diagnostic: (code: string, message: string, field?: string) => void,
 ): RichTextNode | null {
   const match = /^\[([A-Za-z])\s+([^\]]+)\]$/.exec(token);
   if (!match) return null;
   const code = match[1]!;
-  const label = tooltipColors?.[code];
-  if (!label) {
+  const entry = tooltipColors?.[code];
+  if (!entry) {
     diagnostic(
       "unresolvedTooltipColor",
       `Tooltip color code '${code}' is not present in the master tooltip dictionary.`,
@@ -257,8 +258,8 @@ function translateTooltipColor(
   }
   return {
     type: "color",
-    token: label,
-    color: null,
+    token: entry.text,
+    color: entry.color,
     children: [{ type: "text", text: match[2]! }],
   };
 }
