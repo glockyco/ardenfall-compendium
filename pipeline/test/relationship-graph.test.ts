@@ -105,4 +105,24 @@ describe("relationship graph", () => {
       ),
     ).toThrow(/UNIQUE/);
   });
+
+  it("emits a fatal slugCollision diagnostic when two nodes share a (entity_type, short_id)", () => {
+    const db = new Database(":memory:");
+    db.exec(buildRelationshipDDL());
+    db.exec("DROP INDEX idx_entity_nodes_short_id;");
+    db.run(
+      `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+       VALUES ('item', 'a', 'A', '/items/a--abc12345', 'a--abc12345', 'abc12345', 1)`,
+    );
+    db.run(
+      `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+       VALUES ('item', 'b', 'B', '/items/b--abc12345', 'b--abc12345', 'abc12345', 1)`,
+    );
+
+    const diagnostics = auditEntityGraph(db);
+
+    expect(diagnostics).toContainEqual(
+      expect.objectContaining({ severity: "fatal", code: "slugCollision" }),
+    );
+  });
 });

@@ -123,6 +123,26 @@ export function auditEntityGraph(db: Database): PipelineDiagnostic[] {
       evidence: { edgeId: row.edge_id, targetType: row.target_type, targetId: row.target_id },
     });
   }
+  for (const row of db
+    .query<{ entity_type: string; short_id: string; cnt: number }, []>(
+      `SELECT entity_type, short_id, COUNT(*) AS cnt
+       FROM entity_nodes
+       GROUP BY entity_type, short_id
+       HAVING COUNT(*) > 1`,
+    )
+    .all()) {
+    diagnostics.push({
+      severity: "fatal",
+      source: "relationship-graph",
+      code: "slugCollision",
+      message: `short_id '${row.short_id}' collides ${row.cnt} times within entity_type '${row.entity_type}'.`,
+      entityType: row.entity_type,
+      entityId: null,
+      field: "entity_nodes.short_id",
+      evidence: { shortId: row.short_id, occurrences: row.cnt },
+    });
+  }
+
   return diagnostics;
 }
 
