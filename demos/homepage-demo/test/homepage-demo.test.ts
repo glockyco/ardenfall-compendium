@@ -96,7 +96,7 @@ describe("homepage mockup demo", () => {
 
     expect(css).toContain("font-size: clamp(2.8rem, 3.55vw, 3.45rem)");
     expect(css).toContain("background-position: center center");
-    expect(css).toContain("background-size: 100% 100%");
+    expect(css).toContain("background-size: cover");
     expect(css).toContain("hero-ardenfall-valley-wide.avif");
     expect(css).toContain("--topbar-surface: rgb(25 25 23 / 72%)");
     expect(css).toContain("mask-image: linear-gradient(");
@@ -144,14 +144,11 @@ describe("homepage mockup demo", () => {
     for (const refPath of [provenance.directionReference, provenance.earlierDraft]) {
       expect(await Bun.file(join(demoRoot, refPath)).exists()).toBe(true);
     }
-    expect(provenance.prompt).toContain("paths");
-    expect(provenance.prompt).toContain("hamlet");
-    expect(provenance.prompt).toContain("sun");
-    expect(provenance.prompt).toContain("3-5 distinct tall spires");
-    expect(provenance.prompt).toContain("right-side sky");
+    expect(provenance.prompt).toContain("upstream generation prompt was not available");
+    expect(provenance.reviewNotes).toContain("more natural header aspect ratio");
     expect(provenance.reviewNotes).toContain("inviting, friendly, alive");
     expect(provenance.recommendedUse).toBe("decorative hero background");
-    expect(provenance.sourceCanvas).toEqual({ width: 1536, height: 720 });
+    expect(provenance.sourceCanvas).toEqual({ width: 1849, height: 851 });
     expect(provenance.composition.titleSafeZone).toBe(
       "upper center stays open; castle, tree, and mountains do not overlap the h1/lede area",
     );
