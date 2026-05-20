@@ -29,7 +29,12 @@
         "notLootableChance": 0,
         "cannotBeOwned": false,
         "quickslotIconRef": null,
-        "categoryRef": null,
+        "categoryRef": {
+          "kind": "lookupAsset",
+          "guid": "fixture-weapons",
+          "unityType": "Ardenfall.ItemCategory",
+          "name": "Weapons"
+        },
         "isIllegal": false,
         "minimumSkill": 5,
         "statType": "Strength"

@@ -1,0 +1,47 @@
+{
+  "entityId": "item-category",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "fixture-weapons",
+      "fields": {
+        "id": "fixture-weapons",
+        "categoryName": "Weapons",
+        "iconRef": {
+          "kind": "lookupAsset",
+          "guid": "fixture-category-icon",
+          "unityType": "UnityEngine.Sprite",
+          "name": "Weapons Icon"
+        },
+        "defaultItemIconRef": {
+          "kind": "lookupAsset",
+          "guid": "fixture-category-default-icon",
+          "unityType": "UnityEngine.Sprite",
+          "name": "Default Weapon Icon"
+        },
+        "categoryColor": { "r": 0.92, "g": 0.42, "b": 0.42, "a": 1 },
+        "showInAllCategory": true,
+        "columns": [
+          {
+            "label": "Name",
+            "iconRef": null,
+            "preferedWidth": 1.5,
+            "flexibleWidth": 2,
+            "itemName": true,
+            "isItemIconAndCategory": true,
+            "itemValue": false,
+            "isAffectedBySkillRequirement": false,
+            "isAffectedByBrokenDurability": false,
+            "affectingRedColor": true,
+            "affectingIconsAfter": false,
+            "hideIfNegativeOne": false,
+            "alignment": "MiddleLeft",
+            "itemDataField": null,
+            "itemFunctionField": null
+          }
+        ]
+      },
+      "diagnostics": []
+    }
+  ]
+}

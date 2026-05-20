@@ -6,12 +6,15 @@ import {
   emitItemReadModels,
   emitStatTypeReadModels,
   prepareEntityNodeWriter,
+  emitItemCategoryReadModels,
 } from "$pipeline/stages/emit-read-models";
 import { ENTITY_GRAPH_DDL } from "$pipeline/relationships/relationship-graph";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { loadSnapshot } from "$pipeline/stages/load-snapshot";
 import { canonicaliseStatTypes } from "$pipeline/entities/stat-type/canonicaliser";
 import { STAT_TYPE_DDL } from "$pipeline/sql/stat-type-ddl";
+import { canonicaliseItemCategories } from "$pipeline/entities/item-category/canonicaliser";
+import { ITEM_CATEGORY_DDL } from "$pipeline/sql/item-category-ddl";
 
 const ctx = {
   workspaceRoot: ".",
@@ -275,6 +278,113 @@ describe("emitStatTypeReadModels", () => {
       .get();
     expect(node?.canonical_slug).toMatch(/^strength--[0-9a-f]{8}$/);
     expect(node?.route_path).toBe(`/stats/${node?.canonical_slug}`);
+    expect(node?.short_id).toMatch(/^[0-9a-f]{8}$/);
+  });
+});
+
+describe("emitItemCategoryReadModels", () => {
+  it("emits category overview, presentation, item counts, and entity nodes", () => {
+    const db = new Database(":memory:");
+    db.exec(ENTITY_GRAPH_DDL);
+    db.exec(ITEM_CATEGORY_DDL);
+    db.exec(`
+      CREATE TABLE items (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        "categoryRef" TEXT
+      );
+      CREATE TABLE asset_refs (
+        entity_id TEXT NOT NULL,
+        entity_row_id TEXT NOT NULL,
+        slot TEXT NOT NULL,
+        asset_kind TEXT NOT NULL,
+        asset_hash TEXT NOT NULL,
+        PRIMARY KEY (entity_id, entity_row_id, slot)
+      );
+    `);
+    canonicaliseItemCategories(db, {
+      entityId: "item-category",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "category-weapons",
+          fields: {
+            id: "category-weapons",
+            categoryName: "Weapons",
+            iconRef: null,
+            defaultItemIconRef: { kind: "lookupAsset", guid: "default-icon-guid" },
+            categoryColor: { r: 0.92, g: 0.42, b: 0.42, a: 1 },
+            showInAllCategory: true,
+            columns: [{ label: "Name", flexibleWidth: 2 }],
+          },
+        },
+      ],
+    });
+    db.run(
+      `INSERT INTO items (id, name, "categoryRef") VALUES (?, ?, ?)`,
+      "fixture-iron-sword",
+      "Iron Sword",
+      JSON.stringify({ kind: "lookupAsset", guid: "category-weapons" }),
+    );
+    db.run(
+      "INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)",
+      "item-category",
+      "category-weapons",
+      "defaultItemIconRef",
+      "image",
+      "c".repeat(64),
+    );
+
+    emitItemCategoryReadModels(db);
+
+    const overview = db
+      .query<
+        {
+          id: string;
+          name: string;
+          default_item_icon_hash: string | null;
+          category_color_json: string;
+          item_count: number;
+        },
+        []
+      >(
+        "SELECT id, name, default_item_icon_hash, category_color_json, item_count FROM item_category_overview_rows",
+      )
+      .get();
+    expect(overview).toEqual({
+      id: "category-weapons",
+      name: "Weapons",
+      default_item_icon_hash: "c".repeat(64),
+      category_color_json: JSON.stringify({ r: 0.92, g: 0.42, b: 0.42, a: 1 }),
+      item_count: 1,
+    });
+
+    const presentation = db
+      .query<
+        {
+          render_context: string;
+          columns_json: string;
+          show_in_all_category: number;
+          item_count: number;
+        },
+        []
+      >("SELECT render_context, columns_json, show_in_all_category, item_count FROM item_category_presentation_rows WHERE id = 'category-weapons'")
+      .get();
+    expect(presentation?.render_context).toBe("item-category-presentation-v1");
+    expect(JSON.parse(presentation?.columns_json ?? "[]")).toEqual([
+      { label: "Name", flexibleWidth: 2 },
+    ]);
+    expect(presentation?.show_in_all_category).toBe(1);
+    expect(presentation?.item_count).toBe(1);
+
+    const node = db
+      .query<
+        { route_path: string; canonical_slug: string; short_id: string },
+        []
+      >("SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item-category' AND entity_id = 'category-weapons'")
+      .get();
+    expect(node?.canonical_slug).toMatch(/^weapons--[0-9a-f]{8}$/);
+    expect(node?.route_path).toBe(`/categories/${node?.canonical_slug}`);
     expect(node?.short_id).toMatch(/^[0-9a-f]{8}$/);
   });
 });

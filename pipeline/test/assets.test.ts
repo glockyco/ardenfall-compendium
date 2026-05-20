@@ -95,7 +95,7 @@ describe("emitAssets", () => {
       const snap = await loadSnapshot.run({}, ctx);
       const result = await emitAssets.run({ "load-snapshot": snap }, { ...ctx, outDir });
 
-      expect(result.refs).toHaveLength(5);
+      expect(result.refs).toHaveLength(7);
       expect(result.refs.every((ref) => ref.assetHash.match(/^[a-f0-9]{64}$/))).toBe(true);
       for (const ref of result.refs) {
         expect(existsSync(join(outDir, "assets", `${ref.assetHash}.webp`))).toBe(true);
@@ -121,6 +121,14 @@ describe("emitAssets", () => {
           entityId: "stat-type",
           entityRowId: "fixture-strength",
           slot: "iconRef",
+          assetKind: "image",
+        }),
+      );
+      expect(result.refs).toContainEqual(
+        expect.objectContaining({
+          entityId: "item-category",
+          entityRowId: "fixture-weapons",
+          slot: "defaultItemIconRef",
           assetKind: "image",
         }),
       );
@@ -195,6 +203,14 @@ describe("asset_refs", () => {
             entity_id: "item",
             entity_row_id: "fixture-throwing-potion",
             slot: "secondaryIcon",
+            asset_kind: "image",
+          }),
+        );
+        expect(refs).toContainEqual(
+          expect.objectContaining({
+            entity_id: "item-category",
+            entity_row_id: "fixture-weapons",
+            slot: "defaultItemIconRef",
             asset_kind: "image",
           }),
         );

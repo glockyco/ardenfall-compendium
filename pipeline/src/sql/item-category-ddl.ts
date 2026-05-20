@@ -1,0 +1,11 @@
+export const ITEM_CATEGORY_DDL = `
+CREATE TABLE item_categories (
+  id                         TEXT PRIMARY KEY,
+  category_name              TEXT NOT NULL,
+  icon_ref_json              TEXT,
+  default_item_icon_ref_json TEXT,
+  category_color_json        TEXT NOT NULL,
+  show_in_all_category       INTEGER NOT NULL,
+  columns_json               TEXT NOT NULL DEFAULT '[]'
+);
+`;
