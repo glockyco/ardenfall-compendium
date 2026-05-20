@@ -2,10 +2,16 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { buildDDL } from "$pipeline/sql/ddl";
 import { canonicaliseItems } from "$pipeline/entities/item/canonicaliser";
-import { emitItemReadModels, prepareEntityNodeWriter } from "$pipeline/stages/emit-read-models";
+import {
+  emitItemReadModels,
+  emitStatTypeReadModels,
+  prepareEntityNodeWriter,
+} from "$pipeline/stages/emit-read-models";
 import { ENTITY_GRAPH_DDL } from "$pipeline/relationships/relationship-graph";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { loadSnapshot } from "$pipeline/stages/load-snapshot";
+import { canonicaliseStatTypes } from "$pipeline/entities/stat-type/canonicaliser";
+import { STAT_TYPE_DDL } from "$pipeline/sql/stat-type-ddl";
 
 const ctx = {
   workspaceRoot: ".",
@@ -202,6 +208,74 @@ describe("emitItemReadModels", () => {
     expect(JSON.parse(variantFilter.options_json)).toContainEqual(
       expect.objectContaining({ value: "melee-weapon", label: "Melee Weapon", count: 1 }),
     );
+  });
+});
+
+describe("emitStatTypeReadModels", () => {
+  it("emits stat overview, presentation, and entity nodes", async () => {
+    const snap = await loadSnapshot.run({}, ctx);
+    const statEnvelope = snap.envelopes["stat-type"];
+    if (!statEnvelope) throw new Error("fixture missing stat-type envelope");
+    const db = new Database(":memory:");
+    db.exec(ENTITY_GRAPH_DDL);
+    db.exec(STAT_TYPE_DDL);
+    db.exec(`
+      CREATE TABLE asset_refs (
+        entity_id TEXT NOT NULL,
+        entity_row_id TEXT NOT NULL,
+        slot TEXT NOT NULL,
+        asset_kind TEXT NOT NULL,
+        asset_hash TEXT NOT NULL,
+        PRIMARY KEY (entity_id, entity_row_id, slot)
+      );
+    `);
+    db.run(
+      "INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)",
+      "stat-type",
+      "fixture-strength",
+      "iconRef",
+      "image",
+      "b".repeat(64),
+    );
+    canonicaliseStatTypes(db, statEnvelope);
+
+    emitStatTypeReadModels(db, snap.masterTooltip);
+
+    const overview = db
+      .query<
+        { id: string; name: string; grouping: string; icon_hash: string | null },
+        []
+      >("SELECT id, name, grouping, icon_hash FROM stat_type_overview_rows ORDER BY name")
+      .all();
+    expect(overview).toEqual([
+      { id: "fixture-heavy-armor", name: "Heavy Armor", grouping: "skill", icon_hash: null },
+      {
+        id: "fixture-strength",
+        name: "Strength",
+        grouping: "attribute",
+        icon_hash: "b".repeat(64),
+      },
+    ]);
+
+    const presentation = db
+      .query<
+        { render_context: string; icon_hash: string | null; affects_json: string },
+        []
+      >("SELECT render_context, icon_hash, affects_json FROM stat_type_presentation_rows WHERE id = 'fixture-strength'")
+      .get();
+    expect(presentation?.render_context).toBe("stat-type-presentation-v1");
+    expect(presentation?.icon_hash).toBe("b".repeat(64));
+    expect(JSON.parse(presentation?.affects_json ?? "[]")).toContain("melee-damage");
+
+    const node = db
+      .query<
+        { route_path: string; canonical_slug: string; short_id: string },
+        []
+      >("SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'stat-type' AND entity_id = 'fixture-strength'")
+      .get();
+    expect(node?.canonical_slug).toMatch(/^strength--[0-9a-f]{8}$/);
+    expect(node?.route_path).toBe(`/stats/${node?.canonical_slug}`);
+    expect(node?.short_id).toMatch(/^[0-9a-f]{8}$/);
   });
 });
 

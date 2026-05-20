@@ -8,7 +8,7 @@ import { canonicaliseItems } from "../entities/item/canonicaliser";
 import { canonicaliseStatTypes } from "../entities/stat-type/canonicaliser";
 import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
 import { emitSiteMetadata } from "./emit-site-metadata";
-import { emitItemReadModels } from "./emit-read-models";
+import { emitItemReadModels, emitStatTypeReadModels } from "./emit-read-models";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type { LoadSnapshotOutput } from "./load-snapshot.ts";
 import type { EmitAssetsOutput } from "./emit-assets.ts";
@@ -65,6 +65,9 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
         itemEnvelope,
         inputs["load-snapshot"].masterTooltip,
       );
+      if (statTypeEnvelope) {
+        emitStatTypeReadModels(db, inputs["load-snapshot"].masterTooltip);
+      }
       db.exec(`CREATE TABLE artifact_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);`);
       const metadataInsert = db.prepare("INSERT INTO artifact_metadata (key, value) VALUES (?, ?)");
       metadataInsert.run("schemaVersion", "1");

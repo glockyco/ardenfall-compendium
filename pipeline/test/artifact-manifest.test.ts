@@ -43,6 +43,10 @@ describe("artifact manifest emission", () => {
         INSERT INTO item_overview_filters VALUES ('variant');
         CREATE TABLE item_overview_categories (category_id TEXT PRIMARY KEY);
         INSERT INTO item_overview_categories VALUES ('melee-weapon');
+        CREATE TABLE stat_type_overview_rows (id TEXT PRIMARY KEY);
+        INSERT INTO stat_type_overview_rows VALUES ('stat-strength'), ('skill-heavy-armor');
+        CREATE TABLE stat_type_presentation_rows (id TEXT PRIMARY KEY);
+        INSERT INTO stat_type_presentation_rows VALUES ('stat-strength'), ('skill-heavy-armor');
         CREATE TABLE entity_nodes (entity_type TEXT, entity_id TEXT);
         INSERT INTO entity_nodes VALUES ('item', 'item-a');
         CREATE TABLE entity_aliases (alias_key TEXT, target_type TEXT, target_id TEXT);
@@ -88,6 +92,8 @@ describe("artifact manifest emission", () => {
       expect(manifest.counts.itemPresentationRows).toBe(1);
       expect(manifest.counts.itemOverviewFilters).toBe(1);
       expect(manifest.counts.itemOverviewCategories).toBe(1);
+      expect(manifest.counts.statTypeOverviewRows).toBe(2);
+      expect(manifest.counts.statTypePresentationRows).toBe(2);
       expect(manifest.counts.entityNodes).toBe(1);
       expect(manifest.counts.entityAliases).toBe(1);
       expect(manifest.counts.entityEdges).toBe(1);
