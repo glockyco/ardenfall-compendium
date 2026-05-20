@@ -1,29 +1,84 @@
-import Database from "better-sqlite3";
+import { existsSync } from "node:fs";
+import { createRequire } from "node:module";
 import { join } from "node:path";
 
 const DB_PATH = join(process.cwd(), "static", "data.sqlite");
-
-let db: Database.Database | null = null;
+const require = createRequire(import.meta.url);
 
 type SqlParams = readonly unknown[] | Record<string, unknown>;
+type SqliteStatement = {
+  all: (...params: unknown[]) => unknown[];
+  get: (...params: unknown[]) => unknown | null;
+};
+type SqliteDatabase = {
+  close: () => void;
+  query?: (sql: string) => SqliteStatement;
+  prepare?: (sql: string) => SqliteStatement;
+};
+
+let db: SqliteDatabase | null = null;
 
 const assetSrc = (hash: string | null): string | null => (hash ? `/assets/${hash}.webp` : null);
 
-function getDb(): Database.Database {
-  db ??= new Database(DB_PATH, { readonly: true, fileMustExist: true });
+const colorCss = (json: string | null): string | null => {
+  if (!json) return null;
+  try {
+    const color = JSON.parse(json) as { r?: unknown; g?: unknown; b?: unknown; a?: unknown };
+    if (typeof color.r !== "number" || typeof color.g !== "number" || typeof color.b !== "number") {
+      return null;
+    }
+    const alpha = typeof color.a === "number" && Number.isFinite(color.a) ? color.a : 1;
+    return `rgba(${colorChannel(color.r)}, ${colorChannel(color.g)}, ${colorChannel(color.b)}, ${alpha})`;
+  } catch {
+    return null;
+  }
+};
+
+const colorChannel = (value: number): number => Math.round(Math.max(0, Math.min(1, value)) * 255);
+
+function getDb(): SqliteDatabase {
+  if (!db) {
+    if (!existsSync(DB_PATH)) throw new Error(`missing site SQLite database: ${DB_PATH}`);
+    db = openReadonlyDatabase(DB_PATH);
+  }
   return db;
 }
 
+function openReadonlyDatabase(path: string): SqliteDatabase {
+  if ((process.versions as { bun?: string }).bun) {
+    const { Database } = require("bun:sqlite") as {
+      Database: new (
+        filename: string,
+        options: { readonly: boolean; create: boolean },
+      ) => SqliteDatabase;
+    };
+    return new Database(path, { readonly: true, create: false });
+  }
+
+  const Database = require("better-sqlite3") as new (
+    filename: string,
+    options: { readonly: boolean; fileMustExist: boolean },
+  ) => SqliteDatabase;
+  return new Database(path, { readonly: true, fileMustExist: true });
+}
+
+function prepareStatement(sql: string): SqliteStatement {
+  const database = getDb();
+  if (database.query) return database.query(sql);
+  if (database.prepare) return database.prepare(sql);
+  throw new Error("unsupported SQLite database adapter");
+}
+
 function all<T>(sql: string, params: SqlParams = []): T[] {
-  return getDb()
-    .prepare(sql)
-    .all(...(Array.isArray(params) ? params : [params])) as T[];
+  const query = prepareStatement(sql);
+  return (Array.isArray(params) ? query.all(...params) : query.all(params)) as T[];
 }
 
 function get<T>(sql: string, params: SqlParams = []): T | undefined {
-  return getDb()
-    .prepare(sql)
-    .get(...(Array.isArray(params) ? params : [params])) as T | undefined;
+  const query = prepareStatement(sql);
+  return (
+    ((Array.isArray(params) ? query.get(...params) : query.get(params)) as T | null) ?? undefined
+  );
 }
 
 export interface SiteEntity {
@@ -279,6 +334,50 @@ export interface EntityNodeRow {
   isPublic: boolean;
 }
 
+interface StatTypeOverviewRecord {
+  id: string;
+  name: string;
+  grouping: "attribute" | "skill" | "trait";
+  icon_hash: string | null;
+  icon_color: string | null;
+  route_path: string;
+}
+
+interface StatTypePresentationRecord {
+  id: string;
+  name: string;
+  grouping: "attribute" | "skill" | "trait";
+  render_context: "stat-type-presentation-v1";
+  icon_hash: string | null;
+  icon_color: string | null;
+  description: string | null;
+  long_description: string | null;
+  affects_json: string;
+  skill_affects_json: string;
+}
+
+export interface StatTypeOverviewRow {
+  id: string;
+  name: string;
+  grouping: "attribute" | "skill" | "trait";
+  iconSrc: string | null;
+  iconColor: string | null;
+  routePath: string;
+}
+
+export interface StatTypePresentationRow {
+  id: string;
+  name: string;
+  grouping: "attribute" | "skill" | "trait";
+  renderContext: "stat-type-presentation-v1";
+  iconSrc: string | null;
+  iconColor: string | null;
+  description: string | null;
+  longDescription: string | null;
+  affects: string[];
+  skillAffects: string[];
+}
+
 export const getEntity = (id: string): SiteEntity | undefined =>
   get<SiteEntity>("SELECT * FROM site_entities WHERE entity_id = ?", [id]);
 
@@ -440,3 +539,46 @@ export const getEntityNodeByShortId = (
      WHERE entity_type = ? AND short_id = ? AND is_public = 1`,
     [entityType, shortId],
   );
+
+export const listStatTypes = (): StatTypeOverviewRow[] =>
+  all<StatTypeOverviewRecord>(
+    `SELECT o.id, o.name, o.grouping, o.icon_hash, o.icon_color, n.route_path
+     FROM stat_type_overview_rows o
+     JOIN entity_nodes n
+       ON n.entity_type = 'stat-type'
+      AND n.entity_id = o.id
+      AND n.is_public = 1
+     ORDER BY o.grouping, o.name`,
+  ).map((row) => ({
+    id: row.id,
+    name: row.name,
+    grouping: row.grouping,
+    iconSrc: assetSrc(row.icon_hash),
+    iconColor: colorCss(row.icon_color),
+    routePath: row.route_path,
+  }));
+
+export const getStatTypePresentation = (slug: string): StatTypePresentationRow | undefined => {
+  const node = getEntityNodeBySlug("stat-type", slug);
+  if (!node) return undefined;
+  const row = get<StatTypePresentationRecord>(
+    `SELECT id, name, grouping, render_context, icon_hash, icon_color,
+            description, long_description, affects_json, skill_affects_json
+     FROM stat_type_presentation_rows
+     WHERE id = ?`,
+    [node.entityId],
+  );
+  if (!row) return undefined;
+  return {
+    id: row.id,
+    name: row.name,
+    grouping: row.grouping,
+    renderContext: row.render_context,
+    iconSrc: assetSrc(row.icon_hash),
+    iconColor: colorCss(row.icon_color),
+    description: row.description,
+    longDescription: row.long_description,
+    affects: JSON.parse(row.affects_json) as string[],
+    skillAffects: JSON.parse(row.skill_affects_json) as string[],
+  };
+};

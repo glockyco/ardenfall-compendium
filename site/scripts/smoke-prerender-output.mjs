@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { Database } from "bun:sqlite";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -63,6 +64,54 @@ if (detail.includes("_app/immutable/entry/app")) {
 if (probe.displayIconHash) {
   const assetPath = join(outputDir, "assets", `${probe.displayIconHash}.webp`);
   if (!existsSync(assetPath)) throw new Error(`missing probe asset: ${assetPath}`);
+}
+
+const statProbe = readStatProbe();
+const statsOverviewPath = firstExisting([
+  join(outputDir, "stats", "index.html"),
+  join(outputDir, "stats.html"),
+]);
+if (!statsOverviewPath) throw new Error(`missing prerendered stat overview under ${outputDir}`);
+const statsOverview = readFileSync(statsOverviewPath, "utf8");
+for (const snippet of ["Stats", statProbe.name, statProbe.grouping]) {
+  if (!statsOverview.includes(snippet)) throw new Error(`stat overview HTML missing ${snippet}`);
+}
+const statsDetailPath = firstExisting([
+  join(outputDir, "stats", `${statProbe.canonical_slug}.html`),
+  join(outputDir, "stats", statProbe.canonical_slug, "index.html"),
+]);
+if (!statsDetailPath) throw new Error(`missing prerendered stat detail page for ${statProbe.id}`);
+const statsDetail = readFileSync(statsDetailPath, "utf8");
+for (const snippet of [statProbe.name, statProbe.grouping, "melee-damage"]) {
+  if (!statsDetail.includes(snippet)) throw new Error(`stat detail HTML missing ${snippet}`);
+}
+if (statsDetail.includes("background-color: {")) {
+  throw new Error("stat detail rendered raw JSON as CSS color");
+}
+
+function readStatProbe() {
+  const db = new Database(join(import.meta.dirname, "..", "static", "data.sqlite"), {
+    readonly: true,
+    create: false,
+  });
+  try {
+    const row = db
+      .query(
+        `SELECT o.id, o.name, o.grouping, n.canonical_slug
+         FROM stat_type_overview_rows o
+         JOIN entity_nodes n
+           ON n.entity_type = 'stat-type'
+          AND n.entity_id = o.id
+          AND n.is_public = 1
+         ORDER BY o.grouping, o.name
+         LIMIT 1`,
+      )
+      .get();
+    if (!row) throw new Error("staged artifact contains no stat-type probe");
+    return row;
+  } finally {
+    db.close();
+  }
 }
 
 function firstExisting(paths) {

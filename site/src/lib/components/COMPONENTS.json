@@ -70,6 +70,16 @@
       "id": "items.ItemOverviewFilters",
       "path": "items/ItemOverviewFilters.svelte",
       "layer": "items"
+    },
+    {
+      "id": "stats.StatTypeOverview",
+      "path": "stats/StatTypeOverview.svelte",
+      "layer": "stats"
+    },
+    {
+      "id": "stats.StatTypeDetail",
+      "path": "stats/StatTypeDetail.svelte",
+      "layer": "stats"
     }
   ]
 }
