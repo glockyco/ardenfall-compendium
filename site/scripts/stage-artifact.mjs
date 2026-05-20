@@ -115,8 +115,8 @@ function assertSqliteCounts(path, counts) {
     assertCount(db, counts, "itemPresentationRows", "item_presentation_rows");
     assertCount(db, counts, "itemOverviewFilters", "item_overview_filters");
     assertCount(db, counts, "itemOverviewCategories", "item_overview_categories");
-    assertCount(db, counts, "statTypeOverviewRows", "stat_type_overview_rows");
-    assertCount(db, counts, "statTypePresentationRows", "stat_type_presentation_rows");
+    assertRequiredCount(db, counts, "statTypeOverviewRows", "stat_type_overview_rows");
+    assertRequiredCount(db, counts, "statTypePresentationRows", "stat_type_presentation_rows");
   } finally {
     db.close();
   }
@@ -130,11 +130,16 @@ function assertCount(db, counts, key, table) {
   }
 }
 
+function assertRequiredCount(db, counts, key, table) {
+  if (counts[key] === undefined) throw new Error(`missing required count ${key}`);
+  assertCount(db, counts, key, table);
+}
+
 function countRows(db, table) {
   const tableRow = db
     .query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
     .get(table);
-  if (!tableRow) return 0;
+  if (!tableRow) throw new Error(`missing sqlite table ${table}`);
   return db.query(`SELECT COUNT(*) AS count FROM ${table}`).get().count;
 }
 

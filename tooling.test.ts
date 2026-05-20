@@ -59,6 +59,18 @@ function writeMinimalArtifactSqlite(
     db.close();
   }
 }
+
+function writeEmptyStatReadModelTables(sqlitePath: string): void {
+  const db = new Database(sqlitePath);
+  try {
+    db.exec(`
+      CREATE TABLE stat_type_overview_rows (id TEXT);
+      CREATE TABLE stat_type_presentation_rows (id TEXT);
+    `);
+  } finally {
+    db.close();
+  }
+}
 describe("format tooling", () => {
   it("formats mjs files in the pre-commit prettier hook", () => {
     expect(lefthook).toContain("mjs");
@@ -151,7 +163,7 @@ describe("site deployment tooling", () => {
     );
     expect(sitePackageJson.scripts["cf-deploy"]).toBe("bun run deploy:production");
     expect(existsSync("site/scripts/stage-artifact.mjs")).toBe(true);
-    expect(sitePrerenderSmoke).toContain("ORDER BY o.icon_hash IS NULL");
+    expect(sitePrerenderSmoke).toContain("WHERE o.icon_hash IS NOT NULL");
     expect(gitignore).toContain("site/_redirects");
   });
 
@@ -304,6 +316,7 @@ describe("site deployment tooling", () => {
         snapshotId: source.snapshotId,
         gitCommit: git.commit,
       });
+      writeEmptyStatReadModelTables(sqlitePath);
       const sqliteBytes = readFileSync(sqlitePath);
       writeFileSync(
         join(artifact, "artifact-manifest.json"),
@@ -320,6 +333,8 @@ describe("site deployment tooling", () => {
             itemPresentationRows: 0,
             itemOverviewFilters: 0,
             itemOverviewCategories: 0,
+            statTypeOverviewRows: 0,
+            statTypePresentationRows: 0,
           },
           outputs: {
             sqlite: {
@@ -388,6 +403,96 @@ describe("site deployment tooling", () => {
         snapshotId: source.snapshotId,
         gitCommit: git.commit,
       });
+      writeEmptyStatReadModelTables(sqlitePath);
+      const sqliteBytes = readFileSync(sqlitePath);
+      writeFileSync(
+        join(artifact, "artifact-manifest.json"),
+        JSON.stringify({
+          schemaVersion: 1,
+          artifactKind: "fixture",
+          artifactId: "synthetic",
+          createdAt: "2026-05-15T00:00:00.000Z",
+          source,
+          git,
+          diagnostics: { fatal: 0, diagnostic: 0 },
+          counts: {
+            itemOverviewRows: 0,
+            itemPresentationRows: 0,
+            itemOverviewFilters: 0,
+            itemOverviewCategories: 0,
+            statTypeOverviewRows: 0,
+            statTypePresentationRows: 0,
+          },
+          outputs: {
+            sqlite: {
+              path: "data.sqlite",
+              bytes: sqliteBytes.byteLength,
+              sha256: sha256(sqliteBytes),
+            },
+            assets: { path: "assets", count: 0, treeSha256: sha256("") },
+          },
+          probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
+        }),
+      );
+
+      const { stageArtifact } = (await import("./site/scripts/stage-artifact.mjs")) as {
+        stageArtifact: (options: {
+          artifactDir: string;
+          targetDir: string;
+          mode: "fixture" | "release";
+        }) => Promise<unknown>;
+      };
+
+      await stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" });
+
+      expect(readFileSync(join(projectRoot, "_redirects"), "utf8")).toBe("# generated redirects\n");
+      expect(existsSync(join(target, "_redirects"))).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects artifacts that omit stat read-model counts", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-missing-stat-counts-"));
+    try {
+      const artifact = join(root, "artifact");
+      const target = join(root, "site", "static");
+      const source = {
+        kind: "synthetic-fixture",
+        fixtureName: "synthetic",
+        snapshotId: "synthetic",
+        gameVersion: "fixture",
+        buildIdentifier: "synthetic",
+        extractorVersion: "0.1.0",
+        snapshotManifestSha256: "a".repeat(64),
+      };
+      const git = {
+        repository: "glockyco/ardenfall-compendium",
+        commit: "b".repeat(40),
+        branch: "main",
+        dirty: false,
+      };
+      mkdirSync(join(artifact, "assets"), { recursive: true });
+      mkdirSync(join(artifact, "static"), { recursive: true });
+      writeFileSync(join(artifact, "static", "_redirects"), "# redirects\n");
+
+      const sqlitePath = join(artifact, "data.sqlite");
+      writeMinimalArtifactSqlite(sqlitePath, {
+        artifactKind: "fixture",
+        artifactId: "synthetic",
+        sourceKind: source.kind,
+        snapshotId: source.snapshotId,
+        gitCommit: git.commit,
+      });
+      const db = new Database(sqlitePath);
+      try {
+        db.exec(`
+          CREATE TABLE stat_type_overview_rows (id TEXT);
+          CREATE TABLE stat_type_presentation_rows (id TEXT);
+        `);
+      } finally {
+        db.close();
+      }
       const sqliteBytes = readFileSync(sqlitePath);
       writeFileSync(
         join(artifact, "artifact-manifest.json"),
@@ -425,10 +530,88 @@ describe("site deployment tooling", () => {
         }) => Promise<unknown>;
       };
 
-      await stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" });
+      await expect(
+        stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),
+      ).rejects.toThrow(/missing required count statTypeOverviewRows/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 
-      expect(readFileSync(join(projectRoot, "_redirects"), "utf8")).toBe("# generated redirects\n");
-      expect(existsSync(join(target, "_redirects"))).toBe(false);
+  it("rejects artifacts that omit stat read-model tables", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-missing-stat-tables-"));
+    try {
+      const artifact = join(root, "artifact");
+      const target = join(root, "site", "static");
+      const source = {
+        kind: "synthetic-fixture",
+        fixtureName: "synthetic",
+        snapshotId: "synthetic",
+        gameVersion: "fixture",
+        buildIdentifier: "synthetic",
+        extractorVersion: "0.1.0",
+        snapshotManifestSha256: "a".repeat(64),
+      };
+      const git = {
+        repository: "glockyco/ardenfall-compendium",
+        commit: "b".repeat(40),
+        branch: "main",
+        dirty: false,
+      };
+      mkdirSync(join(artifact, "assets"), { recursive: true });
+      mkdirSync(join(artifact, "static"), { recursive: true });
+      writeFileSync(join(artifact, "static", "_redirects"), "# redirects\n");
+
+      const sqlitePath = join(artifact, "data.sqlite");
+      writeMinimalArtifactSqlite(sqlitePath, {
+        artifactKind: "fixture",
+        artifactId: "synthetic",
+        sourceKind: source.kind,
+        snapshotId: source.snapshotId,
+        gitCommit: git.commit,
+      });
+      const sqliteBytes = readFileSync(sqlitePath);
+      writeFileSync(
+        join(artifact, "artifact-manifest.json"),
+        JSON.stringify({
+          schemaVersion: 1,
+          artifactKind: "fixture",
+          artifactId: "synthetic",
+          createdAt: "2026-05-15T00:00:00.000Z",
+          source,
+          git,
+          diagnostics: { fatal: 0, diagnostic: 0 },
+          counts: {
+            itemOverviewRows: 0,
+            itemPresentationRows: 0,
+            itemOverviewFilters: 0,
+            itemOverviewCategories: 0,
+            statTypeOverviewRows: 0,
+            statTypePresentationRows: 0,
+          },
+          outputs: {
+            sqlite: {
+              path: "data.sqlite",
+              bytes: sqliteBytes.byteLength,
+              sha256: sha256(sqliteBytes),
+            },
+            assets: { path: "assets", count: 0, treeSha256: sha256("") },
+          },
+          probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
+        }),
+      );
+
+      const { stageArtifact } = (await import("./site/scripts/stage-artifact.mjs")) as {
+        stageArtifact: (options: {
+          artifactDir: string;
+          targetDir: string;
+          mode: "fixture" | "release";
+        }) => Promise<unknown>;
+      };
+
+      await expect(
+        stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),
+      ).rejects.toThrow(/missing sqlite table stat_type_overview_rows/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -568,6 +751,16 @@ describe("site prerender architecture", () => {
     expect(smoke).not.toContain("fixture-iron-sword");
     expect(smoke).not.toContain("Iron Sword");
     expect(smoke).toContain("manifest.probes.items");
+  });
+
+  it("requires an icon-bearing stat prerender smoke probe", () => {
+    const smoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
+
+    expect(smoke).toContain("WHERE o.icon_hash IS NOT NULL");
+    expect(smoke).toContain(
+      'throw new Error("staged artifact contains no icon-bearing stat-type probe")',
+    );
+    expect(smoke).not.toContain("if (statProbe.icon_hash &&");
   });
 
   it("uses release metadata for local and production smokes", () => {

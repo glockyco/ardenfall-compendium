@@ -76,7 +76,7 @@ const statsOverview = readFileSync(statsOverviewPath, "utf8");
 for (const snippet of ["Stats", statProbe.name, statProbe.grouping]) {
   if (!statsOverview.includes(snippet)) throw new Error(`stat overview HTML missing ${snippet}`);
 }
-if (statProbe.icon_hash && !statsOverview.includes(`/assets/${statProbe.icon_hash}.webp`)) {
+if (!statsOverview.includes(`/assets/${statProbe.icon_hash}.webp`)) {
   throw new Error(`stat overview HTML missing icon asset ${statProbe.icon_hash}`);
 }
 const statsDetailPath = firstExisting([
@@ -91,7 +91,7 @@ for (const snippet of [statProbe.name, statProbe.grouping, "melee-damage"]) {
 if (statsDetail.includes("background-color: {")) {
   throw new Error("stat detail rendered raw JSON as CSS color");
 }
-if (statProbe.icon_hash && !statsDetail.includes(`/assets/${statProbe.icon_hash}.webp`)) {
+if (!statsDetail.includes(`/assets/${statProbe.icon_hash}.webp`)) {
   throw new Error(`stat detail HTML missing icon asset ${statProbe.icon_hash}`);
 }
 
@@ -109,11 +109,12 @@ function readStatProbe() {
            ON n.entity_type = 'stat-type'
           AND n.entity_id = o.id
           AND n.is_public = 1
-         ORDER BY o.icon_hash IS NULL, o.grouping, o.name
+         WHERE o.icon_hash IS NOT NULL
+         ORDER BY o.grouping, o.name
          LIMIT 1`,
       )
       .get();
-    if (!row) throw new Error("staged artifact contains no stat-type probe");
+    if (!row) throw new Error("staged artifact contains no icon-bearing stat-type probe");
     return row;
   } finally {
     db.close();
