@@ -6,7 +6,7 @@
 </script>
 
 <header class="flex items-center gap-3">
-  <ItemIcon src={item.displayIconSrc} size="lg" />
+  <ItemIcon src={item.displayIconSrc} displayIconColor={item.displayIconColor} size="lg" />
   <div>
     <h1 class="text-2xl font-bold">{item.name ?? item.id}</h1>
     <p class="text-muted-foreground">{item.itemType ?? item.variant}</p>

@@ -23,6 +23,11 @@
     return typeof value === "string" && value.length > 0 ? value : null;
   }
 
+  function iconColor(row: T): string | null {
+    const value = (row as T & { displayIconColor?: unknown }).displayIconColor;
+    return typeof value === "string" && value.length > 0 ? value : null;
+  }
+
   function tooltip(row: T): ItemPresentationRow | null {
     const value = (row as T & { tooltip?: unknown }).tooltip;
     return value && typeof value === "object" ? (value as ItemPresentationRow) : null;
@@ -44,7 +49,7 @@
           <td class="p-2">
             {#if col.renderer === "itemNameWithIcon"}
               <span class="group relative flex items-center gap-2">
-                <ItemIcon src={iconSrc(row)} size="sm" />
+                <ItemIcon src={iconSrc(row)} displayIconColor={iconColor(row)} size="sm" />
                 {#if tooltip(row)}
                   <span
                     class="absolute top-9 left-0 z-20 hidden group-focus-within:block group-hover:block"

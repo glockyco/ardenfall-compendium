@@ -10,7 +10,7 @@
   class="bg-popover text-popover-foreground border-border w-72 rounded-lg border p-3 shadow-lg"
 >
   <div class="flex items-center gap-2">
-    <ItemIcon src={item.displayIconSrc} size="sm" />
+    <ItemIcon src={item.displayIconSrc} displayIconColor={item.displayIconColor} size="sm" />
     <div>
       <h3 class="font-semibold">{item.name ?? item.id}</h3>
       <p class="text-muted-foreground text-xs">{item.itemType ?? item.variant}</p>
