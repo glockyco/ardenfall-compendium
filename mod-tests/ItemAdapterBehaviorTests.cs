@@ -100,4 +100,27 @@ public sealed class ItemAdapterBehaviorTests
         Assert.Equal("Weapons", ExtractItem.CategoryNameForFallback(category));
         Assert.Null(ExtractItem.CategoryNameForFallback(null));
     }
+
+    [Fact]
+    public void EquipmentStatTypeLabelUsesDisplayName()
+    {
+        var statType = (StatType)RuntimeHelpers.GetUninitializedObject(typeof(StatType));
+        statType.id = "sk_armor-light";
+        statType.statName = "Light Armor";
+
+        Assert.Equal("Light Armor", ExtractEquipment.StatTypeLabel(statType));
+    }
+
+    [Fact]
+    public void SlateSpellRequirementStatTypeFallsBackToSpellStatType()
+    {
+        var spellStatType = (StatType)RuntimeHelpers.GetUninitializedObject(typeof(StatType));
+        spellStatType.statName = "Night Eye";
+        var spellData = (SpellData)RuntimeHelpers.GetUninitializedObject(typeof(SpellData));
+        spellData.statType = spellStatType;
+        var spell = new LeveledSpellData { spellData = spellData, level = 3 };
+
+        Assert.Equal("Night Eye", ExtractSlateSpell.RequirementStatTypeLabel(equipStatType: null, spell));
+        Assert.Equal("Night Eye Scroll", ExtractSlateSpell.ItemTypeLabel(spell, SpellItemType.Scroll));
+    }
 }

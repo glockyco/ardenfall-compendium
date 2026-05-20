@@ -11,6 +11,7 @@ public static class ExtractMelee
         {
             ["damage"] = asset.damage.Get(),
             ["criticalHitChance"] = asset.criticalHitChance.Get(),
+            ["hardAttackDamMult"] = asset.hardAttackDamMult.Get(),
             ["meleeDurabilityMax"] = asset.durabilityMax.Get(),
             ["canBlock"] = asset.canBlock.Get(),
         };

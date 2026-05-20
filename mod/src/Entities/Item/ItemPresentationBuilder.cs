@@ -10,7 +10,7 @@ public static class ItemPresentationBuilder
     private static readonly (string Field, string Label, string Source, string Size)[] StatFields =
     {
         ("damage", "Damage", "MeleeItem.GetItemStatInfos()", "large"),
-        ("armorRating", "Armor", "ArmorItem.GetItemStatInfos()", "large"),
+        ("armorRating", "Damage Threshold", "ArmorItem.GetItemStatInfos()", "large"),
         ("quickslotCooldownTime", "Cooldown", "ConsumableItem.quickslotCooldownTime.Get()", "normal"),
         ("manaCostMultiplier", "Mana cost multiplier", "SlateSpellItem.manaCostMultiplier.Get()", "normal"),
     };
@@ -61,22 +61,42 @@ public static class ItemPresentationBuilder
                 Size = stat.Size,
                 Source = stat.Source,
             });
+            if (stat.Field == "damage") AddHeavyAttackDamageRow(fields, rows);
         }
         return rows;
+    }
+
+    private static void AddHeavyAttackDamageRow(
+        IReadOnlyDictionary<string, object?> fields,
+        List<ItemPresentationStatRowSnapshot> rows)
+    {
+        var damage = FloatField(fields, "damage");
+        var multiplier = FloatField(fields, "hardAttackDamMult");
+        if (damage == null || multiplier == null) return;
+
+        var value = damage.Value * multiplier.Value;
+        rows.Add(new ItemPresentationStatRowSnapshot
+        {
+            Id = "heavyAttackDamage",
+            Label = "Heavy Attack Damage",
+            Value = value,
+            ValueText = FormatNumber(value),
+            Size = "large",
+            Source = "MeleeItem.GetItemStatInfos()",
+        });
     }
 
     private static List<ItemPresentationRequirementSnapshot> BuildRequirements(IReadOnlyDictionary<string, object?> fields)
     {
         var rows = new List<ItemPresentationRequirementSnapshot>();
         var minimumSkill = IntField(fields, "minimumSkill");
-        if (minimumSkill != null && minimumSkill.Value > 0)
+        var statType = StringField(fields, "statType");
+        if (minimumSkill != null && minimumSkill.Value > 0 && !string.IsNullOrWhiteSpace(statType))
         {
-            var statType = StringField(fields, "statType");
-            var label = string.IsNullOrWhiteSpace(statType) ? "Minimum skill" : statType!;
             rows.Add(new ItemPresentationRequirementSnapshot
             {
                 Id = "minimum-skill",
-                Label = label,
+                Label = statType!,
                 ValueText = minimumSkill.Value.ToString(CultureInfo.InvariantCulture),
                 Source = "EquipItemData.minimumSkill/statType",
             });
@@ -89,7 +109,7 @@ public static class ItemPresentationBuilder
         foreach (var field in new[] { "meleeDurabilityMax", "armorDurabilityMax", "durabilityMax" })
         {
             var max = FloatField(fields, field);
-            if (max == null) continue;
+            if (max == null || max.Value <= 0) continue;
             return new ItemPresentationDurabilitySnapshot
             {
                 Max = max.Value,
@@ -101,15 +121,7 @@ public static class ItemPresentationBuilder
 
     private static List<ItemPresentationStateFactSnapshot> BuildStateFacts(IReadOnlyDictionary<string, object?> fields)
     {
-        var facts = new List<ItemPresentationStateFactSnapshot>
-        {
-            new()
-            {
-                Kind = "canonical-state",
-                Label = "Canonical compendium state",
-                Description = "Base item, no player or inventory context.",
-            },
-        };
+        var facts = new List<ItemPresentationStateFactSnapshot>();
         if (BoolField(fields, "stackable") == true)
         {
             facts.Add(new ItemPresentationStateFactSnapshot
@@ -148,7 +160,7 @@ public static class ItemPresentationBuilder
     private static List<ItemPresentationEffectSnapshot> BuildEffects(IReadOnlyDictionary<string, object?> fields)
     {
         var effects = new List<ItemPresentationEffectSnapshot>();
-        var spellName = NestedString(fields, "spellDataJson", "name");
+        var spellName = NestedString(fields, "spellDataJson", "spellName") ?? NestedString(fields, "spellDataJson", "name");
         var spellId = NestedString(fields, "spellDataJson", "id");
         if (!string.IsNullOrWhiteSpace(spellName))
         {
@@ -190,9 +202,10 @@ public static class ItemPresentationBuilder
     private static string BuildEffectsSource(IReadOnlyList<ItemPresentationEffectSnapshot> effects, IReadOnlyDictionary<string, object?> fields)
     {
         if (effects.Count == 0) return "";
-        if (!string.IsNullOrWhiteSpace(NestedString(fields, "spellDataJson", "name")))
+        var spellName = NestedString(fields, "spellDataJson", "spellName") ?? NestedString(fields, "spellDataJson", "name");
+        if (!string.IsNullOrWhiteSpace(spellName))
         {
-            return "Casts " + NestedString(fields, "spellDataJson", "name");
+            return "Casts " + spellName;
         }
         if (!string.IsNullOrWhiteSpace(StringField(fields, "effectName")))
         {

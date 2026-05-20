@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities.Item;
+using ArdenfallCompendium.Entities.Item.Adapters;
 using Xunit;
 
 namespace ArdenfallCompendium.Tests;
@@ -18,6 +19,7 @@ public sealed class ItemPresentationTests
             ["weight"] = 3.5f,
             ["damage"] = 7.5f,
             ["meleeDurabilityMax"] = 100,
+            ["hardAttackDamMult"] = 1.5f,
             ["minimumSkill"] = 5,
             ["statType"] = "Strength",
         };
@@ -49,11 +51,13 @@ public sealed class ItemPresentationTests
         Assert.Equal(3.5f, presentation.Weight);
         Assert.Contains(presentation.StatRows, row =>
             row.Id == "damage" && row.Label == "Damage" && row.ValueText == "7.5" && row.Comparison == null);
+        Assert.Contains(presentation.StatRows, row =>
+            row.Id == "heavyAttackDamage" && row.Label == "Heavy Attack Damage" && row.ValueText == "11.25");
         Assert.Equal("max-durability", presentation.Durability?.Kind);
         Assert.Contains(presentation.Requirements, row =>
             row.Id == "minimum-skill" && row.Label == "Strength" && row.ValueText == "5");
         Assert.Equal(100, presentation.Durability?.Max);
-        Assert.Contains(presentation.StateFacts, fact => fact.Kind == "canonical-state");
+        Assert.DoesNotContain(presentation.StateFacts, fact => fact.Kind == "canonical-state");
         Assert.Contains(presentation.Omissions, omission => omission.Code == "equippedComparisonOmitted");
     }
 
@@ -82,6 +86,48 @@ public sealed class ItemPresentationTests
     }
 
     [Fact]
+    public void BuilderHidesAmbiguousRequirementsAndZeroDurability()
+    {
+        var fields = new Dictionary<string, object?>
+        {
+            ["name"] = "Unresolved Slate",
+            ["description"] = "",
+            ["minimumSkill"] = 40,
+            ["durabilityMax"] = 0,
+        };
+
+        var presentation = ItemPresentationBuilder.FromExtractedFields(
+            rowId: "fixture-slate",
+            variantId: "slate-spell",
+            fields,
+            provenance: new Dictionary<string, Provenance>());
+
+        Assert.Empty(presentation.Requirements);
+        Assert.Null(presentation.Durability);
+        Assert.DoesNotContain(presentation.StateFacts, fact => fact.Kind == "canonical-state");
+    }
+
+    [Fact]
+    public void BuilderUsesGameTooltipLabelForArmorRating()
+    {
+        var fields = new Dictionary<string, object?>
+        {
+            ["name"] = "Leather Tunic",
+            ["description"] = "",
+            ["armorRating"] = 12,
+        };
+
+        var presentation = ItemPresentationBuilder.FromExtractedFields(
+            rowId: "fixture-leather-tunic",
+            variantId: "armor",
+            fields,
+            provenance: new Dictionary<string, Provenance>());
+
+        Assert.Contains(presentation.StatRows, row =>
+            row.Id == "armorRating" && row.Label == "Damage Threshold" && row.ValueText == "12");
+    }
+
+    [Fact]
     public void BuilderDerivesSafeEffectFactsFromExtractedFields()
     {
         var fields = new Dictionary<string, object?>
@@ -107,5 +153,33 @@ public sealed class ItemPresentationTests
             effect.Label == "Spark" &&
             effect.TargetType == "spell" &&
             effect.TargetId == "fixture-spark");
+    }
+
+    [Fact]
+    public void BuilderUsesLeveledSpellSnapshotNameForSlateEffects()
+    {
+        var fields = new Dictionary<string, object?>
+        {
+            ["name"] = "Scroll of Spark",
+            ["description"] = "",
+            ["spellDataJson"] = new LeveledSpellDataSnapshot(
+                SpellRef: null,
+                SpellName: "Spark",
+                Level: 2,
+                SecondaryLevel: 2,
+                SubSpells: new List<SubSpellSnapshot>()),
+        };
+
+        var presentation = ItemPresentationBuilder.FromExtractedFields(
+            rowId: "fixture-slate",
+            variantId: "slate-spell",
+            fields,
+            provenance: new Dictionary<string, Provenance>());
+
+        Assert.Equal("Casts Spark", presentation.EffectsSource);
+        Assert.Contains(presentation.Effects, effect =>
+            effect.Kind == "spell" &&
+            effect.Label == "Spark" &&
+            effect.TargetType == "spell");
     }
 }
