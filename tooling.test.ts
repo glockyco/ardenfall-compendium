@@ -761,6 +761,8 @@ describe("site prerender architecture", () => {
       'throw new Error("staged artifact contains no icon-bearing stat-type probe")',
     );
     expect(smoke).not.toContain("if (statProbe.icon_hash &&");
+    expect(smoke).toContain("missing stat probe asset");
+    expect(smoke).not.toContain("melee-damage");
   });
 
   it("uses release metadata for local and production smokes", () => {

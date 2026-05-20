@@ -67,6 +67,8 @@ if (probe.displayIconHash) {
 }
 
 const statProbe = readStatProbe();
+const statIconPath = join(outputDir, "assets", `${statProbe.icon_hash}.webp`);
+if (!existsSync(statIconPath)) throw new Error(`missing stat probe asset: ${statIconPath}`);
 const statsOverviewPath = firstExisting([
   join(outputDir, "stats", "index.html"),
   join(outputDir, "stats.html"),
@@ -85,7 +87,7 @@ const statsDetailPath = firstExisting([
 ]);
 if (!statsDetailPath) throw new Error(`missing prerendered stat detail page for ${statProbe.id}`);
 const statsDetail = readFileSync(statsDetailPath, "utf8");
-for (const snippet of [statProbe.name, statProbe.grouping, "melee-damage"]) {
+for (const snippet of [statProbe.name, statProbe.grouping]) {
   if (!statsDetail.includes(snippet)) throw new Error(`stat detail HTML missing ${snippet}`);
 }
 if (statsDetail.includes("background-color: {")) {
