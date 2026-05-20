@@ -40,7 +40,7 @@
         "minimumSkill": 5,
         "statType": "Strength"
       },
-      "tags": ["weapon", "metal"],
+      "tags": [],
       "provenance": {
         "name": {
           "kind": "parameter",
@@ -147,7 +147,7 @@
         "minimumSkill": 0,
         "statType": "Endurance"
       },
-      "tags": ["armor", "leather"],
+      "tags": [],
       "provenance": {
         "iconRef": {
           "kind": "missing",
@@ -248,7 +248,7 @@
           }
         ]
       },
-      "tags": ["consumable", "stamina"],
+      "tags": ["fixture-tag-valuable-remedy"],
       "provenance": {
         "name": {
           "kind": "parameter",
@@ -368,7 +368,7 @@
         "durabilityMax": 60,
         "manaCostMultiplier": 1.1
       },
-      "tags": ["spell", "slate"],
+      "tags": [],
       "provenance": {
         "name": {
           "kind": "parameter",
@@ -493,7 +493,7 @@
         "effectName": "Burning",
         "isDrinkingPotion": false
       },
-      "tags": ["potion", "throwing"],
+      "tags": ["fixture-tag-rare"],
       "provenance": {
         "name": {
           "kind": "parameter",

@@ -34,17 +34,19 @@
   "counts": {
     "item": 5,
     "stat-type": 2,
-    "item-category": 1
+    "item-category": 1,
+    "item-tag": 2
   },
   "diagnostics": {
     "fatal": 0,
     "diagnostic": 0
   },
   "hashes": {
-    "items.json": "f89baec43a75635a0f6b8fb800ffe2ca3a79a88c72883b177e0f371f4032358b",
+    "items.json": "8eeeb533d438777ffe4eceddfafbd5536ff07edc89cc72712241e40bf69833c5",
     "asset-manifest.json": "e6fca19d390b38c5ae4b3fbb4920173d47af07c62f7ed19021bbdd9d3d8108c0",
     "master-tooltip.json": "52eddbdec05b8fb811e2213014fab0f7ad5e0e30b2652a87349886b5ef8234aa",
     "stat-types.json": "249b5eb948ed9ba7dbf3769d90942acdc90fdf0f741947d0373ac7c84b0cdafc",
-    "item-categories.json": "db576ccea92fb897e696a579cac0a526ac88664fb9999e4062c86df4cfb21051"
+    "item-categories.json": "db576ccea92fb897e696a579cac0a526ac88664fb9999e4062c86df4cfb21051",
+    "item-tags.json": "870248efcf66834d9d59b5d87c92e7d205aa8bcd0defd79e1c6c106c8abfa809"
   }
 }

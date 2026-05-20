@@ -54,6 +54,13 @@ describe("end-to-end pipeline", () => {
           db.query("SELECT COUNT(*) c FROM item_categories").get() as { c: number }
         ).c;
         expect(itemCategoryCount).toBe(1);
+        const itemTagCount = (db.query("SELECT COUNT(*) c FROM item_tags").get() as { c: number })
+          .c;
+        expect(itemTagCount).toBe(2);
+        const itemTagOverviewCount = (
+          db.query("SELECT COUNT(*) c FROM item_tag_overview_rows").get() as { c: number }
+        ).c;
+        expect(itemTagOverviewCount).toBe(2);
 
         // Variant ancestry is consistent for the melee row.
         const orphans = db

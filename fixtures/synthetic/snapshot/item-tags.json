@@ -1,0 +1,24 @@
+{
+  "entityId": "item-tag",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "fixture-tag-valuable-remedy",
+      "fields": {
+        "id": "fixture-tag-valuable-remedy",
+        "tagName": "Valuable remedy",
+        "description": "Incredibly valuable remedy"
+      },
+      "diagnostics": []
+    },
+    {
+      "id": "fixture-tag-rare",
+      "fields": {
+        "id": "fixture-tag-rare",
+        "tagName": "Rare",
+        "description": "Difficult to find."
+      },
+      "diagnostics": []
+    }
+  ]
+}

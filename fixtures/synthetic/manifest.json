@@ -13,7 +13,8 @@
     "SmartListParameter<ItemTag> populated and empty cases",
     "Item icon asset slots and color metadata",
     "StatType fixture rows for stat overview/detail routes",
-    "ItemCategory fixture row for category pages and item category counts"
+    "ItemCategory fixture row for category pages and item category counts",
+    "ItemTag fixture rows for tag overview/detail routes and item reverse links"
   ],
   "selection": [
     {
@@ -36,18 +37,24 @@
       "entity": "item-category",
       "ids": ["fixture-weapons"],
       "rationale": "category row for item category pages, icon fallback assets, and item count coverage"
+    },
+    {
+      "entity": "item-tag",
+      "ids": ["fixture-tag-valuable-remedy", "fixture-tag-rare"],
+      "rationale": "tag rows for tag pages, descriptions, and item reverse-link coverage"
     }
   ],
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "0c35a98e8d385ec84a4a1150ad093e637a02d3a019f749ab06ca2bf52c1cb176",
-    "snapshot/items.json": "f89baec43a75635a0f6b8fb800ffe2ca3a79a88c72883b177e0f371f4032358b",
+    "snapshot/manifest.json": "fed4a2f70e5debed17f19ea3fcc7004e68b41140bb2a01fa2484099836f12eae",
+    "snapshot/items.json": "8eeeb533d438777ffe4eceddfafbd5536ff07edc89cc72712241e40bf69833c5",
     "snapshot/asset-manifest.json": "e6fca19d390b38c5ae4b3fbb4920173d47af07c62f7ed19021bbdd9d3d8108c0",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
     "snapshot/assets/items/fixture-icon-blue.png": "d6d4b05209c7541985841a63d955337a411a005d7abb936426791cbfde258f17",
     "snapshot/master-tooltip.json": "52eddbdec05b8fb811e2213014fab0f7ad5e0e30b2652a87349886b5ef8234aa",
     "snapshot/stat-types.json": "249b5eb948ed9ba7dbf3769d90942acdc90fdf0f741947d0373ac7c84b0cdafc",
-    "snapshot/item-categories.json": "db576ccea92fb897e696a579cac0a526ac88664fb9999e4062c86df4cfb21051"
+    "snapshot/item-categories.json": "db576ccea92fb897e696a579cac0a526ac88664fb9999e4062c86df4cfb21051",
+    "snapshot/item-tags.json": "870248efcf66834d9d59b5d87c92e7d205aa8bcd0defd79e1c6c106c8abfa809"
   }
 }
