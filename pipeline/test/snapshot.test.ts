@@ -69,6 +69,44 @@ describe("loadSnapshot", () => {
     ).toBe(true);
   });
 
+  it("loads the master tooltip vocabulary at schemaVersion 2", async () => {
+    const out = await loadSnapshot.run({}, ctx);
+    const v = out.masterTooltip;
+    if (!v) throw new Error("master tooltip vocabulary missing");
+    expect(v.schemaVersion).toBe(2);
+    expect(v.tooltipColors.p?.text).toBe("positive");
+    expect(v.positiveColor.r).toBeGreaterThan(0);
+    expect(v.primarySpellTooltip.length).toBeGreaterThan(0);
+    expect(v.potionRecipeDescription).toContain("{0}");
+  });
+
+  it("rejects a v1 master tooltip dictionary as unsupported", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "ardenfall-v1-mt-"));
+    try {
+      writeFileSync(
+        join(dir, "manifest.json"),
+        readFileSync("fixtures/synthetic/snapshot/manifest.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "asset-manifest.json"),
+        readFileSync("fixtures/synthetic/snapshot/asset-manifest.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "items.json"),
+        readFileSync("fixtures/synthetic/snapshot/items.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "master-tooltip.json"),
+        JSON.stringify({ schemaVersion: 1, tooltipCodes: {}, tooltipColors: {} }),
+      );
+      expect(() => loadSnapshot.run({}, { ...ctx, snapshotDir: dir })).toThrow(
+        /master tooltip.*schemaVersion/,
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it("loads sibling diagnostics artifact and validation counts its entries", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ardenfall-snapshot-"));
     try {

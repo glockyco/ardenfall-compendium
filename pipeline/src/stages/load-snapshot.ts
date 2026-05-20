@@ -3,12 +3,13 @@ import { join } from "node:path";
 import validateAssetManifest from "../../dist/validate-asset-manifest.mjs";
 import validateDiagnostics from "../../dist/validate-diagnostics.mjs";
 import validateManifest from "../../dist/validate-manifest.mjs";
+import validateMasterTooltip from "../../dist/validate-master-tooltip.mjs";
 import validateSnapshot from "../../dist/validate-snapshot.mjs";
 import type {
   SnapshotAssetManifest,
   SnapshotDiagnosticArtifactEntry,
   SnapshotEnvelope,
-  MasterTooltipDictionary,
+  MasterTooltipVocabulary,
   SnapshotManifest,
   Stage,
 } from "../types.ts";
@@ -18,7 +19,7 @@ export interface LoadSnapshotOutput {
   envelopes: Record<string, SnapshotEnvelope>;
   diagnostics: SnapshotDiagnosticArtifactEntry[];
   assetManifest?: SnapshotAssetManifest;
-  masterTooltip?: MasterTooltipDictionary;
+  masterTooltip?: MasterTooltipVocabulary;
 }
 
 export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
@@ -38,7 +39,7 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
     const envelopes: Record<string, SnapshotEnvelope> = {};
     const diagnosticsPath = join(dir, "diagnostics.json");
     const masterTooltipPath = join(dir, "master-tooltip.json");
-    let masterTooltip: MasterTooltipDictionary | undefined;
+    let masterTooltip: MasterTooltipVocabulary | undefined;
     let diagnostics: SnapshotDiagnosticArtifactEntry[] = [];
     for (const fileName of readdirSync(dir)) {
       if (
@@ -85,14 +86,16 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
       }
     }
     if (existsSync(masterTooltipPath)) {
-      masterTooltip = JSON.parse(
-        readFileSync(masterTooltipPath, "utf8"),
-      ) as MasterTooltipDictionary;
-      if (masterTooltip.schemaVersion !== 1) {
+      const raw = JSON.parse(readFileSync(masterTooltipPath, "utf8")) as unknown;
+      if (!validateMasterTooltip(raw)) {
+        const detail = (validateMasterTooltip.errors ?? [])
+          .map((e) => `${masterTooltipPath}#${e.instancePath} — ${e.message}`)
+          .join("\n");
         throw new Error(
-          `invalid master tooltip dictionary at ${masterTooltipPath}: unsupported schemaVersion`,
+          `invalid master tooltip vocabulary at ${masterTooltipPath} (expected schemaVersion 2):\n${detail}`,
         );
       }
+      masterTooltip = raw as MasterTooltipVocabulary;
     }
     return { manifest, envelopes, diagnostics, assetManifest, masterTooltip };
   },

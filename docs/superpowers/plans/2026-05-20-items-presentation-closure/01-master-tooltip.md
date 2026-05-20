@@ -240,7 +240,7 @@ it("rejects a v1 master tooltip dictionary as unsupported", async () => {
       join(dir, "master-tooltip.json"),
       JSON.stringify({ schemaVersion: 1, tooltipCodes: {}, tooltipColors: {} }),
     );
-    await expect(loadSnapshot.run({}, { ...ctx, snapshotDir: dir })).rejects.toThrow(
+    expect(() => loadSnapshot.run({}, { ...ctx, snapshotDir: dir })).toThrow(
       /master tooltip.*schemaVersion/,
     );
   } finally {

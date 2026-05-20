@@ -184,10 +184,38 @@ export interface ItemPresentationDiagnostic {
   message: string;
 }
 
-export interface MasterTooltipDictionary {
-  schemaVersion: 1;
+export interface MasterTooltipVocabulary {
+  schemaVersion: 2;
   tooltipCodes: Record<string, string>;
-  tooltipColors: Record<string, string>;
+  tooltipColors: Record<string, MasterTooltipColorToken>;
+  tooltipTargetColor: SnapshotColor;
+  tooltipDurationColor: SnapshotColor;
+  positiveColor: SnapshotColor;
+  negativeColor: SnapshotColor;
+  spellSubEffectColor: SnapshotColor;
+  enchantmentItemColor: SnapshotColor;
+  primarySpellTooltip: string;
+  secondarySpellTooltip: string;
+  unmetSkillMessage: string;
+  brokenDurabilityMessage: string;
+  ruinedDurabilityMessage: string;
+  statBookMessage: string;
+  termSetColors: Record<string, MasterTooltipColorToken>;
+  globalTermSets: MasterTooltipTermSet[];
+  termColorMatch: string;
+  potionRecipeDescription: string;
+}
+
+export interface MasterTooltipColorToken {
+  color: string;
+  text: string;
+}
+
+export interface MasterTooltipTermSet {
+  setId: string;
+  terms: string[];
+  regex: string;
+  replacement: string;
 }
 
 export type FieldProvenance =
