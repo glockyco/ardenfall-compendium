@@ -49,19 +49,29 @@
 >
   {#if src}
     {#if tintHex && !isWhite}
-      <span
-        class={`relative ${image[size]}`}
-        style:background-color={tintHex}
-        style:mask-image={`url(${src})`}
-        style:-webkit-mask-image={`url(${src})`}
-        style:mask-size="contain"
-        style:-webkit-mask-size="contain"
-        style:mask-repeat="no-repeat"
-        style:-webkit-mask-repeat="no-repeat"
-        style:mask-position="center"
-        style:-webkit-mask-position="center"
-        aria-hidden="true"
-      ></span>
+      <span class={`relative ${image[size]}`}>
+        <span
+          class="absolute inset-0"
+          style:background-color={tintHex}
+          style:mask-image={`url(${src})`}
+          style:-webkit-mask-image={`url(${src})`}
+          style:mask-size="contain"
+          style:-webkit-mask-size="contain"
+          style:mask-repeat="no-repeat"
+          style:-webkit-mask-repeat="no-repeat"
+          style:mask-position="center"
+          style:-webkit-mask-position="center"
+          aria-hidden="true"
+        ></span>
+        <img
+          class="relative size-full object-contain"
+          {src}
+          {alt}
+          loading="lazy"
+          decoding="async"
+          style:mix-blend-mode="multiply"
+        />
+      </span>
     {:else}
       <img class={`object-contain ${image[size]}`} {src} {alt} loading="lazy" decoding="async" />
     {/if}

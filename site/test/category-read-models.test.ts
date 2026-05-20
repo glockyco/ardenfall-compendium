@@ -66,7 +66,7 @@ describe("item-category read-model accessors", () => {
         weight REAL,
         diagnostics_json TEXT NOT NULL
       );
-      CREATE TABLE items (id TEXT PRIMARY KEY, "categoryRef" TEXT);
+      CREATE TABLE items (id TEXT PRIMARY KEY, "categoryRef" TEXT, "categoryName" TEXT);
       CREATE TABLE entity_nodes (
         entity_type TEXT NOT NULL,
         entity_id TEXT NOT NULL,
@@ -78,15 +78,17 @@ describe("item-category read-model accessors", () => {
         PRIMARY KEY (entity_type, entity_id)
       );
       INSERT INTO item_category_overview_rows VALUES
-        ('fixture-weapons', 'Weapons', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1);
+        ('fixture-weapons', 'Weapons', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 2);
       INSERT INTO item_category_presentation_rows VALUES
-        ('fixture-weapons', 'Weapons', 'item-category-presentation-v1', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1, '[{"label":"Name"}]', 1);
+        ('fixture-weapons', 'Weapons', 'item-category-presentation-v1', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1, '[{"label":"Name"}]', 2);
       INSERT INTO item_overview_rows VALUES
-        ('fixture-iron-sword', 'Iron Sword', 3.5, 25, 'melee-weapon', '${iconHash}', '${categoryColor}');
+        ('fixture-iron-sword', 'Iron Sword', 3.5, 25, 'melee-weapon', '${iconHash}', '${categoryColor}'),
+        ('fixture-training-dagger', 'Training Dagger', 1.5, 5, 'melee-weapon', '${iconHash}', '${categoryColor}');
       INSERT INTO item_presentation_rows VALUES
         ('fixture-iron-sword', 'Iron Sword', 'melee-weapon', 'Melee weapon', 'item-presentation-v1', '${iconHash}', '${categoryColor}', '', '${richText}', '', '${richText}', '[]', '[]', '[]', NULL, '[]', '[]', 25, 3.5, '[]');
       INSERT INTO items VALUES
-        ('fixture-iron-sword', '{"kind":"lookupAsset","guid":"fixture-weapons"}');
+        ('fixture-iron-sword', '{"kind":"lookupAsset","guid":"fixture-weapons"}', 'Weapons'),
+        ('fixture-training-dagger', '{"kind":"missing","reason":"lookupAssetGuidMissing"}', 'Weapons');
       INSERT INTO entity_nodes VALUES
         ('item-category', 'fixture-weapons', 'Weapons', '/categories/weapons--abc12345', 'weapons--abc12345', 'abc12345', 1);
     `);
@@ -103,7 +105,7 @@ describe("item-category read-model accessors", () => {
           iconSrc: `/assets/${iconHash}.webp`,
           defaultItemIconSrc: `/assets/${defaultIconHash}.webp`,
           categoryColor,
-          itemCount: 1,
+          itemCount: 2,
           routePath: "/categories/weapons--abc12345",
         },
       ]);
@@ -116,10 +118,11 @@ describe("item-category read-model accessors", () => {
         categoryColor,
         showInAllCategory: true,
         columns: [{ label: "Name" }],
-        itemCount: 1,
+        itemCount: 2,
       });
       expect(readModels.listItemsByCategory("fixture-weapons").map((row) => row.id)).toEqual([
         "fixture-iron-sword",
+        "fixture-training-dagger",
       ]);
     } finally {
       process.chdir(originalCwd);

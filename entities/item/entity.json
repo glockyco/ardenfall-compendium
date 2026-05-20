@@ -76,6 +76,12 @@
       "missingPolicy": "optional-empty"
     },
     {
+      "name": "categoryName",
+      "type": "string",
+      "from": "category.Get()?.categoryName",
+      "missingPolicy": "optional-empty"
+    },
+    {
       "name": "isIllegal",
       "type": "boolean",
       "from": "isIllegal.Get()",

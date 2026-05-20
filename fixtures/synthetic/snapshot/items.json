@@ -35,6 +35,7 @@
           "unityType": "Ardenfall.ItemCategory",
           "name": "Weapons"
         },
+        "categoryName": "Weapons",
         "isIllegal": false,
         "minimumSkill": 5,
         "statType": "Strength"

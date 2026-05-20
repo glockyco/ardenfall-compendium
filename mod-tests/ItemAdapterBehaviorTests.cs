@@ -90,4 +90,14 @@ public sealed class ItemAdapterBehaviorTests
         Assert.Equal(0.3f, dto.B);
         Assert.Equal(0.4f, dto.A);
     }
+
+    [Fact]
+    public void CategoryNameForFallbackUsesResolvedCategoryName()
+    {
+        var category = (ItemCategory)RuntimeHelpers.GetUninitializedObject(typeof(ItemCategory));
+        category.categoryName = "Weapons";
+
+        Assert.Equal("Weapons", ExtractItem.CategoryNameForFallback(category));
+        Assert.Null(ExtractItem.CategoryNameForFallback(null));
+    }
 }

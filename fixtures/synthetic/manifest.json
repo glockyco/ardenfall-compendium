@@ -41,8 +41,8 @@
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "fe830ff70ae971eb519671c67dc0f8a5e6400f765805cb7cae3cdbd6bccafa9e",
-    "snapshot/items.json": "6c56072d478ae8e464ce4cbf60a5a06f3668dd0ae93fb254f9d1b7485bad9ddb",
+    "snapshot/manifest.json": "0c35a98e8d385ec84a4a1150ad093e637a02d3a019f749ab06ca2bf52c1cb176",
+    "snapshot/items.json": "f89baec43a75635a0f6b8fb800ffe2ca3a79a88c72883b177e0f371f4032358b",
     "snapshot/asset-manifest.json": "e6fca19d390b38c5ae4b3fbb4920173d47af07c62f7ed19021bbdd9d3d8108c0",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
     "snapshot/assets/items/fixture-icon-blue.png": "d6d4b05209c7541985841a63d955337a411a005d7abb936426791cbfde258f17",

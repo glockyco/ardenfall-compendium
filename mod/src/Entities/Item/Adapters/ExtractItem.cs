@@ -76,6 +76,7 @@ public static class ExtractItem
         }
 
         var categoryResolved = asset.category.Get();
+        fields["categoryName"] = CategoryNameForFallback(categoryResolved);
         fields["categoryRef"] = categoryResolved == null
             ? null
             : refs.ResolveAsset(categoryResolved, "categoryRef", id, MissingPolicy.Diagnostic, source: "ItemData.category");
@@ -84,6 +85,10 @@ public static class ExtractItem
             provenance["categoryRef"] = (fields["categoryRef"] as SnapshotRef)?.Kind == "missing"
                 ? ProvenanceCapture.ForMissing("ItemData.category", inherited: false)
                 : ProvenanceCapture.ForLookupAsset("ItemData.category", isSet: true, inherited: false);
+            provenance["categoryName"] = ProvenanceCapture.ForParameter<string>(
+                "ItemData.category.Get().categoryName",
+                isSet: true,
+                inherited: false);
         }
 
         var isIllegalResolved = asset.isIllegal.Get();
@@ -112,6 +117,9 @@ public static class ExtractItem
         refs.Diagnostics.Clear();
         return (fields, provenance, diagnostics, tags);
     }
+
+    public static string? CategoryNameForFallback(Ardenfall.ItemCategory? category) =>
+        string.IsNullOrWhiteSpace(category?.categoryName) ? null : category.categoryName;
 
     private static (string Name, string Source) GetItemNameSafe(ItemData asset)
     {

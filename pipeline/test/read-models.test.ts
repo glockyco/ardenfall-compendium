@@ -291,7 +291,8 @@ describe("emitItemCategoryReadModels", () => {
       CREATE TABLE items (
         id TEXT PRIMARY KEY,
         name TEXT,
-        "categoryRef" TEXT
+        "categoryRef" TEXT,
+        "categoryName" TEXT
       );
       CREATE TABLE asset_refs (
         entity_id TEXT NOT NULL,
@@ -321,10 +322,18 @@ describe("emitItemCategoryReadModels", () => {
       ],
     });
     db.run(
-      `INSERT INTO items (id, name, "categoryRef") VALUES (?, ?, ?)`,
+      `INSERT INTO items (id, name, "categoryRef", "categoryName") VALUES (?, ?, ?, ?)`,
       "fixture-iron-sword",
       "Iron Sword",
       JSON.stringify({ kind: "lookupAsset", guid: "category-weapons" }),
+      "Weapons",
+    );
+    db.run(
+      `INSERT INTO items (id, name, "categoryRef", "categoryName") VALUES (?, ?, ?, ?)`,
+      "fixture-training-dagger",
+      "Training Dagger",
+      JSON.stringify({ kind: "missing", reason: "lookupAssetGuidMissing" }),
+      "Weapons",
     );
     db.run(
       "INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)",
@@ -356,7 +365,7 @@ describe("emitItemCategoryReadModels", () => {
       name: "Weapons",
       default_item_icon_hash: "c".repeat(64),
       category_color_json: JSON.stringify({ r: 0.92, g: 0.42, b: 0.42, a: 1 }),
-      item_count: 1,
+      item_count: 2,
     });
 
     const presentation = db
@@ -377,7 +386,7 @@ describe("emitItemCategoryReadModels", () => {
       { label: "Name", flexibleWidth: 2 },
     ]);
     expect(presentation?.show_in_all_category).toBe(1);
-    expect(presentation?.item_count).toBe(1);
+    expect(presentation?.item_count).toBe(2);
 
     const node = db
       .query<

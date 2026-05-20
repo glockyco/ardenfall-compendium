@@ -546,6 +546,7 @@ export function emitItemCategoryReadModels(db: Database): void {
                 SELECT COUNT(*)
                 FROM items i
                 WHERE json_extract(i."categoryRef", '$.guid') = c.id
+                   OR i."categoryName" = c.category_name
               ) AS item_count
        FROM item_categories c
        LEFT JOIN asset_refs icon

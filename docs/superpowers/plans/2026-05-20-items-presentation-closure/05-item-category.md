@@ -39,7 +39,7 @@ The base template covers most of the work. Phase 5 adds these specifics:
 - **DTO carries `columns: List<ItemCategoryColumnSnapshot>`**. Each column is a structured record. Phase 5 does not yet _render_ the columns (they're metadata for future category-specific tables — Slice 10 will use them); Phase 5 just captures them so we don't re-extract later.
 - **Category color JSON** is `iconColor`'s analogue, stored as `category_color_json` to avoid colliding with `iconColor` semantics. The site passes this raw color JSON into `ItemIcon` for deterministic tinting.
 - **`default_item_icon_hash`** is a separate column in `item_categories` and the read-model; the site overview surfaces this fallback for categories that have a default icon defined but no entry-specific icon.
-- **Cross-link**: each item's `categoryRef` (already captured in Slice 1) becomes an `entity_nodes` lookup hit. Phase 15 emits the `item.belongs_to_category` edges; Phase 5 only stores the link target.
+- **Cross-link**: each item now carries both the source `categoryRef` lookup JSON and a direct `categoryName` fallback. Phase 5 uses `categoryRef.guid` when available and falls back to `categoryName = item_categories.category_name` so category pages remain populated when Unity lookup GUIDs are missing; Phase 15 emits the formal `item.belongs_to_category` edges.
 
 ## Tasks
 
@@ -288,10 +288,11 @@ UPDATE item_category_overview_rows SET item_count = (
   SELECT COUNT(*)
   FROM items
   WHERE json_extract(items."categoryRef", '$.guid') = item_category_overview_rows.id
+     OR items."categoryName" = item_category_overview_rows.name
 );
 ```
 
-The existing `items` table stores `categoryRef` as the source lookup-ref JSON, so the read-model joins/extracts `$.guid` rather than inventing a `category_ref_id` column.
+The existing `items` table stores `categoryRef` as the source lookup-ref JSON and `categoryName` as a direct fallback captured from `ItemData.category.Get()?.categoryName`, so the read-model uses both instead of inventing a `category_ref_id` column.
 
 `entity_nodes` insertion uses `deriveSlug({displayName: categoryName, assetId: id})`.
 
@@ -429,8 +430,8 @@ Expected: FAIL.
     }
   }
 
-  const tintHex = tint(displayIconColor);
-  const isWhite = tintHex === "#ffffff";
+  const tintHex = $derived(tint(displayIconColor));
+  const isWhite = $derived(tintHex === "#ffffff");
 </script>
 
 <span
@@ -439,19 +440,29 @@ Expected: FAIL.
 >
   {#if src}
     {#if tintHex && !isWhite}
-      <span
-        class={`relative ${image[size]}`}
-        style:background-color={tintHex}
-        style:mask-image={`url(${src})`}
-        style:-webkit-mask-image={`url(${src})`}
-        style:mask-size="contain"
-        style:-webkit-mask-size="contain"
-        style:mask-repeat="no-repeat"
-        style:-webkit-mask-repeat="no-repeat"
-        style:mask-position="center"
-        style:-webkit-mask-position="center"
-        aria-hidden="true"
-      ></span>
+      <span class={`relative ${image[size]}`}>
+        <span
+          class="absolute inset-0"
+          style:background-color={tintHex}
+          style:mask-image={`url(${src})`}
+          style:-webkit-mask-image={`url(${src})`}
+          style:mask-size="contain"
+          style:-webkit-mask-size="contain"
+          style:mask-repeat="no-repeat"
+          style:-webkit-mask-repeat="no-repeat"
+          style:mask-position="center"
+          style:-webkit-mask-position="center"
+          aria-hidden="true"
+        ></span>
+        <img
+          class="relative size-full object-contain"
+          {src}
+          {alt}
+          loading="lazy"
+          decoding="async"
+          style:mix-blend-mode="multiply"
+        />
+      </span>
     {:else}
       <img class={`object-contain ${image[size]}`} {src} {alt} loading="lazy" decoding="async" />
     {/if}
@@ -459,7 +470,7 @@ Expected: FAIL.
 </span>
 ```
 
-The mask-image approach is the documented modern primitive ([MDN: `mask-image`](https://developer.mozilla.org/en-US/docs/Web/CSS/mask-image)); for already-coloured sprites, the equivalent fallback is `mix-blend-mode: multiply` over the bitmap, which the older Slice-4 code path retains for `tintHex === "#ffffff"` — kept as the `<img>` branch above.
+The tint branch masks the background color to the sprite alpha and keeps the `<img>` bitmap above it with `mix-blend-mode: multiply`, preserving icon RGB detail while applying the deterministic tint. The untinted/white branch keeps the plain bitmap.
 
 - [ ] **Step 4: Run the test**
 
@@ -482,7 +493,7 @@ git commit -m "fix(site): tint item icons by displayIconColor"
 Apply Task 4.8's template with these slugs:
 
 - `/categories` lists every row of `item_category_overview_rows` sorted by `name`, showing the category icon (tinted by `category_color_json`) + name + `item_count`.
-- `/categories/[slug]` renders the presentation row + lists every item in the category (`listItemsByCategory(categoryId)` — a new read-model accessor that joins `item_overview_rows` to `items` and filters `json_extract(items."categoryRef", '$.guid') = ?`).
+- `/categories/[slug]` renders the presentation row + lists every item in the category (`listItemsByCategory(categoryId)` — a new read-model accessor that joins `item_overview_rows` to `items` and filters `json_extract(items."categoryRef", '$.guid') = ? OR items."categoryName"` equals the category name).
 
 Code blocks follow Task 4.8's shape with categories. The detail page links each item via `/items/<id>` until the item route cutover happens in Phase 16.
 
