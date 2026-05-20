@@ -33,10 +33,8 @@ describe("emitRedirects", () => {
 
       expect(out.count).toBe(2);
       const body = readFileSync(join(root, "static", "_redirects"), "utf8");
-      expect(body).toContain(
-        "/items/4ed202185a05d98439595e3fcab021c8.11400000 /items/iron-sword--4ed20218 301",
-      );
-      expect(body).toContain("/items/old-name--4ed20218 /items/iron-sword--4ed20218 301");
+      expect(body).toContain("/items/4ed202185a05d98439595e3fcab021c8.11400000 /items/item-a 301");
+      expect(body).toContain("/items/old-name--4ed20218 /items/item-a 301");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

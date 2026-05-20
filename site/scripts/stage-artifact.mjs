@@ -55,7 +55,8 @@ export async function stageArtifact({ artifactDir, targetDir, mode }) {
   copyFileSync(sqlitePath, join(targetDir, "data.sqlite"));
   copyTree(assetsDir, join(targetDir, "assets"));
   const redirectsPath = join(artifactDir, "static", "_redirects");
-  if (existsSync(redirectsPath)) copyFileSync(redirectsPath, join(targetDir, "_redirects"));
+  if (!existsSync(redirectsPath)) throw new Error(`missing redirects artifact: ${redirectsPath}`);
+  copyFileSync(redirectsPath, join(targetDir, "_redirects"));
   writeFileSync(
     join(targetDir, "_release.json"),
     `${JSON.stringify(publicRelease(manifest), null, 2)}\n`,
