@@ -7,6 +7,7 @@ using ArdenfallCompendium.Control.Handlers;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
+using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
 using Newtonsoft.Json;
@@ -17,6 +18,8 @@ namespace ArdenfallCompendium.Tests;
 
 public sealed class RunFinalizeCommandTests
 {
+    private static readonly FakeStatTypeExtractionCache EmptyStatTypes = new(System.Array.Empty<StatTypeSnapshot>());
+
     [Fact]
     public async Task AggregatesRowAndWalkerDiagnosticsIntoManifestAndDiagnosticsArtifact()
     {
@@ -40,7 +43,7 @@ public sealed class RunFinalizeCommandTests
             Diagnostics = new List<Diagnostic> { Diagnostic("fatal", "rowFatal") },
         });
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
-        var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default);
+        var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default, EmptyStatTypes);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -77,7 +80,7 @@ public sealed class RunFinalizeCommandTests
             RowId = "item-a",
             DisplayIconColor = new AssetColorSnapshot(),
         });
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default, EmptyStatTypes);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -106,7 +109,7 @@ public sealed class RunFinalizeCommandTests
             Fields = new Dictionary<string, object?>(),
         });
         var source = FakeMasterTooltipSource.Default;
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source, EmptyStatTypes);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -121,6 +124,52 @@ public sealed class RunFinalizeCommandTests
         Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "master-tooltip");
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(masterTooltipPath)), manifest.Hashes["master-tooltip.json"]);
+    }
+
+    [Fact]
+    public async Task WritesStatTypeArtifactAndHash()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-stat-types-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+        var statTypes = new FakeStatTypeExtractionCache(new[]
+        {
+            new StatTypeSnapshot(
+                Id: "stat-strength",
+                IsAttribute: true,
+                StatName: "Strength",
+                IconRef: null,
+                IconColor: new AssetColorSnapshot(),
+                StatDescription: "Raw power.",
+                LongStatDescription: "Raw power. Affects melee damage.",
+                Affects: new List<string> { "melee-damage" },
+                SkillAffects: new List<string>()),
+        });
+        var command = new RunFinalizeCommand(
+            runs,
+            new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
+            FakeMasterTooltipSource.Default,
+            statTypes);
+
+        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+
+        Assert.Empty(result.Diagnostics);
+        var manifestPath = result.Result["manifestPath"]!.Value<string>()!;
+        var publishedDir = Path.GetDirectoryName(manifestPath)!;
+        var statTypesPath = Path.Combine(publishedDir, "stat-types.json");
+        Assert.True(File.Exists(statTypesPath));
+        var envelope = JsonConvert.DeserializeObject<StatTypeSnapshotEnvelope>(File.ReadAllText(statTypesPath), JsonSettings.Default)!;
+        Assert.Single(envelope.Rows);
+        Assert.Equal("Strength", envelope.Rows[0].StatName);
+        Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "stat-types");
+        var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
+        Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(statTypesPath)), manifest.Hashes["stat-types.json"]);
+        Assert.Equal(1, manifest.Counts["stat-type"]);
     }
     private static Diagnostic Diagnostic(string severity, string code) => new()
     {
@@ -154,6 +203,20 @@ public sealed class RunFinalizeCommandTests
         public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => _diagnostics;
+    }
+
+    private sealed class FakeStatTypeExtractionCache : IStatTypeExtractionCache
+    {
+        private readonly IReadOnlyList<StatTypeSnapshot> _rows;
+
+        public FakeStatTypeExtractionCache(IReadOnlyList<StatTypeSnapshot> rows)
+        {
+            _rows = rows;
+        }
+
+        public IReadOnlyList<StatTypeSnapshot> GetOrExtract(CompendiumRun run) => _rows;
+
+        public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
     }
 
     private sealed class FakeMasterTooltipSource : IMasterTooltipSnapshotSource

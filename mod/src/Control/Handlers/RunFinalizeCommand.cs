@@ -7,6 +7,7 @@ using ArdenfallCompendium.Assets;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
+using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
 using HotRepl.Control;
@@ -21,15 +22,18 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
 {
     private readonly CompendiumRunManager _runs;
     private readonly IItemExtractionCache _items;
+    private readonly IStatTypeExtractionCache _statTypes;
     private readonly IMasterTooltipSnapshotSource _masterTooltip;
 
     public RunFinalizeCommand(
         CompendiumRunManager runs,
         IItemExtractionCache items,
-        IMasterTooltipSnapshotSource? masterTooltip = null)
+        IMasterTooltipSnapshotSource? masterTooltip = null,
+        IStatTypeExtractionCache? statTypes = null)
     {
         _runs = runs;
         _items = items;
+        _statTypes = statTypes ?? new StatTypeExtractionService(new BuiltLookupTableStatTypeAssetSource());
         _masterTooltip = masterTooltip ?? RuntimeMasterTooltipSnapshotSource.Instance;
     }
 
@@ -98,7 +102,18 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         var masterTooltipPath = Path.Combine(publishedDir, "master-tooltip.json");
         File.WriteAllText(masterTooltipPath, masterTooltipJson);
         var masterTooltipHash = ManifestBuilder.Sha256Hex(masterTooltipJson);
+
+        var statTypeRows = _statTypes.GetOrExtract(run);
+        var statTypeEnvelope = new StatTypeSnapshotEnvelope { Rows = statTypeRows.ToList() };
+        var statTypesJson = JsonConvert.SerializeObject(statTypeEnvelope, JsonSettings.Default);
+        var statTypesPath = Path.Combine(publishedDir, "stat-types.json");
+        File.WriteAllText(statTypesPath, statTypesJson);
+        var statTypesHash = ManifestBuilder.Sha256Hex(statTypesJson);
         foreach (var diagnostic in _items.GetWalkerDiagnostics(run))
+        {
+            AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+        }
+        foreach (var diagnostic in _statTypes.GetWalkerDiagnostics(run))
         {
             AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
         }
@@ -108,6 +123,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             ["items.json"] = itemHash,
             ["asset-manifest.json"] = assetManifestHash,
             ["master-tooltip.json"] = masterTooltipHash,
+            ["stat-types.json"] = statTypesHash,
         };
         string? diagnosticsPath = null;
         string? diagnosticsHash = null;
@@ -122,7 +138,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
 
         var manifest = ManifestBuilder.Build(
             PreflightRunner.Run(),
-            counts: new Dictionary<string, int> { ["item"] = rows.Count },
+            counts: new Dictionary<string, int> { ["item"] = rows.Count, ["stat-type"] = statTypeRows.Count },
             diagnostics: diagnosticTotals,
             contentHashes: hashes,
             extractorVersion: Plugin.Version,
@@ -136,6 +152,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         run.PublishedDir = publishedDir;
         run.State = "finalized";
         run.Counts["item"] = rows.Count;
+        run.Counts["stat-type"] = statTypeRows.Count;
 
         var result = new JObject
         {
@@ -149,6 +166,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             CompendiumCommandResults.FileArtifact("items", itemsPath, "application/json", itemHash),
             CompendiumCommandResults.FileArtifact("asset-manifest", assetManifestPath, "application/json", assetManifestHash),
             CompendiumCommandResults.FileArtifact("master-tooltip", masterTooltipPath, "application/json", masterTooltipHash),
+            CompendiumCommandResults.FileArtifact("stat-types", statTypesPath, "application/json", statTypesHash),
         };
         if (diagnosticsPath is not null && diagnosticsHash is not null)
         {
