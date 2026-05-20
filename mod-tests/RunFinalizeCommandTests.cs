@@ -8,6 +8,7 @@ using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Entities.StatType;
+using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
 using Newtonsoft.Json;
@@ -19,6 +20,7 @@ namespace ArdenfallCompendium.Tests;
 public sealed class RunFinalizeCommandTests
 {
     private static readonly FakeStatTypeExtractionCache EmptyStatTypes = new(System.Array.Empty<StatTypeSnapshotRow>());
+    private static readonly FakeItemCategoryExtractionCache EmptyItemCategories = new(System.Array.Empty<ItemCategorySnapshotRow>());
 
     [Fact]
     public async Task AggregatesRowAndWalkerDiagnosticsIntoManifestAndDiagnosticsArtifact()
@@ -43,7 +45,7 @@ public sealed class RunFinalizeCommandTests
             Diagnostics = new List<Diagnostic> { Diagnostic("fatal", "rowFatal") },
         });
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
-        var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default, EmptyStatTypes);
+        var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -80,7 +82,7 @@ public sealed class RunFinalizeCommandTests
             RowId = "item-a",
             DisplayIconColor = new AssetColorSnapshot(),
         });
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default, EmptyStatTypes);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -109,7 +111,7 @@ public sealed class RunFinalizeCommandTests
             Fields = new Dictionary<string, object?>(),
         });
         var source = FakeMasterTooltipSource.Default;
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source, EmptyStatTypes);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source, EmptyStatTypes, EmptyItemCategories);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -168,7 +170,8 @@ public sealed class RunFinalizeCommandTests
             runs,
             new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
             FakeMasterTooltipSource.Default,
-            statTypes);
+            statTypes,
+            EmptyItemCategories);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -187,6 +190,68 @@ public sealed class RunFinalizeCommandTests
         Assert.Contains(assetManifest.Assets, asset => asset.EntityId == "stat-type" && asset.RowId == "stat-strength" && asset.Slot == "iconRef");
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(statTypesPath)), manifest.Hashes["stat-types.json"]);
         Assert.Equal(1, manifest.Counts["stat-type"]);
+    }
+
+    [Fact]
+    public async Task WritesItemCategoryArtifactAndHash()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-item-categories-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+        var categoryAssetPlan = new ItemIconAssetPlan();
+        categoryAssetPlan.Manifest.Assets.Add(new AssetManifestEntry
+        {
+            EntityId = "item-category",
+            RowId = "category-weapons",
+            Slot = "defaultItemIconRef",
+            Kind = "image",
+            PngHash = "b",
+            SourcePath = "assets/item-category/b.png",
+        });
+        var itemCategories = new FakeItemCategoryExtractionCache(new[]
+        {
+            new ItemCategorySnapshotRow
+            {
+                Id = "category-weapons",
+                Fields = new ItemCategorySnapshot(
+                    Id: "category-weapons",
+                    CategoryName: "Weapons",
+                    IconRef: null,
+                    DefaultItemIconRef: null,
+                    CategoryColor: new AssetColorSnapshot(),
+                    ShowInAllCategory: true,
+                    Columns: new List<ItemCategoryColumnSnapshot>()),
+            },
+        }, categoryAssetPlan);
+        var command = new RunFinalizeCommand(
+            runs,
+            new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
+            FakeMasterTooltipSource.Default,
+            EmptyStatTypes,
+            itemCategories);
+
+        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+
+        Assert.Empty(result.Diagnostics);
+        var manifestPath = result.Result["manifestPath"]!.Value<string>()!;
+        var publishedDir = Path.GetDirectoryName(manifestPath)!;
+        var itemCategoriesPath = Path.Combine(publishedDir, "item-categories.json");
+        Assert.True(File.Exists(itemCategoriesPath));
+        var envelope = JsonConvert.DeserializeObject<ItemCategorySnapshotEnvelope>(File.ReadAllText(itemCategoriesPath), JsonSettings.Default)!;
+        Assert.Single(envelope.Rows);
+        Assert.Equal("Weapons", envelope.Rows[0].Fields.CategoryName);
+        Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "item-categories");
+        var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
+        var assetManifestPath = Path.Combine(publishedDir, "asset-manifest.json");
+        var assetManifest = JsonConvert.DeserializeObject<AssetManifest>(File.ReadAllText(assetManifestPath), JsonSettings.Default)!;
+        Assert.Contains(assetManifest.Assets, asset => asset.EntityId == "item-category" && asset.RowId == "category-weapons" && asset.Slot == "defaultItemIconRef");
+        Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(itemCategoriesPath)), manifest.Hashes["item-categories.json"]);
+        Assert.Equal(1, manifest.Counts["item-category"]);
     }
     private static Diagnostic Diagnostic(string severity, string code) => new()
     {
@@ -234,6 +299,24 @@ public sealed class RunFinalizeCommandTests
         }
 
         public IReadOnlyList<StatTypeSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
+
+        public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
+
+        public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
+    }
+
+    private sealed class FakeItemCategoryExtractionCache : IItemCategoryExtractionCache
+    {
+        private readonly IReadOnlyList<ItemCategorySnapshotRow> _rows;
+        private readonly ItemIconAssetPlan _assetPlan;
+
+        public FakeItemCategoryExtractionCache(IReadOnlyList<ItemCategorySnapshotRow> rows, ItemIconAssetPlan? assetPlan = null)
+        {
+            _rows = rows;
+            _assetPlan = assetPlan ?? new ItemIconAssetPlan();
+        }
+
+        public IReadOnlyList<ItemCategorySnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
         public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 

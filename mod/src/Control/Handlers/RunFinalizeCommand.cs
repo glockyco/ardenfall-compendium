@@ -8,6 +8,7 @@ using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Entities.StatType;
+using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
 using HotRepl.Control;
@@ -23,17 +24,20 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
     private readonly CompendiumRunManager _runs;
     private readonly IItemExtractionCache _items;
     private readonly IStatTypeExtractionCache _statTypes;
+    private readonly IItemCategoryExtractionCache _itemCategories;
     private readonly IMasterTooltipSnapshotSource _masterTooltip;
 
     public RunFinalizeCommand(
         CompendiumRunManager runs,
         IItemExtractionCache items,
         IMasterTooltipSnapshotSource? masterTooltip = null,
-        IStatTypeExtractionCache? statTypes = null)
+        IStatTypeExtractionCache? statTypes = null,
+        IItemCategoryExtractionCache? itemCategories = null)
     {
         _runs = runs;
         _items = items;
         _statTypes = statTypes ?? new StatTypeExtractionService(new BuiltLookupTableStatTypeAssetSource());
+        _itemCategories = itemCategories ?? new ItemCategoryExtractionService(new BuiltLookupTableItemCategoryAssetSource());
         _masterTooltip = masterTooltip ?? RuntimeMasterTooltipSnapshotSource.Instance;
     }
 
@@ -90,15 +94,18 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
 
         var statTypeRows = _statTypes.GetOrExtract(run);
         var statTypeAssetPlan = _statTypes.GetAssetPlan(run);
-
-
+        var itemCategoryRows = _itemCategories.GetOrExtract(run);
+        var itemCategoryAssetPlan = _itemCategories.GetAssetPlan(run);
 
         var assetPlan = _items.GetAssetPlan(run);
         var assetWriter = new ItemAssetManifestWriter(new SpriteAssetExporter());
         assetWriter.WriteSlots(publishedDir, assetPlan);
         assetWriter.WriteSlots(publishedDir, statTypeAssetPlan);
+        assetWriter.WriteSlots(publishedDir, itemCategoryAssetPlan);
         assetPlan.Manifest.Assets.AddRange(statTypeAssetPlan.Manifest.Assets);
         assetPlan.Manifest.ItemIconMetadata.AddRange(statTypeAssetPlan.Manifest.ItemIconMetadata);
+        assetPlan.Manifest.Assets.AddRange(itemCategoryAssetPlan.Manifest.Assets);
+        assetPlan.Manifest.ItemIconMetadata.AddRange(itemCategoryAssetPlan.Manifest.ItemIconMetadata);
         var assetManifest = assetPlan.Manifest;
         var assetManifestJson = JsonConvert.SerializeObject(assetManifest, JsonSettings.Default);
         var assetManifestPath = Path.Combine(publishedDir, "asset-manifest.json");
@@ -116,11 +123,20 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         var statTypesPath = Path.Combine(publishedDir, "stat-types.json");
         File.WriteAllText(statTypesPath, statTypesJson);
         var statTypesHash = ManifestBuilder.Sha256Hex(statTypesJson);
+        var itemCategoryEnvelope = new ItemCategorySnapshotEnvelope { Rows = itemCategoryRows.ToList() };
+        var itemCategoriesJson = JsonConvert.SerializeObject(itemCategoryEnvelope, JsonSettings.Default);
+        var itemCategoriesPath = Path.Combine(publishedDir, "item-categories.json");
+        File.WriteAllText(itemCategoriesPath, itemCategoriesJson);
+        var itemCategoriesHash = ManifestBuilder.Sha256Hex(itemCategoriesJson);
         foreach (var diagnostic in _items.GetWalkerDiagnostics(run))
         {
             AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
         }
         foreach (var diagnostic in _statTypes.GetWalkerDiagnostics(run))
+        {
+            AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+        }
+        foreach (var diagnostic in _itemCategories.GetWalkerDiagnostics(run))
         {
             AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
         }
@@ -131,6 +147,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             ["asset-manifest.json"] = assetManifestHash,
             ["master-tooltip.json"] = masterTooltipHash,
             ["stat-types.json"] = statTypesHash,
+            ["item-categories.json"] = itemCategoriesHash,
         };
         string? diagnosticsPath = null;
         string? diagnosticsHash = null;
@@ -145,7 +162,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
 
         var manifest = ManifestBuilder.Build(
             PreflightRunner.Run(),
-            counts: new Dictionary<string, int> { ["item"] = rows.Count, ["stat-type"] = statTypeRows.Count },
+            counts: new Dictionary<string, int> { ["item"] = rows.Count, ["stat-type"] = statTypeRows.Count, ["item-category"] = itemCategoryRows.Count },
             diagnostics: diagnosticTotals,
             contentHashes: hashes,
             extractorVersion: Plugin.Version,
@@ -160,6 +177,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         run.State = "finalized";
         run.Counts["item"] = rows.Count;
         run.Counts["stat-type"] = statTypeRows.Count;
+        run.Counts["item-category"] = itemCategoryRows.Count;
 
         var result = new JObject
         {
@@ -174,6 +192,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             CompendiumCommandResults.FileArtifact("asset-manifest", assetManifestPath, "application/json", assetManifestHash),
             CompendiumCommandResults.FileArtifact("master-tooltip", masterTooltipPath, "application/json", masterTooltipHash),
             CompendiumCommandResults.FileArtifact("stat-types", statTypesPath, "application/json", statTypesHash),
+            CompendiumCommandResults.FileArtifact("item-categories", itemCategoriesPath, "application/json", itemCategoriesHash),
         };
         if (diagnosticsPath is not null && diagnosticsHash is not null)
         {
