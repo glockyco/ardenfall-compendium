@@ -90,6 +90,16 @@
       "id": "categories.ItemCategoryDetail",
       "path": "categories/ItemCategoryDetail.svelte",
       "layer": "categories"
+    },
+    {
+      "id": "tags.ItemTagOverview",
+      "path": "tags/ItemTagOverview.svelte",
+      "layer": "tags"
+    },
+    {
+      "id": "tags.ItemTagDetail",
+      "path": "tags/ItemTagDetail.svelte",
+      "layer": "tags"
     }
   ]
 }

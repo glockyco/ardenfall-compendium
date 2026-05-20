@@ -83,6 +83,18 @@ function writeEmptyItemCategoryReadModelTables(sqlitePath: string): void {
     db.close();
   }
 }
+
+function writeEmptyItemTagReadModelTables(sqlitePath: string): void {
+  const db = new Database(sqlitePath);
+  try {
+    db.exec(`
+      CREATE TABLE item_tag_overview_rows (id TEXT);
+      CREATE TABLE item_tag_presentation_rows (id TEXT);
+    `);
+  } finally {
+    db.close();
+  }
+}
 describe("format tooling", () => {
   it("formats mjs files in the pre-commit prettier hook", () => {
     expect(lefthook).toContain("mjs");
@@ -330,6 +342,7 @@ describe("site deployment tooling", () => {
       });
       writeEmptyStatReadModelTables(sqlitePath);
       writeEmptyItemCategoryReadModelTables(sqlitePath);
+      writeEmptyItemTagReadModelTables(sqlitePath);
       const sqliteBytes = readFileSync(sqlitePath);
       writeFileSync(
         join(artifact, "artifact-manifest.json"),
@@ -350,6 +363,8 @@ describe("site deployment tooling", () => {
             statTypePresentationRows: 0,
             itemCategoryOverviewRows: 0,
             itemCategoryPresentationRows: 0,
+            itemTagOverviewRows: 0,
+            itemTagPresentationRows: 0,
           },
           outputs: {
             sqlite: {
@@ -420,6 +435,7 @@ describe("site deployment tooling", () => {
       });
       writeEmptyStatReadModelTables(sqlitePath);
       writeEmptyItemCategoryReadModelTables(sqlitePath);
+      writeEmptyItemTagReadModelTables(sqlitePath);
       const sqliteBytes = readFileSync(sqlitePath);
       writeFileSync(
         join(artifact, "artifact-manifest.json"),
@@ -440,6 +456,8 @@ describe("site deployment tooling", () => {
             statTypePresentationRows: 0,
             itemCategoryOverviewRows: 0,
             itemCategoryPresentationRows: 0,
+            itemTagOverviewRows: 0,
+            itemTagPresentationRows: 0,
           },
           outputs: {
             sqlite: {
@@ -725,13 +743,17 @@ describe("site deployment tooling", () => {
     }
   });
 
-  it("requires item-category read-model counts while staging artifacts", () => {
+  it("requires small-entity read-model counts while staging artifacts", () => {
     const stage = readFileSync("site/scripts/stage-artifact.mjs", "utf8");
 
     expect(stage).toContain('"itemCategoryOverviewRows"');
     expect(stage).toContain('"item_category_overview_rows"');
     expect(stage).toContain('"itemCategoryPresentationRows"');
     expect(stage).toContain('"item_category_presentation_rows"');
+    expect(stage).toContain('"itemTagOverviewRows"');
+    expect(stage).toContain('"item_tag_overview_rows"');
+    expect(stage).toContain('"itemTagPresentationRows"');
+    expect(stage).toContain('"item_tag_presentation_rows"');
   });
 });
 
@@ -792,18 +814,22 @@ describe("site prerender architecture", () => {
     expect(smoke).not.toContain("melee-damage");
   });
 
-  it("requires an item-category prerender smoke probe", () => {
+  it("requires small-entity prerender smoke probes", () => {
     const smoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
 
     expect(smoke).toContain("readItemCategoryProbe()");
     expect(smoke).toContain("item_category_overview_rows");
     expect(smoke).toContain("missing category probe asset");
     expect(smoke).toContain("category detail HTML missing item");
+    expect(smoke).toContain("readItemTagProbe()");
+    expect(smoke).toContain("item_tag_overview_rows");
+    expect(smoke).toContain("tag detail HTML missing item");
     expect(smoke).not.toContain("fixture-weapons");
+    expect(smoke).not.toContain("fixture-tag-valuable-remedy");
     expect(smoke).not.toContain("Iron Sword");
   });
 
-  it("catalogs item-category page components", () => {
+  it("catalogs small-entity page components", () => {
     const catalog = JSON.parse(readFileSync("site/src/lib/components/COMPONENTS.json", "utf8")) as {
       components: Array<{ id: string; path: string; layer: string }>;
     };
@@ -817,6 +843,16 @@ describe("site prerender architecture", () => {
       id: "categories.ItemCategoryDetail",
       path: "categories/ItemCategoryDetail.svelte",
       layer: "categories",
+    });
+    expect(catalog.components).toContainEqual({
+      id: "tags.ItemTagOverview",
+      path: "tags/ItemTagOverview.svelte",
+      layer: "tags",
+    });
+    expect(catalog.components).toContainEqual({
+      id: "tags.ItemTagDetail",
+      path: "tags/ItemTagDetail.svelte",
+      layer: "tags",
     });
   });
 

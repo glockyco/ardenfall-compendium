@@ -136,6 +136,37 @@ if (!categoryDetail.includes(categoryProbe.item_name)) {
   throw new Error(`category detail HTML missing item ${categoryProbe.item_name}`);
 }
 
+const tagProbe = readItemTagProbe();
+const tagsOverviewPath = firstExisting([
+  join(outputDir, "tags", "index.html"),
+  join(outputDir, "tags.html"),
+]);
+if (!tagsOverviewPath) {
+  throw new Error(`missing prerendered tag overview under ${outputDir}`);
+}
+const tagsOverview = readFileSync(tagsOverviewPath, "utf8");
+for (const snippet of ["Tags", tagProbe.name, tagProbe.description]) {
+  if (!tagsOverview.includes(snippet)) {
+    throw new Error(`tag overview HTML missing ${snippet}`);
+  }
+}
+const tagDetailPath = firstExisting([
+  join(outputDir, "tags", `${tagProbe.canonical_slug}.html`),
+  join(outputDir, "tags", tagProbe.canonical_slug, "index.html"),
+]);
+if (!tagDetailPath) {
+  throw new Error(`missing prerendered tag detail page for ${tagProbe.id}`);
+}
+const tagDetail = readFileSync(tagDetailPath, "utf8");
+for (const snippet of [tagProbe.name, tagProbe.description]) {
+  if (!tagDetail.includes(snippet)) {
+    throw new Error(`tag detail HTML missing ${snippet}`);
+  }
+}
+if (!tagDetail.includes(tagProbe.item_name)) {
+  throw new Error(`tag detail HTML missing item ${tagProbe.item_name}`);
+}
+
 function readStatProbe() {
   const db = new Database(join(import.meta.dirname, "..", "static", "data.sqlite"), {
     readonly: true,
@@ -193,6 +224,40 @@ function readItemCategoryProbe() {
       .get();
     if (!row?.item_name)
       throw new Error("staged artifact contains no icon-bearing item-category probe");
+    return row;
+  } finally {
+    db.close();
+  }
+}
+
+function readItemTagProbe() {
+  const db = new Database(join(import.meta.dirname, "..", "static", "data.sqlite"), {
+    readonly: true,
+    create: false,
+  });
+  try {
+    const row = db
+      .query(
+        `SELECT o.id, o.name, o.description, n.canonical_slug,
+                (
+                  SELECT COALESCE(io.name, io.id)
+                  FROM item_overview_rows io
+                  JOIN item_tag_refs refs ON refs.item_id = io.id
+                  WHERE refs.tag = o.id
+                  ORDER BY io.name, io.id
+                  LIMIT 1
+                ) AS item_name
+         FROM item_tag_overview_rows o
+         JOIN entity_nodes n
+           ON n.entity_type = 'item-tag'
+          AND n.entity_id = o.id
+          AND n.is_public = 1
+         WHERE o.item_count > 0
+         ORDER BY o.name
+         LIMIT 1`,
+      )
+      .get();
+    if (!row?.item_name) throw new Error("staged artifact contains no item-tag probe");
     return row;
   } finally {
     db.close();
