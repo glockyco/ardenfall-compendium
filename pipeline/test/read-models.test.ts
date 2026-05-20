@@ -7,6 +7,7 @@ import {
   emitStatTypeReadModels,
   prepareEntityNodeWriter,
   emitItemCategoryReadModels,
+  emitItemTagReadModels,
 } from "$pipeline/stages/emit-read-models";
 import { ENTITY_GRAPH_DDL } from "$pipeline/relationships/relationship-graph";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
@@ -15,6 +16,8 @@ import { canonicaliseStatTypes } from "$pipeline/entities/stat-type/canonicalise
 import { STAT_TYPE_DDL } from "$pipeline/sql/stat-type-ddl";
 import { canonicaliseItemCategories } from "$pipeline/entities/item-category/canonicaliser";
 import { ITEM_CATEGORY_DDL } from "$pipeline/sql/item-category-ddl";
+import { canonicaliseItemTags } from "$pipeline/entities/item-tag/canonicaliser";
+import { ITEM_TAG_DDL } from "$pipeline/sql/item-tag-ddl";
 
 const ctx = {
   workspaceRoot: ".",
@@ -396,6 +399,102 @@ describe("emitItemCategoryReadModels", () => {
       .get();
     expect(node?.canonical_slug).toMatch(/^weapons--[0-9a-f]{8}$/);
     expect(node?.route_path).toBe(`/categories/${node?.canonical_slug}`);
+    expect(node?.short_id).toMatch(/^[0-9a-f]{8}$/);
+  });
+});
+
+describe("emitItemTagReadModels", () => {
+  it("emits tag overview, presentation, item counts, and entity nodes", () => {
+    const db = new Database(":memory:");
+    db.exec(ENTITY_GRAPH_DDL);
+    db.exec(ITEM_TAG_DDL);
+    db.exec(`
+      CREATE TABLE item_overview_rows (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        display_icon_hash TEXT,
+        display_icon_color TEXT
+      );
+      CREATE TABLE item_tag_refs (
+        item_id TEXT NOT NULL,
+        tag TEXT NOT NULL,
+        PRIMARY KEY (item_id, tag)
+      );
+    `);
+
+    canonicaliseItemTags(db, {
+      entityId: "item-tag",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "tag-valuable-remedy",
+          fields: {
+            id: "tag-valuable-remedy",
+            tagName: "Valuable remedy",
+            description: "Incredibly valuable remedy",
+          },
+        },
+        {
+          id: "tag-rare",
+          fields: {
+            id: "tag-rare",
+            tagName: "Rare",
+            description: "",
+          },
+        },
+      ],
+    });
+    db.run(
+      "INSERT INTO item_overview_rows (id, name, display_icon_hash, display_icon_color) VALUES (?, ?, ?, ?)",
+      "fixture-stamina-draught",
+      "Stamina Draught",
+      null,
+      null,
+    );
+    db.run(
+      "INSERT INTO item_tag_refs (item_id, tag) VALUES (?, ?)",
+      "fixture-stamina-draught",
+      "tag-valuable-remedy",
+    );
+
+    emitItemTagReadModels(db);
+
+    const overview = db
+      .query<
+        { id: string; name: string; description: string; item_count: number },
+        []
+      >("SELECT id, name, description, item_count FROM item_tag_overview_rows ORDER BY name")
+      .all();
+    expect(overview).toEqual([
+      { id: "tag-rare", name: "Rare", description: "", item_count: 0 },
+      {
+        id: "tag-valuable-remedy",
+        name: "Valuable remedy",
+        description: "Incredibly valuable remedy",
+        item_count: 1,
+      },
+    ]);
+
+    const presentation = db
+      .query<
+        { render_context: string; description: string; item_count: number },
+        []
+      >("SELECT render_context, description, item_count FROM item_tag_presentation_rows WHERE id = 'tag-valuable-remedy'")
+      .get();
+    expect(presentation).toEqual({
+      render_context: "item-tag-presentation-v1",
+      description: "Incredibly valuable remedy",
+      item_count: 1,
+    });
+
+    const node = db
+      .query<
+        { route_path: string; canonical_slug: string; short_id: string },
+        []
+      >("SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item-tag' AND entity_id = 'tag-valuable-remedy'")
+      .get();
+    expect(node?.canonical_slug).toMatch(/^valuable-remedy--[0-9a-f]{8}$/);
+    expect(node?.route_path).toBe(`/tags/${node?.canonical_slug}`);
     expect(node?.short_id).toMatch(/^[0-9a-f]{8}$/);
   });
 });

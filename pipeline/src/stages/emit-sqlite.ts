@@ -7,12 +7,15 @@ import { SITE_METADATA_DDL } from "../sql/site-metadata-ddl";
 import { canonicaliseItems } from "../entities/item/canonicaliser";
 import { canonicaliseStatTypes } from "../entities/stat-type/canonicaliser";
 import { canonicaliseItemCategories } from "../entities/item-category/canonicaliser";
+import { canonicaliseItemTags } from "../entities/item-tag/canonicaliser";
 import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
 import { ITEM_CATEGORY_DDL } from "../sql/item-category-ddl";
+import { ITEM_TAG_DDL } from "../sql/item-tag-ddl";
 import { emitSiteMetadata } from "./emit-site-metadata";
 import {
   emitItemCategoryReadModels,
   emitItemReadModels,
+  emitItemTagReadModels,
   emitStatTypeReadModels,
 } from "./emit-read-models";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
@@ -62,6 +65,11 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
         db.exec(ITEM_CATEGORY_DDL);
         canonicaliseItemCategories(db, itemCategoryEnvelope);
       }
+      const itemTagEnvelope = inputs["load-snapshot"].envelopes["item-tag"];
+      if (itemTagEnvelope) {
+        db.exec(ITEM_TAG_DDL);
+        canonicaliseItemTags(db, itemTagEnvelope);
+      }
       emitSiteMetadata(db, desc);
       const assetRefInsert = db.prepare(
         `INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)`,
@@ -81,6 +89,9 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
       }
       if (itemCategoryEnvelope) {
         emitItemCategoryReadModels(db);
+      }
+      if (itemTagEnvelope) {
+        emitItemTagReadModels(db);
       }
       db.exec(`CREATE TABLE artifact_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);`);
       const metadataInsert = db.prepare("INSERT INTO artifact_metadata (key, value) VALUES (?, ?)");

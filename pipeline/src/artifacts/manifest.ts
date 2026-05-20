@@ -72,6 +72,8 @@ export async function buildArtifactManifest(
       statTypePresentationRows: countRows(sqlitePath, "stat_type_presentation_rows"),
       itemCategoryOverviewRows: countRows(sqlitePath, "item_category_overview_rows"),
       itemCategoryPresentationRows: countRows(sqlitePath, "item_category_presentation_rows"),
+      itemTagOverviewRows: countRows(sqlitePath, "item_tag_overview_rows"),
+      itemTagPresentationRows: countRows(sqlitePath, "item_tag_presentation_rows"),
       entityNodes: countRows(sqlitePath, "entity_nodes"),
       entityAliases: countRows(sqlitePath, "entity_aliases"),
       entityEdges: countRows(sqlitePath, "entity_edges"),
