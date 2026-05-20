@@ -8,6 +8,7 @@ using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Extraction;
+using ArdenfallCompendium.MasterTooltip;
 using HotRepl.Control;
 using HotRepl.Control.Artifacts;
 using Newtonsoft.Json;
@@ -20,11 +21,16 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
 {
     private readonly CompendiumRunManager _runs;
     private readonly IItemExtractionCache _items;
+    private readonly IMasterTooltipSnapshotSource _masterTooltip;
 
-    public RunFinalizeCommand(CompendiumRunManager runs, IItemExtractionCache items)
+    public RunFinalizeCommand(
+        CompendiumRunManager runs,
+        IItemExtractionCache items,
+        IMasterTooltipSnapshotSource? masterTooltip = null)
     {
         _runs = runs;
         _items = items;
+        _masterTooltip = masterTooltip ?? RuntimeMasterTooltipSnapshotSource.Instance;
     }
 
     public ControlCommandDescriptor Descriptor { get; } = new(
@@ -86,6 +92,12 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         var assetManifestPath = Path.Combine(publishedDir, "asset-manifest.json");
         File.WriteAllText(assetManifestPath, assetManifestJson);
         var assetManifestHash = ManifestBuilder.Sha256Hex(assetManifestJson);
+
+        var masterTooltip = _masterTooltip.BuildSnapshot();
+        var masterTooltipJson = JsonConvert.SerializeObject(masterTooltip, JsonSettings.Default);
+        var masterTooltipPath = Path.Combine(publishedDir, "master-tooltip.json");
+        File.WriteAllText(masterTooltipPath, masterTooltipJson);
+        var masterTooltipHash = ManifestBuilder.Sha256Hex(masterTooltipJson);
         foreach (var diagnostic in _items.GetWalkerDiagnostics(run))
         {
             AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
@@ -95,6 +107,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         {
             ["items.json"] = itemHash,
             ["asset-manifest.json"] = assetManifestHash,
+            ["master-tooltip.json"] = masterTooltipHash,
         };
         string? diagnosticsPath = null;
         string? diagnosticsHash = null;
@@ -135,6 +148,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             CompendiumCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash),
             CompendiumCommandResults.FileArtifact("items", itemsPath, "application/json", itemHash),
             CompendiumCommandResults.FileArtifact("asset-manifest", assetManifestPath, "application/json", assetManifestHash),
+            CompendiumCommandResults.FileArtifact("master-tooltip", masterTooltipPath, "application/json", masterTooltipHash),
         };
         if (diagnosticsPath is not null && diagnosticsHash is not null)
         {

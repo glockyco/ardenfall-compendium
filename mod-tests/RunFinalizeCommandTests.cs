@@ -8,6 +8,7 @@ using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Extraction;
+using ArdenfallCompendium.MasterTooltip;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -39,7 +40,7 @@ public sealed class RunFinalizeCommandTests
             Diagnostics = new List<Diagnostic> { Diagnostic("fatal", "rowFatal") },
         });
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
-        var command = new RunFinalizeCommand(runs, cache);
+        var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -76,7 +77,7 @@ public sealed class RunFinalizeCommandTests
             RowId = "item-a",
             DisplayIconColor = new AssetColorSnapshot(),
         });
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan));
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -91,6 +92,35 @@ public sealed class RunFinalizeCommandTests
         Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "asset-manifest");
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(assetManifestPath)), manifest.Hashes["asset-manifest.json"]);
+    }
+
+    [Fact]
+    public async Task WritesMasterTooltipArtifactAndHash()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-master-tooltip-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+        var source = FakeMasterTooltipSource.Default;
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source);
+
+        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+
+        Assert.Empty(result.Diagnostics);
+        var manifestPath = result.Result["manifestPath"]!.Value<string>()!;
+        var publishedDir = Path.GetDirectoryName(manifestPath)!;
+        var masterTooltipPath = Path.Combine(publishedDir, "master-tooltip.json");
+        Assert.True(File.Exists(masterTooltipPath));
+        var snapshot = JsonConvert.DeserializeObject<MasterTooltipVocabularySnapshot>(File.ReadAllText(masterTooltipPath), JsonSettings.Default)!;
+        Assert.Equal(2, snapshot.SchemaVersion);
+        Assert.Equal("positive", snapshot.TooltipColors["p"].Text);
+        Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "master-tooltip");
+        var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
+        Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(masterTooltipPath)), manifest.Hashes["master-tooltip.json"]);
     }
     private static Diagnostic Diagnostic(string severity, string code) => new()
     {
@@ -124,5 +154,36 @@ public sealed class RunFinalizeCommandTests
         public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => _diagnostics;
+    }
+
+    private sealed class FakeMasterTooltipSource : IMasterTooltipSnapshotSource
+    {
+        public static readonly FakeMasterTooltipSource Default = new();
+
+        public MasterTooltipVocabularySnapshot BuildSnapshot() => new()
+        {
+            SchemaVersion = 2,
+            TooltipCodes = new Dictionary<string, string> { ["stamina"] = "Stamina" },
+            TooltipColors = new Dictionary<string, MasterTooltipColorTokenSnapshot>
+            {
+                ["p"] = new() { Color = "#6FCF6F", Text = "positive" },
+            },
+            TooltipTargetColor = new AssetColorSnapshot(),
+            TooltipDurationColor = new AssetColorSnapshot(),
+            PositiveColor = new AssetColorSnapshot { R = 0.43f, G = 0.81f, B = 0.43f, A = 1f },
+            NegativeColor = new AssetColorSnapshot { R = 0.95f, G = 0.36f, B = 0.36f, A = 1f },
+            SpellSubEffectColor = new AssetColorSnapshot { R = 0.8f, G = 0.8f, B = 0.8f, A = 1f },
+            EnchantmentItemColor = new AssetColorSnapshot { R = 0.55f, G = 0.78f, B = 0.85f, A = 1f },
+            PrimarySpellTooltip = "<b>{0}</b>\n{1}",
+            SecondarySpellTooltip = "<b>Secondary:</b> {0}\n{1}",
+            UnmetSkillMessage = "You lack the required skill: {0}",
+            BrokenDurabilityMessage = "This item is broken.",
+            RuinedDurabilityMessage = "This item is ruined.",
+            StatBookMessage = "Reading this grants {0}.",
+            TermSetColors = new List<MasterTooltipTermSetColorSnapshot>(),
+            GlobalTermSets = new List<MasterTooltipTermSetSnapshot>(),
+            TermColorMatch = "\\b({0})\\b",
+            PotionRecipeDescription = "Learn the potion recipe {0}.",
+        };
     }
 }
