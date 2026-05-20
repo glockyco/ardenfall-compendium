@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ardenfall-compendium.example/schemas/master-tooltip.schema.json",
+  "title": "Master tooltip vocabulary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "tooltipCodes",
+    "tooltipColors",
+    "tooltipTargetColor",
+    "tooltipDurationColor",
+    "positiveColor",
+    "negativeColor",
+    "spellSubEffectColor",
+    "enchantmentItemColor",
+    "primarySpellTooltip",
+    "secondarySpellTooltip",
+    "unmetSkillMessage",
+    "brokenDurabilityMessage",
+    "ruinedDurabilityMessage",
+    "statBookMessage",
+    "termSetColors",
+    "globalTermSets",
+    "termColorMatch",
+    "potionRecipeDescription"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "tooltipCodes": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "tooltipColors": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["color", "text"],
+        "properties": {
+          "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "tooltipTargetColor": { "$ref": "#/$defs/color" },
+    "tooltipDurationColor": { "$ref": "#/$defs/color" },
+    "positiveColor": { "$ref": "#/$defs/color" },
+    "negativeColor": { "$ref": "#/$defs/color" },
+    "spellSubEffectColor": { "$ref": "#/$defs/color" },
+    "enchantmentItemColor": { "$ref": "#/$defs/color" },
+    "primarySpellTooltip": { "type": "string" },
+    "secondarySpellTooltip": { "type": "string" },
+    "unmetSkillMessage": { "type": "string" },
+    "brokenDurabilityMessage": { "type": "string" },
+    "ruinedDurabilityMessage": { "type": "string" },
+    "statBookMessage": { "type": "string" },
+    "termSetColors": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["color", "text"],
+        "properties": {
+          "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "globalTermSets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["setId", "terms", "regex", "replacement"],
+        "properties": {
+          "setId": { "type": "string", "minLength": 1 },
+          "terms": { "type": "array", "items": { "type": "string" } },
+          "regex": { "type": "string" },
+          "replacement": { "type": "string" }
+        }
+      }
+    },
+    "termColorMatch": { "type": "string" },
+    "potionRecipeDescription": { "type": "string" }
+  },
+  "$defs": {
+    "color": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["r", "g", "b", "a"],
+      "properties": {
+        "r": { "type": "number", "minimum": 0, "maximum": 1 },
+        "g": { "type": "number", "minimum": 0, "maximum": 1 },
+        "b": { "type": "number", "minimum": 0, "maximum": 1 },
+        "a": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

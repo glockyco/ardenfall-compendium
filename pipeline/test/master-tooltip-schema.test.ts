@@ -1,0 +1,44 @@
+import { describe, expect, it } from "bun:test";
+import validate from "$pipeline/../dist/validate-master-tooltip.mjs";
+
+const valid = {
+  schemaVersion: 2,
+  tooltipCodes: { stamina: "Stamina" },
+  tooltipColors: { p: { color: "#6FCF6F", text: "positive" } },
+  tooltipTargetColor: { r: 1, g: 1, b: 1, a: 1 },
+  tooltipDurationColor: { r: 1, g: 1, b: 1, a: 1 },
+  positiveColor: { r: 0.43, g: 0.81, b: 0.43, a: 1 },
+  negativeColor: { r: 0.95, g: 0.36, b: 0.36, a: 1 },
+  spellSubEffectColor: { r: 0.8, g: 0.8, b: 0.8, a: 1 },
+  enchantmentItemColor: { r: 0.55, g: 0.78, b: 0.85, a: 1 },
+  primarySpellTooltip: "<b>{0}</b>\n{1}",
+  secondarySpellTooltip: "<b>Secondary:</b> {0}\n{1}",
+  unmetSkillMessage: "You lack the required skill: {0}",
+  brokenDurabilityMessage: "This item is broken.",
+  ruinedDurabilityMessage: "This item is ruined.",
+  statBookMessage: "Reading this grants {0}.",
+  termSetColors: {},
+  globalTermSets: [],
+  termColorMatch: "\\{([a-zA-Z0-9_]+)\\}",
+  potionRecipeDescription: "Learn the potion recipe {0}.",
+};
+
+describe("master-tooltip v2 schema", () => {
+  it("accepts a complete vocabulary", () => {
+    expect(validate(valid)).toBe(true);
+  });
+
+  it("rejects schemaVersion 1", () => {
+    expect(validate({ ...valid, schemaVersion: 1 })).toBe(false);
+  });
+
+  it("rejects missing positiveColor", () => {
+    const rest: Record<string, unknown> = { ...valid };
+    delete rest.positiveColor;
+    expect(validate(rest)).toBe(false);
+  });
+
+  it("rejects a string tooltipColors value (v1 shape)", () => {
+    expect(validate({ ...valid, tooltipColors: { p: "positive" } })).toBe(false);
+  });
+});

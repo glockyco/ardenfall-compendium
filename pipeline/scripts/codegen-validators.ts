@@ -24,6 +24,10 @@ const targets = [
     schema: "schemas/fixture-manifest.schema.json",
     out: "pipeline/dist/validate-fixture-manifest.mjs",
   },
+  {
+    schema: "schemas/master-tooltip.schema.json",
+    out: "pipeline/dist/validate-master-tooltip.mjs",
+  },
 ];
 
 // Single Ajv instance so $ref between schemas resolves.

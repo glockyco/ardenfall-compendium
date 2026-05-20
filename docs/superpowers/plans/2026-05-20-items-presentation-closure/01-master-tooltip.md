@@ -178,7 +178,7 @@ Expected: FAIL — `dist/validate-master-tooltip.mjs` does not exist yet.
 
 - [ ] **Step 4: Wire schema into the codegen generator**
 
-Locate the schemas array in `pipeline/scripts/codegen-validators.ts` and add the new entry. Read the file first to confirm the exact shape; the addition is a single object literal `{ source: "schemas/master-tooltip.schema.json", output: "dist/validate-master-tooltip.mjs", typeName: "MasterTooltipVocabulary" }`.
+Locate the schemas array in `pipeline/scripts/codegen-validators.ts` and add the new entry using the repository's existing target shape: `{ schema: "schemas/master-tooltip.schema.json", out: "pipeline/dist/validate-master-tooltip.mjs" }`.
 
 - [ ] **Step 5: Regenerate validators**
 
