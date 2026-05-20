@@ -43,6 +43,25 @@ describe("loadDescriptors", () => {
     ]);
   });
 
+  it("loads the stat-type descriptor without variants", async () => {
+    const result = await loadDescriptors.run(
+      {},
+      {
+        workspaceRoot: ".",
+        snapshotDir: "",
+        outDir: "",
+        log: () => undefined,
+      },
+    );
+    const statType = result.entities["stat-type"];
+    if (!statType) throw new Error("stat-type entity not loaded");
+
+    expect(statType.label.plural).toBe("Stats");
+    expect(statType.presentationContext?.renderContext).toBe("stat-type-presentation-v1");
+    expect(statType.fields.map((field) => field.name)).toContain("statName");
+    expect(result.variants["stat-type"]).toEqual([]);
+  });
+
   it("loads non-variant entity descriptors with presentation contexts", async () => {
     const root = mkdtempSync(join(tmpdir(), "ardenfall-descriptor-"));
     try {

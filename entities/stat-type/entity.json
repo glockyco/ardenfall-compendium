@@ -1,0 +1,42 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "stat-type",
+  "label": { "singular": "Stat", "plural": "Stats" },
+  "extraction": {
+    "root": "BuiltLookupTable.GetAssetsOfType<StatType>",
+    "walker": "StatTypeExtractor"
+  },
+  "presentationContext": { "renderContext": "stat-type-presentation-v1" },
+  "fields": [
+    { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
+    { "name": "isAttribute", "type": "boolean", "from": "isAttribute", "missingPolicy": "fatal" },
+    { "name": "statName", "type": "string", "from": "statName", "missingPolicy": "fatal" },
+    {
+      "name": "iconRef",
+      "type": "ref:asset",
+      "from": "iconRef",
+      "missingPolicy": "optional-empty"
+    },
+    { "name": "iconColor", "type": "json", "from": "iconColor", "missingPolicy": "optional-empty" },
+    {
+      "name": "statDescription",
+      "type": "string",
+      "from": "statDescription",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "longStatDescription",
+      "type": "string",
+      "from": "longStatDescription",
+      "missingPolicy": "optional-empty"
+    },
+    { "name": "affects", "type": "json", "from": "affects", "missingPolicy": "optional-empty" },
+    {
+      "name": "skillAffects",
+      "type": "json",
+      "from": "skillAffects",
+      "missingPolicy": "optional-empty"
+    }
+  ],
+  "map": null
+}
