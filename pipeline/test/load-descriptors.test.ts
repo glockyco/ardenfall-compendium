@@ -62,6 +62,25 @@ describe("loadDescriptors", () => {
     expect(result.variants["stat-type"]).toEqual([]);
   });
 
+  it("loads the item-category descriptor without variants", async () => {
+    const result = await loadDescriptors.run(
+      {},
+      {
+        workspaceRoot: ".",
+        snapshotDir: "",
+        outDir: "",
+        log: () => undefined,
+      },
+    );
+    const category = result.entities["item-category"];
+    if (!category) throw new Error("item-category entity not loaded");
+
+    expect(category.label.plural).toBe("Categories");
+    expect(category.presentationContext?.renderContext).toBe("item-category-presentation-v1");
+    expect(category.fields.map((field) => field.name)).toContain("categoryColor");
+    expect(result.variants["item-category"]).toEqual([]);
+  });
+
   it("loads non-variant entity descriptors with presentation contexts", async () => {
     const root = mkdtempSync(join(tmpdir(), "ardenfall-descriptor-"));
     try {

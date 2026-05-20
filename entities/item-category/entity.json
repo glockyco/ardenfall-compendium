@@ -1,0 +1,35 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "item-category",
+  "label": { "singular": "Category", "plural": "Categories" },
+  "extraction": {
+    "root": "BuiltLookupTable.GetAssetsOfType<ItemCategory>",
+    "walker": "ItemCategoryExtractor"
+  },
+  "presentationContext": { "renderContext": "item-category-presentation-v1" },
+  "fields": [
+    { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
+    { "name": "categoryName", "type": "string", "from": "categoryName", "missingPolicy": "fatal" },
+    {
+      "name": "iconRef",
+      "type": "ref:asset",
+      "from": "iconRef",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "defaultItemIconRef",
+      "type": "ref:asset",
+      "from": "defaultItemIconRef",
+      "missingPolicy": "optional-empty"
+    },
+    { "name": "categoryColor", "type": "json", "from": "categoryColor", "missingPolicy": "fatal" },
+    {
+      "name": "showInAllCategory",
+      "type": "boolean",
+      "from": "showInAllCategory",
+      "missingPolicy": "fatal"
+    },
+    { "name": "columns", "type": "json", "from": "columns", "missingPolicy": "optional-empty" }
+  ],
+  "map": null
+}
