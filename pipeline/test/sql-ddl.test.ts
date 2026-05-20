@@ -37,9 +37,9 @@ describe("buildDDL", () => {
     expect(ddl).toContain('"id" TEXT NOT NULL PRIMARY KEY REFERENCES "items"("id")');
   });
 
-  it("emits item_tags child table for entities with tags", () => {
+  it("emits item_tag_refs child table for entities with tags", () => {
     const ddl = buildDDL(item, []);
-    expect(ddl).toContain('CREATE TABLE "item_tags"');
+    expect(ddl).toContain('CREATE TABLE "item_tag_refs"');
     expect(ddl).toContain('PRIMARY KEY ("item_id", "tag")');
   });
 });

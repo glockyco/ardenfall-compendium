@@ -30,7 +30,7 @@ export function canonicaliseItems(
       `VALUES (${[...rootCols, "variant"].map(() => "?").join(", ")})`,
   );
   const tagInsert = db.prepare(
-    `INSERT INTO "${entity.id}_tags" ("${entity.id}_id", "tag") VALUES (?, ?)`,
+    `INSERT INTO "${entity.id}_tag_refs" ("${entity.id}_id", "tag") VALUES (?, ?)`,
   );
 
   const variantInserters = new Map<string, ReturnType<Database["prepare"]>>();

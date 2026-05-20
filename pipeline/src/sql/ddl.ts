@@ -24,7 +24,7 @@ export function buildDDL(entity: EntityDescriptor, variants: VariantDescriptor[]
 
   // Tags child table.
   out.push(
-    `CREATE TABLE "${entity.id}_tags" (` +
+    `CREATE TABLE "${entity.id}_tag_refs" (` +
       `"${entity.id}_id" TEXT NOT NULL REFERENCES "${entity.id}s"("id"), ` +
       `"tag" TEXT NOT NULL, ` +
       `PRIMARY KEY ("${entity.id}_id", "tag"));`,

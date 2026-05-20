@@ -58,7 +58,9 @@ describe("canonicaliseItems", () => {
       consumableRows.find((r) => r.id === "fixture-stamina-draught")?.quickslotCooldownTime,
     ).toBe(12.5);
 
-    const tagRows = db.query("SELECT item_id, tag FROM item_tags ORDER BY item_id, tag").all() as {
+    const tagRows = db
+      .query("SELECT item_id, tag FROM item_tag_refs ORDER BY item_id, tag")
+      .all() as {
       item_id: string;
       tag: string;
     }[];
