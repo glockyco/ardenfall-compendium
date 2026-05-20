@@ -16,7 +16,7 @@ describe("emitRedirects", () => {
       db.exec(buildRelationshipDDL());
       db.run(
         `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
-         VALUES ('item', 'item-a', 'Iron Sword', '/items/iron-sword--4ed20218', 'iron-sword--4ed20218', '4ed20218', 1)`,
+         VALUES ('item', 'item-a', 'Iron Sword', '/items/item-a', 'iron-sword--4ed20218', '4ed20218', 1)`,
       );
       db.run(
         `INSERT INTO entity_redirects (source_type, source_id, target_type, target_id, reason)

@@ -22,7 +22,11 @@ export function emitRedirects(input: EmitRedirectsInput): EmitRedirectsOutput {
   try {
     const rows = db
       .query<RedirectRow, []>(
-        `SELECT r.source_id AS source, n.route_path AS route
+        `SELECT r.source_id AS source,
+                CASE
+                  WHEN r.target_type = 'item' THEN '/items/' || n.canonical_slug
+                  ELSE n.route_path
+                END AS route
          FROM entity_redirects r
          JOIN entity_nodes n
            ON n.entity_type = r.target_type AND n.entity_id = r.target_id
