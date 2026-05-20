@@ -9,7 +9,7 @@ namespace ArdenfallCompendium.Entities.Item;
 
 public static class ItemIconSlots
 {
-    public static Color BaseDisplayColor(ItemCategory? category) => category?.categoryColor ?? Color.white;
+    public static Color BaseDisplayColor(Ardenfall.ItemCategory? category) => category?.categoryColor ?? Color.white;
 
     public static Color SlateSpellDisplayColor(Color? spellIconColor) => spellIconColor ?? Color.white;
 
