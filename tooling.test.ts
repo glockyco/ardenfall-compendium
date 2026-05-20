@@ -25,6 +25,7 @@ const siteLayout = readFileSync("site/src/routes/+layout.ts", "utf8");
 const siteSvelteConfig = readFileSync("site/svelte.config.js", "utf8");
 const siteWranglerConfig = readFileSync("site/wrangler.toml", "utf8");
 const sitePrerenderSmoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
+const siteAppCss = readFileSync("site/src/app.css", "utf8");
 
 function sha256(content: string | Buffer): string {
   return createHash("sha256").update(content).digest("hex");
@@ -777,6 +778,13 @@ describe("site prerender architecture", () => {
     expect(sitePackageJson.scripts["smoke:prerender"]).toBe(
       "bun run scripts/smoke-prerender-output.mjs",
     );
+  });
+
+  it("defines popover color tokens for opaque overlay surfaces", () => {
+    expect(siteAppCss).toContain("--color-popover: var(--popover)");
+    expect(siteAppCss).toContain("--color-popover-foreground: var(--popover-foreground)");
+    expect(siteAppCss).toContain("--popover:");
+    expect(siteAppCss).toContain("--popover-foreground:");
   });
 
   it("documents release artifact provenance as the deploy contract", () => {
