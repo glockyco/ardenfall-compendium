@@ -288,7 +288,7 @@ SvelteKit's default `[slug]` matcher accepts any non-`/` string, so routes like 
 **Files:**
 
 - Create: `site/src/lib/server/route-slug.ts`
-- Create: `site/src/lib/server/route-slug.test.ts`
+- Create: `site/test/route-slug.test.ts` (kept outside `site/src` so `svelte-check` does not typecheck Bun test globals)
 - Modify: `site/src/lib/server/read-models.ts` (add `getEntityNodeBySlug(entityType, slug)` that consults `entity_nodes` by `canonical_slug` and `(entity_type, short_id)` fallback)
 
 - [ ] **Step 1: Write the failing test**
@@ -338,7 +338,7 @@ Note the last case: uppercase hex is rejected because canonical slugs are always
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `bun --cwd site test src/lib/server/route-slug.test.ts`
+Run: `bun test test/route-slug.test.ts` from `site/`
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Implement the helper**
@@ -415,13 +415,13 @@ export const getEntityNodeByShortId = (
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `bun --cwd site test src/lib/server/route-slug.test.ts`
+Run: `bun test test/route-slug.test.ts` from `site/`
 Expected: PASS.
 
 - [ ] **Step 6: Commit**
 
 ```sh
-git add site/src/lib/server/route-slug.ts site/src/lib/server/route-slug.test.ts site/src/lib/server/read-models.ts
+git add site/src/lib/server/route-slug.ts site/test/route-slug.test.ts site/src/lib/server/read-models.ts
 git commit -m "feat(site): parse canonical slug parameter"
 ```
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { parseSlugParam } from "$lib/server/route-slug";
+import { parseSlugParam } from "../src/lib/server/route-slug";
 
 describe("parseSlugParam", () => {
   it("splits `<kebab>--<id8>` into parts", () => {
