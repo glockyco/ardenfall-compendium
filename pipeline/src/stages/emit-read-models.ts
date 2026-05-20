@@ -62,6 +62,47 @@ CREATE TABLE item_overview_categories (
 );
 `;
 
+export interface EntityNodeInput {
+  entityType: string;
+  entityId: string;
+  label: string;
+  routePath: string;
+  canonicalSlug?: string;
+  shortId?: string;
+  isPublic?: boolean;
+}
+
+export type EntityNodeWriter = (node: EntityNodeInput) => void;
+
+export function prepareEntityNodeWriter(db: Database): EntityNodeWriter {
+  const insert = db.prepare(
+    `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(entity_type, entity_id) DO NOTHING`,
+  );
+
+  return (node) => {
+    const explicitCanonicalSlug = node.canonicalSlug;
+    const explicitShortId = node.shortId;
+    if ((explicitCanonicalSlug === undefined) !== (explicitShortId === undefined)) {
+      throw new Error("entity node canonicalSlug and shortId must be provided together");
+    }
+
+    const slug =
+      explicitCanonicalSlug === undefined
+        ? deriveEntityNodeSlug(node.label, node.entityId)
+        : { canonicalSlug: explicitCanonicalSlug, shortId: explicitShortId as string };
+
+    insert.run(
+      node.entityType,
+      node.entityId,
+      node.label,
+      node.routePath,
+      slug.canonicalSlug,
+      slug.shortId,
+      (node.isPublic ?? true) ? 1 : 0,
+    );
+  };
+}
+
 export function emitItemReadModels(
   db: Database,
   desc: LoadDescriptorsOutput,
@@ -160,9 +201,7 @@ export function emitItemReadModels(
       omissions_json, value, weight, diagnostics_json
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
-  const nodeInsert = db.prepare(
-    `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(entity_type, entity_id) DO NOTHING`,
-  );
+  const writeNode = prepareEntityNodeWriter(db);
   const aliasInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_aliases (alias_key, target_type, target_id, label, source) VALUES (?, ?, ?, ?, ?)`,
   );
@@ -206,16 +245,12 @@ export function emitItemReadModels(
       });
       const itemLabel = item?.name ?? presentation.displayName;
       const variantId = item?.variant ?? snapshotRow.variant;
-      const itemSlug = deriveEntityNodeSlug(itemLabel, snapshotRow.id);
-      nodeInsert.run(
-        "item",
-        snapshotRow.id,
-        itemLabel,
-        `/items/${snapshotRow.id}`,
-        itemSlug.canonicalSlug,
-        itemSlug.shortId,
-        1,
-      );
+      writeNode({
+        entityType: "item",
+        entityId: snapshotRow.id,
+        label: itemLabel,
+        routePath: `/items/${snapshotRow.id}`,
+      });
       aliasInsert.run(aliasKey(itemLabel), "item", snapshotRow.id, itemLabel, "item-presentation");
       presentationInsert.run(
         snapshotRow.id,
@@ -258,15 +293,14 @@ export function emitItemReadModels(
 
       const variant = desc.variants.item?.find((candidate) => candidate.variantId === variantId);
       const variantLabel = variant?.label ?? titleCase(variantId);
-      nodeInsert.run(
-        "item-variant",
-        variantId,
-        variantLabel,
-        `/items/variant/${variantId}`,
-        variantId,
-        variantId,
-        1,
-      );
+      writeNode({
+        entityType: "item-variant",
+        entityId: variantId,
+        label: variantLabel,
+        routePath: `/items/variant/${variantId}`,
+        canonicalSlug: variantId,
+        shortId: variantId,
+      });
       aliasInsert.run(
         aliasKey(variantLabel),
         "item-variant",
@@ -309,15 +343,14 @@ export function emitItemReadModels(
       const termEdges = [];
       for (const term of collectTermLinks(description.nodes)) {
         const termLabel = masterTooltip?.tooltipCodes[term.termId] ?? term.label;
-        nodeInsert.run(
-          "term",
-          term.termId,
-          termLabel,
-          `/terms/${term.termId}`,
-          term.termId,
-          term.termId,
-          1,
-        );
+        writeNode({
+          entityType: "term",
+          entityId: term.termId,
+          label: termLabel,
+          routePath: `/terms/${term.termId}`,
+          canonicalSlug: term.termId,
+          shortId: term.termId,
+        });
         aliasInsert.run(aliasKey(termLabel), "term", term.termId, termLabel, "master-tooltip");
         edgeInsert.run(
           `${snapshotRow.id}:references_term:term:${term.termId}`,

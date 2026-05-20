@@ -6,6 +6,7 @@ export interface EntityDescriptor {
   id: string;
   label: { singular: string; plural: string };
   extraction: { root: string; walker?: string; options?: Record<string, unknown> };
+  presentationContext?: { renderContext: string };
   fields: FieldSpec[];
   variants?: { dir: string; registry?: string };
   denormalise?: OperationRef[];

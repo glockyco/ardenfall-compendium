@@ -2,7 +2,8 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { buildDDL } from "$pipeline/sql/ddl";
 import { canonicaliseItems } from "$pipeline/entities/item/canonicaliser";
-import { emitItemReadModels } from "$pipeline/stages/emit-read-models";
+import { emitItemReadModels, prepareEntityNodeWriter } from "$pipeline/stages/emit-read-models";
+import { ENTITY_GRAPH_DDL } from "$pipeline/relationships/relationship-graph";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { loadSnapshot } from "$pipeline/stages/load-snapshot";
 
@@ -201,5 +202,52 @@ describe("emitItemReadModels", () => {
     expect(JSON.parse(variantFilter.options_json)).toContainEqual(
       expect.objectContaining({ value: "melee-weapon", label: "Melee Weapon", count: 1 }),
     );
+  });
+});
+
+describe("prepareEntityNodeWriter", () => {
+  it("inserts generic entity nodes with derived or explicit slugs", async () => {
+    const db = new Database(":memory:");
+    db.exec(ENTITY_GRAPH_DDL);
+
+    const writeNode = prepareEntityNodeWriter(db);
+
+    writeNode({
+      entityType: "stat-type",
+      entityId: "4ed202185a05d98439595e3fcab021c8.11400000",
+      label: "Heavy Armor Skill",
+      routePath: "/stats/heavy-armor-skill--4ed20218",
+    });
+    writeNode({
+      entityType: "item-tag",
+      entityId: "valuable-remedy",
+      label: "Valuable Remedy",
+      routePath: "/tags/valuable-remedy",
+      canonicalSlug: "valuable-remedy",
+      shortId: "valuable-remedy",
+    });
+
+    expect(
+      db
+        .query(
+          "SELECT entity_type, entity_id, canonical_slug, short_id, is_public FROM entity_nodes ORDER BY entity_type",
+        )
+        .all(),
+    ).toEqual([
+      {
+        entity_type: "item-tag",
+        entity_id: "valuable-remedy",
+        canonical_slug: "valuable-remedy",
+        short_id: "valuable-remedy",
+        is_public: 1,
+      },
+      {
+        entity_type: "stat-type",
+        entity_id: "4ed202185a05d98439595e3fcab021c8.11400000",
+        canonical_slug: "heavy-armor-skill--4ed20218",
+        short_id: "4ed20218",
+        is_public: 1,
+      },
+    ]);
   });
 });

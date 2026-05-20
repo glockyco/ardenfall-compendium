@@ -1,5 +1,16 @@
 import type { Database } from "bun:sqlite";
 
+/**
+ * Pipeline diagnostic source taxonomy for Slice 4.5:
+ * - `rich-text`: rich-text parser/linker diagnostics while translating game-authored strings.
+ * - `relationship-graph`: entity node, edge, slug, and public-link invariant audits.
+ * - `master-tooltip`: master-tooltip vocabulary extraction or schema diagnostics.
+ * - `composer`: tooltip composer parity, binding, and deterministic rendering diagnostics.
+ * - `entity-extraction`: per-entity snapshot extraction diagnostics from mod or pipeline loaders.
+ * - `slug-collision`: route slug/short-id collision diagnostics before public route emission.
+ * - `effect-binding`: unresolved tooltip variable/effect payload binding diagnostics.
+ */
+
 export const ENTITY_GRAPH_DDL = `
 CREATE TABLE IF NOT EXISTS entity_nodes (
   entity_type TEXT NOT NULL,

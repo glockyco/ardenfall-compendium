@@ -14,48 +14,46 @@ Today's `schemas/entity.schema.json` already validates the item descriptor (`ent
 
 - [ ] **Step 1: Audit the existing descriptor schema**
 
-Read `schemas/entity.schema.json` and `entities/item/entity.json`. Confirm the schema is generic enough for the new entities (it accepts `id`, `singularLabel`, `pluralLabel`, `routePath`, `canonicalTable`, optional `variants`, `fields[]`).
+Read `schemas/entity.schema.json` and `entities/item/entity.json`. Confirm the schema is generic enough for the new entities: the current descriptor shape is `id`, `label.{singular,plural}`, `extraction.{root,walker,options}`, `fields[]`, and optional `variants`, `site`, and `map`. Entity descriptors do **not** currently carry `routePath` or `canonicalTable`; those live in variant descriptors or generated read models.
 
-Identify any new properties needed for a non-variant entity: `slugStrategy`, `presentationContext`, etc. For Phase 3 we only add `presentationContext: { renderContext: string }` if absent — every new entity declares its `render_context` constant in the descriptor.
+Identify any new properties needed for a non-variant entity. Phase 3 adds `presentationContext: { renderContext: string }` because each new entity needs a descriptor-owned read-model `render_context` constant.
 
 - [ ] **Step 2: Extend the schema if needed**
 
 If the audit identifies a missing field, extend `schemas/entity.schema.json` with `presentationContext` (object with `renderContext: string`) optional. Regenerate validators.
 
-- [ ] **Step 3: Write a fixture descriptor for a throw-away entity**
+- [ ] **Step 3: Write a failing loader test for a throw-away entity descriptor**
 
-Create `entities/__fixture_entity/entity.json`:
+Add a temp-workspace fixture inside `pipeline/test/load-descriptors.test.ts`; do not commit a real `entities/__fixture_entity` folder. The test descriptor should use the actual descriptor shape:
 
 ```json
 {
   "$schema": "../../schemas/entity.schema.json",
-  "id": "__fixture_entity",
-  "singularLabel": "Fixture entity",
-  "pluralLabel": "Fixture entities",
-  "routePath": "/__fixture_entities",
-  "canonicalTable": "__fixture_entities",
-  "presentationContext": { "renderContext": "fixture-presentation-v1" },
+  "id": "stat-type",
+  "label": { "singular": "Stat type", "plural": "Stat types" },
+  "extraction": {
+    "root": "BuiltLookupTable.GetAssetsOfType<StatType>",
+    "walker": "StatTypeWalker"
+  },
+  "presentationContext": { "renderContext": "stat-type-presentation-v1" },
   "fields": [
-    { "name": "id", "type": "string", "from": "id", "missingPolicy": "fatal" },
-    { "name": "name", "type": "string", "from": "name", "missingPolicy": "fatal" }
-  ]
+    { "name": "id", "type": "id", "from": "guid", "missingPolicy": "fatal" },
+    { "name": "name", "type": "string", "from": "statName", "missingPolicy": "fatal" }
+  ],
+  "map": null
 }
 ```
 
-The descriptor folder name starts with `__` so the loader skips it during normal entity walking (Slice 1 convention; verify in `pipeline/src/stages/load-descriptors.ts`).
+Expected: FAIL before the schema/type change because `presentationContext` is rejected as an additional property.
 
 - [ ] **Step 4: Run the descriptor validator**
 
 Run: `bun test pipeline/test/load-descriptors.test.ts`
-Expected: PASS (the new descriptor folder is ignored).
+Expected after implementation: PASS.
 
-- [ ] **Step 5: Remove the fixture entity**
+- [ ] **Step 5: Do not commit a throw-away entity folder**
 
-```sh
-rm -r entities/__fixture_entity
-```
-
-This was a one-shot audit — keeping the throw-away directory in the repo creates clutter. The descriptor template moves into the canonical entity slices.
+The fixture is a temp directory owned by the test. Keeping a real throw-away descriptor in the repo creates clutter.
 
 - [ ] **Step 6: Commit (only if the schema was extended)**
 
@@ -72,7 +70,7 @@ The existing `schemas/snapshot.schema.json` validates `entityId: "item"` via a `
 
 - [ ] **Step 1: Audit the snapshot schema**
 
-Read `schemas/snapshot.schema.json`. Note the current `entityId` validation. If it is `const: "item"`, change to `enum: ["item", "status-effect", "spell", "enchantment", "stat-type", "item-category", "item-tag", "potion-recipe"]`. If it is open (`type: "string"`), leave it. Document the choice in the schema with a comment.
+Read `schemas/snapshot.schema.json`. The current `entityId` validation is open (`type: "string"` with the normal entity-id pattern), which already covers `status-effect`, `spell`, `enchantment`, `stat-type`, `item-category`, `item-tag`, and `potion-recipe`. Leave it open; do not add JSON comments to the schema because the schema files are consumed as strict JSON artifacts.
 
 - [ ] **Step 2: Regenerate validators**
 
