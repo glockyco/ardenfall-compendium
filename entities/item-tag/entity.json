@@ -1,0 +1,21 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "item-tag",
+  "label": { "singular": "Tag", "plural": "Tags" },
+  "extraction": {
+    "root": "BuiltLookupTable.GetAssetsOfType<ItemTag>",
+    "walker": "ItemTagExtractor"
+  },
+  "presentationContext": { "renderContext": "item-tag-presentation-v1" },
+  "fields": [
+    { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
+    { "name": "tagName", "type": "string", "from": "tagName", "missingPolicy": "fatal" },
+    {
+      "name": "description",
+      "type": "string",
+      "from": "description",
+      "missingPolicy": "optional-empty"
+    }
+  ],
+  "map": null
+}

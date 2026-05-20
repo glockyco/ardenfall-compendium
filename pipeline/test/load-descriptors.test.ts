@@ -81,6 +81,25 @@ describe("loadDescriptors", () => {
     expect(result.variants["item-category"]).toEqual([]);
   });
 
+  it("loads the item-tag descriptor without variants", async () => {
+    const result = await loadDescriptors.run(
+      {},
+      {
+        workspaceRoot: ".",
+        snapshotDir: "",
+        outDir: "",
+        log: () => undefined,
+      },
+    );
+    const tag = result.entities["item-tag"];
+    if (!tag) throw new Error("item-tag entity not loaded");
+
+    expect(tag.label.plural).toBe("Tags");
+    expect(tag.presentationContext?.renderContext).toBe("item-tag-presentation-v1");
+    expect(tag.fields.map((field) => field.name)).toEqual(["id", "tagName", "description"]);
+    expect(result.variants["item-tag"]).toEqual([]);
+  });
+
   it("loads non-variant entity descriptors with presentation contexts", async () => {
     const root = mkdtempSync(join(tmpdir(), "ardenfall-descriptor-"));
     try {
