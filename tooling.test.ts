@@ -1,5 +1,7 @@
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "bun:test";
+import { Database } from "bun:sqlite";
 import { join } from "node:path";
 import { buildCommandPlan, defaultOptions } from "./scripts/decompile-ardenfall.mjs";
 import { tmpdir } from "node:os";
@@ -22,6 +24,40 @@ const sitePackageJson = JSON.parse(readFileSync("site/package.json", "utf8")) as
 const siteLayout = readFileSync("site/src/routes/+layout.ts", "utf8");
 const siteSvelteConfig = readFileSync("site/svelte.config.js", "utf8");
 const siteWranglerConfig = readFileSync("site/wrangler.toml", "utf8");
+
+function sha256(content: string | Buffer): string {
+  return createHash("sha256").update(content).digest("hex");
+}
+
+function writeMinimalArtifactSqlite(
+  sqlitePath: string,
+  manifest: {
+    artifactKind: string;
+    artifactId: string;
+    sourceKind: string;
+    snapshotId: string;
+    gitCommit: string;
+  },
+): void {
+  const db = new Database(sqlitePath);
+  try {
+    db.exec(`
+      CREATE TABLE item_overview_rows (id TEXT);
+      CREATE TABLE item_presentation_rows (id TEXT);
+      CREATE TABLE item_overview_filters (id TEXT);
+      CREATE TABLE item_overview_categories (id TEXT);
+      CREATE TABLE artifact_metadata (key TEXT, value TEXT);
+    `);
+    const insert = db.prepare("INSERT INTO artifact_metadata (key, value) VALUES (?, ?)");
+    insert.run("artifactKind", manifest.artifactKind);
+    insert.run("artifactId", manifest.artifactId);
+    insert.run("sourceKind", manifest.sourceKind);
+    insert.run("sourceSnapshotId", manifest.snapshotId);
+    insert.run("gitCommit", manifest.gitCommit);
+  } finally {
+    db.close();
+  }
+}
 describe("format tooling", () => {
   it("formats mjs files in the pre-commit prettier hook", () => {
     expect(lefthook).toContain("mjs");
@@ -226,6 +262,88 @@ describe("site deployment tooling", () => {
       await expect(
         stageArtifact({ artifactDir: artifact, targetDir: target, mode: "release" }),
       ).rejects.toThrow(/release staging requires artifactKind release/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects missing redirects before mutating target files", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-missing-redirects-"));
+    try {
+      const artifact = join(root, "artifact");
+      const target = join(root, "static");
+      const source = {
+        kind: "synthetic-fixture",
+        fixtureName: "synthetic",
+        snapshotId: "synthetic",
+        gameVersion: "fixture",
+        buildIdentifier: "synthetic",
+        extractorVersion: "0.1.0",
+        snapshotManifestSha256: "a".repeat(64),
+      };
+      const git = {
+        repository: "glockyco/ardenfall-compendium",
+        commit: "b".repeat(40),
+        branch: "main",
+        dirty: false,
+      };
+      mkdirSync(join(artifact, "assets"), { recursive: true });
+      mkdirSync(join(target, "assets"), { recursive: true });
+      writeFileSync(join(target, "data.sqlite"), "previous sqlite");
+      writeFileSync(join(target, "_redirects"), "previous redirects");
+      writeFileSync(join(target, "assets", "stale.webp"), "stale asset");
+
+      const sqlitePath = join(artifact, "data.sqlite");
+      writeMinimalArtifactSqlite(sqlitePath, {
+        artifactKind: "fixture",
+        artifactId: "synthetic",
+        sourceKind: source.kind,
+        snapshotId: source.snapshotId,
+        gitCommit: git.commit,
+      });
+      const sqliteBytes = readFileSync(sqlitePath);
+      writeFileSync(
+        join(artifact, "artifact-manifest.json"),
+        JSON.stringify({
+          schemaVersion: 1,
+          artifactKind: "fixture",
+          artifactId: "synthetic",
+          createdAt: "2026-05-15T00:00:00.000Z",
+          source,
+          git,
+          diagnostics: { fatal: 0, diagnostic: 0 },
+          counts: {
+            itemOverviewRows: 0,
+            itemPresentationRows: 0,
+            itemOverviewFilters: 0,
+            itemOverviewCategories: 0,
+          },
+          outputs: {
+            sqlite: {
+              path: "data.sqlite",
+              bytes: sqliteBytes.byteLength,
+              sha256: sha256(sqliteBytes),
+            },
+            assets: { path: "assets", count: 0, treeSha256: sha256("") },
+          },
+          probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
+        }),
+      );
+
+      const { stageArtifact } = (await import("./site/scripts/stage-artifact.mjs")) as {
+        stageArtifact: (options: {
+          artifactDir: string;
+          targetDir: string;
+          mode: "fixture" | "release";
+        }) => Promise<unknown>;
+      };
+
+      await expect(
+        stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),
+      ).rejects.toThrow(/missing redirects artifact/);
+      expect(readFileSync(join(target, "data.sqlite"), "utf8")).toBe("previous sqlite");
+      expect(readFileSync(join(target, "_redirects"), "utf8")).toBe("previous redirects");
+      expect(readFileSync(join(target, "assets", "stale.webp"), "utf8")).toBe("stale asset");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
