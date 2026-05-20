@@ -37,7 +37,7 @@ Phase 5 instantiates the **small-entity template** defined in [04-stat-type.md](
 The base template covers most of the work. Phase 5 adds these specifics:
 
 - **DTO carries `columns: List<ItemCategoryColumnSnapshot>`**. Each column is a structured record. Phase 5 does not yet _render_ the columns (they're metadata for future category-specific tables — Slice 10 will use them); Phase 5 just captures them so we don't re-extract later.
-- **Category color JSON** is `iconColor`'s analogue, named `categoryColorJson` to avoid colliding with `iconColor` semantics (a category has both an icon-specific tint and a category-wide tint).
+- **Category color JSON** is `iconColor`'s analogue, stored as `category_color_json` to avoid colliding with `iconColor` semantics. The site passes this raw color JSON into `ItemIcon` for deterministic tinting.
 - **`default_item_icon_hash`** is a separate column in `item_categories` and the read-model; the site overview surfaces this fallback for categories that have a default icon defined but no entry-specific icon.
 - **Cross-link**: each item's `categoryRef` (already captured in Slice 1) becomes an `entity_nodes` lookup hit. Phase 15 emits the `item.belongs_to_category` edges; Phase 5 only stores the link target.
 
@@ -57,7 +57,7 @@ The base template covers most of the work. Phase 5 adds these specifics:
 // mod-tests/ItemCategorySnapshotTests.cs
 using System.Collections.Generic;
 using ArdenfallCompendium.Entities.ItemCategory;
-using ArdenfallCompendium.Assets;
+using ArdenfallCompendium.Dtos;
 using Xunit;
 
 namespace ArdenfallCompendium.Tests;
@@ -72,11 +72,26 @@ public sealed class ItemCategorySnapshotTests
             CategoryName: "Weapons",
             IconRef: null,
             DefaultItemIconRef: null,
-            CategoryColor: new AssetColorSnapshot(0.9f, 0.2f, 0.2f, 1f),
+            CategoryColor: new AssetColorSnapshot { R = 0.9f, G = 0.2f, B = 0.2f, A = 1f },
             ShowInAllCategory: true,
             Columns: new List<ItemCategoryColumnSnapshot>
             {
-                new("Name", null, 1.5f, true, true, false, false, false, false, false, "MiddleLeft", null, null),
+                new(
+                    Label: "Name",
+                    IconRef: null,
+                    PreferedWidth: 1.5f,
+                    FlexibleWidth: 2.0f,
+                    IsItemName: true,
+                    IsItemIconAndCategory: true,
+                    IsItemValue: false,
+                    IsAffectedBySkillRequirement: false,
+                    IsAffectedByBrokenDurability: false,
+                    AffectingRedColor: true,
+                    AffectingIconsAfter: false,
+                    HideIfNegativeOne: false,
+                    Alignment: "MiddleLeft",
+                    ItemDataField: null,
+                    ItemFunctionField: null),
             });
 
         Assert.Equal("category-weapons", snapshot.Id);
@@ -95,20 +110,21 @@ Expected: FAIL.
 
 ```cs
 // mod/src/Entities/ItemCategory/ItemCategoryColumnSnapshot.cs
+using ArdenfallCompendium.Dtos;
 using Newtonsoft.Json;
 
 namespace ArdenfallCompendium.Entities.ItemCategory;
 
 public sealed record ItemCategoryColumnSnapshot(
     [property: JsonProperty("label")] string? Label,
-    [property: JsonProperty("iconRef")] object? IconRef,
+    [property: JsonProperty("iconRef")] SnapshotRef? IconRef,
     [property: JsonProperty("preferedWidth")] float PreferedWidth,
-    [property: JsonProperty("flexibleWidth")] bool FlexibleWidth,
+    [property: JsonProperty("flexibleWidth")] float FlexibleWidth,
     [property: JsonProperty("itemName")] bool IsItemName,
     [property: JsonProperty("isItemIconAndCategory")] bool IsItemIconAndCategory,
     [property: JsonProperty("itemValue")] bool IsItemValue,
-    [property: JsonProperty("affectedBySkillRequirement")] bool AffectedBySkillRequirement,
-    [property: JsonProperty("affectedByBrokenDurability")] bool AffectedByBrokenDurability,
+    [property: JsonProperty("isAffectedBySkillRequirement")] bool IsAffectedBySkillRequirement,
+    [property: JsonProperty("isAffectedByBrokenDurability")] bool IsAffectedByBrokenDurability,
     [property: JsonProperty("affectingRedColor")] bool AffectingRedColor,
     [property: JsonProperty("affectingIconsAfter")] bool AffectingIconsAfter,
     [property: JsonProperty("hideIfNegativeOne")] bool HideIfNegativeOne,
@@ -122,7 +138,7 @@ public sealed record ItemCategoryColumnSnapshot(
 ```cs
 // mod/src/Entities/ItemCategory/ItemCategorySnapshot.cs
 using System.Collections.Generic;
-using ArdenfallCompendium.Assets;
+using ArdenfallCompendium.Dtos;
 using Newtonsoft.Json;
 
 namespace ArdenfallCompendium.Entities.ItemCategory;
@@ -165,7 +181,7 @@ Commit: `feat(mod): extract item-category snapshots`.
 
 ### Task 5.3: Mod walker registration
 
-Apply Task 4.3 with `entityId = "item-categories"` so the artifact lands as `item-categories.json`.
+Register the walker so the snapshot envelope's `entityId` remains `item-category` while the artifact filename lands as `item-categories.json`.
 
 Commit: `feat(mod): emit item-category artifact alongside items`.
 
@@ -177,30 +193,37 @@ Create `entities/item-category/entity.json`:
 {
   "$schema": "../../schemas/entity.schema.json",
   "id": "item-category",
-  "singularLabel": "Category",
-  "pluralLabel": "Categories",
-  "routePath": "/categories",
-  "canonicalTable": "item_categories",
+  "label": { "singular": "Category", "plural": "Categories" },
+  "extraction": {
+    "root": "BuiltLookupTable.GetAssetsOfType<ItemCategory>",
+    "walker": "ItemCategoryExtractor"
+  },
   "presentationContext": { "renderContext": "item-category-presentation-v1" },
   "fields": [
-    { "name": "id", "type": "string", "from": "id", "missingPolicy": "fatal" },
+    { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
     { "name": "categoryName", "type": "string", "from": "categoryName", "missingPolicy": "fatal" },
-    { "name": "iconRef", "type": "ref:asset", "from": "iconRef", "missingPolicy": "diagnostic" },
+    {
+      "name": "iconRef",
+      "type": "ref:asset",
+      "from": "iconRef",
+      "missingPolicy": "optional-empty"
+    },
     {
       "name": "defaultItemIconRef",
       "type": "ref:asset",
       "from": "defaultItemIconRef",
-      "missingPolicy": "diagnostic"
+      "missingPolicy": "optional-empty"
     },
     { "name": "categoryColor", "type": "json", "from": "categoryColor", "missingPolicy": "fatal" },
     {
       "name": "showInAllCategory",
-      "type": "bool",
+      "type": "boolean",
       "from": "showInAllCategory",
       "missingPolicy": "fatal"
     },
     { "name": "columns", "type": "json", "from": "columns", "missingPolicy": "optional-empty" }
-  ]
+  ],
+  "map": null
 }
 ```
 
@@ -213,13 +236,13 @@ Create `pipeline/src/sql/item-category-ddl.ts`:
 ```ts
 export const ITEM_CATEGORY_DDL = `
 CREATE TABLE item_categories (
-  id                      TEXT PRIMARY KEY,
-  category_name           TEXT NOT NULL,
-  icon_hash               TEXT,
-  default_item_icon_hash  TEXT,
-  category_color_json     TEXT NOT NULL,
-  show_in_all_category    INTEGER NOT NULL,
-  columns_json            TEXT NOT NULL DEFAULT '[]'
+  id                         TEXT PRIMARY KEY,
+  category_name              TEXT NOT NULL,
+  icon_ref_json              TEXT,
+  default_item_icon_ref_json TEXT,
+  category_color_json        TEXT NOT NULL,
+  show_in_all_category       INTEGER NOT NULL,
+  columns_json               TEXT NOT NULL DEFAULT '[]'
 );
 `;
 ```
@@ -262,11 +285,13 @@ CREATE TABLE item_category_presentation_rows (
 
 ```sql
 UPDATE item_category_overview_rows SET item_count = (
-  SELECT COUNT(*) FROM items WHERE category_ref_id = item_category_overview_rows.id
+  SELECT COUNT(*)
+  FROM items
+  WHERE json_extract(items."categoryRef", '$.guid') = item_category_overview_rows.id
 );
 ```
 
-(Where `category_ref_id` is the column on `items` that already carries the resolved `categoryRef`. If the column name in the existing schema differs, update accordingly — confirm by reading `pipeline/src/entities/item/canonicaliser.ts`.)
+The existing `items` table stores `categoryRef` as the source lookup-ref JSON, so the read-model joins/extracts `$.guid` rather than inventing a `category_ref_id` column.
 
 `entity_nodes` insertion uses `deriveSlug({displayName: categoryName, assetId: id})`.
 
@@ -295,12 +320,12 @@ Create `fixtures/synthetic/snapshot/item-categories.json`:
           "label": "Name",
           "iconRef": null,
           "preferedWidth": 1.5,
-          "flexibleWidth": true,
+          "flexibleWidth": 2,
           "itemName": true,
           "isItemIconAndCategory": true,
           "itemValue": false,
-          "affectedBySkillRequirement": false,
-          "affectedByBrokenDurability": false,
+          "isAffectedBySkillRequirement": false,
+          "isAffectedByBrokenDurability": false,
           "affectingRedColor": false,
           "affectingIconsAfter": false,
           "hideIfNegativeOne": false,
@@ -457,9 +482,9 @@ git commit -m "fix(site): tint item icons by displayIconColor"
 Apply Task 4.8's template with these slugs:
 
 - `/categories` lists every row of `item_category_overview_rows` sorted by `name`, showing the category icon (tinted by `category_color_json`) + name + `item_count`.
-- `/categories/[slug]` renders the presentation row + lists every item in the category (`listItemsByCategory(categoryId)` — a new read-model accessor that joins `items.category_ref_id = ?` and returns `ItemOverviewRow[]`).
+- `/categories/[slug]` renders the presentation row + lists every item in the category (`listItemsByCategory(categoryId)` — a new read-model accessor that joins `item_overview_rows` to `items` and filters `json_extract(items."categoryRef", '$.guid') = ?`).
 
-Code blocks follow Task 4.8's shape with categories. The detail page links each item via `/items/<existing item slug>` (unchanged in this phase — the item route cutover happens in Phase 16, so the temporary route is still `/items/<id>`).
+Code blocks follow Task 4.8's shape with categories. The detail page links each item via `/items/<id>` until the item route cutover happens in Phase 16.
 
 Commit: `feat(site): render item-category pages`.
 
