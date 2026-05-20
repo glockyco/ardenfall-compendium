@@ -9,6 +9,7 @@ using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Entities.ItemCategory;
+using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
 using HotRepl.Control;
@@ -25,6 +26,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
     private readonly IItemExtractionCache _items;
     private readonly IStatTypeExtractionCache _statTypes;
     private readonly IItemCategoryExtractionCache _itemCategories;
+    private readonly IItemTagExtractionCache _itemTags;
     private readonly IMasterTooltipSnapshotSource _masterTooltip;
 
     public RunFinalizeCommand(
@@ -32,12 +34,14 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         IItemExtractionCache items,
         IMasterTooltipSnapshotSource? masterTooltip = null,
         IStatTypeExtractionCache? statTypes = null,
-        IItemCategoryExtractionCache? itemCategories = null)
+        IItemCategoryExtractionCache? itemCategories = null,
+        IItemTagExtractionCache? itemTags = null)
     {
         _runs = runs;
         _items = items;
         _statTypes = statTypes ?? new StatTypeExtractionService(new BuiltLookupTableStatTypeAssetSource());
         _itemCategories = itemCategories ?? new ItemCategoryExtractionService(new BuiltLookupTableItemCategoryAssetSource());
+        _itemTags = itemTags ?? new ItemTagExtractionService(new BuiltLookupTableItemTagAssetSource());
         _masterTooltip = masterTooltip ?? RuntimeMasterTooltipSnapshotSource.Instance;
     }
 
@@ -96,6 +100,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         var statTypeAssetPlan = _statTypes.GetAssetPlan(run);
         var itemCategoryRows = _itemCategories.GetOrExtract(run);
         var itemCategoryAssetPlan = _itemCategories.GetAssetPlan(run);
+        var itemTagRows = _itemTags.GetOrExtract(run);
 
         var assetPlan = _items.GetAssetPlan(run);
         var assetWriter = new ItemAssetManifestWriter(new SpriteAssetExporter());
@@ -128,6 +133,11 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         var itemCategoriesPath = Path.Combine(publishedDir, "item-categories.json");
         File.WriteAllText(itemCategoriesPath, itemCategoriesJson);
         var itemCategoriesHash = ManifestBuilder.Sha256Hex(itemCategoriesJson);
+        var itemTagEnvelope = new ItemTagSnapshotEnvelope { Rows = itemTagRows.ToList() };
+        var itemTagsJson = JsonConvert.SerializeObject(itemTagEnvelope, JsonSettings.Default);
+        var itemTagsPath = Path.Combine(publishedDir, "item-tags.json");
+        File.WriteAllText(itemTagsPath, itemTagsJson);
+        var itemTagsHash = ManifestBuilder.Sha256Hex(itemTagsJson);
         foreach (var diagnostic in _items.GetWalkerDiagnostics(run))
         {
             AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
@@ -140,6 +150,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         {
             AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
         }
+        foreach (var diagnostic in _itemTags.GetWalkerDiagnostics(run))
+        {
+            AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+        }
 
         var hashes = new Dictionary<string, string>
         {
@@ -148,6 +162,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             ["master-tooltip.json"] = masterTooltipHash,
             ["stat-types.json"] = statTypesHash,
             ["item-categories.json"] = itemCategoriesHash,
+            ["item-tags.json"] = itemTagsHash,
         };
         string? diagnosticsPath = null;
         string? diagnosticsHash = null;
@@ -162,7 +177,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
 
         var manifest = ManifestBuilder.Build(
             PreflightRunner.Run(),
-            counts: new Dictionary<string, int> { ["item"] = rows.Count, ["stat-type"] = statTypeRows.Count, ["item-category"] = itemCategoryRows.Count },
+            counts: new Dictionary<string, int> { ["item"] = rows.Count, ["stat-type"] = statTypeRows.Count, ["item-category"] = itemCategoryRows.Count, ["item-tag"] = itemTagRows.Count },
             diagnostics: diagnosticTotals,
             contentHashes: hashes,
             extractorVersion: Plugin.Version,
@@ -178,6 +193,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         run.Counts["item"] = rows.Count;
         run.Counts["stat-type"] = statTypeRows.Count;
         run.Counts["item-category"] = itemCategoryRows.Count;
+        run.Counts["item-tag"] = itemTagRows.Count;
 
         var result = new JObject
         {
@@ -193,6 +209,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             CompendiumCommandResults.FileArtifact("master-tooltip", masterTooltipPath, "application/json", masterTooltipHash),
             CompendiumCommandResults.FileArtifact("stat-types", statTypesPath, "application/json", statTypesHash),
             CompendiumCommandResults.FileArtifact("item-categories", itemCategoriesPath, "application/json", itemCategoriesHash),
+            CompendiumCommandResults.FileArtifact("item-tags", itemTagsPath, "application/json", itemTagsHash),
         };
         if (diagnosticsPath is not null && diagnosticsHash is not null)
         {
