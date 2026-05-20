@@ -43,7 +43,7 @@ const valid = {
   statBookMessage: "Reading this grants {0}.",
   termSetColors: {},
   globalTermSets: [],
-  termColorMatch: "\\{([a-zA-Z0-9_]+)\\}",
+  termColorMatch: "\\b({0})\\b",
   potionRecipeDescription: "Learn the potion recipe {0}.",
 };
 

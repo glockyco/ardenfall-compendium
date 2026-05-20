@@ -23,6 +23,30 @@ describe("loadSnapshot", () => {
     expect(items.rows.length).toBe(5);
   });
 
+  it("rejects snapshots missing the master tooltip vocabulary", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "ardenfall-missing-master-tooltip-"));
+    try {
+      writeFileSync(
+        join(dir, "manifest.json"),
+        readFileSync("fixtures/synthetic/snapshot/manifest.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "asset-manifest.json"),
+        readFileSync("fixtures/synthetic/snapshot/asset-manifest.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "items.json"),
+        readFileSync("fixtures/synthetic/snapshot/items.json", "utf8"),
+      );
+
+      expect(() => loadSnapshot.run({}, { ...ctx, snapshotDir: dir })).toThrow(
+        /missing master tooltip vocabulary/,
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it("requires every item row to carry item-presentation-v1", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ardenfall-missing-presentation-"));
     try {
@@ -33,6 +57,10 @@ describe("loadSnapshot", () => {
       writeFileSync(
         join(dir, "asset-manifest.json"),
         readFileSync("fixtures/synthetic/snapshot/asset-manifest.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "master-tooltip.json"),
+        readFileSync("fixtures/synthetic/snapshot/master-tooltip.json", "utf8"),
       );
       const items = JSON.parse(readFileSync("fixtures/synthetic/snapshot/items.json", "utf8")) as {
         rows: { presentation?: unknown }[];
@@ -117,6 +145,10 @@ describe("loadSnapshot", () => {
       writeFileSync(
         join(dir, "items.json"),
         readFileSync("fixtures/synthetic/snapshot/items.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "master-tooltip.json"),
+        readFileSync("fixtures/synthetic/snapshot/master-tooltip.json", "utf8"),
       );
       writeFileSync(
         join(dir, "diagnostics.json"),

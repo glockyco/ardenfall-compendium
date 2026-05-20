@@ -19,7 +19,7 @@ export interface LoadSnapshotOutput {
   envelopes: Record<string, SnapshotEnvelope>;
   diagnostics: SnapshotDiagnosticArtifactEntry[];
   assetManifest?: SnapshotAssetManifest;
-  masterTooltip?: MasterTooltipVocabulary;
+  masterTooltip: MasterTooltipVocabulary;
 }
 
 export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
@@ -39,7 +39,6 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
     const envelopes: Record<string, SnapshotEnvelope> = {};
     const diagnosticsPath = join(dir, "diagnostics.json");
     const masterTooltipPath = join(dir, "master-tooltip.json");
-    let masterTooltip: MasterTooltipVocabulary | undefined;
     let diagnostics: SnapshotDiagnosticArtifactEntry[] = [];
     for (const fileName of readdirSync(dir)) {
       if (
@@ -85,18 +84,19 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
         throw new Error(`invalid snapshot asset manifest at ${assetManifestPath}:\n${detail}`);
       }
     }
-    if (existsSync(masterTooltipPath)) {
-      const raw = JSON.parse(readFileSync(masterTooltipPath, "utf8")) as unknown;
-      if (!validateMasterTooltip(raw)) {
-        const detail = (validateMasterTooltip.errors ?? [])
-          .map((e) => `${masterTooltipPath}#${e.instancePath} — ${e.message}`)
-          .join("\n");
-        throw new Error(
-          `invalid master tooltip vocabulary at ${masterTooltipPath} (expected schemaVersion 2):\n${detail}`,
-        );
-      }
-      masterTooltip = raw as MasterTooltipVocabulary;
+    if (!existsSync(masterTooltipPath)) {
+      throw new Error(`missing master tooltip vocabulary at ${masterTooltipPath}`);
     }
+    const rawMasterTooltip = JSON.parse(readFileSync(masterTooltipPath, "utf8")) as unknown;
+    if (!validateMasterTooltip(rawMasterTooltip)) {
+      const detail = (validateMasterTooltip.errors ?? [])
+        .map((e) => `${masterTooltipPath}#${e.instancePath} — ${e.message}`)
+        .join("\n");
+      throw new Error(
+        `invalid master tooltip vocabulary at ${masterTooltipPath} (expected schemaVersion 2):\n${detail}`,
+      );
+    }
+    const masterTooltip = rawMasterTooltip as MasterTooltipVocabulary;
     return { manifest, envelopes, diagnostics, assetManifest, masterTooltip };
   },
 };
