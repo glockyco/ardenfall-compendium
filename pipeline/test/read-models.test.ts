@@ -368,7 +368,9 @@ describe("emitItemCategoryReadModels", () => {
           item_count: number;
         },
         []
-      >("SELECT render_context, columns_json, show_in_all_category, item_count FROM item_category_presentation_rows WHERE id = 'category-weapons'")
+      >(
+        "SELECT render_context, columns_json, show_in_all_category, item_count FROM item_category_presentation_rows WHERE id = 'category-weapons'",
+      )
       .get();
     expect(presentation?.render_context).toBe("item-category-presentation-v1");
     expect(JSON.parse(presentation?.columns_json ?? "[]")).toEqual([
