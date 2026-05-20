@@ -48,6 +48,12 @@ Each task in this phase corresponds to one slot.
 | Slug source                 | `statName`                                                                                       |
 | Grouping rule               | `attribute` if `isAttribute` else (`skill` if id ∈ `ArdenfallMasterData.allSkills` else `trait`) |
 
+> Implementation correction: repository snapshot envelopes use the generic
+> `rows[] = { id, fields, diagnostics? }` shape from `schemas/snapshot.schema.json`.
+> `StatTypeSnapshot` is the typed `fields` payload, and `StatTypeSnapshotRow`
+> wraps it for serialization. Any snippet below that shows stat fields directly
+> on the row should be adapted to the `fields` wrapper.
+
 ## Tasks
 
 ### Task 4.1: Mod DTO — `StatTypeSnapshot`

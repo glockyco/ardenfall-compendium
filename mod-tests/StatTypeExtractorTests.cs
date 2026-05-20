@@ -34,10 +34,10 @@ public sealed class StatTypeExtractorTests
 
         Assert.Equal(2, rows.Count);
         Assert.Equal("stat-strength", rows[0].Id);
-        Assert.Equal("Strength", rows[0].StatName);
-        Assert.True(rows[0].IsAttribute);
-        Assert.Contains("melee-damage", rows[0].Affects);
-        Assert.False(rows[1].IsAttribute);
+        Assert.Equal("Strength", rows[0].Fields.StatName);
+        Assert.True(rows[0].Fields.IsAttribute);
+        Assert.Contains("melee-damage", rows[0].Fields.Affects);
+        Assert.False(rows[1].Fields.IsAttribute);
     }
 
     [Fact]

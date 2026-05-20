@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities.StatType;
 using Xunit;
+using Newtonsoft.Json;
 
 namespace ArdenfallCompendium.Tests;
 
@@ -26,5 +27,36 @@ public sealed class StatTypeSnapshotTests
         Assert.Equal("Strength", snapshot.StatName);
         Assert.Contains("melee-damage", snapshot.Affects);
         Assert.Equal(0.95f, snapshot.IconColor?.R);
+    }
+
+    [Fact]
+    public void EnvelopeRowsUseGenericSnapshotFieldsShape()
+    {
+        var envelope = new StatTypeSnapshotEnvelope
+        {
+            Rows = new List<StatTypeSnapshotRow>
+            {
+                new()
+                {
+                    Id = "stat-strength",
+                    Fields = new StatTypeSnapshot(
+                        Id: "stat-strength",
+                        IsAttribute: true,
+                        StatName: "Strength",
+                        IconRef: null,
+                        IconColor: null,
+                        StatDescription: null,
+                        LongStatDescription: null,
+                        Affects: new List<string>(),
+                        SkillAffects: new List<string>()),
+                },
+            },
+        };
+
+        var json = JsonConvert.SerializeObject(envelope);
+
+        Assert.Contains("\"entityId\":\"stat-type\"", json);
+        Assert.Contains("\"fields\":", json);
+        Assert.Contains("\"statName\":\"Strength\"", json);
     }
 }

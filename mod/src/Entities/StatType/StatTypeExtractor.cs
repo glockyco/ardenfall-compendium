@@ -5,7 +5,7 @@ using ArdenfallCompendium.Walker;
 
 namespace ArdenfallCompendium.Entities.StatType;
 
-public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshot>
+public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
 {
     private readonly IStatTypeAssetSource _source;
 
@@ -19,7 +19,7 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshot>
         _source = source;
     }
 
-    public override IEnumerable<StatTypeSnapshot> Walk()
+    public override IEnumerable<StatTypeSnapshotRow> Walk()
     {
         foreach (var asset in _source.EnumerateStatTypes())
         {
@@ -43,16 +43,20 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshot>
                 MissingPolicy.Diagnostic,
                 "StatType.icon");
 
-            yield return new StatTypeSnapshot(
-                Id: guid,
-                IsAttribute: asset.IsAttribute,
-                StatName: NullIfEmpty(asset.StatName) ?? NullIfEmpty(asset.AssetName) ?? guid,
-                IconRef: iconRef,
-                IconColor: asset.IconColor,
-                StatDescription: NullIfEmpty(asset.StatDescription),
-                LongStatDescription: NullIfEmpty(asset.LongStatDescription),
-                Affects: asset.Affects?.ToList() ?? new List<string>(),
-                SkillAffects: asset.SkillAffects?.ToList() ?? new List<string>());
+            yield return new StatTypeSnapshotRow
+            {
+                Id = guid,
+                Fields = new StatTypeSnapshot(
+                    Id: guid,
+                    IsAttribute: asset.IsAttribute,
+                    StatName: NullIfEmpty(asset.StatName) ?? NullIfEmpty(asset.AssetName) ?? guid,
+                    IconRef: iconRef,
+                    IconColor: asset.IconColor,
+                    StatDescription: NullIfEmpty(asset.StatDescription),
+                    LongStatDescription: NullIfEmpty(asset.LongStatDescription),
+                    Affects: asset.Affects?.ToList() ?? new List<string>(),
+                    SkillAffects: asset.SkillAffects?.ToList() ?? new List<string>()),
+            };
         }
 
         Diagnostics.AddRange(Refs.Diagnostics);

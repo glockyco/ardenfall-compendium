@@ -18,7 +18,7 @@ namespace ArdenfallCompendium.Tests;
 
 public sealed class RunFinalizeCommandTests
 {
-    private static readonly FakeStatTypeExtractionCache EmptyStatTypes = new(System.Array.Empty<StatTypeSnapshot>());
+    private static readonly FakeStatTypeExtractionCache EmptyStatTypes = new(System.Array.Empty<StatTypeSnapshotRow>());
 
     [Fact]
     public async Task AggregatesRowAndWalkerDiagnosticsIntoManifestAndDiagnosticsArtifact()
@@ -139,16 +139,20 @@ public sealed class RunFinalizeCommandTests
         });
         var statTypes = new FakeStatTypeExtractionCache(new[]
         {
-            new StatTypeSnapshot(
-                Id: "stat-strength",
-                IsAttribute: true,
-                StatName: "Strength",
-                IconRef: null,
-                IconColor: new AssetColorSnapshot(),
-                StatDescription: "Raw power.",
-                LongStatDescription: "Raw power. Affects melee damage.",
-                Affects: new List<string> { "melee-damage" },
-                SkillAffects: new List<string>()),
+            new StatTypeSnapshotRow
+            {
+                Id = "stat-strength",
+                Fields = new StatTypeSnapshot(
+                    Id: "stat-strength",
+                    IsAttribute: true,
+                    StatName: "Strength",
+                    IconRef: null,
+                    IconColor: new AssetColorSnapshot(),
+                    StatDescription: "Raw power.",
+                    LongStatDescription: "Raw power. Affects melee damage.",
+                    Affects: new List<string> { "melee-damage" },
+                    SkillAffects: new List<string>()),
+            },
         });
         var command = new RunFinalizeCommand(
             runs,
@@ -165,7 +169,7 @@ public sealed class RunFinalizeCommandTests
         Assert.True(File.Exists(statTypesPath));
         var envelope = JsonConvert.DeserializeObject<StatTypeSnapshotEnvelope>(File.ReadAllText(statTypesPath), JsonSettings.Default)!;
         Assert.Single(envelope.Rows);
-        Assert.Equal("Strength", envelope.Rows[0].StatName);
+        Assert.Equal("Strength", envelope.Rows[0].Fields.StatName);
         Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "stat-types");
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(statTypesPath)), manifest.Hashes["stat-types.json"]);
@@ -207,14 +211,14 @@ public sealed class RunFinalizeCommandTests
 
     private sealed class FakeStatTypeExtractionCache : IStatTypeExtractionCache
     {
-        private readonly IReadOnlyList<StatTypeSnapshot> _rows;
+        private readonly IReadOnlyList<StatTypeSnapshotRow> _rows;
 
-        public FakeStatTypeExtractionCache(IReadOnlyList<StatTypeSnapshot> rows)
+        public FakeStatTypeExtractionCache(IReadOnlyList<StatTypeSnapshotRow> rows)
         {
             _rows = rows;
         }
 
-        public IReadOnlyList<StatTypeSnapshot> GetOrExtract(CompendiumRun run) => _rows;
+        public IReadOnlyList<StatTypeSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
     }

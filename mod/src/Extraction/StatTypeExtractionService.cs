@@ -15,7 +15,7 @@ public sealed class StatTypeExtractionService : IStatTypeExtractionCache
         _source = source;
     }
 
-    public IReadOnlyList<StatTypeSnapshot> GetOrExtract(CompendiumRun run) => GetState(run).Rows;
+    public IReadOnlyList<StatTypeSnapshotRow> GetOrExtract(CompendiumRun run) => GetState(run).Rows;
 
     public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => GetState(run).WalkerDiagnostics;
 
@@ -24,7 +24,7 @@ public sealed class StatTypeExtractionService : IStatTypeExtractionCache
         if (_byRun.TryGetValue(run.RunId, out var state)) return state;
 
         var extractor = new StatTypeExtractor(_source);
-        var rows = new List<StatTypeSnapshot>();
+        var rows = new List<StatTypeSnapshotRow>();
         foreach (var row in extractor.Walk()) rows.Add(row);
 
         state = new ExtractionState(rows, extractor.Diagnostics.AsReadOnly());
@@ -33,6 +33,6 @@ public sealed class StatTypeExtractionService : IStatTypeExtractionCache
     }
 
     private sealed record ExtractionState(
-        IReadOnlyList<StatTypeSnapshot> Rows,
+        IReadOnlyList<StatTypeSnapshotRow> Rows,
         IReadOnlyList<Diagnostic> WalkerDiagnostics);
 }

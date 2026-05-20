@@ -7,7 +7,7 @@ namespace ArdenfallCompendium.Extraction;
 
 public interface IStatTypeExtractionCache
 {
-    IReadOnlyList<StatTypeSnapshot> GetOrExtract(CompendiumRun run);
+    IReadOnlyList<StatTypeSnapshotRow> GetOrExtract(CompendiumRun run);
 
     IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run);
 }

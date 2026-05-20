@@ -15,9 +15,16 @@ public sealed record StatTypeSnapshot(
     [property: JsonProperty("affects")] List<string> Affects,
     [property: JsonProperty("skillAffects")] List<string> SkillAffects);
 
+public sealed class StatTypeSnapshotRow
+{
+    [JsonProperty("id")] public string Id { get; init; } = "";
+    [JsonProperty("fields")] public StatTypeSnapshot Fields { get; init; } = null!;
+    [JsonProperty("diagnostics")] public List<Diagnostic> Diagnostics { get; init; } = new();
+}
+
 public sealed class StatTypeSnapshotEnvelope
 {
     [JsonProperty("entityId")] public string EntityId { get; init; } = "stat-type";
     [JsonProperty("schemaVersion")] public int SchemaVersion { get; init; } = 1;
-    [JsonProperty("rows")] public List<StatTypeSnapshot> Rows { get; init; } = new();
+    [JsonProperty("rows")] public List<StatTypeSnapshotRow> Rows { get; init; } = new();
 }
