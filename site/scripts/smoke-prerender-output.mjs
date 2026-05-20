@@ -109,7 +109,7 @@ function readStatProbe() {
            ON n.entity_type = 'stat-type'
           AND n.entity_id = o.id
           AND n.is_public = 1
-         ORDER BY o.grouping, o.name
+         ORDER BY o.icon_hash IS NULL, o.grouping, o.name
          LIMIT 1`,
       )
       .get();

@@ -24,6 +24,7 @@ const sitePackageJson = JSON.parse(readFileSync("site/package.json", "utf8")) as
 const siteLayout = readFileSync("site/src/routes/+layout.ts", "utf8");
 const siteSvelteConfig = readFileSync("site/svelte.config.js", "utf8");
 const siteWranglerConfig = readFileSync("site/wrangler.toml", "utf8");
+const sitePrerenderSmoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
 
 function sha256(content: string | Buffer): string {
   return createHash("sha256").update(content).digest("hex");
@@ -150,6 +151,7 @@ describe("site deployment tooling", () => {
     );
     expect(sitePackageJson.scripts["cf-deploy"]).toBe("bun run deploy:production");
     expect(existsSync("site/scripts/stage-artifact.mjs")).toBe(true);
+    expect(sitePrerenderSmoke).toContain("ORDER BY o.icon_hash IS NULL");
     expect(gitignore).toContain("site/_redirects");
   });
 
