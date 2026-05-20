@@ -117,6 +117,13 @@ function assertSqliteCounts(path, counts) {
     assertCount(db, counts, "itemOverviewCategories", "item_overview_categories");
     assertRequiredCount(db, counts, "statTypeOverviewRows", "stat_type_overview_rows");
     assertRequiredCount(db, counts, "statTypePresentationRows", "stat_type_presentation_rows");
+    assertRequiredCount(db, counts, "itemCategoryOverviewRows", "item_category_overview_rows");
+    assertRequiredCount(
+      db,
+      counts,
+      "itemCategoryPresentationRows",
+      "item_category_presentation_rows",
+    );
   } finally {
     db.close();
   }

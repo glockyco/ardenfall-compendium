@@ -71,6 +71,18 @@ function writeEmptyStatReadModelTables(sqlitePath: string): void {
     db.close();
   }
 }
+
+function writeEmptyItemCategoryReadModelTables(sqlitePath: string): void {
+  const db = new Database(sqlitePath);
+  try {
+    db.exec(`
+      CREATE TABLE item_category_overview_rows (id TEXT);
+      CREATE TABLE item_category_presentation_rows (id TEXT);
+    `);
+  } finally {
+    db.close();
+  }
+}
 describe("format tooling", () => {
   it("formats mjs files in the pre-commit prettier hook", () => {
     expect(lefthook).toContain("mjs");
@@ -317,6 +329,7 @@ describe("site deployment tooling", () => {
         gitCommit: git.commit,
       });
       writeEmptyStatReadModelTables(sqlitePath);
+      writeEmptyItemCategoryReadModelTables(sqlitePath);
       const sqliteBytes = readFileSync(sqlitePath);
       writeFileSync(
         join(artifact, "artifact-manifest.json"),
@@ -335,6 +348,8 @@ describe("site deployment tooling", () => {
             itemOverviewCategories: 0,
             statTypeOverviewRows: 0,
             statTypePresentationRows: 0,
+            itemCategoryOverviewRows: 0,
+            itemCategoryPresentationRows: 0,
           },
           outputs: {
             sqlite: {
@@ -404,6 +419,7 @@ describe("site deployment tooling", () => {
         gitCommit: git.commit,
       });
       writeEmptyStatReadModelTables(sqlitePath);
+      writeEmptyItemCategoryReadModelTables(sqlitePath);
       const sqliteBytes = readFileSync(sqlitePath);
       writeFileSync(
         join(artifact, "artifact-manifest.json"),
@@ -422,6 +438,8 @@ describe("site deployment tooling", () => {
             itemOverviewCategories: 0,
             statTypeOverviewRows: 0,
             statTypePresentationRows: 0,
+            itemCategoryOverviewRows: 0,
+            itemCategoryPresentationRows: 0,
           },
           outputs: {
             sqlite: {
@@ -705,6 +723,17 @@ describe("site deployment tooling", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+
+  it("requires item-category read-model counts while staging artifacts", () => {
+    const stage = readFileSync("site/scripts/stage-artifact.mjs", "utf8");
+
+    expect(stage).toContain(
+      'assertRequiredCount(db, counts, "itemCategoryOverviewRows", "item_category_overview_rows")',
+    );
+    expect(stage).toContain(
+      'assertRequiredCount(db, counts, "itemCategoryPresentationRows", "item_category_presentation_rows")',
+    );
   });
 });
 
