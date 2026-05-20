@@ -7,10 +7,20 @@
 <div class="border-border bg-card mt-4 rounded-lg border p-5">
   <div class="flex items-center gap-3">
     <span
-      class="border-border bg-muted block size-4 rounded-full border"
+      class="border-border bg-muted flex size-12 items-center justify-center rounded border"
       style:background-color={presentation.iconColor ?? undefined}
       aria-hidden="true"
-    ></span>
+    >
+      {#if presentation.iconSrc}
+        <img
+          class="size-10 object-contain"
+          src={presentation.iconSrc}
+          alt=""
+          loading="lazy"
+          decoding="async"
+        />
+      {/if}
+    </span>
     <p class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
       {presentation.grouping}
     </p>

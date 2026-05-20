@@ -95,7 +95,7 @@ describe("emitAssets", () => {
       const snap = await loadSnapshot.run({}, ctx);
       const result = await emitAssets.run({ "load-snapshot": snap }, { ...ctx, outDir });
 
-      expect(result.refs).toHaveLength(4);
+      expect(result.refs).toHaveLength(5);
       expect(result.refs.every((ref) => ref.assetHash.match(/^[a-f0-9]{64}$/))).toBe(true);
       for (const ref of result.refs) {
         expect(existsSync(join(outDir, "assets", `${ref.assetHash}.webp`))).toBe(true);
@@ -113,6 +113,14 @@ describe("emitAssets", () => {
           entityId: "item",
           entityRowId: "fixture-throwing-potion",
           slot: "secondaryIcon",
+          assetKind: "image",
+        }),
+      );
+      expect(result.refs).toContainEqual(
+        expect.objectContaining({
+          entityId: "stat-type",
+          entityRowId: "fixture-strength",
+          slot: "iconRef",
           assetKind: "image",
         }),
       );

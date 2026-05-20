@@ -1,8 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities.StatType;
+using ArdenfallCompendium.Entities.Item;
 using Xunit;
+using UnityEngine;
 
 namespace ArdenfallCompendium.Tests;
 
@@ -55,6 +58,32 @@ public sealed class StatTypeExtractorTests
         Assert.Contains(extractor.Diagnostics, d => d.Code == "lookupAssetGuidMissing" && d.Field == "id");
     }
 
+    [Fact]
+    public void CapturesStatIconAssetSlots()
+    {
+        var icon = (Sprite)RuntimeHelpers.GetUninitializedObject(typeof(Sprite));
+        var plan = new ItemIconAssetPlan();
+        var source = new FakeStatTypeAssetSource(new[]
+        {
+            FakeStatTypeAssetSource.Build(
+                guid: "stat-strength",
+                name: "Strength",
+                isAttribute: true,
+                statDescription: "Raw power.",
+                longStatDescription: "Raw power.",
+                icon: icon),
+        });
+        var extractor = new StatTypeExtractor(source, plan);
+
+        _ = extractor.Walk().ToList();
+
+        var slot = Assert.Single(plan.Slots);
+        Assert.Equal("stat-type", slot.EntityId);
+        Assert.Equal("stat-strength", slot.RowId);
+        Assert.Equal("iconRef", slot.Slot);
+        Assert.Same(icon, slot.Sprite);
+    }
+
     private sealed class FakeStatTypeAssetSource : IStatTypeAssetSource
     {
         private readonly IReadOnlyList<StatTypeAsset> _assets;
@@ -73,12 +102,13 @@ public sealed class StatTypeExtractorTests
             string statDescription,
             string longStatDescription,
             IReadOnlyList<string>? affects = null,
-            IReadOnlyList<string>? skillAffects = null) => new(
+            IReadOnlyList<string>? skillAffects = null,
+            Object? icon = null) => new(
                 Guid: guid,
                 AssetName: name,
                 IsAttribute: isAttribute,
                 StatName: name,
-                Icon: null,
+                Icon: icon,
                 IconColor: new AssetColorSnapshot { R = 1f, G = 1f, B = 1f, A = 1f },
                 StatDescription: statDescription,
                 LongStatDescription: longStatDescription,

@@ -88,6 +88,9 @@ for (const snippet of [statProbe.name, statProbe.grouping, "melee-damage"]) {
 if (statsDetail.includes("background-color: {")) {
   throw new Error("stat detail rendered raw JSON as CSS color");
 }
+if (statProbe.icon_hash && !statsDetail.includes(`/assets/${statProbe.icon_hash}.webp`)) {
+  throw new Error(`stat detail HTML missing icon asset ${statProbe.icon_hash}`);
+}
 
 function readStatProbe() {
   const db = new Database(join(import.meta.dirname, "..", "static", "data.sqlite"), {
@@ -97,7 +100,7 @@ function readStatProbe() {
   try {
     const row = db
       .query(
-        `SELECT o.id, o.name, o.grouping, n.canonical_slug
+        `SELECT o.id, o.name, o.grouping, o.icon_hash, n.canonical_slug
          FROM stat_type_overview_rows o
          JOIN entity_nodes n
            ON n.entity_type = 'stat-type'

@@ -88,9 +88,17 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         File.WriteAllText(itemsPath, itemsJson);
         var itemHash = ManifestBuilder.Sha256Hex(itemsJson);
 
+        var statTypeRows = _statTypes.GetOrExtract(run);
+        var statTypeAssetPlan = _statTypes.GetAssetPlan(run);
+
+
 
         var assetPlan = _items.GetAssetPlan(run);
-        new ItemAssetManifestWriter(new SpriteAssetExporter()).WriteSlots(publishedDir, assetPlan);
+        var assetWriter = new ItemAssetManifestWriter(new SpriteAssetExporter());
+        assetWriter.WriteSlots(publishedDir, assetPlan);
+        assetWriter.WriteSlots(publishedDir, statTypeAssetPlan);
+        assetPlan.Manifest.Assets.AddRange(statTypeAssetPlan.Manifest.Assets);
+        assetPlan.Manifest.ItemIconMetadata.AddRange(statTypeAssetPlan.Manifest.ItemIconMetadata);
         var assetManifest = assetPlan.Manifest;
         var assetManifestJson = JsonConvert.SerializeObject(assetManifest, JsonSettings.Default);
         var assetManifestPath = Path.Combine(publishedDir, "asset-manifest.json");
@@ -103,7 +111,6 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         File.WriteAllText(masterTooltipPath, masterTooltipJson);
         var masterTooltipHash = ManifestBuilder.Sha256Hex(masterTooltipJson);
 
-        var statTypeRows = _statTypes.GetOrExtract(run);
         var statTypeEnvelope = new StatTypeSnapshotEnvelope { Rows = statTypeRows.ToList() };
         var statTypesJson = JsonConvert.SerializeObject(statTypeEnvelope, JsonSettings.Default);
         var statTypesPath = Path.Combine(publishedDir, "stat-types.json");

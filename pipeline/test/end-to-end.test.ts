@@ -45,7 +45,7 @@ describe("end-to-end pipeline", () => {
         expect(overviewCount).toBe(5);
         const assetRefCount = (db.query("SELECT COUNT(*) c FROM asset_refs").get() as { c: number })
           .c;
-        expect(assetRefCount).toBe(4);
+        expect(assetRefCount).toBe(5);
 
         const statTypeCount = (db.query("SELECT COUNT(*) c FROM stat_types").get() as { c: number })
           .c;

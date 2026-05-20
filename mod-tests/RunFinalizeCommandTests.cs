@@ -137,6 +137,16 @@ public sealed class RunFinalizeCommandTests
             Id = "item-a",
             Fields = new Dictionary<string, object?>(),
         });
+        var statAssetPlan = new ItemIconAssetPlan();
+        statAssetPlan.Manifest.Assets.Add(new AssetManifestEntry
+        {
+            EntityId = "stat-type",
+            RowId = "stat-strength",
+            Slot = "iconRef",
+            Kind = "image",
+            PngHash = "a",
+            SourcePath = "assets/stat-type/a.png",
+        });
         var statTypes = new FakeStatTypeExtractionCache(new[]
         {
             new StatTypeSnapshotRow
@@ -153,7 +163,7 @@ public sealed class RunFinalizeCommandTests
                     Affects: new List<string> { "melee-damage" },
                     SkillAffects: new List<string>()),
             },
-        });
+        }, statAssetPlan);
         var command = new RunFinalizeCommand(
             runs,
             new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
@@ -172,6 +182,9 @@ public sealed class RunFinalizeCommandTests
         Assert.Equal("Strength", envelope.Rows[0].Fields.StatName);
         Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "stat-types");
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
+        var assetManifestPath = Path.Combine(publishedDir, "asset-manifest.json");
+        var assetManifest = JsonConvert.DeserializeObject<AssetManifest>(File.ReadAllText(assetManifestPath), JsonSettings.Default)!;
+        Assert.Contains(assetManifest.Assets, asset => asset.EntityId == "stat-type" && asset.RowId == "stat-strength" && asset.Slot == "iconRef");
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(statTypesPath)), manifest.Hashes["stat-types.json"]);
         Assert.Equal(1, manifest.Counts["stat-type"]);
     }
@@ -212,13 +225,17 @@ public sealed class RunFinalizeCommandTests
     private sealed class FakeStatTypeExtractionCache : IStatTypeExtractionCache
     {
         private readonly IReadOnlyList<StatTypeSnapshotRow> _rows;
+        private readonly ItemIconAssetPlan _assetPlan;
 
-        public FakeStatTypeExtractionCache(IReadOnlyList<StatTypeSnapshotRow> rows)
+        public FakeStatTypeExtractionCache(IReadOnlyList<StatTypeSnapshotRow> rows, ItemIconAssetPlan? assetPlan = null)
         {
             _rows = rows;
+            _assetPlan = assetPlan ?? new ItemIconAssetPlan();
         }
 
         public IReadOnlyList<StatTypeSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
+
+        public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
     }

@@ -10,6 +10,14 @@
       "sourcePath": "assets/items/fixture-icon-red.png"
     },
     {
+      "entityId": "stat-type",
+      "rowId": "fixture-strength",
+      "slot": "iconRef",
+      "kind": "image",
+      "pngHash": "fixture-red-png",
+      "sourcePath": "assets/items/fixture-icon-red.png"
+    },
+    {
       "entityId": "item",
       "rowId": "fixture-slate-spell",
       "slot": "displayIcon",

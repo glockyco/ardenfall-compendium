@@ -61,7 +61,7 @@ public static class ItemIconSlots
     }
 }
 
-public sealed record ItemIconAssetSlot(string RowId, string Slot, Sprite Sprite);
+public sealed record ItemIconAssetSlot(string EntityId, string RowId, string Slot, Sprite Sprite, string OutputSubdir);
 
 public sealed class ItemIconAssetPlan
 {
@@ -87,7 +87,7 @@ public static class ItemIconAssetPlanner
 
     private static void CaptureSlot(ItemIconAssetPlan plan, string rowId, string slot, Sprite? sprite)
     {
-        if (sprite != null) plan.Slots.Add(new ItemIconAssetSlot(rowId, slot, sprite));
+        if (sprite != null) plan.Slots.Add(new ItemIconAssetSlot("item", rowId, slot, sprite, "item"));
     }
 }
 
@@ -104,10 +104,10 @@ public sealed class ItemAssetManifestWriter
     {
         foreach (var slot in plan.Slots)
         {
-            var exported = _exporter.WriteSpritePng(slot.Sprite, outputDir, "item");
+            var exported = _exporter.WriteSpritePng(slot.Sprite, outputDir, slot.OutputSubdir);
             plan.Manifest.Assets.Add(new AssetManifestEntry
             {
-                EntityId = "item",
+                EntityId = slot.EntityId,
                 RowId = slot.RowId,
                 Slot = slot.Slot,
                 Kind = "image",

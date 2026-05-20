@@ -1,22 +1,26 @@
 using System.Collections.Generic;
 using System.Linq;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Walker;
+using UnityEngine;
 
 namespace ArdenfallCompendium.Entities.StatType;
 
 public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
 {
     private readonly IStatTypeAssetSource _source;
+    private readonly ItemIconAssetPlan? _assetPlan;
 
     public StatTypeExtractor()
-        : this(new BuiltLookupTableStatTypeAssetSource())
+        : this(new BuiltLookupTableStatTypeAssetSource(), assetPlan: null)
     {
     }
 
-    public StatTypeExtractor(IStatTypeAssetSource source)
+    public StatTypeExtractor(IStatTypeAssetSource source, ItemIconAssetPlan? assetPlan = null)
     {
         _source = source;
+        _assetPlan = assetPlan;
     }
 
     public override IEnumerable<StatTypeSnapshotRow> Walk()
@@ -43,6 +47,11 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
                 MissingPolicy.Diagnostic,
                 "StatType.icon");
 
+
+            if (_assetPlan != null && asset.Icon is Sprite sprite)
+            {
+                _assetPlan.Slots.Add(new ItemIconAssetSlot("stat-type", guid, "iconRef", sprite, "stat-type"));
+            }
             yield return new StatTypeSnapshotRow
             {
                 Id = guid,

@@ -38,10 +38,20 @@
               href={statHref(row.routePath)}
             >
               <span
-                class="border-border bg-muted mt-1 block size-3 shrink-0 rounded-full border"
+                class="border-border bg-muted flex size-8 shrink-0 items-center justify-center rounded border"
                 style:background-color={row.iconColor ?? undefined}
                 aria-hidden="true"
-              ></span>
+              >
+                {#if row.iconSrc}
+                  <img
+                    class="size-6 object-contain"
+                    src={row.iconSrc}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                {/if}
+              </span>
               <span>
                 <span class="block font-medium">{row.name}</span>
                 <span class="text-muted-foreground text-sm">{row.grouping}</span>
