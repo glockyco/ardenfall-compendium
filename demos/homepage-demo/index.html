@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ardenfall Compendium — Home Demo</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar" data-region="primary-navigation">
+      <a class="brand" href="#top" aria-label="Ardenfall Compendium home">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-copy">
+          <span class="brand-title">Ardenfall</span>
+          <span class="brand-subtitle">Compendium</span>
+        </span>
+      </a>
+
+      <nav class="main-nav" aria-label="Primary navigation">
+        <a class="nav-link is-active" href="#top">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 11.2 12 4l8 7.2v8.3a.5.5 0 0 1-.5.5h-5v-5h-5v5h-5a.5.5 0 0 1-.5-.5z" />
+          </svg>
+          <span>Home</span>
+        </a>
+        <a class="nav-link" href="#quests">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 4h10v3H7zm1 5h8v2H8zm0 4h8v2H8zm-1 4h10v3H7z" />
+          </svg>
+          <span>Quests</span>
+        </a>
+        <a class="nav-link" href="#npcs">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0z" />
+          </svg>
+          <span>NPCs</span>
+        </a>
+        <a class="nav-link" href="#locations">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Zm0-8.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"
+            />
+          </svg>
+          <span>Locations</span>
+        </a>
+        <a class="nav-link" href="#factions">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 3h12v18l-6-3-6 3zm3 4v3h6V7z" />
+          </svg>
+          <span>Factions</span>
+        </a>
+        <a class="nav-link" href="#items">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 9h10l2 11H5zm3-5h4l2 5H8z" />
+          </svg>
+          <span>Items</span>
+        </a>
+        <a class="nav-link" href="#skills">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m12 2 2 7 7 3-7 3-2 7-2-7-7-3 7-3z" />
+          </svg>
+          <span>Skills</span>
+        </a>
+        <a class="nav-link" href="#lore">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M5 4h6a3 3 0 0 1 3 3v13a3 3 0 0 0-3-3H5zm14 0h-5a3 3 0 0 0-3 3v13a3 3 0 0 1 3-3h5z"
+            />
+          </svg>
+          <span>Lore</span>
+        </a>
+        <a class="nav-link" href="#map">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m4 5 5-2 6 2 5-2v16l-5 2-6-2-5 2zm5 .3v11.4l6 2V7.3z" />
+          </svg>
+          <span>Map</span>
+        </a>
+      </nav>
+
+      <div class="top-actions" aria-label="Compendium tools">
+        <button class="shortcut" type="button">Ctrl&nbsp;K</button>
+        <label class="top-search">
+          <span class="sr-only">Search the compendium</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M10.8 5a5.8 5.8 0 0 1 4.6 9.3l3.7 3.7-1.4 1.4-3.7-3.7A5.8 5.8 0 1 1 10.8 5Zm0 2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"
+            />
+          </svg>
+          <input
+            aria-label="Search the compendium"
+            type="search"
+            placeholder="Search the compendium..."
+          />
+        </label>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" data-region="hero-search" aria-labelledby="hero-title">
+        <div class="hero-inner">
+          <p class="eyebrow"><span></span>Welcome to the<span></span></p>
+          <h1 id="hero-title">Ardenfall Compendium</h1>
+          <p class="hero-lede">
+            Your definitive resource for everything in Ardenfall. Explore the world. Master the
+            game. Share knowledge.
+          </p>
+
+          <form class="hero-search" role="search" aria-label="Search the compendium">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M10.8 5a5.8 5.8 0 0 1 4.6 9.3l3.7 3.7-1.4 1.4-3.7-3.7A5.8 5.8 0 1 1 10.8 5Zm0 2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"
+              />
+            </svg>
+            <input
+              type="search"
+              placeholder="Search quests, items, locations, NPCs, and more..."
+              aria-label="Search quests, items, locations, NPCs, and more"
+            />
+            <kbd>Ctrl K</kbd>
+          </form>
+
+          <div class="popular-searches" aria-label="Popular searches">
+            <span>Popular searches:</span>
+            <a href="#ironwarden">Ironwarden</a>
+            <a href="#aelrith-council">Aelrith Council</a>
+            <a href="#verdant-keep">Verdant Keep</a>
+            <a href="#fire-lich">Fire Lich</a>
+            <a href="#ancient-relics">Ancient Relics</a>
+          </div>
+
+          <div class="status-strip" data-region="status-strip" aria-label="Compendium status">
+            <article>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 2h2v3h6V2h2v3h3v16H4V5h3zm11 8H6v9h12z" />
+              </svg>
+              <div>
+                <h2>Data updated</h2>
+                <p>May 16, 2024 (Patch 1.0.15)</p>
+              </div>
+            </article>
+            <article>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m12 2 2 7 7 3-7 3-2 7-2-7-7-3 7-3z" />
+              </svg>
+              <div>
+                <h2>Game version</h2>
+                <p>1.0.15</p>
+              </div>
+            </article>
+            <article>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 3h9l3 3v15H6zm8 1.8V7h2.2zM8 10h8v2H8zm0 4h8v2H8z" />
+              </svg>
+              <div>
+                <h2>Changelog</h2>
+                <p><a href="#changelog">View changelog →</a></p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <div class="category-heading" aria-hidden="true">
+        <span></span>
+        <strong>Browse by category</strong>
+        <span></span>
+      </div>
+      <section class="category-band" aria-label="Compendium categories">
+        <div class="category-grid" data-region="category-grid">
+          <a class="category-card" data-category-card href="#quests" id="quests">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 4h10v3H7zm1 5h8v2H8zm0 4h8v2H8zm-1 4h10v3H7z" />
+            </svg>
+            <span class="card-title">Quests</span>
+            <span class="card-count">144 Quests</span>
+          </a>
+          <a class="category-card" data-category-card href="#npcs" id="npcs">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0z" />
+            </svg>
+            <span class="card-title">NPCs</span>
+            <span class="card-count">612 NPCs</span>
+          </a>
+          <a class="category-card" data-category-card href="#locations" id="locations">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Zm0-8.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5Z"
+              />
+            </svg>
+            <span class="card-title">Locations</span>
+            <span class="card-count">158 Locations</span>
+          </a>
+          <a class="category-card" data-category-card href="#factions" id="factions">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 3h12v18l-6-3-6 3zm3 4v3h6V7z" />
+            </svg>
+            <span class="card-title">Factions</span>
+            <span class="card-count">27 Factions</span>
+          </a>
+          <a class="category-card" data-category-card href="#items" id="items">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 9h10l2 11H5zm3-5h4l2 5H8z" />
+            </svg>
+            <span class="card-title">Items</span>
+            <span class="card-count">1,248 Items</span>
+          </a>
+          <a class="category-card" data-category-card href="#skills" id="skills">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m12 2 2 7 7 3-7 3-2 7-2-7-7-3 7-3z" />
+            </svg>
+            <span class="card-title">Skills</span>
+            <span class="card-count">178 Skills</span>
+          </a>
+          <a class="category-card" data-category-card href="#lore" id="lore">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M5 4h6a3 3 0 0 1 3 3v13a3 3 0 0 0-3-3H5zm14 0h-5a3 3 0 0 0-3 3v13a3 3 0 0 1 3-3h5z"
+              />
+            </svg>
+            <span class="card-title">Lore</span>
+            <span class="card-count">342 Pages</span>
+          </a>
+          <a class="category-card" data-category-card href="#map" id="map">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m4 5 5-2 6 2 5-2v16l-5 2-6-2-5 2zm5 .3v11.4l6 2V7.3z" />
+            </svg>
+            <span class="card-title">Map</span>
+            <span class="card-count">Interactive World</span>
+          </a>
+        </div>
+      </section>
+
+      <section
+        class="content-shell"
+        data-region="content-panels"
+        aria-label="Featured compendium content"
+      >
+        <div class="content-grid">
+          <article class="glass-panel popular-panel">
+            <header class="panel-heading">
+              <h2>Popular Pages</h2>
+              <a href="#popular">View all →</a>
+            </header>
+            <div class="popular-list">
+              <a class="page-link" href="#ironwarden" id="ironwarden">
+                <span class="page-glyph">IW</span>
+                <span><strong>Ironwarden</strong><em>NPC</em></span>
+              </a>
+              <a class="page-link" href="#ancient-relics">
+                <span class="page-glyph relic">AR</span>
+                <span><strong>Ancient Relic</strong><em>Item</em></span>
+              </a>
+              <a class="page-link" href="#verdant-keep" id="verdant-keep">
+                <span class="page-glyph keep">VK</span>
+                <span><strong>Verdant Keep</strong><em>Location</em></span>
+              </a>
+              <a class="page-link" href="#fire-lich" id="fire-lich">
+                <span class="page-glyph danger">FL</span>
+                <span><strong>Fire Lich</strong><em>Enemy</em></span>
+              </a>
+              <a class="page-link" href="#aelrith-council" id="aelrith-council">
+                <span class="page-glyph faction">AC</span>
+                <span><strong>Aelrith Council</strong><em>Faction</em></span>
+              </a>
+              <a class="page-link" href="#stormcaller-staff">
+                <span class="page-glyph staff">SS</span>
+                <span><strong>Stormcaller Staff</strong><em>Item</em></span>
+              </a>
+            </div>
+          </article>
+
+          <article class="glass-panel updates-panel">
+            <header class="panel-heading">
+              <h2>Recently Updated</h2>
+              <a href="#updates">View all →</a>
+            </header>
+            <div class="updates-grid">
+              <a class="update-row" href="#patch-notes">
+                <span class="doc-icon" aria-hidden="true"></span>
+                <span><strong>Patch 1.0.15 Notes</strong><em>May 16, 2024</em></span>
+                <span class="tag patch">Patch</span>
+              </a>
+              <a class="update-row" href="#new-unit">
+                <span class="doc-icon" aria-hidden="true"></span>
+                <span><strong>New Unit: Ironwarden</strong><em>May 13, 2024</em></span>
+                <span class="tag npc">NPC</span>
+              </a>
+              <a class="update-row" href="#legendary-items">
+                <span class="doc-icon" aria-hidden="true"></span>
+                <span><strong>New Legendary Items</strong><em>May 15, 2024</em></span>
+                <span class="tag item">Items</span>
+              </a>
+              <a class="update-row" href="#skill-balance">
+                <span class="doc-icon" aria-hidden="true"></span>
+                <span><strong>Skill Balance Changes</strong><em>May 12, 2024</em></span>
+                <span class="tag skill">Skills</span>
+              </a>
+              <a class="update-row" href="#tier-list">
+                <span class="doc-icon" aria-hidden="true"></span>
+                <span><strong>Tier List Updated</strong><em>May 14, 2024</em></span>
+                <span class="tag guide">Guide</span>
+              </a>
+              <a class="update-row" href="#aelrith-lore">
+                <span class="doc-icon" aria-hidden="true"></span>
+                <span><strong>Aelrith Council Lore Added</strong><em>May 11, 2024</em></span>
+                <span class="tag lore">Lore</span>
+              </a>
+            </div>
+          </article>
+
+          <article class="glass-panel feature-panel">
+            <header class="feature-heading">
+              <span></span>
+              <h2>Featured Discovery</h2>
+              <span></span>
+            </header>
+            <div class="feature-card">
+              <div class="feature-art" aria-hidden="true"><span></span></div>
+              <div class="feature-copy">
+                <h3>Verdant Keep</h3>
+                <p>An ancient stronghold reclaimed by nature. Home to secrets long forgotten.</p>
+                <a class="feature-cta" href="#verdant-keep">Explore Location →</a>
+              </div>
+            </div>
+            <div class="pager" aria-label="Featured discovery carousel position">
+              <span class="is-current"></span><span></span><span></span><span></span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="value-strip" aria-label="Why use the compendium">
+        <article>
+          <span class="mini-compass" aria-hidden="true"></span>
+          <div>
+            <h2>Explore Everything</h2>
+            <p>Detailed guides and interactive maps.</p>
+          </div>
+        </article>
+        <article>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M5 4h6a3 3 0 0 1 3 3v13a3 3 0 0 0-3-3H5zm14 0h-5a3 3 0 0 0-3 3v13a3 3 0 0 1 3-3h5z"
+            />
+          </svg>
+          <div>
+            <h2>Master the Game</h2>
+            <p>Strategies, builds, and expert knowledge.</p>
+          </div>
+        </article>
+        <article>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20a5 5 0 0 1 10 0zm8 0a5 5 0 0 1 10 0z"
+            />
+          </svg>
+          <div>
+            <h2>Share Knowledge</h2>
+            <p>Built by players, for players.</p>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="site-footer" data-region="demo-footer">
+      <nav aria-label="Footer links">
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+        <a href="#contribute">Contribute</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#dmca">DMCA</a>
+      </nav>
+      <p>Not affiliated with the developers. Fan-made compendium.</p>
+      <div class="social-links" aria-label="Social links">
+        <a href="#discord">Discord</a>
+        <a href="#reddit">Reddit</a>
+        <a href="#feed">Feed</a>
+      </div>
+    </footer>
+  </body>
+</html>

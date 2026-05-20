@@ -1,0 +1,38 @@
+{
+  "generatedAsset": "assets/hero-ardenfall-valley-wide.png",
+  "optimizedAssets": [
+    "assets/hero-ardenfall-valley-wide.avif",
+    "assets/hero-ardenfall-valley-wide.webp"
+  ],
+  "directionReference": "assets/references/hero-composition-reference.png",
+  "earlierDraft": "assets/references/page-early-draft.png",
+  "sourceTool": "OMP GenerateImage tool, openai-codex/gpt-5.5 image provider",
+  "generatedAt": "2026-05-20",
+  "sourceCanvas": {
+    "width": 1536,
+    "height": 720
+  },
+  "recommendedUse": "decorative hero background",
+  "prompt": "Generate ONLY the background artwork for a 1536x720 wide website header; no UI, no words, no logos. Use assets/references/hero-composition-reference.png as the composition and mood reference. Preserve a clean title-safe rectangle from x=260..1280 and y=0..230: pale parchment sky with only soft clouds and haze, no tree leaves, branches, birds, mountains, buildings, castle silhouettes, high-contrast edges, or spires inside that rectangle. On the right ridge, outside the title-safe rectangle, build a larger distant castle city with 3-5 distinct tall spires of varied heights; the tallest spire must be clearly the tallest element on the right side. These towers may rise into the right-side sky in x=1300..1536 and y=120..400, but must not cross into x=260..1280 and y=0..230. Keep the castle mass on the right third, starting around x=1130 and y=190 or lower, below and beside where the title will sit. Frame the low-left sun through a visible left tree trunk and crown, with winding paths, a sparkling river, a small hamlet, farms, and a bridge receding through the lower half of the valley below y=250. Keep the bottom edge detailed but naturally fade-friendly for a CSS mask. Palette: parchment cream sky, honey-gold sunlight, olive greens, muted teal shadows, soft brown stone. Feeling: inviting, friendly, alive, full of exploration and discovery. Avoid gloomy darkness, hard black vignette, empty wasteland, title-zone clutter, or any words/logos/UI.",
+  "reviewNotes": "Regenerated against assets/references/hero-composition-reference.png to address the missing verticality in the previous right-side city: the castle ridge now has several taller spires concentrated in the far-right sky while the upper-center title-safe area remains open. The reference continues to define the inviting, friendly, alive direction (warm parchment sky, honey-gold sunlight, olive greens, muted teal shadows) and the safe layout (visible left tree crown and trunk, low sun, winding paths, river, hamlet, farms, bridge, and a right-third castle city). assets/references/page-early-draft.png is kept as a historical earlier exploration. The committed derivative is a wide 1536x720 header crop so the page does not rely on browser-cropping a tall painting. The asset is decorative; page text and controls remain real HTML.",
+  "composition": {
+    "titleSafeZone": "upper center stays open; castle, tree, and mountains do not overlap the h1/lede area",
+    "requiredElements": [
+      "visible left tree crown and trunk framing the sun",
+      "winding river and paths receding through the valley",
+      "small hamlet and farms in the midground",
+      "castle on the right third, below and beside the title safe area",
+      "3-5 distinct tall castle spires of varied heights on the right ridge",
+      "warm friendly sunrise palette"
+    ],
+    "negativeConstraints": [
+      "no castle silhouette behind or touching the page title",
+      "no tree canopy crossing the page title",
+      "no right-side towers crossing into the title safe rectangle",
+      "no hard downward image cut before the category grid",
+      "no opaque top header at initial scroll position",
+      "no gloomy dark vignette over the primary first impression"
+    ]
+  },
+  "upscalingNotes": "The committed source is 1536x720 and is not AI-upscaled. For production, prefer a native 2x-or-larger wide generation or a faithful upscaler such as Topaz/Gigapixel or Recraft Crisp Upscale before final WebP/AVIF export; avoid creative/generative upscaling unless explicitly accepting invented detail."
+}
