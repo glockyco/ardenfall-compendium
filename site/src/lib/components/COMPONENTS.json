@@ -80,6 +80,16 @@
       "id": "stats.StatTypeDetail",
       "path": "stats/StatTypeDetail.svelte",
       "layer": "stats"
+    },
+    {
+      "id": "categories.ItemCategoryOverview",
+      "path": "categories/ItemCategoryOverview.svelte",
+      "layer": "categories"
+    },
+    {
+      "id": "categories.ItemCategoryDetail",
+      "path": "categories/ItemCategoryDetail.svelte",
+      "layer": "categories"
     }
   ]
 }

@@ -97,6 +97,45 @@ if (!statsDetail.includes(`/assets/${statProbe.icon_hash}.webp`)) {
   throw new Error(`stat detail HTML missing icon asset ${statProbe.icon_hash}`);
 }
 
+const categoryProbe = readItemCategoryProbe();
+const categoryAssetPath = join(outputDir, "assets", `${categoryProbe.asset_hash}.webp`);
+if (!existsSync(categoryAssetPath)) {
+  throw new Error(`missing category probe asset: ${categoryAssetPath}`);
+}
+const categoriesOverviewPath = firstExisting([
+  join(outputDir, "categories", "index.html"),
+  join(outputDir, "categories.html"),
+]);
+if (!categoriesOverviewPath) {
+  throw new Error(`missing prerendered category overview under ${outputDir}`);
+}
+const categoriesOverview = readFileSync(categoriesOverviewPath, "utf8");
+for (const snippet of [
+  "Categories",
+  categoryProbe.name,
+  `/assets/${categoryProbe.asset_hash}.webp`,
+]) {
+  if (!categoriesOverview.includes(snippet)) {
+    throw new Error(`category overview HTML missing ${snippet}`);
+  }
+}
+const categoryDetailPath = firstExisting([
+  join(outputDir, "categories", `${categoryProbe.canonical_slug}.html`),
+  join(outputDir, "categories", categoryProbe.canonical_slug, "index.html"),
+]);
+if (!categoryDetailPath) {
+  throw new Error(`missing prerendered category detail page for ${categoryProbe.id}`);
+}
+const categoryDetail = readFileSync(categoryDetailPath, "utf8");
+for (const snippet of [categoryProbe.name, `/assets/${categoryProbe.asset_hash}.webp`]) {
+  if (!categoryDetail.includes(snippet)) {
+    throw new Error(`category detail HTML missing ${snippet}`);
+  }
+}
+if (!categoryDetail.includes(categoryProbe.item_name)) {
+  throw new Error(`category detail HTML missing item ${categoryProbe.item_name}`);
+}
+
 function readStatProbe() {
   const db = new Database(join(import.meta.dirname, "..", "static", "data.sqlite"), {
     readonly: true,
@@ -117,6 +156,43 @@ function readStatProbe() {
       )
       .get();
     if (!row) throw new Error("staged artifact contains no icon-bearing stat-type probe");
+    return row;
+  } finally {
+    db.close();
+  }
+}
+
+function readItemCategoryProbe() {
+  const db = new Database(join(import.meta.dirname, "..", "static", "data.sqlite"), {
+    readonly: true,
+    create: false,
+  });
+  try {
+    const row = db
+      .query(
+        `SELECT o.id, o.name, COALESCE(o.icon_hash, o.default_item_icon_hash) AS asset_hash,
+                n.canonical_slug,
+                (
+                  SELECT COALESCE(io.name, io.id)
+                  FROM item_overview_rows io
+                  JOIN items i ON i.id = io.id
+                  WHERE json_extract(i."categoryRef", '$.guid') = o.id
+                  ORDER BY io.name, io.id
+                  LIMIT 1
+                ) AS item_name
+         FROM item_category_overview_rows o
+         JOIN entity_nodes n
+           ON n.entity_type = 'item-category'
+          AND n.entity_id = o.id
+          AND n.is_public = 1
+         WHERE COALESCE(o.icon_hash, o.default_item_icon_hash) IS NOT NULL
+           AND o.item_count > 0
+         ORDER BY o.name
+         LIMIT 1`,
+      )
+      .get();
+    if (!row?.item_name)
+      throw new Error("staged artifact contains no icon-bearing item-category probe");
     return row;
   } finally {
     db.close();

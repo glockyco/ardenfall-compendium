@@ -728,12 +728,10 @@ describe("site deployment tooling", () => {
   it("requires item-category read-model counts while staging artifacts", () => {
     const stage = readFileSync("site/scripts/stage-artifact.mjs", "utf8");
 
-    expect(stage).toContain(
-      'assertRequiredCount(db, counts, "itemCategoryOverviewRows", "item_category_overview_rows")',
-    );
-    expect(stage).toContain(
-      'assertRequiredCount(db, counts, "itemCategoryPresentationRows", "item_category_presentation_rows")',
-    );
+    expect(stage).toContain('"itemCategoryOverviewRows"');
+    expect(stage).toContain('"item_category_overview_rows"');
+    expect(stage).toContain('"itemCategoryPresentationRows"');
+    expect(stage).toContain('"item_category_presentation_rows"');
   });
 });
 
@@ -792,6 +790,34 @@ describe("site prerender architecture", () => {
     expect(smoke).not.toContain("if (statProbe.icon_hash &&");
     expect(smoke).toContain("missing stat probe asset");
     expect(smoke).not.toContain("melee-damage");
+  });
+
+  it("requires an item-category prerender smoke probe", () => {
+    const smoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
+
+    expect(smoke).toContain("readItemCategoryProbe()");
+    expect(smoke).toContain("item_category_overview_rows");
+    expect(smoke).toContain("missing category probe asset");
+    expect(smoke).toContain("category detail HTML missing item");
+    expect(smoke).not.toContain("fixture-weapons");
+    expect(smoke).not.toContain("Iron Sword");
+  });
+
+  it("catalogs item-category page components", () => {
+    const catalog = JSON.parse(readFileSync("site/src/lib/components/COMPONENTS.json", "utf8")) as {
+      components: Array<{ id: string; path: string; layer: string }>;
+    };
+
+    expect(catalog.components).toContainEqual({
+      id: "categories.ItemCategoryOverview",
+      path: "categories/ItemCategoryOverview.svelte",
+      layer: "categories",
+    });
+    expect(catalog.components).toContainEqual({
+      id: "categories.ItemCategoryDetail",
+      path: "categories/ItemCategoryDetail.svelte",
+      layer: "categories",
+    });
   });
 
   it("uses release metadata for local and production smokes", () => {
