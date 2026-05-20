@@ -4,3 +4,13 @@
 *.dll binary
 *.sqlite binary
 bun.lock -text
+demos/**/assets/**/*.png filter=lfs diff=lfs merge=lfs -text
+demos/**/assets/**/*.webp filter=lfs diff=lfs merge=lfs -text
+demos/**/assets/**/*.avif filter=lfs diff=lfs merge=lfs -text
+*.psd filter=lfs diff=lfs merge=lfs -text
+*.afdesign filter=lfs diff=lfs merge=lfs -text
+*.afphoto filter=lfs diff=lfs merge=lfs -text
+*.kra filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.mov filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
