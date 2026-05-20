@@ -68,16 +68,18 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
           );
         }
       }
-      // Synthetic variant column (route filter):
-      insertField.run(
-        entityId,
-        "variant",
-        `${entityId}s`,
-        "variant",
-        "Variant",
-        "string",
-        "diagnostic",
-      );
+      if ((desc.variants[entityId] ?? []).length > 0) {
+        // Synthetic variant column (route filter):
+        insertField.run(
+          entityId,
+          "variant",
+          `${entityId}s`,
+          "variant",
+          "Variant",
+          "string",
+          "diagnostic",
+        );
+      }
 
       const overview = entity.site?.overview;
       if (overview) {
@@ -107,9 +109,11 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
           }
         });
       }
-      // Default read models consumed by the item overview and detail routes.
-      insertReadModel.run("item_overview_rows", "item_overview_rows", entityId, "overview");
-      insertReadModel.run("item_presentation_rows", "item_presentation_rows", entityId, "detail");
+      if (entityId === "item") {
+        // Default read models consumed by the item overview and detail routes.
+        insertReadModel.run("item_overview_rows", "item_overview_rows", entityId, "overview");
+        insertReadModel.run("item_presentation_rows", "item_presentation_rows", entityId, "detail");
+      }
     }
 
     for (const v of desc.variants.item ?? []) {

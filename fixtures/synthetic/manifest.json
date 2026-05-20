@@ -11,7 +11,8 @@
     "lookupAsset and missing iconRef",
     "Parameter<T> resolved/inherited shape",
     "SmartListParameter<ItemTag> populated and empty cases",
-    "Item icon asset slots and color metadata"
+    "Item icon asset slots and color metadata",
+    "StatType fixture rows for stat overview/detail routes"
   ],
   "selection": [
     {
@@ -24,16 +25,22 @@
         "fixture-throwing-potion"
       ],
       "rationale": "one melee branch + one armor branch + one consumable subtype branch + slate spell and throwing potion icon behavior branches"
+    },
+    {
+      "entity": "stat-type",
+      "ids": ["fixture-strength", "fixture-heavy-armor"],
+      "rationale": "one attribute and one skill-like stat for grouping and stat page coverage"
     }
   ],
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "9b590dd52ab9183d49ba163feedfe10adf72df88d0b276b261b42b8c9d2e5105",
+    "snapshot/manifest.json": "13c80e7690d1d60553695bb3268e4765fbe15e03f7f3cbfd9b1dc01be3543ed7",
     "snapshot/items.json": "e1e4a8ba601f2e5dc581eb921eea878d317de5266c39e7e0e87adc0971d015bc",
     "snapshot/asset-manifest.json": "5b3aac7ceeabe0ae87db96b7cb750fb31fd3396c8644d003612b43a0b93ea8e5",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
     "snapshot/assets/items/fixture-icon-blue.png": "d6d4b05209c7541985841a63d955337a411a005d7abb936426791cbfde258f17",
-    "snapshot/master-tooltip.json": "a1a638b30e0ea5ece928fac4c8d96480bdc9cc3497e62640c33afafd083f15d0"
+    "snapshot/master-tooltip.json": "a1a638b30e0ea5ece928fac4c8d96480bdc9cc3497e62640c33afafd083f15d0",
+    "snapshot/stat-types.json": "249b5eb948ed9ba7dbf3769d90942acdc90fdf0f741947d0373ac7c84b0cdafc"
   }
 }

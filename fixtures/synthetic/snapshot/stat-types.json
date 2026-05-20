@@ -1,0 +1,34 @@
+{
+  "entityId": "stat-type",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "fixture-strength",
+      "fields": {
+        "id": "fixture-strength",
+        "isAttribute": true,
+        "statName": "Strength",
+        "iconRef": null,
+        "iconColor": { "r": 0.95, "g": 0.45, "b": 0.2, "a": 1 },
+        "statDescription": "Raw physical power.",
+        "longStatDescription": "Raw physical power. Affects melee damage and carry weight.",
+        "affects": ["melee-damage", "carry-weight"],
+        "skillAffects": ["fixture-heavy-armor"]
+      }
+    },
+    {
+      "id": "fixture-heavy-armor",
+      "fields": {
+        "id": "fixture-heavy-armor",
+        "isAttribute": false,
+        "statName": "Heavy Armor",
+        "iconRef": null,
+        "iconColor": { "r": 0.6, "g": 0.6, "b": 0.65, "a": 1 },
+        "statDescription": "Tolerance for wearing heavy armor.",
+        "longStatDescription": "Tolerance for wearing heavy armor.",
+        "affects": ["damage-threshold"],
+        "skillAffects": []
+      }
+    }
+  ]
+}

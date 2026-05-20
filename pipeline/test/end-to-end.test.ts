@@ -47,6 +47,10 @@ describe("end-to-end pipeline", () => {
           .c;
         expect(assetRefCount).toBe(4);
 
+        const statTypeCount = (db.query("SELECT COUNT(*) c FROM stat_types").get() as { c: number })
+          .c;
+        expect(statTypeCount).toBe(2);
+
         // Variant ancestry is consistent for the melee row.
         const orphans = db
           .query(

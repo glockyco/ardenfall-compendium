@@ -74,5 +74,19 @@ describe("emitSiteMetadata", () => {
         source_column: "damage",
       },
     ]);
+    const statVariantField = db
+      .query(
+        "SELECT field_id FROM site_entity_fields WHERE entity_id = 'stat-type' AND field_id = 'variant'",
+      )
+      .get();
+    expect(statVariantField).toBeNull();
+
+    const readModels = db
+      .query("SELECT read_model_id, entity_id FROM site_read_models ORDER BY read_model_id")
+      .all();
+    expect(readModels).toEqual([
+      { read_model_id: "item_overview_rows", entity_id: "item" },
+      { read_model_id: "item_presentation_rows", entity_id: "item" },
+    ]);
   });
 });

@@ -5,6 +5,8 @@ import type { Stage } from "../types.ts";
 import { buildDDL } from "../sql/ddl";
 import { SITE_METADATA_DDL } from "../sql/site-metadata-ddl";
 import { canonicaliseItems } from "../entities/item/canonicaliser";
+import { canonicaliseStatTypes } from "../entities/stat-type/canonicaliser";
+import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
 import { emitSiteMetadata } from "./emit-site-metadata";
 import { emitItemReadModels } from "./emit-read-models";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
@@ -44,6 +46,11 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
       }
       db.exec(buildDDL(itemEntity, itemVariants));
       canonicaliseItems(db, itemEntity, itemVariants, itemEnvelope);
+      const statTypeEnvelope = inputs["load-snapshot"].envelopes["stat-type"];
+      if (statTypeEnvelope) {
+        db.exec(STAT_TYPE_DDL);
+        canonicaliseStatTypes(db, statTypeEnvelope);
+      }
       emitSiteMetadata(db, desc);
       const assetRefInsert = db.prepare(
         `INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)`,
