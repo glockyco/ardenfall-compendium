@@ -56,30 +56,12 @@
     "ruinedDurabilityMessage": { "type": "string" },
     "statBookMessage": { "type": "string" },
     "termSetColors": {
-      "type": "object",
-      "additionalProperties": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["color", "text"],
-        "properties": {
-          "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
-          "text": { "type": "string" }
-        }
-      }
+      "type": "array",
+      "items": { "$ref": "#/$defs/termSetColor" }
     },
     "globalTermSets": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["setId", "terms", "regex", "replacement"],
-        "properties": {
-          "setId": { "type": "string", "minLength": 1 },
-          "terms": { "type": "array", "items": { "type": "string" } },
-          "regex": { "type": "string" },
-          "replacement": { "type": "string" }
-        }
-      }
+      "items": { "$ref": "#/$defs/termSet" }
     },
     "termColorMatch": { "type": "string" },
     "potionRecipeDescription": { "type": "string" }
@@ -94,6 +76,50 @@
         "g": { "type": "number", "minimum": 0, "maximum": 1 },
         "b": { "type": "number", "minimum": 0, "maximum": 1 },
         "a": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "termSetColor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "categoryId",
+        "replaceWithStart",
+        "replaceWithEnd",
+        "enableJournalOverride",
+        "replaceWithStartJournal",
+        "replaceWithEndJournal",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "categoryId": { "type": "string", "minLength": 1 },
+        "replaceWithStart": { "type": "string" },
+        "replaceWithEnd": { "type": "string" },
+        "enableJournalOverride": { "type": "boolean" },
+        "replaceWithStartJournal": { "type": "string" },
+        "replaceWithEndJournal": { "type": "string" },
+        "start": { "type": "string" },
+        "end": { "type": "string" }
+      }
+    },
+    "termSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["setId", "categoryId", "tooltipFormat", "terms"],
+      "properties": {
+        "setId": { "type": "string", "minLength": 1 },
+        "categoryId": { "type": "string", "minLength": 1 },
+        "tooltipFormat": { "type": "string" },
+        "terms": { "type": "array", "items": { "$ref": "#/$defs/term" } }
+      }
+    },
+    "term": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "definition"],
+      "properties": {
+        "value": { "type": "string" },
+        "definition": { "type": "string" }
       }
     }
   }

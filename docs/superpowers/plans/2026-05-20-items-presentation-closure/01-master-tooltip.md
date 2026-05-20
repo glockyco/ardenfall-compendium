@@ -8,6 +8,8 @@
 
 **Outcome:** `master-tooltip.json` snapshot envelope at schema version 2, validated by a dedicated JSON Schema, loaded into a typed `MasterTooltipVocabulary` object, surfaced to every pipeline stage that needs it. No site changes yet.
 
+**Implementation correction:** `Ardenfall.Dialog.TermSetColor` does not have `{code, color, text}` fields. The implemented v2 shape models the actual decompiled data: `termSetColors` is `TermSetColorSnapshot[]` with `categoryId`, replacement wrappers, journal override wrappers, and parse `start`/`end` delimiters; `globalTermSets` is `TermSetSnapshot[]` with `categoryId`, `tooltipFormat`, and raw `Term.value`/`definition` pairs. This supersedes the older color-token snippets below where they disagree.
+
 ### Task 1.1: JSON Schema for `master-tooltip.json` v2
 
 **Files:**

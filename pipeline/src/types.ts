@@ -200,7 +200,7 @@ export interface MasterTooltipVocabulary {
   brokenDurabilityMessage: string;
   ruinedDurabilityMessage: string;
   statBookMessage: string;
-  termSetColors: Record<string, MasterTooltipColorToken>;
+  termSetColors: MasterTooltipTermSetColor[];
   globalTermSets: MasterTooltipTermSet[];
   termColorMatch: string;
   potionRecipeDescription: string;
@@ -211,11 +211,27 @@ export interface MasterTooltipColorToken {
   text: string;
 }
 
+export interface MasterTooltipTermSetColor {
+  categoryId: string;
+  replaceWithStart: string;
+  replaceWithEnd: string;
+  enableJournalOverride: boolean;
+  replaceWithStartJournal: string;
+  replaceWithEndJournal: string;
+  start: string;
+  end: string;
+}
+
 export interface MasterTooltipTermSet {
   setId: string;
-  terms: string[];
-  regex: string;
-  replacement: string;
+  categoryId: string;
+  tooltipFormat: string;
+  terms: MasterTooltipTerm[];
+}
+
+export interface MasterTooltipTerm {
+  value: string;
+  definition: string;
 }
 
 export type FieldProvenance =

@@ -121,7 +121,7 @@ Every entity below has a public detail page and at least one outbound or inbound
 
 - **`potion-recipe`** — `Item/PotionRecipe.cs:7-107` + `Item/RecipeItem.cs:6-26`. Fields: `recipeName: string | null` (derived from first produced potion's `GetEffectName()` per `PotionRecipe.cs:32-39`), `drinkablePotionRefs: itemRef[]`, `throwingPotionRefs: itemRef[]`, `lockedByDefault`, `enableSkillRequirement`, `skillRequirement`, `levelModifier`, `successModifier`, `ingredients: [{tagRef, count}]`. Predicates: teaches ← item (via `PotionRecipeItemData.recipe`); produces_potion → item (drinkable + throwing); requires_tag → item-tag (via ingredients).
 
-- **`master-tooltip-vocabulary` (private)** — `ArdenfallMasterData.cs:84-160,184-188` + `PotionRecipeManager.cs:20-30` (the `(Learned)` suffix and recipe description format string). Fields: `tooltipCodes: {code, text}[]`, `tooltipColors: {code, color, text}[]`, `tooltipTargetColor: Color`, `tooltipDurationColor: Color`, `positiveColor`, `negativeColor`, `spellSubEffectColor`, `enchantmentItemColor`, `primarySpellTooltip: string` (prefix), `secondarySpellTooltip: string` (prefix), `unmetSkillMessage`, `brokenDurabilityMessage`, `ruinedDurabilityMessage`, `statBookMessage`, `termSetColors: {code, color, text}[]`, `globalTermSets: TermSetContainer[]`, `termColorMatch: string`, `potionRecipeDescription: string` (from `PotionRecipeManager`). Stored under `fixtures/.../snapshot/master-tooltip.json` and the live equivalent; loaded once per pipeline run, available to every composer. No graph node, no public page.
+- **`master-tooltip-vocabulary` (private)** — `ArdenfallMasterData.cs:84-160,184-188` + `PotionRecipeManager.cs:20-30` (the `(Learned)` suffix and recipe description format string). Fields: `tooltipCodes: {code, text}[]`, `tooltipColors: {code, color, text}[]`, `tooltipTargetColor: Color`, `tooltipDurationColor: Color`, `positiveColor`, `negativeColor`, `spellSubEffectColor`, `enchantmentItemColor`, `primarySpellTooltip: string` (prefix), `secondarySpellTooltip: string` (prefix), `unmetSkillMessage`, `brokenDurabilityMessage`, `ruinedDurabilityMessage`, `statBookMessage`, `termSetColors: TermSetColorSnapshot[]` (`categoryId`, replacement wrappers, journal override wrappers, parse `start`/`end` delimiters), `globalTermSets: TermSetSnapshot[]` (`categoryId`, `tooltipFormat`, raw `Term.value`/`definition` pairs), `termColorMatch: string`, `potionRecipeDescription: string` (from `PotionRecipeManager`). Stored under `fixtures/.../snapshot/master-tooltip.json` and the live equivalent; loaded once per pipeline run, available to every composer. No graph node, no public page.
 
 ### 3.3 Composer chain (the two-pass colour expansion the current pipeline misses)
 
@@ -178,17 +178,33 @@ export interface MasterTooltipVocabulary {
   brokenDurabilityMessage: string;
   ruinedDurabilityMessage: string;
   statBookMessage: string;
-  termSetColors: Record<string, { color: string; text: string }>;
+  termSetColors: TermSetColorSnapshot[];
   globalTermSets: TermSetSnapshot[];
   termColorMatch: string;
   potionRecipeDescription: string;
 }
 
+export interface TermSetColorSnapshot {
+  categoryId: string;
+  replaceWithStart: string;
+  replaceWithEnd: string;
+  enableJournalOverride: boolean;
+  replaceWithStartJournal: string;
+  replaceWithEndJournal: string;
+  start: string;
+  end: string;
+}
+
 export interface TermSetSnapshot {
   setId: string;
-  terms: string[];
-  regex: string;
-  replacement: string; // exactly the template the game uses; pipeline does the regex sweep
+  categoryId: string;
+  tooltipFormat: string;
+  terms: TermSnapshot[];
+}
+
+export interface TermSnapshot {
+  value: string;
+  definition: string;
 }
 ```
 

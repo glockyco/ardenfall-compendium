@@ -17,8 +17,26 @@ const valid = {
   brokenDurabilityMessage: "This item is broken.",
   ruinedDurabilityMessage: "This item is ruined.",
   statBookMessage: "Reading this grants {0}.",
-  termSetColors: {},
-  globalTermSets: [],
+  termSetColors: [
+    {
+      categoryId: "combat",
+      replaceWithStart: "<color=#FF0000>",
+      replaceWithEnd: "</color>",
+      enableJournalOverride: true,
+      replaceWithStartJournal: "<b>",
+      replaceWithEndJournal: "</b>",
+      start: "{",
+      end: "}",
+    },
+  ],
+  globalTermSets: [
+    {
+      setId: "combat-terms",
+      categoryId: "combat",
+      tooltipFormat: "{0}",
+      terms: [{ value: "bleed=Bleeding/bleeding", definition: "Bleed" }],
+    },
+  ],
   termColorMatch: "\\{([a-zA-Z0-9_]+)\\}",
   potionRecipeDescription: "Learn the potion recipe {0}.",
 };
@@ -40,5 +58,14 @@ describe("master-tooltip v2 schema", () => {
 
   it("rejects a string tooltipColors value (v1 shape)", () => {
     expect(validate({ ...valid, tooltipColors: { p: "positive" } })).toBe(false);
+  });
+
+  it("rejects the discarded color-token termSetColors shape", () => {
+    expect(
+      validate({
+        ...valid,
+        termSetColors: { combat: { color: "#FF0000", text: "combat" } },
+      }),
+    ).toBe(false);
   });
 });
