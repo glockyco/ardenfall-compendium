@@ -46,8 +46,48 @@ public sealed class ItemTagExtractorTests
 
         var rows = extractor.Walk().ToList();
 
-        Assert.Empty(rows);
+        Assert.Single(rows);
+        Assert.Equal("Floating Tag", rows[0].Id);
+        Assert.Equal("Floating Tag", rows[0].Fields.TagName);
         Assert.Contains(extractor.Diagnostics, d => d.Code == "lookupAssetGuidMissing" && d.Field == "id");
+    }
+
+    [Fact]
+    public void DropsEmptyGuidToMatchItemTagRefs()
+    {
+        var source = new FakeItemTagAssetSource(new[]
+        {
+            FakeItemTagAssetSource.Build(
+                guid: "",
+                assetName: "empty-guid-tag",
+                tagName: "Empty GUID",
+                description: "Dropped because item refs drop empty GUIDs"),
+        });
+        var extractor = new ItemTagExtractor(source);
+
+        var rows = extractor.Walk().ToList();
+
+        Assert.Empty(rows);
+    }
+
+    [Fact]
+    public void PreservesWhitespaceGuidToMatchItemTagRefs()
+    {
+        var source = new FakeItemTagAssetSource(new[]
+        {
+            FakeItemTagAssetSource.Build(
+                guid: "   ",
+                assetName: "whitespace-guid-tag",
+                tagName: "Whitespace GUID",
+                description: "Preserved because item refs preserve non-empty GUID strings"),
+        });
+        var extractor = new ItemTagExtractor(source);
+
+        var rows = extractor.Walk().ToList();
+
+        var row = Assert.Single(rows);
+        Assert.Equal("   ", row.Id);
+        Assert.Equal("Whitespace GUID", row.Fields.TagName);
     }
 
     private sealed class FakeItemTagAssetSource : IItemTagAssetSource
