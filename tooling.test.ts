@@ -431,6 +431,96 @@ describe("site deployment tooling", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it("validates stat read-model counts while staging artifacts", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-stat-counts-"));
+    try {
+      const artifact = join(root, "artifact");
+      const target = join(root, "site", "static");
+      const source = {
+        kind: "synthetic-fixture",
+        fixtureName: "synthetic",
+        snapshotId: "synthetic",
+        gameVersion: "fixture",
+        buildIdentifier: "synthetic",
+        extractorVersion: "0.1.0",
+        snapshotManifestSha256: "a".repeat(64),
+      };
+      const git = {
+        repository: "glockyco/ardenfall-compendium",
+        commit: "b".repeat(40),
+        branch: "main",
+        dirty: false,
+      };
+      mkdirSync(join(artifact, "assets"), { recursive: true });
+      mkdirSync(join(artifact, "static"), { recursive: true });
+      writeFileSync(join(artifact, "static", "_redirects"), "# redirects\n");
+
+      const sqlitePath = join(artifact, "data.sqlite");
+      writeMinimalArtifactSqlite(sqlitePath, {
+        artifactKind: "fixture",
+        artifactId: "synthetic",
+        sourceKind: source.kind,
+        snapshotId: source.snapshotId,
+        gitCommit: git.commit,
+      });
+      const db = new Database(sqlitePath);
+      try {
+        db.exec(`
+          CREATE TABLE stat_type_overview_rows (id TEXT);
+          INSERT INTO stat_type_overview_rows VALUES ('stat-strength');
+          CREATE TABLE stat_type_presentation_rows (id TEXT);
+          INSERT INTO stat_type_presentation_rows VALUES ('stat-strength');
+        `);
+      } finally {
+        db.close();
+      }
+      const sqliteBytes = readFileSync(sqlitePath);
+      writeFileSync(
+        join(artifact, "artifact-manifest.json"),
+        JSON.stringify({
+          schemaVersion: 1,
+          artifactKind: "fixture",
+          artifactId: "synthetic",
+          createdAt: "2026-05-15T00:00:00.000Z",
+          source,
+          git,
+          diagnostics: { fatal: 0, diagnostic: 0 },
+          counts: {
+            itemOverviewRows: 0,
+            itemPresentationRows: 0,
+            itemOverviewFilters: 0,
+            itemOverviewCategories: 0,
+            statTypeOverviewRows: 2,
+            statTypePresentationRows: 1,
+          },
+          outputs: {
+            sqlite: {
+              path: "data.sqlite",
+              bytes: sqliteBytes.byteLength,
+              sha256: sha256(sqliteBytes),
+            },
+            assets: { path: "assets", count: 0, treeSha256: sha256("") },
+          },
+          probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
+        }),
+      );
+
+      const { stageArtifact } = (await import("./site/scripts/stage-artifact.mjs")) as {
+        stageArtifact: (options: {
+          artifactDir: string;
+          targetDir: string;
+          mode: "fixture" | "release";
+        }) => Promise<unknown>;
+      };
+
+      await expect(
+        stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),
+      ).rejects.toThrow(/statTypeOverviewRows mismatch/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("site prerender architecture", () => {

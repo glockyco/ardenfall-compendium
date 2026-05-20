@@ -76,6 +76,9 @@ const statsOverview = readFileSync(statsOverviewPath, "utf8");
 for (const snippet of ["Stats", statProbe.name, statProbe.grouping]) {
   if (!statsOverview.includes(snippet)) throw new Error(`stat overview HTML missing ${snippet}`);
 }
+if (statProbe.icon_hash && !statsOverview.includes(`/assets/${statProbe.icon_hash}.webp`)) {
+  throw new Error(`stat overview HTML missing icon asset ${statProbe.icon_hash}`);
+}
 const statsDetailPath = firstExisting([
   join(outputDir, "stats", `${statProbe.canonical_slug}.html`),
   join(outputDir, "stats", statProbe.canonical_slug, "index.html"),

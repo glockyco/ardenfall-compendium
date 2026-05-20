@@ -111,40 +111,31 @@ function assertAssetTree(dir, expectedHash) {
 function assertSqliteCounts(path, counts) {
   const db = new Database(path, { readonly: true });
   try {
-    const overview = db.query("SELECT COUNT(*) AS count FROM item_overview_rows").get().count;
-    const presentation = db
-      .query("SELECT COUNT(*) AS count FROM item_presentation_rows")
-      .get().count;
-    const filters = db.query("SELECT COUNT(*) AS count FROM item_overview_filters").get().count;
-    const categories = db
-      .query("SELECT COUNT(*) AS count FROM item_overview_categories")
-      .get().count;
-    if (counts.itemOverviewRows !== undefined && overview !== counts.itemOverviewRows) {
-      throw new Error(
-        `itemOverviewRows mismatch: expected ${counts.itemOverviewRows}, got ${overview}`,
-      );
-    }
-    if (counts.itemPresentationRows !== undefined && presentation !== counts.itemPresentationRows) {
-      throw new Error(
-        `itemPresentationRows mismatch: expected ${counts.itemPresentationRows}, got ${presentation}`,
-      );
-    }
-    if (counts.itemOverviewFilters !== undefined && filters !== counts.itemOverviewFilters) {
-      throw new Error(
-        `itemOverviewFilters mismatch: expected ${counts.itemOverviewFilters}, got ${filters}`,
-      );
-    }
-    if (
-      counts.itemOverviewCategories !== undefined &&
-      categories !== counts.itemOverviewCategories
-    ) {
-      throw new Error(
-        `itemOverviewCategories mismatch: expected ${counts.itemOverviewCategories}, got ${categories}`,
-      );
-    }
+    assertCount(db, counts, "itemOverviewRows", "item_overview_rows");
+    assertCount(db, counts, "itemPresentationRows", "item_presentation_rows");
+    assertCount(db, counts, "itemOverviewFilters", "item_overview_filters");
+    assertCount(db, counts, "itemOverviewCategories", "item_overview_categories");
+    assertCount(db, counts, "statTypeOverviewRows", "stat_type_overview_rows");
+    assertCount(db, counts, "statTypePresentationRows", "stat_type_presentation_rows");
   } finally {
     db.close();
   }
+}
+
+function assertCount(db, counts, key, table) {
+  if (counts[key] === undefined) return;
+  const actual = countRows(db, table);
+  if (actual !== counts[key]) {
+    throw new Error(`${key} mismatch: expected ${counts[key]}, got ${actual}`);
+  }
+}
+
+function countRows(db, table) {
+  const tableRow = db
+    .query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
+    .get(table);
+  if (!tableRow) return 0;
+  return db.query(`SELECT COUNT(*) AS count FROM ${table}`).get().count;
 }
 
 function assertArtifactMetadata(path, manifest) {
