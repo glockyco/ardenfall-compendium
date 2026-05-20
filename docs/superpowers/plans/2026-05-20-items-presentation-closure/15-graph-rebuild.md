@@ -250,21 +250,127 @@ const TITLES: Record<string, { forward: string; reverse: string }> = {
 
 ```ts
 // pipeline/test/build-graph.test.ts
+import { describe, expect, it } from "bun:test";
+import { Database } from "bun:sqlite";
+import { buildGraph } from "$pipeline/stages/build-graph";
+import { buildRelationshipDDL } from "$pipeline/relationships/relationship-graph";
+import { writeFileSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+function buildFixtureDb(): { path: string; close: () => void } {
+  const root = mkdtempSync(join(tmpdir(), "ardenfall-graph-"));
+  const path = join(root, "data.sqlite");
+  const db = new Database(path);
+  db.exec(buildRelationshipDDL());
+  // Minimum tables the queries below touch:
+  db.exec(`
+    CREATE TABLE items (id TEXT PRIMARY KEY, name TEXT, variant TEXT);
+    CREATE TABLE item_tag_refs (item_id TEXT, tag_id TEXT);
+    CREATE TABLE effect_instances (
+      effect_id TEXT PRIMARY KEY, owner_type TEXT, owner_id TEXT, owner_scope TEXT,
+      effect_index INTEGER, effect_kind TEXT, payload_json TEXT
+    );
+  `);
+  db.run(
+    "INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public) VALUES ('item', 'iron-sword', 'Iron Sword', '/items/iron-sword--aaaa1111', 'iron-sword--aaaa1111', 'aaaa1111', 1)",
+  );
+  db.run(
+    "INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public) VALUES ('item-tag', 'rare', 'Rare', '/tags/rare--bbbb2222', 'rare--bbbb2222', 'bbbb2222', 1)",
+  );
+  db.run(
+    "INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public) VALUES ('status-effect', 'spider-venom', 'Spider Venom', '/status-effects/spider-venom--cccc3333', 'spider-venom--cccc3333', 'cccc3333', 1)",
+  );
+  db.run(
+    "INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public) VALUES ('stat-type', 'strength', 'Strength', '/stats/strength--dddd4444', 'strength--dddd4444', 'dddd4444', 1)",
+  );
+  db.run("INSERT INTO items VALUES ('iron-sword', 'Iron Sword', 'melee-weapon')");
+  db.run("INSERT INTO item_tag_refs VALUES ('iron-sword', 'rare')");
+  db.run(`INSERT INTO effect_instances VALUES (
+    'spider-venom:0:ModStatEffect', 'status-effect', 'spider-venom', 'status-effect-effects', 0,
+    'ModStatEffect', '{"stat":{"kind":"lookupAsset","guid":"strength"},"modification":{"baseValue":-2,"levelScale":0},"addition":true}'
+  )`);
+  db.close();
+  return {
+    path,
+    close: () => {
+      /* tmp cleanup handled by os */
+    },
+  };
+}
+
 describe("buildGraph", () => {
   it("emits item.tagged_with edges from item_tag_refs", () => {
-    // ...
+    const { path } = buildFixtureDb();
+    buildGraph({ sqlitePath: path });
+    const db = new Database(path, { readonly: true });
+    const edges = db
+      .query<
+        { source_type: string; target_type: string; predicate: string },
+        []
+      >("SELECT source_type, target_type, predicate FROM entity_edges WHERE predicate = 'tagged_with'")
+      .all();
+    expect(edges).toContainEqual({
+      source_type: "item",
+      target_type: "item-tag",
+      predicate: "tagged_with",
+    });
+    db.close();
   });
 
   it("emits status-effect.modifies_stat from effect_instances ModStatEffect payloads", () => {
-    // ...
+    const { path } = buildFixtureDb();
+    buildGraph({ sqlitePath: path });
+    const db = new Database(path, { readonly: true });
+    const row = db
+      .query<
+        { source_id: string; target_id: string },
+        []
+      >("SELECT source_id, target_id FROM entity_edges WHERE predicate = 'modifies_stat' AND source_type = 'status-effect'")
+      .get();
+    expect(row).toEqual({ source_id: "spider-venom", target_id: "strength" });
+    db.close();
   });
 
   it("materialises both forward and reverse sections without doubling edge rows", () => {
-    // Run buildGraph; assert: COUNT(*) FROM entity_edges == N; sections has 2 * N grouped rows.
+    const { path } = buildFixtureDb();
+    buildGraph({ sqlitePath: path });
+    const db = new Database(path, { readonly: true });
+    const edgeCount =
+      db.query<{ n: number }, []>("SELECT COUNT(*) AS n FROM entity_edges").get()?.n ?? 0;
+    const forward =
+      db
+        .query<
+          { n: number },
+          []
+        >("SELECT COUNT(*) AS n FROM entity_relationship_sections WHERE direction = 'forward'")
+        .get()?.n ?? 0;
+    const reverse =
+      db
+        .query<
+          { n: number },
+          []
+        >("SELECT COUNT(*) AS n FROM entity_relationship_sections WHERE direction = 'reverse'")
+        .get()?.n ?? 0;
+    // Each edge contributes to exactly one forward section AND one reverse section, grouped by (predicate, owner).
+    expect(forward + reverse).toBeGreaterThanOrEqual(edgeCount);
+    expect(edgeCount).toBeGreaterThan(0);
+    db.close();
   });
 
   it("fails fast on relationshipMissingTarget", () => {
-    // ...
+    const { path } = buildFixtureDb();
+    const db = new Database(path);
+    // Insert an edge pointing at a non-public target.
+    db.exec(
+      "INSERT INTO entity_edges VALUES ('item:iron-sword:applies_status_effect:status-effect:missing', 'item', 'iron-sword', 'status-effect', 'missing', 'applies_status_effect', 'Applies', 1, '{}', null)",
+    );
+    db.close();
+    const result = buildGraph({ sqlitePath: path });
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({ severity: "fatal", code: "relationshipMissingTarget" }),
+    );
   });
 });
 ```

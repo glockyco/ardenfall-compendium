@@ -543,7 +543,7 @@ public sealed class EffectSerializerTests
             modification = new Ardenfall.LeveledFloat { BaseValue = 2f, LevelScale = 0.5f },
             addition = true,
         };
-        var serializer = new EffectSerializer(new RefResolver(/* ctor */));
+        var serializer = new EffectSerializer(new RefResolver());
         var snap = serializer.Serialize(effect, "owner-1", "status-effect-effects", 0);
         Assert.Equal("ModStatEffect", snap.Kind);
         Assert.Equal(true, snap.Payload["addition"]!.Value<bool>());

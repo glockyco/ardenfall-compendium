@@ -42,7 +42,7 @@ Two distinct sub-streams in this phase:
 public void CapturesHardAttackDamMult()
 {
     var asset = FakeMeleeItemData.WithFields(damage: 50f, hardAttackDamMult: 2.5f);
-    var result = ExtractMelee.Extract(asset, refs: new RefResolver(/*...*/), rowId: "fixture");
+    var result = ExtractMelee.Extract(asset, refs: new RefResolver(), rowId: "fixture");
     Assert.Equal(2.5f, result.Fields["hardAttackDamMult"]);
 }
 
@@ -50,7 +50,7 @@ public void CapturesHardAttackDamMult()
 public void CapturesAttributeTypeRef()
 {
     var asset = FakeMeleeItemData.WithAttributeType(statType: FakeStatType.Strength);
-    var result = ExtractMelee.Extract(asset, refs: new RefResolver(/*...*/), rowId: "fixture");
+    var result = ExtractMelee.Extract(asset, refs: new RefResolver(), rowId: "fixture");
     Assert.NotNull(result.Fields["attributeTypeRef"]);
 }
 
@@ -63,7 +63,7 @@ public void CapturesEnchantmentsArray()
         new FakeLeveledEnchantment("fixture-burning-1", level: 1, hidden: false),
         new FakeLeveledEnchantment("fixture-haste-2",   level: 2, hidden: true),
     });
-    var result = ExtractEquipment.Extract(asset, refs: new RefResolver(/*...*/), rowId: "fixture");
+    var result = ExtractEquipment.Extract(asset, refs: new RefResolver(), rowId: "fixture");
     var enchantments = result.Fields["enchantments"] as System.Collections.IList;
     Assert.Equal(2, enchantments?.Count);
 }
@@ -72,7 +72,7 @@ public void CapturesEnchantmentsArray()
 public void CapturesStatTypeAsRef()
 {
     var asset = FakeEquipItemData.WithStatType(FakeStatType.HeavyArmor);
-    var result = ExtractEquipment.Extract(asset, refs: new RefResolver(/*...*/), rowId: "fixture");
+    var result = ExtractEquipment.Extract(asset, refs: new RefResolver(), rowId: "fixture");
     Assert.IsAssignableFrom<object>(result.Fields["statTypeRef"]);   // ref shape, not a string
 }
 ```
