@@ -20,7 +20,11 @@
 - SvelteKit `adapter-cloudflare` Static Assets hard cap of 100 `_routes.json` rules (must use wildcards, never per-id).
 - Game decompile at `.decompiled/0.0.10.91-63c576261184/csharp/Ardenfall/`.
 
-> Companion working notes used to write this spec: `/tmp/item-inventory.md` (full per-asset graph inventory), `/tmp/pivot-critique.md` (oracle critique), `/tmp/compendium-survey.md` (librarian survey). These are not committed; they are the audit trail.
+> Companion documents committed alongside this spec (audit trail of the work that informed it; may be retired if they go stale):
+>
+> - `docs/superpowers/specs/2026-05-20-item-asset-graph-audit.md` — exhaustive per-asset-type field inventory with decompile + adapter citations.
+> - `docs/superpowers/specs/2026-05-20-compendium-architecture-survey.md` — survey of comparable open-source compendium projects (Path of Building, MediaWiki Cargo, GW2 API, tarkov.dev, Wowhead/dev.to slug shapes, SvelteKit prerender limits).
+> - `docs/superpowers/specs/2026-05-20-items-presentation-closure-architecture-review.md` — oracle review of the pivot proposal, including rejected alternatives.
 
 ---
 
