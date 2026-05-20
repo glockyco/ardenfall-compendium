@@ -19,6 +19,7 @@ pipeline/dist/*.mjs.tmp
 pipeline/artifacts/
 site/static/data.sqlite
 site/static/_release.json
+site/_redirects
 site/static/data.sqlite-wal
 site/static/data.sqlite-shm
 site/static/assets/

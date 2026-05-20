@@ -150,6 +150,7 @@ describe("site deployment tooling", () => {
     );
     expect(sitePackageJson.scripts["cf-deploy"]).toBe("bun run deploy:production");
     expect(existsSync("site/scripts/stage-artifact.mjs")).toBe(true);
+    expect(gitignore).toContain("site/_redirects");
   });
 
   it("copies SQLite and assets while pruning stale managed assets", () => {
@@ -344,6 +345,88 @@ describe("site deployment tooling", () => {
       expect(readFileSync(join(target, "data.sqlite"), "utf8")).toBe("previous sqlite");
       expect(readFileSync(join(target, "_redirects"), "utf8")).toBe("previous redirects");
       expect(readFileSync(join(target, "assets", "stale.webp"), "utf8")).toBe("stale asset");
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("stages redirects at the Cloudflare adapter project root", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-root-redirects-"));
+    try {
+      const artifact = join(root, "artifact");
+      const projectRoot = join(root, "site");
+      const target = join(projectRoot, "static");
+      const source = {
+        kind: "synthetic-fixture",
+        fixtureName: "synthetic",
+        snapshotId: "synthetic",
+        gameVersion: "fixture",
+        buildIdentifier: "synthetic",
+        extractorVersion: "0.1.0",
+        snapshotManifestSha256: "a".repeat(64),
+      };
+      const git = {
+        repository: "glockyco/ardenfall-compendium",
+        commit: "b".repeat(40),
+        branch: "main",
+        dirty: false,
+      };
+      mkdirSync(join(artifact, "assets"), { recursive: true });
+      mkdirSync(join(artifact, "static"), { recursive: true });
+      mkdirSync(target, { recursive: true });
+      writeFileSync(join(artifact, "static", "_redirects"), "# generated redirects\n");
+      writeFileSync(join(projectRoot, "_redirects"), "stale root redirects");
+      writeFileSync(join(target, "_redirects"), "stale static redirects");
+
+      const sqlitePath = join(artifact, "data.sqlite");
+      writeMinimalArtifactSqlite(sqlitePath, {
+        artifactKind: "fixture",
+        artifactId: "synthetic",
+        sourceKind: source.kind,
+        snapshotId: source.snapshotId,
+        gitCommit: git.commit,
+      });
+      const sqliteBytes = readFileSync(sqlitePath);
+      writeFileSync(
+        join(artifact, "artifact-manifest.json"),
+        JSON.stringify({
+          schemaVersion: 1,
+          artifactKind: "fixture",
+          artifactId: "synthetic",
+          createdAt: "2026-05-15T00:00:00.000Z",
+          source,
+          git,
+          diagnostics: { fatal: 0, diagnostic: 0 },
+          counts: {
+            itemOverviewRows: 0,
+            itemPresentationRows: 0,
+            itemOverviewFilters: 0,
+            itemOverviewCategories: 0,
+          },
+          outputs: {
+            sqlite: {
+              path: "data.sqlite",
+              bytes: sqliteBytes.byteLength,
+              sha256: sha256(sqliteBytes),
+            },
+            assets: { path: "assets", count: 0, treeSha256: sha256("") },
+          },
+          probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
+        }),
+      );
+
+      const { stageArtifact } = (await import("./site/scripts/stage-artifact.mjs")) as {
+        stageArtifact: (options: {
+          artifactDir: string;
+          targetDir: string;
+          mode: "fixture" | "release";
+        }) => Promise<unknown>;
+      };
+
+      await stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" });
+
+      expect(readFileSync(join(projectRoot, "_redirects"), "utf8")).toBe("# generated redirects\n");
+      expect(existsSync(join(target, "_redirects"))).toBe(false);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

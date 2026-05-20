@@ -48,15 +48,18 @@ export async function stageArtifact({ artifactDir, targetDir, mode }) {
   const redirectsPath = join(artifactDir, "static", "_redirects");
   if (!existsSync(redirectsPath)) throw new Error(`missing redirects artifact: ${redirectsPath}`);
 
+  const projectRoot = dirname(targetDir);
+
   mkdirSync(targetDir, { recursive: true });
   rmSync(join(targetDir, "data.sqlite"), { force: true });
   rmSync(join(targetDir, "_release.json"), { force: true });
+  rmSync(join(projectRoot, "_redirects"), { force: true });
   rmSync(join(targetDir, "_redirects"), { force: true });
   rmSync(join(targetDir, "assets"), { recursive: true, force: true });
 
   copyFileSync(sqlitePath, join(targetDir, "data.sqlite"));
   copyTree(assetsDir, join(targetDir, "assets"));
-  copyFileSync(redirectsPath, join(targetDir, "_redirects"));
+  copyFileSync(redirectsPath, join(projectRoot, "_redirects"));
   writeFileSync(
     join(targetDir, "_release.json"),
     `${JSON.stringify(publicRelease(manifest), null, 2)}\n`,
