@@ -269,6 +269,16 @@ export interface EntityNode {
   routePath: string;
 }
 
+export interface EntityNodeRow {
+  entityType: string;
+  entityId: string;
+  label: string;
+  routePath: string;
+  canonicalSlug: string;
+  shortId: string;
+  isPublic: boolean;
+}
+
 export const getEntity = (id: string): SiteEntity | undefined =>
   get<SiteEntity>("SELECT * FROM site_entities WHERE entity_id = ?", [id]);
 
@@ -406,3 +416,27 @@ export const getTerm = (id: string): EntityNode | undefined => {
     routePath: row.route_path,
   };
 };
+
+export const getEntityNodeBySlug = (
+  entityType: string,
+  canonicalSlug: string,
+): EntityNodeRow | undefined =>
+  get<EntityNodeRow>(
+    `SELECT entity_type AS entityType, entity_id AS entityId, label, route_path AS routePath,
+            canonical_slug AS canonicalSlug, short_id AS shortId, is_public AS isPublic
+     FROM entity_nodes
+     WHERE entity_type = ? AND canonical_slug = ? AND is_public = 1`,
+    [entityType, canonicalSlug],
+  );
+
+export const getEntityNodeByShortId = (
+  entityType: string,
+  shortId: string,
+): EntityNodeRow | undefined =>
+  get<EntityNodeRow>(
+    `SELECT entity_type AS entityType, entity_id AS entityId, label, route_path AS routePath,
+            canonical_slug AS canonicalSlug, short_id AS shortId, is_public AS isPublic
+     FROM entity_nodes
+     WHERE entity_type = ? AND short_id = ? AND is_public = 1`,
+    [entityType, shortId],
+  );
