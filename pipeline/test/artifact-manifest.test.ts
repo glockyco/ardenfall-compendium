@@ -20,6 +20,7 @@ describe("artifact manifest emission", () => {
           snapshot,
           sqliteOutput: { outputPath: join(root, "data.sqlite"), byteSize: 1 },
           assetsOutput: { assetsDir: join(root, "assets"), refs: [], itemIconMetadata: [] },
+          redirectsOutput: { count: 0, filePath: join(root, "static", "_redirects") },
         }),
       ).rejects.toThrow(/release artifacts require live-game-export snapshots/);
     } finally {
@@ -78,6 +79,7 @@ describe("artifact manifest emission", () => {
           ],
           itemIconMetadata: [],
         },
+        redirectsOutput: { count: 2, filePath: join(root, "static", "_redirects") },
       });
 
       expect(manifest.artifactKind).toBe("release");
@@ -93,6 +95,7 @@ describe("artifact manifest emission", () => {
       expect(manifest.counts.itemPresentationDiagnostics).toBe(1);
       expect(manifest.counts.relationshipDiagnostics).toBe(0);
       expect(manifest.counts.richTextDiagnostics).toBe(1);
+      expect(manifest.counts.redirectsCount).toBe(2);
       expect(manifest.outputs.sqlite.bytes).toBeGreaterThan(0);
       expect(manifest.probes.items).toEqual([
         { id: "item-a", name: "Item A", displayIconHash: "a".repeat(64) },
@@ -140,5 +143,26 @@ function fixtureSnapshot(kind: "live-game-export" | "synthetic-fixture"): LoadSn
     },
     envelopes: {},
     diagnostics: [],
+    masterTooltip: {
+      schemaVersion: 2,
+      tooltipCodes: {},
+      tooltipColors: {},
+      tooltipTargetColor: { r: 1, g: 1, b: 1, a: 1 },
+      tooltipDurationColor: { r: 1, g: 1, b: 1, a: 1 },
+      positiveColor: { r: 0, g: 1, b: 0, a: 1 },
+      negativeColor: { r: 1, g: 0, b: 0, a: 1 },
+      spellSubEffectColor: { r: 1, g: 1, b: 1, a: 1 },
+      enchantmentItemColor: { r: 1, g: 1, b: 1, a: 1 },
+      primarySpellTooltip: "",
+      secondarySpellTooltip: "",
+      unmetSkillMessage: "",
+      brokenDurabilityMessage: "",
+      ruinedDurabilityMessage: "",
+      statBookMessage: "",
+      termSetColors: [],
+      globalTermSets: [],
+      termColorMatch: "\\b({0})\\b",
+      potionRecipeDescription: "",
+    },
   };
 }

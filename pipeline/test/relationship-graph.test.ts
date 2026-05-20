@@ -125,4 +125,16 @@ describe("relationship graph", () => {
       expect.objectContaining({ severity: "fatal", code: "slugCollision" }),
     );
   });
+
+  it("rejects unsupported entity_redirects reasons", () => {
+    const db = new Database(":memory:");
+    db.exec(buildRelationshipDDL());
+
+    expect(() =>
+      db.run(
+        `INSERT INTO entity_redirects (source_type, source_id, target_type, target_id, reason)
+         VALUES ('item-route', '/items/old', 'item', 'item-a', 'temporary')`,
+      ),
+    ).toThrow(/CHECK/);
+  });
 });

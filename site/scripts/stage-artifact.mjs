@@ -49,10 +49,13 @@ export async function stageArtifact({ artifactDir, targetDir, mode }) {
   mkdirSync(targetDir, { recursive: true });
   rmSync(join(targetDir, "data.sqlite"), { force: true });
   rmSync(join(targetDir, "_release.json"), { force: true });
+  rmSync(join(targetDir, "_redirects"), { force: true });
   rmSync(join(targetDir, "assets"), { recursive: true, force: true });
 
   copyFileSync(sqlitePath, join(targetDir, "data.sqlite"));
   copyTree(assetsDir, join(targetDir, "assets"));
+  const redirectsPath = join(artifactDir, "static", "_redirects");
+  if (existsSync(redirectsPath)) copyFileSync(redirectsPath, join(targetDir, "_redirects"));
   writeFileSync(
     join(targetDir, "_release.json"),
     `${JSON.stringify(publicRelease(manifest), null, 2)}\n`,

@@ -6,6 +6,7 @@ import { sha256File, sha256Json, sha256Tree } from "./hash";
 import type { ArtifactKind, ArtifactManifest } from "../types";
 import type { EmitAssetsOutput } from "../stages/emit-assets";
 import type { EmitSqliteOutput } from "../stages/emit-sqlite";
+import type { EmitRedirectsOutput } from "../stages/emit-redirects";
 import type { LoadSnapshotOutput } from "../stages/load-snapshot";
 
 export interface BuildArtifactManifestInput {
@@ -15,6 +16,7 @@ export interface BuildArtifactManifestInput {
   snapshot: LoadSnapshotOutput;
   sqliteOutput: EmitSqliteOutput;
   assetsOutput: EmitAssetsOutput;
+  redirectsOutput: EmitRedirectsOutput;
 }
 
 export async function buildArtifactManifest(
@@ -75,6 +77,7 @@ export async function buildArtifactManifest(
       richTextDiagnostics: countPipelineDiagnostics(sqlitePath, "rich-text"),
       assetRefs: input.assetsOutput.refs.length,
       webpAssets: uniqueAssetHashes.size,
+      redirectsCount: input.redirectsOutput.count,
     },
     outputs: {
       sqlite: {

@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS entity_redirects (
   source_id TEXT NOT NULL,
   target_type TEXT NOT NULL,
   target_id TEXT NOT NULL,
-  reason TEXT NOT NULL,
+  reason TEXT NOT NULL CHECK (reason IN ('legacy-id', 'name-changed', 'merged')),
   PRIMARY KEY (source_type, source_id)
 );
 CREATE TABLE IF NOT EXISTS entity_disambiguations (

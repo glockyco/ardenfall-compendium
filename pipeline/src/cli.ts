@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { rmSync } from "node:fs";
+import { join } from "node:path";
 import { buildArtifactManifest } from "./artifacts/manifest";
 import { runStages } from "./orchestrator";
 import { loadDescriptors } from "./stages/load-descriptors";
@@ -7,6 +8,7 @@ import { loadSnapshot, type LoadSnapshotOutput } from "./stages/load-snapshot";
 import { validate } from "./stages/validate";
 import { emitSqlite, type EmitSqliteOutput } from "./stages/emit-sqlite";
 import { emitAssets, type EmitAssetsOutput } from "./stages/emit-assets";
+import { emitRedirects, type EmitRedirectsOutput } from "./stages/emit-redirects";
 import type { ArtifactKind, Stage, StageContext } from "./types.ts";
 
 const [, , subcommand, firstArg, secondArg] = Bun.argv;
@@ -82,6 +84,8 @@ const e = result["emit-sqlite"] as EmitSqliteOutput;
 console.warn(`wrote ${e.outputPath} (${e.byteSize} bytes)`);
 const a = result["emit-assets"] as EmitAssetsOutput;
 console.warn(`wrote ${a.refs.length} asset refs to ${a.assetsDir}`);
+const r = emitRedirects({ sqlitePath: e.outputPath, outputDir: join(outDir, "static") });
+console.warn(`wrote ${r.count} redirects to ${r.filePath}`);
 
 if (artifactKind) {
   const manifest = await buildArtifactManifest({
@@ -91,6 +95,7 @@ if (artifactKind) {
     snapshot: result["load-snapshot"] as LoadSnapshotOutput,
     sqliteOutput: e,
     assetsOutput: a,
+    redirectsOutput: r as EmitRedirectsOutput,
   });
   console.warn(
     `wrote ${outDir}/artifact-manifest.json (${manifest.artifactKind} ${manifest.artifactId})`,
