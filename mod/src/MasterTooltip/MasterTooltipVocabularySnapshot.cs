@@ -25,6 +25,9 @@ public sealed class MasterTooltipVocabularySnapshot
     [JsonProperty("globalTermSets")] public List<MasterTooltipTermSetSnapshot> GlobalTermSets { get; init; } = new();
     [JsonProperty("termColorMatch")] public string TermColorMatch { get; init; } = "";
     [JsonProperty("potionRecipeDescription")] public string PotionRecipeDescription { get; init; } = "";
+    [JsonProperty("allAttributes")] public List<string> AllAttributes { get; init; } = new();
+    [JsonProperty("allSkills")] public List<string> AllSkills { get; init; } = new();
+    [JsonProperty("allTraits")] public List<string> AllTraits { get; init; } = new();
 }
 
 public sealed class MasterTooltipColorTokenSnapshot

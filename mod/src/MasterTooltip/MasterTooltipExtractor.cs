@@ -71,6 +71,9 @@ public static class MasterTooltipExtractor
             GlobalTermSets = BuildGlobalTermSets(master.globalTermSets, categoryIds, termSetColors),
             TermColorMatch = master.termColorMatch ?? "",
             PotionRecipeDescription = potionRecipeDescription ?? "",
+            AllAttributes = StatTypeIds(master.allAttributes),
+            AllSkills = StatTypeIds(master.allSkills),
+            AllTraits = TraitTypeIds(master.allTraits),
         };
     }
 
@@ -183,6 +186,48 @@ public static class MasterTooltipExtractor
         var firstValue = terms.FirstOrDefault(t => !string.IsNullOrWhiteSpace(t.Value))?.Value;
         if (!string.IsNullOrWhiteSpace(firstValue)) return NormalizeId(firstValue) + "-" + fallbackIndex;
         return categoryId + "-set-" + fallbackIndex;
+    }
+
+    private static List<string> StatTypeIds(List<StatType>? stats)
+    {
+        var ids = new List<string>();
+        if (stats == null) return ids;
+        foreach (var stat in stats)
+        {
+            if (ReferenceEquals(stat, null)) continue;
+            var id = LookupGuid(stat);
+            if (string.IsNullOrWhiteSpace(id)) id = stat.id;
+            if (string.IsNullOrWhiteSpace(id)) id = NormalizeId(stat.statName ?? "");
+            if (!string.IsNullOrWhiteSpace(id)) ids.Add(id);
+        }
+        return ids;
+    }
+
+    private static List<string> TraitTypeIds(List<TraitType>? traits)
+    {
+        var ids = new List<string>();
+        if (traits == null) return ids;
+        foreach (var trait in traits)
+        {
+            if (ReferenceEquals(trait, null)) continue;
+            var id = LookupGuid(trait);
+            if (string.IsNullOrWhiteSpace(id)) id = trait.id;
+            if (string.IsNullOrWhiteSpace(id)) id = NormalizeId(trait.traitName ?? "");
+            if (!string.IsNullOrWhiteSpace(id)) ids.Add(id);
+        }
+        return ids;
+    }
+
+    private static string? LookupGuid(UnityEngine.Object asset)
+    {
+        try
+        {
+            return BuiltLookupTable.Instance != null ? BuiltLookupTable.Instance.GetGuid(asset) : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private static string NormalizeId(string value)

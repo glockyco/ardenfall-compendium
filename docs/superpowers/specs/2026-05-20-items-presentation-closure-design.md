@@ -182,6 +182,9 @@ export interface MasterTooltipVocabulary {
   globalTermSets: TermSetSnapshot[];
   termColorMatch: string;
   potionRecipeDescription: string;
+  allAttributes: string[];
+  allSkills: string[];
+  allTraits: string[];
 }
 
 export interface TermSetColorSnapshot {

@@ -40,6 +40,16 @@ public sealed class MasterTooltipExtractorTests
         Assert.False(string.IsNullOrEmpty(snapshot.TermColorMatch));
     }
 
+    [Fact]
+    public void IncludesStatGroupingAssetIds()
+    {
+        var snapshot = MasterTooltipExtractor.Build(FakeMasterData.Sample, FakeMasterData.PotionRecipeDescription);
+
+        Assert.Contains("attr-strength", snapshot.AllAttributes);
+        Assert.Contains("skill-heavy-armor", snapshot.AllSkills);
+        Assert.Contains("trait-tough", snapshot.AllTraits);
+    }
+
     private static class FakeMasterData
     {
         public const string PotionRecipeDescription = "Learn the potion recipe {0}.";
@@ -96,8 +106,27 @@ public sealed class MasterTooltipExtractorTests
                     },
                 };
                 master.termColorMatch = "\\b({0})\\b";
+                master.allAttributes = new List<StatType> { StatType("attr-strength", "Strength") };
+                master.allSkills = new List<StatType> { StatType("skill-heavy-armor", "Heavy Armor") };
+                master.allTraits = new List<TraitType> { TraitType("trait-tough", "Tough") };
                 return master;
             }
+        }
+
+        private static StatType StatType(string id, string name)
+        {
+            var stat = (StatType)RuntimeHelpers.GetUninitializedObject(typeof(StatType));
+            stat.id = id;
+            stat.statName = name;
+            return stat;
+        }
+
+        private static TraitType TraitType(string id, string name)
+        {
+            var trait = (TraitType)RuntimeHelpers.GetUninitializedObject(typeof(TraitType));
+            trait.id = id;
+            trait.traitName = name;
+            return trait;
         }
     }
 }

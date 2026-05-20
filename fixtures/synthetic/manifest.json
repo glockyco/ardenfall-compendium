@@ -35,12 +35,12 @@
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "13c80e7690d1d60553695bb3268e4765fbe15e03f7f3cbfd9b1dc01be3543ed7",
+    "snapshot/manifest.json": "c7a26dca27a66cc8e6f14ca92e3a4b836f19f6489c35e5dfb360cc4bfefbefdd",
     "snapshot/items.json": "e1e4a8ba601f2e5dc581eb921eea878d317de5266c39e7e0e87adc0971d015bc",
     "snapshot/asset-manifest.json": "5b3aac7ceeabe0ae87db96b7cb750fb31fd3396c8644d003612b43a0b93ea8e5",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
     "snapshot/assets/items/fixture-icon-blue.png": "d6d4b05209c7541985841a63d955337a411a005d7abb936426791cbfde258f17",
-    "snapshot/master-tooltip.json": "a1a638b30e0ea5ece928fac4c8d96480bdc9cc3497e62640c33afafd083f15d0",
+    "snapshot/master-tooltip.json": "52eddbdec05b8fb811e2213014fab0f7ad5e0e30b2652a87349886b5ef8234aa",
     "snapshot/stat-types.json": "249b5eb948ed9ba7dbf3769d90942acdc90fdf0f741947d0373ac7c84b0cdafc"
   }
 }

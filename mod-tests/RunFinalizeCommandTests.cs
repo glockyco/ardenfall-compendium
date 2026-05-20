@@ -251,6 +251,9 @@ public sealed class RunFinalizeCommandTests
             GlobalTermSets = new List<MasterTooltipTermSetSnapshot>(),
             TermColorMatch = "\\b({0})\\b",
             PotionRecipeDescription = "Learn the potion recipe {0}.",
+            AllAttributes = new List<string> { "fixture-strength" },
+            AllSkills = new List<string> { "fixture-heavy-armor" },
+            AllTraits = new List<string>(),
         };
     }
 }

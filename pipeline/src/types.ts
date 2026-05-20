@@ -205,6 +205,9 @@ export interface MasterTooltipVocabulary {
   globalTermSets: MasterTooltipTermSet[];
   termColorMatch: string;
   potionRecipeDescription: string;
+  allAttributes: string[];
+  allSkills: string[];
+  allTraits: string[];
 }
 
 export interface MasterTooltipColorToken {

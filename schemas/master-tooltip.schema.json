@@ -23,7 +23,10 @@
     "termSetColors",
     "globalTermSets",
     "termColorMatch",
-    "potionRecipeDescription"
+    "potionRecipeDescription",
+    "allAttributes",
+    "allSkills",
+    "allTraits"
   ],
   "properties": {
     "schemaVersion": { "const": 2 },
@@ -64,7 +67,10 @@
       "items": { "$ref": "#/$defs/termSet" }
     },
     "termColorMatch": { "type": "string" },
-    "potionRecipeDescription": { "type": "string" }
+    "potionRecipeDescription": { "type": "string" },
+    "allAttributes": { "$ref": "#/$defs/idList" },
+    "allSkills": { "$ref": "#/$defs/idList" },
+    "allTraits": { "$ref": "#/$defs/idList" }
   },
   "$defs": {
     "color": {
@@ -77,6 +83,11 @@
         "b": { "type": "number", "minimum": 0, "maximum": 1 },
         "a": { "type": "number", "minimum": 0, "maximum": 1 }
       }
+    },
+    "idList": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
     },
     "termSetColor": {
       "type": "object",

@@ -39,6 +39,9 @@ const valid = {
   ],
   termColorMatch: "\\b({0})\\b",
   potionRecipeDescription: "Learn the potion recipe {0}.",
+  allAttributes: ["attr-strength"],
+  allSkills: ["skill-heavy-armor"],
+  allTraits: ["trait-tough"],
 };
 
 describe("master-tooltip v2 schema", () => {
@@ -53,6 +56,12 @@ describe("master-tooltip v2 schema", () => {
   it("rejects missing positiveColor", () => {
     const rest: Record<string, unknown> = { ...valid };
     delete rest.positiveColor;
+    expect(validate(rest)).toBe(false);
+  });
+
+  it("rejects missing stat grouping lists", () => {
+    const rest: Record<string, unknown> = { ...valid };
+    delete rest.allSkills;
     expect(validate(rest)).toBe(false);
   });
 
