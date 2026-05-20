@@ -50,9 +50,7 @@
 </script>
 
 <svelte:head>
-  <script type="application/ld+json">
-{JSON.stringify(ld)}
-  </script>
+  {@html `<script type="application/ld+json">${JSON.stringify(ld)}</script>`}
   <link rel="canonical" href={url} />
 </svelte:head>
 ```
