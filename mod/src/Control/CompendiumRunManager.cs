@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace ArdenfallCompendium.Control;
 
@@ -17,12 +18,25 @@ public sealed class CompendiumRunManager
         Directory.CreateDirectory(Path.Combine(workspace, "entities", "item", "chunks"));
         var run = new CompendiumRun { RunId = runId, GameVersion = gameVersion, OutputBaseDir = baseDir, WorkspaceDir = workspace };
         lock (_sync) _runs.Add(runId, run);
+        Save(run);
         return run;
     }
 
     public bool TryGet(string runId, out CompendiumRun run)
     {
         lock (_sync) return _runs.TryGetValue(runId, out run!);
+    }
+
+    public void Save(CompendiumRun run)
+    {
+        var controlDir = Path.Combine(run.WorkspaceDir, "control");
+        Directory.CreateDirectory(controlDir);
+        var path = Path.Combine(controlDir, "run.json");
+        var tempPath = path + ".tmp";
+        var json = JsonConvert.SerializeObject(run, Formatting.Indented);
+        File.WriteAllText(tempPath, json);
+        if (File.Exists(path)) File.Delete(path);
+        File.Move(tempPath, path);
     }
 
     public void Discard(string runId)

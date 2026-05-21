@@ -26,6 +26,89 @@ public sealed class RunFinalizeCommandTests
     private static readonly FakeItemTagExtractionCache EmptyItemTags = new(System.Array.Empty<ItemTagSnapshotRow>());
 
     [Fact]
+    public async Task RejectsFailedPreflightBeforePublishing()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-preflight-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+        var command = new RunFinalizeCommand(
+            runs,
+            new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
+            FakeMasterTooltipSource.Default,
+            EmptyStatTypes,
+            EmptyItemCategories,
+            EmptyItemTags,
+            preflight: FailingPreflight);
+
+        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+
+        Assert.Contains(result.Diagnostics, error => error.Code == "preflightFailed");
+        Assert.False(Directory.Exists(Path.Combine(outputBaseDir, "snapshots")));
+    }
+
+    [Fact]
+    public async Task RejectsMissingPlannedChunkBeforePublishing()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-missing-chunk-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        SetItemPlan(run, total: 2, batchSize: 1);
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+        SetItemPlan(run, total: 2, batchSize: 1);
+        run.MarkEntityChunkComplete("item", offset: 0, written: 1);
+        var command = new RunFinalizeCommand(
+            runs,
+            new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
+            FakeMasterTooltipSource.Default,
+            EmptyStatTypes,
+            EmptyItemCategories,
+            EmptyItemTags,
+            preflight: PassingPreflight);
+
+        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+
+        Assert.Contains(result.Diagnostics, error => error.Code == "chunksIncomplete");
+        Assert.False(Directory.Exists(Path.Combine(outputBaseDir, "snapshots", $"test-version-{run.RunId}")));
+    }
+
+    [Fact]
+    public async Task DiscardsStagingWhenFinalizeFailsBeforePublish()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-atomic-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+        var command = new RunFinalizeCommand(
+            runs,
+            new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
+            new ThrowingMasterTooltipSource(),
+            EmptyStatTypes,
+            EmptyItemCategories,
+            EmptyItemTags,
+            preflight: PassingPreflight);
+
+        await Assert.ThrowsAsync<System.InvalidOperationException>(() =>
+            command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None).AsTask());
+
+        var snapshotsDir = Path.Combine(outputBaseDir, "snapshots");
+        Assert.False(Directory.Exists(Path.Combine(snapshotsDir, $"test-version-{run.RunId}")));
+        Assert.Empty(Directory.Exists(snapshotsDir) ? Directory.GetDirectories(snapshotsDir) : System.Array.Empty<string>());
+    }
+
+    [Fact]
     public async Task AggregatesRowAndWalkerDiagnosticsIntoManifestAndDiagnosticsArtifact()
     {
         var runs = new CompendiumRunManager();
@@ -41,14 +124,14 @@ public sealed class RunFinalizeCommandTests
                 Diagnostic("diagnostic", "rowDiagnosticB"),
             },
         });
-        WriteChunk(run, "000100.json", new ItemSnapshotRow
+        WriteChunk(run, "000001.json", new ItemSnapshotRow
         {
             Id = "item-b",
             Fields = new Dictionary<string, object?>(),
             Diagnostics = new List<Diagnostic> { Diagnostic("fatal", "rowFatal") },
         });
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
-        var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags);
+        var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -85,7 +168,7 @@ public sealed class RunFinalizeCommandTests
             RowId = "item-a",
             DisplayIconColor = new AssetColorSnapshot(),
         });
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -114,7 +197,7 @@ public sealed class RunFinalizeCommandTests
             Fields = new Dictionary<string, object?>(),
         });
         var source = FakeMasterTooltipSource.Default;
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -175,7 +258,8 @@ public sealed class RunFinalizeCommandTests
             FakeMasterTooltipSource.Default,
             statTypes,
             EmptyItemCategories,
-            EmptyItemTags);
+            EmptyItemTags,
+            preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -238,7 +322,8 @@ public sealed class RunFinalizeCommandTests
             FakeMasterTooltipSource.Default,
             EmptyStatTypes,
             itemCategories,
-            EmptyItemTags);
+            EmptyItemTags,
+            preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -287,7 +372,8 @@ public sealed class RunFinalizeCommandTests
             FakeMasterTooltipSource.Default,
             EmptyStatTypes,
             EmptyItemCategories,
-            itemTags);
+            itemTags,
+            preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
 
@@ -313,12 +399,43 @@ public sealed class RunFinalizeCommandTests
         Message = code,
     };
 
+    private static PreflightReport PassingPreflight() => new()
+    {
+        Passed = true,
+        CompletedAt = "2026-05-20T00:00:00.0000000Z",
+        Checks = { new PreflightCheck { Name = "fixture", Ok = true } },
+    };
+
+    private static PreflightReport FailingPreflight() => new()
+    {
+        Passed = false,
+        CompletedAt = "2026-05-20T00:00:00.0000000Z",
+        Checks = { new PreflightCheck { Name = "fixture", Ok = false, Reason = "not ready" } },
+    };
+
+    private static void SetItemPlan(CompendiumRun run, int total, int batchSize)
+    {
+        run.SetEntityPlan("item", total, batchSize);
+    }
+
     private static void WriteChunk(CompendiumRun run, string fileName, ItemSnapshotRow row)
     {
         var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "item", "chunks");
         Directory.CreateDirectory(chunksDir);
         var json = JsonConvert.SerializeObject(new ItemSnapshotEnvelope { Rows = new List<ItemSnapshotRow> { row } }, JsonSettings.Default);
         File.WriteAllText(Path.Combine(chunksDir, fileName), json);
+        var offset = int.Parse(Path.GetFileNameWithoutExtension(fileName));
+        var hasExistingPlan = run.TryGetEntityPlan("item", out var existing);
+        var existingChunks = hasExistingPlan
+            ? new List<CompendiumEntityChunk>(existing.CompletedChunks)
+            : new List<CompendiumEntityChunk>();
+        var planTotal = System.Math.Max(hasExistingPlan ? existing.Total : 0, offset + 1);
+        run.SetEntityPlan("item", planTotal, batchSize: 1);
+        foreach (var chunk in existingChunks)
+        {
+            run.MarkEntityChunkComplete("item", chunk.Offset, chunk.Written);
+        }
+        run.MarkEntityChunkComplete("item", offset, written: 1);
     }
 
     private sealed class FakeItemExtractionCache : IItemExtractionCache
@@ -421,5 +538,10 @@ public sealed class RunFinalizeCommandTests
             AllSkills = new List<string> { "fixture-heavy-armor" },
             AllTraits = new List<string>(),
         };
+    }
+
+    private sealed class ThrowingMasterTooltipSource : IMasterTooltipSnapshotSource
+    {
+        public MasterTooltipVocabularySnapshot BuildSnapshot() => throw new System.InvalidOperationException("fixture failure");
     }
 }

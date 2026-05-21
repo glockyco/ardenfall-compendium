@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -28,6 +29,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
     private readonly IItemCategoryExtractionCache _itemCategories;
     private readonly IItemTagExtractionCache _itemTags;
     private readonly IMasterTooltipSnapshotSource _masterTooltip;
+    private readonly Func<PreflightReport> _preflight;
 
     public RunFinalizeCommand(
         CompendiumRunManager runs,
@@ -35,7 +37,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         IMasterTooltipSnapshotSource? masterTooltip = null,
         IStatTypeExtractionCache? statTypes = null,
         IItemCategoryExtractionCache? itemCategories = null,
-        IItemTagExtractionCache? itemTags = null)
+        IItemTagExtractionCache? itemTags = null,
+        Func<PreflightReport>? preflight = null)
     {
         _runs = runs;
         _items = items;
@@ -43,6 +46,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         _itemCategories = itemCategories ?? new ItemCategoryExtractionService(new BuiltLookupTableItemCategoryAssetSource());
         _itemTags = itemTags ?? new ItemTagExtractionService(new BuiltLookupTableItemTagAssetSource());
         _masterTooltip = masterTooltip ?? RuntimeMasterTooltipSnapshotSource.Instance;
+        _preflight = preflight ?? PreflightRunner.Run;
     }
 
     public ControlCommandDescriptor Descriptor { get; } = new(
@@ -63,18 +67,186 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         if (run.Finalized)
             return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition("runFinalized", $"Run '{runId}' is already finalized."));
 
-        var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "item", "chunks");
-        if (!Directory.Exists(chunksDir))
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition("chunksMissing", "No item chunks were exported."));
+        var preflight = _preflight();
+        if (!preflight.Passed)
+            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition(
+                "preflightFailed",
+                "Preflight failed; no snapshot was written.",
+                JObject.FromObject(preflight)));
 
-        var rows = new List<ItemSnapshotRow>();
-        var diagnosticTotals = new DiagnosticTotals();
-        var diagnostics = new List<JObject>();
-        foreach (var chunk in Directory.GetFiles(chunksDir, "*.json").OrderBy(p => p))
+        var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "item", "chunks");
+        var chunkValidation = ReadPlannedItemChunks(run, chunksDir, out var rows, out var diagnosticTotals, out var diagnostics);
+        if (chunkValidation != null)
+            return new ValueTask<ControlCommandResult>(chunkValidation);
+
+        var snapshotsRoot = Path.Combine(run.OutputBaseDir, "snapshots");
+        var publishedDir = Path.Combine(snapshotsRoot, $"{run.GameVersion}-{run.RunId}");
+        if (Directory.Exists(publishedDir))
+            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition("snapshotExists", $"Snapshot directory already exists: {publishedDir}"));
+
+        Directory.CreateDirectory(snapshotsRoot);
+        var stagingDir = Path.Combine(snapshotsRoot, $".staging-{run.GameVersion}-{run.RunId}");
+        if (Directory.Exists(stagingDir)) Directory.Delete(stagingDir, recursive: true);
+        Directory.CreateDirectory(stagingDir);
+
+        try
         {
-            var json = File.ReadAllText(chunk);
+            var hashes = new Dictionary<string, string>();
+
+            var itemEnvelope = new ItemSnapshotEnvelope { Rows = rows };
+            WriteJson(stagingDir, "items.json", itemEnvelope, hashes);
+
+            var statTypeRows = _statTypes.GetOrExtract(run);
+            var statTypeAssetPlan = _statTypes.GetAssetPlan(run);
+            var itemCategoryRows = _itemCategories.GetOrExtract(run);
+            var itemCategoryAssetPlan = _itemCategories.GetAssetPlan(run);
+            var itemTagRows = _itemTags.GetOrExtract(run);
+
+            var assetPlan = _items.GetAssetPlan(run);
+            var assetWriter = new ItemAssetManifestWriter(new SpriteAssetExporter());
+            assetWriter.WriteSlots(stagingDir, assetPlan);
+            assetWriter.WriteSlots(stagingDir, statTypeAssetPlan);
+            assetWriter.WriteSlots(stagingDir, itemCategoryAssetPlan);
+            assetPlan.Manifest.Assets.AddRange(statTypeAssetPlan.Manifest.Assets);
+            assetPlan.Manifest.ItemIconMetadata.AddRange(statTypeAssetPlan.Manifest.ItemIconMetadata);
+            assetPlan.Manifest.Assets.AddRange(itemCategoryAssetPlan.Manifest.Assets);
+            assetPlan.Manifest.ItemIconMetadata.AddRange(itemCategoryAssetPlan.Manifest.ItemIconMetadata);
+            WriteJson(stagingDir, "asset-manifest.json", assetPlan.Manifest, hashes);
+
+            var masterTooltip = _masterTooltip.BuildSnapshot();
+            WriteJson(stagingDir, "master-tooltip.json", masterTooltip, hashes);
+
+            var statTypeEnvelope = new StatTypeSnapshotEnvelope { Rows = statTypeRows.ToList() };
+            WriteJson(stagingDir, "stat-types.json", statTypeEnvelope, hashes);
+            var itemCategoryEnvelope = new ItemCategorySnapshotEnvelope { Rows = itemCategoryRows.ToList() };
+            WriteJson(stagingDir, "item-categories.json", itemCategoryEnvelope, hashes);
+            var itemTagEnvelope = new ItemTagSnapshotEnvelope { Rows = itemTagRows.ToList() };
+            WriteJson(stagingDir, "item-tags.json", itemTagEnvelope, hashes);
+
+            foreach (var diagnostic in _items.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in _statTypes.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in _itemCategories.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in _itemTags.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+
+            if (diagnostics.Count > 0)
+            {
+                WriteJson(stagingDir, "diagnostics.json", diagnostics, hashes);
+            }
+
+            var counts = new Dictionary<string, int>
+            {
+                ["item"] = rows.Count,
+                ["stat-type"] = statTypeRows.Count,
+                ["item-category"] = itemCategoryRows.Count,
+                ["item-tag"] = itemTagRows.Count,
+            };
+            var manifest = ManifestBuilder.Build(
+                preflight,
+                counts: counts,
+                diagnostics: diagnosticTotals,
+                contentHashes: hashes,
+                extractorVersion: Plugin.Version,
+                gameVersion: run.GameVersion,
+                buildIdentifier: run.RunId);
+            var manifestJson = JsonConvert.SerializeObject(manifest, JsonSettings.Default);
+            File.WriteAllText(Path.Combine(stagingDir, "manifest.json"), manifestJson);
+            var manifestHash = ManifestBuilder.Sha256Hex(manifestJson);
+
+            Directory.Move(stagingDir, publishedDir);
+
+            run.PublishedDir = publishedDir;
+            run.State = "finalized";
+            run.Counts["item"] = rows.Count;
+            run.Counts["stat-type"] = statTypeRows.Count;
+            run.Counts["item-category"] = itemCategoryRows.Count;
+            run.Counts["item-tag"] = itemTagRows.Count;
+            _runs.Save(run);
+
+            var manifestPath = Path.Combine(publishedDir, "manifest.json");
+            var result = new JObject
+            {
+                ["runId"] = run.RunId,
+                ["publishedDir"] = publishedDir,
+                ["manifestPath"] = manifestPath,
+            };
+            var artifacts = new List<ArtifactRef>
+            {
+                CompendiumCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash),
+                CompendiumCommandResults.FileArtifact("items", Path.Combine(publishedDir, "items.json"), "application/json", hashes["items.json"]),
+                CompendiumCommandResults.FileArtifact("asset-manifest", Path.Combine(publishedDir, "asset-manifest.json"), "application/json", hashes["asset-manifest.json"]),
+                CompendiumCommandResults.FileArtifact("master-tooltip", Path.Combine(publishedDir, "master-tooltip.json"), "application/json", hashes["master-tooltip.json"]),
+                CompendiumCommandResults.FileArtifact("stat-types", Path.Combine(publishedDir, "stat-types.json"), "application/json", hashes["stat-types.json"]),
+                CompendiumCommandResults.FileArtifact("item-categories", Path.Combine(publishedDir, "item-categories.json"), "application/json", hashes["item-categories.json"]),
+                CompendiumCommandResults.FileArtifact("item-tags", Path.Combine(publishedDir, "item-tags.json"), "application/json", hashes["item-tags.json"]),
+            };
+            if (hashes.TryGetValue("diagnostics.json", out var diagnosticsHash))
+            {
+                artifacts.Add(CompendiumCommandResults.FileArtifact("diagnostics", Path.Combine(publishedDir, "diagnostics.json"), "application/json", diagnosticsHash));
+            }
+
+            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(result, artifacts.ToArray()));
+        }
+        catch
+        {
+            if (Directory.Exists(stagingDir)) Directory.Delete(stagingDir, recursive: true);
+            throw;
+        }
+    }
+
+    private static ControlCommandResult? ReadPlannedItemChunks(
+        CompendiumRun run,
+        string chunksDir,
+        out List<ItemSnapshotRow> rows,
+        out DiagnosticTotals diagnosticTotals,
+        out List<JObject> diagnostics)
+    {
+        rows = new List<ItemSnapshotRow>();
+        diagnosticTotals = new DiagnosticTotals();
+        diagnostics = new List<JObject>();
+
+        if (!run.TryGetEntityPlan("item", out var plan))
+            return CompendiumCommandResults.Precondition("planMissing", $"Run '{run.RunId}' does not have an item plan.");
+        if (plan.BatchSize <= 0)
+            return CompendiumCommandResults.Precondition("planInvalid", "Item plan batchSize must be greater than zero.");
+        if (!Directory.Exists(chunksDir))
+            return CompendiumCommandResults.Precondition("chunksMissing", "No item chunks were exported.");
+
+        var expectedOffsets = plan.ExpectedOffsets().ToList();
+        var missingOffsets = expectedOffsets
+            .Where(offset => !plan.IsComplete(offset) || !File.Exists(ChunkPath(chunksDir, offset)))
+            .ToList();
+        if (missingOffsets.Count > 0)
+            return CompendiumCommandResults.Precondition(
+                "chunksIncomplete",
+                $"Missing item chunks at offsets: {string.Join(", ", missingOffsets)}.",
+                new JObject { ["missingOffsets"] = JArray.FromObject(missingOffsets) });
+
+        foreach (var offset in expectedOffsets)
+        {
+            var chunkPath = ChunkPath(chunksDir, offset);
+            var json = File.ReadAllText(chunkPath);
             var envelope = JsonConvert.DeserializeObject<ItemSnapshotEnvelope>(json, JsonSettings.Default);
-            if (envelope?.Rows == null) continue;
+            if (envelope?.Rows == null)
+                return CompendiumCommandResults.Precondition("chunkInvalid", $"Item chunk is invalid: {chunkPath}");
+
+            var expectedWritten = Math.Min(plan.BatchSize, plan.Total - offset);
+            if (envelope.Rows.Count != expectedWritten)
+                return CompendiumCommandResults.Precondition(
+                    "chunkRowCountMismatch",
+                    $"Item chunk at offset {offset} contains {envelope.Rows.Count} rows; expected {expectedWritten}.");
+
             foreach (var row in envelope.Rows)
             {
                 rows.Add(row);
@@ -85,137 +257,21 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             }
         }
 
-        var publishedDir = Path.Combine(run.OutputBaseDir, "snapshots", $"{run.GameVersion}-{run.RunId}");
-        if (Directory.Exists(publishedDir))
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition("snapshotExists", $"Snapshot directory already exists: {publishedDir}"));
-        Directory.CreateDirectory(publishedDir);
+        if (rows.Count != plan.Total)
+            return CompendiumCommandResults.Precondition(
+                "chunkRowCountMismatch",
+                $"Item chunks contain {rows.Count} rows; expected {plan.Total}.");
 
-        var itemEnvelope = new ItemSnapshotEnvelope { Rows = rows };
-        var itemsJson = JsonConvert.SerializeObject(itemEnvelope, JsonSettings.Default);
-        var itemsPath = Path.Combine(publishedDir, "items.json");
-        File.WriteAllText(itemsPath, itemsJson);
-        var itemHash = ManifestBuilder.Sha256Hex(itemsJson);
+        return null;
+    }
 
-        var statTypeRows = _statTypes.GetOrExtract(run);
-        var statTypeAssetPlan = _statTypes.GetAssetPlan(run);
-        var itemCategoryRows = _itemCategories.GetOrExtract(run);
-        var itemCategoryAssetPlan = _itemCategories.GetAssetPlan(run);
-        var itemTagRows = _itemTags.GetOrExtract(run);
+    private static string ChunkPath(string chunksDir, int offset) => Path.Combine(chunksDir, $"{offset:D6}.json");
 
-        var assetPlan = _items.GetAssetPlan(run);
-        var assetWriter = new ItemAssetManifestWriter(new SpriteAssetExporter());
-        assetWriter.WriteSlots(publishedDir, assetPlan);
-        assetWriter.WriteSlots(publishedDir, statTypeAssetPlan);
-        assetWriter.WriteSlots(publishedDir, itemCategoryAssetPlan);
-        assetPlan.Manifest.Assets.AddRange(statTypeAssetPlan.Manifest.Assets);
-        assetPlan.Manifest.ItemIconMetadata.AddRange(statTypeAssetPlan.Manifest.ItemIconMetadata);
-        assetPlan.Manifest.Assets.AddRange(itemCategoryAssetPlan.Manifest.Assets);
-        assetPlan.Manifest.ItemIconMetadata.AddRange(itemCategoryAssetPlan.Manifest.ItemIconMetadata);
-        var assetManifest = assetPlan.Manifest;
-        var assetManifestJson = JsonConvert.SerializeObject(assetManifest, JsonSettings.Default);
-        var assetManifestPath = Path.Combine(publishedDir, "asset-manifest.json");
-        File.WriteAllText(assetManifestPath, assetManifestJson);
-        var assetManifestHash = ManifestBuilder.Sha256Hex(assetManifestJson);
-
-        var masterTooltip = _masterTooltip.BuildSnapshot();
-        var masterTooltipJson = JsonConvert.SerializeObject(masterTooltip, JsonSettings.Default);
-        var masterTooltipPath = Path.Combine(publishedDir, "master-tooltip.json");
-        File.WriteAllText(masterTooltipPath, masterTooltipJson);
-        var masterTooltipHash = ManifestBuilder.Sha256Hex(masterTooltipJson);
-
-        var statTypeEnvelope = new StatTypeSnapshotEnvelope { Rows = statTypeRows.ToList() };
-        var statTypesJson = JsonConvert.SerializeObject(statTypeEnvelope, JsonSettings.Default);
-        var statTypesPath = Path.Combine(publishedDir, "stat-types.json");
-        File.WriteAllText(statTypesPath, statTypesJson);
-        var statTypesHash = ManifestBuilder.Sha256Hex(statTypesJson);
-        var itemCategoryEnvelope = new ItemCategorySnapshotEnvelope { Rows = itemCategoryRows.ToList() };
-        var itemCategoriesJson = JsonConvert.SerializeObject(itemCategoryEnvelope, JsonSettings.Default);
-        var itemCategoriesPath = Path.Combine(publishedDir, "item-categories.json");
-        File.WriteAllText(itemCategoriesPath, itemCategoriesJson);
-        var itemCategoriesHash = ManifestBuilder.Sha256Hex(itemCategoriesJson);
-        var itemTagEnvelope = new ItemTagSnapshotEnvelope { Rows = itemTagRows.ToList() };
-        var itemTagsJson = JsonConvert.SerializeObject(itemTagEnvelope, JsonSettings.Default);
-        var itemTagsPath = Path.Combine(publishedDir, "item-tags.json");
-        File.WriteAllText(itemTagsPath, itemTagsJson);
-        var itemTagsHash = ManifestBuilder.Sha256Hex(itemTagsJson);
-        foreach (var diagnostic in _items.GetWalkerDiagnostics(run))
-        {
-            AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
-        }
-        foreach (var diagnostic in _statTypes.GetWalkerDiagnostics(run))
-        {
-            AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
-        }
-        foreach (var diagnostic in _itemCategories.GetWalkerDiagnostics(run))
-        {
-            AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
-        }
-        foreach (var diagnostic in _itemTags.GetWalkerDiagnostics(run))
-        {
-            AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
-        }
-
-        var hashes = new Dictionary<string, string>
-        {
-            ["items.json"] = itemHash,
-            ["asset-manifest.json"] = assetManifestHash,
-            ["master-tooltip.json"] = masterTooltipHash,
-            ["stat-types.json"] = statTypesHash,
-            ["item-categories.json"] = itemCategoriesHash,
-            ["item-tags.json"] = itemTagsHash,
-        };
-        string? diagnosticsPath = null;
-        string? diagnosticsHash = null;
-        if (diagnostics.Count > 0)
-        {
-            var diagnosticsJson = JsonConvert.SerializeObject(diagnostics, JsonSettings.Default);
-            diagnosticsPath = Path.Combine(publishedDir, "diagnostics.json");
-            File.WriteAllText(diagnosticsPath, diagnosticsJson);
-            diagnosticsHash = ManifestBuilder.Sha256Hex(diagnosticsJson);
-            hashes["diagnostics.json"] = diagnosticsHash;
-        }
-
-        var manifest = ManifestBuilder.Build(
-            PreflightRunner.Run(),
-            counts: new Dictionary<string, int> { ["item"] = rows.Count, ["stat-type"] = statTypeRows.Count, ["item-category"] = itemCategoryRows.Count, ["item-tag"] = itemTagRows.Count },
-            diagnostics: diagnosticTotals,
-            contentHashes: hashes,
-            extractorVersion: Plugin.Version,
-            gameVersion: run.GameVersion,
-            buildIdentifier: run.RunId);
-        var manifestJson = JsonConvert.SerializeObject(manifest, JsonSettings.Default);
-        var manifestPath = Path.Combine(publishedDir, "manifest.json");
-        File.WriteAllText(manifestPath, manifestJson);
-        var manifestHash = ManifestBuilder.Sha256Hex(manifestJson);
-
-        run.PublishedDir = publishedDir;
-        run.State = "finalized";
-        run.Counts["item"] = rows.Count;
-        run.Counts["stat-type"] = statTypeRows.Count;
-        run.Counts["item-category"] = itemCategoryRows.Count;
-        run.Counts["item-tag"] = itemTagRows.Count;
-
-        var result = new JObject
-        {
-            ["runId"] = run.RunId,
-            ["publishedDir"] = publishedDir,
-            ["manifestPath"] = manifestPath,
-        };
-        var artifacts = new List<ArtifactRef>
-        {
-            CompendiumCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash),
-            CompendiumCommandResults.FileArtifact("items", itemsPath, "application/json", itemHash),
-            CompendiumCommandResults.FileArtifact("asset-manifest", assetManifestPath, "application/json", assetManifestHash),
-            CompendiumCommandResults.FileArtifact("master-tooltip", masterTooltipPath, "application/json", masterTooltipHash),
-            CompendiumCommandResults.FileArtifact("stat-types", statTypesPath, "application/json", statTypesHash),
-            CompendiumCommandResults.FileArtifact("item-categories", itemCategoriesPath, "application/json", itemCategoriesHash),
-            CompendiumCommandResults.FileArtifact("item-tags", itemTagsPath, "application/json", itemTagsHash),
-        };
-        if (diagnosticsPath is not null && diagnosticsHash is not null)
-        {
-            artifacts.Add(CompendiumCommandResults.FileArtifact("diagnostics", diagnosticsPath, "application/json", diagnosticsHash));
-        }
-        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(result, artifacts.ToArray()));
+    private static void WriteJson(string dir, string fileName, object value, IDictionary<string, string> hashes)
+    {
+        var json = JsonConvert.SerializeObject(value, JsonSettings.Default);
+        File.WriteAllText(Path.Combine(dir, fileName), json);
+        hashes[fileName] = ManifestBuilder.Sha256Hex(json);
     }
 
     private static void AddDiagnostic(DiagnosticTotals totals, List<JObject> sink, string? rowId, Diagnostic diagnostic)

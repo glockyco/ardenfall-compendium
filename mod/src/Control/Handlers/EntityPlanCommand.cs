@@ -10,9 +10,9 @@ public sealed class EntityPlanCommand : IControlCommandHandler
 {
     private const int BatchSize = 100;
     private readonly CompendiumRunManager _runs;
-    private readonly ItemExtractionService _items;
+    private readonly IItemExtractionCache _items;
 
-    public EntityPlanCommand(CompendiumRunManager runs, ItemExtractionService items)
+    public EntityPlanCommand(CompendiumRunManager runs, IItemExtractionCache items)
     {
         _runs = runs;
         _items = items;
@@ -40,12 +40,14 @@ public sealed class EntityPlanCommand : IControlCommandHandler
             return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Validation("unknownRun", $"Unknown run '{runId}'."));
 
         var total = _items.GetOrExtract(run).Count;
+        var plan = run.SetEntityPlan("item", total, BatchSize);
+        _runs.Save(run);
         return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(new JObject
         {
-            ["entity"] = "item",
-            ["total"] = total,
-            ["batchSize"] = BatchSize,
-            ["batches"] = total == 0 ? 0 : (total + BatchSize - 1) / BatchSize,
+            ["entity"] = plan.Entity,
+            ["total"] = plan.Total,
+            ["batchSize"] = plan.BatchSize,
+            ["batches"] = plan.Total == 0 ? 0 : (plan.Total + plan.BatchSize - 1) / plan.BatchSize,
         }));
     }
 }
