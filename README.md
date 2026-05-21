@@ -54,30 +54,34 @@ Production deploys require a release artifact with `artifact-manifest.json`. `si
 Mod build (Mac/Linux requires `mono` or `dotnet`):
 
 ```sh
-mod/scripts/copy-libs.sh   # copies game DLLs from your local Ardenfall install
-dotnet build mod/ArdenfallCompendium.csproj
+cp .env.example .env
+# Edit .env for your Ardenfall Demo install, HotRepl checkout, and token.
+bun run mod:copy-libs
+bun run mod:build
 ```
 
 HotRepl export smoke:
 
 ```sh
-dotnet build /Users/joaichberger/Projects/HotRepl/src/HotRepl.BepInEx/ --nologo -v q
-dotnet build mod/ArdenfallCompendium.csproj -c Debug
+# One-time/local setup after .env is filled in.
+HOTREPL_TOKEN="$(openssl rand -hex 24)"  # also copy this value into .env if you want to reuse it
+bun run hotrepl:setup
 
-PLUGINS_DIR="$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Ardenfall Demo/BepInEx/plugins"
-HOTREPL_TOKEN="$(openssl rand -hex 24)"
-bun run controller:deploy -- \
-  --hotrepl-out /Users/joaichberger/Projects/HotRepl/src/HotRepl.BepInEx/bin/Debug/netstandard2.1 \
-  --mod-out ./mod/bin/Debug/netstandard2.1 \
-  --plugins "$PLUGINS_DIR" \
-  --bind-host 0.0.0.0 \
-  --token "$HOTREPL_TOKEN"
+# Launch manually, or set ARDENFALL_LAUNCH_COMMAND in .env and run:
+bun run hotrepl:launch
 
-
-Launch Ardenfall before exporting. First Steam/CrossOver startup can take a few minutes on a cold or slow network path; `controller:export` waits up to five minutes for the HotRepl listener before failing, so start the export command immediately after launch instead of hand-timing readiness.
-
-bun run controller:export -- --url ws://127.0.0.1:18590 --token "$HOTREPL_TOKEN" --output ./snapshots --pipeline-out ./pipeline/dist
+# Export through HotRepl once the game is running.
+bun run hotrepl:export
 ```
+
+The local setup contract lives in `.env.example`:
+
+- `ARDENFALL_MANAGED_DIR` points at `Ardenfall_Data/Managed`.
+- `ARDENFALL_PLUGINS_DIR` points at `BepInEx/plugins`.
+- `HOTREPL_REPO`, `HOTREPL_CORE_OUT`, and `HOTREPL_BEPINEX_OUT` point at a checked-out HotRepl build.
+- `HOTREPL_BIND_HOST`, `HOTREPL_URL`, and `HOTREPL_TOKEN` describe the runtime control connection. Do not commit real tokens.
+- `ARDENFALL_SNAPSHOT_OUT` and `ARDENFALL_PIPELINE_OUT` are controller output paths.
+- `ARDENFALL_LAUNCH_COMMAND` is optional; manual launch remains supported.
 
 ## License
 

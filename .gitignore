@@ -8,6 +8,10 @@ worktrees/
 # Bun + Node
 node_modules/
 .bun/
+.env
+.env.*
+!.env.example
+
 
 # SvelteKit
 .svelte-kit/
