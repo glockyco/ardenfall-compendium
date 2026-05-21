@@ -276,38 +276,121 @@ describe("validateSnapshot", () => {
     await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
   });
 
-  it("accepts matching manifest hashes and item counts", async () => {
+  it("accepts matching manifest hashes and entity counts for every emitted artifact", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root);
+
+    await expect(validateSnapshot(root)).resolves.toEqual({
+      itemCount: 2,
+      counts: { item: 2, "stat-type": 1, "item-category": 1, "item-tag": 1 },
+    });
+  });
+
+  it("rejects a snapshot with a mismatched item hash", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, { itemHash: "bad" });
+
+    await expect(validateSnapshot(root)).rejects.toThrow(/items\.json hash mismatch/);
+  });
+
+  it("rejects a snapshot with a missing manifest artifact", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, { omitFiles: ["stat-types.json"] });
+
+    await expect(validateSnapshot(root)).rejects.toThrow(/stat-types\.json is missing/);
+  });
+
+  it("rejects a snapshot with a mismatched non-item hash", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, { hashOverrides: { "master-tooltip.json": "bad" } });
+
+    await expect(validateSnapshot(root)).rejects.toThrow(/master-tooltip\.json hash mismatch/);
+  });
+
+  it("rejects a snapshot with a mismatched non-item row count", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, { countOverrides: { "stat-type": 2 } });
+
+    await expect(validateSnapshot(root)).rejects.toThrow(
+      /manifest stat-type count 2 does not match 1 rows/,
+    );
+  });
+
+  it("rejects malformed diagnostics artifacts", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, { diagnosticsText: JSON.stringify({ rows: [] }) });
+
+    await expect(validateSnapshot(root)).rejects.toThrow(/diagnostics\.json must be an array/);
+  });
+
+  it("rejects fatal diagnostics", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, { fatalDiagnostics: 1 });
+
+    await expect(validateSnapshot(root)).rejects.toThrow(/snapshot contains fatal diagnostics/);
+  });
+
+  async function snapshotRoot(roots: string[]) {
     const root = await mkdtemp(join(tmpdir(), "ardenfall-snapshot-"));
     roots.push(root);
     await mkdir(root, { recursive: true });
-    const items = JSON.stringify({ rows: [{ id: "item-1" }, { id: "item-2" }] }, null, 2);
-    const hash = new Bun.CryptoHasher("sha256").update(items).digest("hex");
-    await writeFile(join(root, "items.json"), items);
+    return root;
+  }
+
+  async function writeSnapshot(
+    root: string,
+    options: {
+      itemHash?: string;
+      hashOverrides?: Record<string, string>;
+      countOverrides?: Record<string, number>;
+      omitFiles?: string[];
+      diagnosticsText?: string;
+      fatalDiagnostics?: number;
+    } = {},
+  ) {
+    const files: Record<string, string> = {
+      "items.json": JSON.stringify({ rows: [{ id: "item-1" }, { id: "item-2" }] }, null, 2),
+      "stat-types.json": JSON.stringify({ rows: [{ id: "stat-strength" }] }, null, 2),
+      "item-categories.json": JSON.stringify({ rows: [{ id: "category-weapons" }] }, null, 2),
+      "item-tags.json": JSON.stringify({ rows: [{ id: "tag-valuable" }] }, null, 2),
+      "asset-manifest.json": JSON.stringify({ assets: [], itemIconMetadata: [] }, null, 2),
+      "master-tooltip.json": JSON.stringify({ schemaVersion: 2, tooltipCodes: {} }, null, 2),
+    };
+    if (options.diagnosticsText !== undefined) files["diagnostics.json"] = options.diagnosticsText;
+
+    const omitted = new Set(options.omitFiles ?? []);
+    await Promise.all(
+      Object.entries(files)
+        .filter(([file]) => !omitted.has(file))
+        .map(([file, text]) => writeFile(join(root, file), text)),
+    );
+
+    const hashes = Object.fromEntries(
+      Object.entries(files).map(([file, text]) => [file, hash(text)]),
+    ) as Record<string, string>;
+    if (options.itemHash) hashes["items.json"] = options.itemHash;
+    for (const [file, value] of Object.entries(options.hashOverrides ?? {})) hashes[file] = value;
+
     await writeFile(
       join(root, "manifest.json"),
       JSON.stringify(
-        { counts: { item: 2 }, hashes: { "items.json": hash }, diagnostics: { fatal: 0 } },
+        {
+          counts: {
+            item: options.countOverrides?.item ?? 2,
+            "stat-type": options.countOverrides?.["stat-type"] ?? 1,
+            "item-category": options.countOverrides?.["item-category"] ?? 1,
+            "item-tag": options.countOverrides?.["item-tag"] ?? 1,
+          },
+          hashes,
+          diagnostics: { fatal: options.fatalDiagnostics ?? 0 },
+        },
         null,
         2,
       ),
     );
+  }
 
-    await expect(validateSnapshot(root)).resolves.toEqual({ itemCount: 2 });
-  });
-
-  it("rejects a snapshot with a mismatched item hash", async () => {
-    const root = await mkdtemp(join(tmpdir(), "ardenfall-snapshot-"));
-    roots.push(root);
-    await writeFile(join(root, "items.json"), JSON.stringify({ rows: [] }));
-    await writeFile(
-      join(root, "manifest.json"),
-      JSON.stringify({
-        counts: { item: 0 },
-        hashes: { "items.json": "bad" },
-        diagnostics: { fatal: 0 },
-      }),
-    );
-
-    await expect(validateSnapshot(root)).rejects.toThrow(/items\.json hash mismatch/);
-  });
+  function hash(text: string) {
+    return new Bun.CryptoHasher("sha256").update(text).digest("hex");
+  }
 });
