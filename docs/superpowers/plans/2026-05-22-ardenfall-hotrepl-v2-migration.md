@@ -14,7 +14,7 @@
 
 - Implement from the isolated worktree `ardenfall-compendium/.worktrees/hotrepl-v2-migration-plan` or a fresh successor worktree, not from `main`.
 - Run `git status --short --branch` before editing. The source checkout had unrelated user edits when this plan was written.
-- HotRepl v2 packages must be available to Bun as `@hotrepl/sdk` and `@hotrepl/testing`. If they are not published yet, stop and choose one explicit package source for this repo before Task 2; do not commit machine-local absolute `file:` dependencies.
+- HotRepl v2 package source is repo-local until registry publishing exists. Use version `2.0.0-alpha.0` packages generated from the HotRepl clean-architecture branch: check npm tarballs for `@hotrepl/protocol`, `@hotrepl/sdk`, and `@hotrepl/testing` into `vendor/hotrepl/npm/` and NuGet packages into `vendor/hotrepl/nuget/`. Dependencies must use relative `file:vendor/hotrepl/npm/*.tgz` paths and a repo-local NuGet source; do not commit machine-local absolute paths.
 - Do not add Python. This repo currently uses Bun/TypeScript for the controller and C# for the mod.
 - HotRepl v2 has no `control_auth`, `lease_acquire`, `sessionId`, `leaseId`, `command_error`, `job_result` client request, profile, ping, or token compatibility.
 
@@ -119,7 +119,12 @@ Expected: FAIL because the mod still references v1 `HotRepl.Control` names (`Con
 
 - [ ] **Step 3: Update C# references and DTO names**
 
-Move every command handler from v1 control names to the v2 runtime command API exposed by the HotRepl branch. The long-lived DTO vocabulary in Ardenfall must be:
+Move every command handler from v1 control names to the v2 runtime command API exposed by the
+HotRepl packages. Add `HotRepl.Core` and `HotRepl.Protocol` package references at version
+`2.0.0-alpha.0` through a repo-local `vendor/hotrepl/nuget/` package source, not a hardcoded source
+checkout path.
+
+The long-lived DTO vocabulary in Ardenfall must be:
 
 ```csharp
 public sealed record CompendiumCommandOutput(
@@ -238,20 +243,22 @@ Expected: FAIL because `controller/src/compendium-client.ts` does not exist and 
 
 - [ ] **Step 3: Add HotRepl package dependencies**
 
-HotRepl currently marks the TypeScript packages private. Do not start this implementation task until
-the HotRepl repo has made `@hotrepl/sdk` and `@hotrepl/testing` consumable through the package source
-chosen for downstream repos.
+Add relative tarball dependencies produced from the HotRepl v2 package snapshot:
 
-After that package source exists, add these two dependencies with the exact committed version or
-source string from the HotRepl release:
-
-```text
-@hotrepl/sdk
-@hotrepl/testing
+```json
+{
+  "dependencies": {
+    "@hotrepl/protocol": "file:vendor/hotrepl/npm/hotrepl-protocol-2.0.0-alpha.0.tgz",
+    "@hotrepl/sdk": "file:vendor/hotrepl/npm/hotrepl-sdk-2.0.0-alpha.0.tgz"
+  },
+  "devDependencies": {
+    "@hotrepl/testing": "file:vendor/hotrepl/npm/hotrepl-testing-2.0.0-alpha.0.tgz"
+  }
+}
 ```
 
-Do not commit local absolute `file:` paths or a temporary package source that cannot work on another
-machine.
+The tarballs must be committed under `vendor/hotrepl/npm/` so another machine can install without a
+local HotRepl checkout. Do not use absolute `file:` paths or temporary registry names.
 
 Run:
 
