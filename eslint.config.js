@@ -8,6 +8,8 @@ export default tseslint.config(
   {
     ignores: [
       "node_modules/",
+      ".worktrees/",
+      "worktrees/",
       "**/.svelte-kit/",
       "site/build/",
       "pipeline/dist/",

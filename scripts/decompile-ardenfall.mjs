@@ -235,7 +235,7 @@ async function main() {
 
   const results = [];
   for (const command of plan.commands) {
-    console.log(`$ ${command.args.join(" ")}`);
+    process.stdout.write(`$ ${command.args.join(" ")}\n`);
     const result = await runCommand(command);
     results.push(result);
     if (result.exitCode !== 0 && !result.allowFailure)
@@ -254,7 +254,7 @@ async function main() {
     resolve(options.outputDir, "meta/manifest.json"),
     `${JSON.stringify(manifest, null, 2)}\n`,
   );
-  console.log(options.outputDir);
+  process.stdout.write(`${options.outputDir}\n`);
 }
 
 if (import.meta.main) {
