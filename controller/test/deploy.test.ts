@@ -65,7 +65,7 @@ describe("deployPlugins", () => {
     await expect(stat(join(plugins, "ArdenfallArchives"))).rejects.toThrow();
   });
 
-  it("writes HotRepl BepInEx bind and auth config when requested", async () => {
+  it("writes HotRepl BepInEx bind config without removed v1 auth settings", async () => {
     const root = await mkdtemp(join(tmpdir(), "ardenfall-deploy-"));
     roots.push(root);
     const hotrepl = join(root, "hotrepl");
@@ -83,13 +83,13 @@ describe("deployPlugins", () => {
       ardenfallModOutDir: mod,
       pluginsDir: plugins,
       bindHost: "0.0.0.0",
-      controlAuthToken: "local-token",
     });
 
     const config = await readFile(join(root, "BepInEx", "config", "hotrepl.bepinex.cfg"), "utf8");
     expect(config).toContain("BindHost = 0.0.0.0");
-    expect(config).toContain("RequireAuth = true");
-    expect(config).toContain("AuthToken = local-token");
+    expect(config).not.toContain("[Control]");
+    expect(config).not.toContain("RequireAuth");
+    expect(config).not.toContain("AuthToken");
   });
 
   it("refuses to deploy when a required source DLL is missing", async () => {

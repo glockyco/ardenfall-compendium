@@ -55,7 +55,7 @@ Mod build (Mac/Linux requires `mono` or `dotnet`):
 
 ```sh
 cp .env.example .env
-# Edit .env for your Ardenfall Demo install, HotRepl checkout, and token.
+# Edit .env for your Ardenfall Demo install and HotRepl checkout.
 bun run mod:copy-libs
 bun run mod:build
 ```
@@ -64,7 +64,6 @@ HotRepl export smoke:
 
 ```sh
 # One-time/local setup after .env is filled in.
-HOTREPL_TOKEN="$(openssl rand -hex 24)"  # also copy this value into .env if you want to reuse it
 bun run hotrepl:setup
 
 # Launch manually, or set ARDENFALL_LAUNCH_COMMAND in .env and run:
@@ -79,7 +78,7 @@ The local setup contract lives in `.env.example`:
 - `ARDENFALL_MANAGED_DIR` points at `Ardenfall_Data/Managed`.
 - `ARDENFALL_PLUGINS_DIR` points at `BepInEx/plugins`.
 - `HOTREPL_REPO`, `HOTREPL_CORE_OUT`, and `HOTREPL_BEPINEX_OUT` point at a checked-out HotRepl build.
-- `HOTREPL_BIND_HOST`, `HOTREPL_URL`, and `HOTREPL_TOKEN` describe the runtime control connection. Do not commit real tokens.
+- `HOTREPL_BIND_HOST` and `HOTREPL_URL` describe the runtime control connection.
 - `ARDENFALL_SNAPSHOT_OUT` and `ARDENFALL_PIPELINE_OUT` are controller output paths.
 - `ARDENFALL_LAUNCH_COMMAND` is optional; manual launch remains supported.
 

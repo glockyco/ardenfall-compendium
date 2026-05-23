@@ -603,3 +603,14 @@ dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --nologo -v q
 ```
 
 Record whether live `bun run hotrepl:export` was run and what game/build prerequisites were present.
+
+## Execution notes
+
+- During HotRepl v2 live smoke setup, `bun run hotrepl:deploy` failed when `HOTREPL_TOKEN` was empty
+  because the deploy script still passed the removed `--token` argument. The deploy slice was pulled
+  forward: `controller/src/deploy.ts`, `package.json`, `.env.example`, `README.md`, and
+  `controller/test/deploy.test.ts` now cover bind-only BepInEx config with no `[Control]`,
+  `RequireAuth`, or `AuthToken`.
+- A live Ardenfall launch through `bun run hotrepl:launch` reached HotRepl v2 and evaluated
+  `UnityEngine.Application.productName` as `"Ardenfall Demo 2025"`. Full v2 export remains governed
+  by the remaining `CompendiumClient` migration steps above.

@@ -6,7 +6,6 @@ export interface DeployOptions {
   ardenfallModOutDir: string;
   pluginsDir: string;
   bindHost?: string;
-  controlAuthToken?: string;
 }
 
 export interface DeployResult {
@@ -66,21 +65,14 @@ async function requireFile(path: string): Promise<void> {
 }
 
 async function writeHotReplConfig(options: DeployOptions): Promise<void> {
-  if (!options.bindHost && !options.controlAuthToken) return;
+  if (!options.bindHost) return;
   const configDir = join(dirname(options.pluginsDir), "config");
   await mkdir(configDir, { recursive: true });
-  const token = options.controlAuthToken ?? "";
-  const requireAuth = token.length > 0;
-  const bindHost = options.bindHost ?? "127.0.0.1";
   await writeFile(
     join(configDir, "hotrepl.bepinex.cfg"),
     `[Server]
 Port = 18590
-BindHost = ${bindHost}
-
-[Control]
-RequireAuth = ${requireAuth ? "true" : "false"}
-AuthToken = ${token}
+BindHost = ${options.bindHost}
 `,
   );
 }
@@ -99,13 +91,11 @@ function parseArgs(args: string[]): DeployOptions {
   const ardenfallModOutDir = values.get("--mod-out");
   const pluginsDir = values.get("--plugins");
   const bindHost = values.get("--bind-host");
-  const controlAuthToken = values.get("--token");
   if (!hotReplOutDir) throw new Error("--hotrepl-out is required");
   if (!ardenfallModOutDir) throw new Error("--mod-out is required");
   if (!pluginsDir) throw new Error("--plugins is required");
   const options: DeployOptions = { hotReplOutDir, ardenfallModOutDir, pluginsDir };
   if (bindHost !== undefined) options.bindHost = bindHost;
-  if (controlAuthToken !== undefined) options.controlAuthToken = controlAuthToken;
   return options;
 }
 
