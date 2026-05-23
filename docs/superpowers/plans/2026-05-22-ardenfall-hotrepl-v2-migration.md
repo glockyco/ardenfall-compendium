@@ -14,7 +14,7 @@
 
 - Implement from the isolated worktree `ardenfall-compendium/.worktrees/hotrepl-v2-migration-plan` or a fresh successor worktree, not from `main`.
 - Run `git status --short --branch` before editing. The source checkout had unrelated user edits when this plan was written.
-- HotRepl v2 package source is repo-local until registry publishing exists. Use version `2.0.0-alpha.0` packages generated from the HotRepl clean-architecture branch: check npm tarballs for `@hotrepl/protocol`, `@hotrepl/sdk`, and `@hotrepl/testing` into `vendor/hotrepl/npm/` and NuGet packages into `vendor/hotrepl/nuget/`. Dependencies must use relative `file:vendor/hotrepl/npm/*.tgz` paths and a repo-local NuGet source; do not commit machine-local absolute paths.
+- HotRepl v2 package source is repo-local until registry publishing exists. Use version `2.0.0` packages generated from the HotRepl clean-architecture branch: check npm tarballs for `@hotrepl/protocol`, `@hotrepl/sdk`, and `@hotrepl/testing` into `vendor/hotrepl/npm/` and NuGet packages into `vendor/hotrepl/nuget/`. Dependencies must use relative `file:vendor/hotrepl/npm/*.tgz` paths and a repo-local NuGet source; do not commit machine-local absolute paths.
 - Do not add Python. This repo currently uses Bun/TypeScript for the controller and C# for the mod.
 - HotRepl v2 has no `control_auth`, `lease_acquire`, `sessionId`, `leaseId`, `command_error`, `job_result` client request, profile, ping, or token compatibility.
 
@@ -121,7 +121,7 @@ Expected: FAIL because the mod still references v1 `HotRepl.Control` names (`Con
 
 Move every command handler from v1 control names to the v2 runtime command API exposed by the
 HotRepl packages. Add `HotRepl.Core` and `HotRepl.Protocol` package references at version
-`2.0.0-alpha.0` through a repo-local `vendor/hotrepl/nuget/` package source, not a hardcoded source
+`2.0.0` through a repo-local `vendor/hotrepl/nuget/` package source, not a hardcoded source
 checkout path.
 
 The long-lived DTO vocabulary in Ardenfall must be:
@@ -248,11 +248,11 @@ Add relative tarball dependencies produced from the HotRepl v2 package snapshot:
 ```json
 {
   "dependencies": {
-    "@hotrepl/protocol": "file:vendor/hotrepl/npm/hotrepl-protocol-2.0.0-alpha.0.tgz",
-    "@hotrepl/sdk": "file:vendor/hotrepl/npm/hotrepl-sdk-2.0.0-alpha.0.tgz"
+    "@hotrepl/protocol": "file:vendor/hotrepl/npm/hotrepl-protocol-2.0.0.tgz",
+    "@hotrepl/sdk": "file:vendor/hotrepl/npm/hotrepl-sdk-2.0.0.tgz"
   },
   "devDependencies": {
-    "@hotrepl/testing": "file:vendor/hotrepl/npm/hotrepl-testing-2.0.0-alpha.0.tgz"
+    "@hotrepl/testing": "file:vendor/hotrepl/npm/hotrepl-testing-2.0.0.tgz"
   }
 }
 ```
