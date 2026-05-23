@@ -28,4 +28,26 @@ This repository is the static compendium for the game Ardenfall. Its design is c
 - Generated deploy artifacts are identified by `artifact-manifest.json`. Production deploys consume only release artifacts under `pipeline/artifacts/releases/*`; fixture artifacts under `pipeline/artifacts/fixtures/*` are never deployable.
 - `site/static` is a staging cache populated from a validated artifact. Do not treat it as source-of-truth and do not manually edit generated files there.
 
+## Environment variables and `bun run`
+
+`bun run <script>` does NOT auto-load `.env` files before invoking the script
+body (oven-sh/bun#23962). Bun does load `.env` for its own runtime
+(`process.env` in `bun -e ...` or `bun file.ts`), but the shell command in a
+package.json script runs in a child environment that does not see it.
+
+To bridge the gap, every package.json script that depends on values from
+`.env` is routed through `scripts/with-env.sh`, which sources the repo-root
+`.env` (if present) and `exec`s the rest of its arguments. New env-dependent
+scripts MUST use the same wrapper — never assume `bun run` will surface
+`.env` for you.
+
+Pattern:
+
+```json
+"my:task": "scripts/with-env.sh bash -c ': \"${REQUIRED:?set REQUIRED}\"; ...'"
+```
+
+CI and contributors who export variables directly (or use direnv) are
+unaffected — the wrapper is a no-op when `.env` is absent.
+
 If you find this document outdated, update it in the same commit as the change that outdates it.
