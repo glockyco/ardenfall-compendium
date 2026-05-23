@@ -1,68 +1,59 @@
 # Ardenfall Compendium
 
-Static, agentic-first wiki and interactive map for the Unity-Mono game **Ardenfall** (Spellcast Studios).
+Ardenfall Compendium is a static wiki and export pipeline for the Unity/Mono game **Ardenfall** by Spellcast Studios. It extracts data from a running game, validates the snapshot, builds canonical artifacts, and prerenders a static site for browsing entities and map data.
 
-## Repository shape
+This repository is for maintainers of the compendium. If you only want to read the compendium, use the published site instead of this source tree.
 
-| Path                | Subsystem                                                                                         | Toolchain           |
-| ------------------- | ------------------------------------------------------------------------------------------------- | ------------------- |
-| `mod/`              | BepInEx 5 plugin that walks live game objects and emits JSON snapshots                            | C# / `dotnet build` |
-| `pipeline/`         | TypeScript pipeline that validates snapshots and produces canonical SQLite + WebP assets          | Bun                 |
-| `controller/`       | HotRepl controller that deploys runtime DLLs and drives typed export commands                     | Bun                 |
-| `site/`             | SvelteKit static-assets-first site with prerendered entity pages and synced SQLite/WebP artifacts | Bun + Vite          |
-| `entities/`         | Filesystem-as-registry of entity descriptors                                                      | JSON                |
-| `schemas/`          | JSON Schema authority for descriptors, snapshots, manifests                                       | JSON Schema 2020-12 |
-| `docs/superpowers/` | Specs, plans, and roadmap                                                                         | Markdown            |
+## What you can do here
 
-## Design documents
+- Build and preview the SvelteKit compendium site from fixture data.
+- Run a BepInEx mod that exports live game data into JSON snapshots.
+- Validate snapshots and turn them into release artifacts.
+- Deploy a production artifact to Cloudflare Static Assets.
+- Exercise the local [HotRepl](https://github.com/glockyco/HotRepl) workflow used for game automation.
 
-Read in order:
+## Requirements
 
-1. `docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md`
-2. `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md`
-3. `docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`
-4. `docs/superpowers/roadmap.md`
+- Bun 1.3.13 or newer.
+- .NET SDK for the BepInEx mod build and tests.
+- Ardenfall Demo installed locally for live exports.
+- BepInEx 5 installed in the Ardenfall Demo game directory for live exports.
+- A HotRepl checkout when running the HotRepl smoke/export flow.
 
-## Local quickstart
+## Quickstart by task
 
-```sh
-bun install
-bunx lefthook install
-bun run typecheck
-bun test
+Install JavaScript dependencies first:
+
+```bash
+bun install --frozen-lockfile
 ```
 
-Fixture site prerender smoke:
+### Work on the website from fixture data
 
-```sh
+```bash
 bun run artifact:fixture synthetic fixtures/synthetic/snapshot
 bun run --cwd site build:fixture
 bun run --cwd site smoke:prerender
+bun run dev
 ```
 
-Production release deploy:
+Fixture artifacts are safe for development and tests. They are never valid production deploy inputs.
 
-```sh
-bun run artifact:release snapshots/snapshots/<snapshot-id>
-bun run --cwd site deploy:production ../pipeline/artifacts/releases/<snapshot-id>
-```
+### Build the BepInEx export mod
 
-The production site is static-assets-first: generated pages are prerendered to HTML and should be served by Cloudflare Static Assets without Worker invocation; the Worker is retained only for exceptional non-prerendered routes.
-
-Production deploys require a release artifact with `artifact-manifest.json`. `site/static` is a staging cache populated from the artifact; it is not source-of-truth. Fixture artifacts are valid for tests but must never be accepted by production deploy scripts.
-
-Mod build (Mac/Linux requires `mono` or `dotnet`):
-
-```sh
+```bash
 cp .env.example .env
 # Edit .env for your Ardenfall Demo install and HotRepl checkout.
+
 bun run mod:copy-libs
 bun run mod:build
 ```
 
-HotRepl export smoke:
+The mod reads live game objects and emits explicit snapshot DTOs. Snapshots should not contain raw Unity, Odin, or arbitrary game-object JSON.
 
-```sh
+### Run a live HotRepl export smoke
+
+```bash
 # One-time/local setup after .env is filled in.
 bun run hotrepl:setup
 
@@ -73,14 +64,77 @@ bun run hotrepl:launch
 bun run hotrepl:export
 ```
 
-The local setup contract lives in `.env.example`:
+The `.env.example` file documents every local path used by this flow:
 
 - `ARDENFALL_MANAGED_DIR` points at `Ardenfall_Data/Managed`.
 - `ARDENFALL_PLUGINS_DIR` points at `BepInEx/plugins`.
 - `HOTREPL_REPO`, `HOTREPL_CORE_OUT`, and `HOTREPL_BEPINEX_OUT` point at a checked-out HotRepl build.
-- `HOTREPL_BIND_HOST` and `HOTREPL_URL` describe the runtime control connection.
+- `HOTREPL_BIND_HOST` and `HOTREPL_URL` describe the runtime connection.
 - `ARDENFALL_SNAPSHOT_OUT` and `ARDENFALL_PIPELINE_OUT` are controller output paths.
 - `ARDENFALL_LAUNCH_COMMAND` is optional; manual launch remains supported.
+
+The HotRepl workflow deploys the local BepInEx host, starts the game, and connects to `HOTREPL_URL`.
+
+### Build and deploy a production artifact
+
+```bash
+bun run artifact:release snapshots/snapshots/<snapshot-id>
+bun run --cwd site deploy:production ../pipeline/artifacts/releases/<snapshot-id>
+```
+
+Production deploys require a release artifact with `artifact-manifest.json`. `site/static` is a staging cache populated from the artifact; it is not source-of-truth.
+
+## Architecture
+
+```text
+Ardenfall Demo + BepInEx mod
+  ↓ live extraction
+snapshots/<snapshot-id>/*.json
+  ↓ Bun validation and canonicalization
+pipeline/artifacts/{fixtures,releases}/<snapshot-id>
+  ↓ staged static assets
+site/static + prerendered SvelteKit pages
+  ↓
+Cloudflare Static Assets
+```
+
+| Path                | Purpose                                                                | Toolchain           |
+| ------------------- | ---------------------------------------------------------------------- | ------------------- |
+| `mod/`              | BepInEx 5 plugin that walks live game objects and emits JSON snapshots | C# / .NET           |
+| `controller/`       | HotRepl deployment/export controller for live game automation          | Bun / TypeScript    |
+| `pipeline/`         | Snapshot validation and artifact generation                            | Bun / TypeScript    |
+| `site/`             | SvelteKit static site and artifact staging scripts                     | Bun / Vite          |
+| `entities/`         | Filesystem registry of entity descriptors                              | JSON                |
+| `schemas/`          | JSON Schema authority for descriptors, snapshots, and manifests        | JSON Schema 2020-12 |
+| `docs/superpowers/` | Design notes, plans, and roadmap                                       | Markdown            |
+
+The production site is static-assets-first: generated pages are prerendered to HTML and should be served by Cloudflare Static Assets without Worker invocation. The Worker is retained only for exceptional non-prerendered routes.
+
+## Common commands
+
+| Task                              | Command                                                          |
+| --------------------------------- | ---------------------------------------------------------------- |
+| Typecheck TypeScript              | `bun run typecheck`                                              |
+| Lint TypeScript/Svelte            | `bun run lint`                                                   |
+| Check formatting                  | `bun run format:check`                                           |
+| Generate schema validators        | `bun run codegen:validators`                                     |
+| Run controller tests              | `bun run controller:test`                                        |
+| Build fixture artifact            | `bun run artifact:fixture synthetic fixtures/synthetic/snapshot` |
+| Build release artifact            | `bun run artifact:release snapshots/snapshots/<snapshot-id>`     |
+| Build mod                         | `bun run mod:build`                                              |
+| Deploy HotRepl + mod locally      | `bun run hotrepl:setup`                                          |
+| Decompile game assemblies locally | `bun run decompile:game`                                         |
+
+## Maintainer reading order
+
+Read these when changing architecture or data contracts:
+
+1. [`docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md`](docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md)
+2. [`docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md`](docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md)
+3. [`docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`](docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md)
+4. [`docs/superpowers/roadmap.md`](docs/superpowers/roadmap.md)
+
+Agent-specific working rules live in [`AGENTS.md`](AGENTS.md) and subsystem `AGENTS.md` files.
 
 ## License
 
