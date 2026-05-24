@@ -102,23 +102,23 @@ The existing `scripts/indexnow-ping.mjs` posts a URL list to IndexNow. Extend it
 
 This is the same workflow the user followed for the Slice 4 release.
 
-- [ ] **Step 1: Build runtime plugins**
+- [ ] **Step 1: Build and deploy runtime plugins**
 
 ```sh
-dotnet build /Users/joaichberger/Projects/HotRepl/src/HotRepl.BepInEx/ --nologo -v q
-dotnet build mod/ArdenfallCompendium.csproj -c Debug --nologo -v q
+bun run hotrepl:setup
 ```
 
-- [ ] **Step 2: Deploy plugins + capture token**
-
-Same as `README.md` "HotRepl export smoke" recipe. After deploy, launch Ardenfall (via `cxstart --bottle Steam --no-wait steam://rungameid/1837770` on macOS / appropriate launcher elsewhere).
+This builds HotRepl, copies required HotRepl sidecars (including `Namotion.Reflection.dll`), builds the
+mod, deploys both to BepInEx, and writes the loopback HotRepl bind config unless `.env` explicitly
+overrides `HOTREPL_BIND_HOST`. After deploy, launch Ardenfall with `bun run hotrepl:launch` or the
+equivalent local launcher.
 
 - [ ] **Step 3: Capture goldens before extraction**
 
 The mod's new HotRepl command `compendium.captureGoldens` (Phase 10.3 + extensions in Phase 11/12) writes `fixtures/golden/<patch>/<entity-type>/<id>.json` for status-effects, spells, enchantments, and items. Invoke it once after the game reaches the title screen:
 
 ```sh
-bun run controller:capture-goldens -- --url ws://127.0.0.1:18590 --token "$TOKEN" --patch 0.0.10.91-anchor --output ./fixtures/golden/0.0.10.91-anchor
+bun run controller:capture-goldens -- --url ws://127.0.0.1:18590 --patch 0.0.10.91-anchor --output ./fixtures/golden/0.0.10.91-anchor
 ```
 
 (Add the `controller:capture-goldens` script + the CLI handler to the controller in this task if not done earlier; it invokes the HotRepl command and writes outputs.)
@@ -133,7 +133,7 @@ git commit -m "test(pipeline): capture live goldens for 0.0.10.91"
 - [ ] **Step 4: Run live extraction**
 
 ```sh
-bun run controller:export -- --url ws://127.0.0.1:18590 --token "$TOKEN" --output ./snapshots --pipeline-out ./pipeline/dist
+bun run hotrepl:export
 ```
 
 The extraction writes `snapshots/snapshots/<gameVersion>-<buildIdentifier>/`. Confirm it includes every new artifact (`stat-types.json`, `item-categories.json`, `item-tags.json`, `status-effects.json`, `spells.json`, `enchantments.json`, `potion-recipes.json`, `master-tooltip.json` v2, `effect-bindings-audit.json`).
