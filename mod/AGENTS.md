@@ -25,6 +25,8 @@ Read `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-deci
 
 ## HotRepl dependency
 
-The Ardenfall mod references `mod/libs/HotRepl.Core.dll` at compile time. Runtime DLLs belong in the game's `BepInEx/plugins/` directory, not `mod/libs/`. Build HotRepl first, run `mod/scripts/copy-libs.sh <Ardenfall Managed dir> <HotRepl.Core output dir>` before `dotnet build mod/ArdenfallCompendium.csproj`, and deploy the matching HotRepl and Ardenfall DLLs to `BepInEx/plugins/`.
+The Ardenfall mod implements HotRepl v3 typed control handlers through `HotRepl.Control.GlobalControlCommandRegistry`. The mod references ignored local DLLs under `mod/libs/` at compile time; runtime DLLs belong in the game's `BepInEx/plugins/` directory, not `mod/libs/`.
+
+Build HotRepl first, run `mod/scripts/copy-libs.sh <Ardenfall Managed dir> <HotRepl.Core output dir>` before `dotnet build mod/ArdenfallCompendium.csproj`, and deploy the matching HotRepl host, `HotRepl.Core.dll`, and HotRepl sidecar dependencies to `BepInEx/plugins/`. Schema generation depends on sidecar DLLs such as `Namotion.Reflection.dll`, so do not copy only `HotRepl.Core.dll`.
 
 `mod/ArdenfallCompendium.csproj` targets `netstandard2.1` because HotRepl's control contracts expose `ValueTask<T>` from a `netstandard2.1` assembly and Ardenfall runs on Unity 2022, which supports .NET Standard 2.1. Do not retarget the mod back to `net472` while it implements HotRepl command handlers.

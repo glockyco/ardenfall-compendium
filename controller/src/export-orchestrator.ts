@@ -5,7 +5,7 @@ import type {
   ControlCommandDescriptor,
   HotReplClient,
   JobCancelResult,
-  JobStatus,
+  JobPollResult,
 } from "./hotrepl-client";
 import { validateSnapshot } from "./validate-snapshot";
 import { waitForWorld } from "./wait-for-world";
@@ -17,13 +17,10 @@ export interface ControllerConnectOptions {
 
 export interface ControllerCallOptions {
   timeoutMs?: number;
-  idempotencyKey?: string;
 }
 
 export interface ControllerClient {
   connect(options?: ControllerConnectOptions): Promise<void>;
-  authenticate(token?: string): Promise<{ ok: boolean; sessionId?: string }>;
-  acquireLease(clientName: string): Promise<{ ok: boolean; leaseId?: string }>;
   describeCommands(): Promise<ControlCommandDescriptor[]>;
   call(
     name: string,
@@ -35,8 +32,7 @@ export interface ControllerClient {
     args: Record<string, unknown>,
     options?: ControllerCallOptions,
   ): Promise<CommandAccepted>;
-  jobStatus(jobId: string): Promise<JobStatus>;
-  jobResult(jobId: string): Promise<CommandResult>;
+  jobStatus(jobId: string): Promise<JobPollResult>;
   cancelJob(jobId: string): Promise<JobCancelResult>;
   close(): Promise<void>;
 }
@@ -51,8 +47,6 @@ export interface ExportOptions {
   client: ControllerClient | HotReplClient;
   outputBaseDir: string;
   pipelineOutDir: string;
-  token?: string;
-  clientName?: string;
   runPipeline?: (snapshotDir: string, pipelineOutDir: string) => Promise<void>;
   validate?: (snapshotDir: string) => Promise<{ itemCount: number }>;
   log?: (event: ExportEvent) => void;
@@ -83,18 +77,11 @@ const DEFAULT_FINALIZE_TIMEOUT_MS = 300_000;
 
 export async function exportCompendium(options: ExportOptions): Promise<ExportResult> {
   const log = options.log ?? (() => undefined);
-  const clientName = options.clientName ?? "ardenfall-controller";
   const outputBaseDir = toRuntimePath(resolve(options.outputBaseDir));
   await options.client.connect({
     timeoutMs: options.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS,
   });
   log({ phase: "connect", status: "completed" });
-
-  const auth = await options.client.authenticate(options.token);
-  if (!auth.ok) throw new Error("HotRepl authentication failed");
-  const lease = await options.client.acquireLease(clientName);
-  if (!lease.ok) throw new Error("HotRepl lease acquisition failed");
-  log({ phase: "lease", status: "completed" });
 
   const shouldWaitForWorld = options.waitForWorld === true;
   assertRequiredCommands(
@@ -108,18 +95,18 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
     log({ phase: "waitForWorld", status: "completed" });
   } else {
     const preflight = await options.client.call("compendium.preflight", {});
-    if (preflight.result.ready !== true) throw new Error(formatPreflightFailure(preflight.result));
+    if (preflight.output.ready !== true) throw new Error(formatPreflightFailure(preflight.output));
   }
   log({ phase: "preflight", status: "completed" });
 
   const begin = await options.client.call("run.begin", { outputBaseDir });
-  const runId = requireString(begin.result.runId, "run.begin result.runId");
+  const runId = requireString(begin.output.runId, "run.begin output.runId");
   log({ phase: "run", status: "begun", runId });
 
   try {
     const plan = await options.client.call("entity.plan", { runId, entity: "item" });
-    const total = requireNumber(plan.result.total, "entity.plan result.total");
-    const batchSize = requireNumber(plan.result.batchSize, "entity.plan result.batchSize");
+    const total = requireNumber(plan.output.total, "entity.plan output.total");
+    const batchSize = requireNumber(plan.output.batchSize, "entity.plan output.batchSize");
     for (let offset = 0; offset < total; offset += batchSize) {
       const accepted = await options.client.startJob("entity.exportBatch", {
         runId,
@@ -128,7 +115,6 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
         limit: batchSize,
       });
       await waitForJob(options.client, accepted.jobId);
-      await options.client.jobResult(accepted.jobId);
       log({ phase: "entity.exportBatch", status: "completed", runId, offset });
     }
 
@@ -139,7 +125,7 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
     );
 
     const publishedDir = normalizeControllerPath(
-      requireString(finalized.result.publishedDir, "run.finalize result.publishedDir"),
+      requireString(finalized.output.publishedDir, "run.finalize output.publishedDir"),
     );
     const validate = options.validate ?? validateSnapshot;
     await validate(publishedDir);
@@ -193,10 +179,14 @@ async function quitGame(
     });
   }
 }
-async function waitForJob(client: ControllerClient | HotReplClient, jobId: string): Promise<void> {
+
+async function waitForJob(
+  client: ControllerClient | HotReplClient,
+  jobId: string,
+): Promise<CommandResult> {
   for (;;) {
     const status = await client.jobStatus(jobId);
-    if (status.state === "completed") return;
+    if (isCommandResult(status)) return status;
     if (status.state === "failed" || status.state === "cancelled")
       throw new Error(`Job ${jobId} ended in state ${status.state}`);
     await Bun.sleep(250);
@@ -239,6 +229,10 @@ function formatPreflightFailure(result: Record<string, unknown>): string {
 
   if (failedChecks.length === 0) return "compendium.preflight is not ready";
   return `compendium.preflight is not ready: ${failedChecks.join("; ")}`;
+}
+
+function isCommandResult(value: JobPollResult): value is CommandResult {
+  return "output" in value;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

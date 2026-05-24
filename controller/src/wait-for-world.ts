@@ -1,4 +1,4 @@
-import type { CommandResult } from "./hotrepl-client";
+import { ControlCommandError, type CommandResult } from "./hotrepl-client";
 
 export interface WaitForWorldClient {
   call(name: string, args: Record<string, unknown>): Promise<CommandResult>;
@@ -21,12 +21,19 @@ export async function waitForWorld(
     if (Date.now() > deadline) throw new Error(`Timed out waiting for world: ${lastReason}`);
 
     const preflight = await client.call("compendium.preflight", {});
-    if (preflight.result.ready === true) return;
-    lastReason = formatPreflightFailure(preflight.result);
+    if (preflight.output.ready === true) return;
+    lastReason = formatPreflightFailure(preflight.output);
 
-    const continueResult = await client.call("compendium.continueFromMenu", {});
-    if (continueResult.diagnostics.length > 0) {
-      lastReason = continueResult.diagnostics.map((diagnostic) => diagnostic.message).join("; ");
+    try {
+      await client.call("compendium.continueFromMenu", {});
+    } catch (error) {
+      if (!(error instanceof ControlCommandError)) throw error;
+      if (
+        error.error.kind !== "precondition_failed" ||
+        error.error.code !== "continueButtonMissing"
+      )
+        throw error;
+      lastReason = error.message;
     }
 
     if (pollIntervalMs > 0) await Bun.sleep(pollIntervalMs);

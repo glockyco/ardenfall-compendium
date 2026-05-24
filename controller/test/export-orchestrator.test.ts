@@ -10,7 +10,7 @@ import {
 import { validateSnapshot } from "../src/validate-snapshot";
 
 function command(name: string, kind: "sync" | "job" = "sync", mutatesState = false) {
-  return { name, version: 1, kind, mutatesState, argsSchema: {}, resultSchema: {} };
+  return { name, version: 1, kind, mutatesState };
 }
 
 class FakeClient implements ControllerClient {
@@ -20,6 +20,7 @@ class FakeClient implements ControllerClient {
     options?: Record<string, unknown>;
   }> = [];
   readonly jobs: Array<{ name: string; args: Record<string, unknown> }> = [];
+  readonly jobPolls: string[] = [];
   commands = [
     command("compendium.preflight"),
     command("compendium.continueFromMenu", "sync", true),
@@ -35,69 +36,56 @@ class FakeClient implements ControllerClient {
 
   finalizeError: Error | null = null;
   async connect() {}
-  async authenticate() {
-    return { ok: true, sessionId: "session-1" };
-  }
-  async acquireLease() {
-    return { ok: true, leaseId: "lease-1" };
-  }
   async describeCommands() {
     return this.commands;
   }
   async call(name: string, args: Record<string, unknown>, options?: Record<string, unknown>) {
     this.calls.push({ name, args, options });
     if (name === "compendium.preflight") {
-      const result = this.preflightResults.shift() ?? this.preflightResult;
-      return { status: "ok", result, artifacts: [], diagnostics: [] };
+      const output = this.preflightResults.shift() ?? this.preflightResult;
+      return { status: "ok", output, artifacts: {} };
     }
     if (name === "run.begin")
       return {
         status: "ok",
-        result: { runId: "run-1", workspaceDir: "/tmp/run-1" },
-        artifacts: [],
-        diagnostics: [],
+        output: { runId: "run-1", workspaceDir: "/tmp/run-1" },
+        artifacts: {},
       };
     if (name === "entity.plan")
       return {
         status: "ok",
-        result: { entity: "item", total: 150, batchSize: 100, batches: 2 },
-        artifacts: [],
-        diagnostics: [],
+        output: { entity: "item", total: 150, batchSize: 100, batches: 2 },
+        artifacts: {},
       };
     if (name === "compendium.continueFromMenu")
       return {
         status: "ok",
-        result: { clicked: true },
-        artifacts: [],
-        diagnostics: [],
+        output: { clicked: true },
+        artifacts: {},
       };
     if (name === "game.quit")
       return {
         status: "ok",
-        result: {},
-        artifacts: [],
-        diagnostics: [],
+        output: {},
+        artifacts: {},
       };
     if (name === "run.finalize") {
       if (this.finalizeError) throw this.finalizeError;
       return {
         status: "ok",
-        result: { runId: "run-1", publishedDir: this.publishedDir },
-        artifacts: [],
-        diagnostics: [],
+        output: { runId: "run-1", publishedDir: this.publishedDir },
+        artifacts: {},
       };
     }
     throw new Error(`unexpected call ${name}`);
   }
   async startJob(name: string, args: Record<string, unknown>) {
     this.jobs.push({ name, args });
-    return { jobId: `job-${this.jobs.length}`, state: "accepted" };
+    return { jobId: `job-${this.jobs.length}`, state: "running" };
   }
   async jobStatus(jobId: string) {
-    return { jobId, state: "completed" };
-  }
-  async jobResult(jobId: string) {
-    return { status: "ok", result: { jobId }, artifacts: [], diagnostics: [] };
+    this.jobPolls.push(jobId);
+    return { status: "ok", output: { jobId }, artifacts: {} };
   }
   async cancelJob() {
     return { accepted: true, state: "cancelling" };
@@ -131,6 +119,7 @@ describe("exportCompendium", () => {
       { runId: "run-1", entity: "item", offset: 0, limit: 100 },
       { runId: "run-1", entity: "item", offset: 100, limit: 100 },
     ]);
+    expect(client.jobPolls).toEqual(["job-1", "job-2"]);
     expect(events).toContainEqual(
       expect.objectContaining({ phase: "pipeline", status: "completed" }),
     );

@@ -2,12 +2,13 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ArdenfallCompendium.Control.Args;
+using ArdenfallCompendium.Control.Results;
 using HotRepl.Control;
-using Newtonsoft.Json.Linq;
 
 namespace ArdenfallCompendium.Control.Handlers;
 
-public sealed class RunBeginCommand : IControlCommandHandler
+public sealed class RunBeginCommand : IControlCommandHandler<RunBeginArgs, RunBeginResult>
 {
     private readonly CompendiumRunManager _runs;
     private readonly string _defaultOutputBaseDir;
@@ -18,34 +19,40 @@ public sealed class RunBeginCommand : IControlCommandHandler
         _defaultOutputBaseDir = defaultOutputBaseDir;
     }
 
-    public ControlCommandDescriptor Descriptor { get; } = new(
-        "run.begin",
-        1,
-        ControlCommandKind.Synchronous,
-        mutatesState: true,
-        argsSchema: CompendiumCommandSchemas.AnyObject,
-        resultSchema: CompendiumCommandSchemas.AnyObject);
+    public string Name => "run.begin";
 
-    public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
+    public int Version => 1;
+
+    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+
+    public bool MutatesState => true;
+
+    public ValueTask<ControlCommandResult<RunBeginResult>> ExecuteAsync(
+        ControlCommandContext context,
+        RunBeginArgs args,
+        CancellationToken cancellationToken
+    )
     {
-        var outputBaseDir = OptionalString(args, "outputBaseDir") ?? _defaultOutputBaseDir;
+        var outputBaseDir = OptionalString(args.OutputBaseDir) ?? _defaultOutputBaseDir;
         if (string.IsNullOrWhiteSpace(outputBaseDir))
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Validation("outputBaseDirRequired", "outputBaseDir is required."));
+            return new(
+                CompendiumCommandResults.Validation<RunBeginResult>(
+                    "outputBaseDirRequired",
+                    "outputBaseDir is required."
+                )
+            );
 
-        var gameVersion = SanitizeSegment(OptionalString(args, "gameVersion") ?? Game.GameInfo.SnapshotVersionSegment);
+        var gameVersion = SanitizeSegment(OptionalString(args.GameVersion) ?? Game.GameInfo.SnapshotVersionSegment);
         var run = _runs.Begin(outputBaseDir, gameVersion);
-        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(new JObject
-        {
-            ["runId"] = run.RunId,
-            ["workspaceDir"] = run.WorkspaceDir,
-        }));
+        return new(
+            ControlCommandResult.Ok(
+                new RunBeginResult { RunId = run.RunId, WorkspaceDir = run.WorkspaceDir }
+            )
+        );
     }
 
-    private static string? OptionalString(JObject args, string name)
-    {
-        var value = args[name]?.Value<string>();
-        return string.IsNullOrWhiteSpace(value) ? null : value;
-    }
+    private static string? OptionalString(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value;
 
     private static string SanitizeSegment(string value)
     {

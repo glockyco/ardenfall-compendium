@@ -1,24 +1,28 @@
 using System.Threading;
 using System.Threading.Tasks;
+using ArdenfallCompendium.Control.Results;
 using HotRepl.Control;
-using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace ArdenfallCompendium.Control.Handlers;
 
-public sealed class GameQuitCommand : IControlCommandHandler
+public sealed class GameQuitCommand : IControlCommandHandler<EmptyArgs, GameQuitResult>
 {
-    public ControlCommandDescriptor Descriptor { get; } = new(
-        "game.quit",
-        1,
-        ControlCommandKind.Synchronous,
-        mutatesState: true,
-        argsSchema: CompendiumCommandSchemas.EmptyObject,
-        resultSchema: CompendiumCommandSchemas.AnyObject);
+    public string Name => "game.quit";
 
-    public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
+    public int Version => 1;
+
+    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+
+    public bool MutatesState => true;
+
+    public ValueTask<ControlCommandResult<GameQuitResult>> ExecuteAsync(
+        ControlCommandContext context,
+        EmptyArgs args,
+        CancellationToken cancellationToken
+    )
     {
         Application.Quit();
-        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(new JObject { ["quitting"] = true }));
+        return new(ControlCommandResult.Ok(new GameQuitResult { Quitting = true }));
     }
 }

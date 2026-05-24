@@ -1,30 +1,34 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
+using ArdenfallCompendium.Control.Results;
 using HotRepl.Control;
-using Newtonsoft.Json.Linq;
 
 namespace ArdenfallCompendium.Control.Handlers;
 
-public sealed class CompendiumInfoCommand : IControlCommandHandler
+public sealed class CompendiumInfoCommand : IControlCommandHandler<EmptyArgs, CompendiumInfoResult>
 {
-    public ControlCommandDescriptor Descriptor { get; } = new(
-        "compendium.info",
-        1,
-        ControlCommandKind.Synchronous,
-        mutatesState: false,
-        argsSchema: CompendiumCommandSchemas.EmptyObject,
-        resultSchema: CompendiumCommandSchemas.AnyObject);
+    public string Name => "compendium.info";
 
-    public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
-    {
-        var result = new JObject
-        {
-            ["apiVersion"] = 1,
-            ["extractorVersion"] = Plugin.Version,
-            ["gameVersion"] = Game.GameInfo.Version,
-            ["supportedEntities"] = new JArray("item"),
-        };
-        return new ValueTask<ControlCommandResult>(new ControlCommandResult(result, Array.Empty<HotRepl.Control.Artifacts.ArtifactRef>(), Array.Empty<ControlCommandError>()));
-    }
+    public int Version => 1;
+
+    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+
+    public bool MutatesState => false;
+
+    public ValueTask<ControlCommandResult<CompendiumInfoResult>> ExecuteAsync(
+        ControlCommandContext context,
+        EmptyArgs args,
+        CancellationToken cancellationToken
+    ) =>
+        new(
+            ControlCommandResult.Ok(
+                new CompendiumInfoResult
+                {
+                    ApiVersion = 1,
+                    ExtractorVersion = Plugin.Version,
+                    GameVersion = Game.GameInfo.Version,
+                    SupportedEntities = new[] { "item" },
+                }
+            )
+        );
 }

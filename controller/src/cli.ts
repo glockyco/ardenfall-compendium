@@ -5,7 +5,6 @@ interface CliOptions {
   url: string;
   outputBaseDir: string;
   pipelineOutDir: string;
-  token?: string;
   waitForWorld: boolean;
 }
 
@@ -13,7 +12,7 @@ async function main(argv: string[]): Promise<void> {
   const [command, ...args] = argv;
   if (command !== "export")
     throw new Error(
-      "Usage: controller export --url <ws-url> --output <dir> --pipeline-out <dir> [--token <token>] [--no-wait-for-world]",
+      "Usage: controller export --url <ws-url> --output <dir> --pipeline-out <dir> [--no-wait-for-world]",
     );
   const options = parseArgs(args);
   const client = new HotReplClient(options.url);
@@ -22,7 +21,6 @@ async function main(argv: string[]): Promise<void> {
       client,
       outputBaseDir: options.outputBaseDir,
       pipelineOutDir: options.pipelineOutDir,
-      token: options.token,
       waitForWorld: options.waitForWorld,
       log: (event) => process.stdout.write(`${JSON.stringify(event)}\n`),
     });
@@ -57,10 +55,7 @@ function parseArgs(args: string[]): CliOptions {
   if (!url) throw new Error("--url is required");
   if (!outputBaseDir) throw new Error("--output is required");
   if (!pipelineOutDir) throw new Error("--pipeline-out is required");
-  const token = values.get("--token");
-  return token === undefined
-    ? { url, outputBaseDir, pipelineOutDir, waitForWorld }
-    : { url, outputBaseDir, pipelineOutDir, token, waitForWorld };
+  return { url, outputBaseDir, pipelineOutDir, waitForWorld };
 }
 
 if (import.meta.main) {

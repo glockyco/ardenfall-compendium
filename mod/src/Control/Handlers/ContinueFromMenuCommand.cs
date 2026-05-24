@@ -1,24 +1,29 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using ArdenfallCompendium.Control.Results;
 using HotRepl.Control;
-using Newtonsoft.Json.Linq;
 using UnityEngine.UI;
 using UnityObject = UnityEngine.Object;
 
 namespace ArdenfallCompendium.Control.Handlers;
 
-public sealed class ContinueFromMenuCommand : IControlCommandHandler
+public sealed class ContinueFromMenuCommand
+    : IControlCommandHandler<EmptyArgs, ContinueFromMenuResult>
 {
-    public ControlCommandDescriptor Descriptor { get; } = new(
-        "compendium.continueFromMenu",
-        1,
-        ControlCommandKind.Synchronous,
-        mutatesState: true,
-        argsSchema: CompendiumCommandSchemas.AnyObject,
-        resultSchema: CompendiumCommandSchemas.AnyObject);
+    public string Name => "compendium.continueFromMenu";
 
-    public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
+    public int Version => 1;
+
+    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+
+    public bool MutatesState => true;
+
+    public ValueTask<ControlCommandResult<ContinueFromMenuResult>> ExecuteAsync(
+        ControlCommandContext context,
+        EmptyArgs args,
+        CancellationToken cancellationToken
+    )
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -28,16 +33,23 @@ public sealed class ContinueFromMenuCommand : IControlCommandHandler
             if (!IsContinueButton(button)) continue;
 
             button.onClick.Invoke();
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(new JObject
-            {
-                ["clicked"] = true,
-                ["button"] = HierarchyPath(button.transform),
-            }));
+            return new(
+                ControlCommandResult.Ok(
+                    new ContinueFromMenuResult
+                    {
+                        Clicked = true,
+                        Button = HierarchyPath(button.transform),
+                    }
+                )
+            );
         }
 
-        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition(
-            "continueButtonMissing",
-            "No active interactable Continue button was found in the current Unity UI."));
+        return new(
+            CompendiumCommandResults.Precondition<ContinueFromMenuResult>(
+                "continueButtonMissing",
+                "No active interactable Continue button was found in the current Unity UI."
+            )
+        );
     }
 
     private static bool IsContinueButton(Button button)

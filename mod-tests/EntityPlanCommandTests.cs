@@ -2,9 +2,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ArdenfallCompendium.Control;
+using ArdenfallCompendium.Control.Args;
 using ArdenfallCompendium.Control.Handlers;
 using ArdenfallCompendium.Extraction;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace ArdenfallCompendium.Tests;
@@ -23,11 +23,12 @@ public sealed class EntityPlanCommandTests
 
         var result = await command.ExecuteAsync(
             null!,
-            new JObject { ["runId"] = run.RunId, ["entity"] = "item" },
+            new EntityPlanArgs { RunId = run.RunId, Entity = "item" },
             CancellationToken.None);
 
+        Assert.True(result.Succeeded);
         Assert.Empty(result.Diagnostics);
-        Assert.Equal(0, result.Result["total"]!.Value<int>());
+        Assert.Equal(0, result.Output!.Total);
         Assert.Equal(1, source.WalkCount);
     }
 }

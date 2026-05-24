@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ArdenfallCompendium.Control;
+using ArdenfallCompendium.Control.Args;
 using ArdenfallCompendium.Control.Handlers;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
@@ -45,7 +46,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             preflight: FailingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Contains(result.Diagnostics, error => error.Code == "preflightFailed");
         Assert.False(Directory.Exists(Path.Combine(outputBaseDir, "snapshots")));
@@ -74,7 +75,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Contains(result.Diagnostics, error => error.Code == "chunksIncomplete");
         Assert.False(Directory.Exists(Path.Combine(outputBaseDir, "snapshots", $"test-version-{run.RunId}")));
@@ -101,7 +102,7 @@ public sealed class RunFinalizeCommandTests
             preflight: PassingPreflight);
 
         await Assert.ThrowsAsync<System.InvalidOperationException>(() =>
-            command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None).AsTask());
+            command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None).AsTask());
 
         var snapshotsDir = Path.Combine(outputBaseDir, "snapshots");
         Assert.False(Directory.Exists(Path.Combine(snapshotsDir, $"test-version-{run.RunId}")));
@@ -133,10 +134,10 @@ public sealed class RunFinalizeCommandTests
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
         var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
-        var manifestPath = result.Result["manifestPath"]!.Value<string>()!;
+        var manifestPath = result.Output!.ManifestPath;
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(1, manifest.Diagnostics.Fatal);
         Assert.Equal(3, manifest.Diagnostics.Diagnostic);
@@ -170,17 +171,17 @@ public sealed class RunFinalizeCommandTests
         });
         var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
-        var manifestPath = result.Result["manifestPath"]!.Value<string>()!;
+        var manifestPath = result.Output!.ManifestPath;
         var publishedDir = Path.GetDirectoryName(manifestPath)!;
         var assetManifestPath = Path.Combine(publishedDir, "asset-manifest.json");
         Assert.True(File.Exists(assetManifestPath));
         var assetManifest = JsonConvert.DeserializeObject<AssetManifest>(File.ReadAllText(assetManifestPath), JsonSettings.Default)!;
         Assert.Empty(assetManifest.Assets);
         Assert.Single(assetManifest.ItemIconMetadata);
-        Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "asset-manifest");
+        Assert.Contains("asset-manifest", result.Artifacts.Keys);
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(assetManifestPath)), manifest.Hashes["asset-manifest.json"]);
     }
@@ -199,17 +200,17 @@ public sealed class RunFinalizeCommandTests
         var source = FakeMasterTooltipSource.Default;
         var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
-        var manifestPath = result.Result["manifestPath"]!.Value<string>()!;
+        var manifestPath = result.Output!.ManifestPath;
         var publishedDir = Path.GetDirectoryName(manifestPath)!;
         var masterTooltipPath = Path.Combine(publishedDir, "master-tooltip.json");
         Assert.True(File.Exists(masterTooltipPath));
         var snapshot = JsonConvert.DeserializeObject<MasterTooltipVocabularySnapshot>(File.ReadAllText(masterTooltipPath), JsonSettings.Default)!;
         Assert.Equal(2, snapshot.SchemaVersion);
         Assert.Equal("positive", snapshot.TooltipColors["p"].Text);
-        Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "master-tooltip");
+        Assert.Contains("master-tooltip", result.Artifacts.Keys);
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(masterTooltipPath)), manifest.Hashes["master-tooltip.json"]);
     }
@@ -261,17 +262,17 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
-        var manifestPath = result.Result["manifestPath"]!.Value<string>()!;
+        var manifestPath = result.Output!.ManifestPath;
         var publishedDir = Path.GetDirectoryName(manifestPath)!;
         var statTypesPath = Path.Combine(publishedDir, "stat-types.json");
         Assert.True(File.Exists(statTypesPath));
         var envelope = JsonConvert.DeserializeObject<StatTypeSnapshotEnvelope>(File.ReadAllText(statTypesPath), JsonSettings.Default)!;
         Assert.Single(envelope.Rows);
         Assert.Equal("Strength", envelope.Rows[0].Fields.StatName);
-        Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "stat-types");
+        Assert.Contains("stat-types", result.Artifacts.Keys);
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         var assetManifestPath = Path.Combine(publishedDir, "asset-manifest.json");
         var assetManifest = JsonConvert.DeserializeObject<AssetManifest>(File.ReadAllText(assetManifestPath), JsonSettings.Default)!;
@@ -325,17 +326,17 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
-        var manifestPath = result.Result["manifestPath"]!.Value<string>()!;
+        var manifestPath = result.Output!.ManifestPath;
         var publishedDir = Path.GetDirectoryName(manifestPath)!;
         var itemCategoriesPath = Path.Combine(publishedDir, "item-categories.json");
         Assert.True(File.Exists(itemCategoriesPath));
         var envelope = JsonConvert.DeserializeObject<ItemCategorySnapshotEnvelope>(File.ReadAllText(itemCategoriesPath), JsonSettings.Default)!;
         Assert.Single(envelope.Rows);
         Assert.Equal("Weapons", envelope.Rows[0].Fields.CategoryName);
-        Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "item-categories");
+        Assert.Contains("item-categories", result.Artifacts.Keys);
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         var assetManifestPath = Path.Combine(publishedDir, "asset-manifest.json");
         var assetManifest = JsonConvert.DeserializeObject<AssetManifest>(File.ReadAllText(assetManifestPath), JsonSettings.Default)!;
@@ -375,17 +376,17 @@ public sealed class RunFinalizeCommandTests
             itemTags,
             preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new JObject { ["runId"] = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
-        var manifestPath = result.Result["manifestPath"]!.Value<string>()!;
+        var manifestPath = result.Output!.ManifestPath;
         var publishedDir = Path.GetDirectoryName(manifestPath)!;
         var itemTagsPath = Path.Combine(publishedDir, "item-tags.json");
         Assert.True(File.Exists(itemTagsPath));
         var envelope = JsonConvert.DeserializeObject<ItemTagSnapshotEnvelope>(File.ReadAllText(itemTagsPath), JsonSettings.Default)!;
         Assert.Single(envelope.Rows);
         Assert.Equal("Valuable remedy", envelope.Rows[0].Fields.TagName);
-        Assert.Contains(result.Artifacts, artifact => artifact.LogicalName == "item-tags");
+        Assert.Contains("item-tags", result.Artifacts.Keys);
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(itemTagsPath)), manifest.Hashes["item-tags.json"]);
         Assert.Equal(1, manifest.Counts["item-tag"]);

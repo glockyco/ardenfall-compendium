@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { HotReplClient, type ControlCommandError } from "../src/hotrepl-client";
+import { HotReplClient, type CommandResult, type ControlCommandError } from "../src/hotrepl-client";
 
 type RecordedMessage = Record<string, unknown>;
 
-function startFakeControlServer(options: { commandDelayMs?: number; port?: number } = {}) {
+function startFakeControlServer(
+  options: { commandDelayMs?: number; port?: number; protocolVersion?: number } = {},
+) {
   const messages: RecordedMessage[] = [];
   const server = Bun.serve<{ url: string }>({
     port: options.port ?? 0,
@@ -13,7 +15,9 @@ function startFakeControlServer(options: { commandDelayMs?: number; port?: numbe
     },
     websocket: {
       open(ws) {
-        ws.send(JSON.stringify({ type: "hello", protocolVersion: 1 }));
+        ws.send(
+          JSON.stringify({ type: "handshake", protocolVersion: options.protocolVersion ?? 2 }),
+        );
       },
       async message(ws, raw) {
         const message = JSON.parse(String(raw)) as RecordedMessage;
@@ -22,29 +26,17 @@ function startFakeControlServer(options: { commandDelayMs?: number; port?: numbe
           await Bun.sleep(options.commandDelayMs);
         const id = message.id;
         switch (message.type) {
-          case "control_auth":
-            ws.send(
-              JSON.stringify({ type: "control_auth_result", id, ok: true, sessionId: "session-1" }),
-            );
-            break;
-          case "lease_acquire":
-            ws.send(
-              JSON.stringify({ type: "lease_acquire_result", id, ok: true, leaseId: "lease-1" }),
-            );
-            break;
-          case "command_describe":
+          case "commands_list":
             ws.send(
               JSON.stringify({
-                type: "command_describe_result",
+                type: "commands_list_result",
                 id,
                 commands: [
                   {
                     name: "compendium.info",
-                    version: 1,
+                    majorVersion: 1,
                     kind: "sync",
                     mutatesState: false,
-                    argsSchema: {},
-                    resultSchema: {},
                   },
                 ],
               }),
@@ -54,21 +46,23 @@ function startFakeControlServer(options: { commandDelayMs?: number; port?: numbe
             if (message.name === "compendium.fail") {
               ws.send(
                 JSON.stringify({
-                  type: "command_error",
+                  type: "command_result",
                   id,
                   status: "failed",
+                  output: {},
+                  artifacts: {},
                   error: {
                     kind: "validation_failed",
                     code: "bad",
                     message: "bad args",
                     retryable: false,
                   },
-                  diagnostics: [],
+                  durationMs: 0,
                 }),
               );
             } else if (message.name === "entity.exportBatch") {
               ws.send(
-                JSON.stringify({ type: "command_accepted", id, jobId: "job-1", state: "accepted" }),
+                JSON.stringify({ type: "job_accepted", id, jobId: "job-1", state: "running" }),
               );
             } else {
               ws.send(
@@ -76,9 +70,18 @@ function startFakeControlServer(options: { commandDelayMs?: number; port?: numbe
                   type: "command_result",
                   id,
                   status: "ok",
-                  result: { ok: true },
-                  artifacts: [],
-                  diagnostics: [],
+                  output: { ok: true },
+                  artifacts: {
+                    manifest: {
+                      uri: "file:///tmp/manifest.json",
+                      path: "/tmp/manifest.json",
+                      contentType: "application/json",
+                      byteSize: 2,
+                      sha256: "abc",
+                      finalized: true,
+                    },
+                  },
+                  durationMs: 0,
                 }),
               );
             }
@@ -86,23 +89,14 @@ function startFakeControlServer(options: { commandDelayMs?: number; port?: numbe
           case "job_status":
             ws.send(
               JSON.stringify({
-                type: "job_status_result",
-                id,
-                jobId: message.jobId,
-                state: "completed",
-                progress: { done: true },
-              }),
-            );
-            break;
-          case "job_result":
-            ws.send(
-              JSON.stringify({
                 type: "job_result",
                 id,
+                jobId: message.jobId,
+                state: "done",
                 status: "ok",
-                result: { written: 1 },
-                artifacts: [],
-                diagnostics: [],
+                output: { written: 1 },
+                artifacts: {},
+                durationMs: 1,
               }),
             );
             break;
@@ -112,23 +106,21 @@ function startFakeControlServer(options: { commandDelayMs?: number; port?: numbe
                 type: "job_cancel_result",
                 id,
                 accepted: true,
-                state: "cancelling",
+                state: "cancelled",
               }),
             );
             break;
           default:
             ws.send(
               JSON.stringify({
-                type: "command_error",
+                type: "error",
                 id,
-                status: "failed",
                 error: {
                   kind: "invalid_request",
                   code: "unknown",
                   message: "unknown",
                   retryable: false,
                 },
-                diagnostics: [],
               }),
             );
         }
@@ -143,6 +135,10 @@ function startFakeControlServer(options: { commandDelayMs?: number; port?: numbe
   };
 }
 
+function isCommandResult(value: unknown): value is CommandResult {
+  return typeof value === "object" && value !== null && "output" in value;
+}
+
 describe("HotReplClient", () => {
   const servers: Array<{ stop: () => void }> = [];
 
@@ -150,65 +146,59 @@ describe("HotReplClient", () => {
     for (const server of servers.splice(0)) server.stop();
   });
 
-  it("describes commands and sends command calls with args and lease", async () => {
+  it("waits for handshake, lists commands, and sends calls without auth or lease", async () => {
     const server = startFakeControlServer();
     servers.push(server);
     const client = new HotReplClient(server.url);
     await client.connect();
-    await client.authenticate("secret");
-    await client.acquireLease("ardenfall-controller");
 
     const commands = await client.describeCommands();
     const result = await client.call("compendium.info", { verbose: true });
     await client.close();
 
     expect(commands[0]).toMatchObject({ name: "compendium.info", version: 1, kind: "sync" });
-    expect(result.result).toEqual({ ok: true });
+    expect(result.output).toEqual({ ok: true });
+    expect(result.artifacts.manifest).toMatchObject({
+      logicalName: "manifest",
+      path: "/tmp/manifest.json",
+      finalized: true,
+    });
     expect(server.messages.map((message) => message.type)).toEqual([
-      "control_auth",
-      "lease_acquire",
-      "command_describe",
+      "commands_list",
       "command_call",
     ]);
     expect(server.messages[1]).toMatchObject({
-      type: "lease_acquire",
-      sessionId: "session-1",
-      clientName: "ardenfall-controller",
-    });
-    expect(server.messages[3]).toMatchObject({
       type: "command_call",
       name: "compendium.info",
       args: { verbose: true },
-      leaseId: "lease-1",
     });
+    expect(server.messages[1]).not.toHaveProperty("leaseId");
   });
 
-  it("supports job lifecycle messages", async () => {
+  it("returns terminal job results from job_status without a job_result request", async () => {
     const server = startFakeControlServer();
     servers.push(server);
     const client = new HotReplClient(server.url);
     await client.connect();
-    await client.authenticate();
-    await client.acquireLease("ardenfall-controller");
 
     const accepted = await client.startJob("entity.exportBatch", { runId: "run-1" });
-    const status = await client.jobStatus(accepted.jobId);
-    const result = await client.jobResult(accepted.jobId);
+    const terminal = await client.jobStatus(accepted.jobId);
     const cancel = await client.cancelJob(accepted.jobId);
     await client.close();
 
-    expect(accepted).toEqual({ jobId: "job-1", state: "accepted" });
-    expect(status).toEqual({ jobId: "job-1", state: "completed", progress: { done: true } });
-    expect(result.result).toEqual({ written: 1 });
-    expect(cancel).toEqual({ accepted: true, state: "cancelling" });
-    expect(server.messages.at(-3)).toMatchObject({
-      type: "job_status",
-      jobId: "job-1",
-      leaseId: "lease-1",
-    });
+    expect(accepted).toEqual({ jobId: "job-1", state: "running" });
+    expect(isCommandResult(terminal)).toBe(true);
+    if (!isCommandResult(terminal)) throw new Error("expected terminal command result");
+    expect(terminal.output).toEqual({ written: 1 });
+    expect(cancel).toEqual({ accepted: true, state: "cancelled" });
+    expect(server.messages.map((message) => message.type)).toEqual([
+      "command_call",
+      "job_status",
+      "job_cancel",
+    ]);
   });
 
-  it("rejects command_error with typed control error", async () => {
+  it("rejects failed command_result with typed control error", async () => {
     const server = startFakeControlServer();
     servers.push(server);
     const client = new HotReplClient(server.url);
@@ -239,6 +229,17 @@ describe("HotReplClient", () => {
 
     await expect(client.call("compendium.info", {}, { timeoutMs: 5 })).rejects.toThrow(
       "Timed out waiting for command_call",
+    );
+    await client.close();
+  });
+
+  it("rejects incompatible handshake protocol versions", async () => {
+    const server = startFakeControlServer({ protocolVersion: 999 });
+    servers.push(server);
+    const client = new HotReplClient(server.url);
+
+    await expect(client.connect()).rejects.toThrow(
+      "Unsupported HotRepl protocolVersion 999; expected 2",
     );
     await client.close();
   });

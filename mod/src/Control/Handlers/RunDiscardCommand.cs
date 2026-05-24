@@ -1,11 +1,12 @@
 using System.Threading;
 using System.Threading.Tasks;
+using ArdenfallCompendium.Control.Args;
+using ArdenfallCompendium.Control.Results;
 using HotRepl.Control;
-using Newtonsoft.Json.Linq;
 
 namespace ArdenfallCompendium.Control.Handlers;
 
-public sealed class RunDiscardCommand : IControlCommandHandler
+public sealed class RunDiscardCommand : IControlCommandHandler<RunIdArgs, RunDiscardResult>
 {
     private readonly CompendiumRunManager _runs;
 
@@ -14,25 +15,30 @@ public sealed class RunDiscardCommand : IControlCommandHandler
         _runs = runs;
     }
 
-    public ControlCommandDescriptor Descriptor { get; } = new(
-        "run.discard",
-        1,
-        ControlCommandKind.Synchronous,
-        mutatesState: true,
-        argsSchema: CompendiumCommandSchemas.AnyObject,
-        resultSchema: CompendiumCommandSchemas.AnyObject);
+    public string Name => "run.discard";
 
-    public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
+    public int Version => 1;
+
+    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+
+    public bool MutatesState => true;
+
+    public ValueTask<ControlCommandResult<RunDiscardResult>> ExecuteAsync(
+        ControlCommandContext context,
+        RunIdArgs args,
+        CancellationToken cancellationToken
+    )
     {
-        var runId = args["runId"]?.Value<string>();
-        if (string.IsNullOrWhiteSpace(runId))
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Validation("runIdRequired", "runId is required."));
-
-        _runs.Discard(runId);
-        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(new JObject
-        {
-            ["runId"] = runId,
-            ["discarded"] = true,
-        }));
+        var runIdValidation = CompendiumCommandResults.RequiredString<RunDiscardResult>(
+            args.RunId,
+            "runId"
+        );
+        if (runIdValidation != null) return new(runIdValidation);
+        _runs.Discard(args.RunId);
+        return new(
+            ControlCommandResult.Ok(
+                new RunDiscardResult { RunId = args.RunId, Discarded = true }
+            )
+        );
     }
 }

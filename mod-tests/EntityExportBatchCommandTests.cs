@@ -3,12 +3,12 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using ArdenfallCompendium.Control;
+using ArdenfallCompendium.Control.Args;
 using ArdenfallCompendium.Control.Handlers;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Extraction;
-using Newtonsoft.Json.Linq;
 using Xunit;
 
 namespace ArdenfallCompendium.Tests;
@@ -25,7 +25,7 @@ public sealed class EntityExportBatchCommandTests
 
         var result = await command.ExecuteAsync(
             null!,
-            new JObject { ["runId"] = run.RunId, ["entity"] = "item", ["offset"] = 0, ["limit"] = 1 },
+            new EntityExportBatchArgs { RunId = run.RunId, Entity = "item", Offset = 0, Limit = 1 },
             CancellationToken.None);
 
         Assert.Contains(result.Diagnostics, error => error.Code == "planMissing");
@@ -45,10 +45,13 @@ public sealed class EntityExportBatchCommandTests
 
         var result = await command.ExecuteAsync(
             null!,
-            new JObject { ["runId"] = run.RunId, ["entity"] = "item", ["offset"] = 0, ["limit"] = 1 },
+            new EntityExportBatchArgs { RunId = run.RunId, Entity = "item", Offset = 0, Limit = 1 },
             CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, result.Output!.Written);
+        Assert.Contains("item.chunk.000000", result.Artifacts.Keys);
         Assert.True(run.TryGetEntityPlan("item", out var plan));
         Assert.True(plan.IsComplete(0));
         Assert.Equal(1, run.Counts["item"]);

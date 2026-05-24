@@ -101,6 +101,18 @@ This set proves the variant model with one deep inheritance branch (`MeleeItemDa
 - Any new presentation primitives beyond `+error.svelte` — Slice 4 owns that.
 - Any map work — Slice 5+ owns that.
 
+### Operational slice — HotRepl v3 typed command migration
+
+**Status:** done
+**Plan:** HotRepl repo `docs/superpowers/plans/2026-05-24-typed-commands-phase-2-ardenfall-migration.md`
+**Spec coverage:** amendment §14 lifecycle/export flow plus HotRepl typed-command roadmap Phase 2.
+
+**Delivers:** clean cutover from Ardenfall's legacy HotRepl control wire to HotRepl.Core 3.0.0 typed commands. The mod now registers `IControlCommandHandler<TArgs,TOutput>` handlers with generated lower-camel schemas; command outputs use typed DTOs; artifact references are keyed maps. The controller consumes the current protocol (`handshake`, `commands_list`, `job_accepted`, terminal `job_result` from `job_status`, `.output`, artifact maps) and removes auth/token/lease/job-result request plumbing.
+
+**Operational notes:** runtime deployment must copy the HotRepl host output and sidecar DLLs, including schema-generation dependencies such as `Namotion.Reflection.dll`. HotRepl has no auth or lease handshake in this protocol; default deployment remains loopback-only (`127.0.0.1`) unless an operator explicitly supplies a broader trusted network boundary.
+
+**Verification evidence:** local gates passed (`bun test controller/test`, `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --nologo -v q`, `dotnet build mod/ArdenfallCompendium.csproj -c Debug --nologo -v q`, `bun run typecheck`). `bun run hotrepl:setup` also completed, copying HotRepl host sidecars, UnityCommands, and ArdenfallCompendium into the configured BepInEx plugins directory; the local `.env` explicitly set `HOTREPL_BIND_HOST=0.0.0.0`, so that setup run intentionally used host-reachable binding rather than the new script default. Live export against Ardenfall Demo `0.0.10.91` then completed through the typed command controller, publishing `snapshots/snapshots/0.0.10.91-20260524-1022238608580` with counts `{ item: 1273, stat-type: 20, item-category: 7, item-tag: 28 }`, diagnostics `{ fatal: 0, diagnostic: 1807 }`, `pipeline/dist/data.sqlite` at 6,238,208 bytes, 1,779 asset refs, and `game.quit` completed.
+
 ### Slice 2 — Item subtype enrichment
 
 **Status:** done

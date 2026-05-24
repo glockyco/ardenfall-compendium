@@ -1,28 +1,39 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
+using ArdenfallCompendium.Control.Results;
 using HotRepl.Control;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using PreflightRunner = ArdenfallCompendium.Preflight.Preflight;
 
 namespace ArdenfallCompendium.Control.Handlers;
 
-public sealed class CompendiumPreflightCommand : IControlCommandHandler
+public sealed class CompendiumPreflightCommand
+    : IControlCommandHandler<EmptyArgs, CompendiumPreflightResult>
 {
-    public ControlCommandDescriptor Descriptor { get; } = new(
-        "compendium.preflight",
-        1,
-        ControlCommandKind.Synchronous,
-        mutatesState: false,
-        argsSchema: CompendiumCommandSchemas.EmptyObject,
-        resultSchema: CompendiumCommandSchemas.AnyObject);
+    public string Name => "compendium.preflight";
 
-    public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
+    public int Version => 1;
+
+    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+
+    public bool MutatesState => false;
+
+    public ValueTask<ControlCommandResult<CompendiumPreflightResult>> ExecuteAsync(
+        ControlCommandContext context,
+        EmptyArgs args,
+        CancellationToken cancellationToken
+    )
     {
         var report = PreflightRunner.Run();
-        var result = JObject.FromObject(report, JsonSerializer.Create(Emit.JsonSettings.Default));
-        result["ready"] = report.Passed;
-        return new ValueTask<ControlCommandResult>(new ControlCommandResult(result, Array.Empty<HotRepl.Control.Artifacts.ArtifactRef>(), Array.Empty<ControlCommandError>()));
+        return new(
+            ControlCommandResult.Ok(
+                new CompendiumPreflightResult
+                {
+                    Ready = report.Passed,
+                    Passed = report.Passed,
+                    CompletedAt = report.CompletedAt,
+                    Checks = report.Checks,
+                }
+            )
+        );
     }
 }

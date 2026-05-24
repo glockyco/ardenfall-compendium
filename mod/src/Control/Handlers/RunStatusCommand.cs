@@ -1,11 +1,12 @@
 using System.Threading;
 using System.Threading.Tasks;
+using ArdenfallCompendium.Control.Args;
+using ArdenfallCompendium.Control.Results;
 using HotRepl.Control;
-using Newtonsoft.Json.Linq;
 
 namespace ArdenfallCompendium.Control.Handlers;
 
-public sealed class RunStatusCommand : IControlCommandHandler
+public sealed class RunStatusCommand : IControlCommandHandler<RunIdArgs, RunStatusResult>
 {
     private readonly CompendiumRunManager _runs;
 
@@ -14,30 +15,45 @@ public sealed class RunStatusCommand : IControlCommandHandler
         _runs = runs;
     }
 
-    public ControlCommandDescriptor Descriptor { get; } = new(
-        "run.status",
-        1,
-        ControlCommandKind.Synchronous,
-        mutatesState: false,
-        argsSchema: CompendiumCommandSchemas.AnyObject,
-        resultSchema: CompendiumCommandSchemas.AnyObject);
+    public string Name => "run.status";
 
-    public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
+    public int Version => 1;
+
+    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+
+    public bool MutatesState => false;
+
+    public ValueTask<ControlCommandResult<RunStatusResult>> ExecuteAsync(
+        ControlCommandContext context,
+        RunIdArgs args,
+        CancellationToken cancellationToken
+    )
     {
-        var runId = args["runId"]?.Value<string>();
-        if (string.IsNullOrWhiteSpace(runId))
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Validation("runIdRequired", "runId is required."));
-        if (!_runs.TryGet(runId, out var run))
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Validation("unknownRun", $"Unknown run '{runId}'."));
+        var runIdValidation = CompendiumCommandResults.RequiredString<RunStatusResult>(
+            args.RunId,
+            "runId"
+        );
+        if (runIdValidation != null) return new(runIdValidation);
+        if (!_runs.TryGet(args.RunId, out var run))
+            return new(
+                CompendiumCommandResults.Validation<RunStatusResult>(
+                    "unknownRun",
+                    $"Unknown run '{args.RunId}'."
+                )
+            );
 
-        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(new JObject
-        {
-            ["runId"] = run.RunId,
-            ["state"] = run.State,
-            ["counts"] = JObject.FromObject(run.Counts),
-            ["finalized"] = run.Finalized,
-            ["workspaceDir"] = run.WorkspaceDir,
-            ["publishedDir"] = run.PublishedDir,
-        }));
+        return new(
+            ControlCommandResult.Ok(
+                new RunStatusResult
+                {
+                    RunId = run.RunId,
+                    State = run.State,
+                    Counts = run.Counts,
+                    Finalized = run.Finalized,
+                    WorkspaceDir = run.WorkspaceDir,
+                    PublishedDir = run.PublishedDir,
+                }
+            )
+        );
     }
 }

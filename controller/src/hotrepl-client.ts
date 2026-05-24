@@ -8,13 +8,11 @@ export interface ControlError {
 
 export class ControlCommandError extends Error {
   readonly error: ControlError;
-  readonly diagnostics: ControlError[];
 
-  constructor(error: ControlError, diagnostics: ControlError[] = []) {
+  constructor(error: ControlError) {
     super(error.message);
     this.name = "ControlCommandError";
     this.error = error;
-    this.diagnostics = diagnostics;
   }
 }
 
@@ -23,8 +21,9 @@ export interface ControlCommandDescriptor {
   version: number;
   kind: "sync" | "job";
   mutatesState: boolean;
-  argsSchema: unknown;
-  resultSchema: unknown;
+  inputSchema?: unknown;
+  outputSchema?: unknown;
+  artifactsSchema?: unknown;
 }
 
 export interface ArtifactRef {
@@ -37,11 +36,12 @@ export interface ArtifactRef {
   finalized: boolean;
 }
 
+export type ArtifactMap = Record<string, ArtifactRef>;
+
 export interface CommandResult {
   status: string;
-  result: Record<string, unknown>;
-  artifacts: ArtifactRef[];
-  diagnostics: ControlError[];
+  output: Record<string, unknown>;
+  artifacts: ArtifactMap;
 }
 
 export interface CommandAccepted {
@@ -54,6 +54,8 @@ export interface JobStatus {
   state: string;
   progress?: unknown;
 }
+
+export type JobPollResult = JobStatus | CommandResult;
 
 export interface JobCancelResult {
   accepted: boolean;
@@ -71,8 +73,6 @@ export class HotReplClient {
   private readonly url: string;
   private ws?: WebSocket;
   private counter = 0;
-  private sessionId?: string;
-  private leaseId?: string;
   private readonly pending = new Map<string, Pending>();
 
   constructor(url: string) {
@@ -81,71 +81,79 @@ export class HotReplClient {
 
   async connect(options: { timeoutMs?: number; retryIntervalMs?: number } = {}): Promise<void> {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) return;
-    const deadline = Date.now() + (options.timeoutMs ?? 0);
+    const deadline = options.timeoutMs === undefined ? undefined : Date.now() + options.timeoutMs;
     const retryIntervalMs = options.retryIntervalMs ?? 1_000;
     for (;;) {
       try {
-        await this.connectOnce();
+        const remaining = deadline === undefined ? undefined : Math.max(1, deadline - Date.now());
+        await this.connectOnce(remaining);
         return;
       } catch (error) {
         this.ws?.close();
         this.ws = undefined;
-        if (options.timeoutMs === undefined || Date.now() >= deadline) throw error;
+        if (deadline === undefined || Date.now() >= deadline) throw error;
         await Bun.sleep(Math.min(retryIntervalMs, Math.max(0, deadline - Date.now())));
       }
     }
   }
 
-  private async connectOnce(): Promise<void> {
+  private async connectOnce(timeoutMs = 10_000): Promise<void> {
     const ws = new WebSocket(this.url);
     this.ws = ws;
     ws.addEventListener("message", (event) => this.handleMessage(event));
     ws.addEventListener("error", () => this.rejectAll(new Error("HotRepl WebSocket error")));
     ws.addEventListener("close", () => this.rejectAll(new Error("HotRepl WebSocket closed")));
+
     await new Promise<void>((resolve, reject) => {
-      ws.addEventListener("open", () => resolve(), { once: true });
-      ws.addEventListener("error", () => reject(new Error("Failed to connect to HotRepl")), {
-        once: true,
-      });
+      const timeout = setTimeout(() => {
+        cleanup();
+        reject(new Error("Timed out waiting for HotRepl handshake"));
+      }, timeoutMs);
+      const cleanup = () => {
+        clearTimeout(timeout);
+        ws.removeEventListener("message", onMessage);
+        ws.removeEventListener("error", onError);
+        ws.removeEventListener("close", onClose);
+      };
+      const onMessage = (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(String(event.data)) as JsonObject;
+          if (data.type !== "handshake") return;
+          const protocolVersion = Number(data.protocolVersion);
+          if (protocolVersion !== 2) {
+            cleanup();
+            reject(
+              new Error(
+                `Unsupported HotRepl protocolVersion ${String(data.protocolVersion)}; expected 2`,
+              ),
+            );
+            return;
+          }
+          cleanup();
+          resolve();
+        } catch (error) {
+          cleanup();
+          reject(error instanceof Error ? error : new Error(String(error)));
+        }
+      };
+      const onError = () => {
+        cleanup();
+        reject(new Error("Failed to connect to HotRepl"));
+      };
+      const onClose = () => {
+        cleanup();
+        reject(new Error("HotRepl WebSocket closed before handshake"));
+      };
+      ws.addEventListener("message", onMessage);
+      ws.addEventListener("error", onError, { once: true });
+      ws.addEventListener("close", onClose, { once: true });
     });
-  }
-
-  async authenticate(
-    token?: string,
-  ): Promise<{ ok: boolean; sessionId?: string; error?: ControlError }> {
-    const payload: JsonObject = { type: "control_auth", id: this.nextId() };
-    if (token !== undefined) payload.token = token;
-    const response = await this.request(payload);
-    const result = {
-      ok: Boolean(response.ok),
-      sessionId: typeof response.sessionId === "string" ? response.sessionId : undefined,
-      error: isObject(response.error) ? parseControlError(response.error) : undefined,
-    };
-    if (result.ok && result.sessionId) this.sessionId = result.sessionId;
-    return result;
-  }
-
-  async acquireLease(
-    clientName: string,
-  ): Promise<{ ok: boolean; leaseId?: string; error?: ControlError }> {
-    if (!this.sessionId) await this.authenticate();
-    const response = await this.request({
-      type: "lease_acquire",
-      id: this.nextId(),
-      sessionId: this.sessionId,
-      clientName,
-    });
-    const result = {
-      ok: Boolean(response.ok),
-      leaseId: typeof response.leaseId === "string" ? response.leaseId : undefined,
-      error: isObject(response.error) ? parseControlError(response.error) : undefined,
-    };
-    if (result.ok && result.leaseId) this.leaseId = result.leaseId;
-    return result;
   }
 
   async describeCommands(): Promise<ControlCommandDescriptor[]> {
-    const response = await this.request({ type: "command_describe", id: this.nextId() });
+    const response = await this.request({ type: "commands_list", id: this.nextId() });
+    if (response.type !== "commands_list_result")
+      throw new Error(`Expected commands_list_result, got ${String(response.type)}`);
     const commands = Array.isArray(response.commands) ? response.commands : [];
     return commands.filter(isObject).map(parseDescriptor);
   }
@@ -153,7 +161,7 @@ export class HotReplClient {
   async call(
     name: string,
     args: JsonObject,
-    options: { timeoutMs?: number; idempotencyKey?: string } = {},
+    options: { timeoutMs?: number } = {},
   ): Promise<CommandResult> {
     const response = await this.request(this.commandPayload(name, args, options));
     if (response.type !== "command_result")
@@ -164,30 +172,28 @@ export class HotReplClient {
   async startJob(
     name: string,
     args: JsonObject,
-    options: { timeoutMs?: number; idempotencyKey?: string } = {},
+    options: { timeoutMs?: number } = {},
   ): Promise<CommandAccepted> {
     const response = await this.request(this.commandPayload(name, args, options));
-    if (response.type !== "command_accepted")
-      throw new Error(`Expected command_accepted, got ${String(response.type)}`);
+    if (response.type !== "job_accepted")
+      throw new Error(`Expected job_accepted, got ${String(response.type)}`);
     return { jobId: String(response.jobId), state: String(response.state) };
   }
 
-  async jobStatus(jobId: string): Promise<JobStatus> {
+  async jobStatus(jobId: string): Promise<JobPollResult> {
     const response = await this.request(this.jobPayload("job_status", jobId));
+    if (response.type === "job_result") return parseCommandResult(response);
+    if (response.type !== "job_status_result")
+      throw new Error(`Expected job_status_result or job_result, got ${String(response.type)}`);
     const status: JobStatus = { jobId: String(response.jobId), state: String(response.state) };
     if (response.progress !== undefined) status.progress = response.progress;
     return status;
   }
 
-  async jobResult(jobId: string): Promise<CommandResult> {
-    const response = await this.request(this.jobPayload("job_result", jobId));
-    if (response.type !== "job_result")
-      throw new Error(`Expected job_result, got ${String(response.type)}`);
-    return parseCommandResult(response);
-  }
-
   async cancelJob(jobId: string): Promise<JobCancelResult> {
     const response = await this.request(this.jobPayload("job_cancel", jobId));
+    if (response.type !== "job_cancel_result")
+      throw new Error(`Expected job_cancel_result, got ${String(response.type)}`);
     return { accepted: Boolean(response.accepted), state: String(response.state) };
   }
 
@@ -205,19 +211,15 @@ export class HotReplClient {
   private commandPayload(
     name: string,
     args: JsonObject,
-    options: { timeoutMs?: number; idempotencyKey?: string },
+    options: { timeoutMs?: number },
   ): JsonObject {
     const payload: JsonObject = { type: "command_call", id: this.nextId(), name, args };
-    if (this.leaseId) payload.leaseId = this.leaseId;
     if (options.timeoutMs !== undefined) payload.timeoutMs = options.timeoutMs;
-    if (options.idempotencyKey !== undefined) payload.idempotencyKey = options.idempotencyKey;
     return payload;
   }
 
   private jobPayload(type: string, jobId: string): JsonObject {
-    const payload: JsonObject = { type, id: this.nextId(), jobId };
-    if (this.leaseId) payload.leaseId = this.leaseId;
-    return payload;
+    return { type, id: this.nextId(), jobId };
   }
 
   private async request(payload: JsonObject): Promise<JsonObject> {
@@ -247,13 +249,10 @@ export class HotReplClient {
     if (!pending) return;
     this.pending.delete(id);
     clearTimeout(pending.timeout);
-    if (response.type === "command_error") {
+    if (response.type === "error" || response.type === "command_error") {
       pending.reject(
         new ControlCommandError(
           parseControlError(isObject(response.error) ? response.error : undefined),
-          Array.isArray(response.diagnostics)
-            ? response.diagnostics.filter(isObject).map(parseControlError)
-            : [],
         ),
       );
       return;
@@ -294,32 +293,40 @@ function parseControlError(data: JsonObject | undefined): ControlError {
 }
 
 function parseDescriptor(data: JsonObject): ControlCommandDescriptor {
-  return {
+  const descriptor: ControlCommandDescriptor = {
     name: String(data.name),
-    version: Number(data.version),
+    version: Number(data.majorVersion ?? data.version),
     kind: data.kind === "job" ? "job" : "sync",
     mutatesState: Boolean(data.mutatesState),
-    argsSchema: data.argsSchema ?? {},
-    resultSchema: data.resultSchema ?? {},
   };
+  if (data.inputSchema !== undefined) descriptor.inputSchema = data.inputSchema;
+  if (data.outputSchema !== undefined) descriptor.outputSchema = data.outputSchema;
+  if (data.artifactsSchema !== undefined) descriptor.artifactsSchema = data.artifactsSchema;
+  return descriptor;
 }
 
 function parseCommandResult(data: JsonObject): CommandResult {
+  if (data.status === "failed") {
+    throw new ControlCommandError(parseControlError(isObject(data.error) ? data.error : undefined));
+  }
   return {
     status: String(data.status),
-    result: isObject(data.result) ? data.result : {},
-    artifacts: Array.isArray(data.artifacts)
-      ? data.artifacts.filter(isObject).map(parseArtifact)
-      : [],
-    diagnostics: Array.isArray(data.diagnostics)
-      ? data.diagnostics.filter(isObject).map(parseControlError)
-      : [],
+    output: isObject(data.output) ? data.output : {},
+    artifacts: isObject(data.artifacts) ? parseArtifacts(data.artifacts) : {},
   };
 }
 
-function parseArtifact(data: JsonObject): ArtifactRef {
+function parseArtifacts(data: JsonObject): ArtifactMap {
+  const artifacts: ArtifactMap = {};
+  for (const [logicalName, value] of Object.entries(data)) {
+    if (isObject(value)) artifacts[logicalName] = parseArtifact(logicalName, value);
+  }
+  return artifacts;
+}
+
+function parseArtifact(logicalName: string, data: JsonObject): ArtifactRef {
   const artifact: ArtifactRef = {
-    logicalName: String(data.logicalName),
+    logicalName,
     uri: String(data.uri),
     contentType: String(data.contentType),
     byteSize: Number(data.byteSize),

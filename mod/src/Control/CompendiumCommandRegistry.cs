@@ -32,7 +32,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         Register(new Handlers.GameQuitCommand());
     }
 
-    private void Register(IControlCommandHandler handler)
+    private void Register<TArgs, TOutput>(IControlCommandHandler<TArgs, TOutput> handler)
     {
         _registrations.Add(GlobalControlCommandRegistry.Instance.Register(handler));
     }

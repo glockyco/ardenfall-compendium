@@ -1,21 +1,25 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using ArdenfallCompendium.Control.Args;
+using ArdenfallCompendium.Control.Results;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Extraction;
 using HotRepl.Control;
+using HotRepl.Control.Artifacts;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace ArdenfallCompendium.Control.Handlers;
 
-public sealed class EntityExportBatchCommand : IControlCommandHandler
+public sealed class EntityExportBatchCommand
+    : IControlCommandHandler<EntityExportBatchArgs, EntityExportBatchResult>
 {
     private readonly CompendiumRunManager _runs;
     private readonly IItemExtractionCache _items;
-
 
     public EntityExportBatchCommand(CompendiumRunManager runs, IItemExtractionCache items)
     {
@@ -23,77 +27,130 @@ public sealed class EntityExportBatchCommand : IControlCommandHandler
         _items = items;
     }
 
-    public ControlCommandDescriptor Descriptor { get; } = new(
-        "entity.exportBatch",
-        1,
-        ControlCommandKind.Job,
-        mutatesState: true,
-        argsSchema: CompendiumCommandSchemas.AnyObject,
-        resultSchema: CompendiumCommandSchemas.AnyObject);
+    public string Name => "entity.exportBatch";
 
-    public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
+    public int Version => 1;
+
+    public ControlCommandKind Kind => ControlCommandKind.Job;
+
+    public bool MutatesState => true;
+
+    public ValueTask<ControlCommandResult<EntityExportBatchResult>> ExecuteAsync(
+        ControlCommandContext context,
+        EntityExportBatchArgs args,
+        CancellationToken cancellationToken
+    )
     {
-        var validation = Validate(args, out var run, out var plan, out var offset, out var limit);
-        if (validation != null)
-            return new ValueTask<ControlCommandResult>(validation);
+        var validation = Validate(args, out var run, out var plan);
+        if (validation != null) return new(validation);
 
         cancellationToken.ThrowIfCancellationRequested();
         var rows = _items.GetOrExtract(run);
         if (rows.Count != plan.Total)
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition("planChanged", $"Planned item total {plan.Total} no longer matches extracted total {rows.Count}."));
-        var slice = rows.Skip(offset).Take(limit).ToList();
-        var expectedWritten = System.Math.Min(plan.BatchSize, plan.Total - offset);
+            return new(
+                CompendiumCommandResults.Precondition<EntityExportBatchResult>(
+                    "planChanged",
+                    $"Planned item total {plan.Total} no longer matches extracted total {rows.Count}."
+                )
+            );
+        var slice = rows.Skip(args.Offset).Take(args.Limit).ToList();
+        var expectedWritten = Math.Min(plan.BatchSize, plan.Total - args.Offset);
         if (slice.Count != expectedWritten)
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition("batchIncomplete", $"Batch at offset {offset} wrote {slice.Count} rows; expected {expectedWritten}."));
+            return new(
+                CompendiumCommandResults.Precondition<EntityExportBatchResult>(
+                    "batchIncomplete",
+                    $"Batch at offset {args.Offset} wrote {slice.Count} rows; expected {expectedWritten}."
+                )
+            );
         var envelope = new ItemSnapshotEnvelope { Rows = slice };
         var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "item", "chunks");
         Directory.CreateDirectory(chunksDir);
-        var path = Path.Combine(chunksDir, $"{offset:D6}.json");
+        var path = Path.Combine(chunksDir, $"{args.Offset:D6}.json");
         var json = JsonConvert.SerializeObject(envelope, JsonSettings.Default);
         File.WriteAllText(path, json);
         var sha256 = ManifestBuilder.Sha256Hex(json);
-        run.MarkEntityChunkComplete("item", offset, slice.Count);
+        run.MarkEntityChunkComplete("item", args.Offset, slice.Count);
         _runs.Save(run);
 
-        var result = new JObject
+        var result = new EntityExportBatchResult
         {
-            ["entity"] = "item",
-            ["offset"] = offset,
-            ["limit"] = limit,
-            ["written"] = slice.Count,
-            ["total"] = rows.Count,
+            Entity = "item",
+            Offset = args.Offset,
+            Limit = args.Limit,
+            Written = slice.Count,
+            Total = rows.Count,
         };
-        return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(
-            result,
-            CompendiumCommandResults.FileArtifact($"item.chunk.{offset:D6}", path, "application/json", sha256)));
+        var artifacts = new Dictionary<string, ArtifactRef>(StringComparer.Ordinal)
+        {
+            [$"item.chunk.{args.Offset:D6}"] = CompendiumCommandResults.FileArtifact(
+                $"item.chunk.{args.Offset:D6}",
+                path,
+                "application/json",
+                sha256
+            ),
+        };
+        return new(ControlCommandResult.Ok(result, artifacts));
     }
 
-    private ControlCommandResult? Validate(JObject args, out CompendiumRun run, out CompendiumEntityRunPlan plan, out int offset, out int limit)
+    private ControlCommandResult<EntityExportBatchResult>? Validate(
+        EntityExportBatchArgs args,
+        out CompendiumRun run,
+        out CompendiumEntityRunPlan plan
+    )
     {
         run = null!;
         plan = null!;
-        offset = args["offset"]?.Value<int?>() ?? -1;
-        limit = args["limit"]?.Value<int?>() ?? -1;
+        var runIdValidation = CompendiumCommandResults.RequiredString<EntityExportBatchResult>(
+            args.RunId,
+            "runId"
+        );
+        if (runIdValidation != null) return runIdValidation;
+        var entityValidation = CompendiumCommandResults.RequiredString<EntityExportBatchResult>(
+            args.Entity,
+            "entity"
+        );
+        if (entityValidation != null) return entityValidation;
 
-        var runId = args["runId"]?.Value<string>();
-        if (string.IsNullOrWhiteSpace(runId))
-            return CompendiumCommandResults.Validation("runIdRequired", "runId is required.");
-        if (!_runs.TryGet(runId, out run))
-            return CompendiumCommandResults.Validation("unknownRun", $"Unknown run '{runId}'.");
+        if (!_runs.TryGet(args.RunId, out run))
+            return CompendiumCommandResults.Validation<EntityExportBatchResult>(
+                "unknownRun",
+                $"Unknown run '{args.RunId}'."
+            );
         if (run.Finalized)
-            return CompendiumCommandResults.Precondition("runFinalized", $"Run '{runId}' is already finalized.");
-        if (args["entity"]?.Value<string>() != "item")
-            return CompendiumCommandResults.Validation("unsupportedEntity", "Only entity 'item' is supported.");
+            return CompendiumCommandResults.Precondition<EntityExportBatchResult>(
+                "runFinalized",
+                $"Run '{args.RunId}' is already finalized."
+            );
+        if (!string.Equals(args.Entity, "item", StringComparison.Ordinal))
+            return CompendiumCommandResults.Validation<EntityExportBatchResult>(
+                "unsupportedEntity",
+                "Only entity 'item' is supported."
+            );
         if (!run.TryGetEntityPlan("item", out plan))
-            return CompendiumCommandResults.Precondition("planMissing", $"Run '{runId}' does not have an item plan.");
-        if (offset < 0)
-            return CompendiumCommandResults.Validation("offsetInvalid", "offset must be zero or greater.");
-        if (limit <= 0)
-            return CompendiumCommandResults.Validation("limitInvalid", "limit must be greater than zero.");
-        if (limit != plan.BatchSize)
-            return CompendiumCommandResults.Validation("limitInvalid", $"limit must match planned batchSize {plan.BatchSize}.");
-        if (!plan.IsExpectedOffset(offset))
-            return CompendiumCommandResults.Validation("offsetInvalid", $"offset must be one of the planned item batch offsets.");
+            return CompendiumCommandResults.Precondition<EntityExportBatchResult>(
+                "planMissing",
+                $"Run '{args.RunId}' does not have an item plan."
+            );
+        if (args.Offset < 0)
+            return CompendiumCommandResults.Validation<EntityExportBatchResult>(
+                "offsetInvalid",
+                "offset must be zero or greater."
+            );
+        if (args.Limit <= 0)
+            return CompendiumCommandResults.Validation<EntityExportBatchResult>(
+                "limitInvalid",
+                "limit must be greater than zero."
+            );
+        if (args.Limit != plan.BatchSize)
+            return CompendiumCommandResults.Validation<EntityExportBatchResult>(
+                "limitInvalid",
+                $"limit must match planned batchSize {plan.BatchSize}."
+            );
+        if (!plan.IsExpectedOffset(args.Offset))
+            return CompendiumCommandResults.Validation<EntityExportBatchResult>(
+                "offsetInvalid",
+                "offset must be one of the planned item batch offsets."
+            );
         return null;
     }
 }

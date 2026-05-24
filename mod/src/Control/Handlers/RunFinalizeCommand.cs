@@ -5,12 +5,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ArdenfallCompendium.Assets;
+using ArdenfallCompendium.Control.Args;
+using ArdenfallCompendium.Control.Results;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
-using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Entities.ItemTag;
+using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
 using HotRepl.Control;
@@ -21,7 +23,7 @@ using PreflightRunner = ArdenfallCompendium.Preflight.Preflight;
 
 namespace ArdenfallCompendium.Control.Handlers;
 
-public sealed class RunFinalizeCommand : IControlCommandHandler
+public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFinalizeResult>
 {
     private readonly CompendiumRunManager _runs;
     private readonly IItemExtractionCache _items;
@@ -38,7 +40,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         IStatTypeExtractionCache? statTypes = null,
         IItemCategoryExtractionCache? itemCategories = null,
         IItemTagExtractionCache? itemTags = null,
-        Func<PreflightReport>? preflight = null)
+        Func<PreflightReport>? preflight = null
+    )
     {
         _runs = runs;
         _items = items;
@@ -49,40 +52,69 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         _preflight = preflight ?? PreflightRunner.Run;
     }
 
-    public ControlCommandDescriptor Descriptor { get; } = new(
-        "run.finalize",
-        1,
-        ControlCommandKind.Synchronous,
-        mutatesState: true,
-        argsSchema: CompendiumCommandSchemas.AnyObject,
-        resultSchema: CompendiumCommandSchemas.AnyObject);
+    public string Name => "run.finalize";
 
-    public ValueTask<ControlCommandResult> ExecuteAsync(ControlCommandContext context, JObject args, CancellationToken cancellationToken)
+    public int Version => 1;
+
+    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+
+    public bool MutatesState => true;
+
+    public ValueTask<ControlCommandResult<RunFinalizeResult>> ExecuteAsync(
+        ControlCommandContext context,
+        RunIdArgs args,
+        CancellationToken cancellationToken
+    )
     {
-        var runId = args["runId"]?.Value<string>();
-        if (string.IsNullOrWhiteSpace(runId))
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Validation("runIdRequired", "runId is required."));
-        if (!_runs.TryGet(runId, out var run))
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Validation("unknownRun", $"Unknown run '{runId}'."));
+        var runIdValidation = CompendiumCommandResults.RequiredString<RunFinalizeResult>(
+            args.RunId,
+            "runId"
+        );
+        if (runIdValidation != null) return new(runIdValidation);
+        if (!_runs.TryGet(args.RunId, out var run))
+            return new(
+                CompendiumCommandResults.Validation<RunFinalizeResult>(
+                    "unknownRun",
+                    $"Unknown run '{args.RunId}'."
+                )
+            );
         if (run.Finalized)
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition("runFinalized", $"Run '{runId}' is already finalized."));
+            return new(
+                CompendiumCommandResults.Precondition<RunFinalizeResult>(
+                    "runFinalized",
+                    $"Run '{args.RunId}' is already finalized."
+                )
+            );
 
         var preflight = _preflight();
         if (!preflight.Passed)
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition(
-                "preflightFailed",
-                "Preflight failed; no snapshot was written.",
-                JObject.FromObject(preflight)));
+            return new(
+                CompendiumCommandResults.Precondition<RunFinalizeResult>(
+                    "preflightFailed",
+                    "Preflight failed; no snapshot was written.",
+                    JObject.FromObject(preflight)
+                )
+            );
 
         var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "item", "chunks");
-        var chunkValidation = ReadPlannedItemChunks(run, chunksDir, out var rows, out var diagnosticTotals, out var diagnostics);
-        if (chunkValidation != null)
-            return new ValueTask<ControlCommandResult>(chunkValidation);
+        var chunkValidation = ReadPlannedItemChunks(
+            run,
+            chunksDir,
+            out var rows,
+            out var diagnosticTotals,
+            out var diagnostics
+        );
+        if (chunkValidation != null) return new(chunkValidation);
 
         var snapshotsRoot = Path.Combine(run.OutputBaseDir, "snapshots");
         var publishedDir = Path.Combine(snapshotsRoot, $"{run.GameVersion}-{run.RunId}");
         if (Directory.Exists(publishedDir))
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Precondition("snapshotExists", $"Snapshot directory already exists: {publishedDir}"));
+            return new(
+                CompendiumCommandResults.Precondition<RunFinalizeResult>(
+                    "snapshotExists",
+                    $"Snapshot directory already exists: {publishedDir}"
+                )
+            );
 
         Directory.CreateDirectory(snapshotsRoot);
         var stagingDir = Path.Combine(snapshotsRoot, $".staging-{run.GameVersion}-{run.RunId}");
@@ -159,7 +191,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
                 contentHashes: hashes,
                 extractorVersion: Plugin.Version,
                 gameVersion: run.GameVersion,
-                buildIdentifier: run.RunId);
+                buildIdentifier: run.RunId
+            );
             var manifestJson = JsonConvert.SerializeObject(manifest, JsonSettings.Default);
             File.WriteAllText(Path.Combine(stagingDir, "manifest.json"), manifestJson);
             var manifestHash = ManifestBuilder.Sha256Hex(manifestJson);
@@ -175,28 +208,33 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             _runs.Save(run);
 
             var manifestPath = Path.Combine(publishedDir, "manifest.json");
-            var result = new JObject
+            var result = new RunFinalizeResult
             {
-                ["runId"] = run.RunId,
-                ["publishedDir"] = publishedDir,
-                ["manifestPath"] = manifestPath,
+                RunId = run.RunId,
+                PublishedDir = publishedDir,
+                ManifestPath = manifestPath,
             };
-            var artifacts = new List<ArtifactRef>
+            var artifacts = new Dictionary<string, ArtifactRef>(StringComparer.Ordinal)
             {
-                CompendiumCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash),
-                CompendiumCommandResults.FileArtifact("items", Path.Combine(publishedDir, "items.json"), "application/json", hashes["items.json"]),
-                CompendiumCommandResults.FileArtifact("asset-manifest", Path.Combine(publishedDir, "asset-manifest.json"), "application/json", hashes["asset-manifest.json"]),
-                CompendiumCommandResults.FileArtifact("master-tooltip", Path.Combine(publishedDir, "master-tooltip.json"), "application/json", hashes["master-tooltip.json"]),
-                CompendiumCommandResults.FileArtifact("stat-types", Path.Combine(publishedDir, "stat-types.json"), "application/json", hashes["stat-types.json"]),
-                CompendiumCommandResults.FileArtifact("item-categories", Path.Combine(publishedDir, "item-categories.json"), "application/json", hashes["item-categories.json"]),
-                CompendiumCommandResults.FileArtifact("item-tags", Path.Combine(publishedDir, "item-tags.json"), "application/json", hashes["item-tags.json"]),
+                ["manifest"] = CompendiumCommandResults.FileArtifact("manifest", manifestPath, "application/json", manifestHash),
+                ["items"] = CompendiumCommandResults.FileArtifact("items", Path.Combine(publishedDir, "items.json"), "application/json", hashes["items.json"]),
+                ["asset-manifest"] = CompendiumCommandResults.FileArtifact("asset-manifest", Path.Combine(publishedDir, "asset-manifest.json"), "application/json", hashes["asset-manifest.json"]),
+                ["master-tooltip"] = CompendiumCommandResults.FileArtifact("master-tooltip", Path.Combine(publishedDir, "master-tooltip.json"), "application/json", hashes["master-tooltip.json"]),
+                ["stat-types"] = CompendiumCommandResults.FileArtifact("stat-types", Path.Combine(publishedDir, "stat-types.json"), "application/json", hashes["stat-types.json"]),
+                ["item-categories"] = CompendiumCommandResults.FileArtifact("item-categories", Path.Combine(publishedDir, "item-categories.json"), "application/json", hashes["item-categories.json"]),
+                ["item-tags"] = CompendiumCommandResults.FileArtifact("item-tags", Path.Combine(publishedDir, "item-tags.json"), "application/json", hashes["item-tags.json"]),
             };
             if (hashes.TryGetValue("diagnostics.json", out var diagnosticsHash))
             {
-                artifacts.Add(CompendiumCommandResults.FileArtifact("diagnostics", Path.Combine(publishedDir, "diagnostics.json"), "application/json", diagnosticsHash));
+                artifacts["diagnostics"] = CompendiumCommandResults.FileArtifact(
+                    "diagnostics",
+                    Path.Combine(publishedDir, "diagnostics.json"),
+                    "application/json",
+                    diagnosticsHash
+                );
             }
 
-            return new ValueTask<ControlCommandResult>(CompendiumCommandResults.Ok(result, artifacts.ToArray()));
+            return new(ControlCommandResult.Ok(result, artifacts));
         }
         catch
         {
@@ -205,33 +243,44 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         }
     }
 
-    private static ControlCommandResult? ReadPlannedItemChunks(
+    private static ControlCommandResult<RunFinalizeResult>? ReadPlannedItemChunks(
         CompendiumRun run,
         string chunksDir,
         out List<ItemSnapshotRow> rows,
         out DiagnosticTotals diagnosticTotals,
-        out List<JObject> diagnostics)
+        out List<JObject> diagnostics
+    )
     {
         rows = new List<ItemSnapshotRow>();
         diagnosticTotals = new DiagnosticTotals();
         diagnostics = new List<JObject>();
 
         if (!run.TryGetEntityPlan("item", out var plan))
-            return CompendiumCommandResults.Precondition("planMissing", $"Run '{run.RunId}' does not have an item plan.");
+            return CompendiumCommandResults.Precondition<RunFinalizeResult>(
+                "planMissing",
+                $"Run '{run.RunId}' does not have an item plan."
+            );
         if (plan.BatchSize <= 0)
-            return CompendiumCommandResults.Precondition("planInvalid", "Item plan batchSize must be greater than zero.");
+            return CompendiumCommandResults.Precondition<RunFinalizeResult>(
+                "planInvalid",
+                "Item plan batchSize must be greater than zero."
+            );
         if (!Directory.Exists(chunksDir))
-            return CompendiumCommandResults.Precondition("chunksMissing", "No item chunks were exported.");
+            return CompendiumCommandResults.Precondition<RunFinalizeResult>(
+                "chunksMissing",
+                "No item chunks were exported."
+            );
 
         var expectedOffsets = plan.ExpectedOffsets().ToList();
         var missingOffsets = expectedOffsets
             .Where(offset => !plan.IsComplete(offset) || !File.Exists(ChunkPath(chunksDir, offset)))
             .ToList();
         if (missingOffsets.Count > 0)
-            return CompendiumCommandResults.Precondition(
+            return CompendiumCommandResults.Precondition<RunFinalizeResult>(
                 "chunksIncomplete",
                 $"Missing item chunks at offsets: {string.Join(", ", missingOffsets)}.",
-                new JObject { ["missingOffsets"] = JArray.FromObject(missingOffsets) });
+                new JObject { ["missingOffsets"] = JArray.FromObject(missingOffsets) }
+            );
 
         foreach (var offset in expectedOffsets)
         {
@@ -239,13 +288,17 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
             var json = File.ReadAllText(chunkPath);
             var envelope = JsonConvert.DeserializeObject<ItemSnapshotEnvelope>(json, JsonSettings.Default);
             if (envelope?.Rows == null)
-                return CompendiumCommandResults.Precondition("chunkInvalid", $"Item chunk is invalid: {chunkPath}");
+                return CompendiumCommandResults.Precondition<RunFinalizeResult>(
+                    "chunkInvalid",
+                    $"Item chunk is invalid: {chunkPath}"
+                );
 
             var expectedWritten = Math.Min(plan.BatchSize, plan.Total - offset);
             if (envelope.Rows.Count != expectedWritten)
-                return CompendiumCommandResults.Precondition(
+                return CompendiumCommandResults.Precondition<RunFinalizeResult>(
                     "chunkRowCountMismatch",
-                    $"Item chunk at offset {offset} contains {envelope.Rows.Count} rows; expected {expectedWritten}.");
+                    $"Item chunk at offset {offset} contains {envelope.Rows.Count} rows; expected {expectedWritten}."
+                );
 
             foreach (var row in envelope.Rows)
             {
@@ -258,14 +311,16 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         }
 
         if (rows.Count != plan.Total)
-            return CompendiumCommandResults.Precondition(
+            return CompendiumCommandResults.Precondition<RunFinalizeResult>(
                 "chunkRowCountMismatch",
-                $"Item chunks contain {rows.Count} rows; expected {plan.Total}.");
+                $"Item chunks contain {rows.Count} rows; expected {plan.Total}."
+            );
 
         return null;
     }
 
-    private static string ChunkPath(string chunksDir, int offset) => Path.Combine(chunksDir, $"{offset:D6}.json");
+    private static string ChunkPath(string chunksDir, int offset) =>
+        Path.Combine(chunksDir, $"{offset:D6}.json");
 
     private static void WriteJson(string dir, string fileName, object value, IDictionary<string, string> hashes)
     {
@@ -274,18 +329,25 @@ public sealed class RunFinalizeCommand : IControlCommandHandler
         hashes[fileName] = ManifestBuilder.Sha256Hex(json);
     }
 
-    private static void AddDiagnostic(DiagnosticTotals totals, List<JObject> sink, string? rowId, Diagnostic diagnostic)
+    private static void AddDiagnostic(
+        DiagnosticTotals totals,
+        List<JObject> sink,
+        string? rowId,
+        Diagnostic diagnostic
+    )
     {
-        if (diagnostic.Severity == "fatal") totals.Fatal++;
+        if (string.Equals(diagnostic.Severity, "fatal", StringComparison.Ordinal)) totals.Fatal++;
         else totals.Diagnostic++;
 
-        sink.Add(new JObject
-        {
-            ["rowId"] = rowId is null ? JValue.CreateNull() : rowId,
-            ["severity"] = diagnostic.Severity,
-            ["code"] = diagnostic.Code,
-            ["field"] = diagnostic.Field,
-            ["message"] = diagnostic.Message,
-        });
+        sink.Add(
+            new JObject
+            {
+                ["rowId"] = rowId is null ? JValue.CreateNull() : rowId,
+                ["severity"] = diagnostic.Severity,
+                ["code"] = diagnostic.Code,
+                ["field"] = diagnostic.Field,
+                ["message"] = diagnostic.Message,
+            }
+        );
     }
 }
