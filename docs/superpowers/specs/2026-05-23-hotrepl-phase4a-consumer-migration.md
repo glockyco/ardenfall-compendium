@@ -1,6 +1,6 @@
 # HotRepl Phase 4a Consumer Migration Specification
 
-**Status:** Approved for implementation
+**Status:** Implemented and live-checked on 2026-05-23 (commits `e783cc7`, `ffe6b47`).
 **Date:** 2026-05-23
 **Scope:** Migrate Ardenfall's BepInEx typed-command consumer to the Phase 4a HotRepl authoring API and verify it against the current local HotRepl core.
 
