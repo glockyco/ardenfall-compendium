@@ -11,12 +11,12 @@ public sealed class CompendiumInfoCommand : IControlCommandHandler<EmptyArgs, Co
 
     public int Version => 1;
 
-    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+    public ControlCommandKind Kind => ControlCommandKind.Sync;
 
     public bool MutatesState => false;
 
     public ValueTask<ControlCommandResult<CompendiumInfoResult>> ExecuteAsync(
-        ControlCommandContext context,
+        ControlCommandContext<CompendiumInfoResult> context,
         EmptyArgs args,
         CancellationToken cancellationToken
     ) =>

@@ -19,24 +19,26 @@ public sealed class RunStatusCommand : IControlCommandHandler<RunIdArgs, RunStat
 
     public int Version => 1;
 
-    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+    public ControlCommandKind Kind => ControlCommandKind.Sync;
 
     public bool MutatesState => false;
 
     public ValueTask<ControlCommandResult<RunStatusResult>> ExecuteAsync(
-        ControlCommandContext context,
+        ControlCommandContext<RunStatusResult> context,
         RunIdArgs args,
         CancellationToken cancellationToken
     )
     {
-        var runIdValidation = CompendiumCommandResults.RequiredString<RunStatusResult>(
+        var runIdValidation = CompendiumCommandResults.RequiredString(
+            context,
             args.RunId,
             "runId"
         );
         if (runIdValidation != null) return new(runIdValidation);
         if (!_runs.TryGet(args.RunId, out var run))
             return new(
-                CompendiumCommandResults.Validation<RunStatusResult>(
+                CompendiumCommandResults.Validation(
+                    context,
                     "unknownRun",
                     $"Unknown run '{args.RunId}'."
                 )

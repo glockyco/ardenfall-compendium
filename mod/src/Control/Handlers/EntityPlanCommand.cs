@@ -24,36 +24,40 @@ public sealed class EntityPlanCommand : IControlCommandHandler<EntityPlanArgs, E
 
     public int Version => 1;
 
-    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+    public ControlCommandKind Kind => ControlCommandKind.Sync;
 
     public bool MutatesState => false;
 
     public ValueTask<ControlCommandResult<EntityPlanResult>> ExecuteAsync(
-        ControlCommandContext context,
+        ControlCommandContext<EntityPlanResult> context,
         EntityPlanArgs args,
         CancellationToken cancellationToken
     )
     {
-        var runIdValidation = CompendiumCommandResults.RequiredString<EntityPlanResult>(
+        var runIdValidation = CompendiumCommandResults.RequiredString(
+            context,
             args.RunId,
             "runId"
         );
         if (runIdValidation != null) return new(runIdValidation);
-        var entityValidation = CompendiumCommandResults.RequiredString<EntityPlanResult>(
+        var entityValidation = CompendiumCommandResults.RequiredString(
+            context,
             args.Entity,
             "entity"
         );
         if (entityValidation != null) return new(entityValidation);
         if (!string.Equals(args.Entity, "item", StringComparison.Ordinal))
             return new(
-                CompendiumCommandResults.Validation<EntityPlanResult>(
+                CompendiumCommandResults.Validation(
+                    context,
                     "unsupportedEntity",
                     "Only entity 'item' is supported."
                 )
             );
         if (!_runs.TryGet(args.RunId, out var run))
             return new(
-                CompendiumCommandResults.Validation<EntityPlanResult>(
+                CompendiumCommandResults.Validation(
+                    context,
                     "unknownRun",
                     $"Unknown run '{args.RunId}'."
                 )

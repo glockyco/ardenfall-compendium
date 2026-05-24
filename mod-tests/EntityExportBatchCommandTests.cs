@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using ArdenfallCompendium.Control;
 using ArdenfallCompendium.Control.Args;
 using ArdenfallCompendium.Control.Handlers;
+using ArdenfallCompendium.Control.Results;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
@@ -24,7 +25,7 @@ public sealed class EntityExportBatchCommandTests
         var command = new EntityExportBatchCommand(runs, new FakeItemExtractionCache(Row("item-a")));
 
         var result = await command.ExecuteAsync(
-            null!,
+            TestControlCommandContext.Create<EntityExportBatchResult>(),
             new EntityExportBatchArgs { RunId = run.RunId, Entity = "item", Offset = 0, Limit = 1 },
             CancellationToken.None);
 
@@ -44,7 +45,7 @@ public sealed class EntityExportBatchCommandTests
         var command = new EntityExportBatchCommand(runs, cache);
 
         var result = await command.ExecuteAsync(
-            null!,
+            TestControlCommandContext.Create<EntityExportBatchResult>(),
             new EntityExportBatchArgs { RunId = run.RunId, Entity = "item", Offset = 0, Limit = 1 },
             CancellationToken.None);
 

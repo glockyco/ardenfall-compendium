@@ -73,12 +73,12 @@ public sealed class TypedCommandRegistryTests
         );
 
         var blankRun = await command.ExecuteAsync(
-            null!,
+            TestControlCommandContext.Create<EntityExportBatchResult>(),
             new EntityExportBatchArgs { RunId = "", Entity = "item", Offset = 0, Limit = 1 },
             CancellationToken.None
         );
         var blankEntity = await command.ExecuteAsync(
-            null!,
+            TestControlCommandContext.Create<EntityExportBatchResult>(),
             new EntityExportBatchArgs { RunId = "run-1", Entity = "", Offset = 0, Limit = 1 },
             CancellationToken.None
         );

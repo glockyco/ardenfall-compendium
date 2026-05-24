@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using ArdenfallCompendium.Control;
 using ArdenfallCompendium.Control.Args;
 using ArdenfallCompendium.Control.Handlers;
+using ArdenfallCompendium.Control.Results;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
@@ -46,7 +47,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             preflight: FailingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Contains(result.Diagnostics, error => error.Code == "preflightFailed");
         Assert.False(Directory.Exists(Path.Combine(outputBaseDir, "snapshots")));
@@ -75,7 +76,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Contains(result.Diagnostics, error => error.Code == "chunksIncomplete");
         Assert.False(Directory.Exists(Path.Combine(outputBaseDir, "snapshots", $"test-version-{run.RunId}")));
@@ -102,7 +103,7 @@ public sealed class RunFinalizeCommandTests
             preflight: PassingPreflight);
 
         await Assert.ThrowsAsync<System.InvalidOperationException>(() =>
-            command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None).AsTask());
+            command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None).AsTask());
 
         var snapshotsDir = Path.Combine(outputBaseDir, "snapshots");
         Assert.False(Directory.Exists(Path.Combine(snapshotsDir, $"test-version-{run.RunId}")));
@@ -134,7 +135,7 @@ public sealed class RunFinalizeCommandTests
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
         var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
         var manifestPath = result.Output!.ManifestPath;
@@ -171,7 +172,7 @@ public sealed class RunFinalizeCommandTests
         });
         var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
         var manifestPath = result.Output!.ManifestPath;
@@ -200,7 +201,7 @@ public sealed class RunFinalizeCommandTests
         var source = FakeMasterTooltipSource.Default;
         var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
         var manifestPath = result.Output!.ManifestPath;
@@ -262,7 +263,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
         var manifestPath = result.Output!.ManifestPath;
@@ -326,7 +327,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
         var manifestPath = result.Output!.ManifestPath;
@@ -376,7 +377,7 @@ public sealed class RunFinalizeCommandTests
             itemTags,
             preflight: PassingPreflight);
 
-        var result = await command.ExecuteAsync(null!, new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
         var manifestPath = result.Output!.ManifestPath;

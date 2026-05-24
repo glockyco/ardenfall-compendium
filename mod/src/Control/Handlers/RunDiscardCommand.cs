@@ -19,17 +19,18 @@ public sealed class RunDiscardCommand : IControlCommandHandler<RunIdArgs, RunDis
 
     public int Version => 1;
 
-    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+    public ControlCommandKind Kind => ControlCommandKind.Sync;
 
     public bool MutatesState => true;
 
     public ValueTask<ControlCommandResult<RunDiscardResult>> ExecuteAsync(
-        ControlCommandContext context,
+        ControlCommandContext<RunDiscardResult> context,
         RunIdArgs args,
         CancellationToken cancellationToken
     )
     {
-        var runIdValidation = CompendiumCommandResults.RequiredString<RunDiscardResult>(
+        var runIdValidation = CompendiumCommandResults.RequiredString(
+            context,
             args.RunId,
             "runId"
         );

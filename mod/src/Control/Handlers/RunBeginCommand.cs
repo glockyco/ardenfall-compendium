@@ -23,12 +23,12 @@ public sealed class RunBeginCommand : IControlCommandHandler<RunBeginArgs, RunBe
 
     public int Version => 1;
 
-    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+    public ControlCommandKind Kind => ControlCommandKind.Sync;
 
     public bool MutatesState => true;
 
     public ValueTask<ControlCommandResult<RunBeginResult>> ExecuteAsync(
-        ControlCommandContext context,
+        ControlCommandContext<RunBeginResult> context,
         RunBeginArgs args,
         CancellationToken cancellationToken
     )
@@ -36,7 +36,8 @@ public sealed class RunBeginCommand : IControlCommandHandler<RunBeginArgs, RunBe
         var outputBaseDir = OptionalString(args.OutputBaseDir) ?? _defaultOutputBaseDir;
         if (string.IsNullOrWhiteSpace(outputBaseDir))
             return new(
-                CompendiumCommandResults.Validation<RunBeginResult>(
+                CompendiumCommandResults.Validation(
+                    context,
                     "outputBaseDirRequired",
                     "outputBaseDir is required."
                 )

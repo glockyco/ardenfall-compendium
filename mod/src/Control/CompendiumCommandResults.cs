@@ -17,22 +17,27 @@ public static class CompendiumCommandResults
     ) => ControlCommandResult.Ok(output, artifacts);
 
     public static ControlCommandResult<TOutput> Validation<TOutput>(
+        ControlCommandContext<TOutput> context,
         string code,
         string message,
         object? details = null
-    ) => ControlCommandResult.ValidationFailed<TOutput>(code, message, details);
+    ) => context.ValidationFailed(code, message, details);
 
     public static ControlCommandResult<TOutput> Precondition<TOutput>(
+        ControlCommandContext<TOutput> context,
         string code,
         string message,
         object? details = null
-    ) => ControlCommandResult.PreconditionFailed<TOutput>(code, message, details);
+    ) => context.PreconditionFailed(code, message, details);
+
     public static ControlCommandResult<TOutput>? RequiredString<TOutput>(
+        ControlCommandContext<TOutput> context,
         string? value,
         string propertyName
     ) =>
         string.IsNullOrWhiteSpace(value)
-            ? Validation<TOutput>(
+            ? Validation(
+                context,
                 propertyName + "Required",
                 propertyName + " must be a non-empty string."
             )

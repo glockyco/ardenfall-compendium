@@ -13,12 +13,12 @@ public sealed class CompendiumPreflightCommand
 
     public int Version => 1;
 
-    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+    public ControlCommandKind Kind => ControlCommandKind.Sync;
 
     public bool MutatesState => false;
 
     public ValueTask<ControlCommandResult<CompendiumPreflightResult>> ExecuteAsync(
-        ControlCommandContext context,
+        ControlCommandContext<CompendiumPreflightResult> context,
         EmptyArgs args,
         CancellationToken cancellationToken
     )

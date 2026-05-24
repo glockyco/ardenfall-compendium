@@ -12,12 +12,12 @@ public sealed class GameQuitCommand : IControlCommandHandler<EmptyArgs, GameQuit
 
     public int Version => 1;
 
-    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+    public ControlCommandKind Kind => ControlCommandKind.Sync;
 
     public bool MutatesState => true;
 
     public ValueTask<ControlCommandResult<GameQuitResult>> ExecuteAsync(
-        ControlCommandContext context,
+        ControlCommandContext<GameQuitResult> context,
         EmptyArgs args,
         CancellationToken cancellationToken
     )

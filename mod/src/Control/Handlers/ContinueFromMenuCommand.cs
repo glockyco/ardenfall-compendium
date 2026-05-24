@@ -15,12 +15,12 @@ public sealed class ContinueFromMenuCommand
 
     public int Version => 1;
 
-    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+    public ControlCommandKind Kind => ControlCommandKind.Sync;
 
     public bool MutatesState => true;
 
     public ValueTask<ControlCommandResult<ContinueFromMenuResult>> ExecuteAsync(
-        ControlCommandContext context,
+        ControlCommandContext<ContinueFromMenuResult> context,
         EmptyArgs args,
         CancellationToken cancellationToken
     )
@@ -45,7 +45,8 @@ public sealed class ContinueFromMenuCommand
         }
 
         return new(
-            CompendiumCommandResults.Precondition<ContinueFromMenuResult>(
+            CompendiumCommandResults.Precondition(
+                context,
                 "continueButtonMissing",
                 "No active interactable Continue button was found in the current Unity UI."
             )

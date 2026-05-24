@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using ArdenfallCompendium.Control;
 using ArdenfallCompendium.Control.Args;
 using ArdenfallCompendium.Control.Handlers;
+using ArdenfallCompendium.Control.Results;
 using ArdenfallCompendium.Extraction;
 using Xunit;
 
@@ -22,7 +23,7 @@ public sealed class EntityPlanCommandTests
         var command = new EntityPlanCommand(runs, service);
 
         var result = await command.ExecuteAsync(
-            null!,
+            TestControlCommandContext.Create<EntityPlanResult>(),
             new EntityPlanArgs { RunId = run.RunId, Entity = "item" },
             CancellationToken.None);
 

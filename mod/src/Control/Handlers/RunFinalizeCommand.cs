@@ -56,31 +56,34 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
 
     public int Version => 1;
 
-    public ControlCommandKind Kind => ControlCommandKind.Synchronous;
+    public ControlCommandKind Kind => ControlCommandKind.Sync;
 
     public bool MutatesState => true;
 
     public ValueTask<ControlCommandResult<RunFinalizeResult>> ExecuteAsync(
-        ControlCommandContext context,
+        ControlCommandContext<RunFinalizeResult> context,
         RunIdArgs args,
         CancellationToken cancellationToken
     )
     {
-        var runIdValidation = CompendiumCommandResults.RequiredString<RunFinalizeResult>(
+        var runIdValidation = CompendiumCommandResults.RequiredString(
+            context,
             args.RunId,
             "runId"
         );
         if (runIdValidation != null) return new(runIdValidation);
         if (!_runs.TryGet(args.RunId, out var run))
             return new(
-                CompendiumCommandResults.Validation<RunFinalizeResult>(
+                CompendiumCommandResults.Validation(
+                    context,
                     "unknownRun",
                     $"Unknown run '{args.RunId}'."
                 )
             );
         if (run.Finalized)
             return new(
-                CompendiumCommandResults.Precondition<RunFinalizeResult>(
+                CompendiumCommandResults.Precondition(
+                    context,
                     "runFinalized",
                     $"Run '{args.RunId}' is already finalized."
                 )
@@ -89,7 +92,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         var preflight = _preflight();
         if (!preflight.Passed)
             return new(
-                CompendiumCommandResults.Precondition<RunFinalizeResult>(
+                CompendiumCommandResults.Precondition(
+                    context,
                     "preflightFailed",
                     "Preflight failed; no snapshot was written.",
                     JObject.FromObject(preflight)
@@ -98,6 +102,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
 
         var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "item", "chunks");
         var chunkValidation = ReadPlannedItemChunks(
+            context,
             run,
             chunksDir,
             out var rows,
@@ -110,7 +115,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         var publishedDir = Path.Combine(snapshotsRoot, $"{run.GameVersion}-{run.RunId}");
         if (Directory.Exists(publishedDir))
             return new(
-                CompendiumCommandResults.Precondition<RunFinalizeResult>(
+                CompendiumCommandResults.Precondition(
+                    context,
                     "snapshotExists",
                     $"Snapshot directory already exists: {publishedDir}"
                 )
@@ -244,6 +250,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     }
 
     private static ControlCommandResult<RunFinalizeResult>? ReadPlannedItemChunks(
+        ControlCommandContext<RunFinalizeResult> context,
         CompendiumRun run,
         string chunksDir,
         out List<ItemSnapshotRow> rows,
@@ -256,17 +263,20 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         diagnostics = new List<JObject>();
 
         if (!run.TryGetEntityPlan("item", out var plan))
-            return CompendiumCommandResults.Precondition<RunFinalizeResult>(
+            return CompendiumCommandResults.Precondition(
+                context,
                 "planMissing",
                 $"Run '{run.RunId}' does not have an item plan."
             );
         if (plan.BatchSize <= 0)
-            return CompendiumCommandResults.Precondition<RunFinalizeResult>(
+            return CompendiumCommandResults.Precondition(
+                context,
                 "planInvalid",
                 "Item plan batchSize must be greater than zero."
             );
         if (!Directory.Exists(chunksDir))
-            return CompendiumCommandResults.Precondition<RunFinalizeResult>(
+            return CompendiumCommandResults.Precondition(
+                context,
                 "chunksMissing",
                 "No item chunks were exported."
             );
@@ -276,7 +286,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             .Where(offset => !plan.IsComplete(offset) || !File.Exists(ChunkPath(chunksDir, offset)))
             .ToList();
         if (missingOffsets.Count > 0)
-            return CompendiumCommandResults.Precondition<RunFinalizeResult>(
+            return CompendiumCommandResults.Precondition(
+                context,
                 "chunksIncomplete",
                 $"Missing item chunks at offsets: {string.Join(", ", missingOffsets)}.",
                 new JObject { ["missingOffsets"] = JArray.FromObject(missingOffsets) }
@@ -288,14 +299,16 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             var json = File.ReadAllText(chunkPath);
             var envelope = JsonConvert.DeserializeObject<ItemSnapshotEnvelope>(json, JsonSettings.Default);
             if (envelope?.Rows == null)
-                return CompendiumCommandResults.Precondition<RunFinalizeResult>(
+                return CompendiumCommandResults.Precondition(
+                    context,
                     "chunkInvalid",
                     $"Item chunk is invalid: {chunkPath}"
                 );
 
             var expectedWritten = Math.Min(plan.BatchSize, plan.Total - offset);
             if (envelope.Rows.Count != expectedWritten)
-                return CompendiumCommandResults.Precondition<RunFinalizeResult>(
+                return CompendiumCommandResults.Precondition(
+                    context,
                     "chunkRowCountMismatch",
                     $"Item chunk at offset {offset} contains {envelope.Rows.Count} rows; expected {expectedWritten}."
                 );
@@ -311,7 +324,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         }
 
         if (rows.Count != plan.Total)
-            return CompendiumCommandResults.Precondition<RunFinalizeResult>(
+            return CompendiumCommandResults.Precondition(
+                context,
                 "chunkRowCountMismatch",
                 $"Item chunks contain {rows.Count} rows; expected {plan.Total}."
             );
