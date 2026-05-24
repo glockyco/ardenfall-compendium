@@ -39,6 +39,7 @@ describe("deployPlugins", () => {
     await expect(readFile(join(plugins, "HotRepl", "HotRepl.BepInEx.dll"), "utf8")).resolves.toBe(
       "hotrepl",
     );
+    await expect(stat(join(plugins, "HotRepl", "Namotion.Reflection.dll"))).rejects.toThrow();
   });
 
   it("removes the stale pre-rename ArdenfallArchives plugin directory", async () => {

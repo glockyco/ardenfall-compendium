@@ -31,10 +31,6 @@ if [[ ! -f "$HOTREPL_OUT/HotRepl.Core.dll" ]]; then
   printf 'missing HotRepl.Core.dll: %s\n' "$HOTREPL_OUT/HotRepl.Core.dll" >&2
   missing=1
 fi
-if [[ ! -f "$HOTREPL_OUT/Namotion.Reflection.dll" ]]; then
-  printf 'missing Namotion.Reflection.dll: %s\n' "$HOTREPL_OUT/Namotion.Reflection.dll" >&2
-  missing=1
-fi
 
 
 if [[ "$missing" -ne 0 ]]; then
@@ -46,7 +42,6 @@ for dll in "${required_managed_dlls[@]}"; do
   cp "$SRC/$dll" "$DEST/$dll"
 done
 cp "$HOTREPL_OUT/HotRepl.Core.dll" "$DEST/HotRepl.Core.dll"
-cp "$HOTREPL_OUT/Namotion.Reflection.dll" "$DEST/Namotion.Reflection.dll"
 
 copied=0
 for dll in "$DEST"/*.dll; do
