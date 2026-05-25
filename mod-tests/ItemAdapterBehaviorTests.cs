@@ -5,6 +5,7 @@ using Ardenfall;
 using Ardenfall.Item;
 using ArdenfallCompendium.Entities.Item.Adapters;
 using UnityEngine;
+using ArdenfallCompendium.Walker;
 using Xunit;
 
 namespace ArdenfallCompendium.Tests;
@@ -92,6 +93,19 @@ public sealed class ItemAdapterBehaviorTests
     }
 
     [Fact]
+    public void ItemTagRefsSkipAndDiagnoseAssetsMissingLookupGuid()
+    {
+        var tag = (ItemTag)RuntimeHelpers.GetUninitializedObject(typeof(ItemTag));
+        tag.tagName = "Readable tag";
+        var refs = new RefResolver();
+
+        var tagId = ExtractItem.ResolveTagRef(tag, refs, "item-guid", _ => null);
+
+        Assert.Null(tagId);
+        Assert.Contains(refs.Diagnostics, d => d.Code == "lookupAssetGuidMissing" && d.Field == "tags");
+    }
+
+    [Fact]
     public void CategoryNameForFallbackUsesResolvedCategoryName()
     {
         var category = (ItemCategory)RuntimeHelpers.GetUninitializedObject(typeof(ItemCategory));
@@ -123,4 +137,5 @@ public sealed class ItemAdapterBehaviorTests
         Assert.Equal("Night Eye", ExtractSlateSpell.RequirementStatTypeLabel(equipStatType: null, spell));
         Assert.Equal("Night Eye Scroll", ExtractSlateSpell.ItemTypeLabel(spell, SpellItemType.Scroll));
     }
+
 }

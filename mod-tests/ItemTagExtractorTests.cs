@@ -46,14 +46,12 @@ public sealed class ItemTagExtractorTests
 
         var rows = extractor.Walk().ToList();
 
-        Assert.Single(rows);
-        Assert.Equal("Floating Tag", rows[0].Id);
-        Assert.Equal("Floating Tag", rows[0].Fields.TagName);
+        Assert.Empty(rows);
         Assert.Contains(extractor.Diagnostics, d => d.Code == "lookupAssetGuidMissing" && d.Field == "id");
     }
 
     [Fact]
-    public void DropsEmptyGuidToMatchItemTagRefs()
+    public void DiagnosesEmptyGuid()
     {
         var source = new FakeItemTagAssetSource(new[]
         {
@@ -68,10 +66,11 @@ public sealed class ItemTagExtractorTests
         var rows = extractor.Walk().ToList();
 
         Assert.Empty(rows);
+        Assert.Contains(extractor.Diagnostics, d => d.Code == "lookupAssetGuidMissing" && d.Field == "id");
     }
 
     [Fact]
-    public void PreservesWhitespaceGuidToMatchItemTagRefs()
+    public void DiagnosesWhitespaceGuid()
     {
         var source = new FakeItemTagAssetSource(new[]
         {
@@ -85,9 +84,8 @@ public sealed class ItemTagExtractorTests
 
         var rows = extractor.Walk().ToList();
 
-        var row = Assert.Single(rows);
-        Assert.Equal("   ", row.Id);
-        Assert.Equal("Whitespace GUID", row.Fields.TagName);
+        Assert.Empty(rows);
+        Assert.Contains(extractor.Diagnostics, d => d.Code == "lookupAssetGuidMissing" && d.Field == "id");
     }
 
     private sealed class FakeItemTagAssetSource : IItemTagAssetSource

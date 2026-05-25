@@ -109,8 +109,8 @@ public static class ExtractItem
             foreach (var tag in tagListResolved)
             {
                 if (tag == null) continue;
-                var tagId = BuiltLookupTable.Instance?.GetGuid(tag) ?? tag.name;
-                if (!string.IsNullOrEmpty(tagId)) tags.Add(tagId);
+                var tagId = ResolveTagRef(tag, refs, id);
+                if (tagId != null) tags.Add(tagId);
             }
         }
         diagnostics.AddRange(refs.Diagnostics);
@@ -120,6 +120,25 @@ public static class ExtractItem
 
     public static string? CategoryNameForFallback(Ardenfall.ItemCategory? category) =>
         string.IsNullOrWhiteSpace(category?.categoryName) ? null : category.categoryName;
+
+    public static string? ResolveTagRef(
+        Ardenfall.Item.ItemTag tag,
+        RefResolver refs,
+        string id,
+        Func<Ardenfall.Item.ItemTag, string?>? getGuid = null)
+    {
+        var guid = getGuid != null ? getGuid(tag) : BuiltLookupTable.Instance?.GetGuid(tag);
+        if (!string.IsNullOrWhiteSpace(guid)) return guid;
+
+        refs.Diagnostics.Add(new Diagnostic
+        {
+            Severity = "diagnostic",
+            Code = "lookupAssetGuidMissing",
+            Field = "tags",
+            Message = $"missing ref 'tags' on {id}",
+        });
+        return null;
+    }
 
     private static (string Name, string Source) GetItemNameSafe(ItemData asset)
     {

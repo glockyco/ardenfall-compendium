@@ -23,8 +23,7 @@ public sealed class ItemTagExtractor : WalkerBase<ItemTagSnapshotRow>
         foreach (var asset in _source.EnumerateItemTags())
         {
             var id = asset.Guid;
-            var assetName = asset.AssetName;
-            if (id == null)
+            if (string.IsNullOrWhiteSpace(id))
             {
                 Diagnostics.Add(new Diagnostic
                 {
@@ -33,16 +32,15 @@ public sealed class ItemTagExtractor : WalkerBase<ItemTagSnapshotRow>
                     Field = "id",
                     Message = $"ItemTag asset '{asset.AssetName}' has no GUID in BuiltLookupTable",
                 });
-                id = assetName;
+                continue;
             }
-            if (string.IsNullOrEmpty(id)) continue;
 
             yield return new ItemTagSnapshotRow
             {
                 Id = id,
                 Fields = new ItemTagSnapshot(
                     Id: id,
-                    TagName: NullIfEmpty(asset.TagName) ?? NullIfEmpty(assetName) ?? id,
+                    TagName: NullIfEmpty(asset.TagName) ?? NullIfEmpty(asset.AssetName) ?? id,
                     Description: asset.Description ?? ""),
             };
         }
