@@ -125,6 +125,19 @@ describe("exportCompendium", () => {
     expect(events).toContainEqual(
       expect.objectContaining({ phase: "pipeline", status: "completed" }),
     );
+    expect(events).toContainEqual(
+      expect.objectContaining({ phase: "run.finalize", status: "started", runId: "run-1" }),
+    );
+    expect(events).toContainEqual(
+      expect.objectContaining({ phase: "run.finalize", status: "completed", runId: "run-1" }),
+    );
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        phase: "validate",
+        status: "started",
+        publishedDir: "/tmp/snapshot",
+      }),
+    );
   });
 
   it("calls game.quit after a successful export", async () => {
