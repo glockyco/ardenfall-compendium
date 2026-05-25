@@ -18,6 +18,7 @@
     "format:check": "prettier --check .",
     "typecheck": "bunx tsgo --noEmit -p .",
     "codegen:validators": "bun run pipeline/scripts/codegen-validators.ts",
+    "check:validators": "bun run codegen:validators && git diff --exit-code -- pipeline/dist/validate-*.mjs pipeline/dist/validate-*.d.mts",
     "check:fixtures": "bun run pipeline/scripts/check-fixtures.ts",
     "pipeline:run": "bun run pipeline/src/cli.ts run",
     "artifact:fixture": "bun run pipeline/src/cli.ts build-fixture",

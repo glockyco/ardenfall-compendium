@@ -1,5 +1,15 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+} from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import validateArtifactManifest from "../../pipeline/dist/validate-artifact-manifest.mjs";
 
 const defaultSourceDir = resolve(import.meta.dirname, "../../pipeline/dist");
 const defaultTargetDir = resolve(import.meta.dirname, "../static");
@@ -15,6 +25,50 @@ function assertNonEmptyFile(path, label) {
     throw new Error(`Invalid generated ${label} at ${path}. Expected a non-empty file.`);
   }
   return info.size;
+}
+
+function loadManifest(sourceDir) {
+  const manifestPath = join(sourceDir, "artifact-manifest.json");
+  if (!existsSync(manifestPath)) throw new Error(`missing artifact manifest: ${manifestPath}`);
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  if (!validateArtifactManifest(manifest)) {
+    const detail = (validateArtifactManifest.errors ?? [])
+      .map((error) => `artifact-manifest.json#${error.instancePath} — ${error.message}`)
+      .join("\n");
+    throw new Error(`invalid artifact manifest:\n${detail}`);
+  }
+  if (manifest.diagnostics?.fatal !== 0) {
+    throw new Error(`artifact has fatal diagnostics: ${manifest.diagnostics?.fatal}`);
+  }
+  return manifest;
+}
+
+function sha256(path) {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
+}
+
+function assertFileHash(path, expectedHash, expectedBytes) {
+  const bytes = assertNonEmptyFile(path, "SQLite output");
+  if (bytes !== expectedBytes) {
+    throw new Error(
+      `artifact file size mismatch for ${path}: expected ${expectedBytes}, got ${bytes}`,
+    );
+  }
+  const actualHash = sha256(path);
+  if (actualHash !== expectedHash) {
+    throw new Error(
+      `artifact file hash mismatch for ${path}: expected ${expectedHash}, got ${actualHash}`,
+    );
+  }
+  return bytes;
+}
+
+function assetTreeHash(dir) {
+  const entries = listFilesRecursive(dir).map((path) => {
+    const relative = path.slice(dir.length + 1).replaceAll("\\", "/");
+    return `${relative}\0${sha256(path)}`;
+  });
+  return createHash("sha256").update(entries.join("\n")).digest("hex");
 }
 
 function listFilesRecursive(dir) {
@@ -43,7 +97,12 @@ export function syncGeneratedArtifacts({
   targetDir = defaultTargetDir,
 } = {}) {
   const sqliteSource = join(sourceDir, "data.sqlite");
-  const sqliteBytes = assertNonEmptyFile(sqliteSource, "SQLite output");
+  const manifest = loadManifest(sourceDir);
+  const sqliteBytes = assertFileHash(
+    sqliteSource,
+    manifest.outputs.sqlite.sha256,
+    manifest.outputs.sqlite.bytes,
+  );
 
   const sourceAssets = join(sourceDir, "assets");
   if (!existsSync(sourceAssets) || !statSync(sourceAssets).isDirectory()) {
@@ -54,6 +113,17 @@ export function syncGeneratedArtifacts({
   const assetFiles = listFilesRecursive(sourceAssets).filter((path) => path.endsWith(".webp"));
   if (assetFiles.length === 0) {
     throw new Error(`Missing generated WebP assets under ${sourceAssets}.`);
+  }
+  const actualAssetHash = assetTreeHash(sourceAssets);
+  if (actualAssetHash !== manifest.outputs.assets.treeSha256) {
+    throw new Error(
+      `asset tree hash mismatch: expected ${manifest.outputs.assets.treeSha256}, got ${actualAssetHash}`,
+    );
+  }
+  if (assetFiles.length !== manifest.outputs.assets.count) {
+    throw new Error(
+      `asset count mismatch: expected ${manifest.outputs.assets.count}, got ${assetFiles.length}`,
+    );
   }
 
   mkdirSync(targetDir, { recursive: true });
