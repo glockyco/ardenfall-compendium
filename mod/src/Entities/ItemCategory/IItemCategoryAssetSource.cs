@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Ardenfall;
-using Ardenfall.Item;
 using ArdenfallCompendium.Dtos;
 using UnityObject = UnityEngine.Object;
 using ArdenfallCategory = Ardenfall.ItemCategory;
@@ -44,71 +43,38 @@ public interface IItemCategoryAssetSource
 public sealed class BuiltLookupTableItemCategoryAssetSource : IItemCategoryAssetSource
 {
     private readonly Func<IEnumerable<ArdenfallCategory>> _lookupCategories;
-    private readonly Func<IEnumerable<ItemData>> _itemAssets;
-    private readonly Func<ItemData, ArdenfallCategory?> _itemCategory;
     private readonly Func<ArdenfallCategory, IReadOnlyList<ItemCategoryColumnAsset>> _columns;
     private readonly Func<UnityObject?, bool> _isUnityNull;
-    private readonly Func<UnityObject, string?> _lookupGuid;
 
     public BuiltLookupTableItemCategoryAssetSource()
         : this(
             lookupCategories: () => BuiltLookupTable.GetAssetsOfType<ArdenfallCategory>(),
-            itemAssets: () => BuiltLookupTable.GetAssetsOfType<ItemData>(),
-            itemCategory: item => item.category?.Get(),
             columns: Columns,
-            isUnityNull: IsUnityNull,
-            lookupGuid: LookupGuid)
+            isUnityNull: IsUnityNull)
     {
     }
 
     public BuiltLookupTableItemCategoryAssetSource(
         Func<IEnumerable<ArdenfallCategory>> lookupCategories,
-        Func<IEnumerable<ItemData>> itemAssets,
-        Func<ItemData, ArdenfallCategory?> itemCategory,
-        Func<ArdenfallCategory, IReadOnlyList<ItemCategoryColumnAsset>> columns,
         Func<UnityObject?, bool> isUnityNull,
-        Func<UnityObject, string?>? lookupGuid = null)
+        Func<ArdenfallCategory, IReadOnlyList<ItemCategoryColumnAsset>>? columns = null)
     {
         _lookupCategories = lookupCategories;
-        _itemAssets = itemAssets;
-        _itemCategory = itemCategory;
-        _columns = columns;
+        _columns = columns ?? Columns;
         _isUnityNull = isUnityNull;
-        _lookupGuid = lookupGuid ?? LookupGuid;
     }
 
     public IEnumerable<ItemCategoryAsset> EnumerateItemCategories()
     {
-        var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var asset in _lookupCategories())
         {
             if (_isUnityNull(asset)) continue;
-            var snapshot = ToAsset(asset);
-            if (!string.IsNullOrWhiteSpace(snapshot.Guid) && !seen.Add(snapshot.Guid)) continue;
-            yield return snapshot;
-        }
-
-        foreach (var asset in EnumerateItemCategoriesFromItems())
-        {
-            if (_isUnityNull(asset)) continue;
-            var snapshot = ToAsset(asset);
-            if (!string.IsNullOrWhiteSpace(snapshot.Guid) && !seen.Add(snapshot.Guid)) continue;
-            yield return snapshot;
-        }
-    }
-
-    private IEnumerable<ArdenfallCategory> EnumerateItemCategoriesFromItems()
-    {
-        foreach (var item in _itemAssets())
-        {
-            if (_isUnityNull(item)) continue;
-            var category = _itemCategory(item);
-            if (!_isUnityNull(category)) yield return category!;
+            yield return ToAsset(asset);
         }
     }
 
     private ItemCategoryAsset ToAsset(ArdenfallCategory asset) => new(
-        Guid: _lookupGuid(asset),
+        Guid: LookupGuid(asset),
         AssetName: SafeName(asset),
         CategoryName: asset.categoryName,
         Icon: asset.icon,
@@ -120,7 +86,6 @@ public sealed class BuiltLookupTableItemCategoryAssetSource : IItemCategoryAsset
     private static IReadOnlyList<ItemCategoryColumnAsset> Columns(ArdenfallCategory asset) =>
         asset.columns?.Where(column => column != null).Select(ToColumnAsset).ToList()
             ?? new List<ItemCategoryColumnAsset>();
-
 
     private static string SafeName(UnityObject asset)
     {

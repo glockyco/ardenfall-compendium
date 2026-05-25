@@ -26,73 +26,38 @@ public interface IStatTypeAssetSource
 public sealed class BuiltLookupTableStatTypeAssetSource : IStatTypeAssetSource
 {
     private readonly Func<IEnumerable<Ardenfall.StatType>> _lookupStatTypes;
-    private readonly Func<ArdenfallMasterData?> _masterData;
     private readonly Func<UnityObject?, bool> _isUnityNull;
     private readonly Func<UnityObject, string> _assetName;
-    private readonly Func<UnityObject, string?> _lookupGuid;
 
     public BuiltLookupTableStatTypeAssetSource()
         : this(
             lookupStatTypes: () => BuiltLookupTable.GetAssetsOfType<Ardenfall.StatType>(),
-            masterData: () => ArdenfallMasterData.Instance,
             isUnityNull: IsUnityNull,
-            assetName: SafeName,
-            lookupGuid: LookupGuid)
+            assetName: SafeName)
     {
     }
 
     public BuiltLookupTableStatTypeAssetSource(
         Func<IEnumerable<Ardenfall.StatType>> lookupStatTypes,
-        Func<ArdenfallMasterData?> masterData,
         Func<UnityObject?, bool> isUnityNull,
-        Func<UnityObject, string>? assetName = null,
-        Func<UnityObject, string?>? lookupGuid = null)
+        Func<UnityObject, string>? assetName = null)
     {
         _lookupStatTypes = lookupStatTypes;
-        _masterData = masterData;
         _isUnityNull = isUnityNull;
         _assetName = assetName ?? SafeName;
-        _lookupGuid = lookupGuid ?? LookupGuid;
     }
 
     public IEnumerable<StatTypeAsset> EnumerateStatTypes()
     {
-        var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var asset in _lookupStatTypes())
         {
             if (_isUnityNull(asset)) continue;
-            var snapshot = ToAsset(asset);
-            if (!string.IsNullOrWhiteSpace(snapshot.Guid) && !seen.Add(snapshot.Guid)) continue;
-            yield return snapshot;
-        }
-
-        var master = _masterData();
-        if (_isUnityNull(master)) yield break;
-
-        foreach (var asset in EnumerateMasterStats(master!))
-        {
-            if (_isUnityNull(asset)) continue;
-            var snapshot = ToAsset(asset);
-            if (!string.IsNullOrWhiteSpace(snapshot.Guid) && !seen.Add(snapshot.Guid)) continue;
-            yield return snapshot;
-        }
-    }
-
-    private static IEnumerable<Ardenfall.StatType> EnumerateMasterStats(ArdenfallMasterData master)
-    {
-        if (master.allAttributes != null)
-        {
-            foreach (var stat in master.allAttributes) yield return stat;
-        }
-
-        if (master.allSkills != null)
-        {
-            foreach (var stat in master.allSkills) yield return stat;
+            yield return ToAsset(asset);
         }
     }
 
     private StatTypeAsset ToAsset(Ardenfall.StatType asset) => new(
-        Guid: _lookupGuid(asset),
+        Guid: LookupGuid(asset),
         AssetName: _assetName(asset),
         IsAttribute: asset.isAttribute,
         StatName: asset.statName,
@@ -102,7 +67,6 @@ public sealed class BuiltLookupTableStatTypeAssetSource : IStatTypeAssetSource
         LongStatDescription: asset.longStatDescription,
         Affects: asset.affects,
         SkillAffects: asset.skillAffects);
-
 
     private static string SafeName(UnityObject asset)
     {
