@@ -21,6 +21,7 @@ class FakeClient implements ControllerClient {
   }> = [];
   readonly jobs: Array<{ name: string; args: Record<string, unknown> }> = [];
   readonly jobPolls: string[] = [];
+  describeOptions?: Record<string, unknown>;
   commands = [
     command("compendium.preflight"),
     command("compendium.continueFromMenu", "sync", true),
@@ -36,7 +37,8 @@ class FakeClient implements ControllerClient {
 
   finalizeError: Error | null = null;
   async connect() {}
-  async describeCommands() {
+  async describeCommands(options?: Record<string, unknown>) {
+    this.describeOptions = options;
     return this.commands;
   }
   async call(name: string, args: Record<string, unknown>, options?: Record<string, unknown>) {
@@ -170,6 +172,21 @@ describe("exportCompendium", () => {
     expect(client.calls.find((call) => call.name === "run.finalize")?.options).toEqual({
       timeoutMs: 300_000,
     });
+  });
+
+  it("lets initial command catalog readiness use the connect timeout", async () => {
+    const client = new FakeClient();
+
+    await exportCompendium({
+      client,
+      outputBaseDir: "/tmp/out",
+      pipelineOutDir: "/tmp/pipeline",
+      validate: async () => ({ itemCount: 150 }),
+      runPipeline: async () => undefined,
+      connectTimeoutMs: 123_000,
+    });
+
+    expect(client.describeOptions).toEqual({ timeoutMs: 123_000 });
   });
 
   it("waits for world by clicking through the main menu before beginning a run", async () => {

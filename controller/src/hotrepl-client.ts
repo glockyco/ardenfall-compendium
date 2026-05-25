@@ -150,8 +150,10 @@ export class HotReplClient {
     });
   }
 
-  async describeCommands(): Promise<ControlCommandDescriptor[]> {
-    const response = await this.request({ type: "commands_list", id: this.nextId() });
+  async describeCommands(
+    options: { timeoutMs?: number } = {},
+  ): Promise<ControlCommandDescriptor[]> {
+    const response = await this.request({ type: "commands_list", id: this.nextId(), ...options });
     if (response.type !== "commands_list_result")
       throw new Error(`Expected commands_list_result, got ${String(response.type)}`);
     const commands = Array.isArray(response.commands) ? response.commands : [];

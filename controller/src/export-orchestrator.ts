@@ -21,7 +21,7 @@ export interface ControllerCallOptions {
 
 export interface ControllerClient {
   connect(options?: ControllerConnectOptions): Promise<void>;
-  describeCommands(): Promise<ControlCommandDescriptor[]>;
+  describeCommands(options?: ControllerCallOptions): Promise<ControlCommandDescriptor[]>;
   call(
     name: string,
     args: Record<string, unknown>,
@@ -85,7 +85,9 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
 
   const shouldWaitForWorld = options.waitForWorld === true;
   assertRequiredCommands(
-    await options.client.describeCommands(),
+    await options.client.describeCommands({
+      timeoutMs: options.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS,
+    }),
     options.noQuit === true,
     shouldWaitForWorld,
   );

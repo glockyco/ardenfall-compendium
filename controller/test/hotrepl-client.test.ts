@@ -4,7 +4,12 @@ import { HotReplClient, type CommandResult, type ControlCommandError } from "../
 type RecordedMessage = Record<string, unknown>;
 
 function startFakeControlServer(
-  options: { commandDelayMs?: number; port?: number; protocolVersion?: number } = {},
+  options: {
+    commandDelayMs?: number;
+    commandsListDelayMs?: number;
+    port?: number;
+    protocolVersion?: number;
+  } = {},
 ) {
   const messages: RecordedMessage[] = [];
   const server = Bun.serve<{ url: string }>({
@@ -25,6 +30,8 @@ function startFakeControlServer(
         if (options.commandDelayMs && message.type === "command_call")
           await Bun.sleep(options.commandDelayMs);
         const id = message.id;
+        if (options.commandsListDelayMs && message.type === "commands_list")
+          await Bun.sleep(options.commandsListDelayMs);
         switch (message.type) {
           case "commands_list":
             ws.send(
@@ -139,6 +146,10 @@ function isCommandResult(value: unknown): value is CommandResult {
   return typeof value === "object" && value !== null && "output" in value;
 }
 
+async function connectTestClient(client: HotReplClient): Promise<void> {
+  await client.connect({ timeoutMs: 500, retryIntervalMs: 10 });
+}
+
 describe("HotReplClient", () => {
   const servers: Array<{ stop: () => void }> = [];
 
@@ -150,7 +161,7 @@ describe("HotReplClient", () => {
     const server = startFakeControlServer();
     servers.push(server);
     const client = new HotReplClient(server.url);
-    await client.connect();
+    await connectTestClient(client);
 
     const commands = await client.describeCommands();
     const result = await client.call("compendium.info", { verbose: true });
@@ -179,7 +190,7 @@ describe("HotReplClient", () => {
     const server = startFakeControlServer();
     servers.push(server);
     const client = new HotReplClient(server.url);
-    await client.connect();
+    await connectTestClient(client);
 
     const accepted = await client.startJob("entity.exportBatch", { runId: "run-1" });
     const terminal = await client.jobStatus(accepted.jobId);
@@ -202,7 +213,7 @@ describe("HotReplClient", () => {
     const server = startFakeControlServer();
     servers.push(server);
     const client = new HotReplClient(server.url);
-    await client.connect();
+    await connectTestClient(client);
 
     let error: ControlCommandError | undefined;
     try {
@@ -225,10 +236,22 @@ describe("HotReplClient", () => {
     const server = startFakeControlServer({ commandDelayMs: 30 });
     servers.push(server);
     const client = new HotReplClient(server.url);
-    await client.connect();
+    await connectTestClient(client);
 
     await expect(client.call("compendium.info", {}, { timeoutMs: 5 })).rejects.toThrow(
       "Timed out waiting for command_call",
+    );
+    await client.close();
+  });
+
+  it("applies timeoutMs to the command catalog wait", async () => {
+    const server = startFakeControlServer({ commandsListDelayMs: 30 });
+    servers.push(server);
+    const client = new HotReplClient(server.url);
+    await connectTestClient(client);
+
+    await expect(client.describeCommands({ timeoutMs: 5 })).rejects.toThrow(
+      "Timed out waiting for commands_list",
     );
     await client.close();
   });
