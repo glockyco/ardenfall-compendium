@@ -3,7 +3,7 @@
   "assets": [
     {
       "entityId": "item",
-      "rowId": "fixture-iron-sword",
+      "rowId": "4ed20218.fixture-iron-sword",
       "slot": "displayIcon",
       "kind": "image",
       "pngHash": "fixture-red-png",
@@ -11,7 +11,7 @@
     },
     {
       "entityId": "stat-type",
-      "rowId": "fixture-strength",
+      "rowId": "57a70001.fixture-strength",
       "slot": "iconRef",
       "kind": "image",
       "pngHash": "fixture-red-png",
@@ -19,7 +19,7 @@
     },
     {
       "entityId": "item",
-      "rowId": "fixture-slate-spell",
+      "rowId": "7ab10c55.fixture-slate-spell",
       "slot": "displayIcon",
       "kind": "image",
       "pngHash": "fixture-blue-png",
@@ -27,7 +27,7 @@
     },
     {
       "entityId": "item",
-      "rowId": "fixture-throwing-potion",
+      "rowId": "8c0ffee0.fixture-throwing-potion",
       "slot": "displayIcon",
       "kind": "image",
       "pngHash": "fixture-blue-png",
@@ -35,7 +35,7 @@
     },
     {
       "entityId": "item",
-      "rowId": "fixture-throwing-potion",
+      "rowId": "8c0ffee0.fixture-throwing-potion",
       "slot": "secondaryIcon",
       "kind": "image",
       "pngHash": "fixture-red-png",
@@ -43,7 +43,7 @@
     },
     {
       "entityId": "item-category",
-      "rowId": "fixture-weapons",
+      "rowId": "ca7e60a1.fixture-weapons",
       "slot": "iconRef",
       "kind": "image",
       "pngHash": "fixture-red-png",
@@ -51,7 +51,7 @@
     },
     {
       "entityId": "item-category",
-      "rowId": "fixture-weapons",
+      "rowId": "ca7e60a1.fixture-weapons",
       "slot": "defaultItemIconRef",
       "kind": "image",
       "pngHash": "fixture-blue-png",
@@ -61,7 +61,7 @@
   "itemIconMetadata": [
     {
       "entityId": "item",
-      "rowId": "fixture-iron-sword",
+      "rowId": "4ed20218.fixture-iron-sword",
       "displayIconColor": {
         "r": 1,
         "g": 1,
@@ -72,7 +72,7 @@
     },
     {
       "entityId": "item",
-      "rowId": "fixture-leather-tunic",
+      "rowId": "5ea7beef.fixture-leather-tunic",
       "displayIconColor": {
         "r": 0.25,
         "g": 0.2,
@@ -83,7 +83,7 @@
     },
     {
       "entityId": "item",
-      "rowId": "fixture-slate-spell",
+      "rowId": "7ab10c55.fixture-slate-spell",
       "displayIconColor": {
         "r": 0.2,
         "g": 0.4,
@@ -99,7 +99,7 @@
     },
     {
       "entityId": "item",
-      "rowId": "fixture-throwing-potion",
+      "rowId": "8c0ffee0.fixture-throwing-potion",
       "displayIconColor": {
         "r": 0.1,
         "g": 0.8,

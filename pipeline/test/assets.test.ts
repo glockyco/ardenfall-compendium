@@ -49,7 +49,7 @@ describe("asset manifest loading", () => {
     expect(snap.assetManifest?.schemaVersion).toBe(1);
     expect(snap.assetManifest?.assets).toContainEqual({
       entityId: "item",
-      rowId: "fixture-iron-sword",
+      rowId: "4ed20218.fixture-iron-sword",
       slot: "displayIcon",
       kind: "image",
       pngHash: "fixture-red-png",
@@ -57,7 +57,7 @@ describe("asset manifest loading", () => {
     });
     expect(snap.assetManifest?.itemIconMetadata).toContainEqual({
       entityId: "item",
-      rowId: "fixture-iron-sword",
+      rowId: "4ed20218.fixture-iron-sword",
       displayIconColor: { r: 1, g: 1, b: 1, a: 1 },
       secondaryIconColor: null,
     });
@@ -103,7 +103,7 @@ describe("emitAssets", () => {
       expect(result.refs).toContainEqual(
         expect.objectContaining({
           entityId: "item",
-          entityRowId: "fixture-iron-sword",
+          entityRowId: "4ed20218.fixture-iron-sword",
           slot: "displayIcon",
           assetKind: "image",
         }),
@@ -111,7 +111,7 @@ describe("emitAssets", () => {
       expect(result.refs).toContainEqual(
         expect.objectContaining({
           entityId: "item",
-          entityRowId: "fixture-throwing-potion",
+          entityRowId: "8c0ffee0.fixture-throwing-potion",
           slot: "secondaryIcon",
           assetKind: "image",
         }),
@@ -119,7 +119,7 @@ describe("emitAssets", () => {
       expect(result.refs).toContainEqual(
         expect.objectContaining({
           entityId: "stat-type",
-          entityRowId: "fixture-strength",
+          entityRowId: "57a70001.fixture-strength",
           slot: "iconRef",
           assetKind: "image",
         }),
@@ -127,7 +127,7 @@ describe("emitAssets", () => {
       expect(result.refs).toContainEqual(
         expect.objectContaining({
           entityId: "item-category",
-          entityRowId: "fixture-weapons",
+          entityRowId: "ca7e60a1.fixture-weapons",
           slot: "defaultItemIconRef",
           assetKind: "image",
         }),
@@ -150,7 +150,7 @@ describe("emitAssets", () => {
           assets: [
             {
               entityId: "item",
-              rowId: "fixture-iron-sword",
+              rowId: "4ed20218.fixture-iron-sword",
               slot: "displayIcon",
               kind: "image" as const,
               pngHash: "missing",
@@ -193,7 +193,7 @@ describe("asset_refs", () => {
         expect(refs).toContainEqual(
           expect.objectContaining({
             entity_id: "item",
-            entity_row_id: "fixture-iron-sword",
+            entity_row_id: "4ed20218.fixture-iron-sword",
             slot: "displayIcon",
             asset_kind: "image",
           }),
@@ -201,7 +201,7 @@ describe("asset_refs", () => {
         expect(refs).toContainEqual(
           expect.objectContaining({
             entity_id: "item",
-            entity_row_id: "fixture-throwing-potion",
+            entity_row_id: "8c0ffee0.fixture-throwing-potion",
             slot: "secondaryIcon",
             asset_kind: "image",
           }),
@@ -209,7 +209,7 @@ describe("asset_refs", () => {
         expect(refs).toContainEqual(
           expect.objectContaining({
             entity_id: "item-category",
-            entity_row_id: "fixture-weapons",
+            entity_row_id: "ca7e60a1.fixture-weapons",
             slot: "defaultItemIconRef",
             asset_kind: "image",
           }),

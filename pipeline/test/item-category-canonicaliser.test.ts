@@ -34,9 +34,9 @@ describe("canonicaliseItemCategories", () => {
       schemaVersion: 1,
       rows: [
         {
-          id: "category-weapons",
+          id: "ca7e60a1.category-weapons",
           fields: {
-            id: "category-weapons",
+            id: "ca7e60a1.category-weapons",
             categoryName: "Weapons",
             iconRef: { kind: "lookupAsset", guid: "icon-guid" },
             defaultItemIconRef: { kind: "lookupAsset", guid: "default-icon-guid" },
@@ -63,7 +63,7 @@ describe("canonicaliseItemCategories", () => {
       >("SELECT * FROM item_categories")
       .get();
 
-    expect(row?.id).toBe("category-weapons");
+    expect(row?.id).toBe("ca7e60a1.category-weapons");
     expect(row?.category_name).toBe("Weapons");
     expect(JSON.parse(row?.icon_ref_json ?? "null")).toEqual({
       kind: "lookupAsset",

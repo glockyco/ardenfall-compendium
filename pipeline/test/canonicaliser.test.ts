@@ -32,7 +32,7 @@ describe("canonicaliseItems", () => {
       variant: string;
     }[];
     expect(items.length).toBe(5);
-    expect(items.find((r) => r.id === "fixture-iron-sword")?.variant).toBe("melee-weapon");
+    expect(items.find((r) => r.id === "4ed20218.fixture-iron-sword")?.variant).toBe("melee-weapon");
 
     const equipRows = db.query("SELECT id, equipSlot FROM item_equipment").all() as {
       id: string;
@@ -43,10 +43,10 @@ describe("canonicaliseItems", () => {
       id: string;
       damage: number;
     }[];
-    expect(meleeRows.find((r) => r.id === "fixture-iron-sword")?.damage).toBe(7.5);
+    expect(meleeRows.find((r) => r.id === "4ed20218.fixture-iron-sword")?.damage).toBe(7.5);
 
     const armorRows = db.query("SELECT id FROM item_armor").all() as { id: string }[];
-    expect(armorRows.find((r) => r.id === "fixture-leather-tunic")).toBeDefined();
+    expect(armorRows.find((r) => r.id === "5ea7beef.fixture-leather-tunic")).toBeDefined();
 
     const consumableRows = db
       .query("SELECT id, quickslotCooldownTime FROM item_consumables")
@@ -55,7 +55,8 @@ describe("canonicaliseItems", () => {
       quickslotCooldownTime: number;
     }[];
     expect(
-      consumableRows.find((r) => r.id === "fixture-stamina-draught")?.quickslotCooldownTime,
+      consumableRows.find((r) => r.id === "6a71c0de.fixture-stamina-draught")
+        ?.quickslotCooldownTime,
     ).toBe(12.5);
 
     const tagRows = db
@@ -65,8 +66,8 @@ describe("canonicaliseItems", () => {
       tag: string;
     }[];
     expect(tagRows).toEqual([
-      { item_id: "fixture-stamina-draught", tag: "fixture-tag-valuable-remedy" },
-      { item_id: "fixture-throwing-potion", tag: "fixture-tag-rare" },
+      { item_id: "6a71c0de.fixture-stamina-draught", tag: "7a600001.fixture-tag-valuable-remedy" },
+      { item_id: "8c0ffee0.fixture-throwing-potion", tag: "7a600002.fixture-tag-rare" },
     ]);
   });
 });

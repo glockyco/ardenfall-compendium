@@ -483,42 +483,85 @@ export const getEntityField = (entityId: string, fieldId: string): SiteEntityFie
     fieldId,
   ]);
 
-const toItemOverviewRow = (row: ItemOverviewRecord): ItemOverviewRow => ({
+const toItemPresentationRow = (row: ItemPresentationRecord): ItemPresentationRow => ({
   id: row.id,
   name: row.name,
-  weight: row.weight,
-  value: row.value,
   variant: row.variant,
+  itemType: row.item_type,
+  renderContext: row.render_context,
   displayIconSrc: assetSrc(row.display_icon_hash),
   displayIconColor: row.display_icon_color,
-  tooltip: getItemPresentation(row.id),
+  description: JSON.parse(row.description_rich_text_json) as RichTextDocument,
+  effectsSource: row.effects_source,
+  effectsSourceRichText: JSON.parse(row.effects_source_rich_text_json) as RichTextDocument,
+  effects: JSON.parse(row.effect_facts_json) as ItemPresentationEffect[],
+  statRows: JSON.parse(row.stat_rows_json) as ItemPresentationStatRow[],
+  requirements: JSON.parse(row.requirements_json) as ItemPresentationRequirement[],
+  durability: row.durability_json
+    ? (JSON.parse(row.durability_json) as ItemPresentationDurability)
+    : null,
+  stateFacts: JSON.parse(row.state_facts_json) as ItemPresentationStateFact[],
+  omissions: JSON.parse(row.omissions_json) as ItemPresentationOmission[],
+  value: row.value,
+  weight: row.weight,
+  diagnostics: JSON.parse(row.diagnostics_json) as ItemPresentationDiagnostic[],
 });
 
+const attachItemTooltips = (rows: ItemOverviewRecord[]): ItemOverviewRow[] => {
+  if (rows.length === 0) return [];
+  const ids = rows.map((row) => row.id);
+  const placeholders = ids.map(() => "?").join(", ");
+  const presentations = new Map(
+    all<ItemPresentationRecord>(
+      `SELECT * FROM item_presentation_rows WHERE id IN (${placeholders})`,
+      ids,
+    ).map((row) => [row.id, toItemPresentationRow(row)]),
+  );
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    weight: row.weight,
+    value: row.value,
+    variant: row.variant,
+    displayIconSrc: assetSrc(row.display_icon_hash),
+    displayIconColor: row.display_icon_color,
+    tooltip: presentations.get(row.id),
+  }));
+};
+
 export const listItemsOverview = (): ItemOverviewRow[] =>
-  all<ItemOverviewRecord>("SELECT * FROM item_overview_rows ORDER BY name").map(toItemOverviewRow);
+  attachItemTooltips(all<ItemOverviewRecord>("SELECT * FROM item_overview_rows ORDER BY name"));
 
 export const listItemsByVariant = (variant: string): ItemOverviewRow[] =>
-  listItemsOverview().filter((row) => row.variant === variant);
+  attachItemTooltips(
+    all<ItemOverviewRecord>("SELECT * FROM item_overview_rows WHERE variant = ? ORDER BY name", [
+      variant,
+    ]),
+  );
 
 export const listItemsByCategory = (categoryId: string): ItemOverviewRow[] =>
-  all<ItemOverviewRecord>(
-    `SELECT o.id, o.name, o.weight, o.value, o.variant, o.display_icon_hash, o.display_icon_color
-     FROM item_overview_rows o
-     JOIN items i ON i.id = o.id
-     WHERE json_extract(i."categoryRef", '$.guid') = ?
-     ORDER BY o.name`,
-    [categoryId],
-  ).map(toItemOverviewRow);
+  attachItemTooltips(
+    all<ItemOverviewRecord>(
+      `SELECT o.id, o.name, o.weight, o.value, o.variant, o.display_icon_hash, o.display_icon_color
+       FROM item_overview_rows o
+       JOIN items i ON i.id = o.id
+       WHERE json_extract(i."categoryRef", '$.guid') = ?
+       ORDER BY o.name`,
+      [categoryId],
+    ),
+  );
 
 export const listItemsByTag = (tagId: string): ItemOverviewRow[] =>
-  all<ItemOverviewRecord>(
-    `SELECT o.id, o.name, o.weight, o.value, o.variant, o.display_icon_hash, o.display_icon_color
-     FROM item_overview_rows o
-     JOIN item_tag_refs refs ON refs.item_id = o.id
-     WHERE refs.tag = ?
-     ORDER BY o.name`,
-    [tagId],
-  ).map(toItemOverviewRow);
+  attachItemTooltips(
+    all<ItemOverviewRecord>(
+      `SELECT o.id, o.name, o.weight, o.value, o.variant, o.display_icon_hash, o.display_icon_color
+       FROM item_overview_rows o
+       JOIN item_tag_refs refs ON refs.item_id = o.id
+       WHERE refs.tag = ?
+       ORDER BY o.name`,
+      [tagId],
+    ),
+  );
 
 export const listItemOverviewCategories = (): ItemOverviewCategory[] =>
   all<ItemOverviewCategoryRecord>(
@@ -547,30 +590,7 @@ export const getItemPresentation = (id: string): ItemPresentationRow | undefined
   const row = get<ItemPresentationRecord>("SELECT * FROM item_presentation_rows WHERE id = ?", [
     id,
   ]);
-  if (!row) return undefined;
-  return {
-    id: row.id,
-    name: row.name,
-    variant: row.variant,
-    itemType: row.item_type,
-    renderContext: row.render_context,
-    displayIconSrc: assetSrc(row.display_icon_hash),
-    displayIconColor: row.display_icon_color,
-    description: JSON.parse(row.description_rich_text_json) as RichTextDocument,
-    effectsSource: row.effects_source,
-    effectsSourceRichText: JSON.parse(row.effects_source_rich_text_json) as RichTextDocument,
-    effects: JSON.parse(row.effect_facts_json) as ItemPresentationEffect[],
-    statRows: JSON.parse(row.stat_rows_json) as ItemPresentationStatRow[],
-    requirements: JSON.parse(row.requirements_json) as ItemPresentationRequirement[],
-    durability: row.durability_json
-      ? (JSON.parse(row.durability_json) as ItemPresentationDurability)
-      : null,
-    stateFacts: JSON.parse(row.state_facts_json) as ItemPresentationStateFact[],
-    omissions: JSON.parse(row.omissions_json) as ItemPresentationOmission[],
-    value: row.value,
-    weight: row.weight,
-    diagnostics: JSON.parse(row.diagnostics_json) as ItemPresentationDiagnostic[],
-  };
+  return row ? toItemPresentationRow(row) : undefined;
 };
 
 export const listRelationshipSections = (

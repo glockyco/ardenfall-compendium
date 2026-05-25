@@ -111,7 +111,7 @@ describe("loadSnapshot", () => {
       expect(result.errors).toContainEqual(
         expect.objectContaining({
           entity: "item",
-          row: "fixture-iron-sword",
+          row: "4ed20218.fixture-iron-sword",
           field: "presentation",
           code: "missingItemPresentation",
         }),
@@ -222,7 +222,7 @@ describe("validate", () => {
     const desc = await loadDescriptors.run({}, ctx);
     const result = await validate.run({ "load-snapshot": snap, "load-descriptors": desc }, ctx);
     // The synthetic fixture has one row-level diagnostic
-    // (lookupAssetGuidMissing for fixture-leather-tunic.iconRef),
+    // (lookupAssetGuidMissing for 5ea7beef.fixture-leather-tunic.iconRef),
     // not zero. Validate that non-fatal diagnostics surface but no
     // fatal errors did.
     expect(result.countsBySeverity.fatal).toBe(0);

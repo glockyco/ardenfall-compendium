@@ -3,9 +3,9 @@
   "schemaVersion": 1,
   "rows": [
     {
-      "id": "fixture-strength",
+      "id": "57a70001.fixture-strength",
       "fields": {
-        "id": "fixture-strength",
+        "id": "57a70001.fixture-strength",
         "isAttribute": true,
         "statName": "Strength",
         "iconRef": null,
@@ -13,13 +13,13 @@
         "statDescription": "Raw physical power.",
         "longStatDescription": "Raw physical power. Affects melee damage and carry weight.",
         "affects": ["melee-damage", "carry-weight"],
-        "skillAffects": ["fixture-heavy-armor"]
+        "skillAffects": ["57a70002.fixture-heavy-armor"]
       }
     },
     {
-      "id": "fixture-heavy-armor",
+      "id": "57a70002.fixture-heavy-armor",
       "fields": {
-        "id": "fixture-heavy-armor",
+        "id": "57a70002.fixture-heavy-armor",
         "isAttribute": false,
         "statName": "Heavy Armor",
         "iconRef": null,

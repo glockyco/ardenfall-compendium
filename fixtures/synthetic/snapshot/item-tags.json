@@ -3,18 +3,18 @@
   "schemaVersion": 1,
   "rows": [
     {
-      "id": "fixture-tag-valuable-remedy",
+      "id": "7a600001.fixture-tag-valuable-remedy",
       "fields": {
-        "id": "fixture-tag-valuable-remedy",
+        "id": "7a600001.fixture-tag-valuable-remedy",
         "tagName": "Valuable remedy",
         "description": "Incredibly valuable remedy"
       },
       "diagnostics": []
     },
     {
-      "id": "fixture-tag-rare",
+      "id": "7a600002.fixture-tag-rare",
       "fields": {
-        "id": "fixture-tag-rare",
+        "id": "7a600002.fixture-tag-rare",
         "tagName": "Rare",
         "description": "Difficult to find."
       },

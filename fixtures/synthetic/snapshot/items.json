@@ -3,10 +3,10 @@
   "schemaVersion": 2,
   "rows": [
     {
-      "id": "fixture-iron-sword",
+      "id": "4ed20218.fixture-iron-sword",
       "variant": "melee-weapon",
       "fields": {
-        "id": "fixture-iron-sword",
+        "id": "4ed20218.fixture-iron-sword",
         "name": "Iron Sword",
         "weight": 3.5,
         "value": 25,
@@ -31,7 +31,7 @@
         "quickslotIconRef": null,
         "categoryRef": {
           "kind": "lookupAsset",
-          "guid": "fixture-weapons",
+          "guid": "ca7e60a1.fixture-weapons",
           "unityType": "Ardenfall.ItemCategory",
           "name": "Weapons"
         },
@@ -119,10 +119,10 @@
       }
     },
     {
-      "id": "fixture-leather-tunic",
+      "id": "5ea7beef.fixture-leather-tunic",
       "variant": "armor",
       "fields": {
-        "id": "fixture-leather-tunic",
+        "id": "5ea7beef.fixture-leather-tunic",
         "name": "Leather Tunic",
         "weight": 4,
         "value": 12,
@@ -213,10 +213,10 @@
       }
     },
     {
-      "id": "fixture-stamina-draught",
+      "id": "6a71c0de.fixture-stamina-draught",
       "variant": "consumable",
       "fields": {
-        "id": "fixture-stamina-draught",
+        "id": "6a71c0de.fixture-stamina-draught",
         "name": "Stamina Draught",
         "weight": 0.25,
         "value": 9,
@@ -248,7 +248,7 @@
           }
         ]
       },
-      "tags": ["fixture-tag-valuable-remedy"],
+      "tags": ["7a600001.fixture-tag-valuable-remedy"],
       "provenance": {
         "name": {
           "kind": "parameter",
@@ -325,10 +325,10 @@
       }
     },
     {
-      "id": "fixture-slate-spell",
+      "id": "7ab10c55.fixture-slate-spell",
       "variant": "slate-spell",
       "fields": {
-        "id": "fixture-slate-spell",
+        "id": "7ab10c55.fixture-slate-spell",
         "name": "Spark Slate",
         "weight": 1.2,
         "value": 40,
@@ -429,10 +429,10 @@
       }
     },
     {
-      "id": "fixture-throwing-potion",
+      "id": "8c0ffee0.fixture-throwing-potion",
       "variant": "throwing-potion",
       "fields": {
-        "id": "fixture-throwing-potion",
+        "id": "8c0ffee0.fixture-throwing-potion",
         "name": "Fire Flask",
         "weight": 0.5,
         "value": 18,
@@ -493,7 +493,7 @@
         "effectName": "Burning",
         "isDrinkingPotion": false
       },
-      "tags": ["fixture-tag-rare"],
+      "tags": ["7a600002.fixture-tag-rare"],
       "provenance": {
         "name": {
           "kind": "parameter",

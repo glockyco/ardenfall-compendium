@@ -43,13 +43,13 @@ describe("stat read-model accessors", () => {
         PRIMARY KEY (entity_type, entity_id)
       );
       INSERT INTO stat_type_overview_rows VALUES
-        ('fixture-strength', 'Strength', 'attribute', '${iconHash}', '{"r":1,"g":0.5,"b":0.25,"a":1}'),
-        ('fixture-heavy-armor', 'Heavy Armor', 'skill', NULL, NULL);
+        ('57a70001.fixture-strength', 'Strength', 'attribute', '${iconHash}', '{"r":1,"g":0.5,"b":0.25,"a":1}'),
+        ('57a70002.fixture-heavy-armor', 'Heavy Armor', 'skill', NULL, NULL);
       INSERT INTO stat_type_presentation_rows VALUES
-        ('fixture-strength', 'Strength', 'attribute', 'stat-type-presentation-v1', '${iconHash}', '{"r":1,"g":0.5,"b":0.25,"a":1}', 'Raw power.', 'Raw power. Affects melee damage.', '["melee-damage"]', '["fixture-heavy-armor"]');
+        ('57a70001.fixture-strength', 'Strength', 'attribute', 'stat-type-presentation-v1', '${iconHash}', '{"r":1,"g":0.5,"b":0.25,"a":1}', 'Raw power.', 'Raw power. Affects melee damage.', '["melee-damage"]', '["57a70002.fixture-heavy-armor"]');
       INSERT INTO entity_nodes VALUES
-        ('stat-type', 'fixture-strength', 'Strength', '/stats/strength--abc12345', 'strength--abc12345', 'abc12345', 1),
-        ('stat-type', 'fixture-heavy-armor', 'Heavy Armor', '/stats/heavy-armor--def67890', 'heavy-armor--def67890', 'def67890', 1);
+        ('stat-type', '57a70001.fixture-strength', 'Strength', '/stats/strength--abc12345', 'strength--abc12345', 'abc12345', 1),
+        ('stat-type', '57a70002.fixture-heavy-armor', 'Heavy Armor', '/stats/heavy-armor--def67890', 'heavy-armor--def67890', 'def67890', 1);
     `);
     db.close();
 
@@ -59,7 +59,7 @@ describe("stat read-model accessors", () => {
 
       expect(readModels.listStatTypes()).toEqual([
         {
-          id: "fixture-strength",
+          id: "57a70001.fixture-strength",
           name: "Strength",
           grouping: "attribute",
           iconSrc: `/assets/${iconHash}.webp`,
@@ -67,7 +67,7 @@ describe("stat read-model accessors", () => {
           routePath: "/stats/strength--abc12345",
         },
         {
-          id: "fixture-heavy-armor",
+          id: "57a70002.fixture-heavy-armor",
           name: "Heavy Armor",
           grouping: "skill",
           iconSrc: null,
@@ -76,7 +76,7 @@ describe("stat read-model accessors", () => {
         },
       ]);
       expect(readModels.getStatTypePresentation("strength--abc12345")).toEqual({
-        id: "fixture-strength",
+        id: "57a70001.fixture-strength",
         name: "Strength",
         grouping: "attribute",
         renderContext: "stat-type-presentation-v1",
@@ -85,7 +85,7 @@ describe("stat read-model accessors", () => {
         description: "Raw power.",
         longDescription: "Raw power. Affects melee damage.",
         affects: ["melee-damage"],
-        skillAffects: ["fixture-heavy-armor"],
+        skillAffects: ["57a70002.fixture-heavy-armor"],
       });
       expect(readModels.getStatTypePresentation("missing--00000000")).toBeUndefined();
     } finally {

@@ -20,27 +20,27 @@
     {
       "entity": "item",
       "ids": [
-        "fixture-iron-sword",
-        "fixture-leather-tunic",
-        "fixture-stamina-draught",
-        "fixture-slate-spell",
-        "fixture-throwing-potion"
+        "4ed20218.fixture-iron-sword",
+        "5ea7beef.fixture-leather-tunic",
+        "6a71c0de.fixture-stamina-draught",
+        "7ab10c55.fixture-slate-spell",
+        "8c0ffee0.fixture-throwing-potion"
       ],
       "rationale": "one melee branch + one armor branch + one consumable subtype branch + slate spell and throwing potion icon behavior branches"
     },
     {
       "entity": "stat-type",
-      "ids": ["fixture-strength", "fixture-heavy-armor"],
+      "ids": ["57a70001.fixture-strength", "57a70002.fixture-heavy-armor"],
       "rationale": "one attribute and one skill-like stat for grouping and stat page coverage"
     },
     {
       "entity": "item-category",
-      "ids": ["fixture-weapons"],
+      "ids": ["ca7e60a1.fixture-weapons"],
       "rationale": "category row for item category pages, icon fallback assets, and item count coverage"
     },
     {
       "entity": "item-tag",
-      "ids": ["fixture-tag-valuable-remedy", "fixture-tag-rare"],
+      "ids": ["7a600001.fixture-tag-valuable-remedy", "7a600002.fixture-tag-rare"],
       "rationale": "tag rows for tag pages, descriptions, and item reverse-link coverage"
     }
   ],
@@ -48,13 +48,13 @@
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
     "snapshot/manifest.json": "fed4a2f70e5debed17f19ea3fcc7004e68b41140bb2a01fa2484099836f12eae",
-    "snapshot/items.json": "8eeeb533d438777ffe4eceddfafbd5536ff07edc89cc72712241e40bf69833c5",
-    "snapshot/asset-manifest.json": "e6fca19d390b38c5ae4b3fbb4920173d47af07c62f7ed19021bbdd9d3d8108c0",
+    "snapshot/items.json": "46f5b8a46a1b81046abcb4276f5e6d6a6c09c017bc2b54c1726f2b391a3a7bea",
+    "snapshot/asset-manifest.json": "9d87c696295ef5c9f3f13e7183beed680d13213f35100f7e7b8c7b4e93411c68",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
     "snapshot/assets/items/fixture-icon-blue.png": "d6d4b05209c7541985841a63d955337a411a005d7abb936426791cbfde258f17",
-    "snapshot/master-tooltip.json": "52eddbdec05b8fb811e2213014fab0f7ad5e0e30b2652a87349886b5ef8234aa",
-    "snapshot/stat-types.json": "249b5eb948ed9ba7dbf3769d90942acdc90fdf0f741947d0373ac7c84b0cdafc",
-    "snapshot/item-categories.json": "db576ccea92fb897e696a579cac0a526ac88664fb9999e4062c86df4cfb21051",
-    "snapshot/item-tags.json": "870248efcf66834d9d59b5d87c92e7d205aa8bcd0defd79e1c6c106c8abfa809"
+    "snapshot/master-tooltip.json": "4a042a3cbd86e4a621899485ad3aa1f117c4d47340e39c92d8bfb1a812a79faa",
+    "snapshot/stat-types.json": "4013bd6b248b40cfe9901c4d17015a4071916690f76ae398ea85f03275bd1b52",
+    "snapshot/item-categories.json": "be00a12b6ec41de05ee8faef62086cef3a9570374fed103604b8a12d9135101f",
+    "snapshot/item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b"
   }
 }

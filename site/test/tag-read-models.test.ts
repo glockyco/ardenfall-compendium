@@ -73,20 +73,20 @@ describe("item-tag read-model accessors", () => {
         PRIMARY KEY (entity_type, entity_id)
       );
       INSERT INTO item_tag_overview_rows VALUES
-        ('fixture-tag-valuable-remedy', 'Valuable remedy', 'Incredibly valuable remedy', 1),
-        ('fixture-tag-rare', 'Rare', 'Difficult to find.', 0);
+        ('7a600001.fixture-tag-valuable-remedy', 'Valuable remedy', 'Incredibly valuable remedy', 1),
+        ('7a600002.fixture-tag-rare', 'Rare', 'Difficult to find.', 0);
       INSERT INTO item_tag_presentation_rows VALUES
-        ('fixture-tag-valuable-remedy', 'Valuable remedy', 'item-tag-presentation-v1', 'Incredibly valuable remedy', 1),
-        ('fixture-tag-rare', 'Rare', 'item-tag-presentation-v1', 'Difficult to find.', 0);
+        ('7a600001.fixture-tag-valuable-remedy', 'Valuable remedy', 'item-tag-presentation-v1', 'Incredibly valuable remedy', 1),
+        ('7a600002.fixture-tag-rare', 'Rare', 'item-tag-presentation-v1', 'Difficult to find.', 0);
       INSERT INTO item_overview_rows VALUES
-        ('fixture-stamina-draught', 'Stamina Draught', 0.25, 9, 'consumable', NULL, NULL);
+        ('6a71c0de.fixture-stamina-draught', 'Stamina Draught', 0.25, 9, 'consumable', NULL, NULL);
       INSERT INTO item_presentation_rows VALUES
-        ('fixture-stamina-draught', 'Stamina Draught', 'consumable', 'Consumable', 'item-presentation-v1', NULL, NULL, '', '${richText}', '', '${richText}', '[]', '[]', '[]', NULL, '[]', '[]', 9, 0.25, '[]');
+        ('6a71c0de.fixture-stamina-draught', 'Stamina Draught', 'consumable', 'Consumable', 'item-presentation-v1', NULL, NULL, '', '${richText}', '', '${richText}', '[]', '[]', '[]', NULL, '[]', '[]', 9, 0.25, '[]');
       INSERT INTO item_tag_refs VALUES
-        ('fixture-stamina-draught', 'fixture-tag-valuable-remedy');
+        ('6a71c0de.fixture-stamina-draught', '7a600001.fixture-tag-valuable-remedy');
       INSERT INTO entity_nodes VALUES
-        ('item-tag', 'fixture-tag-valuable-remedy', 'Valuable remedy', '/tags/valuable-remedy--abc12345', 'valuable-remedy--abc12345', 'abc12345', 1),
-        ('item-tag', 'fixture-tag-rare', 'Rare', '/tags/rare--def67890', 'rare--def67890', 'def67890', 1);
+        ('item-tag', '7a600001.fixture-tag-valuable-remedy', 'Valuable remedy', '/tags/valuable-remedy--abc12345', 'valuable-remedy--abc12345', 'abc12345', 1),
+        ('item-tag', '7a600002.fixture-tag-rare', 'Rare', '/tags/rare--def67890', 'rare--def67890', 'def67890', 1);
     `);
     db.close();
 
@@ -96,14 +96,14 @@ describe("item-tag read-model accessors", () => {
 
       expect(readModels.listItemTags()).toEqual([
         {
-          id: "fixture-tag-rare",
+          id: "7a600002.fixture-tag-rare",
           name: "Rare",
           description: "Difficult to find.",
           itemCount: 0,
           routePath: "/tags/rare--def67890",
         },
         {
-          id: "fixture-tag-valuable-remedy",
+          id: "7a600001.fixture-tag-valuable-remedy",
           name: "Valuable remedy",
           description: "Incredibly valuable remedy",
           itemCount: 1,
@@ -111,15 +111,15 @@ describe("item-tag read-model accessors", () => {
         },
       ]);
       expect(readModels.getItemTagPresentation("valuable-remedy--abc12345")).toEqual({
-        id: "fixture-tag-valuable-remedy",
+        id: "7a600001.fixture-tag-valuable-remedy",
         name: "Valuable remedy",
         renderContext: "item-tag-presentation-v1",
         description: "Incredibly valuable remedy",
         itemCount: 1,
       });
-      expect(readModels.listItemsByTag("fixture-tag-valuable-remedy").map((row) => row.id)).toEqual(
-        ["fixture-stamina-draught"],
-      );
+      expect(
+        readModels.listItemsByTag("7a600001.fixture-tag-valuable-remedy").map((row) => row.id),
+      ).toEqual(["6a71c0de.fixture-stamina-draught"]);
     } finally {
       process.chdir(originalCwd);
       rmSync(root, { recursive: true, force: true });

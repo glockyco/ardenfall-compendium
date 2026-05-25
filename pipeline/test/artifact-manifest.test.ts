@@ -48,9 +48,9 @@ describe("artifact manifest emission", () => {
         CREATE TABLE stat_type_presentation_rows (id TEXT PRIMARY KEY);
         INSERT INTO stat_type_presentation_rows VALUES ('stat-strength'), ('skill-heavy-armor');
         CREATE TABLE item_category_overview_rows (id TEXT PRIMARY KEY);
-        INSERT INTO item_category_overview_rows VALUES ('category-weapons');
+        INSERT INTO item_category_overview_rows VALUES ('ca7e60a1.category-weapons');
         CREATE TABLE item_category_presentation_rows (id TEXT PRIMARY KEY);
-        INSERT INTO item_category_presentation_rows VALUES ('category-weapons');
+        INSERT INTO item_category_presentation_rows VALUES ('ca7e60a1.category-weapons');
         CREATE TABLE item_tag_overview_rows (id TEXT PRIMARY KEY);
         INSERT INTO item_tag_overview_rows VALUES ('tag-valuable-remedy'), ('tag-rare');
         CREATE TABLE item_tag_presentation_rows (id TEXT PRIMARY KEY);

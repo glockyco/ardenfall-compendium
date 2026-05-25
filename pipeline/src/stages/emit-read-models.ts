@@ -1,5 +1,4 @@
 import type { Database } from "bun:sqlite";
-import { createHash } from "node:crypto";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type {
   MasterTooltipVocabulary,
@@ -13,7 +12,7 @@ import {
   insertPipelineDiagnostics,
 } from "../relationships/relationship-graph.ts";
 import type { RichTextNode } from "../rich-text/rich-text-v1.ts";
-import { deriveShortId, deriveSlug, kebab } from "../slug/derive-slug.ts";
+import { deriveShortId, deriveSlug } from "../slug/derive-slug.ts";
 
 export const ITEM_READ_MODEL_DDL = `
 CREATE TABLE item_overview_rows (
@@ -150,7 +149,6 @@ export function prepareEntityNodeWriter(db: Database): EntityNodeWriter {
       explicitCanonicalSlug === undefined
         ? deriveEntityNodeSlug(node.label, node.entityId)
         : { canonicalSlug: explicitCanonicalSlug, shortId: explicitShortId as string };
-
     insert.run(
       node.entityType,
       node.entityId,
@@ -686,16 +684,10 @@ function deriveEntityNodeSlug(
   displayName: string,
   entityId: string,
 ): { canonicalSlug: string; shortId: string } {
-  try {
-    return {
-      canonicalSlug: deriveSlug({ displayName, assetId: entityId }),
-      shortId: deriveShortId(entityId),
-    };
-  } catch {
-    const shortId = createHash("sha256").update(entityId).digest("hex").slice(0, 8);
-    const head = kebab(displayName) || "entity";
-    return { canonicalSlug: `${head}--${shortId}`, shortId };
-  }
+  return {
+    canonicalSlug: deriveSlug({ displayName, assetId: entityId }),
+    shortId: deriveShortId(entityId),
+  };
 }
 
 function aliasKey(label: string): string {
