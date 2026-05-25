@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Ardenfall;
+using Ardenfall.Item;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Entities.ItemCategory;
@@ -94,6 +96,41 @@ public sealed class ItemCategoryExtractorTests
             ReferenceEquals(slot.Sprite, defaultIcon));
     }
 
+    [Fact]
+    public void BuiltLookupSourceDiscoversCategoriesFromItemAssetsWhenLookupHasNoCategories()
+    {
+        var weapons = RuntimeCategory("Weapons", showInAllCategory: true);
+        var firstItem = RuntimeItem();
+        var secondItem = RuntimeItem();
+        var source = new BuiltLookupTableItemCategoryAssetSource(
+            lookupCategories: () => System.Array.Empty<Ardenfall.ItemCategory>(),
+            itemAssets: () => new[] { firstItem, secondItem },
+            itemCategory: _ => weapons,
+            columns: _ => System.Array.Empty<ItemCategoryColumnAsset>(),
+            isUnityNull: _ => false);
+
+        var assets = source.EnumerateItemCategories().ToList();
+
+        var asset = Assert.Single(assets);
+        Assert.Equal("weapons", asset.Guid);
+        Assert.Equal("Weapons", asset.CategoryName);
+        Assert.True(asset.ShowInAllCategory);
+    }
+
+    [Fact]
+    public void BuiltLookupSourceSkipsUnityNullCategoriesReachedFromItems()
+    {
+        var weapons = RuntimeCategory("Weapons", showInAllCategory: true);
+        var source = new BuiltLookupTableItemCategoryAssetSource(
+            lookupCategories: () => System.Array.Empty<Ardenfall.ItemCategory>(),
+            itemAssets: () => new[] { RuntimeItem() },
+            itemCategory: _ => weapons,
+            columns: _ => System.Array.Empty<ItemCategoryColumnAsset>(),
+            isUnityNull: asset => ReferenceEquals(asset, weapons));
+
+        Assert.Empty(source.EnumerateItemCategories());
+    }
+
     private sealed class FakeItemCategoryAssetSource : IItemCategoryAssetSource
     {
         private readonly IReadOnlyList<ItemCategoryAsset> _assets;
@@ -153,4 +190,15 @@ public sealed class ItemCategoryExtractorTests
                 ItemDataField: null,
                 ItemFunctionField: null);
     }
+
+    private static Ardenfall.ItemCategory RuntimeCategory(string name, bool showInAllCategory)
+    {
+        var category = (Ardenfall.ItemCategory)RuntimeHelpers.GetUninitializedObject(typeof(Ardenfall.ItemCategory));
+        category.categoryName = name;
+        category.showInAllCategory = showInAllCategory;
+        return category;
+    }
+
+    private static ItemData RuntimeItem() =>
+        (ItemData)RuntimeHelpers.GetUninitializedObject(typeof(ItemData));
 }

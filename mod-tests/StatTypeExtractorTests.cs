@@ -4,6 +4,8 @@ using System.Runtime.CompilerServices;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Entities.Item;
+using Ardenfall;
+using ArdenfallStatType = Ardenfall.StatType;
 using Xunit;
 using UnityEngine;
 
@@ -84,6 +86,51 @@ public sealed class StatTypeExtractorTests
         Assert.Same(icon, slot.Sprite);
     }
 
+    [Fact]
+    public void BuiltLookupSourceFallsBackToMasterDataStatsWhenLookupHasNoStatTypes()
+    {
+        var master = (ArdenfallMasterData)RuntimeHelpers.GetUninitializedObject(typeof(ArdenfallMasterData));
+        master.allAttributes = new List<ArdenfallStatType> { RuntimeStat("attr-strength", "Strength", isAttribute: true) };
+        master.allSkills = new List<ArdenfallStatType> { RuntimeStat("skill-heavy-armor", "Heavy Armor", isAttribute: false) };
+        var source = new BuiltLookupTableStatTypeAssetSource(
+            lookupStatTypes: () => System.Array.Empty<ArdenfallStatType>(),
+            masterData: () => master,
+            isUnityNull: _ => false);
+
+        var assets = source.EnumerateStatTypes().ToList();
+
+        Assert.Equal(2, assets.Count);
+        Assert.Contains(assets, asset => asset.Guid == "attr-strength" && asset.StatName == "Strength" && asset.IsAttribute);
+        Assert.Contains(assets, asset => asset.Guid == "skill-heavy-armor" && asset.StatName == "Heavy Armor" && !asset.IsAttribute);
+    }
+
+    [Fact]
+    public void BuiltLookupSourceFallsBackToStatNameBeforeUnityAssetName()
+    {
+        var stat = RuntimeStat("", "Alteration Magic", isAttribute: false);
+        var source = new BuiltLookupTableStatTypeAssetSource(
+            lookupStatTypes: () => new[] { stat },
+            masterData: () => null,
+            isUnityNull: asset => ReferenceEquals(asset, null),
+            assetName: _ => "sk_alteration_magic");
+
+        var asset = Assert.Single(source.EnumerateStatTypes());
+
+        Assert.Equal("alteration-magic", asset.Guid);
+    }
+
+    [Fact]
+    public void BuiltLookupSourceSkipsUnityNullStatAssets()
+    {
+        var stat = RuntimeStat("attr-strength", "Strength", isAttribute: true);
+        var source = new BuiltLookupTableStatTypeAssetSource(
+            lookupStatTypes: () => new[] { stat },
+            masterData: () => null,
+            isUnityNull: _ => true);
+
+        Assert.Empty(source.EnumerateStatTypes());
+    }
+
     private sealed class FakeStatTypeAssetSource : IStatTypeAssetSource
     {
         private readonly IReadOnlyList<StatTypeAsset> _assets;
@@ -126,5 +173,16 @@ public sealed class StatTypeExtractorTests
             LongStatDescription: null,
             Affects: new List<string>(),
             SkillAffects: new List<string>());
+    }
+
+    private static ArdenfallStatType RuntimeStat(string id, string name, bool isAttribute)
+    {
+        var stat = (ArdenfallStatType)RuntimeHelpers.GetUninitializedObject(typeof(ArdenfallStatType));
+        stat.id = id;
+        stat.statName = name;
+        stat.isAttribute = isAttribute;
+        stat.affects = new List<string>();
+        stat.skillAffects = new List<string>();
+        return stat;
     }
 }
