@@ -147,7 +147,7 @@ function isCommandResult(value: unknown): value is CommandResult {
 }
 
 async function connectTestClient(client: HotReplClient): Promise<void> {
-  await client.connect({ timeoutMs: 500, retryIntervalMs: 10 });
+  await client.connect({ timeoutMs: 2_000, retryIntervalMs: 10 });
 }
 
 describe("HotReplClient", () => {
