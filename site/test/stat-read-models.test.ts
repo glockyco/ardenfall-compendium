@@ -93,4 +93,45 @@ describe("stat read-model accessors", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+
+  it("fails on malformed generated color JSON", async () => {
+    const originalCwd = process.cwd();
+    const root = join(tmpdir(), `ardenfall-site-stat-color-${process.pid}-${Date.now()}`);
+    mkdirSync(join(root, "static"), { recursive: true });
+    const db = new Database(join(root, "static", "data.sqlite"));
+    db.exec(`
+      CREATE TABLE stat_type_overview_rows (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        grouping TEXT NOT NULL,
+        icon_hash TEXT,
+        icon_color TEXT
+      );
+      CREATE TABLE entity_nodes (
+        entity_type TEXT NOT NULL,
+        entity_id TEXT NOT NULL,
+        label TEXT NOT NULL,
+        route_path TEXT NOT NULL,
+        canonical_slug TEXT NOT NULL,
+        short_id TEXT NOT NULL,
+        is_public INTEGER NOT NULL,
+        PRIMARY KEY (entity_type, entity_id)
+      );
+      INSERT INTO stat_type_overview_rows VALUES
+        ('57a70001.fixture-strength', 'Strength', 'attribute', NULL, '{"r":"bad"}');
+      INSERT INTO entity_nodes VALUES
+        ('stat-type', '57a70001.fixture-strength', 'Strength', '/stats/strength--abc12345', 'strength--abc12345', 'abc12345', 1);
+    `);
+    db.close();
+
+    try {
+      process.chdir(root);
+      const readModels = await import("../src/lib/server/read-models");
+
+      expect(() => readModels.listStatTypes()).toThrow(/invalid generated color/);
+    } finally {
+      process.chdir(originalCwd);
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });

@@ -22,16 +22,24 @@ const assetSrc = (hash: string | null): string | null => (hash ? `/assets/${hash
 
 const colorCss = (json: string | null): string | null => {
   if (!json) return null;
+  let color: { r?: unknown; g?: unknown; b?: unknown; a?: unknown };
   try {
-    const color = JSON.parse(json) as { r?: unknown; g?: unknown; b?: unknown; a?: unknown };
-    if (typeof color.r !== "number" || typeof color.g !== "number" || typeof color.b !== "number") {
-      return null;
-    }
-    const alpha = typeof color.a === "number" && Number.isFinite(color.a) ? color.a : 1;
-    return `rgba(${colorChannel(color.r)}, ${colorChannel(color.g)}, ${colorChannel(color.b)}, ${alpha})`;
-  } catch {
-    return null;
+    color = JSON.parse(json) as { r?: unknown; g?: unknown; b?: unknown; a?: unknown };
+  } catch (error) {
+    throw new Error(`invalid generated color JSON: ${json}`, { cause: error });
   }
+  if (
+    typeof color.r !== "number" ||
+    !Number.isFinite(color.r) ||
+    typeof color.g !== "number" ||
+    !Number.isFinite(color.g) ||
+    typeof color.b !== "number" ||
+    !Number.isFinite(color.b)
+  ) {
+    throw new Error(`invalid generated color channels: ${json}`);
+  }
+  const alpha = typeof color.a === "number" && Number.isFinite(color.a) ? color.a : 1;
+  return `rgba(${colorChannel(color.r)}, ${colorChannel(color.g)}, ${colorChannel(color.b)}, ${alpha})`;
 };
 
 const colorChannel = (value: number): number => Math.round(Math.max(0, Math.min(1, value)) * 255);
