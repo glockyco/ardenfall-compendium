@@ -1,6 +1,14 @@
 # Ardenfall HotRepl v2 Migration Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **Status:** Closed/superseded by the typed HotRepl command migration. The
+> v1 auth/lease/token cleanup and bind-only deploy fixes landed in `db503e8`;
+> the later typed-command cutover landed in `562802e`, `c92380e`, `0e94824`,
+> `e783cc7`, `ffe6b47`, and `045ece8`. The current authoritative runtime state
+> is the roadmap's "Operational slice — HotRepl v3 typed command migration" and
+> the completed Phase 4a plan. Treat the task boxes below as historical
+> execution notes, not pending work.
 
 **Goal:** Move the Ardenfall export controller and mod command bridge from the bespoke HotRepl v1 client to the canonical HotRepl v2 SDK and runtime protocol.
 
@@ -611,6 +619,7 @@ Record whether live `bun run hotrepl:export` was run and what game/build prerequ
   forward: `controller/src/deploy.ts`, `package.json`, `.env.example`, `README.md`, and
   `controller/test/deploy.test.ts` now cover bind-only BepInEx config with no `[Control]`,
   `RequireAuth`, or `AuthToken`.
-- A live Ardenfall launch through `bun run hotrepl:launch` reached HotRepl v2 and evaluated
-  `UnityEngine.Application.productName` as `"Ardenfall Demo 2025"`. Full v2 export remains governed
-  by the remaining `CompendiumClient` migration steps above.
+- The remaining v2 live-export concern was superseded by the typed-command
+  cutover recorded in the roadmap and completed Phase 4a plan. The final
+  verified path uses the current typed HotRepl control API rather than the
+  SDK/package migration shape drafted here.

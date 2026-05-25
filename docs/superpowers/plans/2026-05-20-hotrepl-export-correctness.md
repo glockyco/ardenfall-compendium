@@ -1,6 +1,13 @@
 # HotRepl Export Correctness Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **Status:** Completed on 2026-05-21. The implementation landed in
+> `fe82c8f`, `54b1049`, and `01e1dc6`: game-side finalize now verifies
+> preflight and complete chunk state before atomic publish; the controller
+> validates every snapshot artifact, hash, count, and fatal diagnostic before
+> running the pipeline; setup/export helper scripts are in place. Treat the
+> task boxes below as historical execution notes, not pending work.
 
 **Goal:** Make the Ardenfall HotRepl export path publish only complete, preflight-passing snapshots and validate every emitted artifact before pipeline ingestion.
 

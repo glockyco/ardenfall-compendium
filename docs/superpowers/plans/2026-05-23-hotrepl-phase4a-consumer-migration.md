@@ -1,6 +1,9 @@
 # HotRepl Phase 4a Consumer Migration Implementation Plan
 
-> **Status:** Completed on 2026-05-23. Spec, mechanical API migration, build, mod-tests, and live HotRepl smoke against the running game are all green (commits `e783cc7`, `ffe6b47`). Treat the task boxes below as historical execution notes, not pending work.
+> **Status:** Completed on 2026-05-24. Spec, mechanical API migration, build,
+> mod-tests, live HotRepl smoke against the running game, and closeout docs are
+> all green (commits `e783cc7`, `ffe6b47`, `045ece8`). Treat the task boxes
+> below as historical execution notes, not pending work.
 >
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
