@@ -24,6 +24,7 @@ This repository is the static compendium for the game Ardenfall. Its design is c
 - No raw Unity / Odin / game-object JSON in snapshots. The mod walks live runtime graphs and emits explicit DTOs.
 - Public presentation and link contracts are generated pipeline data. The site renders typed read models, rich-text nodes, and relationship edges; it does not render raw TMP/HTML or infer durable cross-entity links in route code.
 - Public contract replacements are clean cutovers. When a new read model, route contract, or shared UI primitive replaces an old one, remove the old public fallback/plumbing in the same slice; use private `_debug_*` views or diagnostics for temporary inspection.
+- Fail fast instead of adding secondary discovery paths, guessed identifiers, or silent fallbacks. Missing source-of-truth data should produce diagnostics or fail the slice; recovery logic is acceptable only when it is an explicit, continuously verified contract.
 - Pre-commit runs Prettier, ESLint, and `dotnet format` via lefthook. Do not bypass with `--no-verify` for routine work.
 - Generated deploy artifacts are identified by `artifact-manifest.json`. Production deploys consume only release artifacts under `pipeline/artifacts/releases/*`; fixture artifacts under `pipeline/artifacts/fixtures/*` are never deployable.
 - `site/static` is a staging cache populated from a validated artifact. Do not treat it as source-of-truth and do not manually edit generated files there.
