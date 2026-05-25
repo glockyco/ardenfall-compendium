@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "dev": "bun run --cwd site dev",
+    "prepare": "lefthook install",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
