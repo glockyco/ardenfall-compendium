@@ -18,6 +18,11 @@ pre-commit:
         - merge
         - rebase
 
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH" bunx commitlint --edit {1}
+
 pre-push:
   jobs:
     - name: typecheck
