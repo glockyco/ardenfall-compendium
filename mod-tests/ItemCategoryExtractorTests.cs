@@ -107,14 +107,32 @@ public sealed class ItemCategoryExtractorTests
             itemAssets: () => new[] { firstItem, secondItem },
             itemCategory: _ => weapons,
             columns: _ => System.Array.Empty<ItemCategoryColumnAsset>(),
-            isUnityNull: _ => false);
+            isUnityNull: _ => false,
+            lookupGuid: asset => ReferenceEquals(asset, weapons) ? "category-weapons" : null);
 
         var assets = source.EnumerateItemCategories().ToList();
 
         var asset = Assert.Single(assets);
-        Assert.Equal("weapons", asset.Guid);
+        Assert.Equal("category-weapons", asset.Guid);
         Assert.Equal("Weapons", asset.CategoryName);
         Assert.True(asset.ShowInAllCategory);
+    }
+
+    [Fact]
+    public void BuiltLookupSourceDoesNotInventCategoryIdsWhenLookupGuidIsMissing()
+    {
+        var weapons = RuntimeCategory("Weapons", showInAllCategory: true);
+        var source = new BuiltLookupTableItemCategoryAssetSource(
+            lookupCategories: () => System.Array.Empty<Ardenfall.ItemCategory>(),
+            itemAssets: () => new[] { RuntimeItem() },
+            itemCategory: _ => weapons,
+            columns: _ => System.Array.Empty<ItemCategoryColumnAsset>(),
+            isUnityNull: _ => false,
+            lookupGuid: _ => null);
+
+        var asset = Assert.Single(source.EnumerateItemCategories());
+
+        Assert.Null(asset.Guid);
     }
 
     [Fact]

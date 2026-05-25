@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Ardenfall;
 using Ardenfall.Item;
 using ArdenfallCompendium.Dtos;
@@ -49,6 +48,7 @@ public sealed class BuiltLookupTableItemCategoryAssetSource : IItemCategoryAsset
     private readonly Func<ItemData, ArdenfallCategory?> _itemCategory;
     private readonly Func<ArdenfallCategory, IReadOnlyList<ItemCategoryColumnAsset>> _columns;
     private readonly Func<UnityObject?, bool> _isUnityNull;
+    private readonly Func<UnityObject, string?> _lookupGuid;
 
     public BuiltLookupTableItemCategoryAssetSource()
         : this(
@@ -56,7 +56,8 @@ public sealed class BuiltLookupTableItemCategoryAssetSource : IItemCategoryAsset
             itemAssets: () => BuiltLookupTable.GetAssetsOfType<ItemData>(),
             itemCategory: item => item.category?.Get(),
             columns: Columns,
-            isUnityNull: IsUnityNull)
+            isUnityNull: IsUnityNull,
+            lookupGuid: LookupGuid)
     {
     }
 
@@ -65,13 +66,15 @@ public sealed class BuiltLookupTableItemCategoryAssetSource : IItemCategoryAsset
         Func<IEnumerable<ItemData>> itemAssets,
         Func<ItemData, ArdenfallCategory?> itemCategory,
         Func<ArdenfallCategory, IReadOnlyList<ItemCategoryColumnAsset>> columns,
-        Func<UnityObject?, bool> isUnityNull)
+        Func<UnityObject?, bool> isUnityNull,
+        Func<UnityObject, string?>? lookupGuid = null)
     {
         _lookupCategories = lookupCategories;
         _itemAssets = itemAssets;
         _itemCategory = itemCategory;
         _columns = columns;
         _isUnityNull = isUnityNull;
+        _lookupGuid = lookupGuid ?? LookupGuid;
     }
 
     public IEnumerable<ItemCategoryAsset> EnumerateItemCategories()
@@ -80,7 +83,7 @@ public sealed class BuiltLookupTableItemCategoryAssetSource : IItemCategoryAsset
         foreach (var asset in _lookupCategories())
         {
             if (_isUnityNull(asset)) continue;
-            var snapshot = ToAsset(asset, _columns);
+            var snapshot = ToAsset(asset);
             if (!string.IsNullOrWhiteSpace(snapshot.Guid) && !seen.Add(snapshot.Guid)) continue;
             yield return snapshot;
         }
@@ -88,7 +91,7 @@ public sealed class BuiltLookupTableItemCategoryAssetSource : IItemCategoryAsset
         foreach (var asset in EnumerateItemCategoriesFromItems())
         {
             if (_isUnityNull(asset)) continue;
-            var snapshot = ToAsset(asset, _columns);
+            var snapshot = ToAsset(asset);
             if (!string.IsNullOrWhiteSpace(snapshot.Guid) && !seen.Add(snapshot.Guid)) continue;
             yield return snapshot;
         }
@@ -104,30 +107,20 @@ public sealed class BuiltLookupTableItemCategoryAssetSource : IItemCategoryAsset
         }
     }
 
-    private static ItemCategoryAsset ToAsset(
-        ArdenfallCategory asset,
-        Func<ArdenfallCategory, IReadOnlyList<ItemCategoryColumnAsset>> columns) => new(
-        Guid: StableId(asset),
+    private ItemCategoryAsset ToAsset(ArdenfallCategory asset) => new(
+        Guid: _lookupGuid(asset),
         AssetName: SafeName(asset),
         CategoryName: asset.categoryName,
         Icon: asset.icon,
         DefaultItemIcon: asset.defaultItemIcon,
         CategoryColor: AssetColorSnapshot.FromColor(asset.categoryColor),
         ShowInAllCategory: asset.showInAllCategory,
-        Columns: columns(asset));
+        Columns: _columns(asset));
 
     private static IReadOnlyList<ItemCategoryColumnAsset> Columns(ArdenfallCategory asset) =>
         asset.columns?.Where(column => column != null).Select(ToColumnAsset).ToList()
             ?? new List<ItemCategoryColumnAsset>();
 
-    public static string? StableId(ArdenfallCategory asset)
-    {
-        var guid = LookupGuid(asset);
-        if (!string.IsNullOrWhiteSpace(guid)) return guid;
-        if (!string.IsNullOrWhiteSpace(asset.categoryName)) return NormalizeId(asset.categoryName);
-        var name = SafeName(asset);
-        return string.IsNullOrWhiteSpace(name) ? null : NormalizeId(name);
-    }
 
     private static string SafeName(UnityObject asset)
     {
@@ -166,26 +159,6 @@ public sealed class BuiltLookupTableItemCategoryAssetSource : IItemCategoryAsset
         }
     }
 
-    private static string NormalizeId(string value)
-    {
-        var builder = new StringBuilder(value.Length);
-        var needsDash = false;
-        foreach (var ch in value)
-        {
-            if (char.IsLetterOrDigit(ch))
-            {
-                if (needsDash && builder.Length > 0) builder.Append('-');
-                builder.Append(char.ToLowerInvariant(ch));
-                needsDash = false;
-            }
-            else
-            {
-                needsDash = true;
-            }
-        }
-
-        return builder.Length == 0 ? "item-category" : builder.ToString();
-    }
 
     private static ItemCategoryColumnAsset ToColumnAsset(ArdenfallCategory.CategoryColumn column) => new(
         Label: column.label,

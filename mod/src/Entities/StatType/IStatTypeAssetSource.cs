@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Ardenfall;
 using ArdenfallCompendium.Dtos;
 using UnityObject = UnityEngine.Object;
@@ -30,13 +29,15 @@ public sealed class BuiltLookupTableStatTypeAssetSource : IStatTypeAssetSource
     private readonly Func<ArdenfallMasterData?> _masterData;
     private readonly Func<UnityObject?, bool> _isUnityNull;
     private readonly Func<UnityObject, string> _assetName;
+    private readonly Func<UnityObject, string?> _lookupGuid;
 
     public BuiltLookupTableStatTypeAssetSource()
         : this(
             lookupStatTypes: () => BuiltLookupTable.GetAssetsOfType<Ardenfall.StatType>(),
             masterData: () => ArdenfallMasterData.Instance,
             isUnityNull: IsUnityNull,
-            assetName: SafeName)
+            assetName: SafeName,
+            lookupGuid: LookupGuid)
     {
     }
 
@@ -44,12 +45,14 @@ public sealed class BuiltLookupTableStatTypeAssetSource : IStatTypeAssetSource
         Func<IEnumerable<Ardenfall.StatType>> lookupStatTypes,
         Func<ArdenfallMasterData?> masterData,
         Func<UnityObject?, bool> isUnityNull,
-        Func<UnityObject, string>? assetName = null)
+        Func<UnityObject, string>? assetName = null,
+        Func<UnityObject, string?>? lookupGuid = null)
     {
         _lookupStatTypes = lookupStatTypes;
         _masterData = masterData;
         _isUnityNull = isUnityNull;
         _assetName = assetName ?? SafeName;
+        _lookupGuid = lookupGuid ?? LookupGuid;
     }
 
     public IEnumerable<StatTypeAsset> EnumerateStatTypes()
@@ -89,7 +92,7 @@ public sealed class BuiltLookupTableStatTypeAssetSource : IStatTypeAssetSource
     }
 
     private StatTypeAsset ToAsset(Ardenfall.StatType asset) => new(
-        Guid: StableId(asset),
+        Guid: _lookupGuid(asset),
         AssetName: _assetName(asset),
         IsAttribute: asset.isAttribute,
         StatName: asset.statName,
@@ -100,15 +103,6 @@ public sealed class BuiltLookupTableStatTypeAssetSource : IStatTypeAssetSource
         Affects: asset.affects,
         SkillAffects: asset.skillAffects);
 
-    private string? StableId(Ardenfall.StatType asset)
-    {
-        var guid = LookupGuid(asset);
-        if (!string.IsNullOrWhiteSpace(guid)) return guid;
-        if (!string.IsNullOrWhiteSpace(asset.id)) return asset.id;
-        if (!string.IsNullOrWhiteSpace(asset.statName)) return NormalizeId(asset.statName);
-        var name = _assetName(asset);
-        return string.IsNullOrWhiteSpace(name) ? null : NormalizeId(name);
-    }
 
     private static string SafeName(UnityObject asset)
     {
@@ -147,24 +141,4 @@ public sealed class BuiltLookupTableStatTypeAssetSource : IStatTypeAssetSource
         }
     }
 
-    private static string NormalizeId(string value)
-    {
-        var builder = new StringBuilder(value.Length);
-        var needsDash = false;
-        foreach (var ch in value)
-        {
-            if (char.IsLetterOrDigit(ch))
-            {
-                if (needsDash && builder.Length > 0) builder.Append('-');
-                builder.Append(char.ToLowerInvariant(ch));
-                needsDash = false;
-            }
-            else
-            {
-                needsDash = true;
-            }
-        }
-
-        return builder.Length == 0 ? "stat-type" : builder.ToString();
-    }
 }

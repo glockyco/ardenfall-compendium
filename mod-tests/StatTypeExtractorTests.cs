@@ -89,34 +89,42 @@ public sealed class StatTypeExtractorTests
     [Fact]
     public void BuiltLookupSourceFallsBackToMasterDataStatsWhenLookupHasNoStatTypes()
     {
+        var attribute = RuntimeStat("attr-strength", "Strength", isAttribute: true);
+        var skill = RuntimeStat("skill-heavy-armor", "Heavy Armor", isAttribute: false);
         var master = (ArdenfallMasterData)RuntimeHelpers.GetUninitializedObject(typeof(ArdenfallMasterData));
-        master.allAttributes = new List<ArdenfallStatType> { RuntimeStat("attr-strength", "Strength", isAttribute: true) };
-        master.allSkills = new List<ArdenfallStatType> { RuntimeStat("skill-heavy-armor", "Heavy Armor", isAttribute: false) };
+        master.allAttributes = new List<ArdenfallStatType> { attribute };
+        master.allSkills = new List<ArdenfallStatType> { skill };
         var source = new BuiltLookupTableStatTypeAssetSource(
             lookupStatTypes: () => System.Array.Empty<ArdenfallStatType>(),
             masterData: () => master,
-            isUnityNull: _ => false);
+            isUnityNull: _ => false,
+            lookupGuid: asset => ReferenceEquals(asset, attribute)
+                ? "stat-attr-strength"
+                : ReferenceEquals(asset, skill)
+                    ? "stat-skill-heavy-armor"
+                    : null);
 
         var assets = source.EnumerateStatTypes().ToList();
 
         Assert.Equal(2, assets.Count);
-        Assert.Contains(assets, asset => asset.Guid == "attr-strength" && asset.StatName == "Strength" && asset.IsAttribute);
-        Assert.Contains(assets, asset => asset.Guid == "skill-heavy-armor" && asset.StatName == "Heavy Armor" && !asset.IsAttribute);
+        Assert.Contains(assets, asset => asset.Guid == "stat-attr-strength" && asset.StatName == "Strength" && asset.IsAttribute);
+        Assert.Contains(assets, asset => asset.Guid == "stat-skill-heavy-armor" && asset.StatName == "Heavy Armor" && !asset.IsAttribute);
     }
 
     [Fact]
-    public void BuiltLookupSourceFallsBackToStatNameBeforeUnityAssetName()
+    public void BuiltLookupSourceDoesNotInventStatIdsWhenLookupGuidIsMissing()
     {
-        var stat = RuntimeStat("", "Alteration Magic", isAttribute: false);
+        var stat = RuntimeStat("attr-alteration", "Alteration Magic", isAttribute: false);
         var source = new BuiltLookupTableStatTypeAssetSource(
             lookupStatTypes: () => new[] { stat },
             masterData: () => null,
             isUnityNull: asset => ReferenceEquals(asset, null),
-            assetName: _ => "sk_alteration_magic");
+            assetName: _ => "sk_alteration_magic",
+            lookupGuid: _ => null);
 
         var asset = Assert.Single(source.EnumerateStatTypes());
 
-        Assert.Equal("alteration-magic", asset.Guid);
+        Assert.Null(asset.Guid);
     }
 
     [Fact]
