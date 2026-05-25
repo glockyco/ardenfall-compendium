@@ -23,6 +23,41 @@ describe("loadSnapshot", () => {
     expect(items.rows.length).toBe(5);
   });
 
+  it("loads root finalize timings as a typed auxiliary artifact", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "ardenfall-finalize-timings-"));
+    try {
+      writeFileSync(
+        join(dir, "manifest.json"),
+        readFileSync("fixtures/synthetic/snapshot/manifest.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "asset-manifest.json"),
+        readFileSync("fixtures/synthetic/snapshot/asset-manifest.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "items.json"),
+        readFileSync("fixtures/synthetic/snapshot/items.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "master-tooltip.json"),
+        readFileSync("fixtures/synthetic/snapshot/master-tooltip.json", "utf8"),
+      );
+      writeFileSync(
+        join(dir, "finalize-timings.json"),
+        JSON.stringify([{ phase: "assets.write", elapsedMs: 42, totalElapsedMs: 50 }]),
+      );
+
+      const out = await loadSnapshot.run({}, { ...ctx, snapshotDir: dir });
+
+      expect(out.finalizeTimings).toEqual([
+        { phase: "assets.write", elapsedMs: 42, totalElapsedMs: 50 },
+      ]);
+      expect(out.envelopes.item).toBeDefined();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it("rejects snapshots missing the master tooltip vocabulary", async () => {
     const dir = mkdtempSync(join(tmpdir(), "ardenfall-missing-master-tooltip-"));
     try {

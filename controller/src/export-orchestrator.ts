@@ -131,7 +131,13 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
     const publishedDir = normalizeControllerPath(
       requireString(finalized.output.publishedDir, "run.finalize output.publishedDir"),
     );
-    log({ phase: "run.finalize", status: "completed", runId, publishedDir });
+    log({
+      phase: "run.finalize",
+      status: "completed",
+      runId,
+      publishedDir,
+      timings: finalized.output.timings,
+    });
 
     const validate = options.validate ?? validateSnapshot;
     log({ phase: "validate", status: "started", publishedDir });

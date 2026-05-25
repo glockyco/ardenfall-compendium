@@ -75,7 +75,11 @@ class FakeClient implements ControllerClient {
       if (this.finalizeError) throw this.finalizeError;
       return {
         status: "ok",
-        output: { runId: "run-1", publishedDir: this.publishedDir },
+        output: {
+          runId: "run-1",
+          publishedDir: this.publishedDir,
+          timings: [{ phase: "publish", elapsedMs: 3 }],
+        },
         artifacts: {},
       };
     }
@@ -129,7 +133,12 @@ describe("exportCompendium", () => {
       expect.objectContaining({ phase: "run.finalize", status: "started", runId: "run-1" }),
     );
     expect(events).toContainEqual(
-      expect.objectContaining({ phase: "run.finalize", status: "completed", runId: "run-1" }),
+      expect.objectContaining({
+        phase: "run.finalize",
+        status: "completed",
+        runId: "run-1",
+        timings: [{ phase: "publish", elapsedMs: 3 }],
+      }),
     );
     expect(events).toContainEqual(
       expect.objectContaining({

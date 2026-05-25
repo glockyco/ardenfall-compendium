@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -89,7 +90,11 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 )
             );
 
+        var timings = new List<RunFinalizeTiming>();
+        var totalStopwatch = Stopwatch.StartNew();
+        var phaseStopwatch = Stopwatch.StartNew();
         var preflight = _preflight();
+        RecordTiming(timings, "preflight", phaseStopwatch, totalStopwatch);
         if (!preflight.Passed)
             return new(
                 CompendiumCommandResults.Precondition(
@@ -100,6 +105,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 )
             );
 
+        phaseStopwatch.Restart();
         var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "item", "chunks");
         var chunkValidation = ReadPlannedItemChunks(
             context,
@@ -109,6 +115,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             out var diagnosticTotals,
             out var diagnostics
         );
+        RecordTiming(timings, "chunks.read", phaseStopwatch, totalStopwatch);
         if (chunkValidation != null) return new(chunkValidation);
 
         var snapshotsRoot = Path.Combine(run.OutputBaseDir, "snapshots");
@@ -131,15 +138,20 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         {
             var hashes = new Dictionary<string, string>();
 
+            phaseStopwatch.Restart();
             var itemEnvelope = new ItemSnapshotEnvelope { Rows = rows };
             WriteJson(stagingDir, "items.json", itemEnvelope, hashes);
+            RecordTiming(timings, "items.write", phaseStopwatch, totalStopwatch);
 
+            phaseStopwatch.Restart();
             var statTypeRows = _statTypes.GetOrExtract(run);
             var statTypeAssetPlan = _statTypes.GetAssetPlan(run);
             var itemCategoryRows = _itemCategories.GetOrExtract(run);
             var itemCategoryAssetPlan = _itemCategories.GetAssetPlan(run);
             var itemTagRows = _itemTags.GetOrExtract(run);
+            RecordTiming(timings, "related.extract", phaseStopwatch, totalStopwatch);
 
+            phaseStopwatch.Restart();
             var assetPlan = _items.GetAssetPlan(run);
             var assetWriter = new ItemAssetManifestWriter(new SpriteAssetExporter());
             assetWriter.WriteSlots(stagingDir, assetPlan);
@@ -150,7 +162,9 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             assetPlan.Manifest.Assets.AddRange(itemCategoryAssetPlan.Manifest.Assets);
             assetPlan.Manifest.ItemIconMetadata.AddRange(itemCategoryAssetPlan.Manifest.ItemIconMetadata);
             WriteJson(stagingDir, "asset-manifest.json", assetPlan.Manifest, hashes);
+            RecordTiming(timings, "assets.write", phaseStopwatch, totalStopwatch);
 
+            phaseStopwatch.Restart();
             var masterTooltip = _masterTooltip.BuildSnapshot();
             WriteJson(stagingDir, "master-tooltip.json", masterTooltip, hashes);
 
@@ -160,7 +174,9 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             WriteJson(stagingDir, "item-categories.json", itemCategoryEnvelope, hashes);
             var itemTagEnvelope = new ItemTagSnapshotEnvelope { Rows = itemTagRows.ToList() };
             WriteJson(stagingDir, "item-tags.json", itemTagEnvelope, hashes);
+            RecordTiming(timings, "metadata.write", phaseStopwatch, totalStopwatch);
 
+            phaseStopwatch.Restart();
             foreach (var diagnostic in _items.GetWalkerDiagnostics(run))
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
@@ -182,6 +198,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             {
                 WriteJson(stagingDir, "diagnostics.json", diagnostics, hashes);
             }
+            RecordTiming(timings, "diagnostics.collect", phaseStopwatch, totalStopwatch);
+            WriteJson(stagingDir, "finalize-timings.json", timings, hashes);
 
             var counts = new Dictionary<string, int>
             {
@@ -199,11 +217,15 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 gameVersion: run.GameVersion,
                 buildIdentifier: run.RunId
             );
+            phaseStopwatch.Restart();
             var manifestJson = JsonConvert.SerializeObject(manifest, JsonSettings.Default);
-            File.WriteAllText(Path.Combine(stagingDir, "manifest.json"), manifestJson);
+            AtomicFile.WriteAllText(Path.Combine(stagingDir, "manifest.json"), manifestJson);
             var manifestHash = ManifestBuilder.Sha256Hex(manifestJson);
+            RecordTiming(timings, "manifest.write", phaseStopwatch, totalStopwatch);
 
+            phaseStopwatch.Restart();
             Directory.Move(stagingDir, publishedDir);
+            RecordTiming(timings, "publish", phaseStopwatch, totalStopwatch);
 
             run.PublishedDir = publishedDir;
             run.State = "finalized";
@@ -211,7 +233,9 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             run.Counts["stat-type"] = statTypeRows.Count;
             run.Counts["item-category"] = itemCategoryRows.Count;
             run.Counts["item-tag"] = itemTagRows.Count;
+            phaseStopwatch.Restart();
             _runs.Save(run);
+            RecordTiming(timings, "run.save", phaseStopwatch, totalStopwatch);
 
             var manifestPath = Path.Combine(publishedDir, "manifest.json");
             var result = new RunFinalizeResult
@@ -219,6 +243,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 RunId = run.RunId,
                 PublishedDir = publishedDir,
                 ManifestPath = manifestPath,
+                Timings = timings,
             };
             var artifacts = new Dictionary<string, ArtifactRef>(StringComparer.Ordinal)
             {
@@ -229,6 +254,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["stat-types"] = CompendiumCommandResults.FileArtifact("stat-types", Path.Combine(publishedDir, "stat-types.json"), "application/json", hashes["stat-types.json"]),
                 ["item-categories"] = CompendiumCommandResults.FileArtifact("item-categories", Path.Combine(publishedDir, "item-categories.json"), "application/json", hashes["item-categories.json"]),
                 ["item-tags"] = CompendiumCommandResults.FileArtifact("item-tags", Path.Combine(publishedDir, "item-tags.json"), "application/json", hashes["item-tags.json"]),
+                ["finalize-timings"] = CompendiumCommandResults.FileArtifact("finalize-timings", Path.Combine(publishedDir, "finalize-timings.json"), "application/json", hashes["finalize-timings.json"]),
             };
             if (hashes.TryGetValue("diagnostics.json", out var diagnosticsHash))
             {
@@ -339,8 +365,24 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     private static void WriteJson(string dir, string fileName, object value, IDictionary<string, string> hashes)
     {
         var json = JsonConvert.SerializeObject(value, JsonSettings.Default);
-        File.WriteAllText(Path.Combine(dir, fileName), json);
+        AtomicFile.WriteAllText(Path.Combine(dir, fileName), json);
         hashes[fileName] = ManifestBuilder.Sha256Hex(json);
+    }
+
+    private static void RecordTiming(
+        ICollection<RunFinalizeTiming> timings,
+        string phase,
+        Stopwatch phaseStopwatch,
+        Stopwatch totalStopwatch
+    )
+    {
+        phaseStopwatch.Stop();
+        timings.Add(new RunFinalizeTiming
+        {
+            Phase = phase,
+            ElapsedMs = phaseStopwatch.ElapsedMilliseconds,
+            TotalElapsedMs = totalStopwatch.ElapsedMilliseconds,
+        });
     }
 
     private static void AddDiagnostic(

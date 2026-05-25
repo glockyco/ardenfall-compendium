@@ -97,6 +97,12 @@ export interface SnapshotManifest {
   hashes: Record<string, string>;
 }
 
+export interface FinalizeTiming {
+  phase: string;
+  elapsedMs: number;
+  totalElapsedMs: number;
+}
+
 export interface SnapshotEnvelope<F = Record<string, unknown>> {
   entityId: string;
   schemaVersion: number;

@@ -151,6 +151,42 @@ public sealed class RunFinalizeCommandTests
         Assert.Contains(diagnostics, d => d["rowId"]!.Type == JTokenType.Null && d["code"]?.Value<string>() == "walkerDiagnostic");
     }
 
+    [Fact]
+    public async Task EmitsFinalizeTimingArtifact()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-timing-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+        var command = new RunFinalizeCommand(
+            runs,
+            new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
+            FakeMasterTooltipSource.Default,
+            EmptyStatTypes,
+            EmptyItemCategories,
+            EmptyItemTags,
+            preflight: PassingPreflight);
+
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+
+        Assert.Empty(result.Diagnostics);
+        Assert.Contains("finalize-timings", result.Artifacts.Keys);
+        var publishedDir = Path.GetDirectoryName(result.Output!.ManifestPath)!;
+        var timingPath = Path.Combine(publishedDir, "finalize-timings.json");
+        Assert.True(File.Exists(timingPath));
+        var artifactTimings = JArray.Parse(File.ReadAllText(timingPath));
+        Assert.Contains(artifactTimings, timing => timing["phase"]?.Value<string>() == "chunks.read");
+        Assert.All(artifactTimings, timing => Assert.True(timing["elapsedMs"]?.Value<long>() >= 0));
+
+        var output = JObject.FromObject(result.Output!);
+        var outputTimings = (JArray)output["timings"]!;
+        Assert.Contains(outputTimings, timing => timing["phase"]?.Value<string>() == "publish");
+    }
+
 
     [Fact]
     public async Task WritesAssetManifestArtifactAndHash()

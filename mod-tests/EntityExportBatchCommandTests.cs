@@ -58,6 +58,33 @@ public sealed class EntityExportBatchCommandTests
         Assert.Equal(1, run.Counts["item"]);
         Assert.True(File.Exists(Path.Combine(run.WorkspaceDir, "entities", "item", "chunks", "000000.json")));
         Assert.Contains("\"offset\": 0", File.ReadAllText(Path.Combine(run.WorkspaceDir, "control", "run.json")));
+        Assert.False(File.Exists(Path.Combine(run.WorkspaceDir, "entities", "item", "chunks", "000000.json.tmp")));
+    }
+
+    [Fact]
+    public async Task DeletesStaleChunkTempFileAfterAtomicWrite()
+    {
+        var rows = new[] { Row("item-a") };
+        var cache = new FakeItemExtractionCache(rows);
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-batch-atomic-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        run.SetEntityPlan("item", total: 1, batchSize: 1);
+        runs.Save(run);
+        var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "item", "chunks");
+        Directory.CreateDirectory(chunksDir);
+        var tempPath = Path.Combine(chunksDir, "000000.json.tmp");
+        File.WriteAllText(tempPath, "stale");
+        var command = new EntityExportBatchCommand(runs, cache);
+
+        var result = await command.ExecuteAsync(
+            TestControlCommandContext.Create<EntityExportBatchResult>(),
+            new EntityExportBatchArgs { RunId = run.RunId, Entity = "item", Offset = 0, Limit = 1 },
+            CancellationToken.None);
+
+        Assert.True(result.Succeeded);
+        Assert.False(File.Exists(tempPath));
+        Assert.True(File.Exists(Path.Combine(chunksDir, "000000.json")));
     }
 
     private static ItemSnapshotRow Row(string id) => new()

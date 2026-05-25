@@ -69,7 +69,7 @@ public sealed class EntityExportBatchCommand
         Directory.CreateDirectory(chunksDir);
         var path = Path.Combine(chunksDir, $"{args.Offset:D6}.json");
         var json = JsonConvert.SerializeObject(envelope, JsonSettings.Default);
-        File.WriteAllText(path, json);
+        AtomicFile.WriteAllText(path, json);
         var sha256 = ManifestBuilder.Sha256Hex(json);
         run.MarkEntityChunkComplete("item", args.Offset, slice.Count);
         _runs.Save(run);

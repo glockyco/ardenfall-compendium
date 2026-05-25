@@ -2,11 +2,13 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import validateAssetManifest from "../../dist/validate-asset-manifest.mjs";
 import validateDiagnostics from "../../dist/validate-diagnostics.mjs";
+import validateFinalizeTimings from "../../dist/validate-finalize-timings.mjs";
 import validateManifest from "../../dist/validate-manifest.mjs";
 import validateMasterTooltip from "../../dist/validate-master-tooltip.mjs";
 import validateSnapshot from "../../dist/validate-snapshot.mjs";
 import type {
   SnapshotAssetManifest,
+  FinalizeTiming,
   SnapshotDiagnosticArtifactEntry,
   SnapshotEnvelope,
   MasterTooltipVocabulary,
@@ -20,6 +22,7 @@ export interface LoadSnapshotOutput {
   diagnostics: SnapshotDiagnosticArtifactEntry[];
   assetManifest?: SnapshotAssetManifest;
   masterTooltip: MasterTooltipVocabulary;
+  finalizeTimings: FinalizeTiming[];
 }
 
 export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
@@ -38,14 +41,17 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
 
     const envelopes: Record<string, SnapshotEnvelope> = {};
     const diagnosticsPath = join(dir, "diagnostics.json");
+    const finalizeTimingsPath = join(dir, "finalize-timings.json");
     const masterTooltipPath = join(dir, "master-tooltip.json");
     let diagnostics: SnapshotDiagnosticArtifactEntry[] = [];
+    let finalizeTimings: FinalizeTiming[] = [];
     for (const fileName of readdirSync(dir)) {
       if (
         fileName === "manifest.json" ||
         fileName === "diagnostics.json" ||
         fileName === "asset-manifest.json" ||
-        fileName === "master-tooltip.json"
+        fileName === "master-tooltip.json" ||
+        fileName === "finalize-timings.json"
       ) {
         continue;
       }
@@ -73,6 +79,16 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
       }
     }
 
+    if (existsSync(finalizeTimingsPath)) {
+      finalizeTimings = JSON.parse(readFileSync(finalizeTimingsPath, "utf8")) as FinalizeTiming[];
+      if (!validateFinalizeTimings(finalizeTimings)) {
+        const detail = (validateFinalizeTimings.errors ?? [])
+          .map((e) => `${finalizeTimingsPath}#${e.instancePath} — ${e.message}`)
+          .join("\n");
+        throw new Error(`invalid finalize timings at ${finalizeTimingsPath}:\n${detail}`);
+      }
+    }
+
     const assetManifestPath = join(dir, "asset-manifest.json");
     let assetManifest: SnapshotAssetManifest | undefined;
     if (existsSync(assetManifestPath)) {
@@ -97,6 +113,6 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
       );
     }
     const masterTooltip = rawMasterTooltip as MasterTooltipVocabulary;
-    return { manifest, envelopes, diagnostics, assetManifest, masterTooltip };
+    return { manifest, envelopes, diagnostics, finalizeTimings, assetManifest, masterTooltip };
   },
 };

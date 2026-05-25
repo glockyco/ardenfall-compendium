@@ -28,6 +28,10 @@ const targets = [
     schema: "schemas/master-tooltip.schema.json",
     out: "pipeline/dist/validate-master-tooltip.mjs",
   },
+  {
+    schema: "schemas/finalize-timings.schema.json",
+    out: "pipeline/dist/validate-finalize-timings.mjs",
+  },
 ];
 
 // Single Ajv instance so $ref between schemas resolves.
