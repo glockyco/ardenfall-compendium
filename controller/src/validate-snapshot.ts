@@ -16,7 +16,7 @@ interface EnvelopeShape {
   rows?: unknown[];
 }
 
-const ENTITY_FILES: Record<string, string> = {
+export const ENTITY_FILES: Record<string, string> = {
   item: "items.json",
   "stat-type": "stat-types.json",
   "item-category": "item-categories.json",
