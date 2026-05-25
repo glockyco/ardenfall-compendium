@@ -505,11 +505,9 @@ export const listItemsByCategory = (categoryId: string): ItemOverviewRow[] =>
     `SELECT o.id, o.name, o.weight, o.value, o.variant, o.display_icon_hash, o.display_icon_color
      FROM item_overview_rows o
      JOIN items i ON i.id = o.id
-     JOIN item_category_presentation_rows c ON c.id = ?
      WHERE json_extract(i."categoryRef", '$.guid') = ?
-        OR i."categoryName" = c.name
      ORDER BY o.name`,
-    [categoryId, categoryId],
+    [categoryId],
   ).map(toItemOverviewRow);
 
 export const listItemsByTag = (tagId: string): ItemOverviewRow[] =>

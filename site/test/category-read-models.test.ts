@@ -78,9 +78,9 @@ describe("item-category read-model accessors", () => {
         PRIMARY KEY (entity_type, entity_id)
       );
       INSERT INTO item_category_overview_rows VALUES
-        ('fixture-weapons', 'Weapons', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 2);
+        ('fixture-weapons', 'Weapons', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1);
       INSERT INTO item_category_presentation_rows VALUES
-        ('fixture-weapons', 'Weapons', 'item-category-presentation-v1', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1, '[{"label":"Name"}]', 2);
+        ('fixture-weapons', 'Weapons', 'item-category-presentation-v1', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1, '[{"label":"Name"}]', 1);
       INSERT INTO item_overview_rows VALUES
         ('fixture-iron-sword', 'Iron Sword', 3.5, 25, 'melee-weapon', '${iconHash}', '${categoryColor}'),
         ('fixture-training-dagger', 'Training Dagger', 1.5, 5, 'melee-weapon', '${iconHash}', '${categoryColor}');
@@ -105,7 +105,7 @@ describe("item-category read-model accessors", () => {
           iconSrc: `/assets/${iconHash}.webp`,
           defaultItemIconSrc: `/assets/${defaultIconHash}.webp`,
           categoryColor,
-          itemCount: 2,
+          itemCount: 1,
           routePath: "/categories/weapons--abc12345",
         },
       ]);
@@ -118,11 +118,10 @@ describe("item-category read-model accessors", () => {
         categoryColor,
         showInAllCategory: true,
         columns: [{ label: "Name" }],
-        itemCount: 2,
+        itemCount: 1,
       });
       expect(readModels.listItemsByCategory("fixture-weapons").map((row) => row.id)).toEqual([
         "fixture-iron-sword",
-        "fixture-training-dagger",
       ]);
     } finally {
       process.chdir(originalCwd);

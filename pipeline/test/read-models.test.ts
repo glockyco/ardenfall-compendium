@@ -368,7 +368,7 @@ describe("emitItemCategoryReadModels", () => {
       name: "Weapons",
       default_item_icon_hash: "c".repeat(64),
       category_color_json: JSON.stringify({ r: 0.92, g: 0.42, b: 0.42, a: 1 }),
-      item_count: 2,
+      item_count: 1,
     });
 
     const presentation = db
@@ -389,7 +389,7 @@ describe("emitItemCategoryReadModels", () => {
       { label: "Name", flexibleWidth: 2 },
     ]);
     expect(presentation?.show_in_all_category).toBe(1);
-    expect(presentation?.item_count).toBe(2);
+    expect(presentation?.item_count).toBe(1);
 
     const node = db
       .query<
