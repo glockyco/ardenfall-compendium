@@ -45,7 +45,13 @@ export function emitReadModels(
     snapshot.masterTooltip,
   );
 
-  if (snapshot.envelopes["stat-type"]) emitStatTypeReadModels(db, snapshot.masterTooltip);
-  if (snapshot.envelopes["item-category"]) emitItemCategoryReadModels(db);
-  if (snapshot.envelopes["item-tag"]) emitItemTagReadModels(db);
+  if (snapshot.envelopes["stat-type"]) {
+    emitStatTypeReadModels(db, snapshot.masterTooltip, desc.entities["stat-type"]?.site?.route);
+  }
+  if (snapshot.envelopes["item-category"]) {
+    emitItemCategoryReadModels(db, desc.entities["item-category"]?.site?.route);
+  }
+  if (snapshot.envelopes["item-tag"]) {
+    emitItemTagReadModels(db, desc.entities["item-tag"]?.site?.route);
+  }
 }

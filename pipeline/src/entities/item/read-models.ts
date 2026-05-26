@@ -110,6 +110,7 @@ export function emitItemReadModels(
 ): void {
   db.exec(ITEM_READ_MODEL_DDL);
   db.exec(ENTITY_GRAPH_DDL);
+  const itemRoute = desc.entities.item?.site?.route ?? "/items";
   const colorByItem = new Map(
     itemIconMetadata
       .filter((entry) => entry.entityId === "item")
@@ -157,6 +158,7 @@ export function emitItemReadModels(
     current.count++;
     categories.set(row.variant, current);
   }
+  const variantRoute = `${itemRoute}/variant`;
   const categoryInsert = db.prepare(
     `INSERT INTO item_overview_categories (category_id, label, href, item_count, sort_order) VALUES (?, ?, ?, ?, ?)`,
   );
@@ -166,7 +168,7 @@ export function emitItemReadModels(
   const categoryOptions = [...categories.entries()]
     .sort((a, b) => a[1].label.localeCompare(b[1].label))
     .map(([id, category], index) => {
-      categoryInsert.run(id, category.label, `/items/variant/${id}`, category.count, index);
+      categoryInsert.run(id, category.label, `${variantRoute}/${id}`, category.count, index);
       return { value: id, label: category.label, count: category.count };
     });
   filterInsert.run("variant", "Variant", "multi-select", JSON.stringify(categoryOptions));
@@ -247,7 +249,7 @@ export function emitItemReadModels(
         entityType: "item",
         entityId: snapshotRow.id,
         label: itemLabel,
-        routePath: `/items/${snapshotRow.id}`,
+        routePath: `${itemRoute}/${snapshotRow.id}`,
       });
       aliasInsert.run(aliasKey(itemLabel), "item", snapshotRow.id, itemLabel, "item-presentation");
       presentationInsert.run(
@@ -295,7 +297,7 @@ export function emitItemReadModels(
         entityType: "item-variant",
         entityId: variantId,
         label: variantLabel,
-        routePath: `/items/variant/${variantId}`,
+        routePath: `${variantRoute}/${variantId}`,
         canonicalSlug: variantId,
         shortId: variantId,
       });
@@ -310,7 +312,7 @@ export function emitItemReadModels(
         targetType: "item-variant",
         targetId: variantId,
         targetLabel: variantLabel,
-        targetRoutePath: `/items/variant/${variantId}`,
+        targetRoutePath: `${variantRoute}/${variantId}`,
         predicate: "variant_of",
         label: "Variant",
         weight: 1,

@@ -28,6 +28,7 @@ CREATE TABLE stat_type_presentation_rows (
 export function emitStatTypeReadModels(
   db: Database,
   masterTooltip?: MasterTooltipVocabulary,
+  routeBase = "/stats",
 ): void {
   db.exec(STAT_TYPE_READ_MODEL_DDL);
   db.exec(ENTITY_GRAPH_DDL);
@@ -92,7 +93,7 @@ export function emitStatTypeReadModels(
         entityType: "stat-type",
         entityId: row.id,
         label: row.stat_name,
-        routePath: `/stats/${slug.canonicalSlug}`,
+        routePath: `${routeBase}/${slug.canonicalSlug}`,
         canonicalSlug: slug.canonicalSlug,
         shortId: slug.shortId,
       });

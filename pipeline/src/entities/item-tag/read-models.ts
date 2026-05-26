@@ -18,7 +18,7 @@ CREATE TABLE item_tag_presentation_rows (
 );
 `;
 
-export function emitItemTagReadModels(db: Database): void {
+export function emitItemTagReadModels(db: Database, routeBase = "/tags"): void {
   db.exec(ITEM_TAG_READ_MODEL_DDL);
   db.exec(ENTITY_GRAPH_DDL);
   const overviewInsert = db.prepare(
@@ -66,7 +66,7 @@ export function emitItemTagReadModels(db: Database): void {
         entityType: "item-tag",
         entityId: row.id,
         label: row.tag_name,
-        routePath: `/tags/${slug.canonicalSlug}`,
+        routePath: `${routeBase}/${slug.canonicalSlug}`,
         canonicalSlug: slug.canonicalSlug,
         shortId: slug.shortId,
       });

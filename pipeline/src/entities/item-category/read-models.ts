@@ -24,7 +24,7 @@ CREATE TABLE item_category_presentation_rows (
 );
 `;
 
-export function emitItemCategoryReadModels(db: Database): void {
+export function emitItemCategoryReadModels(db: Database, routeBase = "/categories"): void {
   db.exec(ITEM_CATEGORY_READ_MODEL_DDL);
   db.exec(ENTITY_GRAPH_DDL);
   const overviewInsert = db.prepare(
@@ -102,7 +102,7 @@ export function emitItemCategoryReadModels(db: Database): void {
         entityType: "item-category",
         entityId: row.id,
         label: row.category_name,
-        routePath: `/categories/${slug.canonicalSlug}`,
+        routePath: `${routeBase}/${slug.canonicalSlug}`,
         canonicalSlug: slug.canonicalSlug,
         shortId: slug.shortId,
       });

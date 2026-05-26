@@ -87,6 +87,7 @@ describe("emitItemReadModels", () => {
         secondaryIconColor: null,
       },
     ];
+    if (itemEntity.site) itemEntity.site.route = "/objects";
     emitItemReadModels(db, desc, iconMetadata, itemEnvelope, snap.masterTooltip);
 
     const overview = db
@@ -168,7 +169,7 @@ describe("emitItemReadModels", () => {
       expect.objectContaining({
         targetType: "item-variant",
         targetId: "melee-weapon",
-        targetRoutePath: "/items/variant/melee-weapon",
+        targetRoutePath: "/objects/variant/melee-weapon",
       }),
     );
 
@@ -188,7 +189,7 @@ describe("emitItemReadModels", () => {
         "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item' AND entity_id = '4ed20218.fixture-iron-sword'",
       )
       .get() as { route_path: string; canonical_slug: string; short_id: string };
-    expect(itemNode.route_path).toBe("/items/4ed20218.fixture-iron-sword");
+    expect(itemNode.route_path).toBe("/objects/4ed20218.fixture-iron-sword");
     expect(itemNode.canonical_slug).toBe("iron-sword--4ed20218");
     expect(itemNode.short_id).toBe("4ed20218");
 
@@ -219,7 +220,7 @@ describe("emitItemReadModels", () => {
     expect(categories).toContainEqual({
       category_id: "melee-weapon",
       label: "Melee Weapon",
-      href: "/items/variant/melee-weapon",
+      href: "/objects/variant/melee-weapon",
       item_count: 1,
     });
 
@@ -263,7 +264,7 @@ describe("emitStatTypeReadModels", () => {
     );
     canonicaliseStatTypes(db, statEnvelope);
 
-    emitStatTypeReadModels(db, snap.masterTooltip);
+    emitStatTypeReadModels(db, snap.masterTooltip, "/attributes");
 
     const overview = db
       .query<
@@ -303,7 +304,7 @@ describe("emitStatTypeReadModels", () => {
       >("SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'stat-type' AND entity_id = '57a70001.fixture-strength'")
       .get();
     expect(node?.canonical_slug).toMatch(/^strength--[0-9a-f]{8}$/);
-    expect(node?.route_path).toBe(`/stats/${node?.canonical_slug}`);
+    expect(node?.route_path).toBe(`/attributes/${node?.canonical_slug}`);
     expect(node?.short_id).toMatch(/^[0-9a-f]{8}$/);
   });
 });
@@ -370,7 +371,7 @@ describe("emitItemCategoryReadModels", () => {
       "c".repeat(64),
     );
 
-    emitItemCategoryReadModels(db);
+    emitItemCategoryReadModels(db, "/groups");
 
     const overview = db
       .query<
@@ -421,7 +422,7 @@ describe("emitItemCategoryReadModels", () => {
       >("SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item-category' AND entity_id = 'ca7e60a1.category-weapons'")
       .get();
     expect(node?.canonical_slug).toMatch(/^weapons--[0-9a-f]{8}$/);
-    expect(node?.route_path).toBe(`/categories/${node?.canonical_slug}`);
+    expect(node?.route_path).toBe(`/groups/${node?.canonical_slug}`);
     expect(node?.short_id).toMatch(/^[0-9a-f]{8}$/);
   });
 });
@@ -480,7 +481,7 @@ describe("emitItemTagReadModels", () => {
       "7a600001.tag-valuable-remedy",
     );
 
-    emitItemTagReadModels(db);
+    emitItemTagReadModels(db, "/labels");
 
     const overview = db
       .query<
@@ -517,7 +518,7 @@ describe("emitItemTagReadModels", () => {
       >("SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item-tag' AND entity_id = '7a600001.tag-valuable-remedy'")
       .get();
     expect(node?.canonical_slug).toBe("valuable-remedy--7a600001");
-    expect(node?.route_path).toBe("/tags/valuable-remedy--7a600001");
+    expect(node?.route_path).toBe("/labels/valuable-remedy--7a600001");
     expect(node?.short_id).toBe("7a600001");
   });
 });
