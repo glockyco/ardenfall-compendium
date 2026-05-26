@@ -90,7 +90,9 @@ describe("item-category read-model accessors", () => {
         ('4ed20218.fixture-iron-sword', '{"kind":"lookupAsset","guid":"ca7e60a1.fixture-weapons"}', 'Weapons'),
         ('fixture-training-dagger', '{"kind":"missing","reason":"lookupAssetGuidMissing"}', 'Weapons');
       INSERT INTO entity_nodes VALUES
-        ('item-category', 'ca7e60a1.fixture-weapons', 'Weapons', '/categories/weapons--abc12345', 'weapons--abc12345', 'abc12345', 1);
+        ('item-category', 'ca7e60a1.fixture-weapons', 'Weapons', '/categories/weapons--abc12345', 'weapons--abc12345', 'abc12345', 1),
+        ('item', '4ed20218.fixture-iron-sword', 'Iron Sword', '/items/4ed20218.fixture-iron-sword', 'iron-sword--4ed20218', '4ed20218', 1),
+        ('item', 'fixture-training-dagger', 'Training Dagger', '/items/fixture-training-dagger', 'training-dagger--fbfb0000', 'fbfb0000', 1);
     `);
     db.close();
 

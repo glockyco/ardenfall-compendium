@@ -86,7 +86,8 @@ describe("item-tag read-model accessors", () => {
         ('6a71c0de.fixture-stamina-draught', '7a600001.fixture-tag-valuable-remedy');
       INSERT INTO entity_nodes VALUES
         ('item-tag', '7a600001.fixture-tag-valuable-remedy', 'Valuable remedy', '/tags/valuable-remedy--abc12345', 'valuable-remedy--abc12345', 'abc12345', 1),
-        ('item-tag', '7a600002.fixture-tag-rare', 'Rare', '/tags/rare--def67890', 'rare--def67890', 'def67890', 1);
+        ('item-tag', '7a600002.fixture-tag-rare', 'Rare', '/tags/rare--def67890', 'rare--def67890', 'def67890', 1),
+        ('item', '6a71c0de.fixture-stamina-draught', 'Stamina Draught', '/items/6a71c0de.fixture-stamina-draught', 'stamina-draught--6a71c0de', '6a71c0de', 1);
     `);
     db.close();
 
