@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
   import ItemIcon from "$lib/components/items/ItemIcon.svelte";
   import type { ItemCategoryPresentationRow, ItemOverviewRow } from "$lib/server/read-models";
 
@@ -41,7 +40,7 @@
           <li>
             <a
               class="flex items-center gap-2 underline-offset-4 hover:underline"
-              href={resolve("/items/[id]", { id: item.id })}
+              href={item.routePath}
             >
               <ItemIcon
                 src={item.displayIconSrc}

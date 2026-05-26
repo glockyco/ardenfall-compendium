@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
   import ItemCategoryDetail from "$lib/components/categories/ItemCategoryDetail.svelte";
   import type { PageProps } from "./$types";
 
@@ -11,6 +10,6 @@
   <title>{category.name} | Categories | Ardenfall Compendium</title>
 </svelte:head>
 
-<a class="text-sm underline" href={resolve("/categories")}>← back to categories</a>
+<a class="text-sm underline" href={data.itemCategoryRoute}>← back to categories</a>
 <h1 class="mt-2 text-2xl font-bold">{category.name}</h1>
 <ItemCategoryDetail presentation={category} items={data.items} />

@@ -1,25 +1,14 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
   import ItemIcon from "$lib/components/items/ItemIcon.svelte";
   import type { ItemCategoryOverviewRow } from "$lib/server/read-models";
 
   let { rows }: { rows: ItemCategoryOverviewRow[] } = $props();
-
-  const categoryHref = (routePath: string) =>
-    resolve("/categories/[slug]", {
-      slug: routePath.startsWith("/categories/")
-        ? routePath.slice("/categories/".length)
-        : routePath,
-    });
 </script>
 
 <ul class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
   {#each rows as row (row.id)}
     <li class="border-border bg-card rounded-lg border p-4">
-      <a
-        class="flex items-center gap-3 underline-offset-4 hover:underline"
-        href={categoryHref(row.routePath)}
-      >
+      <a class="flex items-center gap-3 underline-offset-4 hover:underline" href={row.routePath}>
         <ItemIcon
           src={row.iconSrc ?? row.defaultItemIconSrc}
           displayIconColor={row.categoryColor}

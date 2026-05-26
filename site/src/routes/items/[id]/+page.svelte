@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
   import ItemHeader from "$lib/components/items/ItemHeader.svelte";
   import ItemPresentationPanel from "$lib/components/items/ItemPresentationPanel.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
@@ -13,7 +12,7 @@
   <title>{item.name ?? "Item"} | Ardenfall Compendium</title>
 </svelte:head>
 
-<a class="text-sm underline" href={resolve("/items")}>← back to items</a>
+<a class="text-sm underline" href={data.itemRoute}>← back to items</a>
 <div class="mt-2">
   <ItemHeader {item} />
 </div>

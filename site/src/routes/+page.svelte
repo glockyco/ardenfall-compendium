@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import type { PageProps } from "./$types";
+
+  let { data }: PageProps = $props();
 </script>
 
 <svelte:head>
@@ -10,4 +12,4 @@
 <p class="text-muted-foreground mt-2">
   Static compendium of Ardenfall game data. Currently focused on items.
 </p>
-<a class="mt-4 inline-block underline" href={resolve("/items")}>Browse items →</a>
+<a class="mt-4 inline-block underline" href={data.itemRoute}>Browse items →</a>

@@ -1,6 +1,5 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { resolve } from "$app/paths";
   import EntityTable from "$lib/components/EntityTable.svelte";
   import type {
     ItemOverviewCategory,
@@ -95,9 +94,5 @@
   </nav>
 
   <p class="text-muted-foreground text-sm">{filteredRows.length} matching items</p>
-  <EntityTable
-    {columns}
-    rows={filteredRows}
-    rowHref={(row) => resolve("/items/[id]", { id: row.id })}
-  />
+  <EntityTable {columns} rows={filteredRows} rowHref={(row) => row.routePath} />
 </div>

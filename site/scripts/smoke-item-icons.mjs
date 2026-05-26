@@ -12,13 +12,15 @@ const itemHeader = source(["src", "lib", "components", "items", "ItemHeader.svel
 const tooltipCard = source(["src", "lib", "components", "items", "ItemTooltipCard.svelte"]);
 const richTextNode = source(["src", "lib", "components", "content", "RichTextNode.svelte"]);
 const readModels = source(["src", "lib", "server", "read-models.ts"]);
+const itemReadModel = source(["src", "lib", "server", "entities", "item.ts"]);
 
 const required = [
-  [readModels, "displayIconSrc"],
-  [readModels, "display_icon_hash"],
+  [itemReadModel, "displayIconSrc"],
+  [itemReadModel, "display_icon_hash"],
+  [readModels, "ItemOverviewRow"],
+  [readModels, "ItemPresentationRow"],
   [table, "itemNameWithIcon"],
   [table, "sortable?: boolean"],
-  [table, "ItemTooltipCard"],
   [itemIcon, "item-icon"],
   [itemIcon, "aria-hidden={alt.length === 0}"],
   [itemIcon, "{#if src}"],

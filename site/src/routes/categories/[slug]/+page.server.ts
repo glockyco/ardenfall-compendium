@@ -6,10 +6,11 @@ import {
 } from "$lib/server/read-models";
 import type { EntryGenerator, PageServerLoad } from "./$types";
 
+const slugFromRoutePath = (routePath: string) => routePath.slice(routePath.lastIndexOf("/") + 1);
 export const prerender = true;
 
 export const entries: EntryGenerator = () =>
-  listItemCategories().map((row) => ({ slug: row.routePath.replace("/categories/", "") }));
+  listItemCategories().map((row) => ({ slug: slugFromRoutePath(row.routePath) }));
 
 export const load: PageServerLoad = ({ params }) => {
   const presentation = getItemCategoryPresentation(params.slug);

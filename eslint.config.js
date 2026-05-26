@@ -45,13 +45,34 @@ export default tseslint.config(
     },
   },
   {
-    // shadcn-svelte primitives accept arbitrary user-supplied href values
-    // (internal, external, mailto:, hash). resolve() is a routing-tree helper
-    // and would break the wrapper. The rule stays on for app routes/pages
-    // where it catches real internal-link mistakes.
-    files: ["site/src/lib/components/ui/**/*.svelte"],
+    // The `svelte/no-navigation-without-resolve` rule has known false positives on
+    // dynamic `<a href>` values driven by typed data, including ResolvedPathname-typed
+    // values, search params/hash fragments, and values read from object properties in
+    // loops. The rule maintainers acknowledge these limitations and recommend
+    // `ignoreLinks: true` for projects that pass generated/typed hrefs into anchors:
+    //   - https://github.com/sveltejs/eslint-plugin-svelte/issues/1319
+    //   - https://github.com/sveltejs/eslint-plugin-svelte/issues/1327
+    //   - https://github.com/sveltejs/eslint-plugin-svelte/issues/1314
+    //   - https://github.com/sveltejs/eslint-plugin-svelte/issues/1353
+    //   - https://maier.tech/notes/eslint-plugin-svelte-makes-sveltekit-linter-fail
+    //
+    // The site reads pipeline-generated route paths from typed read models
+    // (`SiteEntity.route_path`, `ItemOverviewRow.routePath`, layout `data.itemRoute`,
+    // etc.). Those paths are produced by descriptor-validated emitters; passing them
+    // through `resolve()` would require unsafe type casts. The rule still applies to
+    // `goto()`, `pushState()`, and `replaceState()`, where dev-authored route literals
+    // benefit from the check.
+    files: ["**/*.svelte", "**/*.svelte.ts"],
     rules: {
-      "svelte/no-navigation-without-resolve": "off",
+      "svelte/no-navigation-without-resolve": [
+        "error",
+        {
+          ignoreLinks: true,
+          ignoreGoto: false,
+          ignorePushState: false,
+          ignoreReplaceState: false,
+        },
+      ],
     },
   },
 );

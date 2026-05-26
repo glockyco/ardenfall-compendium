@@ -2,10 +2,11 @@ import { error } from "@sveltejs/kit";
 import { getItemTagPresentation, listItemsByTag, listItemTags } from "$lib/server/read-models";
 import type { EntryGenerator, PageServerLoad } from "./$types";
 
+const slugFromRoutePath = (routePath: string) => routePath.slice(routePath.lastIndexOf("/") + 1);
 export const prerender = true;
 
 export const entries: EntryGenerator = () =>
-  listItemTags().map((row) => ({ slug: row.routePath.replace("/tags/", "") }));
+  listItemTags().map((row) => ({ slug: slugFromRoutePath(row.routePath) }));
 
 export const load: PageServerLoad = ({ params }) => {
   const presentation = getItemTagPresentation(params.slug);

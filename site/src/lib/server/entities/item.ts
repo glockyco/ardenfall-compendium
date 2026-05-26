@@ -8,6 +8,7 @@ interface ItemOverviewRecord {
   variant: string | null;
   display_icon_hash: string | null;
   display_icon_color: string | null;
+  route_path: string;
 }
 
 interface ItemOverviewCategoryRecord {
@@ -56,6 +57,7 @@ export interface ItemOverviewRow {
   variant: string | null;
   displayIconSrc: string | null;
   displayIconColor: string | null;
+  routePath: string;
 }
 
 export interface ItemPresentationRow {
@@ -237,20 +239,41 @@ const toItemOverviewRow = (row: ItemOverviewRecord): ItemOverviewRow => ({
   variant: row.variant,
   displayIconSrc: assetSrc(row.display_icon_hash),
   displayIconColor: row.display_icon_color,
+  routePath: row.route_path,
 });
 
 export const listItemsOverview = (): ItemOverviewRow[] =>
-  all<ItemOverviewRecord>("SELECT * FROM item_overview_rows ORDER BY name").map(toItemOverviewRow);
+  all<ItemOverviewRecord>(
+    `SELECT o.id, o.name, o.weight, o.value, o.variant, o.display_icon_hash, o.display_icon_color,
+            n.route_path
+       FROM item_overview_rows o
+       JOIN entity_nodes n
+         ON n.entity_type = 'item'
+        AND n.entity_id = o.id
+       ORDER BY o.name`,
+  ).map(toItemOverviewRow);
 
 export const listItemsByVariant = (variant: string): ItemOverviewRow[] =>
-  all<ItemOverviewRecord>("SELECT * FROM item_overview_rows WHERE variant = ? ORDER BY name", [
-    variant,
-  ]).map(toItemOverviewRow);
+  all<ItemOverviewRecord>(
+    `SELECT o.id, o.name, o.weight, o.value, o.variant, o.display_icon_hash, o.display_icon_color,
+            n.route_path
+       FROM item_overview_rows o
+       JOIN entity_nodes n
+         ON n.entity_type = 'item'
+        AND n.entity_id = o.id
+       WHERE o.variant = ?
+       ORDER BY o.name`,
+    [variant],
+  ).map(toItemOverviewRow);
 
 export const listItemsByCategory = (categoryId: string): ItemOverviewRow[] =>
   all<ItemOverviewRecord>(
-    `SELECT o.id, o.name, o.weight, o.value, o.variant, o.display_icon_hash, o.display_icon_color
+    `SELECT o.id, o.name, o.weight, o.value, o.variant, o.display_icon_hash, o.display_icon_color,
+            n.route_path
        FROM item_overview_rows o
+       JOIN entity_nodes n
+         ON n.entity_type = 'item'
+        AND n.entity_id = o.id
        JOIN items i ON i.id = o.id
        WHERE json_extract(i."categoryRef", '$.guid') = ?
        ORDER BY o.name`,
@@ -259,8 +282,12 @@ export const listItemsByCategory = (categoryId: string): ItemOverviewRow[] =>
 
 export const listItemsByTag = (tagId: string): ItemOverviewRow[] =>
   all<ItemOverviewRecord>(
-    `SELECT o.id, o.name, o.weight, o.value, o.variant, o.display_icon_hash, o.display_icon_color
+    `SELECT o.id, o.name, o.weight, o.value, o.variant, o.display_icon_hash, o.display_icon_color,
+            n.route_path
        FROM item_overview_rows o
+       JOIN entity_nodes n
+         ON n.entity_type = 'item'
+        AND n.entity_id = o.id
        JOIN item_tag_refs refs ON refs.item_id = o.id
        WHERE refs.tag = ?
        ORDER BY o.name`,

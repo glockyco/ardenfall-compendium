@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
   import type { StatTypeOverviewRow } from "$lib/server/read-models";
-
   type StatGroup = StatTypeOverviewRow["grouping"];
 
   let { rows }: { rows: StatTypeOverviewRow[] } = $props();
@@ -19,11 +17,6 @@
       rows: rows.filter((row) => row.grouping === group),
     })),
   );
-
-  const statHref = (routePath: string) =>
-    resolve("/stats/[slug]", {
-      slug: routePath.startsWith("/stats/") ? routePath.slice("/stats/".length) : routePath,
-    });
 </script>
 
 {#each groupedRows as group (group.group)}
@@ -35,7 +28,7 @@
           <li class="border-border bg-card rounded-lg border p-4">
             <a
               class="flex items-start gap-3 underline-offset-4 hover:underline"
-              href={statHref(row.routePath)}
+              href={row.routePath}
             >
               <span
                 class="border-border bg-muted flex size-8 shrink-0 items-center justify-center rounded border"
