@@ -878,6 +878,11 @@ describe("site prerender architecture", () => {
     expect(siteWranglerConfig).not.toContain("run_worker_first = true");
   });
 
+  it("documents why the Cloudflare Worker still uses nodejs_compat", () => {
+    expect(siteWranglerConfig).toContain("nodejs_compat");
+    expect(siteWranglerConfig).toContain("Required because adapter-cloudflare");
+  });
+
   it("has a prerender smoke script wired into the site package", () => {
     expect(sitePackageJson.scripts["smoke:prerender"]).toBe(
       "bun run scripts/smoke-prerender-output.mjs",

@@ -1,6 +1,8 @@
 name = "ardenfall-compendium-site"
 main = ".svelte-kit/cloudflare/_worker.js"
 compatibility_date = "2026-05-07"
+# Required because adapter-cloudflare still emits a Worker bundle that imports
+# Node builtins through SvelteKit's server environment chunk for fallback routes.
 compatibility_flags = ["nodejs_compat"]
 
 workers_dev = false
