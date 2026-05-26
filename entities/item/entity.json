@@ -91,6 +91,7 @@
   "variants": { "dir": "variants" },
 
   "site": {
+    "route": "/items",
     "overview": {
       "columns": ["name", "value", "weight", "variant"],
       "search": ["name"],

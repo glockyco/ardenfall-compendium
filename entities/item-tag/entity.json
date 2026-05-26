@@ -7,6 +7,9 @@
     "walker": "ItemTagExtractor"
   },
   "presentationContext": { "renderContext": "item-tag-presentation-v1" },
+  "site": {
+    "route": "/tags"
+  },
   "fields": [
     { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
     { "name": "tagName", "type": "string", "from": "tagName", "missingPolicy": "fatal" },

@@ -61,6 +61,22 @@ describe("loadDescriptors", () => {
     expect(statType.fields.map((field) => field.name)).toContain("statName");
     expect(result.variants["stat-type"]).toEqual([]);
   });
+  it("loads explicit public routes from entity descriptors", async () => {
+    const result = await loadDescriptors.run(
+      {},
+      {
+        workspaceRoot: ".",
+        snapshotDir: "",
+        outDir: "",
+        log: () => undefined,
+      },
+    );
+
+    expect(result.entities.item?.site?.route).toBe("/items");
+    expect(result.entities["stat-type"]?.site?.route).toBe("/stats");
+    expect(result.entities["item-category"]?.site?.route).toBe("/categories");
+    expect(result.entities["item-tag"]?.site?.route).toBe("/tags");
+  });
 
   it("loads the item-category descriptor without variants", async () => {
     const result = await loadDescriptors.run(
@@ -148,6 +164,71 @@ describe("loadDescriptors", () => {
     }
   });
 
+  it("rejects public descriptors without a route", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-missing-route-"));
+    try {
+      const entityDir = join(root, "entities", "thing");
+      mkdirSync(entityDir, { recursive: true });
+      writeFileSync(
+        join(entityDir, "entity.json"),
+        `${JSON.stringify(
+          {
+            $schema: "../../schemas/entity.schema.json",
+            id: "thing",
+            label: { singular: "Thing", plural: "Things" },
+            extraction: { root: "Thing.Root", walker: "ThingWalker" },
+            fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
+            site: { overview: { columns: ["id"] } },
+            map: null,
+          },
+          null,
+          2,
+        )}\n`,
+      );
+
+      expect(() =>
+        loadDescriptors.run(
+          {},
+          { workspaceRoot: root, snapshotDir: "", outDir: "", log: () => undefined },
+        ),
+      ).toThrow(/entity\.json#\/site — must have required property 'route'/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects malformed public routes", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-bad-route-"));
+    try {
+      const entityDir = join(root, "entities", "thing");
+      mkdirSync(entityDir, { recursive: true });
+      writeFileSync(
+        join(entityDir, "entity.json"),
+        `${JSON.stringify(
+          {
+            $schema: "../../schemas/entity.schema.json",
+            id: "thing",
+            label: { singular: "Thing", plural: "Things" },
+            extraction: { root: "Thing.Root", walker: "ThingWalker" },
+            fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
+            site: { route: "Things", overview: { columns: ["id"] } },
+            map: null,
+          },
+          null,
+          2,
+        )}\n`,
+      );
+
+      expect(() =>
+        loadDescriptors.run(
+          {},
+          { workspaceRoot: root, snapshotDir: "", outDir: "", log: () => undefined },
+        ),
+      ).toThrow(/entity\.json#\/site\/route — must match pattern/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
   it("rejects an invalid descriptor with a JSON Pointer in the error", async () => {
     // This behavior is covered by invariants/items.test.ts; keep this case
     // as the future home for a sandboxed invalid-descriptor fixture.

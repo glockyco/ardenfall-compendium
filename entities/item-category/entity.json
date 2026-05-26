@@ -7,6 +7,9 @@
     "walker": "ItemCategoryExtractor"
   },
   "presentationContext": { "renderContext": "item-category-presentation-v1" },
+  "site": {
+    "route": "/categories"
+  },
   "fields": [
     { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
     { "name": "categoryName", "type": "string", "from": "categoryName", "missingPolicy": "fatal" },

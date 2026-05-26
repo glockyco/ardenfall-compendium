@@ -7,6 +7,9 @@
     "walker": "StatTypeExtractor"
   },
   "presentationContext": { "renderContext": "stat-type-presentation-v1" },
+  "site": {
+    "route": "/stats"
+  },
   "fields": [
     { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
     { "name": "isAttribute", "type": "boolean", "from": "isAttribute", "missingPolicy": "fatal" },

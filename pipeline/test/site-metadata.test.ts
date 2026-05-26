@@ -16,6 +16,7 @@ describe("emitSiteMetadata", () => {
     const ent = db.query("SELECT * FROM site_entities WHERE entity_id = 'item'").get() as {
       route_path: string;
     };
+    expect(ent.route_path).toBe(desc.entities.item?.site?.route);
     expect(ent.route_path).toBe("/items");
 
     const cols = db
@@ -88,5 +89,25 @@ describe("emitSiteMetadata", () => {
       { read_model_id: "item_overview_rows", entity_id: "item" },
       { read_model_id: "item_presentation_rows", entity_id: "item" },
     ]);
+  });
+
+  it("skips descriptors without public site metadata", () => {
+    const db = new Database(":memory:");
+    db.exec(SITE_METADATA_DDL);
+
+    emitSiteMetadata(db, {
+      entities: {
+        internal: {
+          id: "internal",
+          label: { singular: "Internal", plural: "Internals" },
+          extraction: { root: "Internal.Root" },
+          fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
+          map: null,
+        },
+      },
+      variants: { internal: [] },
+    });
+
+    expect(db.query("SELECT * FROM site_entities WHERE entity_id = 'internal'").get()).toBeNull();
   });
 });

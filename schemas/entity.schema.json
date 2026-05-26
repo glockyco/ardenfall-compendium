@@ -56,7 +56,12 @@
     "site": {
       "type": "object",
       "additionalProperties": false,
+      "required": ["route"],
       "properties": {
+        "route": {
+          "type": "string",
+          "pattern": "^/$|^/[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*)*$"
+        },
         "overview": { "$ref": "#/$defs/siteOverview" },
         "detail": { "$ref": "#/$defs/siteDetail" }
       }

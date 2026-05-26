@@ -36,11 +36,12 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
 
   const tx = db.transaction(() => {
     for (const [entityId, entity] of Object.entries(desc.entities)) {
+      if (!entity.site) continue;
       insertEntity.run(
         entityId,
         entity.label.singular,
         entity.label.plural,
-        `/${entity.label.plural.toLowerCase()}`,
+        entity.site.route,
         `${entityId}s`,
       );
       for (const f of entity.fields) {
