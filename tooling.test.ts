@@ -35,6 +35,10 @@ const siteSvelteConfig = readFileSync("site/svelte.config.js", "utf8");
 const siteWranglerConfig = readFileSync("site/wrangler.toml", "utf8");
 const sitePrerenderSmoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
 const siteAppCss = readFileSync("site/src/app.css", "utf8");
+const siteEntityTable = readFileSync("site/src/lib/components/EntityTable.svelte", "utf8");
+const siteReadModels = readFileSync("site/src/lib/server/read-models.ts", "utf8");
+const siteServerDb = readFileSync("site/src/lib/server/db.ts", "utf8");
+const siteItemReadModels = readFileSync("site/src/lib/server/entities/item.ts", "utf8");
 
 function sha256(content: string | Buffer): string {
   return createHash("sha256").update(content).digest("hex");
@@ -981,13 +985,23 @@ describe("site prerender architecture", () => {
     expect(deploy).toContain("smoke-production-release.mjs");
   });
 
+  it("does not bulk-attach full item presentation rows to the item overview payload", () => {
+    expect(siteReadModels).not.toContain("attachItemTooltips");
+    expect(siteItemReadModels).not.toContain("attachItemTooltips");
+    expect(siteReadModels).not.toContain("SELECT * FROM item_presentation_rows WHERE id IN");
+    expect(siteItemReadModels).not.toContain("SELECT * FROM item_presentation_rows WHERE id IN");
+    expect(siteEntityTable).not.toContain("ItemTooltipCard");
+    expect(siteEntityTable).not.toContain("ItemPresentationRow");
+  });
   it("keeps generated SQLite reads server-only", () => {
     expect(existsSync("site/src/lib/server/read-models.ts")).toBe(true);
-    const readModels = readFileSync("site/src/lib/server/read-models.ts", "utf8");
-    expect(readModels).toContain("better-sqlite3");
-    expect(readModels).toContain('"static", "data.sqlite"');
-    expect(readModels).not.toContain("$app/environment");
-    expect(readModels).not.toContain("@sqlite.org/sqlite-wasm");
+    expect(existsSync("site/src/lib/server/db.ts")).toBe(true);
+    expect(siteServerDb).toContain("better-sqlite3");
+    expect(siteServerDb).toContain('"static", "data.sqlite"');
+    expect(siteReadModels).not.toContain("$app/environment");
+    expect(siteServerDb).not.toContain("$app/environment");
+    expect(siteReadModels).not.toContain("@sqlite.org/sqlite-wasm");
+    expect(siteServerDb).not.toContain("@sqlite.org/sqlite-wasm");
   });
 
   it("does not depend on browser SQLite for static pages", () => {
