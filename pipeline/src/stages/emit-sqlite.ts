@@ -12,12 +12,8 @@ import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
 import { ITEM_CATEGORY_DDL } from "../sql/item-category-ddl";
 import { ITEM_TAG_DDL } from "../sql/item-tag-ddl";
 import { emitSiteMetadata } from "./emit-site-metadata";
-import {
-  emitItemCategoryReadModels,
-  emitItemReadModels,
-  emitItemTagReadModels,
-  emitStatTypeReadModels,
-} from "./emit-read-models";
+import { emitReadModels } from "./emit-read-models";
+import { validateDescriptorCoverage } from "../entities/registry";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type { LoadSnapshotOutput } from "./load-snapshot.ts";
 import type { EmitAssetsOutput } from "./emit-assets.ts";
@@ -47,6 +43,7 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
       db.exec("PRAGMA journal_mode = DELETE;");
       db.exec(SITE_METADATA_DDL);
       const desc = inputs["load-descriptors"];
+      validateDescriptorCoverage(desc);
       const itemEntity = desc.entities.item;
       const itemVariants = desc.variants.item;
       const itemEnvelope = inputs["load-snapshot"].envelopes.item;
@@ -77,22 +74,7 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
       for (const ref of inputs["emit-assets"]?.refs ?? []) {
         assetRefInsert.run(ref.entityId, ref.entityRowId, ref.slot, ref.assetKind, ref.assetHash);
       }
-      emitItemReadModels(
-        db,
-        desc,
-        inputs["emit-assets"]?.itemIconMetadata ?? [],
-        itemEnvelope,
-        inputs["load-snapshot"].masterTooltip,
-      );
-      if (statTypeEnvelope) {
-        emitStatTypeReadModels(db, inputs["load-snapshot"].masterTooltip);
-      }
-      if (itemCategoryEnvelope) {
-        emitItemCategoryReadModels(db);
-      }
-      if (itemTagEnvelope) {
-        emitItemTagReadModels(db);
-      }
+      emitReadModels(db, desc, inputs["load-snapshot"], inputs["emit-assets"]);
       db.exec(`CREATE TABLE artifact_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);`);
       const metadataInsert = db.prepare("INSERT INTO artifact_metadata (key, value) VALUES (?, ?)");
       metadataInsert.run("schemaVersion", "1");

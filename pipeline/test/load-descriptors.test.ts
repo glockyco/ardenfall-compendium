@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
+import { validateDescriptorCoverage } from "$pipeline/entities/registry";
 
 describe("loadDescriptors", () => {
   it("loads the item descriptor + variants from entities/", async () => {
@@ -228,6 +229,38 @@ describe("loadDescriptors", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+  it("accepts every committed public descriptor in the pipeline support registry", async () => {
+    const result = await loadDescriptors.run(
+      {},
+      {
+        workspaceRoot: ".",
+        snapshotDir: "",
+        outDir: "",
+        log: () => undefined,
+      },
+    );
+    expect(() => validateDescriptorCoverage(result)).not.toThrow();
+  });
+
+  it("reports missing canonicalizer and read-model support by descriptor id", () => {
+    expect(() =>
+      validateDescriptorCoverage({
+        entities: {
+          location: {
+            id: "location",
+            label: { singular: "Location", plural: "Locations" },
+            extraction: { root: "Location.Root" },
+            fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
+            site: { route: "/locations", overview: { columns: ["id"] } },
+            map: null,
+          },
+        },
+        variants: { location: [] },
+      }),
+    ).toThrow(
+      /descriptor 'location' has no pipeline canonicalizer[\s\S]*descriptor 'location' has no read-model emitter for public route '\/locations'/,
+    );
   });
   it("rejects an invalid descriptor with a JSON Pointer in the error", async () => {
     // This behavior is covered by invariants/items.test.ts; keep this case
