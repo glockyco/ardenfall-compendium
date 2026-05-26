@@ -14,6 +14,7 @@ import { ITEM_TAG_DDL } from "../sql/item-tag-ddl";
 import { emitSiteMetadata } from "./emit-site-metadata";
 import { emitReadModels } from "./emit-read-models";
 import { validateDescriptorCoverage } from "../entities/registry";
+import { validateDeployableSqlite } from "../artifacts/sqlite-validation";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type { LoadSnapshotOutput } from "./load-snapshot.ts";
 import type { EmitAssetsOutput } from "./emit-assets.ts";
@@ -81,6 +82,7 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
       db.close();
       db = undefined;
       renameSync(tempPath, outputPath);
+      validateDeployableSqlite(outputPath);
       return { outputPath, byteSize: Bun.file(outputPath).size };
     } catch (error) {
       db?.close();

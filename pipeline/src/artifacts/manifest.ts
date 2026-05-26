@@ -3,6 +3,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import validateArtifactManifest from "../../dist/validate-artifact-manifest.mjs";
 import { sha256File, sha256Json, sha256Tree } from "./hash";
+import { validateDeployableSqlite } from "./sqlite-validation";
 import type { ArtifactKind, ArtifactManifest } from "../types";
 import type { EmitAssetsOutput } from "../stages/emit-assets";
 import type { EmitSqliteOutput } from "../stages/emit-sqlite";
@@ -43,6 +44,7 @@ export async function buildArtifactManifest(
     sourceSnapshotId: snapshotId,
     gitCommit: git.commit,
   });
+  validateDeployableSqlite(sqlitePath);
   const sqliteBytes = Bun.file(sqlitePath).size;
   const manifest: ArtifactManifest = {
     schemaVersion: 1,

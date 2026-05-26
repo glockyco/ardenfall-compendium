@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "bun:test";
 import { buildArtifactManifest, isTrackedWorktreeDirty } from "../src/artifacts/manifest";
 import type { LoadSnapshotOutput } from "../src/stages/load-snapshot";
+import { validateDeployableSqlite } from "../src/artifacts/sqlite-validation";
 
 describe("artifact manifest emission", () => {
   it("refuses to build a release artifact from a synthetic fixture snapshot", async () => {
@@ -137,6 +138,37 @@ describe("artifact manifest emission", () => {
   });
 });
 
+describe("deployable SQLite validation", () => {
+  it("accepts a closed SQLite database with no WAL sidecars", () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-sqlite-valid-"));
+    try {
+      const sqlitePath = join(root, "data.sqlite");
+      const db = new Database(sqlitePath);
+      db.exec("CREATE TABLE ok_table (id TEXT PRIMARY KEY);");
+      db.close();
+
+      expect(validateDeployableSqlite(sqlitePath)).toEqual({ ok: true });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects WAL and SHM sidecars next to a deployable database", () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-sqlite-sidecar-"));
+    try {
+      const sqlitePath = join(root, "data.sqlite");
+      const db = new Database(sqlitePath);
+      db.exec("CREATE TABLE ok_table (id TEXT PRIMARY KEY);");
+      db.close();
+      writeFileSync(`${sqlitePath}-wal`, "leftover wal");
+      writeFileSync(`${sqlitePath}-shm`, "leftover shm");
+
+      expect(() => validateDeployableSqlite(sqlitePath)).toThrow(/unexpected WAL sidecar/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
 describe("git provenance", () => {
   it("does not mark release artifacts dirty for untracked local deploy state", () => {
     expect(isTrackedWorktreeDirty("?? site/.wrangler/state/v3/cache.sqlite\n")).toBe(false);
