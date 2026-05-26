@@ -1,12 +1,15 @@
 import { Database } from "bun:sqlite";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "bun:test";
 import { buildArtifactManifest, isTrackedWorktreeDirty } from "../src/artifacts/manifest";
+import {
+  validateDeployableSqlite,
+  publishValidatedSqlite,
+} from "../src/artifacts/sqlite-validation";
 import type { LoadSnapshotOutput } from "../src/stages/load-snapshot";
-import { validateDeployableSqlite } from "../src/artifacts/sqlite-validation";
 
 describe("artifact manifest emission", () => {
   it("refuses to build a release artifact from a synthetic fixture snapshot", async () => {
@@ -164,6 +167,50 @@ describe("deployable SQLite validation", () => {
       writeFileSync(`${sqlitePath}-shm`, "leftover shm");
 
       expect(() => validateDeployableSqlite(sqlitePath)).toThrow(/unexpected WAL sidecar/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("publishValidatedSqlite", () => {
+  it("atomically renames temp to output after validation passes", () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-publish-ok-"));
+    try {
+      const tempPath = join(root, "data.sqlite.tmp");
+      const outputPath = join(root, "data.sqlite");
+      const db = new Database(tempPath);
+      db.exec("CREATE TABLE ok_table (id TEXT PRIMARY KEY);");
+      db.close();
+
+      publishValidatedSqlite(tempPath, outputPath);
+
+      expect(existsSync(outputPath)).toBe(true);
+      expect(existsSync(tempPath)).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("never publishes when validation fails and cleans up the temp artifact", () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-publish-fail-"));
+    try {
+      const tempPath = join(root, "data.sqlite.tmp");
+      const outputPath = join(root, "data.sqlite");
+      const db = new Database(tempPath);
+      db.exec("CREATE TABLE ok_table (id TEXT PRIMARY KEY);");
+      db.close();
+      // Stale WAL sidecar simulates a half-closed previous transaction.
+      writeFileSync(`${tempPath}-wal`, "stale wal");
+
+      expect(() => publishValidatedSqlite(tempPath, outputPath)).toThrow(/unexpected WAL sidecar/);
+
+      // The publish path must never see a bad artifact.
+      expect(existsSync(outputPath)).toBe(false);
+      // Temp + sidecars are cleaned so the caller starts fresh on retry.
+      expect(existsSync(tempPath)).toBe(false);
+      expect(existsSync(`${tempPath}-wal`)).toBe(false);
+      expect(existsSync(`${tempPath}-shm`)).toBe(false);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

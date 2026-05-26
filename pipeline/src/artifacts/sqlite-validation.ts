@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import { existsSync } from "node:fs";
+import { existsSync, renameSync, rmSync } from "node:fs";
 
 export interface DeployableSqliteValidation {
   ok: true;
@@ -26,4 +26,25 @@ export function validateDeployableSqlite(sqlitePath: string): DeployableSqliteVa
   }
 
   return { ok: true };
+}
+
+/**
+ * Atomically publish a deployable SQLite artifact. Validates `tempPath` for
+ * sidecars and integrity before performing the atomic `rename` to
+ * `outputPath`. On validation failure, removes `tempPath` and any leftover
+ * `-wal`/`-shm` sidecars so the publish path is never reached.
+ *
+ * This shape preserves the no-partial-artifact guarantee: any error thrown
+ * by this function leaves no file at `outputPath`.
+ */
+export function publishValidatedSqlite(tempPath: string, outputPath: string): void {
+  try {
+    validateDeployableSqlite(tempPath);
+  } catch (error) {
+    rmSync(tempPath, { force: true });
+    rmSync(`${tempPath}-wal`, { force: true });
+    rmSync(`${tempPath}-shm`, { force: true });
+    throw error;
+  }
+  renameSync(tempPath, outputPath);
 }

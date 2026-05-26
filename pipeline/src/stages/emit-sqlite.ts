@@ -1,5 +1,5 @@
 import { Database } from "bun:sqlite";
-import { mkdirSync, renameSync, rmSync } from "node:fs";
+import { mkdirSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
 import type { Stage } from "../types.ts";
 import { buildDDL } from "../sql/ddl";
@@ -14,7 +14,7 @@ import { ITEM_TAG_DDL } from "../sql/item-tag-ddl";
 import { emitSiteMetadata } from "./emit-site-metadata";
 import { emitReadModels } from "./emit-read-models";
 import { validateDescriptorCoverage } from "../entities/registry";
-import { validateDeployableSqlite } from "../artifacts/sqlite-validation";
+import { publishValidatedSqlite } from "../artifacts/sqlite-validation";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type { LoadSnapshotOutput } from "./load-snapshot.ts";
 import type { EmitAssetsOutput } from "./emit-assets.ts";
@@ -81,12 +81,13 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
       metadataInsert.run("schemaVersion", "1");
       db.close();
       db = undefined;
-      renameSync(tempPath, outputPath);
-      validateDeployableSqlite(outputPath);
+      publishValidatedSqlite(tempPath, outputPath);
       return { outputPath, byteSize: Bun.file(outputPath).size };
     } catch (error) {
       db?.close();
       rmSync(tempPath, { force: true });
+      rmSync(`${tempPath}-wal`, { force: true });
+      rmSync(`${tempPath}-shm`, { force: true });
       throw error;
     }
   },
