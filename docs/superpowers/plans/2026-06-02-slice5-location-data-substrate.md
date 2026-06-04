@@ -114,7 +114,6 @@ Assembly audited:
 mod/libs/Assembly-CSharp.dll
 sha256 63c57626118485d98c8f78614fe77f14723ad57e663c4055b8989a8cb82147c3
 ```
-````
 
 Local decompile output, ignored by git:
 
@@ -186,7 +185,6 @@ degenerate map area and is diagnostic-only; the row remains available for audit.
 - no tile capture;
 - no marker icon export;
 - no map-supporting entities.
-
 ````
 
 - [ ] **Step 2: Reconcile `docs/superpowers/roadmap.md` state**
@@ -210,7 +208,7 @@ docs/superpowers/plans/2026-05-20-hotrepl-export-correctness.md
 docs/superpowers/plans/2026-05-22-ardenfall-hotrepl-v2-migration.md
 docs/superpowers/plans/2026-05-23-hotrepl-phase4a-consumer-migration.md
 docs/superpowers/plans/2026-05-26-architecture-cleanup-hardening.md
-````
+```
 
 Do not remove `docs/superpowers/plans/2026-06-02-slice5-location-data-substrate.md`; it is the active plan.
 

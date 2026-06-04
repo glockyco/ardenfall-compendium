@@ -246,12 +246,36 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 
 **Why before maps:** items are the dominant audience surface (investment-priorities §1). Investing in their presentation before locations/maps maximises return on the most-visited pages.
 
+### Slice 4.5 — Items presentation closure
+
+**Status:** done
+**Spec coverage:** investment-priorities §1–§2; Slice 4 public presentation and link contracts.
+
+**Delivered:** public stat, item-category, item-tag, and master-tooltip term entities; slug routes and GUID redirects for item pages; route slug helpers shared by site routes; item relationship sections that resolve item-adjacent targets without route-local inference; game-grounded tooltip composition for item presentation facts. Public item pages now depend on generated read models, rich-text nodes, and relationship edges rather than raw game/TMP markup or descriptor parsing in route code.
+
+### Operational slice — HotRepl Phase 4a consumer migration
+
+**Status:** done
+**Spec coverage:** amendment §14 lifecycle/export flow; HotRepl typed-command control migration.
+
+**Delivered:** controller-side migration to the current HotRepl typed-command protocol, including command discovery, typed argument/output handling, artifact maps, and unattended `MainMenu → continue → export → quit` flow. The mod command registry and tests cover the typed command surface used by the controller.
+
+### Architecture cleanup and artifact hardening
+
+**Status:** done
+**Spec:** `docs/superpowers/specs/2026-05-26-architecture-cleanup-hardening-design.md`
+
+**Delivered:** descriptor-owned public routes through `site.route`; entity-owned pipeline/site read models behind thin facades; lean item overview payloads; explicit SQLite and sidecar artifact validation before fixture/release publication; Cloudflare Worker compatibility hardening; descriptor coverage diagnostics that fail fast when public or mapped descriptors lack pipeline support.
+
 ### Slice 5 — Locations and map data substrate
 
-**Status:** planned
+**Status:** in-progress
+**Spec:** `docs/superpowers/specs/2026-06-02-slice5-location-data-substrate-design.md`
+**Audit:** `docs/superpowers/specs/2026-06-02-location-source-audit.md`
+**Plan:** `docs/superpowers/plans/2026-06-02-slice5-location-data-substrate.md`
 **Spec coverage:** baseline §10; amendment §17–§18; investment-priorities §1 (maps second).
 
-**Delivers:** `LocationAsset` extraction; `locations` and `location_volumes` canonical tables; coordinate canonicalisation per design spec §10.3 (Y-negation performed once at canonicalisation); descriptor-driven point/polygon support. This slice prepares map data without requiring tile capture or deck.gl UI yet.
+**Delivers:** `LocationAsset` extraction from `MapLocationManager.GetLocations()`; canonical `locations` and `location_volumes`; Unity source `(x,y,z)` to compendium `(map_x,map_y,elevation)` canonicalisation; descriptor-owned `map_layers`; location map point/volume read models. No public `/map` or `/locations` route ships in this slice.
 
 ### Slice 6 — Map system
 
