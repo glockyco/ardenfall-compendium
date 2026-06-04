@@ -47,6 +47,7 @@ public sealed class RunFinalizeCommandTests
             EmptyStatTypes,
             EmptyItemCategories,
             EmptyItemTags,
+            EmptyLocations,
             preflight: FailingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -76,6 +77,7 @@ public sealed class RunFinalizeCommandTests
             EmptyStatTypes,
             EmptyItemCategories,
             EmptyItemTags,
+            EmptyLocations,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -102,6 +104,7 @@ public sealed class RunFinalizeCommandTests
             EmptyStatTypes,
             EmptyItemCategories,
             EmptyItemTags,
+            EmptyLocations,
             preflight: PassingPreflight);
 
         await Assert.ThrowsAsync<System.InvalidOperationException>(() =>
@@ -135,7 +138,7 @@ public sealed class RunFinalizeCommandTests
             Diagnostics = new List<Diagnostic> { Diagnostic("fatal", "rowFatal") },
         });
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
-        var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -171,6 +174,7 @@ public sealed class RunFinalizeCommandTests
             EmptyStatTypes,
             EmptyItemCategories,
             EmptyItemTags,
+            EmptyLocations,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -208,7 +212,7 @@ public sealed class RunFinalizeCommandTests
             RowId = "item-a",
             DisplayIconColor = new AssetColorSnapshot(),
         });
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -237,7 +241,7 @@ public sealed class RunFinalizeCommandTests
             Fields = new Dictionary<string, object?>(),
         });
         var source = FakeMasterTooltipSource.Default;
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -299,8 +303,8 @@ public sealed class RunFinalizeCommandTests
             statTypes,
             EmptyItemCategories,
             EmptyItemTags,
+            EmptyLocations,
             preflight: PassingPreflight);
-
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
@@ -363,6 +367,7 @@ public sealed class RunFinalizeCommandTests
             EmptyStatTypes,
             itemCategories,
             EmptyItemTags,
+            EmptyLocations,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -413,6 +418,7 @@ public sealed class RunFinalizeCommandTests
             EmptyStatTypes,
             EmptyItemCategories,
             itemTags,
+            EmptyLocations,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
