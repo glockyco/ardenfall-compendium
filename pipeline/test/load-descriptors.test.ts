@@ -117,6 +117,43 @@ describe("loadDescriptors", () => {
     expect(result.variants["item-tag"]).toEqual([]);
   });
 
+  it("loads the map-only location descriptor", async () => {
+    const result = await loadDescriptors.run(
+      {},
+      {
+        workspaceRoot: ".",
+        snapshotDir: "",
+        outDir: "",
+        log: () => undefined,
+      },
+    );
+    const location = result.entities.location;
+    if (!location) throw new Error("location entity not loaded");
+
+    expect(location.site).toBeUndefined();
+    expect(location.map).toEqual({
+      layer: "locations",
+      renderKind: "point-or-polygon",
+      icon: "location",
+      color: [120, 170, 255],
+      radius: 6,
+      tooltip: ["name"],
+      legendLabel: "Locations",
+      zOrder: 100,
+    });
+    expect(location.fields.map((field) => field.name)).toEqual([
+      "id",
+      "gameLocationId",
+      "name",
+      "enabled",
+      "mapId",
+      "showOnMap",
+      "showOnMapDebugOnly",
+      "allowFastTravel",
+      "displayOnEnterVolume",
+    ]);
+  });
+
   it("loads non-variant entity descriptors with presentation contexts", async () => {
     const root = mkdtempSync(join(tmpdir(), "ardenfall-descriptor-"));
     try {
@@ -230,7 +267,7 @@ describe("loadDescriptors", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
-  it("accepts every committed public descriptor in the pipeline support registry", async () => {
+  it("accepts every committed public or mapped descriptor in the pipeline support registry", async () => {
     const result = await loadDescriptors.run(
       {},
       {
@@ -247,20 +284,37 @@ describe("loadDescriptors", () => {
     expect(() =>
       validateDescriptorCoverage({
         entities: {
-          location: {
-            id: "location",
-            label: { singular: "Location", plural: "Locations" },
-            extraction: { root: "Location.Root" },
+          thing: {
+            id: "thing",
+            label: { singular: "Thing", plural: "Things" },
+            extraction: { root: "Thing.Root" },
             fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
-            site: { route: "/locations", overview: { columns: ["id"] } },
+            site: { route: "/things", overview: { columns: ["id"] } },
             map: null,
           },
         },
-        variants: { location: [] },
+        variants: { thing: [] },
       }),
     ).toThrow(
-      /descriptor 'location' has no pipeline canonicalizer[\s\S]*descriptor 'location' has no read-model emitter for public route '\/locations'/,
+      /descriptor 'thing' has no pipeline canonicalizer[\s\S]*descriptor 'thing' has no read-model emitter for public route '\/things'/,
     );
+  });
+
+  it("reports missing map read-model support by descriptor id", () => {
+    expect(() =>
+      validateDescriptorCoverage({
+        entities: {
+          item: {
+            id: "item",
+            label: { singular: "Item", plural: "Items" },
+            extraction: { root: "BuiltLookupTable.GetAssetsOfType<ItemData>" },
+            fields: [{ name: "id", type: "id", from: "guid", missingPolicy: "fatal" }],
+            map: { layer: "items" },
+          },
+        },
+        variants: { item: [] },
+      }),
+    ).toThrow(/descriptor 'item' has no map read-model emitter for layer 'items'/);
   });
   it("rejects an invalid descriptor with a JSON Pointer in the error", async () => {
     // This behavior is covered by invariants/items.test.ts; keep this case

@@ -110,4 +110,48 @@ describe("emitSiteMetadata", () => {
 
     expect(db.query("SELECT * FROM site_entities WHERE entity_id = 'internal'").get()).toBeNull();
   });
+
+  it("emits descriptor-owned map layers for map-only entities", async () => {
+    const desc = await loadDescriptors.run({}, ctx);
+    const db = new Database(":memory:");
+    db.exec(SITE_METADATA_DDL);
+
+    emitSiteMetadata(db, desc);
+
+    const layer = db
+      .query(
+        `SELECT layer_id, entity_id, source_table, render_kind, icon, color_json,
+                radius, tooltip_fields_json, filters_json, legend_label, z_order
+         FROM map_layers WHERE layer_id = 'locations'`,
+      )
+      .get() as {
+      layer_id: string;
+      entity_id: string;
+      source_table: string;
+      render_kind: string;
+      icon: string | null;
+      color_json: string;
+      radius: number | null;
+      tooltip_fields_json: string;
+      filters_json: string;
+      legend_label: string;
+      z_order: number;
+    };
+
+    expect(layer).toEqual({
+      layer_id: "locations",
+      entity_id: "location",
+      source_table: "location_map_points",
+      render_kind: "point-or-polygon",
+      icon: "location",
+      color_json: JSON.stringify([120, 170, 255]),
+      radius: 6,
+      tooltip_fields_json: JSON.stringify(["name"]),
+      filters_json: JSON.stringify([]),
+      legend_label: "Locations",
+      z_order: 100,
+    });
+
+    expect(db.query("SELECT * FROM site_entities WHERE entity_id = 'location'").get()).toBeNull();
+  });
 });

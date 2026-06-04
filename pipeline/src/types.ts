@@ -69,11 +69,21 @@ export type SiteSection =
 
 export interface SiteMap {
   layer: string;
+  renderKind:
+    | "point"
+    | "polygon"
+    | "point-or-polygon"
+    | "arc"
+    | "radius"
+    | "relation-overlay"
+    | "custom";
   icon?: string;
   color?: number[];
   radius?: number;
   filters?: SiteFilter[];
   tooltip?: string[];
+  legendLabel?: string;
+  zOrder?: number;
 }
 
 export type SnapshotSource =

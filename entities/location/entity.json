@@ -1,0 +1,57 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "location",
+  "label": {
+    "singular": "Location",
+    "plural": "Locations"
+  },
+  "extraction": {
+    "root": "MapLocationManager.GetLocations",
+    "walker": "LocationWalker"
+  },
+  "fields": [
+    { "name": "id", "type": "id", "from": "guid", "missingPolicy": "fatal" },
+    {
+      "name": "gameLocationId",
+      "type": "string",
+      "from": "locationID",
+      "missingPolicy": "fatal",
+      "label": "Game location ID"
+    },
+    { "name": "name", "type": "string", "from": "locationName", "missingPolicy": "fatal" },
+    { "name": "enabled", "type": "boolean", "from": "enabled", "missingPolicy": "fatal" },
+    { "name": "mapId", "type": "string", "from": "map.id", "missingPolicy": "diagnostic" },
+    { "name": "showOnMap", "type": "boolean", "from": "showOnMap", "missingPolicy": "fatal" },
+    {
+      "name": "showOnMapDebugOnly",
+      "type": "boolean",
+      "from": "showOnMapDebugOnly",
+      "missingPolicy": "fatal",
+      "label": "Debug-only map marker"
+    },
+    {
+      "name": "allowFastTravel",
+      "type": "boolean",
+      "from": "allowFastTravel",
+      "missingPolicy": "fatal",
+      "label": "Allows fast travel"
+    },
+    {
+      "name": "displayOnEnterVolume",
+      "type": "boolean",
+      "from": "displayOnEnterVolume",
+      "missingPolicy": "fatal",
+      "label": "Displays on enter"
+    }
+  ],
+  "map": {
+    "layer": "locations",
+    "renderKind": "point-or-polygon",
+    "icon": "location",
+    "color": [120, 170, 255],
+    "radius": 6,
+    "tooltip": ["name"],
+    "legendLabel": "Locations",
+    "zOrder": 100
+  }
+}

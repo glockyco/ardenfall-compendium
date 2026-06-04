@@ -68,4 +68,17 @@ CREATE TABLE asset_refs (
   asset_hash       TEXT NOT NULL,
   PRIMARY KEY (entity_id, entity_row_id, slot)
 );
+CREATE TABLE map_layers (
+  layer_id             TEXT PRIMARY KEY,
+  entity_id            TEXT NOT NULL,
+  source_table          TEXT NOT NULL,
+  render_kind           TEXT NOT NULL,
+  icon                  TEXT,
+  color_json            TEXT NOT NULL,
+  radius                REAL,
+  tooltip_fields_json   TEXT NOT NULL,
+  filters_json          TEXT NOT NULL,
+  legend_label          TEXT NOT NULL,
+  z_order               INTEGER NOT NULL DEFAULT 0
+);
 `;

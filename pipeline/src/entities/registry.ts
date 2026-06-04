@@ -5,6 +5,7 @@ export const canonicalizerSupport = {
   "stat-type": true,
   "item-category": true,
   "item-tag": true,
+  location: true,
 } as const satisfies Record<string, true>;
 
 export const readModelSupport = {
@@ -12,6 +13,10 @@ export const readModelSupport = {
   "stat-type": true,
   "item-category": true,
   "item-tag": true,
+} as const satisfies Record<string, true>;
+
+export const mapReadModelSupport = {
+  location: true,
 } as const satisfies Record<string, true>;
 
 const hasOwn = <T extends object>(object: T, key: string): key is keyof T =>
@@ -26,6 +31,11 @@ export function validateDescriptorCoverage(desc: LoadDescriptorsOutput): void {
     if (entity.site && !hasOwn(readModelSupport, entityId)) {
       errors.push(
         `descriptor '${entityId}' has no read-model emitter for public route '${entity.site.route}'`,
+      );
+    }
+    if (entity.map && !hasOwn(mapReadModelSupport, entityId)) {
+      errors.push(
+        `descriptor '${entityId}' has no map read-model emitter for layer '${entity.map.layer}'`,
       );
     }
   }

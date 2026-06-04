@@ -33,9 +33,30 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
   const insertReadModel = db.prepare(
     `INSERT INTO site_read_models (read_model_id, physical_name, entity_id, purpose) VALUES (?, ?, ?, ?)`,
   );
+  const insertMapLayer = db.prepare(
+    `INSERT INTO map_layers (
+      layer_id, entity_id, source_table, render_kind, icon, color_json, radius,
+      tooltip_fields_json, filters_json, legend_label, z_order
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
 
   const tx = db.transaction(() => {
     for (const [entityId, entity] of Object.entries(desc.entities)) {
+      if (entity.map) {
+        insertMapLayer.run(
+          entity.map.layer,
+          entityId,
+          `${entityId}_map_points`,
+          entity.map.renderKind,
+          entity.map.icon ?? null,
+          JSON.stringify(entity.map.color ?? [255, 255, 255]),
+          entity.map.radius ?? null,
+          JSON.stringify(entity.map.tooltip ?? []),
+          JSON.stringify(entity.map.filters ?? []),
+          entity.map.legendLabel ?? entity.label.plural,
+          entity.map.zOrder ?? 0,
+        );
+      }
       if (!entity.site) continue;
       insertEntity.run(
         entityId,

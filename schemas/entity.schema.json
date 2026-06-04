@@ -158,9 +158,20 @@
     "siteMap": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["layer"],
+      "required": ["layer", "renderKind"],
       "properties": {
         "layer": { "type": "string" },
+        "renderKind": {
+          "enum": [
+            "point",
+            "polygon",
+            "point-or-polygon",
+            "arc",
+            "radius",
+            "relation-overlay",
+            "custom"
+          ]
+        },
         "icon": { "type": "string" },
         "color": {
           "type": "array",
@@ -170,7 +181,9 @@
         },
         "radius": { "type": "number", "minimum": 0 },
         "filters": { "type": "array", "items": { "$ref": "#/$defs/filter" } },
-        "tooltip": { "type": "array", "items": { "type": "string" } }
+        "tooltip": { "type": "array", "items": { "type": "string" } },
+        "legendLabel": { "type": "string", "minLength": 1 },
+        "zOrder": { "type": "integer" }
       }
     }
   }
