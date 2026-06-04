@@ -120,7 +120,7 @@ References:
    open an accessible details panel, legend + per-layer toggles, name search with
    zoom-to/select, flag filters (debug-only off by default, fast-travel),
    responsive desktop/mobile layouts.
-5. URL-addressable state: view, selection, visible layers, filters, active map.
+5. URL-addressable state: selection, visible layers, filters, and active map.
 6. Cross-linking backbone: pipeline emits public `entity_nodes` for locations
    whose `route_path` is the map deep link; the map details panel renders the
    selected location's relationship section using the existing shared component.
@@ -128,8 +128,8 @@ References:
 8. Add `@deck.gl/core` and `@deck.gl/layers` (standalone, non-React) at the
    latest stable major (currently 9.3.x) as site dependencies, configured for
    GPU acceleration per the GPU section below.
-9. Verification: unit tests for pure logic, prerender smoke, a browser E2E
-   against the built fixture, and the root gates.
+9. Verification: unit tests for pure logic, a prerender smoke, a harness-driven
+   browser end-to-end run against the built fixture, and the root gates.
 10. Roadmap/spec updates reflecting implemented and next-planned state only.
 
 ### Out of scope (deferred, with the model reserved here)
@@ -299,16 +299,22 @@ only `MapCanvas` is client-only.
   deselects and updates URL.
 - Declutter: toggle a layer or the debug filter -> markers show/hide via
   `visible` (no data reload).
-- Share/return: pan/zoom (`replaceState`), select (`pushState`), copy link ->
-  reopen restores view + selection.
+- Share/return: selection, filter, and layer toggles update the URL (`goto` with
+  `replaceState` semantics); copy link -> reopen restores selection + filters.
 
 ## URL-addressable state
 
 `src/lib/map/url-state.ts` is a pure encode/decode of
-`{ mapId?, center, zoom, selected?, layers?, filters }` to/from query params
-(`?map=&v=&z=&sel=&layers=&debug=&ft=`). Pan/zoom churn uses `replaceState`;
-meaningful selection uses `pushState`. State round-trips on load. This module is
-fully unit-tested and shared by the page (initial state) and the store.
+`{ mapId?, selected?, hiddenLayers, showDebug, fastTravelOnly }` to/from query
+params (`?map=&sel=&hide=&debug=&ft=`). All transient changes use `goto` with
+`replaceState` semantics (the supported way to update query params; shallow
+routing `replaceState`/`pushState` is for page.state and crashes if called during
+hydration). State round-trips on load via `afterNavigate`. This module is fully
+unit-tested and shared by the page (initial state) and the store.
+
+Continuous pan/zoom are intentionally not URL-encoded in this slice: syncing them
+would require debounced per-frame navigation, and selection already conveys which
+place a shared link points at.
 
 ## Multi-map handling
 
@@ -477,8 +483,8 @@ tiles.
   - `layer-factory`: each `render_kind`; `point-or-polygon` expands to a marker
     layer plus a polygon layer; unknown kind raises a visible error; filters map
     to `visible`/filtered rows as specified.
-  - `url-state`: round-trip of view/selection/layers/filters/map; `replaceState`
-    vs `pushState` selection encoded correctly.
+  - `url-state`: round-trip of selection/layers/filters/map; absent keys omitted
+    from the encoded query.
   - server loader shaping: `map_layers` parsed once; rows grouped by `mapId`;
     precomputed `position`/`ring`/`tooltip`; debug-only/fast-travel flags carried.
   - pipeline: location `entity_nodes` emitted with `is_public = 1`, derived
@@ -486,11 +492,13 @@ tiles.
     coverage/diagnostics unchanged for unsupported descriptors.
 - Prerender smoke: `/map` emits static shell HTML with embedded `MapView` and no
   deck.gl in the SSR/prerender output; a "Map" nav link is present.
-- Browser E2E (puppeteer) against the built fixture site: map mounts on a GPU
-  device (assert the Deck's `device.type` is a WebGL/WebGPU device, not a
-  software/null context); markers and volumes render; click opens the panel; a
-  filter toggles a layer; search selects and centers a marker; the URL reflects
-  view + selection and restores on reload.
+- Browser E2E (harness-driven, against the built fixture served by `vite
+preview`): map mounts on a GPU device (assert the deck container's exposed
+  `data-deck-device` is a WebGL/WebGPU device, not software/null); markers and
+  volumes render; click and search select with the details panel; a layer toggle
+  and the filters drive the layers; the URL reflects selection/filters and
+  deep-links rehydrate. An automated committed browser smoke is deferred
+  consistent with the repo's deferred browser/visual-testing stance.
 - Root gates: `bun run codegen:validators`, `bun run check:fixtures`,
   `dotnet test mod-tests/...`, `bun test pipeline/test tooling.test.ts
 controller/test`, `bun run typecheck`, `bun run --cwd site check`,
@@ -520,8 +528,8 @@ string is itself the contract (route path, query-param keys, diagnostic codes).
 - Pan/zoom (with visible controls + keyboard), fit-to-bounds initial view, hover
   tooltip, click-to-select details panel, legend + layer toggles, name search
   with zoom-to, and debug-only/fast-travel filters all work against the fixture.
-- View, selection, visible layers, filters, and active map are URL-addressable
-  and restore on reload.
+- Selection, visible layers, filters, and active map are URL-addressable and
+  restore on reload; deep links rehydrate the selection.
 - The layer factory is data-driven from `map_layers`; an unknown `render_kind`
   fails visibly; no per-entity branch exists in render code.
 - The pipeline emits public location `entity_nodes` whose `route_path` is the map
@@ -532,6 +540,6 @@ string is itself the contract (route path, query-param keys, diagnostic codes).
   pinned to the latest stable major (currently 9.3.x), and initialises a GPU
   device with `powerPreference: 'high-performance'`.
 - Generated artifacts pass SQLite integrity and sidecar validation; root gates
-  pass; browser E2E passes.
+  pass; the harness browser end-to-end run passes.
 - Roadmap/spec state matches the implemented and next-planned state without
   changelog prose; open questions #6 and #9 are updated as described.

@@ -278,16 +278,31 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 
 ### Slice 6 — Map system
 
-**Status:** planned
+**Status:** done
+**Spec:** `docs/superpowers/specs/2026-06-04-slice6-map-system-design.md`
 **Spec coverage:** baseline §10; amendment §17; investment-priorities §1.
 
-**Delivers:** deck.gl `OrthographicView` map; emitted `map_layers` metadata/read models; the generic `createEntityLayer(descriptor, data, filters)` loop replacing AK's wall of imperative calls; first tile pyramid if capture tooling is ready.
+**Delivered:**
 
-**Open questions to close in this slice's plan:** orthographic camera setup, zoom levels, projection bounds, capture stitching strategy.
+- Vector-first interactive map at `/map`: a deck.gl `OrthographicView` rendered with the standalone `@deck.gl/core` + `@deck.gl/layers` 9.3.x on a GPU (`webgl`) device, loaded only on the map route (CSR exception; deck.gl is a lazy chunk, absent from SSR/prerender output and other route bundles).
+- Data-driven `buildEntityLayerSpecs(layerConfig, points, volumes, filters)` factory off the descriptor-owned `map_layers` metadata, with a closed `render_kind` registry that fails loudly on unknown kinds; `point-or-polygon` expands to a marker layer plus a volume-polygon layer. No per-entity branches in render code.
+- Build-time `getMapView()` read model shapes layers, points (joined to public location nodes for deep-link short ids), volumes, and per-map bounds; source tables are discovered from `map_layers` and validated against the point/volume suffix contract (fail fast).
+- Map UX: pan/zoom, fit-to-bounds, hover tooltip, click-to-select details panel, legend + per-layer toggles, name search with select, and debug-only/fast-travel filters. Debug-only locations are carried in the read model and hidden by default.
+- URL-addressable, shareable state (active map, selection, hidden layers, flag filters) synced via `goto` (`replaceState` semantics) after the router is ready; deep links rehydrate selection.
+- Cross-linking backbone: public location `entity_nodes` whose `route_path` is the map deep link, validated by the existing relationship audit; the details panel reuses the shared relationship surface (empty until edge-bearing slices land).
+- "Map" navigation entry.
+
+**Deferred (model reserved in the spec):** base map tile imagery and capture; `LocationMiniMap` SVG embeds; transitive spatial edges; live in-game markers; continuous pan/zoom in the URL; marker icon-atlas rendering (location icons not yet exported).
+
+**Verification evidence:** local gates passed on 2026-06-04 (`bun run codegen:validators`, `bun run check:fixtures`, `dotnet test mod-tests/...` 89 passed, `bun test pipeline/test tooling.test.ts controller/test` and `bun test site/test`, `bun run typecheck`, `bun run --cwd site check` 0/0, `bun run artifact:fixture synthetic fixtures/synthetic/snapshot`, `bun run --cwd site build:fixture`, `bun run --cwd site smoke:prerender`, `bun run --cwd site smoke:map`, `bun run format:check`, `bun run lint`, `git diff --check`). Interactive browser end-to-end run via the harness against `vite preview` confirmed the map mounts on a `webgl` GPU device, markers/volumes render, click and search select with details panel, layer toggle and filters drive the layers, and URL state round-trips/deep-links — all with zero page errors. An automated browser smoke remains deferred consistent with the repo's deferred browser/visual-testing stance.
+
+**Plan deviations (as built):** URL state is synced via `goto` rather than shallow-routing `replaceState` (the latter crashes when called during hydration); continuous pan/zoom were cut from the URL contract (chatty, low value vs selection); the browser E2E was executed via the harness rather than committed as a puppeteer script (no browser-automation dependency added).
+
+**Open questions closed/advanced here:** #6 tile capture — vector-first shipped; capture/stitch strategy still open for the tile slice. #9 map-supporting entity ordering — see Slice 7+ below.
 
 ### Slice 7+ — Map-supporting entities (game-specific)
 
-**Status:** planned (concrete entity set firm-up owed by Slice 6's plan)
+**Status:** planned (ordering firmed up by Slice 6)
 **Spec coverage:** investment-priorities §4.
 
 **Delivers:** the entities that make the map useful. Concrete set is deliberately not pre-enumerated here. Likely candidates for Ardenfall:
@@ -298,9 +313,16 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 - Resource nodes / gathering points.
 - Points of interest / lore markers.
 
-Each candidate gets its own slice number (7, 8, …), ordered by map-marker volume and detail-page value. Each candidate slice ships data + map-layer integration; some may earn a follow-up presentation-depth slice (e.g. monster pages with item drop tables).
+Each candidate gets its own slice number (7, 8, …). Ordered by map-marker volume and detail-page value. Firmed-up ordering for the next planning horizon (from Slice 6's plan):
 
-**Trigger to firm up:** Slice 6's plan must enumerate the candidate set and propose an order. That decision then folds into this roadmap as a non-provisional ordering for the next planning horizon.
+1. Vendors — map placement plus inventory tables linking to items; first to land because it makes the existing item track spatially navigable (`sold-at` edges).
+2. Monsters / enemies — map placement plus `drops` edges to items and detail pages with drop tables.
+3. NPCs and quests — `gives`/`requires` edges enabling transitive `available-at` location links.
+4. Zone connections / portals — `leads-to` edges between locations.
+5. Resource nodes / gathering points.
+6. Points of interest / lore markers.
+
+Each candidate slice ships data + map-layer integration; some may earn a follow-up presentation-depth slice (e.g. monster pages with item drop tables).
 
 Any map-supporting entity slice that ships public detail pages must reuse Slice 4's presentation, rich-text, component, and relationship contracts. Marker-only slices can stay map/read-model focused; public pages must not invent route-local link or tooltip systems.
 
@@ -351,17 +373,17 @@ Any map-supporting entity slice that ships public detail pages must reuse Slice 
 
 ## Open questions tracker
 
-| #   | Question                               | Status                                    | Closes in slice                                                                                                                                                   |
-| --- | -------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Deployment target                      | **closed**                                | Slice 1.5 deployed `ardenfall.compendiums.org` through local/operator Wrangler + Cloudflare Workers Static Assets                                                 |
-| 2   | Repo strategy + CI tooling             | **closed**                                | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §1, §8)                                                                                                         |
-| 3   | Component library / primitive strategy | **closed (foundation + governance seed)** | Slice 1 chose Tailwind v4/shadcn-svelte/Bits primitives; Slice 4 seeds component catalog, token, and intake governance; Slice 10 scales automation only if needed |
-| 4   | JSON Schema validator                  | **closed**                                | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §3)                                                                                                             |
-| 5   | Property-test framework                | **closed**                                | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §4)                                                                                                             |
-| 6   | Tile capture specifics                 | open                                      | Slice 6                                                                                                                                                           |
-| 7   | External archive backend               | open                                      | Slice 13                                                                                                                                                          |
-| 8   | Future gameplay-mod surface            | deferred                                  | indefinitely                                                                                                                                                      |
-| 9   | Map-supporting entity ordering         | open                                      | Slice 6 (firm-up)                                                                                                                                                 |
+| #   | Question                               | Status                                        | Closes in slice                                                                                                                                                   |
+| --- | -------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Deployment target                      | **closed**                                    | Slice 1.5 deployed `ardenfall.compendiums.org` through local/operator Wrangler + Cloudflare Workers Static Assets                                                 |
+| 2   | Repo strategy + CI tooling             | **closed**                                    | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §1, §8)                                                                                                         |
+| 3   | Component library / primitive strategy | **closed (foundation + governance seed)**     | Slice 1 chose Tailwind v4/shadcn-svelte/Bits primitives; Slice 4 seeds component catalog, token, and intake governance; Slice 10 scales automation only if needed |
+| 4   | JSON Schema validator                  | **closed**                                    | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §3)                                                                                                             |
+| 5   | Property-test framework                | **closed**                                    | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §4)                                                                                                             |
+| 6   | Tile capture specifics                 | advanced (vector-first shipped; capture open) | Slice 6 shipped vector-first; tile capture/stitch deferred to a tile slice                                                                                        |
+| 7   | External archive backend               | open                                          | Slice 13                                                                                                                                                          |
+| 8   | Future gameplay-mod surface            | deferred                                      | indefinitely                                                                                                                                                      |
+| 9   | Map-supporting entity ordering         | **closed (firmed up)**                        | Slice 6 plan; ordering recorded in Slice 7+ above                                                                                                                 |
 
 ## Update protocol
 
