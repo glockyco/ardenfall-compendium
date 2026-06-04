@@ -1,5 +1,5 @@
 import type { MapPointRow, MapView } from "./types";
-import type { MapUiState } from "./url-state";
+import { decodeMapSearch, type MapUiState } from "./url-state";
 
 export class MapStore {
   readonly view: MapView;
@@ -13,10 +13,19 @@ export class MapStore {
     fastTravelOnly: false,
   });
 
-  constructor(view: MapView, initial: Partial<MapUiState>) {
+  constructor(view: MapView) {
     this.view = view;
-    this.ui = { ...this.ui, ...initial };
-    if (this.ui.mapId === null) this.ui.mapId = view.maps[0]?.mapId ?? null;
+    this.ui.mapId = this.defaultMapId();
+  }
+
+  private defaultMapId(): string | null {
+    return this.view.maps.find((m) => m.mapId !== null)?.mapId ?? this.view.maps[0]?.mapId ?? null;
+  }
+
+  /** Apply URL-encoded state on the client; the prerendered shell uses defaults. */
+  hydrateFromSearch(search: string): void {
+    this.ui = { ...this.ui, ...decodeMapSearch(search) };
+    if (this.ui.mapId === null) this.ui.mapId = this.defaultMapId();
   }
 
   get activeMapId(): string | null {

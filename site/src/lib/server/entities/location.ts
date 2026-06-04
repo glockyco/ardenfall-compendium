@@ -50,11 +50,18 @@ interface MapVolumeRecord {
 }
 
 function toFillColor(json: string): [number, number, number, number] {
-  const parsed = JSON.parse(json) as number[];
-  if (!Array.isArray(parsed) || parsed.length < 3 || parsed.some((n) => !Number.isFinite(n))) {
+  const parsed = JSON.parse(json) as unknown;
+  if (!Array.isArray(parsed) || parsed.length < 3) {
     throw new Error(`invalid map layer color JSON: ${json}`);
   }
-  return [parsed[0], parsed[1], parsed[2], parsed[3] ?? 255];
+  const r = Number(parsed[0]);
+  const g = Number(parsed[1]);
+  const b = Number(parsed[2]);
+  const a = parsed[3] === undefined ? 255 : Number(parsed[3]);
+  if (![r, g, b, a].every((n) => Number.isFinite(n))) {
+    throw new Error(`invalid map layer color JSON: ${json}`);
+  }
+  return [r, g, b, a];
 }
 
 function tableExists(name: string): boolean {
@@ -167,7 +174,13 @@ function computeMaps(points: MapPointRow[], volumes: MapVolumeRow[]): MapSummary
   for (const p of points) extend(p.mapId, p.position[0], p.position[1]);
   for (const v of volumes) for (const [x, y] of v.ring) extend(v.mapId, x, y);
   return [...byMap.entries()]
-    .sort((a, b) => (a[0] ?? "").localeCompare(b[0] ?? ""))
+    .sort((a, b) => {
+      // Named maps first, the null/"Unknown" group last, then alphabetical.
+      if (a[0] === b[0]) return 0;
+      if (a[0] === null) return 1;
+      if (b[0] === null) return -1;
+      return a[0].localeCompare(b[0]);
+    })
     .map(([mapId, bounds]) => ({ mapId, label: mapId ?? "Unknown", bounds }));
 }
 

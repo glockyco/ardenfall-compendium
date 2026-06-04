@@ -18,7 +18,9 @@ export function decodeMapState(params: URLSearchParams): MapUiState {
   const center = params.get("c");
   let parsedCenter: [number, number] | null = null;
   if (center) {
-    const [x, y] = center.split(",").map((value) => Number(value));
+    const [rawX, rawY] = center.split(",");
+    const x = Number(rawX);
+    const y = Number(rawY);
     if (Number.isFinite(x) && Number.isFinite(y)) parsedCenter = [x, y];
   }
   const hidden = params.get("hide");
@@ -43,4 +45,8 @@ export function encodeMapState(state: MapUiState): string {
   if (state.showDebug) params.set("debug", "1");
   if (state.fastTravelOnly) params.set("ft", "1");
   return params.toString();
+}
+
+export function decodeMapSearch(search: string): MapUiState {
+  return decodeMapState(new URLSearchParams(search));
 }
