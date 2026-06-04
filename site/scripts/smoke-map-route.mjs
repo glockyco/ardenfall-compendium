@@ -15,5 +15,3 @@ for (const needle of must) {
 if (/@deck\.gl\/core/.test(html)) {
   throw new Error("deck.gl appears inlined in the prerendered map HTML");
 }
-
-console.log("map route smoke ok");
