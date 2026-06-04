@@ -2,6 +2,8 @@
   "name": "@ardenfall-compendium/site",
   "version": "0.0.0",
   "devDependencies": {
+    "@deck.gl/core": "^9.3",
+    "@deck.gl/layers": "^9.3",
     "@internationalized/date": "^3.12.1",
     "@lucide/svelte": "^1.14.0",
     "@sveltejs/adapter-cloudflare": "^7.2.8",
