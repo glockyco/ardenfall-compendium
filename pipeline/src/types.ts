@@ -311,6 +311,35 @@ export interface SnapshotDiagnostic {
   message?: string;
 }
 
+export interface SnapshotVector3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface LocationSnapshotVolume {
+  index: number;
+  center: SnapshotVector3;
+  size: SnapshotVector3;
+}
+
+export interface LocationSnapshotFields {
+  id: string;
+  gameLocationId: string;
+  name: string;
+  enabled: boolean;
+  mapId: string | null;
+  mapRef?: SnapshotRef | null;
+  showOnMap: boolean;
+  showOnMapDebugOnly: boolean;
+  iconRef?: SnapshotRef | null;
+  mapPosition: SnapshotVector3;
+  allowFastTravel: boolean;
+  fastTravelPosition: SnapshotVector3 | null;
+  displayOnEnterVolume: boolean;
+  volumes: LocationSnapshotVolume[];
+}
+
 export interface SnapshotDiagnosticArtifactEntry extends SnapshotDiagnostic {
   rowId: string | null;
 }

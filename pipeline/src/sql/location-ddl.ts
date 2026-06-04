@@ -1,0 +1,40 @@
+export const LOCATION_DDL = `
+CREATE TABLE locations (
+  id                         TEXT PRIMARY KEY,
+  game_location_id           TEXT NOT NULL,
+  name                       TEXT NOT NULL,
+  enabled                    INTEGER NOT NULL,
+  map_id                     TEXT,
+  map_ref_json               TEXT,
+  show_on_map                INTEGER NOT NULL,
+  show_on_map_debug_only     INTEGER NOT NULL,
+  icon_ref_json              TEXT,
+  source_map_position_json   TEXT NOT NULL,
+  map_x                      REAL NOT NULL,
+  map_y                      REAL NOT NULL,
+  elevation                  REAL NOT NULL,
+  allow_fast_travel          INTEGER NOT NULL,
+  source_fast_travel_json    TEXT,
+  fast_travel_map_x          REAL,
+  fast_travel_map_y          REAL,
+  fast_travel_elevation      REAL,
+  display_on_enter_volume    INTEGER NOT NULL
+);
+CREATE TABLE location_volumes (
+  id                    TEXT PRIMARY KEY,
+  location_id           TEXT NOT NULL REFERENCES locations(id),
+  volume_index          INTEGER NOT NULL,
+  kind                  TEXT NOT NULL,
+  source_center_json    TEXT NOT NULL,
+  source_size_json      TEXT NOT NULL,
+  map_min_x             REAL,
+  map_min_y             REAL,
+  map_max_x             REAL,
+  map_max_y             REAL,
+  elevation_min         REAL,
+  elevation_max         REAL,
+  geometry_json         TEXT,
+  diagnostics_json      TEXT NOT NULL DEFAULT '[]',
+  UNIQUE(location_id, volume_index)
+);
+`;
