@@ -17,7 +17,7 @@
       <dt>Position</dt>
       <dd>{point.position[0]}, {point.position[1]}</dd>
       <dt>Elevation</dt>
-      <dd>{point.position[2]}</dd>
+      <dd>{point.elevation}</dd>
       <dt>Fast travel</dt>
       <dd>{point.fastTravel ? "Yes" : "No"}</dd>
     </dl>

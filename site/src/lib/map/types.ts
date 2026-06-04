@@ -18,7 +18,9 @@ export interface MapPointRow {
   id: string;
   layerId: string;
   mapId: string | null;
+  // Top-down render position; z is always 0. Elevation is metadata, not a render axis.
   position: [number, number, number];
+  elevation: number;
   name: string;
   tooltip: string;
   debugOnly: boolean;

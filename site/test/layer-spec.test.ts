@@ -21,6 +21,7 @@ const point = (id: string, over: Partial<MapPointRow> = {}): MapPointRow => ({
   layerId: "locations",
   mapId: "ardenfall",
   position: [1, 2, 0],
+  elevation: 0,
   name: id,
   tooltip: id,
   debugOnly: false,
