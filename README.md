@@ -125,16 +125,14 @@ The production site is static-assets-first: generated pages are prerendered to H
 | Deploy HotRepl + mod locally      | `bun run hotrepl:setup`                                          |
 | Decompile game assemblies locally | `bun run decompile:game`                                         |
 
-## Maintainer reading order
+## Maintainer orientation
 
-Read these when changing architecture or data contracts:
+Start with the living roadmap, then the agent guides:
 
-1. [`docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md`](docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md)
-2. [`docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md`](docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md)
-3. [`docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`](docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md)
-4. [`docs/superpowers/roadmap.md`](docs/superpowers/roadmap.md)
+1. [`docs/superpowers/roadmap.md`](docs/superpowers/roadmap.md) — delivered and planned state.
+2. [`AGENTS.md`](AGENTS.md) and the subsystem `AGENTS.md` files — durable working rules, commands, and invariants.
 
-Agent-specific working rules live in [`AGENTS.md`](AGENTS.md) and subsystem `AGENTS.md` files.
+Design specs and plans under `docs/superpowers/` are planning scaffolding that is removed once delivered; treat them as background, not as the source of truth.
 
 ## License
 
