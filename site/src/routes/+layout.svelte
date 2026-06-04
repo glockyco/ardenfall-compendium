@@ -11,6 +11,7 @@
     <a href={resolve("/")} class="text-lg font-semibold">Ardenfall Compendium</a>
     <nav class="text-muted-foreground flex gap-4">
       <a href={data.itemRoute} class="hover:text-foreground">Items</a>
+      <a href={data.mapRoute} class="hover:text-foreground">Map</a>
     </nav>
   </div>
 </header>
