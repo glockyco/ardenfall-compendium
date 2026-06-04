@@ -65,10 +65,18 @@ describe("end-to-end pipeline", () => {
         const locationCount = (db.query("SELECT COUNT(*) c FROM locations").get() as { c: number })
           .c;
         expect(locationCount).toBe(2);
+        // Both enabled, on-map locations are present, including the debug-only one
+        // (the map UI hides it by default and reveals it via the debug filter).
         const locationPointCount = (
           db.query("SELECT COUNT(*) c FROM location_map_points").get() as { c: number }
         ).c;
-        expect(locationPointCount).toBe(1);
+        expect(locationPointCount).toBe(2);
+        const debugPointCount = (
+          db
+            .query("SELECT COUNT(*) c FROM location_map_points WHERE show_on_map_debug_only = 1")
+            .get() as { c: number }
+        ).c;
+        expect(debugPointCount).toBe(1);
         const mapLayer = db
           .query(
             "SELECT layer_id, source_table, source_tables_json FROM map_layers WHERE layer_id = 'locations'",

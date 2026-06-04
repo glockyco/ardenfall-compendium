@@ -632,4 +632,40 @@ describe("emitLocationReadModels", () => {
       [7, 16],
     ]);
   });
+
+  it("includes debug-only map points so the map can offer a debug toggle", () => {
+    const db = new Database(":memory:");
+    db.exec(LOCATION_DDL);
+    canonicaliseLocations(db, {
+      entityId: "location",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "22222222.fixture-debug-cave",
+          fields: {
+            id: "22222222.fixture-debug-cave",
+            gameLocationId: "debug-cave",
+            name: "Debug Cave",
+            enabled: true,
+            mapId: null,
+            showOnMap: true,
+            showOnMapDebugOnly: true,
+            mapPosition: { x: -5, y: 1, z: 9 },
+            allowFastTravel: false,
+            fastTravelPosition: null,
+            displayOnEnterVolume: false,
+            volumes: [],
+          },
+        },
+      ],
+    });
+
+    emitLocationReadModels(db);
+
+    expect(
+      db
+        .query("SELECT id, show_on_map_debug_only FROM location_map_points WHERE id = ?")
+        .get("22222222.fixture-debug-cave"),
+    ).toEqual({ id: "22222222.fixture-debug-cave", show_on_map_debug_only: 1 });
+  });
 });

@@ -36,7 +36,7 @@ export function emitLocationReadModels(db: Database, mapRoute = "/map"): void {
     SELECT id, name, map_id, map_x, map_y, elevation,
            show_on_map, show_on_map_debug_only, allow_fast_travel
     FROM locations
-    WHERE enabled = 1 AND show_on_map = 1 AND show_on_map_debug_only = 0
+    WHERE enabled = 1 AND show_on_map = 1
     ORDER BY name;
   `);
   db.exec(`
