@@ -12,6 +12,7 @@ using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Entities.ItemTag;
+using ArdenfallCompendium.Entities.Location;
 using PublicItemTagSnapshot = ArdenfallCompendium.Entities.ItemTag.ItemTagSnapshot;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
@@ -26,6 +27,7 @@ public sealed class RunFinalizeCommandTests
     private static readonly FakeStatTypeExtractionCache EmptyStatTypes = new(System.Array.Empty<StatTypeSnapshotRow>());
     private static readonly FakeItemCategoryExtractionCache EmptyItemCategories = new(System.Array.Empty<ItemCategorySnapshotRow>());
     private static readonly FakeItemTagExtractionCache EmptyItemTags = new(System.Array.Empty<ItemTagSnapshotRow>());
+    private static readonly FakeLocationExtractionCache EmptyLocations = new(System.Array.Empty<LocationSnapshotRow>());
 
     [Fact]
     public async Task RejectsFailedPreflightBeforePublishing()
@@ -429,6 +431,65 @@ public sealed class RunFinalizeCommandTests
         Assert.Equal(1, manifest.Counts["item-tag"]);
     }
 
+    [Fact]
+    public async Task WritesLocationsArtifactAndManifestCount()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-locations-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+        var locations = new FakeLocationExtractionCache(new[]
+        {
+            new LocationSnapshotRow
+            {
+                Id = "11111111.fixture-town",
+                Fields = new LocationSnapshot(
+                    Id: "11111111.fixture-town",
+                    GameLocationId: "town",
+                    Name: "Harbor Town",
+                    Enabled: true,
+                    MapRef: null,
+                    MapId: "ardenfall",
+                    ShowOnMap: true,
+                    ShowOnMapDebugOnly: false,
+                    IconRef: null,
+                    MapPosition: new LocationVector3Snapshot(12f, 3f, -8f),
+                    AllowFastTravel: true,
+                    FastTravelPosition: new LocationVector3Snapshot(14f, 4f, -10f),
+                    DisplayOnEnterVolume: true,
+                    Volumes: new List<LocationVolumeSnapshot>())
+            }
+        });
+        var command = new RunFinalizeCommand(
+            runs,
+            new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
+            FakeMasterTooltipSource.Default,
+            EmptyStatTypes,
+            EmptyItemCategories,
+            EmptyItemTags,
+            locations,
+            preflight: PassingPreflight);
+
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+
+        Assert.Empty(result.Diagnostics);
+        var manifestPath = result.Output!.ManifestPath;
+        var publishedDir = Path.GetDirectoryName(manifestPath)!;
+        var locationsPath = Path.Combine(publishedDir, "locations.json");
+        Assert.True(File.Exists(locationsPath));
+        var envelope = JsonConvert.DeserializeObject<LocationSnapshotEnvelope>(File.ReadAllText(locationsPath), JsonSettings.Default)!;
+        Assert.Single(envelope.Rows);
+        Assert.Equal("Harbor Town", envelope.Rows[0].Fields.Name);
+        Assert.Contains("locations", result.Artifacts.Keys);
+        var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
+        Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(locationsPath)), manifest.Hashes["locations.json"]);
+        Assert.Equal(1, manifest.Counts["location"]);
+    }
+
     private static Diagnostic Diagnostic(string severity, string code) => new()
     {
         Severity = severity,
@@ -542,6 +603,22 @@ public sealed class RunFinalizeCommandTests
         public IReadOnlyList<ItemTagSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
+    }
+
+    private sealed class FakeLocationExtractionCache : ILocationExtractionCache
+    {
+        private readonly IReadOnlyList<LocationSnapshotRow> _rows;
+        private readonly IReadOnlyList<Diagnostic> _diagnostics;
+
+        public FakeLocationExtractionCache(IReadOnlyList<LocationSnapshotRow> rows, IReadOnlyList<Diagnostic>? diagnostics = null)
+        {
+            _rows = rows;
+            _diagnostics = diagnostics ?? System.Array.Empty<Diagnostic>();
+        }
+
+        public IReadOnlyList<LocationSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
+
+        public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => _diagnostics;
     }
 
     private sealed class FakeMasterTooltipSource : IMasterTooltipSnapshotSource

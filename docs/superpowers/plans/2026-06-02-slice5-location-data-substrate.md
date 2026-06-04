@@ -1495,7 +1495,9 @@ public sealed class LocationExtractorTests
         var disabled = RuntimeLocation("disabled", enabled: false);
         var source = new BuiltLookupTableLocationAssetSource(
             lookupLocations: () => new[] { enabled, disabled },
-            isUnityNull: asset => ReferenceEquals(asset, disabled));
+            isUnityNull: asset => ReferenceEquals(asset, disabled),
+            lookupGuid: asset => ReferenceEquals(asset, enabled) ? "enabled-guid" : null,
+            assetName: _ => "enabled");
 
         Assert.Single(source.EnumerateLocations());
     }
@@ -1690,6 +1692,12 @@ public sealed class LocationSnapshotEnvelope
 
 - [ ] **Step 5: Add asset source abstraction**
 
+This file is the Unity adapter boundary. Pure extractor tests must not touch
+`BuiltLookupTable.Instance`, `UnityEngine.Object.name`, or other Unity ECalls in
+the .NET test host. Follow the existing stat/category pattern: inject Unity
+lookup, Unity-null checking, GUID lookup, and asset-name access so unit tests can
+exercise filtering without initializing Unity runtime singletons.
+
 Create `mod/src/Entities/Location/ILocationAssetSource.cs`:
 
 ```csharp
@@ -1729,20 +1737,28 @@ public sealed class BuiltLookupTableLocationAssetSource : ILocationAssetSource
 {
     private readonly Func<IEnumerable<LocationAsset>> _lookupLocations;
     private readonly Func<UnityObject?, bool> _isUnityNull;
+    private readonly Func<UnityObject, string?> _lookupGuid;
+    private readonly Func<UnityObject, string> _assetName;
 
     public BuiltLookupTableLocationAssetSource()
         : this(
             lookupLocations: () => BuiltLookupTable.GetAssetsOfType<LocationAsset>(),
-            isUnityNull: IsUnityNull)
+            isUnityNull: IsUnityNull,
+            lookupGuid: LookupGuid,
+            assetName: SafeName)
     {
     }
 
     public BuiltLookupTableLocationAssetSource(
         Func<IEnumerable<LocationAsset>> lookupLocations,
-        Func<UnityObject?, bool> isUnityNull)
+        Func<UnityObject?, bool> isUnityNull,
+        Func<UnityObject, string?>? lookupGuid = null,
+        Func<UnityObject, string>? assetName = null)
     {
         _lookupLocations = lookupLocations;
         _isUnityNull = isUnityNull;
+        _lookupGuid = lookupGuid ?? LookupGuid;
+        _assetName = assetName ?? SafeName;
     }
 
     public IEnumerable<LocationAssetRecord> EnumerateLocations()
@@ -1751,31 +1767,48 @@ public sealed class BuiltLookupTableLocationAssetSource : ILocationAssetSource
         {
             if (_isUnityNull(asset)) continue;
             if (!asset.enabled) continue;
-            yield return ToRecord(asset);
+            yield return ToRecord(asset, _lookupGuid, _assetName);
         }
     }
 
-    private LocationAssetRecord ToRecord(LocationAsset asset)
+    private static LocationAssetRecord ToRecord(
+        LocationAsset asset,
+        Func<UnityObject, string?> lookupGuid,
+        Func<UnityObject, string> assetName)
     {
-        var resolver = new ArdenfallCompendium.Walker.RefResolver();
-        var mapRef = resolver.ResolveAsset(asset.map, "mapRef", LookupGuid(asset) ?? asset.locationID ?? asset.name, MissingPolicy.Diagnostic, "LocationAsset.map");
-        var iconRef = resolver.ResolveAsset(asset.icon, "iconRef", LookupGuid(asset) ?? asset.locationID ?? asset.name, MissingPolicy.OptionalEmpty, "LocationAsset.icon");
+        var assetGuid = lookupGuid(asset);
         return new LocationAssetRecord(
-            Guid: LookupGuid(asset),
-            AssetName: SafeName(asset),
+            Guid: assetGuid,
+            AssetName: assetName(asset),
             Enabled: asset.enabled,
             LocationName: asset.locationName,
             GameLocationId: asset.locationID,
-            MapRef: mapRef,
+            MapRef: ResolveAsset(asset.map, lookupGuid, assetName, "LocationAsset.map"),
             MapId: asset.map == null ? null : asset.map.id,
             ShowOnMap: asset.showOnMap,
             ShowOnMapDebugOnly: asset.showOnMapDebugOnly,
-            IconRef: iconRef,
+            IconRef: ResolveAsset(asset.icon, lookupGuid, assetName, "LocationAsset.icon"),
             MapPosition: FromVector3(asset.mapPosition),
             AllowFastTravel: asset.allowFastTravel,
             FastTravelPosition: asset.allowFastTravel ? FromVector3(asset.fastTravelPosition) : null,
             DisplayOnEnterVolume: asset.displayOnEnterVolume,
-            Volumes: asset.volumes.Select((volume, index) => new LocationVolumeSnapshot(index, FromVector3(volume.center), FromVector3(volume.size))).ToList());
+            Volumes: asset.volumes
+                .Select((volume, index) =>
+                    new LocationVolumeSnapshot(index, FromVector3(volume.center), FromVector3(volume.size)))
+                .ToList());
+    }
+
+    private static SnapshotRef ResolveAsset(
+        UnityObject? asset,
+        Func<UnityObject, string?> lookupGuid,
+        Func<UnityObject, string> assetName,
+        string source)
+    {
+        if (asset == null) return SnapshotRef.Missing("nullAsset", source);
+        var guid = lookupGuid(asset);
+        return string.IsNullOrWhiteSpace(guid)
+            ? SnapshotRef.Missing("lookupAssetGuidMissing", source)
+            : SnapshotRef.LookupAsset(guid, asset.GetType().FullName, assetName(asset));
     }
 
     private static LocationVector3Snapshot FromVector3(Vector3 value) => new(value.x, value.y, value.z);

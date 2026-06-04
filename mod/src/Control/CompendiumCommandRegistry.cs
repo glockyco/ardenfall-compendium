@@ -5,6 +5,7 @@ using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Entities.ItemTag;
+using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Extraction;
 
 namespace ArdenfallCompendium.Control;
@@ -19,6 +20,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         var statTypes = new StatTypeExtractionService(new BuiltLookupTableStatTypeAssetSource());
         var itemCategories = new ItemCategoryExtractionService(new BuiltLookupTableItemCategoryAssetSource());
         var itemTags = new ItemTagExtractionService(new BuiltLookupTableItemTagAssetSource());
+        var locations = new LocationExtractionService(new BuiltLookupTableLocationAssetSource());
 
         Register(new Handlers.CompendiumInfoCommand());
         Register(new Handlers.CompendiumPreflightCommand());
@@ -27,7 +29,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         Register(new Handlers.RunStatusCommand(runs));
         Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs, items));
-        Register(new Handlers.RunFinalizeCommand(runs, items, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags));
+        Register(new Handlers.RunFinalizeCommand(runs, items, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations));
         Register(new Handlers.RunDiscardCommand(runs));
         Register(new Handlers.GameQuitCommand());
     }

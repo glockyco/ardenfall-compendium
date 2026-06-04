@@ -14,6 +14,7 @@ using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.StatType;
+using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
 using HotRepl.Control;
@@ -31,6 +32,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     private readonly IStatTypeExtractionCache _statTypes;
     private readonly IItemCategoryExtractionCache _itemCategories;
     private readonly IItemTagExtractionCache _itemTags;
+    private readonly ILocationExtractionCache _locations;
     private readonly IMasterTooltipSnapshotSource _masterTooltip;
     private readonly Func<PreflightReport> _preflight;
 
@@ -41,6 +43,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         IStatTypeExtractionCache? statTypes = null,
         IItemCategoryExtractionCache? itemCategories = null,
         IItemTagExtractionCache? itemTags = null,
+        ILocationExtractionCache? locations = null,
         Func<PreflightReport>? preflight = null
     )
     {
@@ -49,6 +52,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         _statTypes = statTypes ?? new StatTypeExtractionService(new BuiltLookupTableStatTypeAssetSource());
         _itemCategories = itemCategories ?? new ItemCategoryExtractionService(new BuiltLookupTableItemCategoryAssetSource());
         _itemTags = itemTags ?? new ItemTagExtractionService(new BuiltLookupTableItemTagAssetSource());
+        _locations = locations ?? new LocationExtractionService(new BuiltLookupTableLocationAssetSource());
         _masterTooltip = masterTooltip ?? RuntimeMasterTooltipSnapshotSource.Instance;
         _preflight = preflight ?? PreflightRunner.Run;
     }
@@ -149,6 +153,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             var itemCategoryRows = _itemCategories.GetOrExtract(run);
             var itemCategoryAssetPlan = _itemCategories.GetAssetPlan(run);
             var itemTagRows = _itemTags.GetOrExtract(run);
+            var locationRows = _locations.GetOrExtract(run);
             RecordTiming(timings, "related.extract", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
@@ -174,6 +179,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             WriteJson(stagingDir, "item-categories.json", itemCategoryEnvelope, hashes);
             var itemTagEnvelope = new ItemTagSnapshotEnvelope { Rows = itemTagRows.ToList() };
             WriteJson(stagingDir, "item-tags.json", itemTagEnvelope, hashes);
+            var locationEnvelope = new LocationSnapshotEnvelope { Rows = locationRows.ToList() };
+            WriteJson(stagingDir, "locations.json", locationEnvelope, hashes);
             RecordTiming(timings, "metadata.write", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
@@ -193,6 +200,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
+            foreach (var diagnostic in _locations.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
 
             if (diagnostics.Count > 0)
             {
@@ -207,6 +218,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["stat-type"] = statTypeRows.Count,
                 ["item-category"] = itemCategoryRows.Count,
                 ["item-tag"] = itemTagRows.Count,
+                ["location"] = locationRows.Count,
             };
             var manifest = ManifestBuilder.Build(
                 preflight,
@@ -233,6 +245,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             run.Counts["stat-type"] = statTypeRows.Count;
             run.Counts["item-category"] = itemCategoryRows.Count;
             run.Counts["item-tag"] = itemTagRows.Count;
+            run.Counts["location"] = locationRows.Count;
             phaseStopwatch.Restart();
             _runs.Save(run);
             RecordTiming(timings, "run.save", phaseStopwatch, totalStopwatch);
@@ -254,6 +267,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["stat-types"] = CompendiumCommandResults.FileArtifact("stat-types", Path.Combine(publishedDir, "stat-types.json"), "application/json", hashes["stat-types.json"]),
                 ["item-categories"] = CompendiumCommandResults.FileArtifact("item-categories", Path.Combine(publishedDir, "item-categories.json"), "application/json", hashes["item-categories.json"]),
                 ["item-tags"] = CompendiumCommandResults.FileArtifact("item-tags", Path.Combine(publishedDir, "item-tags.json"), "application/json", hashes["item-tags.json"]),
+                ["locations"] = CompendiumCommandResults.FileArtifact("locations", Path.Combine(publishedDir, "locations.json"), "application/json", hashes["locations.json"]),
                 ["finalize-timings"] = CompendiumCommandResults.FileArtifact("finalize-timings", Path.Combine(publishedDir, "finalize-timings.json"), "application/json", hashes["finalize-timings.json"]),
             };
             if (hashes.TryGetValue("diagnostics.json", out var diagnosticsHash))
