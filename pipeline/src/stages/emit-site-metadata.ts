@@ -11,6 +11,14 @@ function valueKindOf(type: string): string {
   return "string";
 }
 
+function mapSourceTables(entityId: string, renderKind: string): string[] {
+  if (renderKind === "point-or-polygon") {
+    return [`${entityId}_map_points`, `${entityId}_map_volumes`];
+  }
+  if (renderKind === "polygon") return [`${entityId}_map_volumes`];
+  return [`${entityId}_map_points`];
+}
+
 export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): void {
   const insertEntity = db.prepare(
     `INSERT INTO site_entities (entity_id, singular_label, plural_label, route_path, canonical_table) VALUES (?, ?, ?, ?, ?)`,
@@ -35,18 +43,20 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
   );
   const insertMapLayer = db.prepare(
     `INSERT INTO map_layers (
-      layer_id, entity_id, source_table, render_kind, icon, color_json, radius,
-      tooltip_fields_json, filters_json, legend_label, z_order
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      layer_id, entity_id, source_table, source_tables_json, render_kind, icon,
+      color_json, radius, tooltip_fields_json, filters_json, legend_label, z_order
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   const tx = db.transaction(() => {
     for (const [entityId, entity] of Object.entries(desc.entities)) {
       if (entity.map) {
+        const sourceTables = mapSourceTables(entityId, entity.map.renderKind);
         insertMapLayer.run(
           entity.map.layer,
           entityId,
-          `${entityId}_map_points`,
+          sourceTables[0],
+          JSON.stringify(sourceTables),
           entity.map.renderKind,
           entity.map.icon ?? null,
           JSON.stringify(entity.map.color ?? [255, 255, 255]),

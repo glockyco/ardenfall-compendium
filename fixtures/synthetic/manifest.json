@@ -53,7 +53,7 @@
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "ea431af24bb8243e815e698493eb55b5b7cbdc289b43798633198ee1373b0344",
+    "snapshot/manifest.json": "88041e4512bd78fa84275b9279be2b2257cf29148343d47a9621f1c42f81960d",
     "snapshot/items.json": "46f5b8a46a1b81046abcb4276f5e6d6a6c09c017bc2b54c1726f2b391a3a7bea",
     "snapshot/asset-manifest.json": "9d87c696295ef5c9f3f13e7183beed680d13213f35100f7e7b8c7b4e93411c68",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
@@ -62,6 +62,6 @@
     "snapshot/stat-types.json": "4013bd6b248b40cfe9901c4d17015a4071916690f76ae398ea85f03275bd1b52",
     "snapshot/item-categories.json": "be00a12b6ec41de05ee8faef62086cef3a9570374fed103604b8a12d9135101f",
     "snapshot/item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
-    "snapshot/locations.json": "69e7cd0cce83e991c1bebc550bbb15b3c477119f1082d536d55c2550cb4f9b4c"
+    "snapshot/locations.json": "333dc28688c556536ad084613d35577ce58915a6b136bfd2763cb9a58731d241"
   }
 }

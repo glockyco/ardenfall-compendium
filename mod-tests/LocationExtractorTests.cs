@@ -66,17 +66,42 @@ public sealed class LocationExtractorTests
     }
 
     [Fact]
+    public void DiagnosesLocationMissingGameLocationId()
+    {
+        var source = new FakeLocationAssetSource(new[]
+        {
+            FakeLocationAssetSource.Build(
+                guid: "11111111.fixture-town",
+                assetName: "Town Asset",
+                locationId: "",
+                locationName: "Harbor Town",
+                mapId: "ardenfall",
+                mapPosition: new LocationVector3Snapshot(12f, 3f, -8f),
+                fastTravelPosition: null,
+                volumes: System.Array.Empty<LocationVolumeSnapshot>()),
+        });
+        var extractor = new LocationExtractor(source);
+
+        var rows = extractor.Walk().ToList();
+
+        Assert.Empty(rows);
+        Assert.Contains(extractor.Diagnostics, d => d.Code == "locationIdMissing" && d.Field == "gameLocationId");
+    }
+
+    [Fact]
     public void BuiltLookupSourceSkipsUnityNullAndDisabledLocations()
     {
         var enabled = RuntimeLocation("enabled", enabled: true);
         var disabled = RuntimeLocation("disabled", enabled: false);
         var source = new BuiltLookupTableLocationAssetSource(
             lookupLocations: () => new[] { enabled, disabled },
-            isUnityNull: asset => ReferenceEquals(asset, disabled),
-            lookupGuid: asset => ReferenceEquals(asset, enabled) ? "enabled-guid" : null,
-            assetName: _ => "enabled");
+            isUnityNull: _ => false,
+            lookupGuid: asset => ReferenceEquals(asset, enabled) ? "enabled-guid" : "disabled-guid",
+            assetName: asset => ((LocationAsset)asset).locationID);
 
-        Assert.Single(source.EnumerateLocations());
+        var row = Assert.Single(source.EnumerateLocations());
+
+        Assert.Equal("enabled", row.GameLocationId);
     }
 
     private sealed class FakeLocationAssetSource : ILocationAssetSource

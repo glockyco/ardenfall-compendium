@@ -70,9 +70,15 @@ describe("end-to-end pipeline", () => {
         ).c;
         expect(locationPointCount).toBe(1);
         const mapLayer = db
-          .query("SELECT layer_id, source_table FROM map_layers WHERE layer_id = 'locations'")
-          .get();
-        expect(mapLayer).toEqual({ layer_id: "locations", source_table: "location_map_points" });
+          .query(
+            "SELECT layer_id, source_table, source_tables_json FROM map_layers WHERE layer_id = 'locations'",
+          )
+          .get() as { layer_id: string; source_table: string; source_tables_json: string };
+        expect(mapLayer).toEqual({
+          layer_id: "locations",
+          source_table: "location_map_points",
+          source_tables_json: JSON.stringify(["location_map_points", "location_map_volumes"]),
+        });
 
         // Variant ancestry is consistent for the melee row.
         const orphans = db
@@ -158,6 +164,22 @@ describe("end-to-end pipeline", () => {
       expect(() =>
         emitSqlite.run({ "load-descriptors": desc, "load-snapshot": badSnap }, ctx),
       ).toThrow(/unknown variant/);
+
+      const locationEnvelope = snap.envelopes.location;
+      if (!locationEnvelope) throw new Error("fixture missing location envelope");
+      const missingLocationSnap = {
+        ...snap,
+        envelopes: {
+          ...snap.envelopes,
+          location: undefined,
+        },
+      };
+
+      expect(() =>
+        emitSqlite.run({ "load-descriptors": desc, "load-snapshot": missingLocationSnap }, ctx),
+      ).toThrow(
+        /descriptor 'location' has map metadata but snapshot envelope 'location' is missing/,
+      );
 
       const db = new Database(dbPath, { readonly: true });
       try {

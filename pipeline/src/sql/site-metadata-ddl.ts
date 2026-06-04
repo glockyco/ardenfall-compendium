@@ -72,6 +72,7 @@ CREATE TABLE map_layers (
   layer_id             TEXT PRIMARY KEY,
   entity_id            TEXT NOT NULL,
   source_table          TEXT NOT NULL,
+  source_tables_json    TEXT NOT NULL,
   render_kind           TEXT NOT NULL,
   icon                  TEXT,
   color_json            TEXT NOT NULL,

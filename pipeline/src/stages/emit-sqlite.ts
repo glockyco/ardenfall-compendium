@@ -32,6 +32,19 @@ export interface EmitSqliteOutput {
   byteSize: number;
 }
 
+function validateMappedSnapshotEnvelopes(
+  desc: LoadDescriptorsOutput,
+  snapshot: LoadSnapshotOutput,
+): void {
+  for (const [entityId, entity] of Object.entries(desc.entities)) {
+    if (entity.map && !snapshot.envelopes[entityId]) {
+      throw new Error(
+        `descriptor '${entityId}' has map metadata but snapshot envelope '${entityId}' is missing`,
+      );
+    }
+  }
+}
+
 export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
   id: "emit-sqlite",
   inputs: ["load-descriptors", "load-snapshot", "emit-assets"],
@@ -46,31 +59,33 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
       db.exec("PRAGMA journal_mode = DELETE;");
       db.exec(SITE_METADATA_DDL);
       const desc = inputs["load-descriptors"];
+      const snapshot = inputs["load-snapshot"];
       validateDescriptorCoverage(desc);
+      validateMappedSnapshotEnvelopes(desc, snapshot);
       const itemEntity = desc.entities.item;
       const itemVariants = desc.variants.item;
-      const itemEnvelope = inputs["load-snapshot"].envelopes.item;
+      const itemEnvelope = snapshot.envelopes.item;
       if (!itemEntity || !itemVariants || !itemEnvelope) {
         throw new Error("emit-sqlite: missing item descriptor or envelope");
       }
       db.exec(buildDDL(itemEntity, itemVariants));
       canonicaliseItems(db, itemEntity, itemVariants, itemEnvelope);
-      const statTypeEnvelope = inputs["load-snapshot"].envelopes["stat-type"];
+      const statTypeEnvelope = snapshot.envelopes["stat-type"];
       if (statTypeEnvelope) {
         db.exec(STAT_TYPE_DDL);
         canonicaliseStatTypes(db, statTypeEnvelope);
       }
-      const itemCategoryEnvelope = inputs["load-snapshot"].envelopes["item-category"];
+      const itemCategoryEnvelope = snapshot.envelopes["item-category"];
       if (itemCategoryEnvelope) {
         db.exec(ITEM_CATEGORY_DDL);
         canonicaliseItemCategories(db, itemCategoryEnvelope);
       }
-      const itemTagEnvelope = inputs["load-snapshot"].envelopes["item-tag"];
+      const itemTagEnvelope = snapshot.envelopes["item-tag"];
       if (itemTagEnvelope) {
         db.exec(ITEM_TAG_DDL);
         canonicaliseItemTags(db, itemTagEnvelope);
       }
-      const locationEnvelope = inputs["load-snapshot"].envelopes.location;
+      const locationEnvelope = snapshot.envelopes.location;
       if (locationEnvelope) {
         db.exec(LOCATION_DDL);
         canonicaliseLocations(db, locationEnvelope);

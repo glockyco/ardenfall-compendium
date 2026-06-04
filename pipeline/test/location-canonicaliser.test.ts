@@ -44,6 +44,7 @@ describe("sourceToMapPoint", () => {
   it("maps Unity x/z to compendium x/y and preserves elevation", () => {
     expect(sourceToMapPoint({ x: 12, y: 3, z: -8 })).toEqual({ x: 12, y: 8, elevation: 3 });
     expect(sourceToMapPoint({ x: -5, y: -2, z: 9 })).toEqual({ x: -5, y: -9, elevation: -2 });
+    expect(sourceToMapPoint({ x: 0, y: 0, z: 0 })).toEqual({ x: 0, y: -0, elevation: 0 });
   });
 });
 
@@ -118,6 +119,14 @@ describe("canonicaliseLocations", () => {
         [7, 16],
       ],
     });
+    const ring = JSON.parse(volume.geometry_json).ring as number[][];
+    const signedArea =
+      ring.slice(0, -1).reduce((area, point, index) => {
+        const next = ring[index + 1];
+        return area + point[0] * next[1] - next[0] * point[1];
+      }, 0) / 2;
+    expect(ring[0]).toEqual(ring.at(-1));
+    expect(signedArea).toBeGreaterThan(0);
   });
 
   it("rejects non-finite source coordinates", () => {

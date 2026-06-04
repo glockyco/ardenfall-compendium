@@ -120,14 +120,15 @@ describe("emitSiteMetadata", () => {
 
     const layer = db
       .query(
-        `SELECT layer_id, entity_id, source_table, render_kind, icon, color_json,
-                radius, tooltip_fields_json, filters_json, legend_label, z_order
+        `SELECT layer_id, entity_id, source_table, source_tables_json, render_kind, icon,
+                color_json, radius, tooltip_fields_json, filters_json, legend_label, z_order
          FROM map_layers WHERE layer_id = 'locations'`,
       )
       .get() as {
       layer_id: string;
       entity_id: string;
       source_table: string;
+      source_tables_json: string;
       render_kind: string;
       icon: string | null;
       color_json: string;
@@ -142,6 +143,7 @@ describe("emitSiteMetadata", () => {
       layer_id: "locations",
       entity_id: "location",
       source_table: "location_map_points",
+      source_tables_json: JSON.stringify(["location_map_points", "location_map_volumes"]),
       render_kind: "point-or-polygon",
       icon: "location",
       color_json: JSON.stringify([120, 170, 255]),

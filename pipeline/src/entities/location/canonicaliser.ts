@@ -20,7 +20,7 @@ interface VolumeDiagnostic {
 
 export function sourceToMapPoint(point: SnapshotVector3): MapPoint {
   assertFiniteVector(point, "mapPosition");
-  return { x: point.x, y: -point.z, elevation: point.y };
+  return mapPointUnchecked(point);
 }
 
 export function canonicaliseLocations(db: Database, envelope: SnapshotEnvelope): void {
@@ -177,6 +177,10 @@ function sourceToMapPointForRow(
   field: string,
 ): MapPoint {
   assertFiniteVectorForRow(locationId, point, field);
+  return mapPointUnchecked(point);
+}
+
+function mapPointUnchecked(point: SnapshotVector3): MapPoint {
   return { x: point.x, y: -point.z, elevation: point.y };
 }
 

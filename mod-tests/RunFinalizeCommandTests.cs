@@ -157,6 +157,68 @@ public sealed class RunFinalizeCommandTests
     }
 
     [Fact]
+    public async Task AggregatesLocationRowDiagnosticsIntoManifestAndDiagnosticsArtifact()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-location-diagnostics-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+        var locations = new FakeLocationExtractionCache(new[]
+        {
+            new LocationSnapshotRow
+            {
+                Id = "11111111.fixture-town",
+                Fields = new LocationSnapshot(
+                    Id: "11111111.fixture-town",
+                    GameLocationId: "town",
+                    Name: "Harbor Town",
+                    Enabled: true,
+                    MapRef: null,
+                    MapId: null,
+                    ShowOnMap: true,
+                    ShowOnMapDebugOnly: false,
+                    IconRef: null,
+                    MapPosition: new LocationVector3Snapshot(12f, 3f, -8f),
+                    AllowFastTravel: false,
+                    FastTravelPosition: null,
+                    DisplayOnEnterVolume: true,
+                    Volumes: new List<LocationVolumeSnapshot>()),
+                Diagnostics = new List<Diagnostic>
+                {
+                    Diagnostic("diagnostic", "locationMapMissing"),
+                },
+            },
+        });
+        var command = new RunFinalizeCommand(
+            runs,
+            new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
+            FakeMasterTooltipSource.Default,
+            EmptyStatTypes,
+            EmptyItemCategories,
+            EmptyItemTags,
+            locations,
+            preflight: PassingPreflight);
+
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+
+        Assert.Empty(result.Diagnostics);
+        var manifestPath = result.Output!.ManifestPath;
+        var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
+        Assert.Equal(0, manifest.Diagnostics.Fatal);
+        Assert.Equal(1, manifest.Diagnostics.Diagnostic);
+
+        var diagnosticsPath = Path.Combine(Path.GetDirectoryName(manifestPath)!, "diagnostics.json");
+        Assert.True(File.Exists(diagnosticsPath));
+        var diagnostics = JArray.Parse(File.ReadAllText(diagnosticsPath));
+        Assert.Single(diagnostics);
+        Assert.Contains(diagnostics, d => d["rowId"]?.Value<string>() == "11111111.fixture-town" && d["code"]?.Value<string>() == "locationMapMissing");
+    }
+
+    [Fact]
     public async Task EmitsFinalizeTimingArtifact()
     {
         var runs = new CompendiumRunManager();

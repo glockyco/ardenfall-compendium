@@ -44,7 +44,7 @@
         "name": "Debug Cave",
         "enabled": true,
         "mapRef": null,
-        "mapId": "ardenfall",
+        "mapId": null,
         "showOnMap": true,
         "showOnMapDebugOnly": true,
         "iconRef": null,

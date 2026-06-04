@@ -148,12 +148,12 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             RecordTiming(timings, "items.write", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
-            var statTypeRows = _statTypes.GetOrExtract(run);
+            var statTypeRows = _statTypes.GetOrExtract(run).ToList();
             var statTypeAssetPlan = _statTypes.GetAssetPlan(run);
-            var itemCategoryRows = _itemCategories.GetOrExtract(run);
+            var itemCategoryRows = _itemCategories.GetOrExtract(run).ToList();
             var itemCategoryAssetPlan = _itemCategories.GetAssetPlan(run);
-            var itemTagRows = _itemTags.GetOrExtract(run);
-            var locationRows = _locations.GetOrExtract(run);
+            var itemTagRows = _itemTags.GetOrExtract(run).ToList();
+            var locationRows = _locations.GetOrExtract(run).ToList();
             RecordTiming(timings, "related.extract", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
@@ -173,13 +173,13 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             var masterTooltip = _masterTooltip.BuildSnapshot();
             WriteJson(stagingDir, "master-tooltip.json", masterTooltip, hashes);
 
-            var statTypeEnvelope = new StatTypeSnapshotEnvelope { Rows = statTypeRows.ToList() };
+            var statTypeEnvelope = new StatTypeSnapshotEnvelope { Rows = statTypeRows };
             WriteJson(stagingDir, "stat-types.json", statTypeEnvelope, hashes);
-            var itemCategoryEnvelope = new ItemCategorySnapshotEnvelope { Rows = itemCategoryRows.ToList() };
+            var itemCategoryEnvelope = new ItemCategorySnapshotEnvelope { Rows = itemCategoryRows };
             WriteJson(stagingDir, "item-categories.json", itemCategoryEnvelope, hashes);
-            var itemTagEnvelope = new ItemTagSnapshotEnvelope { Rows = itemTagRows.ToList() };
+            var itemTagEnvelope = new ItemTagSnapshotEnvelope { Rows = itemTagRows };
             WriteJson(stagingDir, "item-tags.json", itemTagEnvelope, hashes);
-            var locationEnvelope = new LocationSnapshotEnvelope { Rows = locationRows.ToList() };
+            var locationEnvelope = new LocationSnapshotEnvelope { Rows = locationRows };
             WriteJson(stagingDir, "locations.json", locationEnvelope, hashes);
             RecordTiming(timings, "metadata.write", phaseStopwatch, totalStopwatch);
 
@@ -203,6 +203,34 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             foreach (var diagnostic in _locations.GetWalkerDiagnostics(run))
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var row in statTypeRows)
+            {
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
+            }
+            foreach (var row in itemCategoryRows)
+            {
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
+            }
+            foreach (var row in itemTagRows)
+            {
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
+            }
+            foreach (var row in locationRows)
+            {
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
             }
 
             if (diagnostics.Count > 0)
