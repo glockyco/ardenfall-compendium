@@ -57,6 +57,14 @@ cited because they change concrete decisions, not as background reading.
   `data` regenerates GPU buffers; toggle with `visible`, keep stable layer `id`s,
   keep accessors allocation-free, gate updates with `updateTriggers`. Source:
   deck.gl performance / using-layers docs.
+- deck.gl 9 is GPU-accelerated by default: `DeckProps.deviceProps` creates a
+  luma.gl device, `powerPreference` defaults to `'high-performance'` (so the
+  browser prefers the discrete GPU), the default device type is WebGL2, and
+  picking is GPU-based. `device.type === 'best-available'` selects WebGPU when
+  the runtime supports it and falls back to WebGL2 — a future upgrade with no
+  layer code changes. The map must keep these GPU defaults and not regress
+  `powerPreference` to low power. Source: deck.gl upgrade guide / Deck API;
+  luma.gl device docs.
 - Browsers cap simultaneous WebGL contexts (commonly 8-16); deck.gl recommends a
   single Deck instance per page and warns that excess instances cause "Too many
   active WebGL contexts. Oldest context will be lost." This rules out many live
@@ -86,6 +94,8 @@ References:
 - https://deck.gl/docs/get-started/using-standalone
 - https://deck.gl/docs/api-reference/core/deck
 - https://deck.gl/docs/developer-guide/performance
+- https://deck.gl/docs/upgrade-guide
+- https://luma.gl/docs/api-reference/core/device
 - https://github.com/visgl/deck.gl/discussions/7412
 - https://webglfundamentals.org/webgl/lessons/webgl-anti-patterns.html
 - https://svelte.dev/docs/kit/page-options
@@ -115,7 +125,9 @@ References:
    whose `route_path` is the map deep link; the map details panel renders the
    selected location's relationship section using the existing shared component.
 7. A "Map" entry in site navigation.
-8. Add `@deck.gl/core` and `@deck.gl/layers` as site dependencies.
+8. Add `@deck.gl/core` and `@deck.gl/layers` (standalone, non-React) at the
+   latest stable major (currently 9.3.x) as site dependencies, configured for
+   GPU acceleration per the GPU section below.
 9. Verification: unit tests for pure logic, prerender smoke, a browser E2E
    against the built fixture, and the root gates.
 10. Roadmap/spec updates reflecting implemented and next-planned state only.
@@ -413,11 +425,40 @@ selection, and URL state are unchanged. Three rules keep this honest:
 
 No `LiveDataSource` code is written in Slice 6.
 
+## GPU acceleration and rendering performance
+
+deck.gl renders on the GPU; the design must keep it there and not starve it from
+the CPU side. Concretely:
+
+- Pin the latest stable deck.gl major (currently 9.3.x). Use the standalone
+  `@deck.gl/core` + `@deck.gl/layers` packages (luma.gl 9 is a transitive
+  dependency; no separate luma install is required for these layers).
+- Create the `Deck` with `deviceProps: { type: 'webgl' }` and keep deck.gl 9's
+  default `powerPreference: 'high-performance'` (do not override it to low
+  power). Reserve `type: 'best-available'` as the WebGPU upgrade switch; it needs
+  no layer changes. Markers and volumes render through GPU layers
+  (`ScatterplotLayer`, `PolygonLayer`); there is no DOM/CPU marker fallback.
+- GPU picking is on by default; keep `pickable: true` only on interactive layers
+  and disable it on any decorative layer so the GPU picking pass stays cheap.
+- Keep the CPU off the hot path so the GPU is never blocked: precompute
+  `position`, polygon `ring`, and tooltip text in the loader; keep deck.gl
+  accessors allocation-free; use constant accessors (`getFillColor: [r,g,b,a]`,
+  `radiusUnits: 'pixels'`) where possible; gate updates with `updateTriggers`
+  keyed on primitive style values; toggle layers via `visible`, never by
+  replacing `data`; keep stable layer `id`s and `data` references so GPU buffers
+  are reused across `deck.setProps`.
+- Keep `useDevicePixels` at its default for crisp markers; allow lowering it to
+  `1` only if profiling shows the map is fragment-bound on dense data or mobile.
+- If point/volume counts ever grow enough to make JSON accessors a measured
+  bottleneck, move to binary attributes (`positionFormat: 'XY'`, flat typed
+  arrays); do not start there.
+
 ## Dependencies
 
-Add `@deck.gl/core` and `@deck.gl/layers` (standalone, non-React) to the site,
-imported only inside the `/map` client component. `@deck.gl/geo-layers`
-(`TileLayer`) is not added; it arrives with tiles.
+Add `@deck.gl/core` and `@deck.gl/layers` (standalone, non-React, latest stable
+major — currently 9.3.x) to the site, imported only inside the `/map` client
+component. `@deck.gl/geo-layers` (`TileLayer`) is not added; it arrives with
+tiles.
 
 ## Fail-fast and invariants
 
@@ -445,9 +486,11 @@ imported only inside the `/map` client component. `@deck.gl/geo-layers`
     coverage/diagnostics unchanged for unsupported descriptors.
 - Prerender smoke: `/map` emits static shell HTML with embedded `MapView` and no
   deck.gl in the SSR/prerender output; a "Map" nav link is present.
-- Browser E2E (puppeteer) against the built fixture site: map mounts; markers and
-  volumes render; click opens the panel; a filter toggles a layer; search selects
-  and centers a marker; the URL reflects view + selection and restores on reload.
+- Browser E2E (puppeteer) against the built fixture site: map mounts on a GPU
+  device (assert the Deck's `device.type` is a WebGL/WebGPU device, not a
+  software/null context); markers and volumes render; click opens the panel; a
+  filter toggles a layer; search selects and centers a marker; the URL reflects
+  view + selection and restores on reload.
 - Root gates: `bun run codegen:validators`, `bun run check:fixtures`,
   `dotnet test mod-tests/...`, `bun test pipeline/test tooling.test.ts
 controller/test`, `bun run typecheck`, `bun run --cwd site check`,
@@ -485,7 +528,9 @@ string is itself the contract (route path, query-param keys, diagnostic codes).
   deep link; the relationship graph audit passes; the map details panel renders a
   (currently empty) relationship section via the shared component.
 - A "Map" navigation entry links to `/map`.
-- deck.gl is absent from SSR/prerender output and from non-map route bundles.
+- deck.gl is absent from SSR/prerender output and from non-map route bundles,
+  pinned to the latest stable major (currently 9.3.x), and initialises a GPU
+  device with `powerPreference: 'high-performance'`.
 - Generated artifacts pass SQLite integrity and sidecar validation; root gates
   pass; browser E2E passes.
 - Roadmap/spec state matches the implemented and next-planned state without
