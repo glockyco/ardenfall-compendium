@@ -60,6 +60,6 @@ export function emitReadModels(
     emitItemTagReadModels(db, desc.entities["item-tag"]?.site?.route);
   }
   if (snapshot.envelopes.location) {
-    emitLocationReadModels(db);
+    emitLocationReadModels(db, "/map");
   }
 }

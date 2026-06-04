@@ -1,4 +1,6 @@
 import type { Database } from "bun:sqlite";
+import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
 
 export const LOCATION_READ_MODEL_DDL = `
 CREATE TABLE location_map_points (
@@ -23,8 +25,9 @@ CREATE TABLE location_map_volumes (
 );
 `;
 
-export function emitLocationReadModels(db: Database): void {
+export function emitLocationReadModels(db: Database, mapRoute = "/map"): void {
   db.exec(LOCATION_READ_MODEL_DDL);
+  db.exec(ENTITY_GRAPH_DDL);
   db.exec(`
     INSERT INTO location_map_points (
       id, name, map_id, map_x, map_y, elevation,
@@ -47,4 +50,29 @@ export function emitLocationReadModels(db: Database): void {
       AND v.geometry_json IS NOT NULL
     ORDER BY l.name, v.volume_index;
   `);
+
+  const writeNode = prepareEntityNodeWriter(db);
+  const nodeRows = db
+    .query<
+      { id: string; name: string; map_id: string | null },
+      []
+    >(`SELECT id, name, map_id FROM locations WHERE enabled = 1 ORDER BY name`)
+    .all();
+  const tx = db.transaction(() => {
+    for (const row of nodeRows) {
+      const slug = deriveEntityNodeSlug(row.name, row.id);
+      const query = row.map_id
+        ? `map=${encodeURIComponent(row.map_id)}&sel=${slug.shortId}`
+        : `sel=${slug.shortId}`;
+      writeNode({
+        entityType: "location",
+        entityId: row.id,
+        label: row.name,
+        routePath: `${mapRoute}?${query}`,
+        canonicalSlug: slug.canonicalSlug,
+        shortId: slug.shortId,
+      });
+    }
+  });
+  tx();
 }
