@@ -5,8 +5,6 @@ export class MapStore {
   readonly view: MapView;
   ui = $state<MapUiState>({
     mapId: null,
-    center: null,
-    zoom: null,
     selected: null,
     hiddenLayers: [],
     showDebug: false,

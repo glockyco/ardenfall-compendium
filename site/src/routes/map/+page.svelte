@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { onMount, untrack } from "svelte";
-  import { browser } from "$app/environment";
-  import { replaceState } from "$app/navigation";
+  import { untrack } from "svelte";
+  import { afterNavigate, goto } from "$app/navigation";
   import { MapStore } from "$lib/map/map-store.svelte";
   import { encodeMapState } from "$lib/map/url-state";
   import MapCanvas from "$lib/components/map/MapCanvas.svelte";
@@ -14,21 +13,35 @@
   // Build-time data is read once; the URL is read on the client after mount,
   // because url.searchParams is not available during prerendering.
   const store = untrack(() => new MapStore(data.mapView));
-  let hydrated = $state(false);
+  let ready = $state(false);
 
-  onMount(() => {
+  // afterNavigate runs after the client router is ready (post-hydration), which
+  // is when programmatic navigation is safe to call.
+  afterNavigate(() => {
+    if (ready) return;
     store.hydrateFromSearch(location.search);
-    hydrated = true;
+    ready = true;
   });
 
-  // Reflect UI state into the URL so every view/selection is shareable.
+  // Mirror UI state into the URL via goto (the supported way to update query
+  // params), using replaceState semantics so transient changes do not stack
+  // history entries. The first run only establishes reactive tracking.
+  let urlInitialized = false;
   $effect(() => {
     const qs = encodeMapState(store.ui);
-    if (!hydrated || !browser) return;
+    if (!ready) return;
+    if (!urlInitialized) {
+      urlInitialized = true;
+      return;
+    }
     const search = qs ? `?${qs}` : "";
     if (search !== location.search) {
-      // eslint-disable-next-line svelte/no-navigation-without-resolve -- shallow same-page query sync; only the query string changes on the static /map route
-      replaceState(`${location.pathname}${search}`, {});
+      // eslint-disable-next-line svelte/no-navigation-without-resolve -- same-page query sync to the static /map route
+      void goto(`${location.pathname}${search}`, {
+        replaceState: true,
+        keepFocus: true,
+        noScroll: true,
+      });
     }
   });
 </script>

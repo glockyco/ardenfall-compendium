@@ -92,7 +92,7 @@ describe("getMapView", () => {
           nodeShortId: "abc12345",
         },
       ]);
-      expect(view.volumes[0].ring).toEqual([
+      expect(view.volumes[0]?.ring).toEqual([
         [10, 6],
         [14, 6],
         [14, 10],

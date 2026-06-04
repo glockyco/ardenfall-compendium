@@ -3,8 +3,6 @@ import { decodeMapState, encodeMapState, type MapUiState } from "../src/lib/map/
 
 const full: MapUiState = {
   mapId: "ardenfall",
-  center: [12.5, -8.25],
-  zoom: 3,
   selected: "abc12345",
   hiddenLayers: ["locations"],
   showDebug: true,
@@ -21,8 +19,6 @@ describe("map url-state", () => {
   it("returns defaults for an empty query", () => {
     expect(decodeMapState(new URLSearchParams(""))).toEqual({
       mapId: null,
-      center: null,
-      zoom: null,
       selected: null,
       hiddenLayers: [],
       showDebug: false,
@@ -33,8 +29,6 @@ describe("map url-state", () => {
   it("omits absent keys from the encoded string", () => {
     const qs = encodeMapState({
       mapId: null,
-      center: null,
-      zoom: null,
       selected: "abc12345",
       hiddenLayers: [],
       showDebug: false,
@@ -43,13 +37,20 @@ describe("map url-state", () => {
     const params = new URLSearchParams(qs);
     expect(params.get("sel")).toBe("abc12345");
     expect(params.has("map")).toBe(false);
-    expect(params.has("c")).toBe(false);
+    expect(params.has("hide")).toBe(false);
     expect(params.has("debug")).toBe(false);
   });
 
-  it("ignores malformed center/zoom without throwing", () => {
-    const decoded = decodeMapState(new URLSearchParams("c=bad&z=NaN"));
-    expect(decoded.center).toBeNull();
-    expect(decoded.zoom).toBeNull();
+  it("encodes multiple hidden layers as a comma list", () => {
+    const qs = encodeMapState({
+      mapId: null,
+      selected: null,
+      hiddenLayers: ["locations", "vendors"],
+      showDebug: false,
+      fastTravelOnly: true,
+    });
+    const params = new URLSearchParams(qs);
+    expect(params.get("hide")).toBe("locations,vendors");
+    expect(params.get("ft")).toBe("1");
   });
 });
