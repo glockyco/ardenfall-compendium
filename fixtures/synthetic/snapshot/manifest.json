@@ -35,7 +35,8 @@
     "item": 5,
     "stat-type": 2,
     "item-category": 1,
-    "item-tag": 2
+    "item-tag": 2,
+    "location": 2
   },
   "diagnostics": {
     "fatal": 0,
@@ -47,6 +48,7 @@
     "master-tooltip.json": "52eddbdec05b8fb811e2213014fab0f7ad5e0e30b2652a87349886b5ef8234aa",
     "stat-types.json": "249b5eb948ed9ba7dbf3769d90942acdc90fdf0f741947d0373ac7c84b0cdafc",
     "item-categories.json": "db576ccea92fb897e696a579cac0a526ac88664fb9999e4062c86df4cfb21051",
-    "item-tags.json": "870248efcf66834d9d59b5d87c92e7d205aa8bcd0defd79e1c6c106c8abfa809"
+    "item-tags.json": "870248efcf66834d9d59b5d87c92e7d205aa8bcd0defd79e1c6c106c8abfa809",
+    "locations.json": "69e7cd0cce83e991c1bebc550bbb15b3c477119f1082d536d55c2550cb4f9b4c"
   }
 }

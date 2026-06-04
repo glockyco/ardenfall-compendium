@@ -62,6 +62,18 @@ describe("end-to-end pipeline", () => {
         ).c;
         expect(itemTagOverviewCount).toBe(2);
 
+        const locationCount = (db.query("SELECT COUNT(*) c FROM locations").get() as { c: number })
+          .c;
+        expect(locationCount).toBe(2);
+        const locationPointCount = (
+          db.query("SELECT COUNT(*) c FROM location_map_points").get() as { c: number }
+        ).c;
+        expect(locationPointCount).toBe(1);
+        const mapLayer = db
+          .query("SELECT layer_id, source_table FROM map_layers WHERE layer_id = 'locations'")
+          .get();
+        expect(mapLayer).toEqual({ layer_id: "locations", source_table: "location_map_points" });
+
         // Variant ancestry is consistent for the melee row.
         const orphans = db
           .query(

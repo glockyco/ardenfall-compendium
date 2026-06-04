@@ -14,7 +14,8 @@
     "Item icon asset slots and color metadata",
     "StatType fixture rows for stat overview/detail routes",
     "ItemCategory fixture row for category pages and item category counts",
-    "ItemTag fixture rows for tag overview/detail routes and item reverse links"
+    "ItemTag fixture rows for tag overview/detail routes and item reverse links",
+    "LocationAsset fixture rows for map points, debug-only filtering, and axis-aligned volumes"
   ],
   "selection": [
     {
@@ -42,12 +43,17 @@
       "entity": "item-tag",
       "ids": ["7a600001.fixture-tag-valuable-remedy", "7a600002.fixture-tag-rare"],
       "rationale": "tag rows for tag pages, descriptions, and item reverse-link coverage"
+    },
+    {
+      "entity": "location",
+      "ids": ["11111111.fixture-town", "22222222.fixture-debug-cave"],
+      "rationale": "one public map point with an area volume and one debug-only marker excluded from default map point read models"
     }
   ],
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "fed4a2f70e5debed17f19ea3fcc7004e68b41140bb2a01fa2484099836f12eae",
+    "snapshot/manifest.json": "ea431af24bb8243e815e698493eb55b5b7cbdc289b43798633198ee1373b0344",
     "snapshot/items.json": "46f5b8a46a1b81046abcb4276f5e6d6a6c09c017bc2b54c1726f2b391a3a7bea",
     "snapshot/asset-manifest.json": "9d87c696295ef5c9f3f13e7183beed680d13213f35100f7e7b8c7b4e93411c68",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
@@ -55,6 +61,7 @@
     "snapshot/master-tooltip.json": "4a042a3cbd86e4a621899485ad3aa1f117c4d47340e39c92d8bfb1a812a79faa",
     "snapshot/stat-types.json": "4013bd6b248b40cfe9901c4d17015a4071916690f76ae398ea85f03275bd1b52",
     "snapshot/item-categories.json": "be00a12b6ec41de05ee8faef62086cef3a9570374fed103604b8a12d9135101f",
-    "snapshot/item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b"
+    "snapshot/item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
+    "snapshot/locations.json": "69e7cd0cce83e991c1bebc550bbb15b3c477119f1082d536d55c2550cb4f9b4c"
   }
 }
