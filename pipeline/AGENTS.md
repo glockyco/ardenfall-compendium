@@ -24,4 +24,4 @@ The pipeline validates snapshots/descriptors and emits the canonical SQLite/arti
 - `src/sql/` — canonical and site-metadata DDL.
 - `test/` — pipeline unit, invariant, and end-to-end fixture tests.
 
-Read `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md` §4, §6, §7, §16 and the active slice spec before changing emitted contracts.
+The hard rules above are the durable contract; emitted shapes live in `src/sql/` (DDL) and `src/stages/` (canonicalize/emit). Check the roadmap for which entities and read models are currently in scope.

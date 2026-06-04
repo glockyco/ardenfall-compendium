@@ -1,20 +1,29 @@
 # Repo Agent Orientation
 
-This repository is the static compendium for the game Ardenfall. Its design is captured in `docs/superpowers/specs/`. Read those before changing anything; they document non-obvious invariants this codebase enforces by design.
+This repository is the static compendium for the game Ardenfall. The durable rules live in this file and the subsystem `AGENTS.md` files; `docs/superpowers/` holds planning specs and plans that are scaffolding (they get removed once delivered), so treat them as background, not as the source of truth.
 
 ## Where to look first
 
-- Design baseline: `docs/superpowers/specs/2026-04-28-ardenfall-compendium-design.md`
-- Implementation decisions (authoritative where the baseline differs): `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md`
-- Slice-1 tooling pins: `docs/superpowers/specs/2026-05-03-slice1-tooling-decisions.md`
-- Living roadmap: `docs/superpowers/roadmap.md`
-- Active plan, when one exists: `docs/superpowers/plans/<latest>.md`
+- Living roadmap (delivered and planned state): `docs/superpowers/roadmap.md`
 
 ## Subsystem entry points
 
 - `mod/AGENTS.md` — BepInEx walker, DTOs, snapshot writer.
 - `pipeline/AGENTS.md` — descriptor loader, stage orchestrator, canonicaliser, site-metadata emitter.
-- `site/AGENTS.md` — SvelteKit pages, store accessors, design tokens, deck.gl map (later).
+- `site/AGENTS.md` — SvelteKit pages, store accessors, design tokens, deck.gl map.
+
+## Commands
+
+- Pipeline: `bun test pipeline/test` · Site: `bun run --cwd site check` and `bun test site/test` · Mod (C#): `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --nologo -v q` · Controller: `bun test controller/test`.
+- Repo-wide: `bun run typecheck` · `bun run lint` · `bun run format` · `bun run check:fixtures` · `bun run codegen:validators`.
+- Site dev server: `bun run dev`.
+- Before yielding non-trivial work, run the full gate (the scoped tests above plus `bun run artifact:fixture synthetic fixtures/synthetic/snapshot`, `bun run --cwd site build:fixture`, `bun run --cwd site smoke:prerender`, `bun run format:check`, `bun run lint`, `git diff --check`). Commit through `skill://commit`; never bypass hooks with `--no-verify`.
+
+## Live data and game logic
+
+- Live extraction is automated. With a configured repo-root `.env` (game paths, `HOTREPL_URL`, launch command), run `bun run hotrepl:setup` (build + deploy the mod), `bun run hotrepl:launch` (start the game), then `bun run hotrepl:export` (drive HotRepl → snapshot → pipeline; see `controller/src/export-orchestrator.ts` for the step sequence).
+- Probe a running game directly with HotRepl. Use the **CLI** for interactive C# eval/inspection (`hotrepl eval '<C#>'`, `describe`, `watch`) and `@hotrepl/sdk` for automation; do not use the MCP server. The HotRepl checkout is `$HOTREPL_REPO`. The world must be loaded (`compendium.continueFromMenu`) before `worldData`/records are reachable.
+- Ground game-logic decisions in the decompiled source, not guesses. The gitignored cache lives at `.decompiled/<gameVersion>-<sha>/` (regenerate with `bun run decompile:game`). Never commit decompiled source, raw game JSON, snapshots, or generated databases.
 
 ## Non-negotiable invariants
 

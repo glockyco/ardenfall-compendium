@@ -21,7 +21,7 @@ The mod walks live Ardenfall runtime objects and emits JSON snapshots. It is **n
 - `src/Entities/<E>/Adapters/` — per-layer extractor adapters.
 - `src/Emit/` — JSON + atomic snapshot writers.
 
-Read `docs/superpowers/specs/2026-04-29-ardenfall-compendium-implementation-decisions.md` §11–§14 for the contract.
+The hard rules above are the durable contract; the canonical types live in `src/Dtos/` and the entity adapters under `src/Entities/`.
 
 ## HotRepl dependency
 
