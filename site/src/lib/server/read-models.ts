@@ -120,3 +120,14 @@ export { getItemCategoryPresentation, listItemCategories } from "./entities/item
 
 export type { ItemTagOverviewRow, ItemTagPresentationRow } from "./entities/item-tag";
 export { getItemTagPresentation, listItemTags } from "./entities/item-tag";
+
+export type {
+  MapBounds,
+  MapLayerConfig,
+  MapPointRow,
+  MapSummary,
+  MapView,
+  MapVolumeRow,
+  RenderKind,
+} from "../map/types";
+export { getMapView } from "./entities/location";
