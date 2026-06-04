@@ -18,6 +18,9 @@ import { canonicaliseItemCategories } from "$pipeline/entities/item-category/can
 import { ITEM_CATEGORY_DDL } from "$pipeline/sql/item-category-ddl";
 import { canonicaliseItemTags } from "$pipeline/entities/item-tag/canonicaliser";
 import { ITEM_TAG_DDL } from "$pipeline/sql/item-tag-ddl";
+import { canonicaliseLocations } from "$pipeline/entities/location/canonicaliser";
+import { LOCATION_DDL } from "$pipeline/sql/location-ddl";
+import { emitLocationReadModels } from "$pipeline/stages/emit-read-models";
 
 const ctx = {
   workspaceRoot: ".",
@@ -566,6 +569,67 @@ describe("prepareEntityNodeWriter", () => {
         short_id: "4ed20218",
         is_public: 1,
       },
+    ]);
+  });
+});
+
+describe("emitLocationReadModels", () => {
+  it("builds map point and volume read models from canonical locations", () => {
+    const db = new Database(":memory:");
+    db.exec(LOCATION_DDL);
+    canonicaliseLocations(db, {
+      entityId: "location",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "11111111.fixture-town",
+          fields: {
+            id: "11111111.fixture-town",
+            gameLocationId: "town",
+            name: "Harbor Town",
+            enabled: true,
+            mapId: "ardenfall",
+            showOnMap: true,
+            showOnMapDebugOnly: false,
+            mapPosition: { x: 12, y: 3, z: -8 },
+            allowFastTravel: true,
+            fastTravelPosition: { x: 14, y: 4, z: -10 },
+            displayOnEnterVolume: true,
+            volumes: [{ index: 0, center: { x: 10, y: 2, z: -20 }, size: { x: 6, y: 4, z: 8 } }],
+          },
+        },
+      ],
+    });
+
+    emitLocationReadModels(db);
+
+    expect(db.query("SELECT * FROM location_map_points").get()).toEqual({
+      id: "11111111.fixture-town",
+      name: "Harbor Town",
+      map_id: "ardenfall",
+      map_x: 12,
+      map_y: 8,
+      elevation: 3,
+      show_on_map: 1,
+      show_on_map_debug_only: 0,
+      allow_fast_travel: 1,
+    });
+
+    const volume = db
+      .query("SELECT location_id, name, geometry_json FROM location_map_volumes")
+      .get() as {
+      location_id: string;
+      name: string;
+      geometry_json: string;
+    };
+    expect(volume.location_id).toBe("11111111.fixture-town");
+    expect(volume.name).toBe("Harbor Town");
+    expect(JSON.parse(volume.geometry_json).ring).toEqual([
+      [7, 16],
+      [13, 16],
+      [13, 24],
+      [7, 24],
+      [7, 16],
     ]);
   });
 });

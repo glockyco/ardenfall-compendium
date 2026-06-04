@@ -8,9 +8,11 @@ import { canonicaliseItems } from "../entities/item/canonicaliser";
 import { canonicaliseStatTypes } from "../entities/stat-type/canonicaliser";
 import { canonicaliseItemCategories } from "../entities/item-category/canonicaliser";
 import { canonicaliseItemTags } from "../entities/item-tag/canonicaliser";
+import { canonicaliseLocations } from "../entities/location/canonicaliser";
 import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
 import { ITEM_CATEGORY_DDL } from "../sql/item-category-ddl";
 import { ITEM_TAG_DDL } from "../sql/item-tag-ddl";
+import { LOCATION_DDL } from "../sql/location-ddl";
 import { emitSiteMetadata } from "./emit-site-metadata";
 import { emitReadModels } from "./emit-read-models";
 import { validateDescriptorCoverage } from "../entities/registry";
@@ -67,6 +69,11 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
       if (itemTagEnvelope) {
         db.exec(ITEM_TAG_DDL);
         canonicaliseItemTags(db, itemTagEnvelope);
+      }
+      const locationEnvelope = inputs["load-snapshot"].envelopes.location;
+      if (locationEnvelope) {
+        db.exec(LOCATION_DDL);
+        canonicaliseLocations(db, locationEnvelope);
       }
       emitSiteMetadata(db, desc);
       const assetRefInsert = db.prepare(
