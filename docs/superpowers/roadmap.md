@@ -269,13 +269,12 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 
 ### Slice 5 — Locations and map data substrate
 
-**Status:** in-progress
+**Status:** done
 **Spec:** `docs/superpowers/specs/2026-06-02-slice5-location-data-substrate-design.md`
 **Audit:** `docs/superpowers/specs/2026-06-02-location-source-audit.md`
-**Plan:** `docs/superpowers/plans/2026-06-02-slice5-location-data-substrate.md`
 **Spec coverage:** baseline §10; amendment §17–§18; investment-priorities §1 (maps second).
 
-**Delivers:** `LocationAsset` extraction from `MapLocationManager.GetLocations()`; canonical `locations` and `location_volumes`; Unity source `(x,y,z)` to compendium `(map_x,map_y,elevation)` canonicalisation; descriptor-owned `map_layers`; location map point/volume read models. No public `/map` or `/locations` route ships in this slice.
+**Delivered:** `LocationAsset` extraction from `MapLocationManager.GetLocations()`; canonical `locations` and `location_volumes`; Unity source `(x,y,z)` to compendium `(map_x,map_y,elevation)` canonicalisation; descriptor-owned `map_layers`; location map point/volume read models; synthetic fixture coverage. No public `/map` or `/locations` route ships in this slice.
 
 ### Slice 6 — Map system
 
