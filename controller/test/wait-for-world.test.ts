@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { ControlCommandError } from "../src/hotrepl-client";
+import { ControlCommandError } from "../src/control-types";
 import { waitForWorld, type WaitForWorldClient } from "../src/wait-for-world";
 
 class FakeWorldClient implements WaitForWorldClient {

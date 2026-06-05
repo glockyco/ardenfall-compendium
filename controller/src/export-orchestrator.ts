@@ -3,10 +3,9 @@ import type {
   CommandAccepted,
   CommandResult,
   ControlCommandDescriptor,
-  HotReplClient,
   JobCancelResult,
   JobPollResult,
-} from "./hotrepl-client";
+} from "./control-types";
 import { validateSnapshot } from "./validate-snapshot";
 import { waitForWorld } from "./wait-for-world";
 
@@ -44,7 +43,7 @@ export interface ExportEvent {
 }
 
 export interface ExportOptions {
-  client: ControllerClient | HotReplClient;
+  client: ControllerClient;
   outputBaseDir: string;
   pipelineOutDir: string;
   runPipeline?: (snapshotDir: string, pipelineOutDir: string) => Promise<void>;
@@ -178,7 +177,7 @@ function assertRequiredCommands(
 }
 
 async function quitGame(
-  client: ControllerClient | HotReplClient,
+  client: ControllerClient,
   log: (event: ExportEvent) => void,
 ): Promise<void> {
   try {
@@ -193,10 +192,7 @@ async function quitGame(
   }
 }
 
-async function waitForJob(
-  client: ControllerClient | HotReplClient,
-  jobId: string,
-): Promise<CommandResult> {
+async function waitForJob(client: ControllerClient, jobId: string): Promise<CommandResult> {
   for (;;) {
     const status = await client.jobStatus(jobId);
     if (isCommandResult(status)) return status;

@@ -1,4 +1,4 @@
-import { ControlCommandError, type CommandResult } from "./hotrepl-client";
+import { ControlCommandError, type CommandResult } from "./control-types";
 
 export interface WaitForWorldClient {
   call(name: string, args: Record<string, unknown>): Promise<CommandResult>;

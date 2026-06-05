@@ -1,4 +1,4 @@
-import { HotReplClient } from "./hotrepl-client";
+import { SdkControllerClient } from "./sdk-control-client";
 import { exportCompendium } from "./export-orchestrator";
 
 interface CliOptions {
@@ -15,7 +15,7 @@ async function main(argv: string[]): Promise<void> {
       "Usage: controller export --url <ws-url> --output <dir> --pipeline-out <dir> [--no-wait-for-world]",
     );
   const options = parseArgs(args);
-  const client = new HotReplClient(options.url);
+  const client = new SdkControllerClient(options.url);
   try {
     const result = await exportCompendium({
       client,
