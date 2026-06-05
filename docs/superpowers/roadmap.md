@@ -298,27 +298,39 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 
 **Plan deviations (as built):** URL state is synced via `goto` rather than shallow-routing `replaceState` (the latter crashes when called during hydration); continuous pan/zoom were cut from the URL contract (chatty, low value vs selection); the browser E2E was executed via the harness rather than committed as a puppeteer script (no browser-automation dependency added).
 
-**Open questions closed/advanced here:** #6 tile capture — vector-first shipped; capture/stitch strategy still open for the tile slice. #9 map-supporting entity ordering — see Slice 7+ below.
+**Open questions closed/advanced here:** #6 tile capture — vector-first shipped; capture/stitch strategy still open for the tile slice. #9 map-supporting entity ordering — the next step is a foundation data-architecture slice before adding more entity-specific map markers.
 
-### Slice 7+ — Map-supporting entities (game-specific)
+### Slice 7 — Entity kinds and placement foundation
 
-**Status:** planned (ordering firmed up by Slice 6)
+**Status:** planned next
+**Spec coverage:** investment-priorities §4; baseline §10; amendment §17–§18.
+
+**Delivers:** the clean-cut data substrate required before map-supporting entities can ship without one-off extraction paths. The descriptor model gains explicit entity kinds (`definition`, `instance`, `role`); placements become a general contract instead of a location-only table; `map_points` and `map_volumes` are generalized behind descriptor-owned `map_layers`; and runtime extraction is organized around the three verified source mechanisms: lookup assets, master records, and scene `GuidComponent` instances.
+
+This slice migrates the existing location map data onto the generalized placement/read-model substrate and re-verifies `/map` against both fixture and live-export data. It does not ship a broad set of new public entities; it proves the substrate with the smallest useful record-backed entity needed for the next map slices: portals.
+
+**Acceptance criteria:** live export still produces items, related item entities, locations, generalized placements, and portal records with fatal diagnostics at zero; pipeline emits SQLite placement/map read models without route-local descriptor parsing; `/map` renders existing locations from the generalized tables; and old location-only public map plumbing is removed in the same cutover.
+
+### Slice 8+ — Map-supporting entities (game-specific)
+
+**Status:** planned (ordered after Slice 7 foundation)
 **Spec coverage:** investment-priorities §4.
 
 **Delivers:** the entities that make the map useful. Concrete set is deliberately not pre-enumerated here. Likely candidates for Ardenfall:
 
-- Monsters / enemies (with map placement plus detail pages with drop tables once items are richly modelled).
-- Vendors (map placement plus inventory tables linking to items).
 - Zone connections / portals.
+- Vendors (map placement plus inventory tables linking to items).
+- Monsters / enemies (with map placement plus detail pages with drop tables once items are richly modelled).
+- NPCs and quests.
 - Resource nodes / gathering points.
 - Points of interest / lore markers.
 
-Each candidate gets its own slice number (7, 8, …). Ordered by map-marker volume and detail-page value. Firmed-up ordering for the next planning horizon (from Slice 6's plan):
+Each candidate gets its own slice number (8, 9, …). Ordered by extraction confidence, map-marker value, and detail-page value. Firmed-up ordering for the next planning horizon:
 
-1. Vendors — map placement plus inventory tables linking to items; first to land because it makes the existing item track spatially navigable (`sold-at` edges).
-2. Monsters / enemies — map placement plus `drops` edges to items and detail pages with drop tables.
-3. NPCs and quests — `gives`/`requires` edges enabling transitive `available-at` location links.
-4. Zone connections / portals — `leads-to` edges between locations.
+1. Portals — first record-backed instance entity; proves master-record identity, placement, and `leads-to` relationships without inventory/drop-table complexity.
+2. Characters / NPCs plus vendor role — unlocks `sold-at` item edges and spatial NPC/vendor navigation.
+3. Monsters / enemies — map placement plus `drops` edges to items and detail pages with drop tables.
+4. Quests — `gives`/`requires` edges enabling transitive `available-at` location links.
 5. Resource nodes / gathering points.
 6. Points of interest / lore markers.
 
