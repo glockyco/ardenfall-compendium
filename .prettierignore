@@ -11,3 +11,6 @@ pipeline/dist/
 snapshots/
 *.lock
 bun.lockb
+
+# Planning docs are owned by omp-plans (its own format + generated INDEX)
+docs/plans/

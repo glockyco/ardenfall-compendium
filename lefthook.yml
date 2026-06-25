@@ -17,6 +17,12 @@ pre-commit:
       skip:
         - merge
         - rebase
+    - name: plans docs
+      glob: "docs/plans/**/*.md"
+      run: PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH" sh -c 'omp-plans index && omp-plans check'
+      stage_fixed: true
+      skip:
+        - run: "! command -v omp-plans"
 
 commit-msg:
   jobs:
