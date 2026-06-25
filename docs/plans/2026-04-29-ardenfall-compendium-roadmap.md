@@ -21,7 +21,7 @@ The amendment is authoritative where it differs from the baseline spec. The inve
 
 ## How this is organised
 
-The project spans three layered subsystems (BepInEx mod, TS/Bun pipeline, SvelteKit site) plus shared descriptor/schema infrastructure. Rather than one mega-plan, work is split into **slices**. Each active slice may get an execution plan under `docs/superpowers/plans/` while work is live, but completed plans are removed from the working tree once the roadmap/specs capture the outcome; git history is the archive.
+The project spans three layered subsystems (BepInEx mod, TS/Bun pipeline, SvelteKit site) plus shared descriptor/schema infrastructure. Rather than one mega-plan, work is split into **slices**. Each active slice may get an execution plan under `docs/plans/` while work is live; when the slice ships, its plan is marked `implemented` and moved to `docs/plans/archive/` (per the planning-files convention) rather than deleted.
 
 Slice ordering is driven by `2026-05-07-investment-priorities.md`: items get the deepest investment first (data breadth, then assets, then presentation depth), maps come second (locations, map system, then map-supporting entities one-by-one), with spells/quests after. Each major entity gets a data slice plus a presentation depth slice; depth is not deferred to a single distant design-system slice. One operational override currently sits above all content work: the site must return to a static-assets-first SvelteKit architecture before Slice 4 or any new entity slice, because avoidable Worker invocations threaten the Cloudflare Workers free-tier envelope and make production failures look like blank client shells.
 
@@ -32,7 +32,7 @@ Slice ordering is driven by `2026-05-07-investment-priorities.md`: items get the
 - **drafting** — plan being written
 - **ready** — plan written and committed, awaiting execution
 - **in-progress** — plan execution underway
-- **done** — slice executed and merged; completed execution plans are not retained in the working tree
+- **done** — slice executed and merged; the execution plan is marked `implemented` and moved to `docs/plans/archive/`
 - **deferred** — explicitly parked until a stated trigger fires
 
 ## Slices
@@ -414,7 +414,7 @@ When a slice transitions:
 - **Brainstorming → drafting:** all decisions that materially affect the slice are closed or marked provisional with revisit triggers.
 - **Drafting → ready:** active plan location and commit hash recorded while the plan is live.
 - **Ready → in-progress:** branch noted when work does not happen directly on `main`.
-- **In-progress → done:** completion date recorded; any spec deviations noted under the slice with rationale; completed plan/progress artifacts removed from the working tree.
+- **In-progress → done:** completion date recorded; any spec deviations noted under the slice with rationale; the execution plan is set to `implemented` and moved to `docs/plans/archive/`.
 - **Public-contract replacement:** when a slice replaces a public read model, route contract, rich-text/link contract, or shared UI primitive, remove old public fallback/plumbing in the same slice. Temporary inspection surfaces must be private/debug-only, and downstream slice entries must reference the new contract.
 - **Slice re-shaped:** old slice marked `superseded by Slice N`, new slice added.
 - **Investment priority shift:** evidence (analytics, user feedback, structural game change) recorded in `2026-05-07-investment-priorities.md` under "Revisit triggers"; affected slice ordering updated here.
