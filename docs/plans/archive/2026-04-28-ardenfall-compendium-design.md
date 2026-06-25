@@ -1,11 +1,11 @@
 ---
 title: "Ardenfall Compendium — Design Spec"
 type: spec
-status: active
+status: implemented
 created: 2026-04-28
 parent:
 superseded_by:
-archived:
+archived: 2026-06-25
 ---
 
 # Ardenfall Compendium — Design Spec

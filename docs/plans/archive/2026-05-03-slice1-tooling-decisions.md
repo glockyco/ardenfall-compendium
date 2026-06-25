@@ -1,11 +1,11 @@
 ---
 title: "Ardenfall Compendium — Slice 1 Tooling Decisions"
 type: spec
-status: active
+status: implemented
 created: 2026-05-03
 parent:
 superseded_by:
-archived:
+archived: 2026-06-25
 ---
 
 # Ardenfall Compendium — Slice 1 Tooling Decisions

@@ -12,10 +12,10 @@ archived:
 
 Living tracker for implementation of:
 
-- Baseline spec: `docs/plans/2026-04-28-ardenfall-compendium-design.md`
-- Slice 1 amendment: `docs/plans/2026-04-29-ardenfall-compendium-implementation-decisions.md`
-- Slice 1 tooling decisions: `docs/plans/2026-05-03-slice1-tooling-decisions.md`
-- Investment priorities: `docs/plans/2026-05-07-investment-priorities.md`
+- Baseline spec: `docs/plans/archive/2026-04-28-ardenfall-compendium-design.md`
+- Slice 1 amendment: `docs/plans/archive/2026-04-29-ardenfall-compendium-implementation-decisions.md`
+- Slice 1 tooling decisions: `docs/plans/archive/2026-05-03-slice1-tooling-decisions.md`
+- Investment priorities: `docs/plans/archive/2026-05-07-investment-priorities.md`
 
 The amendment is authoritative where it differs from the baseline spec. The investment-priorities spec governs slice ordering and presentation depth; the roadmap below reflects it.
 

@@ -1,11 +1,11 @@
 ---
 title: "Ardenfall Compendium — Implementation Decisions Addendum"
 type: spec
-status: active
+status: implemented
 created: 2026-04-29
 parent:
 superseded_by:
-archived:
+archived: 2026-06-25
 ---
 
 # Ardenfall Compendium — Implementation Decisions Addendum

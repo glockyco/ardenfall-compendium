@@ -1,11 +1,11 @@
 ---
 title: "Ardenfall Compendium — Investment Priorities"
 type: spec
-status: active
+status: implemented
 created: 2026-05-07
 parent:
 superseded_by:
-archived:
+archived: 2026-06-25
 ---
 
 # Ardenfall Compendium — Investment Priorities
