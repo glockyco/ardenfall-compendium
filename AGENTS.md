@@ -1,10 +1,10 @@
 # Repo Agent Orientation
 
-This repository is the static compendium for the game Ardenfall. The durable rules live in this file and the subsystem `AGENTS.md` files; `docs/superpowers/` holds planning specs and plans that are scaffolding (they get removed once delivered), so treat them as background, not as the source of truth.
+This repository is the static compendium for the game Ardenfall. The durable rules live in this file and the subsystem `AGENTS.md` files; `docs/plans/` holds planning specs and plans that are scaffolding (they get archived once delivered), so treat them as background, not as the source of truth.
 
 ## Where to look first
 
-- Living roadmap (delivered and planned state): `docs/superpowers/roadmap.md`
+- Living roadmap (delivered and planned state): `docs/plans/2026-04-29-ardenfall-compendium-roadmap.md`
 
 ## Subsystem entry points
 

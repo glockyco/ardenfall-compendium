@@ -98,15 +98,15 @@ site/static + prerendered SvelteKit pages
 Cloudflare Static Assets
 ```
 
-| Path                | Purpose                                                                | Toolchain           |
-| ------------------- | ---------------------------------------------------------------------- | ------------------- |
-| `mod/`              | BepInEx 5 plugin that walks live game objects and emits JSON snapshots | C# / .NET           |
-| `controller/`       | HotRepl deployment/export controller for live game automation          | Bun / TypeScript    |
-| `pipeline/`         | Snapshot validation and artifact generation                            | Bun / TypeScript    |
-| `site/`             | SvelteKit static site and artifact staging scripts                     | Bun / Vite          |
-| `entities/`         | Filesystem registry of entity descriptors                              | JSON                |
-| `schemas/`          | JSON Schema authority for descriptors, snapshots, and manifests        | JSON Schema 2020-12 |
-| `docs/superpowers/` | Design notes, plans, and roadmap                                       | Markdown            |
+| Path          | Purpose                                                                | Toolchain           |
+| ------------- | ---------------------------------------------------------------------- | ------------------- |
+| `mod/`        | BepInEx 5 plugin that walks live game objects and emits JSON snapshots | C# / .NET           |
+| `controller/` | HotRepl deployment/export controller for live game automation          | Bun / TypeScript    |
+| `pipeline/`   | Snapshot validation and artifact generation                            | Bun / TypeScript    |
+| `site/`       | SvelteKit static site and artifact staging scripts                     | Bun / Vite          |
+| `entities/`   | Filesystem registry of entity descriptors                              | JSON                |
+| `schemas/`    | JSON Schema authority for descriptors, snapshots, and manifests        | JSON Schema 2020-12 |
+| `docs/plans/` | Design notes, plans, and roadmap                                       | Markdown            |
 
 The production site is static-assets-first: generated pages are prerendered to HTML and should be served by Cloudflare Static Assets without Worker invocation. The Worker is retained only for exceptional non-prerendered routes.
 
@@ -129,10 +129,10 @@ The production site is static-assets-first: generated pages are prerendered to H
 
 Start with the living roadmap, then the agent guides:
 
-1. [`docs/superpowers/roadmap.md`](docs/superpowers/roadmap.md) — delivered and planned state.
+1. [`docs/plans/2026-04-29-ardenfall-compendium-roadmap.md`](docs/plans/2026-04-29-ardenfall-compendium-roadmap.md) — delivered and planned state.
 2. [`AGENTS.md`](AGENTS.md) and the subsystem `AGENTS.md` files — durable working rules, commands, and invariants.
 
-Design specs and plans under `docs/superpowers/` are planning scaffolding that is removed once delivered; treat them as background, not as the source of truth.
+Design specs and plans under `docs/plans/` are planning scaffolding that is archived once delivered; treat them as background, not as the source of truth. [`docs/plans/INDEX.md`](docs/plans/INDEX.md) lists what is currently active.
 
 ## License
 
