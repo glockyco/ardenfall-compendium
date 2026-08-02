@@ -52,10 +52,6 @@ Weak assertions worth tightening: `pipeline/test/snapshot.test.ts:54` asserts on
 
 Several pipeline and site tests use `process.chdir` with `Date.now()`-named temp directories (`site/test/map-read-models.test.ts:8,66`), which is racy under parallel execution.
 
-### N6. Pre-push hook cost
-
-`lefthook.yml` runs the full typecheck and the full test suite on every push. The repo forbids `--no-verify`, and a slow hook is how that rule gets broken. Now that typecheck actually compiles something, this is no longer close to free.
-
 ---
 
 ## Constraints discovered, worth not rediscovering
