@@ -373,6 +373,32 @@ Item's descriptor-built DDL and the five fixed constants are the same field rath
 
 **Verification evidence:** confirmed a pure refactor against the fixture artifact — 54 tables before and after, none added or removed, no row count changed, identical public node and edge distributions.
 
+### Spells, and the diagnostics that hid them
+
+**Status:** done
+**Spec coverage:** investment-priorities §4.
+
+**Delivers:** `spell` as a first-class entity — 56 rows, public routes, and a `casts_school` edge to the stat type each spell belongs to. Identity is `namedAsset`, because none of the 56 is registered in `BuiltLookupTable`, which is the same gap that made stat types and item categories ship empty.
+
+**Why it was invisible.** A live export emitted 1805 `lookupAssetGuidMissing` diagnostics, of which about 1454 were references to Unity sprites, prefabs, and fonts that the compendium deliberately does not catalogue and never could resolve. The 286 spell references that mattered were 16% of the noise. Classifying engine-namespace assets as out of scope, rather than as failures, cut the total to 357 and made the remainder legible. Fixing the spells then took it to 72.
+
+| | before | after |
+| --- | --- | --- |
+| non-fatal diagnostics | 1811 | **72** |
+| `lookupAssetGuidMissing` | 1805 | **65**, all `fontRef` |
+| unresolved `spellRef` | 286 | **0** |
+| `counts.spell` | absent | **56** |
+
+**Deliberately excluded:** spell effects, subspells, tooltips, and cooldowns. Effects are a structured graph and tooltips need level-dependent variable substitution, so both belong with a presentation slice of their own, exactly as item presentation did.
+
+**Two corrections the work forced.**
+
+The first live export was *rejected*, `fatal: 1`, on a spell with an empty display name. The field had been specified fatal, which was wrong: identity comes from the asset name, so an absent label is a presentation gap. It is now a diagnostic, the canonical column is nullable, and presentation supplies a placeholder — the same resolution portals already had. One row of imperfect game data must not block an artifact.
+
+The navigation only ever offered Items and Map, while the layout resolved routes for stats, categories, and tags and discarded them. Three public prerendered sections were unreachable and spells would have been the fourth, so all six are now in the header.
+
+**Also settled:** adding this entity required exactly one `entityRegistry` entry, which is the first real test of the dispatch refactor. The mod's resolver gained the same treatment, collapsing three per-type branches into one registry, and every extraction source there is now a required argument rather than a default that quietly constructed live Unity services.
+
 ### Content coverage against the game, measured 2026-08-02
 
 A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.10.91`, establishing what the game authors versus what the compendium models. Every count below was read from the running game, not inferred.
@@ -385,7 +411,7 @@ A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.1
 | `StatType` | 21 | **0** | yes | `namedAsset` |
 | `ItemCategory` | 7 | **0** | yes | `namedAsset` |
 | `StatusEffectData` | 172 | 172 | **no** | `lookupAsset` |
-| `SpellData` | 56 | **0** | **no** | `namedAsset` |
+| `SpellData` | 56 | **0** | yes | `namedAsset` |
 | `Faction` | 48 | 48 | **no** | `lookupAsset` |
 | `PerkAsset` | 18 | 18 | **no** | `lookupAsset` |
 | `TraitType` | 17 | 17 | **no** | `lookupAsset` |
@@ -416,7 +442,7 @@ A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.1
 Ordered by reader value against extraction cost, now that registration is known for every candidate:
 
 1. ~~Portal connectivity~~ — **done.** See "Portal connectivity and honest portal names" below.
-2. **Spells.** 56 authored `SpellData` assets, none registered in the lookup table, behind 280 public item pages that currently cannot show what the spell does. This is the same defect as stat types and the fix is the mechanism that already exists. It is the only remaining case where content we already publish is broken rather than absent, which puts it first. Doing it should also remove `RefResolver`'s hardcoded two-type named-asset branch in favour of a descriptor-driven rule.
+2. ~~Spells~~ — **done.** See "Spells, and the diagnostics that hid them" below.
 3. **Status effects.** 172 assets, already registered. Referenced by spells, consumables, throwing potions, and perks, so it multiplies the value of both the spell slice and the existing item pages.
 4. **Characters / NPCs.** 212 definitions and 314 placed instances across both maps. The largest body of placed content in the game. The vendor role is excluded on evidence — see the note below.
 5. **Traits, perks, factions.** 17, 18, and 48 assets, all registered, all authored, all currently invisible. Small and independent of one another.
