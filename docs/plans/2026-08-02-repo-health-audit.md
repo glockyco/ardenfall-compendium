@@ -18,7 +18,7 @@ Severity: **major** — real defect or invariant violation with a plausible fail
 
 ## Open
 
-Nothing from the original audit remains open. `M10` (four hand-maintained entity-id lists) and `N5` (test gaps in rich-text parsing, artifact tampering, and a weak table assertion) are resolved, and the temp-directory race in the site tests is gone.
+Nothing from the *original* audit remains open. `M10` (four hand-maintained entity-id lists) and `N5` (test gaps in rich-text parsing, artifact tampering, and a weak table assertion) are resolved, and the temp-directory race in the site tests is gone.
 
 Two things were found while closing them and are recorded here because they are latent rather than fixed:
 
@@ -33,6 +33,31 @@ Not fixed, because the live export produces zero rich-text diagnostics of any ki
 `<b><i>x</b></i>` drops the outer formatting and leaves the unmatched `</b>` as literal visible text. If real content ever contains crossed tags, that ships as garbage on the page rather than as a formatting approximation. Same reason for not acting: the current corpus contains none, and the behaviour is now pinned by a test that documents it plainly rather than dressing it up.
 
 ---
+
+## Semantics audit, 2026-08-02
+
+A separate sweep asked a different question of every field we publish: not what type it is, but **where the game reads it and what it does with it**. Five parallel audits against the decompiled source. The premise is that a field with the right type and the wrong meaning is worse than a missing one, because it reads as authoritative.
+
+Four reader-facing misrepresentations were confirmed and fixed. Recorded here because the *class* of error matters more than the instances.
+
+- **A spell's stat was published as its "school".** It is the skill that scales the spell and doubles as the item's minimum stat. It looked like a school only because every spell in this build happens to reference a magic skill.
+- **Item pages asserted equip "Requirements".** `CanEquip` returns true unconditionally. Falling short of the stat applies penalty multipliers to output.
+- **Category pages published the game's inventory table column configuration** as catalogue knowledge.
+- **The map filtered on a fast-travel flag with no runtime consumer.** Real availability comes from a fast-travel set we do not extract.
+
+Three values were qualified rather than removed, since each is genuinely useful for comparison and misleading only when bare: base damage, base value, and base mana cost are all first terms in runtime formulas.
+
+### Still open from that audit
+
+**The map projection does not match the game's.** `WorldMapUI.GlobalPositionToMapPosition` maps world `x,z` through a per-map `worldMapDivision`, currently `(2.975, 3.185)`, with no sign flip. We map `x, -z` at raw scale. Scale is harmless because we fit bounds, but the sign is not: if the game does not flip, our map is mirrored north to south against the one players know. The game also supports per-map overrides that derive positions through portal anchors, which we do not model at all.
+
+Not fixed, because flipping an axis on a source reading alone could easily make it worse, and there is no ground truth in the repo to check against. Settling it needs a known landmark pair compared between our map and the game's.
+
+**Debug-only locations can be revealed in production.** The game gates them on `Debug.isDebugBuild` and additionally on discovery. Our client offers a toggle that reveals them in any build, and shows undiscovered locations unconditionally. Showing undiscovered content is defensible for a compendium and arguably the point, but it should be a decision rather than an accident, and debug-only content is a different question.
+
+**Item tags are understated.** They are not merely descriptive: they feed item effect tooltips, match potion recipe ingredients, and `FactionItemTag` modifiers alter faction relationships from equipped gear. The extractor emits only name and description, dropping the only structured subtype payload the game has.
+
+**`sk_unarmed` is confirmed vestigial.** No `CoreStats` entry, no runtime skill key, no consumer, and `HandItem.CalculateDamage` returns zero. It ships as authored content with a diagnostic. Whether an unreachable asset should hold a public route is still open.
 
 ## Fixed since the audit, worth knowing
 
