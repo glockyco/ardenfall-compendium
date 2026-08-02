@@ -19,20 +19,22 @@ Five parallel surveys of the whole project: code health, site quality, content c
 | entity | public pages | with an inbound edge |
 | --- | ---: | ---: |
 | item | 1273 | 0 |
-| status-effect | 172 | 0 |
-| spell | 56 | 0 |
+| status-effect | 172 | 56 |
+| spell | 56 | 55 |
 | location | 34 | 0 |
 | item-tag | 28 | 0 |
 | portal | 33 | 29 |
-| stat-type | 21 | 4 |
+| stat-type | 21 | 20 |
 
-1,591 of 1,640 public pages have no inbound edge. All 1,359 edges point outward: `variant_of` 1273, `scales_with` 56, `leads_to` 30. A reader can look up a thing they can already name and cannot ask a single relational question.
+1,480 of 1,640 public pages still have no inbound edge, down from 1,591. The graph now carries 1,911 edges: `variant_of` 1273, `casts` 286, `applies` 266, `scales_with` 56, `leads_to` 30.
 
-Three connective slices are cheap because the data is already extracted:
+Items now link to the status effects they apply and the spells they carry, and both directions render. The two slices resolved every one of the 552 item effect facts and took unresolved-target diagnostics to zero. Stat pages link the stats they affect where the label matches a published stat.
 
-- **Items to status effects.** 231 references across 212 items, every one carrying `targetId: null`. `ItemPresentationBuilder.cs:178-198` builds the fact from a label string while `ItemAdapterHelpers.cs:117-126` resolves the real `SnapshotRef` two functions away. `ConsumableItemData.statusEffects` and `MeleeItemData.bleedStatusEffect` are the authored sources.
-- **Stat types to stat types.** 16 of 28 `affects` labels on stat pages exactly match an existing stat page name, and none of them are links. The labels are already rendered, the targets already exist.
+What remains connective and cheap:
+
 - **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference.
+- **Spells to status effects.** The remaining 116 unreachable status effects are referenced from the polymorphic Odin-serialised effect graph on `SpellData`, so this is a slice rather than a field.
+- **Items to tags and categories.** `ItemData.tags` and `ItemData.category` are authored references, and all 28 tag pages and 7 category pages currently have no inbound edge despite every item carrying them.
 
 ## Currently shipping, reader-visible
 

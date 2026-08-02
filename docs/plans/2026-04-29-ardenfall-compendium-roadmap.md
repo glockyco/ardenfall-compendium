@@ -456,7 +456,7 @@ A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.1
 
 **Delivers:** the entities that make the compendium answer more questions. The candidate set is no longer speculative — see the coverage table above, which was measured against the running game.
 
-Ordered by measured reader value against cost. The survey at [`2026-08-02-program-survey`](2026-08-02-program-survey.md) supplies the evidence, and it changed this ordering: new entities rank below both connective work and the last mile, because 97% of pages currently have no inbound edge and several shipped defects are reader-visible today.
+Ordered by measured reader value against cost. The survey at [`2026-08-02-program-survey`](2026-08-02-program-survey.md) supplies the evidence, and it changed this ordering: new entities rank below both connective work and the last mile, because most pages still have no inbound edge and several shipped defects were reader-visible when the survey ran.
 
 **Correctness of what already ships.** The site draws transparent cards, the map draws white borders, 967 item pages render an empty Description heading, and every non-item 404 claims an item was missing. Most are trivial fixes. They come first because they are wrong now, on pages already published.
 
@@ -464,9 +464,12 @@ Ordered by measured reader value against cost. The survey at [`2026-08-02-progra
 
 **Edges.**
 
-1. **Items to status effects.** 231 references across 212 items, `targetId` null on every one, the resolved ref sitting two functions from the slot that needs it. Makes 172 orphan pages reachable and enriches 212 item pages both ways.
-2. **Stat types to stat types.** 16 of 28 `affects` labels already match a stat page by name and none are links.
-3. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference.
+1. ~~Items to status effects~~ - **done.** 266 `applies` edges.
+2. ~~Items to spells~~ - **done.** 286 `casts` edges. Both directions render, and every one of the 552 item effect facts now resolves.
+3. ~~Stat types to stat types~~ - **done.** Labels that match a published stat are links.
+4. **Items to tags and categories.** `ItemData.tags` and `ItemData.category` are authored references on every item, yet all 28 tag pages and 7 category pages have no inbound edge. The cheapest remaining connection by some distance.
+5. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference.
+6. **Spells to status effects.** The 116 status effects still unreachable are referenced from the Odin-serialised effect graph on `SpellData`, so this one is a slice rather than a field.
 
 **Search.** No site search exists and no FTS table ships. Pagefind runs after prerender and needs no extraction work. Until it exists, crawlers are the only discovery path, which is also why the missing sitemap and meta descriptions matter.
 
