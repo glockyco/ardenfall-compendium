@@ -96,7 +96,7 @@ This set proves the variant model with one deep inheritance branch (`MeleeItemDa
 
 - All five identified bugs in the HotRepl extraction path fixed at the source. Specifically: empty `DiagnosticTotals` in `RunFinalizeCommand`; full walker re-run in `EntityPlanCommand`; full walker re-run per batch in `EntityExportBatchCommand`; walker-level diagnostics dropped between batches; reliance on unstable iteration order from `BuiltLookupTable.GetAssetsOfType<T>()`. Walker rows and diagnostics are cached through `ItemExtractionService`; manifest totals aggregate row diagnostics plus walker diagnostics.
 - Local C# xUnit regression substrate under `mod-tests/`, including coverage for cached item extraction, entity planning, batch slicing, finalize diagnostics, diagnostic code naming, and run lifecycle behavior.
-- Site `+error.svelte` for SvelteKit error states, with `site/scripts/smoke-error-route.mjs` covering the unknown-item route.
+- Site `+error.svelte` for SvelteKit error states, with `site/scripts/smoke-error-route.ts` covering the unknown-item route.
 - Controller invokes `game.quit` after the `run.finalize` path; quit failures are logged and do not mask the original export result.
 - Live deployment of the site to `ardenfall.compendiums.org` via Cloudflare Workers Static Assets and local/operator `wrangler deploy`. CI verifies buildability; it does not deploy and assumes no Cloudflare secrets.
 - Operational helper for the controller to drive `MainMenu → continue → world_Ardenfall` through the typed `compendium.continueFromMenu` command, so unattended live smoke runs require no human click.
@@ -406,13 +406,13 @@ Spell pages had shipped with a governing skill and a base mana cost and nothing 
 | unresolved `spellRef` | 286 | **0** |
 | `counts.spell` | absent | **56** |
 
-**Deliberately excluded:** spell effects, subspells, tooltips, and cooldowns. Effects are a structured graph and tooltips need level-dependent variable substitution, so both belong with a presentation slice of their own, exactly as item presentation did.
+**Excluded at the time:** spell effects, subspells, tooltips, and cooldowns. Tooltips shipped shortly after in their own slice, once a probe confirmed the level-dependent substitution runs at extraction time. Effects and subspells remain out, since they are a polymorphic serialized graph.
 
 **Two corrections the work forced.**
 
 The first live export was *rejected*, `fatal: 1`, on a spell with an empty display name. The field had been specified fatal, which was wrong: identity comes from the asset name, so an absent label is a presentation gap. It is now a diagnostic, the canonical column is nullable, and presentation supplies a placeholder — the same resolution portals already had. One row of imperfect game data must not block an artifact.
 
-The navigation only ever offered Items and Map, while the layout resolved routes for stats, categories, and tags and discarded them. Three public prerendered sections were unreachable and spells would have been the fourth, so all six are now in the header.
+The navigation only ever offered Items and Map, while the layout resolved routes for stats, categories, and tags and discarded them. Three public prerendered sections were unreachable and spells would have been the fourth, so every section went into the header. There are seven now.
 
 **Also settled:** adding this entity required exactly one `entityRegistry` entry, which is the first real test of the dispatch refactor. The mod's resolver gained the same treatment, collapsing three per-type branches into one registry, and every extraction source there is now a required argument rather than a default that quietly constructed live Unity services.
 
@@ -461,17 +461,16 @@ Ordered by reader value against extraction cost, now that registration is known 
 1. ~~Portal connectivity~~ — **done.** See "Portal connectivity and honest portal names" below.
 2. ~~Spells~~ — **done.** See "Spells, and the diagnostics that hid them" below.
 3. ~~Status effects~~ — **done.** Shipped together with spell descriptions, since both hang off the same tooltip mechanism. See below.
-4. **Characters / NPCs.** 212 definitions and 314 placed instances across both maps. The largest body of placed content in the game. The vendor role is excluded on evidence — see the note below.
-5. **Traits, perks, factions.** 17, 18, and 48 assets, all registered, all authored, all currently invisible. Small and independent of one another.
-6. **Loot provenance.** `ItemListAsset` and the counted and leveled wrappers. The highest reader value of anything here, because it answers where an item comes from, and the largest modelling job because the structure is a weighted nested graph rather than a flat table.
-7. **Quests and journal text.** First-class assets with authored phases and objectives.
+4. **Connect items to status effects.** The compendium now has far more nodes than edges, and the imbalance is stark: 172 status-effect pages have **zero** inbound edges, so they are reachable only by browsing their index. Meanwhile the item presentation already emits a `status-effect` fact whose `targetId` is null, and the mod already resolves the reference to a real GUID. The slot was built for this link and left empty because status effects were not an entity yet. Filling it needs no new extraction, makes 172 orphan pages reachable, and enriches item pages both ways. Cheapest real connection available.
+5. **Connect spells to status effects.** The same relationship from the harder side. It lives in the polymorphic Odin-serialized effect graph, so it is a slice rather than a field, and it is also what would give the 18 tooltip-less spells their meaning: `Fortify Strength` has no text of its own because its meaning *is* the effect it applies.
+6. **Characters / NPCs.** 212 definitions and 314 placed instances across both maps, the largest body of placed content in the game. Ranked below the connective work deliberately, because it adds another island of nodes to a graph that does not yet join up. The vendor role is excluded on evidence — see the note below.
+7. **Item tags, properly.** Already shipped as browsable pages, but understated: tags feed item effect tooltips, match potion recipe ingredients, and `FactionItemTag` modifiers alter faction standing from equipped gear. The extractor emits only name and description, dropping the only structured subtype payload the game has.
+8. **Traits, perks, factions.** 17, 18, and 48 assets, all registered, all authored, all currently invisible. Small and independent of one another.
+9. **Loot provenance.** `ItemListAsset` and the counted and leveled wrappers. The highest reader value of anything on this list, because it answers where an item comes from, and the largest modelling job because the structure is a weighted nested graph rather than a flat table.
+10. **Quests and journal text.** First-class assets with authored phases and objectives, with runtime progress correctly out of scope.
+11. **Monsters and the rest of the placed world.** Resource nodes, points of interest, and lore markers, each earning a slice only once something links to it.
 
-3. Monsters / enemies — map placement plus `drops` edges to items and detail pages with drop tables.
-4. Quests — `gives`/`requires` edges enabling transitive `available-at` location links.
-5. Resource nodes / gathering points.
-6. Points of interest / lore markers.
-
-Each candidate slice ships data + map-layer integration; some may earn a follow-up presentation-depth slice (e.g. monster pages with item drop tables).
+Each candidate ships data plus its integration, and some earn a follow-up presentation slice. The ordering rule that emerged this session: **a new entity is worth less than an edge to an existing one.** Nodes without edges are a catalogue nobody can navigate.
 
 Any map-supporting entity slice that ships public detail pages must reuse Slice 4's presentation, rich-text, component, and relationship contracts. Marker-only slices can stay map/read-model focused; public pages must not invent route-local link or tooltip systems.
 
