@@ -373,47 +373,56 @@ Item's descriptor-built DDL and the five fixed constants are the same field rath
 
 **Verification evidence:** confirmed a pure refactor against the fixture artifact — 54 tables before and after, none added or removed, no row count changed, identical public node and edge distributions.
 
+### Content coverage against the game, measured 2026-08-02
+
+A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.10.91`, establishing what the game authors versus what the compendium models. Every count below was read from the running game, not inferred.
+
+| game asset type | in memory | in `BuiltLookupTable` | modelled | identity mechanism |
+| --- | --- | --- | --- | --- |
+| `Item.ItemData` | 1273 | 1273 | yes | `lookupAsset` |
+| `LocationAsset` | 48 | 48 | yes | `lookupAsset` |
+| `Item.ItemTag` | 28 | 28 | yes | `lookupAsset` |
+| `StatType` | 21 | **0** | yes | `namedAsset` |
+| `ItemCategory` | 7 | **0** | yes | `namedAsset` |
+| `StatusEffectData` | 172 | 172 | **no** | `lookupAsset` |
+| `SpellData` | 56 | **0** | **no** | `namedAsset` |
+| `Faction` | 48 | 48 | **no** | `lookupAsset` |
+| `PerkAsset` | 18 | 18 | **no** | `lookupAsset` |
+| `TraitType` | 17 | 17 | **no** | `lookupAsset` |
+| `CharacterData` | 212 | 212 | **no** | `lookupAsset` |
+| `NPCRecord` instances | 314 | n/a | **no** | `record` |
+
+**Spells are the same defect that made stat types ship empty, still live.** 56 `SpellData` assets exist and none is registered, so all 286 item references to them fail. The catalogue already publishes 280 items in a `Spells` category whose actual spell definition is unreachable. `namedAsset` solves it exactly as it solved stat types, and `RefResolver` currently hardcodes that mechanism for two types, which is the same hand-maintained-list smell the pipeline registry just removed.
+
+**Everything else missing is already reachable.** Status effects, factions, perks and traits are all registered, so they need no identity work at all, only descriptors, extraction, and presentation. Traits are the asset family behind the master tooltip's `allTraits`, which is why the stat grouping could never classify them and why that grouping was reduced to attribute and skill.
+
+**Quests are first-class.** `Questing/QuestData` is a real ScriptableObject with authored identity, journal text, phases, objectives, and rewards, with runtime progress held separately in `QuestInstance`. Authored quest content is extractable, and only the progress state is out of scope.
+
+**Loot provenance is the largest single gap in reader value.** `ItemListAsset`, `ItemGroup`, and the counted and leveled wrappers describe what drops and what is stocked. Nothing extracts them, so the compendium cannot answer where an item comes from, which is among the most valuable questions a game wiki answers.
+
+**Not entities, deliberately.** `ItemFilter` is a reusable internal predicate, not a taxonomy. Reputation and bounty are runtime state on `FactionInstance`, while only `Faction` itself is authored. `CharacterRace`, `CharacterModule`, and the race-list selector are mostly rendering and AI configuration. `VolumeRecord` is a gameplay ownership volume, unrelated to the location polygons already on the map.
+
+**One published stat is not in the game's model.** `CoreStats`, `CharMajorSkillsDataList`, and the exported master tooltip all define 5 attributes and 15 skills. The compendium extracts 21 authored `StatType` assets and publishes 16 skills. The extra one is `Unarmed`, referenced by no character and absent from every gameplay list. It is authored content so it still ships, and it is now reported as a diagnostic rather than passing silently. Whether an orphaned asset should hold a public route is an open decision.
+
+**Item subtype coverage is complete.** All 17 concrete `ItemData` subclasses have a matching variant descriptor, with no obsolete or unmodelled subtype. The gaps there are field-level: melee omits most authored combat fields, and equipment omits enchantments entirely, which loses enchantment identity and the built-in versus configurable distinction.
+
 ### Slice 8+ — Map-supporting entities (game-specific)
 
 **Status:** planned (ordered after Slice 7 foundation)
 **Spec coverage:** investment-priorities §4.
 
-**Delivers:** the entities that make the map useful. Concrete set is deliberately not pre-enumerated here. Likely candidates for Ardenfall:
+**Delivers:** the entities that make the compendium answer more questions. The candidate set is no longer speculative — see the coverage table above, which was measured against the running game.
 
-- Zone connections / portals: extraction, placement, map markers, and `leads_to` connectivity are delivered. Remaining portal work is presentation depth, not data.
-- Vendors (map placement plus inventory tables linking to items). Not viable in the demo build, which authors no vendor stock — see the ordering note below.
-- Monsters / enemies (with map placement plus detail pages with drop tables once items are richly modelled).
-- NPCs and quests.
-- Resource nodes / gathering points.
-- Points of interest / lore markers.
-
-Each candidate gets its own slice number (8, 9, …). Ordered by extraction confidence, map-marker value, and detail-page value. Firmed-up ordering for the next planning horizon:
+Ordered by reader value against extraction cost, now that registration is known for every candidate:
 
 1. ~~Portal connectivity~~ — **done.** See "Portal connectivity and honest portal names" below.
-2. **Characters / NPCs** — spatial navigation for the largest body of placed content in the game. Probed against the running demo build on 2026-08-02:
+2. **Spells.** 56 authored `SpellData` assets, none registered in the lookup table, behind 280 public item pages that currently cannot show what the spell does. This is the same defect as stat types and the fix is the mechanism that already exists. It is the only remaining case where content we already publish is broken rather than absent, which puts it first. Doing it should also remove `RefResolver`'s hardcoded two-type named-asset branch in favour of a descriptor-driven rule.
+3. **Status effects.** 172 assets, already registered. Referenced by spells, consumables, throwing potions, and perks, so it multiplies the value of both the spell slice and the existing item pages.
+4. **Characters / NPCs.** 212 definitions and 314 placed instances across both maps. The largest body of placed content in the game. The vendor role is excluded on evidence — see the note below.
+5. **Traits, perks, factions.** 17, 18, and 48 assets, all registered, all authored, all currently invisible. Small and independent of one another.
+6. **Loot provenance.** `ItemListAsset` and the counted and leveled wrappers. The highest reader value of anything here, because it answers where an item comes from, and the largest modelling job because the structure is a weighted nested graph rather than a flat table.
+7. **Quests and journal text.** First-class assets with authored phases and objectives.
 
-   | | count | mechanism |
-   | --- | --- | --- |
-   | `Ardenfall.CharacterData` definitions | 212 | all registered in `BuiltLookupTable`, so `lookupAsset` |
-   | `NPCRecord` instances | 314 | master record table, so `record`, exactly as portals |
-   | instances carrying a map id | 314 of 314 | `overworld` and `interior` |
-
-   No new identity mechanism is required, and the placement substrate already handles both halves. At 314 placed instances this is roughly four times the locations and portals combined.
-
-   **The vendor role is dropped from this slice, on evidence.** The previous plan claimed characters would unlock `sold-at` item edges. A merchant's stock comes from exactly two authored fields, read in `MerchantController.FillInventory`: `merchantItemLists` and `merchantAdditionalItems`. Both are empty on every character in the build.
-
-   | field | characters with content | what it actually does |
-   | --- | --- | --- |
-   | `merchantItemLists` | **0** | leveled lists, one of the two stock sources |
-   | `merchantAdditionalItems` | **0** | explicit items, the other stock source |
-   | `merchantCategories` | 1 | **not stock** — a pricing filter, applied in `InventoryTradeUI.CalculateItemValue` so off-speciality goods buy at `merchantUnsupportedBuyMult` |
-   | `merchantGold` | 112 | the till, inherited from a base template |
-
-   The trade plumbing is wired broadly and stocked nowhere: 112 characters carry merchant gold, and not one has anything to sell. The single character with a category filter, `preset_garako-merchant-potionseller`, will price potions favourably when buying them from the player, and offers nothing.
-
-   **How to probe this correctly, because the first attempt got it wrong.** `CharacterData` extends `ParameterizedObject`, which has a `parent` chain, and `Parameter.IsSet` reports only *local* assignment while `Get()` resolves through the chain. Filtering on `IsSet` undercounts: it reported 2 characters with merchant gold where `Get()` reports 112. Always probe with `Get()`, and always include a control — `itemLists` returns non-empty for 133 characters and `additionalItems` for 40, which is what proves a zero elsewhere is real rather than a broken probe.
-
-   There are no `sold-at` edges to derive. Designing a role vocabulary against one example with no stock is the same guessing the vocabulary was removed to avoid, so it waits for a build that actually ships vendors.
 3. Monsters / enemies — map placement plus `drops` edges to items and detail pages with drop tables.
 4. Quests — `gives`/`requires` edges enabling transitive `available-at` location links.
 5. Resource nodes / gathering points.
