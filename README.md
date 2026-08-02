@@ -119,6 +119,7 @@ The production site is static-assets-first: generated pages are prerendered to H
 | Check formatting                  | `bun run format:check`                                           |
 | Generate schema validators        | `bun run codegen:validators`                                     |
 | Run controller tests              | `bun run controller:test`                                        |
+| Run cross-package tests           | `bun test tooling.test.ts artifact-staging.test.ts`              |
 | Build fixture artifact            | `bun run artifact:fixture synthetic fixtures/synthetic/snapshot` |
 | Build release artifact            | `bun run artifact:release snapshots/snapshots/<snapshot-id>`     |
 | Build mod                         | `bun run mod:build`                                              |

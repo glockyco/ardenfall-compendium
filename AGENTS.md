@@ -16,7 +16,7 @@ This repository is the static compendium for the game Ardenfall. The durable rul
 
 - Pipeline: `bun test pipeline/test` · Site: `bun run --cwd site check` and `bun test site/test` · Mod (C#): `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --nologo -v q` · Controller: `bun test controller/test` · Cross-package: `bun test tooling.test.ts artifact-staging.test.ts`.
 - Repo-wide: `bun run typecheck` · `bun run lint` · `bun run format` · `bun run check:fixtures` · `bun run codegen:validators`.
-- `bun run typecheck` compiles the root, `pipeline`, and `controller` projects; the site is typechecked separately by `svelte-check` via `bun run --cwd site check`. Both are required — neither covers the other.
+- `bun run typecheck` checks the root tooling and standalone TypeScript scripts under `scripts/`, `site/scripts/`, and `fixtures/scripts/`, plus the `pipeline` and `controller` projects. The site is typechecked separately by `svelte-check` via `bun run --cwd site check`. Both are required — neither covers the other.
 - Stay on TypeScript 6. TypeScript 7 is released but `svelte-check` peers `^5 || ^6` and `typescript-eslint` peers `<6.1.0`, so adopting it breaks typechecking and linting. Recheck when both publish support.
 - Site dev server: `bun run dev`.
 - Before yielding non-trivial work, run the full gate (the scoped tests above plus `bun run artifact:fixture synthetic fixtures/synthetic/snapshot`, `bun run --cwd site build:fixture`, `bun run --cwd site smoke:prerender`, `bun run format:check`, `bun run lint`, `git diff --check`). Commit through `skill://commit`; never bypass hooks with `--no-verify`.
@@ -31,7 +31,8 @@ This repository is the static compendium for the game Ardenfall. The durable rul
 ## Non-negotiable invariants
 
 - The descriptor at `entities/<id>/entity.json` is the only cross-subsystem source of truth for entity shape. Do not duplicate it in TS, SQL, or C#.
-- Filesystem is the registry. Do not maintain manual indexes, enums, or unions of entity ids.
+- The descriptor filesystem under `entities/<id>/entity.json` is the entity registry for discovery. Do not maintain manual indexes, enums, or unions of descriptor ids.
+- Synthetic fixtures must preserve awkward shapes from live data, including nameless rows and absent references. Do not make fixtures tidier than the game data.
 - The site reads pipeline-emitted SQLite metadata only. It does not parse descriptors directly.
 - No raw Unity / Odin / game-object JSON in snapshots. The mod walks live runtime graphs and emits explicit DTOs.
 - Public presentation and link contracts are generated pipeline data. The site renders typed read models, rich-text nodes, and relationship edges; it does not render raw TMP/HTML or infer durable cross-entity links in route code.

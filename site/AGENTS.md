@@ -5,7 +5,7 @@ SvelteKit static-first site. Generated data is shipped as `static/data.sqlite` p
 ## Hard rules
 
 - Default route architecture is SSR + prerender + no CSR. Generated compendium pages should be static HTML served by Cloudflare Workers Static Assets. Opt into CSR or request-time Worker rendering only with a documented route-level reason.
-- Build-time SQLite access goes through `src/lib/server/read-models.ts`. Route loaders shape emitted JSON once; components receive typed props and must not open SQLite, parse descriptors, parse raw TMP/HTML, or assemble durable cross-entity links.
+- Game text carries TMP markup. A page must never render a raw game string. Read models keep the source column server-side and expose only the translated rich-text document, so pages render typed rich-text nodes.
 - Design tokens live in `src/app.css`. Component styling uses token-backed Tailwind utilities or CSS variables; do not hardcode colours, shadows, or one-off spacing systems.
 - shadcn-svelte components are owned: edit `src/lib/components/ui/*` freely; do not depend on a specific upstream version.
 - Renderer registries (`sections`, etc.) merge typed exported maps at boot. No global `register()` calls.
