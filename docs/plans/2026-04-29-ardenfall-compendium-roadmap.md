@@ -467,9 +467,15 @@ Ordered by measured reader value against cost. The survey at [`2026-08-02-progra
 1. ~~Items to status effects~~ - **done.** 266 `applies` edges.
 2. ~~Items to spells~~ - **done.** 286 `casts` edges. Both directions render, and every one of the 552 item effect facts now resolves.
 3. ~~Stat types to stat types~~ - **done.** Labels that match a published stat are links.
-4. **Items to tags and categories.** `ItemData.tags` and `ItemData.category` are authored references on every item, yet all 28 tag pages and 7 category pages have no inbound edge. The cheapest remaining connection by some distance.
-5. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference.
-6. **Spells to status effects.** The 116 status effects still unreachable are referenced from the Odin-serialised effect graph on `SpellData`, so this one is a slice rather than a field.
+4. ~~Items to categories and tags~~ - **done.** 1,268 `categorised_as` and 76 `tagged` edges. Item pages name both, and the tag and category pages were left alone because their existing tables already say it.
+
+**That exhausts the field-shaped edges**, and the remaining orphans are not spread evenly. Items are 1,273 of the 1,455, and nothing in the game points at an item except loot tables, recipes, merchants, and quests, none of which are modelled. `PotionRecipe` is partly extracted already but amounts to one recipe and four potions live.
+
+So the next connective work is no longer a field, it is an entity:
+
+5. **Loot provenance.** `ItemListAsset` with its counted and leveled wrappers. This was ranked last on cost grounds when the list was written, and the survey inverted that: it is the only remaining route to making 1,273 item pages reachable, and it answers the question a reader most often has. Still the largest modelling job here, because the structure is a weighted nested graph rather than a flat table.
+6. **Spells to status effects.** The 116 unreachable status effects are referenced from the Odin-serialised effect graph on `SpellData`. A slice rather than a field.
+7. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference, but the extractor does not currently emit it, so it needs mod work first.
 
 **Search.** No site search exists and no FTS table ships. Pagefind runs after prerender and needs no extraction work. Until it exists, crawlers are the only discovery path, which is also why the missing sitemap and meta descriptions matter.
 

@@ -26,15 +26,23 @@ Five parallel surveys of the whole project: code health, site quality, content c
 | portal | 33 | 29 |
 | stat-type | 21 | 20 |
 
-1,480 of 1,640 public pages still have no inbound edge, down from 1,591. The graph now carries 1,911 edges: `variant_of` 1273, `casts` 286, `applies` 266, `scales_with` 56, `leads_to` 30.
+1,455 of 1,640 public pages still have no inbound edge, down from 1,591. The graph carries 3,255 edges: `variant_of` 1273, `categorised_as` 1268, `casts` 286, `applies` 266, `tagged` 76, `scales_with` 56, `leads_to` 30.
 
-Items now link to the status effects they apply and the spells they carry, and both directions render. The two slices resolved every one of the 552 item effect facts and took unresolved-target diagnostics to zero. Stat pages link the stats they affect where the label matches a published stat.
+Items now link to the status effects they apply, the spells they carry, their category, and their tags. Every one of the 552 item effect facts resolves and unresolved-target diagnostics are zero. Stat pages link the stats they affect.
 
-What remains connective and cheap:
+**The field-shaped edges are exhausted, and the remaining orphans are concentrated in one place.**
 
-- **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference.
-- **Spells to status effects.** The remaining 116 unreachable status effects are referenced from the polymorphic Odin-serialised effect graph on `SpellData`, so this is a slice rather than a field.
-- **Items to tags and categories.** `ItemData.tags` and `ItemData.category` are authored references, and all 28 tag pages and 7 category pages currently have no inbound edge despite every item carrying them.
+| entity | orphaned | why |
+| --- | ---: | --- |
+| item | 1273 | nothing in the game points at an item except loot, recipes, merchants, and quests, none of which are modelled |
+| status-effect | 116 | referenced from the Odin-serialised effect graph on `SpellData` |
+| location | 34 | placed content, no authored referent yet |
+| stat-type | 17 | only the four magic skills are referenced, by spells |
+| item-tag | 10 | genuinely unused by any item |
+
+Items are 87% of what is left, and no cheap reference reaches them. The candidates that do are all new entities: `ItemListAsset` and its counted and leveled wrappers, `PotionRecipe`, `CharacterData` merchant inventories, and quest rewards. `PotionRecipe` is already partly extracted, but live it is one recipe pointing at four potions, so it is not worth a slice by itself.
+
+That reorders what comes next. **Loot provenance stops being the largest modelling job on the list and becomes the only remaining way to make the largest page type reachable at all.**
 
 ## Currently shipping, reader-visible
 
