@@ -23,14 +23,34 @@ describe("item subtype descriptors", () => {
 
     db.exec(buildDDL(itemEntity, itemVariants));
 
-    expect(
-      db.query("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'item_basic'").get(),
-    ).toBeTruthy();
-    expect(
-      db
-        .query("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'item_currency'")
-        .get(),
-    ).toBeTruthy();
+    // A variant with no fields of its own still earns a table, keyed back to the
+    // root: that is what makes the marker addressable.
+    for (const marker of ["item_basic", "item_currency"]) {
+      const columns = db
+        .query<{ name: string; type: string }, []>(`PRAGMA table_info("${marker}")`)
+        .all();
+      expect(columns.map((c) => c.name)).toEqual(["id"]);
+    }
+
+    // A variant table carries exactly its own fields, typed from the descriptor.
+    // Asserting only that the table exists would pass on an empty table, on
+    // leaked parent columns, and on every column silently typed TEXT.
+    const arrowColumns = db
+      .query<{ name: string; type: string }, []>(`PRAGMA table_info("item_arrows")`)
+      .all()
+      .map((c) => [c.name, c.type] as const);
+    expect(arrowColumns).toEqual([
+      ["id", "TEXT"],
+      ["damage", "REAL"],
+      ["spawnVisualOnHitStatic", "INTEGER"],
+      ["spawnVisualOnHitCharacter", "INTEGER"],
+      ["respawnItemPickupChance", "REAL"],
+      ["addItemToInventoryChance", "REAL"],
+      ["projectileSettingsJson", "TEXT"],
+      ["projectileRef", "TEXT"],
+    ]);
+    // Parent fields belong to the parent table, not copied down.
+    expect(arrowColumns.map(([name]) => name)).not.toContain("variant");
   });
 
   test("describes every non-equipment subtype found in live diagnostics", async () => {

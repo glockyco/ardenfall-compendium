@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
-import { mkdirSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -9,7 +9,7 @@ const richText = JSON.stringify({ schemaVersion: 1, sourceHash: "", nodes: [], d
 describe("item-tag read-model accessors", () => {
   it("lists tag routes, resolves presentations, and lists tagged items", async () => {
     const originalCwd = process.cwd();
-    const root = join(tmpdir(), `ardenfall-site-tag-models-${process.pid}-${Date.now()}`);
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-site-tag-models-"));
     mkdirSync(join(root, "static"), { recursive: true });
     const db = new Database(join(root, "static", "data.sqlite"));
     db.exec(`

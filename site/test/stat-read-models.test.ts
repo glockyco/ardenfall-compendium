@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
-import { mkdirSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -9,7 +9,7 @@ const iconHash = "c".repeat(64);
 describe("stat read-model accessors", () => {
   it("lists stat routes and resolves presentation rows by canonical slug", async () => {
     const originalCwd = process.cwd();
-    const root = join(tmpdir(), `ardenfall-site-stat-models-${process.pid}-${Date.now()}`);
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-site-stat-models-"));
     mkdirSync(join(root, "static"), { recursive: true });
     const db = new Database(join(root, "static", "data.sqlite"));
     db.exec(`
@@ -96,7 +96,7 @@ describe("stat read-model accessors", () => {
 
   it("fails on malformed generated color JSON", async () => {
     const originalCwd = process.cwd();
-    const root = join(tmpdir(), `ardenfall-site-stat-color-${process.pid}-${Date.now()}`);
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-site-stat-color-"));
     mkdirSync(join(root, "static"), { recursive: true });
     const db = new Database(join(root, "static", "data.sqlite"));
     db.exec(`

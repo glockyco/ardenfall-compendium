@@ -41,6 +41,89 @@ describe("translateRichTextV1", () => {
     );
   });
 
+  it("preserves nested formatting as a nested node tree", () => {
+    const rich = translateRichTextV1("<b>bold <i>and italic</i></b>");
+
+    expect(rich.nodes).toEqual([
+      {
+        type: "strong",
+        children: [
+          { type: "text", text: "bold " },
+          { type: "emphasis", children: [{ type: "text", text: "and italic" }] },
+        ],
+      },
+    ]);
+    expect(rich.diagnostics).toEqual([]);
+  });
+
+  it("recovers unterminated tags by preserving the opening tag and parsed children", () => {
+    const rich = translateRichTextV1("Before <b>unfinished");
+
+    expect(rich.nodes).toEqual([
+      { type: "text", text: "Before <b>" },
+      { type: "text", text: "unfinished" },
+    ]);
+    expect(rich.diagnostics).toEqual([
+      {
+        severity: "diagnostic",
+        code: "unclosedRichTextTag",
+        field: "richText",
+        message: "Rich text tag 'strong' was not closed.",
+      },
+    ]);
+  });
+
+  it("keeps an unmatched opening tag as text and retains the inner emphasis for crossed tags", () => {
+    const rich = translateRichTextV1("<b><i>crossed</b></i>");
+
+    // Crossed recovery is lossy: the unmatched <b> is emitted as literal text,
+    // while </b> remains literal text inside the recovered emphasis node.
+    expect(rich.nodes).toEqual([
+      { type: "text", text: "<b>" },
+      {
+        type: "emphasis",
+        children: [{ type: "text", text: "crossed</b>" }],
+      },
+    ]);
+    expect(rich.diagnostics).toEqual([
+      {
+        severity: "diagnostic",
+        code: "mismatchedRichTextTag",
+        field: "richText",
+        message: "Unexpected rich text closing tag '</b>'.",
+      },
+      {
+        severity: "diagnostic",
+        code: "unclosedRichTextTag",
+        field: "richText",
+        message: "Rich text tag 'strong' was not closed.",
+      },
+    ]);
+  });
+
+  it("preserves HTML-significant text characters without escaping or dropping them", () => {
+    const rich = translateRichTextV1("5 < 6 & 7 > 3");
+
+    expect(rich.nodes).toEqual([{ type: "text", text: "5 < 6 & 7 > 3" }]);
+    expect(rich.diagnostics).toEqual([
+      {
+        severity: "diagnostic",
+        code: "unsupportedRichTextTag",
+        field: "richText",
+        message: "Unsupported rich text tag '< 6 & 7 >'.",
+      },
+    ]);
+  });
+
+  it("translates empty and whitespace-only input into text nodes without diagnostics", () => {
+    expect(translateRichTextV1("").nodes).toEqual([]);
+    expect(translateRichTextV1("").diagnostics).toEqual([]);
+
+    const whitespace = translateRichTextV1(" \t  ");
+    expect(whitespace.nodes).toEqual([{ type: "text", text: " \t  " }]);
+    expect(whitespace.diagnostics).toEqual([]);
+  });
+
   it("translates tooltip links to term links", () => {
     const rich = translateRichTextV1('<link="tooltip_stamina">Stamina</link>');
 
