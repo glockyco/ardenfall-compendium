@@ -31,8 +31,8 @@ export interface ControllerClient {
     args: Record<string, unknown>,
     options?: ControllerCallOptions,
   ): Promise<CommandAccepted>;
-  jobStatus(jobId: string): Promise<JobPollResult>;
-  cancelJob(jobId: string): Promise<JobCancelResult>;
+  jobStatus(jobId: string, options?: ControllerCallOptions): Promise<JobPollResult>;
+  cancelJob(jobId: string, options?: ControllerCallOptions): Promise<JobCancelResult>;
   close(): Promise<void>;
 }
 
@@ -54,6 +54,7 @@ export interface ExportOptions {
   waitForWorldTimeoutMs?: number;
   connectTimeoutMs?: number;
   finalizeTimeoutMs?: number;
+  jobTimeoutMs?: number;
 }
 
 export interface ExportResult {
@@ -71,22 +72,49 @@ const REQUIRED_COMMANDS = new Map<string, "sync" | "job">([
   ["game.quit", "sync"],
 ]);
 
-const DEFAULT_CONNECT_TIMEOUT_MS = 300_000;
-const DEFAULT_FINALIZE_TIMEOUT_MS = 300_000;
+export const CONTROLLER_TIMEOUTS = {
+  // A local HotRepl handshake should be available quickly; retries cannot hide a dead port.
+  connectMs: 30_000,
+  // Command metadata is in-memory and should not take as long as an export operation.
+  commandCatalogMs: 10_000,
+  // Ordinary control commands perform bounded validation and state changes, not asset writes.
+  commandMs: 30_000,
+  // Starting an export batch queues work and should return promptly before polling it.
+  batchStartMs: 30_000,
+  // One job-status request may include a short SDK poll; the orchestrator owns the total limit.
+  jobPollMs: 5_000,
+  // A batch can traverse many Unity objects, but a stuck job must fail within five minutes.
+  jobMs: 300_000,
+  // Finalization writes and hashes the complete snapshot, so it is intentionally generous.
+  finalizeMs: 300_000,
+  // Loading the world can involve scene/menu transitions and is bounded to one minute.
+  waitForWorldMs: 60_000,
+  // Retry pacing avoids a busy loop while waiting for the game to expose its socket.
+  retryIntervalMs: 1_000,
+} as const;
+
+/**
+ * The Unity product name the mod must report from `compendium.preflight`.
+ *
+ * Deliberately hardcoded rather than configurable: its whole purpose is to fail
+ * loudly when the controller has attached to a different HotRepl-instrumented
+ * game, which happens when two of them claim the same port.
+ */
 const EXPECTED_PRODUCT_NAME = "Ardenfall Demo 2025";
 
 export async function exportCompendium(options: ExportOptions): Promise<ExportResult> {
   const log = options.log ?? (() => undefined);
   const outputBaseDir = toRuntimePath(resolve(options.outputBaseDir));
+  const connectTimeoutMs = options.connectTimeoutMs ?? CONTROLLER_TIMEOUTS.connectMs;
   await options.client.connect({
-    timeoutMs: options.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS,
+    timeoutMs: connectTimeoutMs,
   });
   log({ phase: "connect", status: "completed" });
 
   const shouldWaitForWorld = options.waitForWorld === true;
-  assertRequiredCommands(
+  const availableCommands = assertRequiredCommands(
     await options.client.describeCommands({
-      timeoutMs: options.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS,
+      timeoutMs: options.connectTimeoutMs ?? CONTROLLER_TIMEOUTS.commandCatalogMs,
     }),
     options.noQuit === true,
     shouldWaitForWorld,
@@ -96,37 +124,59 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
     await waitForWorld(
       {
         call: async (name, args) => {
-          const result = await options.client.call(name, args);
+          const result = await options.client.call(name, args, {
+            timeoutMs: CONTROLLER_TIMEOUTS.commandMs,
+          });
           if (name === "compendium.preflight") assertExpectedProductName(result.output);
           return result;
         },
       },
-      { timeoutMs: options.waitForWorldTimeoutMs ?? 60_000 },
+      { timeoutMs: options.waitForWorldTimeoutMs ?? CONTROLLER_TIMEOUTS.waitForWorldMs },
     );
     log({ phase: "waitForWorld", status: "completed" });
   } else {
-    const preflight = await options.client.call("compendium.preflight", {});
+    const preflight = await options.client.call(
+      "compendium.preflight",
+      {},
+      { timeoutMs: CONTROLLER_TIMEOUTS.commandMs },
+    );
     assertExpectedProductName(preflight.output);
     if (preflight.output.ready !== true) throw new Error(formatPreflightFailure(preflight.output));
   }
   log({ phase: "preflight", status: "completed" });
 
-  const begin = await options.client.call("run.begin", { outputBaseDir });
+  const begin = await options.client.call(
+    "run.begin",
+    { outputBaseDir },
+    { timeoutMs: CONTROLLER_TIMEOUTS.commandMs },
+  );
   const runId = requireString(begin.output.runId, "run.begin output.runId");
   log({ phase: "run", status: "begun", runId });
 
+  let succeeded = false;
+  let activeJobId: string | undefined;
   try {
-    const plan = await options.client.call("entity.plan", { runId, entity: "item" });
+    const plan = await options.client.call(
+      "entity.plan",
+      { runId, entity: "item" },
+      { timeoutMs: CONTROLLER_TIMEOUTS.commandMs },
+    );
     const total = requireNumber(plan.output.total, "entity.plan output.total");
     const batchSize = requireNumber(plan.output.batchSize, "entity.plan output.batchSize");
     for (let offset = 0; offset < total; offset += batchSize) {
-      const accepted = await options.client.startJob("entity.exportBatch", {
-        runId,
-        entity: "item",
-        offset,
-        limit: batchSize,
-      });
-      await waitForJob(options.client, accepted.jobId);
+      const accepted = await options.client.startJob(
+        "entity.exportBatch",
+        {
+          runId,
+          entity: "item",
+          offset,
+          limit: batchSize,
+        },
+        { timeoutMs: CONTROLLER_TIMEOUTS.batchStartMs },
+      );
+      activeJobId = accepted.jobId;
+      await waitForJob(options.client, accepted.jobId, options.jobTimeoutMs);
+      activeJobId = undefined;
       log({ phase: "entity.exportBatch", status: "completed", runId, offset });
     }
 
@@ -135,7 +185,7 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
     const finalized = await options.client.call(
       "run.finalize",
       { runId },
-      { timeoutMs: options.finalizeTimeoutMs ?? DEFAULT_FINALIZE_TIMEOUT_MS },
+      { timeoutMs: options.finalizeTimeoutMs ?? CONTROLLER_TIMEOUTS.finalizeMs },
     );
 
     const publishedDir = normalizeControllerPath(
@@ -163,8 +213,11 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
       pipelineOutDir: options.pipelineOutDir,
     });
 
+    succeeded = true;
     return { runId, publishedDir };
   } finally {
+    if (!succeeded)
+      await cleanupFailedRun(options.client, runId, activeJobId, availableCommands, log);
     if (options.noQuit !== true) await quitGame(options.client, log);
   }
 }
@@ -173,7 +226,7 @@ function assertRequiredCommands(
   commands: ControlCommandDescriptor[],
   noQuit: boolean,
   waitForWorld: boolean,
-): void {
+): Set<string> {
   const byName = new Map(commands.map((command) => [command.name, command]));
   for (const [name, kind] of REQUIRED_COMMANDS) {
     if (noQuit && name === "game.quit") continue;
@@ -185,6 +238,62 @@ function assertRequiredCommands(
     if (command.kind !== kind)
       throw new Error(`Unsupported ${name} kind ${command.kind}; expected ${kind}`);
   }
+  return new Set(byName.keys());
+}
+
+async function cleanupFailedRun(
+  client: ControllerClient,
+  runId: string,
+  activeJobId: string | undefined,
+  availableCommands: Set<string>,
+  log: (event: ExportEvent) => void,
+): Promise<void> {
+  if (activeJobId !== undefined) {
+    log({ phase: "entity.exportBatch", status: "cancelling", jobId: activeJobId, runId });
+    try {
+      const result = await client.cancelJob(activeJobId, {
+        timeoutMs: CONTROLLER_TIMEOUTS.commandMs,
+      });
+      log({
+        phase: "entity.exportBatch",
+        status: result.accepted ? "cancelled" : "cancel-rejected",
+        jobId: activeJobId,
+        runId,
+        state: result.state,
+      });
+    } catch (error) {
+      log({
+        phase: "entity.exportBatch",
+        status: "cancel-failed",
+        jobId: activeJobId,
+        runId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  if (!availableCommands.has("run.discard")) {
+    log({
+      phase: "run.discard",
+      status: "unavailable",
+      runId,
+      error: "HotRepl peer does not expose run.discard; run state could not be discarded.",
+    });
+    return;
+  }
+
+  log({ phase: "run.discard", status: "started", runId });
+  try {
+    await client.call("run.discard", { runId }, { timeoutMs: CONTROLLER_TIMEOUTS.commandMs });
+    log({ phase: "run.discard", status: "completed", runId });
+  } catch (error) {
+    log({
+      phase: "run.discard",
+      status: "failed",
+      runId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 async function quitGame(
@@ -192,7 +301,7 @@ async function quitGame(
   log: (event: ExportEvent) => void,
 ): Promise<void> {
   try {
-    await client.call("game.quit", {});
+    await client.call("game.quit", {}, { timeoutMs: CONTROLLER_TIMEOUTS.commandMs });
     log({ phase: "game.quit", status: "completed" });
   } catch (error) {
     log({
@@ -203,13 +312,21 @@ async function quitGame(
   }
 }
 
-async function waitForJob(client: ControllerClient, jobId: string): Promise<CommandResult> {
+async function waitForJob(
+  client: ControllerClient,
+  jobId: string,
+  timeoutMs: number = CONTROLLER_TIMEOUTS.jobMs,
+): Promise<CommandResult> {
+  const deadline = Date.now() + timeoutMs;
   for (;;) {
-    const status = await client.jobStatus(jobId);
+    if (Date.now() >= deadline) throw new Error(`Timed out waiting for job ${jobId}.`);
+    const status = await client.jobStatus(jobId, { timeoutMs: CONTROLLER_TIMEOUTS.jobPollMs });
     if (isCommandResult(status)) return status;
     if (status.state === "failed" || status.state === "cancelled")
       throw new Error(`Job ${jobId} ended in state ${status.state}`);
-    await Bun.sleep(250);
+    const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) throw new Error(`Timed out waiting for job ${jobId}.`);
+    await Bun.sleep(Math.min(250, remainingMs));
   }
 }
 

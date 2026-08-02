@@ -16,6 +16,7 @@ const artifactRef: ArtifactRef = {
 class FakeRuntimeTransport implements RuntimeTransport {
   readonly requests: RuntimeRequest[] = [];
   closed = false;
+  hangCommandsList = false;
 
   async handshake(): Promise<HandshakeMessage> {
     return {
@@ -47,6 +48,8 @@ class FakeRuntimeTransport implements RuntimeTransport {
 
   async request(request: RuntimeRequest): Promise<ServerMessage> {
     this.requests.push(request);
+    if (request.type === "commands_list" && this.hangCommandsList)
+      return new Promise<ServerMessage>(() => {});
     switch (request.type) {
       case "commands_list":
         return {
@@ -153,6 +156,17 @@ describe("SdkControllerClient", () => {
       { name: "compendium.fail", version: 1, kind: "sync", mutatesState: false },
       { name: "entity.exportBatch", version: 1, kind: "job", mutatesState: true },
     ]);
+  });
+
+  it("honours the timeout for a command catalog request", async () => {
+    const runtime = new FakeRuntimeTransport();
+    runtime.hangCommandsList = true;
+    const client = await testClient(runtime);
+
+    await expect(client.describeCommands({ timeoutMs: 20 })).rejects.toThrow(
+      /HotRepl command catalog timed out after 20 ms/,
+    );
+    await client.close();
   });
 
   it("maps SDK command results and artifact refs to controller results", async () => {

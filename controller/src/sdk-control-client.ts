@@ -20,11 +20,9 @@ import type {
   ControllerClient,
   ControllerConnectOptions,
 } from "./export-orchestrator";
+import { CONTROLLER_TIMEOUTS } from "./export-orchestrator";
 
 type ConnectSession = (options: ConnectOptions) => Promise<Session>;
-
-const DEFAULT_CONNECT_TIMEOUT_MS = 300_000;
-const DEFAULT_RETRY_INTERVAL_MS = 1_000;
 
 export class SdkControllerClient implements ControllerClient {
   private session: Session | undefined;
@@ -36,13 +34,17 @@ export class SdkControllerClient implements ControllerClient {
   ) {}
 
   async connect(options: ControllerConnectOptions = {}): Promise<void> {
-    const timeoutMs = options.timeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS;
-    const retryIntervalMs = options.retryIntervalMs ?? DEFAULT_RETRY_INTERVAL_MS;
+    const timeoutMs = options.timeoutMs ?? CONTROLLER_TIMEOUTS.connectMs;
+    const retryIntervalMs = options.retryIntervalMs ?? CONTROLLER_TIMEOUTS.retryIntervalMs;
     const deadline = Date.now() + timeoutMs;
 
     for (;;) {
       try {
-        this.session = await this.connectSession({ url: this.url });
+        this.session = await withTimeout(
+          this.connectSession({ url: this.url }),
+          Math.max(1, deadline - Date.now()),
+          "HotRepl connection",
+        );
         return;
       } catch (error) {
         if (Date.now() >= deadline) throw wrapError(error);
@@ -51,9 +53,13 @@ export class SdkControllerClient implements ControllerClient {
     }
   }
 
-  async describeCommands(): Promise<ControlCommandDescriptor[]> {
+  async describeCommands(options: ControllerCallOptions = {}): Promise<ControlCommandDescriptor[]> {
     try {
-      const commands = await this.requireSession().listCommands();
+      const commands = await withTimeout(
+        this.requireSession().listCommands(),
+        options.timeoutMs ?? CONTROLLER_TIMEOUTS.commandCatalogMs,
+        "HotRepl command catalog",
+      );
       return commands.map((command) => ({
         name: command.name,
         version: command.majorVersion,
@@ -71,9 +77,12 @@ export class SdkControllerClient implements ControllerClient {
     options: ControllerCallOptions = {},
   ): Promise<CommandResult> {
     try {
-      const result = await this.requireSession().run<Record<string, unknown>>(name, args, {
-        ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
-      });
+      const timeoutMs = options.timeoutMs ?? CONTROLLER_TIMEOUTS.commandMs;
+      const result = await withTimeout(
+        this.requireSession().run<Record<string, unknown>>(name, args, { timeoutMs }),
+        timeoutMs,
+        `HotRepl command '${name}'`,
+      );
       return toCommandResult(result);
     } catch (error) {
       throw wrapError(error);
@@ -86,10 +95,15 @@ export class SdkControllerClient implements ControllerClient {
     options: ControllerCallOptions = {},
   ): Promise<CommandAccepted> {
     try {
-      const handle = await this.requireSession().run<Record<string, unknown>>(name, args, {
-        wait: false,
-        ...(options.timeoutMs === undefined ? {} : { timeoutMs: options.timeoutMs }),
-      });
+      const timeoutMs = options.timeoutMs ?? CONTROLLER_TIMEOUTS.batchStartMs;
+      const handle = await withTimeout(
+        this.requireSession().run<Record<string, unknown>>(name, args, {
+          wait: false,
+          timeoutMs,
+        }),
+        timeoutMs,
+        `HotRepl job '${name}' start`,
+      );
       this.jobs.set(handle.jobId, handle);
       return { jobId: handle.jobId, state: "running" };
     } catch (error) {
@@ -97,30 +111,38 @@ export class SdkControllerClient implements ControllerClient {
     }
   }
 
-  async jobStatus(jobId: string): Promise<JobPollResult> {
+  async jobStatus(jobId: string, options: ControllerCallOptions = {}): Promise<JobPollResult> {
     const handle = this.jobs.get(jobId);
     if (!handle) throw unknownJobError(jobId);
 
     try {
-      const result = await handle.result<Record<string, unknown>>();
+      const result = await withTimeout(
+        handle.result<Record<string, unknown>>(),
+        options.timeoutMs ?? CONTROLLER_TIMEOUTS.jobPollMs,
+        `HotRepl job '${jobId}' status`,
+      );
       this.jobs.delete(jobId);
       return toCommandResult(result);
     } catch (error) {
-      this.jobs.delete(jobId);
+      if (!(error instanceof OperationTimeoutError)) this.jobs.delete(jobId);
       throw wrapError(error);
     }
   }
 
-  async cancelJob(jobId: string): Promise<JobCancelResult> {
+  async cancelJob(jobId: string, options: ControllerCallOptions = {}): Promise<JobCancelResult> {
     const handle = this.jobs.get(jobId);
     if (!handle) return { accepted: false, state: "unknown" };
 
     try {
-      const result = await handle.cancel();
+      const result = await withTimeout(
+        handle.cancel(),
+        options.timeoutMs ?? CONTROLLER_TIMEOUTS.commandMs,
+        `HotRepl job '${jobId}' cancellation`,
+      );
       this.jobs.delete(jobId);
       return { accepted: result.accepted, state: result.state };
     } catch (error) {
-      this.jobs.delete(jobId);
+      if (!(error instanceof OperationTimeoutError)) this.jobs.delete(jobId);
       throw wrapError(error);
     }
   }
@@ -139,6 +161,29 @@ export class SdkControllerClient implements ControllerClient {
       message: "HotRepl controller client is not connected.",
       retryable: false,
     });
+  }
+}
+
+function withTimeout<T>(operation: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new OperationTimeoutError(label, timeoutMs)), timeoutMs);
+    operation.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
+class OperationTimeoutError extends Error {
+  constructor(label: string, timeoutMs: number) {
+    super(`${label} timed out after ${timeoutMs} ms.`);
+    this.name = "OperationTimeoutError";
   }
 }
 

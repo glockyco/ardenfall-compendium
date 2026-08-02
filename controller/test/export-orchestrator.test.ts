@@ -29,6 +29,7 @@ class FakeClient implements ControllerClient {
     command("entity.plan"),
     command("entity.exportBatch", "job", true),
     command("run.finalize", "sync", true),
+    command("run.discard", "sync", true),
     command("game.quit", "sync", true),
   ];
   preflightResult: Record<string, unknown> = {
@@ -40,6 +41,8 @@ class FakeClient implements ControllerClient {
   publishedDir = "/tmp/snapshot";
 
   finalizeError: Error | null = null;
+  jobNeverCompletes = false;
+  cancelledJobs: string[] = [];
   async connect() {}
   async describeCommands(options?: Record<string, unknown>) {
     this.describeOptions = options;
@@ -79,6 +82,12 @@ class FakeClient implements ControllerClient {
         output: {},
         artifacts: {},
       };
+    if (name === "run.discard")
+      return {
+        status: "ok",
+        output: { runId: "run-1", discarded: true },
+        artifacts: {},
+      };
     if (name === "run.finalize") {
       if (this.finalizeError) throw this.finalizeError;
       return {
@@ -99,9 +108,11 @@ class FakeClient implements ControllerClient {
   }
   async jobStatus(jobId: string) {
     this.jobPolls.push(jobId);
+    if (this.jobNeverCompletes) return { jobId, state: "running" as const };
     return { status: "ok", output: { jobId }, artifacts: {} };
   }
-  async cancelJob() {
+  async cancelJob(jobId: string) {
+    this.cancelledJobs.push(jobId);
     return { accepted: true, state: "cancelling" };
   }
   async close() {}
@@ -157,6 +168,24 @@ describe("exportCompendium", () => {
     );
   });
 
+  it("fails a job that never completes and cancels the outstanding job", async () => {
+    const client = new FakeClient();
+    client.jobNeverCompletes = true;
+
+    await expect(
+      exportCompendium({
+        client,
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+        jobTimeoutMs: 10,
+        validate: async () => ({ itemCount: 150 }),
+        runPipeline: async () => undefined,
+      }),
+    ).rejects.toThrow(/Timed out waiting for job job-1/);
+
+    expect(client.cancelledJobs).toEqual(["job-1"]);
+  });
+
   it("calls game.quit after a successful export", async () => {
     const client = new FakeClient();
 
@@ -185,7 +214,14 @@ describe("exportCompendium", () => {
       }),
     ).rejects.toThrow("finalize failed");
 
-    expect(client.calls.map((call) => call.name).at(-1)).toBe("game.quit");
+    expect(client.calls.map((call) => call.name)).toEqual([
+      "compendium.preflight",
+      "run.begin",
+      "entity.plan",
+      "run.finalize",
+      "run.discard",
+      "game.quit",
+    ]);
   });
 
   it("allows asset-heavy finalization to run longer than ordinary commands", async () => {
