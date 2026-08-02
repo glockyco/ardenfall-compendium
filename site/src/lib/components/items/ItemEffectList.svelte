@@ -1,9 +1,25 @@
 <script lang="ts">
   import RichText from "$lib/components/content/RichText.svelte";
-  import type { ItemPresentationEffect, RichTextDocument } from "$lib/server/read-models";
+  import type {
+    ItemPresentationDiagnostic,
+    ItemPresentationEffect,
+    RichTextDocument,
+  } from "$lib/server/read-models";
+  import { itemDiagnosticMessage } from "./itemDiagnostic";
 
-  let { effects, source }: { effects: ItemPresentationEffect[]; source: RichTextDocument } =
-    $props();
+  let {
+    effects,
+    source,
+    diagnostics,
+  }: {
+    effects: ItemPresentationEffect[];
+    source: RichTextDocument;
+    diagnostics: ItemPresentationDiagnostic[];
+  } = $props();
+
+  const unresolvedEffectDiagnostic = $derived(
+    diagnostics.find((diagnostic) => diagnostic.code === "unresolvedEffectTarget"),
+  );
 </script>
 
 {#if source.nodes.length > 0 || effects.length > 0}
@@ -18,6 +34,17 @@
           <li>
             <span class="font-medium">{effect.label}</span>
             <span class="text-muted-foreground">{effect.kind}</span>
+            {#if effect.targetId === null}
+              <span class="text-muted-foreground block text-xs">
+                No link available.
+                {#if unresolvedEffectDiagnostic}
+                  {itemDiagnosticMessage(unresolvedEffectDiagnostic)}
+                {:else}
+                  This effect names a status effect that this snapshot does not publish as its own
+                  page.
+                {/if}
+              </span>
+            {/if}
           </li>
         {/each}
       </ul>

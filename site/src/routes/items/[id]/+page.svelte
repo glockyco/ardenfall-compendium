@@ -1,5 +1,6 @@
 <script lang="ts">
   import ItemHeader from "$lib/components/items/ItemHeader.svelte";
+  import { itemNameForDisplay } from "$lib/components/items/itemName";
   import ItemPresentationPanel from "$lib/components/items/ItemPresentationPanel.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
@@ -9,7 +10,7 @@
 </script>
 
 <svelte:head>
-  <title>{item.name ?? "Item"} | Ardenfall Compendium</title>
+  <title>{itemNameForDisplay(item.name)} | Ardenfall Compendium</title>
 </svelte:head>
 
 <a class="text-sm underline" href={data.itemRoute}>← back to items</a>

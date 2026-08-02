@@ -28,13 +28,15 @@
 </script>
 
 <table class="w-full text-left text-sm">
-  <thead class="bg-muted text-muted-foreground">
-    <tr>
-      {#each columns as col (col.id)}
-        <th scope="col" class="p-2">{col.label}</th>
-      {/each}
-    </tr>
-  </thead>
+  {#if rows.length > 0}
+    <thead class="bg-muted text-muted-foreground">
+      <tr>
+        {#each columns as col (col.id)}
+          <th scope="col" class="p-2">{col.label}</th>
+        {/each}
+      </tr>
+    </thead>
+  {/if}
   <tbody>
     {#each rows as row (row.id)}
       <tr class="border-border hover:bg-muted/40 border-b">
@@ -64,5 +66,7 @@
 </table>
 
 {#if rows.length === 0}
-  <p class="text-muted-foreground p-4">No rows.</p>
+  <p class="text-muted-foreground p-4">
+    No matching rows. Adjust the query or filters to see results.
+  </p>
 {/if}

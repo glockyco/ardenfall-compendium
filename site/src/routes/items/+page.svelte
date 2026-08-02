@@ -10,12 +10,6 @@
 </svelte:head>
 
 <h1 class="text-2xl font-bold">{data.label}</h1>
-<p class="text-muted-foreground mt-2">{data.rows.length} {data.label.toLowerCase()}</p>
 <div class="mt-4">
-  <ItemOverviewFilters
-    rows={data.rows}
-    columns={data.columns}
-    categories={data.categories}
-    filters={data.filters}
-  />
+  <ItemOverviewFilters rows={data.rows} columns={data.columns} filters={data.filters} />
 </div>

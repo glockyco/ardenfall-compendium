@@ -318,7 +318,7 @@
             "severity": "diagnostic",
             "code": "unresolvedEffectTarget",
             "field": "presentation.effects",
-            "message": "Status effect target is not public in Slice 4."
+            "message": "Effect 'Status effects' does not have a resolved status-effect target."
           }
         ]
       }
@@ -572,7 +572,7 @@
             "severity": "diagnostic",
             "code": "unresolvedEffectTarget",
             "field": "presentation.effects",
-            "message": "Burning status target is not public in Slice 4."
+            "message": "Effect 'Burning' does not have a resolved status-effect target."
           }
         ]
       }
