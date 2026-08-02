@@ -1,11 +1,22 @@
 import { describe, expect, it } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { emitSqlite } from "$pipeline/stages/emit-sqlite";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { loadSnapshot } from "$pipeline/stages/load-snapshot";
+import type {
+  EntityDescriptor,
+  ItemPresentationSnapshot,
+  MasterTooltipVocabulary,
+  SnapshotDiagnostic,
+  SnapshotDiagnosticArtifactEntry,
+  SnapshotManifest,
+  SnapshotRow,
+  StageContext,
+} from "$pipeline/types";
 import { validate } from "$pipeline/stages/validate";
-import type { StageContext } from "$pipeline/types";
+import type { ValidateInputs } from "$pipeline/stages/validate";
 
 const ctx: StageContext = {
   workspaceRoot: ".",
@@ -13,6 +24,98 @@ const ctx: StageContext = {
   outDir: "pipeline/test/.tmp",
   log: () => undefined,
 };
+
+const testColor = { r: 0, g: 0, b: 0, a: 1 };
+
+const testManifest: SnapshotManifest = {
+  schemaVersion: 1,
+  extractorVersion: "test",
+  extractedAt: "2026-01-01T00:00:00.000Z",
+  source: { kind: "synthetic-fixture", fixtureName: "validation-test" },
+  preflight: { passed: true, completedAt: "2026-01-01T00:00:00.000Z", checks: [] },
+  counts: {},
+  diagnostics: { fatal: 0, diagnostic: 0 },
+  hashes: {},
+};
+
+const testMasterTooltip = (): MasterTooltipVocabulary => ({
+  schemaVersion: 2,
+  tooltipCodes: {},
+  tooltipColors: {},
+  tooltipTargetColor: testColor,
+  tooltipDurationColor: testColor,
+  positiveColor: testColor,
+  negativeColor: testColor,
+  spellSubEffectColor: testColor,
+  enchantmentItemColor: testColor,
+  primarySpellTooltip: "",
+  secondarySpellTooltip: "",
+  unmetSkillMessage: "",
+  brokenDurabilityMessage: "",
+  ruinedDurabilityMessage: "",
+  statBookMessage: "",
+  termSetColors: [],
+  globalTermSets: [],
+  termColorMatch: "",
+  potionRecipeDescription: "",
+  allAttributes: [],
+  allSkills: [],
+  allTraits: [],
+});
+
+const makeEntity = (id: string, fields: EntityDescriptor["fields"]): EntityDescriptor => ({
+  id,
+  kind: "definition",
+  label: { singular: id, plural: `${id}s` },
+  extraction: { source: "record", root: "Test.Record" },
+  fields,
+});
+
+const makeItemPresentation = (): ItemPresentationSnapshot => ({
+  schemaVersion: 1,
+  renderContext: "item-presentation-v1",
+  displayName: "Test item",
+  displayNameSourceMethod: "test",
+  itemType: null,
+  itemTypeSourceMethod: null,
+  descriptionSource: "",
+  effectsSource: "",
+  effects: [],
+  statRows: [],
+  requirements: [],
+  durability: null,
+  stateFacts: [],
+  omissions: [],
+  value: null,
+  weight: null,
+  diagnostics: [],
+});
+
+const makeRow = (
+  fields: Record<string, unknown> = {},
+  extras: { diagnostics?: SnapshotDiagnostic[]; presentation?: ItemPresentationSnapshot } = {},
+): SnapshotRow => ({ id: "row-1", fields, ...extras });
+
+const makeValidationInputs = (
+  entityId: string,
+  row: SnapshotRow,
+  entity?: EntityDescriptor,
+  diagnostics: SnapshotDiagnosticArtifactEntry[] = [],
+): ValidateInputs => ({
+  "load-snapshot": {
+    manifest: testManifest,
+    envelopes: {
+      [entityId]: { entityId, schemaVersion: 1, rows: [row] },
+    },
+    diagnostics,
+    masterTooltip: testMasterTooltip(),
+    finalizeTimings: [],
+  },
+  "load-descriptors": {
+    entities: entity ? { [entityId]: entity } : {},
+    variants: entity ? { [entityId]: [] } : {},
+  },
+});
 
 describe("loadSnapshot", () => {
   it("loads manifest + per-entity envelopes", async () => {
@@ -229,5 +332,194 @@ describe("validate", () => {
     // fatal errors did.
     expect(result.countsBySeverity.fatal).toBe(0);
     expect(result.errors.every((e) => e.code !== "missingFatalField")).toBe(true);
+  });
+
+  it("classifies rows from unknown entities as fatal", async () => {
+    const result = await validate.run(makeValidationInputs("ghost", makeRow()), ctx);
+
+    expect(result.countsBySeverity).toEqual({ fatal: 1, diagnostic: 0 });
+    expect(result.errors).toEqual([
+      expect.objectContaining({ entity: "ghost", code: "unknownEntity" }),
+    ]);
+    expect(result.errors.length).toBe(
+      result.countsBySeverity.fatal + result.countsBySeverity.diagnostic,
+    );
+  });
+
+  it("classifies a missing fatal-policy field as fatal", async () => {
+    const entity = makeEntity("test", [
+      { name: "requiredField", type: "string", from: "test.required", missingPolicy: "fatal" },
+    ]);
+    const result = await validate.run(makeValidationInputs(entity.id, makeRow(), entity), ctx);
+
+    expect(result.countsBySeverity).toEqual({ fatal: 1, diagnostic: 0 });
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({ code: "missingFatalField", field: "requiredField" }),
+    );
+    expect(result.errors.length).toBe(1);
+  });
+
+  it("classifies a missing diagnostic-policy field as diagnostic without becoming fatal", async () => {
+    const entity = makeEntity("test", [
+      {
+        name: "notableField",
+        type: "string",
+        from: "test.notable",
+        missingPolicy: "diagnostic",
+      },
+    ]);
+    const result = await validate.run(makeValidationInputs(entity.id, makeRow(), entity), ctx);
+
+    expect(result.countsBySeverity).toEqual({ fatal: 0, diagnostic: 1 });
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({ code: "missingDiagnosticField", field: "notableField" }),
+    );
+    expect(result.errors.length).toBe(
+      result.countsBySeverity.fatal + result.countsBySeverity.diagnostic,
+    );
+  });
+
+  it("counts row diagnostics by each diagnostic severity", async () => {
+    const entity = makeEntity("test", []);
+    const result = await validate.run(
+      makeValidationInputs(
+        entity.id,
+        makeRow(
+          {},
+          {
+            diagnostics: [
+              { severity: "fatal", code: "rowFatal", field: "ref", message: "fatal row issue" },
+              {
+                severity: "diagnostic",
+                code: "rowDiagnostic",
+                field: "name",
+                message: "diagnostic row issue",
+              },
+            ],
+          },
+        ),
+        entity,
+      ),
+      ctx,
+    );
+
+    expect(result.countsBySeverity).toEqual({ fatal: 1, diagnostic: 1 });
+    expect(result.errors).toEqual([
+      expect.objectContaining({ entity: "test", row: "row-1", code: "rowFatal" }),
+      expect.objectContaining({ entity: "test", row: "row-1", code: "rowDiagnostic" }),
+    ]);
+    expect(result.errors.length).toBe(2);
+  });
+
+  it("counts snapshot diagnostics by each diagnostic severity", async () => {
+    const entity = makeEntity("test", []);
+    const result = await validate.run(
+      makeValidationInputs(entity.id, makeRow(), entity, [
+        { rowId: null, severity: "fatal", code: "snapshotFatal", field: "refs" },
+        { rowId: null, severity: "diagnostic", code: "snapshotDiagnostic", field: "refs" },
+      ]),
+      ctx,
+    );
+
+    expect(result.countsBySeverity).toEqual({ fatal: 1, diagnostic: 1 });
+    expect(result.errors).toEqual([
+      expect.objectContaining({ entity: "snapshot", code: "snapshotFatal" }),
+      expect.objectContaining({ entity: "snapshot", code: "snapshotDiagnostic" }),
+    ]);
+    expect(result.errors.length).toBe(
+      result.countsBySeverity.fatal + result.countsBySeverity.diagnostic,
+    );
+  });
+
+  it("classifies an item missing presentation as fatal", async () => {
+    const entity = makeEntity("item", []);
+    const result = await validate.run(makeValidationInputs(entity.id, makeRow(), entity), ctx);
+
+    expect(result.countsBySeverity).toEqual({ fatal: 1, diagnostic: 0 });
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({ code: "missingItemPresentation", field: "presentation" }),
+    );
+  });
+
+  it("classifies an item with an unsupported presentation context as fatal", async () => {
+    const entity = makeEntity("item", []);
+    const presentation = {
+      ...makeItemPresentation(),
+      renderContext: "unsupported-context",
+    } as unknown as ItemPresentationSnapshot;
+    const result = await validate.run(
+      makeValidationInputs(entity.id, makeRow({}, { presentation }), entity),
+      ctx,
+    );
+
+    expect(result.countsBySeverity).toEqual({ fatal: 1, diagnostic: 0 });
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({
+        code: "invalidItemPresentationContext",
+        field: "presentation.renderContext",
+      }),
+    );
+  });
+});
+
+describe("emitSqlite validation gate", () => {
+  it("rejects a fatal snapshot validation before creating SQLite output", async () => {
+    const out = mkdtempSync(join(tmpdir(), "ardenfall-fatal-emission-"));
+    try {
+      const snap = await loadSnapshot.run({}, ctx);
+      const desc = await loadDescriptors.run({}, ctx);
+      const fatalSnapshot = {
+        ...snap,
+        diagnostics: [
+          ...snap.diagnostics,
+          {
+            rowId: null,
+            severity: "fatal" as const,
+            code: "fatalExportDiagnostic",
+            field: "refs",
+            message: "fatal export diagnostic",
+          },
+        ],
+      };
+      const validation = await validate.run(
+        { "load-snapshot": fatalSnapshot, "load-descriptors": desc },
+        ctx,
+      );
+
+      expect(validation.countsBySeverity.fatal).toBeGreaterThan(0);
+      expect(() =>
+        emitSqlite.run(
+          { "load-descriptors": desc, "load-snapshot": fatalSnapshot, validate: validation },
+          { ...ctx, outDir: out },
+        ),
+      ).toThrow(/pipeline rejected snapshot/);
+      expect(existsSync(join(out, "data.sqlite"))).toBe(false);
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
+  });
+
+  it("emits SQLite output when validation has no fatal diagnostics", async () => {
+    const out = mkdtempSync(join(tmpdir(), "ardenfall-clean-emission-"));
+    try {
+      const snap = await loadSnapshot.run({}, ctx);
+      const desc = await loadDescriptors.run({}, ctx);
+      const validation = await validate.run(
+        { "load-snapshot": snap, "load-descriptors": desc },
+        ctx,
+      );
+
+      expect(validation.countsBySeverity.fatal).toBe(0);
+      const emitted = await emitSqlite.run(
+        { "load-descriptors": desc, "load-snapshot": snap, validate: validation },
+        { ...ctx, outDir: out },
+      );
+
+      expect(emitted.outputPath).toBe(join(out, "data.sqlite"));
+      expect(emitted.byteSize).toBeGreaterThan(0);
+      expect(existsSync(emitted.outputPath)).toBe(true);
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
   });
 });
