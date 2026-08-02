@@ -54,7 +54,7 @@ const importModule = <T>(specifier: string) => import(specifier) as Promise<T>;
 const { buildCommandPlan, defaultOptions } = await importModule<{
   buildCommandPlan(options: DecompileOptions): DecompilePlan;
   defaultOptions(options: DecompileOptionsInput): DecompileOptions;
-}>("./scripts/decompile-ardenfall.mjs");
+}>("./scripts/decompile-ardenfall.ts");
 const gitignore = readFileSync(".gitignore", "utf8");
 const lefthook = readFileSync("lefthook.yml", "utf8");
 const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
@@ -72,7 +72,7 @@ const sitePackageJson = JSON.parse(readFileSync("site/package.json", "utf8")) as
 const siteLayout = readFileSync("site/src/routes/+layout.ts", "utf8");
 const siteSvelteConfig = readFileSync("site/svelte.config.js", "utf8");
 const siteWranglerConfig = readFileSync("site/wrangler.toml", "utf8");
-const sitePrerenderSmoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
+const sitePrerenderSmoke = readFileSync("site/scripts/smoke-prerender-output.ts", "utf8");
 const siteAppCss = readFileSync("site/src/app.css", "utf8");
 const siteEntityTable = readFileSync("site/src/lib/components/EntityTable.svelte", "utf8");
 const siteReadModels = readFileSync("site/src/lib/server/read-models.ts", "utf8");
@@ -168,7 +168,7 @@ describe("ci site build tooling", () => {
     expect(ciWorkflow).not.toContain(
       "bun run pipeline:run fixtures/synthetic/snapshot site/static",
     );
-    expect(ciWorkflow).toContain("bun test tooling.test.ts");
+    expect(ciWorkflow).toContain("bun test tooling.test.ts artifact-staging.test.ts");
     expect(ciWorkflow).toContain("site: ${{ steps.filter.outputs.site }}");
     expect(ciWorkflow).toContain("- 'site/**'");
     expect(ciWorkflow).toContain("- 'tooling.test.ts'");
@@ -252,29 +252,29 @@ describe("snapshot provenance", () => {
 
 describe("site deployment tooling", () => {
   it("deploys by staging an explicit artifact before build", () => {
-    expect(sitePackageJson.scripts["stage:artifact"]).toBe("bun run scripts/stage-artifact.mjs");
+    expect(sitePackageJson.scripts["stage:artifact"]).toBe("bun run scripts/stage-artifact.ts");
     expect(sitePackageJson.scripts["build:prepared"]).toBe("vite build");
     expect(sitePackageJson.scripts["build:fixture"]).toBe(
       "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
     );
     expect(sitePackageJson.scripts.build).toBe("bun run build:fixture");
     expect(sitePackageJson.scripts["deploy:production"]).toBe(
-      "bun run scripts/deploy-production.mjs",
+      "bun run scripts/deploy-production.ts",
     );
-    expect(existsSync("site/scripts/stage-artifact.mjs")).toBe(true);
+    expect(existsSync("site/scripts/stage-artifact.ts")).toBe(true);
     expect(sitePrerenderSmoke).toContain("WHERE o.icon_hash IS NOT NULL");
     expect(gitignore).toContain("site/_redirects");
   });
 
   it("stages site builds from explicit artifact directories", () => {
-    expect(sitePackageJson.scripts["stage:artifact"]).toBe("bun run scripts/stage-artifact.mjs");
+    expect(sitePackageJson.scripts["stage:artifact"]).toBe("bun run scripts/stage-artifact.ts");
     expect(sitePackageJson.scripts["build:prepared"]).toBe("vite build");
     expect(sitePackageJson.scripts["build:fixture"]).toBe(
       "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
     );
     expect(sitePackageJson.scripts.build).toBe("bun run build:fixture");
     expect(sitePackageJson.scripts["deploy:production"]).toBe(
-      "bun run scripts/deploy-production.mjs",
+      "bun run scripts/deploy-production.ts",
     );
   });
 
@@ -321,7 +321,7 @@ describe("site deployment tooling", () => {
       );
 
       const { stageArtifact } = await importModule<StageArtifactModule>(
-        "./site/scripts/stage-artifact.mjs",
+        "./site/scripts/stage-artifact.ts",
       );
 
       await expect(
@@ -405,7 +405,7 @@ describe("site deployment tooling", () => {
       );
 
       const { stageArtifact } = await importModule<StageArtifactModule>(
-        "./site/scripts/stage-artifact.mjs",
+        "./site/scripts/stage-artifact.ts",
       );
 
       await expect(
@@ -494,7 +494,7 @@ describe("site deployment tooling", () => {
       );
 
       const { stageArtifact } = await importModule<StageArtifactModule>(
-        "./site/scripts/stage-artifact.mjs",
+        "./site/scripts/stage-artifact.ts",
       );
 
       await stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" });
@@ -577,7 +577,7 @@ describe("site deployment tooling", () => {
       );
 
       const { stageArtifact } = await importModule<StageArtifactModule>(
-        "./site/scripts/stage-artifact.mjs",
+        "./site/scripts/stage-artifact.ts",
       );
 
       await expect(
@@ -652,7 +652,7 @@ describe("site deployment tooling", () => {
       );
 
       const { stageArtifact } = await importModule<StageArtifactModule>(
-        "./site/scripts/stage-artifact.mjs",
+        "./site/scripts/stage-artifact.ts",
       );
 
       await expect(
@@ -738,7 +738,7 @@ describe("site deployment tooling", () => {
       );
 
       const { stageArtifact } = await importModule<StageArtifactModule>(
-        "./site/scripts/stage-artifact.mjs",
+        "./site/scripts/stage-artifact.ts",
       );
 
       await expect(
@@ -750,7 +750,7 @@ describe("site deployment tooling", () => {
   });
 
   it("requires small-entity read-model counts while staging artifacts", () => {
-    const stage = readFileSync("site/scripts/stage-artifact.mjs", "utf8");
+    const stage = readFileSync("site/scripts/stage-artifact.ts", "utf8");
 
     expect(stage).toContain('"itemCategoryOverviewRows"');
     expect(stage).toContain('"item_category_overview_rows"');
@@ -786,7 +786,7 @@ describe("site prerender architecture", () => {
 
   it("has a prerender smoke script wired into the site package", () => {
     expect(sitePackageJson.scripts["smoke:prerender"]).toBe(
-      "bun run scripts/smoke-prerender-output.mjs",
+      "bun run scripts/smoke-prerender-output.ts",
     );
   });
 
@@ -814,14 +814,14 @@ describe("site prerender architecture", () => {
   });
 
   it("keeps prerender smoke independent of synthetic fixture names", () => {
-    const smoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
+    const smoke = readFileSync("site/scripts/smoke-prerender-output.ts", "utf8");
     expect(smoke).not.toContain("fixture-iron-sword");
     expect(smoke).not.toContain("Iron Sword");
     expect(smoke).toContain("manifest.probes.items");
   });
 
   it("requires an icon-bearing stat prerender smoke probe", () => {
-    const smoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
+    const smoke = readFileSync("site/scripts/smoke-prerender-output.ts", "utf8");
 
     expect(smoke).toContain("WHERE o.icon_hash IS NOT NULL");
     expect(smoke).toContain(
@@ -833,7 +833,7 @@ describe("site prerender architecture", () => {
   });
 
   it("requires small-entity prerender smoke probes", () => {
-    const smoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
+    const smoke = readFileSync("site/scripts/smoke-prerender-output.ts", "utf8");
 
     expect(smoke).toContain("readItemCategoryProbe()");
     expect(smoke).toContain("item_category_overview_rows");
@@ -875,20 +875,20 @@ describe("site prerender architecture", () => {
   });
 
   it("uses release metadata for local and production smokes", () => {
-    const localSmoke = readFileSync("site/scripts/smoke-prerender-output.mjs", "utf8");
+    const localSmoke = readFileSync("site/scripts/smoke-prerender-output.ts", "utf8");
     expect(localSmoke).toContain("_release.json");
     expect(localSmoke).toContain("manifest.probes.items");
 
-    expect(existsSync("site/scripts/smoke-production-release.mjs")).toBe(true);
-    const remoteSmoke = readFileSync("site/scripts/smoke-production-release.mjs", "utf8");
+    expect(existsSync("site/scripts/smoke-production-release.ts")).toBe(true);
+    const remoteSmoke = readFileSync("site/scripts/smoke-production-release.ts", "utf8");
     expect(remoteSmoke).toContain("/_release.json");
     expect(remoteSmoke).toContain("data.sqlite");
     expect(remoteSmoke).toContain("manifest.outputs.sqlite.sha256");
 
-    const deploy = readFileSync("site/scripts/deploy-production.mjs", "utf8");
+    const deploy = readFileSync("site/scripts/deploy-production.ts", "utf8");
     expect(deploy).toContain("stageArtifact");
     expect(deploy).toContain("wrangler deploy");
-    expect(deploy).toContain("smoke-production-release.mjs");
+    expect(deploy).toContain("smoke-production-release.ts");
   });
 
   it("does not bulk-attach full item presentation rows to the item overview payload", () => {
@@ -929,8 +929,8 @@ describe("decompilation tooling", () => {
   });
 
   it("exposes a root decompile script", () => {
-    expect(packageJson.scripts["decompile:game"]).toBe("bun run scripts/decompile-ardenfall.mjs");
-    expect(existsSync("scripts/decompile-ardenfall.mjs")).toBe(true);
+    expect(packageJson.scripts["decompile:game"]).toBe("bun run scripts/decompile-ardenfall.ts");
+    expect(existsSync("scripts/decompile-ardenfall.ts")).toBe(true);
   });
 
   it("plans reproducible decompile commands for the Ardenfall game assembly", () => {

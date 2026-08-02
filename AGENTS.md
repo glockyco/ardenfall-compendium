@@ -14,7 +14,7 @@ This repository is the static compendium for the game Ardenfall. The durable rul
 
 ## Commands
 
-- Pipeline: `bun test pipeline/test` · Site: `bun run --cwd site check` and `bun test site/test` · Mod (C#): `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --nologo -v q` · Controller: `bun test controller/test`.
+- Pipeline: `bun test pipeline/test` · Site: `bun run --cwd site check` and `bun test site/test` · Mod (C#): `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --nologo -v q` · Controller: `bun test controller/test` · Cross-package: `bun test tooling.test.ts artifact-staging.test.ts`.
 - Repo-wide: `bun run typecheck` · `bun run lint` · `bun run format` · `bun run check:fixtures` · `bun run codegen:validators`.
 - `bun run typecheck` compiles the root, `pipeline`, and `controller` projects; the site is typechecked separately by `svelte-check` via `bun run --cwd site check`. Both are required — neither covers the other.
 - Stay on TypeScript 6. TypeScript 7 is released but `svelte-check` peers `^5 || ^6` and `typescript-eslint` peers `<6.1.0`, so adopting it breaks typechecking and linting. Recheck when both publish support.

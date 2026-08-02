@@ -32,6 +32,7 @@ jobs:
             site:
               - 'site/**'
               - 'tooling.test.ts'
+              - 'artifact-staging.test.ts'
               - '.github/workflows/ci.yml'
               - 'package.json'
               - 'bun.lock'
@@ -45,7 +46,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run format:check
       - run: bun run lint
-      - run: bun test tooling.test.ts
+      - run: bun test tooling.test.ts artifact-staging.test.ts
       - run: git diff --check
 
   pipeline:

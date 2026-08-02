@@ -1,11 +1,10 @@
 import { Database } from "bun:sqlite";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "bun:test";
 import { buildArtifactManifest, isTrackedWorktreeDirty } from "../src/artifacts/manifest";
-import { stageArtifact } from "../../site/scripts/stage-artifact.mjs";
 import {
   validateDeployableSqlite,
   publishValidatedSqlite,
@@ -28,65 +27,6 @@ describe("artifact manifest emission", () => {
           redirectsOutput: { count: 0, filePath: join(root, "static", "_redirects") },
         }),
       ).rejects.toThrow(/release artifacts require live-game-export snapshots/);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it("rejects a tampered hashed file and names data.sqlite", async () => {
-    const root = mkdtempSync(join(tmpdir(), "ardenfall-artifact-manifest-"));
-    try {
-      await createValidArtifact(root);
-      const sqlitePath = join(root, "data.sqlite");
-      writeFileSync(sqlitePath, Buffer.concat([readFileSync(sqlitePath), Buffer.from("tampered")]));
-
-      await expect(
-        stageArtifact({ artifactDir: root, targetDir: join(root, "staged"), mode: "release" }),
-      ).rejects.toThrow(/artifact file (?:size|hash) mismatch for .*data\.sqlite/);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it("rejects a tampered recorded row count", async () => {
-    const root = mkdtempSync(join(tmpdir(), "ardenfall-artifact-manifest-"));
-    try {
-      await createValidArtifact(root);
-      const manifestPath = join(root, "artifact-manifest.json");
-      const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-      manifest.counts.itemOverviewRows += 1;
-      writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-
-      await expect(
-        stageArtifact({ artifactDir: root, targetDir: join(root, "staged"), mode: "release" }),
-      ).rejects.toThrow(/itemOverviewRows mismatch: expected 2, got 1/);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it("rejects a missing file listed by the manifest", async () => {
-    const root = mkdtempSync(join(tmpdir(), "ardenfall-artifact-manifest-"));
-    try {
-      await createValidArtifact(root);
-      rmSync(join(root, "assets", `${"a".repeat(64)}.webp`));
-
-      await expect(
-        stageArtifact({ artifactDir: root, targetDir: join(root, "staged"), mode: "release" }),
-      ).rejects.toThrow(/asset tree hash mismatch/);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it("accepts an untampered artifact", async () => {
-    const root = mkdtempSync(join(tmpdir(), "ardenfall-artifact-manifest-"));
-    try {
-      await createValidArtifact(root);
-
-      await expect(
-        stageArtifact({ artifactDir: root, targetDir: join(root, "staged"), mode: "release" }),
-      ).resolves.toMatchObject({ manifest: { artifactKind: "release" } });
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -283,62 +223,6 @@ describe("git provenance", () => {
     expect(isTrackedWorktreeDirty("M  site/package.json\n")).toBe(true);
   });
 });
-
-async function createValidArtifact(root: string) {
-  mkdirSync(join(root, "assets"), { recursive: true });
-  mkdirSync(join(root, "static"), { recursive: true });
-  const assetPath = join(root, "assets", `${"a".repeat(64)}.webp`);
-  writeFileSync(assetPath, "asset bytes");
-  writeFileSync(join(root, "static", "_redirects"), "# redirects\n");
-
-  const db = new Database(join(root, "data.sqlite"));
-  db.exec(`
-    CREATE TABLE item_overview_rows (id TEXT PRIMARY KEY, name TEXT, display_icon_hash TEXT);
-    INSERT INTO item_overview_rows VALUES ('item-a', 'Item A', '${"a".repeat(64)}');
-    CREATE TABLE item_presentation_rows (id TEXT PRIMARY KEY, diagnostics_json TEXT NOT NULL);
-    INSERT INTO item_presentation_rows VALUES ('item-a', '[]');
-    CREATE TABLE item_overview_filters (filter_id TEXT PRIMARY KEY);
-    CREATE TABLE item_overview_categories (category_id TEXT PRIMARY KEY);
-    CREATE TABLE stat_type_overview_rows (id TEXT PRIMARY KEY);
-    CREATE TABLE stat_type_presentation_rows (id TEXT PRIMARY KEY);
-    CREATE TABLE item_category_overview_rows (id TEXT PRIMARY KEY);
-    CREATE TABLE item_category_presentation_rows (id TEXT PRIMARY KEY);
-    CREATE TABLE item_tag_overview_rows (id TEXT PRIMARY KEY);
-    CREATE TABLE item_tag_presentation_rows (id TEXT PRIMARY KEY);
-    CREATE TABLE entity_nodes (entity_type TEXT, entity_id TEXT);
-    CREATE TABLE entity_aliases (alias_key TEXT, target_type TEXT, target_id TEXT);
-    CREATE TABLE entity_edges (edge_id TEXT PRIMARY KEY);
-    CREATE TABLE entity_relationship_sections (section_id TEXT PRIMARY KEY);
-    CREATE TABLE pipeline_diagnostics (source TEXT NOT NULL);
-  `);
-  db.close();
-
-  return buildArtifactManifest({
-    artifactKind: "release",
-    artifactId: "tamper-test",
-    artifactDir: root,
-    snapshot: fixtureSnapshot("live-game-export"),
-    sqliteOutput: {
-      outputPath: join(root, "data.sqlite"),
-      byteSize: Bun.file(join(root, "data.sqlite")).size,
-    },
-    assetsOutput: {
-      assetsDir: join(root, "assets"),
-      refs: [
-        {
-          entityId: "item",
-          entityRowId: "item-a",
-          slot: "displayIcon",
-          assetKind: "image",
-          assetHash: "a".repeat(64),
-          outputPath: assetPath,
-        },
-      ],
-      itemIconMetadata: [],
-    },
-    redirectsOutput: { count: 0, filePath: join(root, "static", "_redirects") },
-  });
-}
 
 function fixtureSnapshot(kind: "live-game-export" | "synthetic-fixture"): LoadSnapshotOutput {
   return {
