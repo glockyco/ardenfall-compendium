@@ -1,6 +1,6 @@
 ---
 title: "Ardenfall Compendium — Implementation Roadmap"
-type: note
+type: overview
 status: active
 created: 2026-04-29
 parent:
@@ -23,7 +23,7 @@ The amendment is authoritative where it differs from the baseline spec. The inve
 
 The project spans three layered subsystems (BepInEx mod, TS/Bun pipeline, SvelteKit site) plus shared descriptor/schema infrastructure. Rather than one mega-plan, work is split into **slices**. Each active slice may get an execution plan under `docs/plans/` while work is live; when the slice ships, its plan is marked `implemented` and moved to `docs/plans/archive/` (per the planning-files convention) rather than deleted.
 
-Slice ordering is driven by `2026-05-07-investment-priorities.md`: items get the deepest investment first (data breadth, then assets, then presentation depth), maps come second (locations, map system, then map-supporting entities one-by-one), with spells/quests after. Each major entity gets a data slice plus a presentation depth slice; depth is not deferred to a single distant design-system slice. One operational override currently sits above all content work: the site must return to a static-assets-first SvelteKit architecture before Slice 4 or any new entity slice, because avoidable Worker invocations threaten the Cloudflare Workers free-tier envelope and make production failures look like blank client shells.
+Slice ordering is driven by `docs/plans/archive/2026-05-07-investment-priorities.md`: items get the deepest investment first (data breadth, then assets, then presentation depth), maps come second (locations, map system, then map-supporting entities one-by-one), with spells/quests after. Each major entity gets a data slice plus a presentation depth slice; depth is not deferred to a single distant design-system slice. One operational override currently sits above all content work: the site must return to a static-assets-first SvelteKit architecture before Slice 4 or any new entity slice, because avoidable Worker invocations threaten the Cloudflare Workers free-tier envelope and make production failures look like blank client shells.
 
 ## Status legend
 
@@ -114,7 +114,7 @@ This set proves the variant model with one deep inheritance branch (`MeleeItemDa
 ### Operational slice — HotRepl v3 typed command migration
 
 **Status:** done
-**Plan:** HotRepl repo `docs/plans/archive/2026-05-24-typed-commands-phase-2-ardenfall-migration.md`
+**Plan:** HotRepl repo `docs/plans/archive/2026-05-23-hotrepl-phase4a-consumer-migration.md`
 **Spec coverage:** amendment §14 lifecycle/export flow plus HotRepl typed-command roadmap Phase 2.
 
 **Delivers:** clean cutover from Ardenfall's legacy HotRepl control wire to HotRepl.Core 3.0.0 typed commands. The mod now registers `IControlCommandHandler<TArgs,TOutput>` handlers with generated lower-camel schemas; command outputs use typed DTOs; artifact references are keyed maps. The controller consumes the current protocol (`handshake`, `commands_list`, `job_accepted`, terminal `job_result` from `job_status`, `.output`, artifact maps) and removes auth/token/lease/job-result request plumbing.
@@ -342,7 +342,7 @@ This slice migrates the existing location map data onto the generalized placemen
 
 Each candidate gets its own slice number (8, 9, …). Ordered by extraction confidence, map-marker value, and detail-page value. Firmed-up ordering for the next planning horizon:
 
-1. Portals — record-backed extraction, placement, and map markers shipped with the Slice 7 substrate. Remaining: project the canonical `connected_portal_ref_json` into `leads-to` edges in `entity_edges` so the map can express zone connectivity.
+1. Portal connectivity — project the canonical `connected_portal_ref_json` into `leads-to` edges in `entity_edges` so the map can express zone connectivity.
 2. Characters / NPCs plus vendor role — unlocks `sold-at` item edges and spatial NPC/vendor navigation.
 3. Monsters / enemies — map placement plus `drops` edges to items and detail pages with drop tables.
 4. Quests — `gives`/`requires` edges enabling transitive `available-at` location links.
@@ -394,9 +394,7 @@ Any map-supporting entity slice that ships public detail pages must reuse Slice 
 ### Slice 15 — AGENTS.md / CLAUDE.md per subsystem with worked examples
 
 **Status:** planned
-**Spec coverage:** baseline §15 P8.
-
-**Delivers:** repo-level and per-subsystem agent guidance with explicit good/bad examples. Earlier slices may land minimal stubs; this slice fills them in once architecture has stopped moving. Examples should cover generated presentation/read-model cutovers, typed rich-text rendering with no raw `{@html}`, relationship-graph link governance, and component-intake decisions.
+**Remaining:** `AGENTS.md`, `mod/AGENTS.md`, `pipeline/AGENTS.md`, `site/AGENTS.md`, and `CLAUDE.md` provide subsystem guidance. The slice still needs explicit worked good/bad examples for generated presentation/read-model cutovers, typed rich-text rendering without raw `{@html}`, relationship-graph link governance, and component-intake decisions.
 
 ## Open questions tracker
 
