@@ -275,7 +275,10 @@ export const listItemsByCategory = (categoryId: string): ItemOverviewRow[] =>
          ON n.entity_type = 'item'
         AND n.entity_id = o.id
        JOIN items i ON i.id = o.id
-       WHERE json_extract(i."categoryRef", '$.guid') = ?
+       WHERE 'named;'
+             || json_extract(i."categoryRef", '$.entity')
+             || ';'
+             || json_extract(i."categoryRef", '$.name') = ?
        ORDER BY o.name`,
     [categoryId],
   ).map(toItemOverviewRow);

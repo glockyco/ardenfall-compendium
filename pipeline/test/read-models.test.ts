@@ -257,7 +257,7 @@ describe("emitStatTypeReadModels", () => {
     `);
     db.run(
       "INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)",
-      ["stat-type", "57a70001.fixture-strength", "iconRef", "image", "b".repeat(64)],
+      ["stat-type", "named;stat-type;att_strength", "iconRef", "image", "b".repeat(64)],
     );
     canonicaliseStatTypes(db, statEnvelope);
 
@@ -270,13 +270,13 @@ describe("emitStatTypeReadModels", () => {
       .all();
     expect(overview).toEqual([
       {
-        id: "57a70002.fixture-heavy-armor",
-        name: "Heavy Armor",
+        id: "named;stat-type;sk_alchemy",
+        name: "Alchemy",
         grouping: "skill",
         icon_hash: null,
       },
       {
-        id: "57a70001.fixture-strength",
+        id: "named;stat-type;att_strength",
         name: "Strength",
         grouping: "attribute",
         icon_hash: "b".repeat(64),
@@ -285,7 +285,7 @@ describe("emitStatTypeReadModels", () => {
 
     const presentation = db
       .query<{ render_context: string; icon_hash: string | null; affects_json: string }, []>(
-        "SELECT render_context, icon_hash, affects_json FROM stat_type_presentation_rows WHERE id = '57a70001.fixture-strength'",
+        "SELECT render_context, icon_hash, affects_json FROM stat_type_presentation_rows WHERE id = 'named;stat-type;att_strength'",
       )
       .get();
     expect(presentation?.render_context).toBe("stat-type-presentation-v1");
@@ -294,12 +294,12 @@ describe("emitStatTypeReadModels", () => {
 
     const node = db
       .query<{ route_path: string; canonical_slug: string; short_id: string }, []>(
-        "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'stat-type' AND entity_id = '57a70001.fixture-strength'",
+        "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'stat-type' AND entity_id = 'named;stat-type;att_strength'",
       )
       .get();
-    expect(node?.canonical_slug).toMatch(/^strength--[0-9a-f]{8}$/);
+    expect(node?.short_id).toBe("att-strength");
+    expect(node?.canonical_slug).toBe("strength--att-strength");
     expect(node?.route_path).toBe(`/attributes/${node?.canonical_slug}`);
-    expect(node?.short_id).toMatch(/^[0-9a-f]{8}$/);
   });
 });
 
@@ -329,9 +329,9 @@ describe("emitItemCategoryReadModels", () => {
       schemaVersion: 1,
       rows: [
         {
-          id: "ca7e60a1.category-weapons",
+          id: "named;item-category;itemcat_weapons",
           fields: {
-            id: "ca7e60a1.category-weapons",
+            id: "named;item-category;itemcat_weapons",
             categoryName: "Weapons",
             iconRef: null,
             defaultItemIconRef: { kind: "lookupAsset", guid: "default-icon-guid" },
@@ -345,7 +345,7 @@ describe("emitItemCategoryReadModels", () => {
     db.run(`INSERT INTO items (id, name, "categoryRef", "categoryName") VALUES (?, ?, ?, ?)`, [
       "4ed20218.fixture-iron-sword",
       "Iron Sword",
-      JSON.stringify({ kind: "lookupAsset", guid: "ca7e60a1.category-weapons" }),
+      JSON.stringify({ kind: "namedAsset", entity: "item-category", name: "itemcat_weapons" }),
       "Weapons",
     ]);
     db.run(`INSERT INTO items (id, name, "categoryRef", "categoryName") VALUES (?, ?, ?, ?)`, [
@@ -356,7 +356,13 @@ describe("emitItemCategoryReadModels", () => {
     ]);
     db.run(
       "INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)",
-      ["item-category", "ca7e60a1.category-weapons", "defaultItemIconRef", "image", "c".repeat(64)],
+      [
+        "item-category",
+        "named;item-category;itemcat_weapons",
+        "defaultItemIconRef",
+        "image",
+        "c".repeat(64),
+      ],
     );
 
     emitItemCategoryReadModels(db, "/groups");
@@ -376,7 +382,7 @@ describe("emitItemCategoryReadModels", () => {
       )
       .get();
     expect(overview).toEqual({
-      id: "ca7e60a1.category-weapons",
+      id: "named;item-category;itemcat_weapons",
       name: "Weapons",
       default_item_icon_hash: "c".repeat(64),
       category_color_json: JSON.stringify({ r: 0.92, g: 0.42, b: 0.42, a: 1 }),
@@ -393,7 +399,7 @@ describe("emitItemCategoryReadModels", () => {
         },
         []
       >(
-        "SELECT render_context, columns_json, show_in_all_category, item_count FROM item_category_presentation_rows WHERE id = 'ca7e60a1.category-weapons'",
+        "SELECT render_context, columns_json, show_in_all_category, item_count FROM item_category_presentation_rows WHERE id = 'named;item-category;itemcat_weapons'",
       )
       .get();
     expect(presentation?.render_context).toBe("item-category-presentation-v1");
@@ -405,12 +411,12 @@ describe("emitItemCategoryReadModels", () => {
 
     const node = db
       .query<{ route_path: string; canonical_slug: string; short_id: string }, []>(
-        "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item-category' AND entity_id = 'ca7e60a1.category-weapons'",
+        "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item-category' AND entity_id = 'named;item-category;itemcat_weapons'",
       )
       .get();
-    expect(node?.canonical_slug).toMatch(/^weapons--[0-9a-f]{8}$/);
+    expect(node?.short_id).toBe("itemcat-weapons");
+    expect(node?.canonical_slug).toBe("weapons--itemcat-weapons");
     expect(node?.route_path).toBe(`/groups/${node?.canonical_slug}`);
-    expect(node?.short_id).toMatch(/^[0-9a-f]{8}$/);
   });
 });
 

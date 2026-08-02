@@ -78,19 +78,19 @@ describe("item-category read-model accessors", () => {
         PRIMARY KEY (entity_type, entity_id)
       );
       INSERT INTO item_category_overview_rows VALUES
-        ('ca7e60a1.fixture-weapons', 'Weapons', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1);
+        ('named;item-category;itemcat_weapons', 'Weapons', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1);
       INSERT INTO item_category_presentation_rows VALUES
-        ('ca7e60a1.fixture-weapons', 'Weapons', 'item-category-presentation-v1', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1, '[{"label":"Name"}]', 1);
+        ('named;item-category;itemcat_weapons', 'Weapons', 'item-category-presentation-v1', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1, '[{"label":"Name"}]', 1);
       INSERT INTO item_overview_rows VALUES
         ('4ed20218.fixture-iron-sword', 'Iron Sword', 3.5, 25, 'melee-weapon', '${iconHash}', '${categoryColor}'),
         ('fixture-training-dagger', 'Training Dagger', 1.5, 5, 'melee-weapon', '${iconHash}', '${categoryColor}');
       INSERT INTO item_presentation_rows VALUES
         ('4ed20218.fixture-iron-sword', 'Iron Sword', 'melee-weapon', 'Melee weapon', 'item-presentation-v1', '${iconHash}', '${categoryColor}', '', '${richText}', '', '${richText}', '[]', '[]', '[]', NULL, '[]', '[]', 25, 3.5, '[]');
       INSERT INTO items VALUES
-        ('4ed20218.fixture-iron-sword', '{"kind":"lookupAsset","guid":"ca7e60a1.fixture-weapons"}', 'Weapons'),
+        ('4ed20218.fixture-iron-sword', '{"kind":"namedAsset","entity":"item-category","name":"itemcat_weapons"}', 'Weapons'),
         ('fixture-training-dagger', '{"kind":"missing","reason":"lookupAssetGuidMissing"}', 'Weapons');
       INSERT INTO entity_nodes VALUES
-        ('item-category', 'ca7e60a1.fixture-weapons', 'Weapons', '/categories/weapons--abc12345', 'weapons--abc12345', 'abc12345', 1),
+        ('item-category', 'named;item-category;itemcat_weapons', 'Weapons', '/categories/weapons--abc12345', 'weapons--abc12345', 'abc12345', 1),
         ('item', '4ed20218.fixture-iron-sword', 'Iron Sword', '/items/4ed20218.fixture-iron-sword', 'iron-sword--4ed20218', '4ed20218', 1),
         ('item', 'fixture-training-dagger', 'Training Dagger', '/items/fixture-training-dagger', 'training-dagger--fbfb0000', 'fbfb0000', 1);
     `);
@@ -102,7 +102,7 @@ describe("item-category read-model accessors", () => {
 
       expect(readModels.listItemCategories()).toEqual([
         {
-          id: "ca7e60a1.fixture-weapons",
+          id: "named;item-category;itemcat_weapons",
           name: "Weapons",
           iconSrc: `/assets/${iconHash}.webp`,
           defaultItemIconSrc: `/assets/${defaultIconHash}.webp`,
@@ -112,7 +112,7 @@ describe("item-category read-model accessors", () => {
         },
       ]);
       expect(readModels.getItemCategoryPresentation("weapons--abc12345")).toEqual({
-        id: "ca7e60a1.fixture-weapons",
+        id: "named;item-category;itemcat_weapons",
         name: "Weapons",
         renderContext: "item-category-presentation-v1",
         iconSrc: `/assets/${iconHash}.webp`,
@@ -123,7 +123,7 @@ describe("item-category read-model accessors", () => {
         itemCount: 1,
       });
       expect(
-        readModels.listItemsByCategory("ca7e60a1.fixture-weapons").map((row) => row.id),
+        readModels.listItemsByCategory("named;item-category;itemcat_weapons").map((row) => row.id),
       ).toEqual(["4ed20218.fixture-iron-sword"]);
     } finally {
       process.chdir(originalCwd);

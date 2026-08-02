@@ -119,7 +119,7 @@ describe("emitAssets", () => {
       expect(result.refs).toContainEqual(
         expect.objectContaining({
           entityId: "stat-type",
-          entityRowId: "57a70001.fixture-strength",
+          entityRowId: "named;stat-type;att_strength",
           slot: "iconRef",
           assetKind: "image",
         }),
@@ -127,7 +127,7 @@ describe("emitAssets", () => {
       expect(result.refs).toContainEqual(
         expect.objectContaining({
           entityId: "item-category",
-          entityRowId: "ca7e60a1.fixture-weapons",
+          entityRowId: "named;item-category;itemcat_weapons",
           slot: "defaultItemIconRef",
           assetKind: "image",
         }),
@@ -214,7 +214,7 @@ describe("asset_refs", () => {
         expect(refs).toContainEqual(
           expect.objectContaining({
             entity_id: "item-category",
-            entity_row_id: "ca7e60a1.fixture-weapons",
+            entity_row_id: "named;item-category;itemcat_weapons",
             slot: "defaultItemIconRef",
             asset_kind: "image",
           }),

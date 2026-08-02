@@ -207,7 +207,10 @@ function readItemCategoryProbe() {
                   SELECT COALESCE(io.name, io.id)
                   FROM item_overview_rows io
                   JOIN items i ON i.id = io.id
-                  WHERE json_extract(i."categoryRef", '$.guid') = o.id
+                  WHERE 'named;'
+                        || json_extract(i."categoryRef", '$.entity')
+                        || ';'
+                        || json_extract(i."categoryRef", '$.name') = o.id
                   ORDER BY io.name, io.id
                   LIMIT 1
                 ) AS item_name

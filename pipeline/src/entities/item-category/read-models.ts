@@ -59,7 +59,10 @@ export function emitItemCategoryReadModels(db: Database, routeBase = "/categorie
               (
                 SELECT COUNT(*)
                 FROM items i
-                WHERE json_extract(i."categoryRef", '$.guid') = c.id
+                WHERE 'named;'
+                      || json_extract(i."categoryRef", '$.entity')
+                      || ';'
+                      || json_extract(i."categoryRef", '$.name') = c.id
               ) AS item_count
        FROM item_categories c
        LEFT JOIN asset_refs icon
