@@ -155,6 +155,136 @@ public sealed class ItemPresentationTests
     }
 
     [Fact]
+    public void BuilderEmitsEachConsumableStatusEffectWithReferenceAndLevel()
+    {
+        var haste = SnapshotRef.LookupAsset("status-haste", "Ardenfall.StatusEffectData", "Attack Speed");
+        var resistance = SnapshotRef.LookupAsset("status-resistance", "Ardenfall.StatusEffectData", "Bleed Resistance");
+        var fields = new Dictionary<string, object?>
+        {
+            ["effectName"] = "Attack Speed I",
+            ["statusEffectsJson"] = new List<LeveledStatusEffectSnapshot>
+            {
+                new(haste, 1, 30, null),
+                new(resistance, 3, 30, null),
+            },
+        };
+
+        var presentation = ItemPresentationBuilder.FromExtractedFields(
+            rowId: "fixture-consumable",
+            variantId: "consumable",
+            fields,
+            provenance: new Dictionary<string, Provenance>());
+
+        Assert.Equal(2, presentation.Effects.Count);
+        Assert.Collection(
+            presentation.Effects,
+            first =>
+            {
+                Assert.Equal("status-haste", first.TargetRef?.Guid);
+                Assert.Equal(1, first.Level);
+                Assert.Equal("Attack Speed I", first.Label);
+                Assert.Equal("statusEffectsJson", first.Source);
+                Assert.Null(first.TargetId);
+            },
+            second =>
+            {
+                Assert.Equal("status-resistance", second.TargetRef?.Guid);
+                Assert.Equal(3, second.Level);
+                Assert.Equal("Attack Speed I", second.Label);
+                Assert.Equal("statusEffectsJson", second.Source);
+                Assert.Null(second.TargetId);
+            });
+    }
+
+    [Fact]
+    public void BuilderEmitsBleedStatusEffectAsOneFact()
+    {
+        var bleed = SnapshotRef.LookupAsset("status-bleed", "Ardenfall.StatusEffectData", "Bleed");
+        var fields = new Dictionary<string, object?>
+        {
+            ["bleedStatusEffectJson"] = new LeveledStatusEffectSnapshot(bleed, 2.5f, 10, null),
+        };
+
+        var presentation = ItemPresentationBuilder.FromExtractedFields(
+            rowId: "fixture-bow",
+            variantId: "bow",
+            fields,
+            provenance: new Dictionary<string, Provenance>());
+
+        var effect = Assert.Single(presentation.Effects);
+        Assert.Equal("status-bleed", effect.TargetRef?.Guid);
+        Assert.Equal(2.5f, effect.Level);
+        Assert.Equal("Bleed", effect.Label);
+        Assert.Equal("bleedStatusEffectJson", effect.Source);
+        Assert.Null(effect.TargetId);
+    }
+
+    [Fact]
+    public void BuilderEmitsNoStatusEffectsWhenSnapshotListIsEmpty()
+    {
+        var fields = new Dictionary<string, object?>
+        {
+            ["statusEffectsJson"] = new List<LeveledStatusEffectSnapshot>(),
+        };
+
+        var presentation = ItemPresentationBuilder.FromExtractedFields(
+            rowId: "fixture-empty-consumable",
+            variantId: "consumable",
+            fields,
+            provenance: new Dictionary<string, Provenance>());
+
+        Assert.Empty(presentation.Effects);
+        Assert.Empty(presentation.Diagnostics);
+    }
+
+    [Fact]
+    public void BuilderKeepsStatusEffectFactWhenReferenceIsNull()
+    {
+        var fields = new Dictionary<string, object?>
+        {
+            ["statusEffectsJson"] = new List<LeveledStatusEffectSnapshot>
+            {
+                new(null, 4, 30, null),
+            },
+        };
+
+        var presentation = ItemPresentationBuilder.FromExtractedFields(
+            rowId: "fixture-unresolved-consumable",
+            variantId: "consumable",
+            fields,
+            provenance: new Dictionary<string, Provenance>());
+
+        var effect = Assert.Single(presentation.Effects);
+        Assert.Null(effect.TargetRef);
+        Assert.Equal(4, effect.Level);
+        Assert.Equal("statusEffectsJson", effect.Source);
+        var diagnostic = Assert.Single(presentation.Diagnostics);
+        Assert.Equal("statusEffectsJson", diagnostic.Field);
+        Assert.Equal("unresolvedEffectTarget", diagnostic.Code);
+    }
+
+    [Fact]
+    public void BuilderSkipsUnconfiguredLeveledStatusEffect()
+    {
+        // bleedStatusEffect is a Parameter with a default instance, so a weapon that never
+        // configured bleed still carries an empty snapshot. It applies nothing, so it is not
+        // an effect and it is not an unresolved reference either.
+        var fields = new Dictionary<string, object?>
+        {
+            ["bleedStatusEffectJson"] = new LeveledStatusEffectSnapshot(null, 0f, 0f, null),
+        };
+
+        var presentation = ItemPresentationBuilder.FromExtractedFields(
+            rowId: "fixture-plain-sword",
+            variantId: "melee-weapon",
+            fields,
+            provenance: new Dictionary<string, Provenance>());
+
+        Assert.Empty(presentation.Effects);
+        Assert.Empty(presentation.Diagnostics);
+    }
+
+    [Fact]
     public void BuilderUsesLeveledSpellSnapshotNameForSlateEffects()
     {
         var fields = new Dictionary<string, object?>

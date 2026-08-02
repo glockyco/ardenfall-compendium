@@ -187,6 +187,8 @@ export interface ItemPresentationEffect {
   label: string;
   targetType: string | null;
   targetId: string | null;
+  targetRef: SnapshotRef | null;
+  level: number | null;
   source: string;
 }
 

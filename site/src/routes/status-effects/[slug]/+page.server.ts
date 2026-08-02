@@ -1,5 +1,9 @@
 import { error } from "@sveltejs/kit";
-import { getStatusEffectPresentation, listStatusEffects } from "$lib/server/read-models";
+import {
+  getStatusEffectPresentation,
+  listItemsApplyingStatusEffect,
+  listStatusEffects,
+} from "$lib/server/read-models";
 import type { EntryGenerator, PageServerLoad } from "./$types";
 
 const slugFromRoutePath = (routePath: string) => routePath.slice(routePath.lastIndexOf("/") + 1);
@@ -11,5 +15,15 @@ export const entries: EntryGenerator = () =>
 export const load: PageServerLoad = ({ params }) => {
   const presentation = getStatusEffectPresentation(params.slug);
   if (!presentation) throw error(404, "Status effect not found");
-  return { presentation };
+  return {
+    presentation,
+    relationships: [
+      {
+        id: "items-applying-status-effect",
+        title: "Applied by items",
+        predicate: "applies",
+        edges: listItemsApplyingStatusEffect(presentation.id),
+      },
+    ],
+  };
 };

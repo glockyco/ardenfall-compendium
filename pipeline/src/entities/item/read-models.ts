@@ -4,6 +4,7 @@ import type {
   MasterTooltipVocabulary,
   SnapshotEnvelope,
   SnapshotItemIconMetadata,
+  SnapshotRef,
 } from "../../types.ts";
 import { translateRichTextV1 } from "../../rich-text/rich-text-v1.ts";
 import {
@@ -196,6 +197,18 @@ export function emitItemReadModels(
       }[]
     ).map((row) => [row.id, row] as const),
   );
+  const statusEffectIds = new Set<string>();
+  const hasStatusEffectsTable = db
+    .query<{ name: string }, []>(
+      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'status_effects'`,
+    )
+    .get();
+  if (hasStatusEffectsTable) {
+    for (const row of db.query<{ id: string }, []>(`SELECT id FROM status_effects`).all()) {
+      statusEffectIds.add(row.id);
+    }
+  }
+
   const presentationInsert = db.prepare(
     `INSERT INTO item_presentation_rows (
       id, name, variant, item_type, render_context, display_icon_hash, display_icon_color,
@@ -259,6 +272,36 @@ export function emitItemReadModels(
       if (variantId === undefined) {
         throw new Error(`Item '${snapshotRow.id}' is missing a variant`);
       }
+      const effectFacts = presentation.effects.map((effect) => {
+        if (effect.targetType !== "status-effect") return effect;
+        const targetId = resolveStatusEffectId(effect.targetRef, statusEffectIds);
+        if (targetId === null) {
+          richTextDiagnostics.push({
+            severity: "diagnostic",
+            source: "item-presentation-read-model",
+            code: "unresolvedEffectTarget",
+            message: `Effect '${effect.label}' does not resolve to a published status effect.`,
+            entityType: "item",
+            entityId: snapshotRow.id,
+            field: "presentation.effects.targetRef",
+            evidence: { targetRef: effect.targetRef ?? null },
+          });
+          return { ...effect, targetId: null };
+        }
+        edgeInsert.run(
+          `${snapshotRow.id}:applies:status-effect:${targetId}`,
+          "item",
+          snapshotRow.id,
+          "status-effect",
+          targetId,
+          "applies",
+          "Applies",
+          1,
+          JSON.stringify({ source: "items.statusEffectRef", level: effect.level ?? null }),
+          null,
+        );
+        return { ...effect, targetId };
+      });
       writeNode({
         entityType: "item",
         entityId: snapshotRow.id,
@@ -278,7 +321,7 @@ export function emitItemReadModels(
         JSON.stringify(description),
         presentation.effectsSource,
         JSON.stringify(effectsSource),
-        JSON.stringify(presentation.effects),
+        JSON.stringify(effectFacts),
         JSON.stringify(presentation.statRows),
         JSON.stringify(presentation.requirements),
         presentation.durability ? JSON.stringify(presentation.durability) : null,
@@ -405,6 +448,13 @@ export function emitItemReadModels(
   insertPipelineDiagnostics(db, richTextDiagnostics, "item-presentation-read-model");
 }
 
+function resolveStatusEffectId(
+  targetRef: SnapshotRef | null | undefined,
+  statusEffectIds: Set<string>,
+): string | null {
+  if (targetRef?.kind !== "lookupAsset" || !targetRef.guid) return null;
+  return statusEffectIds.has(targetRef.guid) ? targetRef.guid : null;
+}
 function collectTermLinks(nodes: RichTextNode[]): { termId: string; label: string }[] {
   const terms: { termId: string; label: string }[] = [];
   for (const node of nodes) {

@@ -222,9 +222,31 @@
         "quickslotCooldownTime": 12.5,
         "statusEffectsJson": [
           {
-            "statusEffectRef": null,
-            "level": 1,
+            "statusEffectRef": {
+              "kind": "lookupAsset",
+              "guid": "91a00001.fixture-status-effect-bleeding",
+              "unityType": "Ardenfall.StatusEffectData",
+              "name": "status-effect_bleeding",
+              "id": null
+            },
+            "level": 1.0,
             "lifetime": 30,
+            "stackMode": {
+              "type": "Refresh",
+              "addLevel": 0,
+              "maxLevel": 0
+            }
+          },
+          {
+            "statusEffectRef": {
+              "kind": "lookupAsset",
+              "guid": "91a00002.fixture-status-effect-burning",
+              "unityType": "Ardenfall.StatusEffectData",
+              "name": "status-effect_burning",
+              "id": null
+            },
+            "level": 2.5,
+            "lifetime": 20,
             "stackMode": {
               "type": "Refresh",
               "addLevel": 0,
@@ -276,8 +298,39 @@
         "itemType": "Consumable",
         "itemTypeSourceMethod": "variant:consumable",
         "descriptionSource": "A <b>small</b> <color=#7CFF8A>draught</color> that restores <link=\"tooltip_stamina\">Stamina</link>.",
-        "effectsSource": "",
-        "effects": [],
+        "effectsSource": "Applies Bleeding I and Burning II.",
+        "effects": [
+          {
+            "kind": "status-effect",
+            "label": "Bleeding I",
+            "targetType": "status-effect",
+            "targetId": null,
+            "targetRef": {
+              "kind": "lookupAsset",
+              "guid": "91a00001.fixture-status-effect-bleeding",
+              "unityType": "Ardenfall.StatusEffectData",
+              "name": "status-effect_bleeding",
+              "id": null
+            },
+            "level": 1.0,
+            "source": "statusEffectsJson"
+          },
+          {
+            "kind": "status-effect",
+            "label": "Burning II",
+            "targetType": "status-effect",
+            "targetId": null,
+            "targetRef": {
+              "kind": "lookupAsset",
+              "guid": "91a00002.fixture-status-effect-burning",
+              "unityType": "Ardenfall.StatusEffectData",
+              "name": "status-effect_burning",
+              "id": null
+            },
+            "level": 2.5,
+            "source": "statusEffectsJson"
+          }
+        ],
         "statRows": [],
         "requirements": [],
         "durability": null,
@@ -290,14 +343,7 @@
         ],
         "value": 9,
         "weight": 0.25,
-        "diagnostics": [
-          {
-            "severity": "diagnostic",
-            "code": "unresolvedEffectTarget",
-            "field": "presentation.effects",
-            "message": "Effect 'Status effects' does not have a resolved status-effect target."
-          }
-        ]
+        "diagnostics": []
       }
     },
     {
@@ -380,6 +426,8 @@
             "label": "Spark",
             "targetType": "spell",
             "targetId": "fixture-spark",
+            "targetRef": null,
+            "level": null,
             "source": "spellDataJson"
           }
         ],
@@ -498,6 +546,14 @@
             "label": "Burning",
             "targetType": "status-effect",
             "targetId": null,
+            "targetRef": {
+              "kind": "lookupAsset",
+              "guid": "ffffffff.fixture-status-effect-missing",
+              "unityType": "Ardenfall.StatusEffectData",
+              "name": "status-effect_missing",
+              "id": null
+            },
+            "level": 1.0,
             "source": "effectName"
           }
         ],

@@ -22,9 +22,16 @@
       <ul class="mt-3 grid gap-2 text-sm">
         {#each effects as effect, index (`${effect.kind}-${effect.label}-${index}`)}
           <li>
-            <span class="font-medium">{effect.label}</span>
+            {#if effect.targetId !== null && effect.targetRoutePath !== null}
+              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- route paths come from the static read model -->
+              <a class="font-medium underline underline-offset-2" href={effect.targetRoutePath}>
+                {effect.label}
+              </a>
+            {:else}
+              <span class="font-medium">{effect.label}</span>
+            {/if}
             <span class="text-muted-foreground">{effectKindLabel(effect.kind)}</span>
-            {#if effect.targetId === null}
+            {#if effect.kind === "status-effect" && effect.targetId === null}
               <span class="text-muted-foreground block text-xs">
                 {UNRESOLVED_EFFECT_TARGET}
               </span>

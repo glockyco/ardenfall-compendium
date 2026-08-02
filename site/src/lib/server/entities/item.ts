@@ -39,6 +39,7 @@ interface ItemPresentationRecord {
   effects_source: string;
   effects_source_rich_text_json: string;
   effect_facts_json: string;
+  effect_target_routes_json: string;
   stat_rows_json: string;
   requirements_json: string;
   durability_json: string | null;
@@ -126,6 +127,8 @@ export interface ItemPresentationEffect {
   label: string;
   targetType: string | null;
   targetId: string | null;
+  targetRoutePath: string | null;
+  level: number | null;
   source: string;
 }
 
@@ -197,27 +200,40 @@ export interface EntityNodeRow {
   isPublic: boolean;
 }
 
-const toItemPresentationRow = (row: ItemPresentationRecord): ItemPresentationRow => ({
-  id: row.id,
-  name: row.name,
-  variant: row.variant,
-  itemType: row.item_type,
-  renderContext: row.render_context,
-  displayIconSrc: assetSrc(row.display_icon_hash),
-  displayIconColor: row.display_icon_color,
-  description: JSON.parse(row.description_rich_text_json) as RichTextDocument,
-  effectsSource: row.effects_source,
-  effectsSourceRichText: JSON.parse(row.effects_source_rich_text_json) as RichTextDocument,
-  effects: JSON.parse(row.effect_facts_json) as ItemPresentationEffect[],
-  statRows: JSON.parse(row.stat_rows_json) as ItemPresentationStatRow[],
-  requirements: JSON.parse(row.requirements_json) as ItemPresentationRequirement[],
-  durability: row.durability_json
-    ? (JSON.parse(row.durability_json) as ItemPresentationDurability)
-    : null,
-  stateFacts: JSON.parse(row.state_facts_json) as ItemPresentationStateFact[],
-  value: row.value,
-  weight: row.weight,
-});
+const toItemPresentationRow = (row: ItemPresentationRecord): ItemPresentationRow => {
+  const effectRoutes = JSON.parse(row.effect_target_routes_json) as Record<string, string>;
+  const effects = (
+    JSON.parse(row.effect_facts_json) as Array<
+      Omit<ItemPresentationEffect, "targetRoutePath" | "level"> & { level?: number | null }
+    >
+  ).map((effect) => ({
+    ...effect,
+    level: typeof effect.level === "number" ? effect.level : null,
+    targetRoutePath: effect.targetId === null ? null : (effectRoutes[effect.targetId] ?? null),
+  }));
+
+  return {
+    id: row.id,
+    name: row.name,
+    variant: row.variant,
+    itemType: row.item_type,
+    renderContext: row.render_context,
+    displayIconSrc: assetSrc(row.display_icon_hash),
+    displayIconColor: row.display_icon_color,
+    description: JSON.parse(row.description_rich_text_json) as RichTextDocument,
+    effectsSource: row.effects_source,
+    effectsSourceRichText: JSON.parse(row.effects_source_rich_text_json) as RichTextDocument,
+    effects,
+    statRows: JSON.parse(row.stat_rows_json) as ItemPresentationStatRow[],
+    requirements: JSON.parse(row.requirements_json) as ItemPresentationRequirement[],
+    durability: row.durability_json
+      ? (JSON.parse(row.durability_json) as ItemPresentationDurability)
+      : null,
+    stateFacts: JSON.parse(row.state_facts_json) as ItemPresentationStateFact[],
+    value: row.value,
+    weight: row.weight,
+  };
+};
 
 const toItemOverviewRow = (row: ItemOverviewRecord): ItemOverviewRow => ({
   id: row.id,
@@ -309,9 +325,23 @@ export const listItemIds = (): string[] =>
   all<{ id: string }>("SELECT id FROM item_presentation_rows ORDER BY id").map((row) => row.id);
 
 export const getItemPresentation = (id: string): ItemPresentationRow | undefined => {
-  const row = get<ItemPresentationRecord>("SELECT * FROM item_presentation_rows WHERE id = ?", [
-    id,
-  ]);
+  const row = get<ItemPresentationRecord>(
+    `SELECT p.*,
+            COALESCE((
+              SELECT json_group_object(target_id, route_path)
+              FROM (
+                SELECT json_extract(effect.value, '$.targetId') AS target_id, n.route_path
+                FROM json_each(p.effect_facts_json) AS effect
+                JOIN entity_nodes n
+                  ON n.entity_type = json_extract(effect.value, '$.targetType')
+                 AND n.entity_id = json_extract(effect.value, '$.targetId')
+                 AND n.is_public = 1
+              )
+            ), '{}') AS effect_target_routes_json
+       FROM item_presentation_rows p
+       WHERE p.id = ?`,
+    [id],
+  );
   return row ? toItemPresentationRow(row) : undefined;
 };
 

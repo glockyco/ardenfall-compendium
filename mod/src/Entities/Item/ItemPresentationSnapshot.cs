@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using ArdenfallCompendium.Dtos;
 
 namespace ArdenfallCompendium.Entities.Item;
 
@@ -50,6 +51,8 @@ public sealed class ItemPresentationEffectSnapshot
     [JsonProperty("label")] public string Label { get; init; } = "";
     [JsonProperty("targetType")] public string? TargetType { get; init; }
     [JsonProperty("targetId")] public string? TargetId { get; init; }
+    [JsonProperty("targetRef")] public SnapshotRef? TargetRef { get; init; }
+    [JsonProperty("level")] public float? Level { get; init; }
     [JsonProperty("source")] public string Source { get; init; } = "";
 }
 

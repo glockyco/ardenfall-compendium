@@ -82,7 +82,11 @@ export type {
   StatusEffectOverviewRow,
   StatusEffectPresentationRow,
 } from "./entities/status-effect";
-export { getStatusEffectPresentation, listStatusEffects } from "./entities/status-effect";
+export {
+  getStatusEffectPresentation,
+  listItemsApplyingStatusEffect,
+  listStatusEffects,
+} from "./entities/status-effect";
 
 export type { SpellOverviewRow, SpellPresentationRow } from "./entities/spell";
 export { getSpellPresentation, listSpells } from "./entities/spell";

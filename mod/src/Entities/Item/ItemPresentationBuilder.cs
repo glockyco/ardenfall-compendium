@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities.Item.Adapters;
 
 namespace ArdenfallCompendium.Entities.Item;
 
@@ -39,7 +40,7 @@ public static class ItemPresentationBuilder
             StateFacts = BuildStateFacts(fields),
             Value = IntField(fields, "value"),
             Weight = FloatField(fields, "weight"),
-            Diagnostics = BuildDiagnostics(effects, fields),
+            Diagnostics = BuildDiagnostics(effects),
         };
     }
 
@@ -159,18 +160,66 @@ public static class ItemPresentationBuilder
         }
 
         var effectName = StringField(fields, "effectName");
-        if (!string.IsNullOrWhiteSpace(effectName))
-        {
-            effects.Add(new ItemPresentationEffectSnapshot
-            {
-                Kind = "status-effect",
-                Label = effectName!,
-                TargetType = "status-effect",
-                Source = "effectName",
-            });
-        }
+        AddStatusEffects(fields, "statusEffectsJson", effectName, effects);
+        AddStatusEffects(fields, "areaOfEffectJson", effectName, effects);
+        AddStatusEffects(fields, "bleedStatusEffectJson", effectName, effects);
 
         return effects;
+    }
+
+    private static void AddStatusEffects(
+        IReadOnlyDictionary<string, object?> fields,
+        string field,
+        string? effectName,
+        List<ItemPresentationEffectSnapshot> effects)
+    {
+        if (!fields.TryGetValue(field, out var value) || value == null) return;
+
+        if (value is LeveledStatusEffectSnapshot single)
+        {
+            AddStatusEffect(single, field, effectName, effects);
+            return;
+        }
+
+        if (value is IEnumerable<LeveledStatusEffectSnapshot> snapshots)
+        {
+            foreach (var snapshot in snapshots)
+            {
+                if (snapshot != null) AddStatusEffect(snapshot, field, effectName, effects);
+            }
+        }
+    }
+
+    private static void AddStatusEffect(
+        LeveledStatusEffectSnapshot snapshot,
+        string source,
+        string? effectName,
+        List<ItemPresentationEffectSnapshot> effects)
+    {
+        // A LeveledStatusEffect is a Parameter with a default instance, so an item that never
+        // configured one still carries an empty snapshot. Level and lifetime are both zero in
+        // that state and it means the item applies nothing, not that a reference went missing.
+        // Emitting it produced 200 facts that named no effect and diagnosed themselves as
+        // unresolved. A null reference carrying a level would be a real contradiction, so that
+        // case is reported rather than skipped.
+        if (snapshot.StatusEffectRef == null)
+        {
+            if (snapshot.Level == 0f && snapshot.Lifetime == 0f) return;
+        }
+
+        var refName = snapshot.StatusEffectRef?.Name;
+        var label = !string.IsNullOrWhiteSpace(effectName)
+            ? effectName!
+            : !string.IsNullOrWhiteSpace(refName) ? refName! : "";
+        effects.Add(new ItemPresentationEffectSnapshot
+        {
+            Kind = "status-effect",
+            Label = label,
+            TargetType = "status-effect",
+            TargetRef = snapshot.StatusEffectRef,
+            Level = snapshot.Level,
+            Source = source,
+        });
     }
 
     private static string BuildEffectsSource(IReadOnlyList<ItemPresentationEffectSnapshot> effects, IReadOnlyDictionary<string, object?> fields)
@@ -189,12 +238,25 @@ public static class ItemPresentationBuilder
     }
 
     private static List<ItemPresentationDiagnosticSnapshot> BuildDiagnostics(
-        IEnumerable<ItemPresentationEffectSnapshot> effects,
-        IReadOnlyDictionary<string, object?> fields)
+        IEnumerable<ItemPresentationEffectSnapshot> effects)
     {
         var diagnostics = new List<ItemPresentationDiagnosticSnapshot>();
         foreach (var effect in effects)
         {
+            if (effect.TargetType == "status-effect")
+            {
+                if (effect.TargetRef == null)
+                {
+                    diagnostics.Add(new ItemPresentationDiagnosticSnapshot
+                    {
+                        Code = "unresolvedEffectTarget",
+                        Field = effect.Source,
+                        Message = $"Effect '{effect.Label}' does not have a status-effect reference.",
+                    });
+                }
+                continue;
+            }
+
             if (effect.TargetType != null && string.IsNullOrWhiteSpace(effect.TargetId))
             {
                 diagnostics.Add(new ItemPresentationDiagnosticSnapshot
@@ -204,15 +266,6 @@ public static class ItemPresentationBuilder
                     Message = $"Effect '{effect.Label}' does not have a resolved {effect.TargetType} target.",
                 });
             }
-        }
-        if (fields.ContainsKey("statusEffectsJson"))
-        {
-            diagnostics.Add(new ItemPresentationDiagnosticSnapshot
-            {
-                Code = "unresolvedEffectTarget",
-                Field = "presentation.effects",
-                Message = "Effect 'Status effects' does not have a resolved status-effect target.",
-            });
         }
         return diagnostics;
     }

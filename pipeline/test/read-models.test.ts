@@ -61,6 +61,13 @@ describe("emitItemReadModels", () => {
     db.exec(buildDDL(itemEntity, itemVariants));
     canonicaliseItems(db, itemEntity, itemVariants, itemEnvelope);
     db.exec(`
+      CREATE TABLE status_effects (id TEXT PRIMARY KEY);
+      INSERT INTO status_effects (id) VALUES
+        ('91a00001.fixture-status-effect-bleeding'),
+        ('91a00002.fixture-status-effect-burning');
+    `);
+
+    db.exec(`
       CREATE TABLE asset_refs (
         entity_id TEXT NOT NULL,
         entity_row_id TEXT NOT NULL,
@@ -157,13 +164,92 @@ describe("emitItemReadModels", () => {
     );
     expect(JSON.stringify(richDescription.nodes)).toContain("/terms/stamina");
     expect(JSON.parse(presentation.stat_rows_json)).toEqual([]);
-    expect(JSON.parse(presentation.effect_facts_json)).toEqual([]);
-    expect(JSON.parse(presentation.diagnostics_json)).toContainEqual(
+    const statusFacts = JSON.parse(presentation.effect_facts_json) as {
+      targetId: string | null;
+      level: number | null;
+    }[];
+    expect(statusFacts).toEqual([
       expect.objectContaining({
-        code: "unresolvedEffectTarget",
-        message: "Effect 'Status effects' does not have a resolved status-effect target.",
+        targetId: "91a00001.fixture-status-effect-bleeding",
+        level: 1,
       }),
+      expect.objectContaining({
+        targetId: "91a00002.fixture-status-effect-burning",
+        level: 2.5,
+      }),
+    ]);
+    const appliesEdges = db
+      .query(
+        `SELECT edge_id, target_id, predicate, label, evidence_json
+         FROM entity_edges
+         WHERE source_id = '6a71c0de.fixture-stamina-draught' AND predicate = 'applies'
+         ORDER BY edge_id`,
+      )
+      .all() as {
+      edge_id: string;
+      target_id: string;
+      predicate: string;
+      label: string;
+      evidence_json: string;
+    }[];
+    expect(appliesEdges).toHaveLength(2);
+    expect(appliesEdges).toEqual([
+      expect.objectContaining({
+        edge_id:
+          "6a71c0de.fixture-stamina-draught:applies:status-effect:91a00001.fixture-status-effect-bleeding",
+        target_id: "91a00001.fixture-status-effect-bleeding",
+        predicate: "applies",
+        label: "Applies",
+      }),
+      expect.objectContaining({
+        edge_id:
+          "6a71c0de.fixture-stamina-draught:applies:status-effect:91a00002.fixture-status-effect-burning",
+        target_id: "91a00002.fixture-status-effect-burning",
+        predicate: "applies",
+        label: "Applies",
+      }),
+    ]);
+    expect(JSON.parse(appliesEdges[0]!.evidence_json)).toEqual({
+      source: "items.statusEffectRef",
+      level: 1,
+    });
+    expect(JSON.parse(appliesEdges[1]!.evidence_json)).toEqual({
+      source: "items.statusEffectRef",
+      level: 2.5,
+    });
+    const fireFacts = db
+      .query<{ effect_facts_json: string }, [string]>(
+        `SELECT effect_facts_json FROM item_presentation_rows WHERE id = ?`,
+      )
+      .get("8c0ffee0.fixture-throwing-potion");
+    expect(JSON.parse(fireFacts!.effect_facts_json)[0]).toEqual(
+      expect.objectContaining({ targetId: null }),
     );
+    expect(
+      db
+        .query(
+          `SELECT count(*) AS count FROM entity_edges
+           WHERE source_id = '8c0ffee0.fixture-throwing-potion' AND predicate = 'applies'`,
+        )
+        .get(),
+    ).toEqual({ count: 0 });
+    expect(
+      db
+        .query(
+          `SELECT code, entity_id FROM pipeline_diagnostics
+           WHERE entity_id = '8c0ffee0.fixture-throwing-potion' AND code = 'unresolvedEffectTarget'`,
+        )
+        .get(),
+    ).toEqual({ code: "unresolvedEffectTarget", entity_id: "8c0ffee0.fixture-throwing-potion" });
+    expect(
+      JSON.parse(
+        db
+          .query<{ effect_facts_json: string }, [string]>(
+            `SELECT effect_facts_json FROM item_presentation_rows WHERE id = ?`,
+          )
+          .get("4ed20218.fixture-iron-sword")!.effect_facts_json,
+      ),
+    ).toEqual([]);
 
     const variantSection = db
       .query(

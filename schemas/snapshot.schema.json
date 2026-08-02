@@ -270,10 +270,32 @@
         }
       }
     },
+    "snapshotRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "enum": ["lookupAsset", "namedAsset", "record", "runtimeObject", "missing"]
+        },
+        "guid": { "type": ["string", "null"] },
+        "unityType": { "type": ["string", "null"] },
+        "entity": { "type": ["string", "null"] },
+        "name": { "type": ["string", "null"] },
+        "table": { "type": ["string", "null"] },
+        "subtable": { "type": ["string", "null"] },
+        "id": { "type": ["string", "null"] },
+        "recordType": { "type": ["string", "null"] },
+        "extractionId": { "type": ["string", "null"] },
+        "stable": { "type": ["boolean", "null"] },
+        "reason": { "type": ["string", "null"] },
+        "source": { "type": ["string", "null"] }
+      }
+    },
     "itemPresentationEffect": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "label", "targetType", "targetId", "source"],
+      "required": ["kind", "label", "targetType", "targetId", "targetRef", "level", "source"],
       "properties": {
         "kind": {
           "type": "string"
@@ -286,6 +308,12 @@
         },
         "targetId": {
           "type": ["string", "null"]
+        },
+        "targetRef": {
+          "oneOf": [{ "$ref": "#/$defs/snapshotRef" }, { "type": "null" }]
+        },
+        "level": {
+          "type": ["number", "null"]
         },
         "source": {
           "type": "string"

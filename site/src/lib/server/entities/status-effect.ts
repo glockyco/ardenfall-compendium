@@ -1,6 +1,6 @@
 import { all, get } from "../db";
 import { getEntityNodeBySlug } from "./item";
-import type { RichTextDocument } from "./item";
+import type { RelationshipEdge, RichTextDocument } from "./item";
 
 interface StatusEffectOverviewRecord {
   id: string;
@@ -18,7 +18,6 @@ interface StatusEffectPresentationRecord {
   tooltip_rich_text_json: string | null;
   route_path: string;
 }
-
 export interface StatusEffectOverviewRow {
   id: string;
   name: string | null;
@@ -68,6 +67,40 @@ export const listStatusEffects = (): StatusEffectOverviewRow[] => {
       : row,
   );
 };
+
+export const listItemsApplyingStatusEffect = (statusEffectId: string): RelationshipEdge[] =>
+  all<{
+    source_id: string;
+    label: string;
+    route_path: string;
+    predicate: string;
+    edge_label: string;
+    weight: number;
+    anchor: string | null;
+  }>(
+    `SELECT e.source_id, n.label, n.route_path, e.predicate,
+            e.label AS edge_label, e.weight, e.anchor
+     FROM entity_edges e
+     JOIN entity_nodes n
+       ON n.entity_type = e.source_type
+      AND n.entity_id = e.source_id
+      AND n.is_public = 1
+     WHERE e.source_type = 'item'
+       AND e.target_type = 'status-effect'
+       AND e.target_id = ?
+       AND e.predicate = 'applies'
+     ORDER BY n.label, e.source_id`,
+    [statusEffectId],
+  ).map((row) => ({
+    targetType: "item",
+    targetId: row.source_id,
+    targetLabel: row.label,
+    targetRoutePath: row.route_path,
+    predicate: row.predicate,
+    label: row.edge_label,
+    weight: row.weight,
+    anchor: row.anchor,
+  }));
 
 export const getStatusEffectPresentation = (
   slug: string,
