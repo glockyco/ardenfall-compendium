@@ -92,6 +92,6 @@ Mature game wikis converge on **generated inverse relationship blocks**: "used b
 
 **Pagefind** is the strongest fit for search here. It runs after prerendering, chunks its index so a browser fetches a subset, and its own documentation reports a 2,496-page site indexing in 2.4 seconds. SQLite FTS5 in WASM is the architecturally purer option and costs materially more to implement.
 
-Warframe's database guide contains the warning most relevant to an extractor: **adding data is easier than removing it**, because existing pages depend on what was there before. An entity that disappears from a capture should be marked removed rather than silently vanishing.
+Warframe's guidance on retaining removed content does not transfer. It exists because a hand-authored wiki cannot be rebuilt, so an editor's prose depends on data rows that must not vanish underneath it. Every page here is regenerated from one snapshot with no authored layer, so an entity leaving the game correctly leaves the site.
 
 The research also argues, independently of our own conclusion, that basemap work should follow graph and search work rather than precede it. It does not solve the discoverability failure.

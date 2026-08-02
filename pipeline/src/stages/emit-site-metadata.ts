@@ -28,12 +28,6 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
   const insertColumn = db.prepare(
     `INSERT INTO site_overview_columns (entity_id, column_id, field_id, position, renderer, sortable) VALUES (?, ?, ?, ?, ?, ?)`,
   );
-  const insertSection = db.prepare(
-    `INSERT INTO site_detail_sections (entity_id, section_id, kind, title, position, renderer_key, payload_json) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-  );
-  const insertSectionField = db.prepare(
-    `INSERT INTO site_detail_section_fields (entity_id, section_id, field_id, position) VALUES (?, ?, ?, ?)`,
-  );
   const insertVariant = db.prepare(
     `INSERT INTO item_variants (variant_id, label, unity_type, canonical_table, parent_variant_id, position, is_public_route) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
@@ -122,27 +116,6 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
         overview.columns.forEach((field, i) => {
           const renderer = module?.site?.overviewRenderer?.(field) ?? "text";
           insertColumn.run(entityId, `col_${field}`, field, i, renderer, 1);
-        });
-      }
-      const detail = entity.site?.detail;
-      if (detail) {
-        detail.sections.forEach((section, i) => {
-          if (section.kind === "fieldList") {
-            insertSection.run(entityId, section.id, "fieldList", section.title, i, null, null);
-            section.fields.forEach((field, j) =>
-              insertSectionField.run(entityId, section.id, field, j),
-            );
-          } else {
-            insertSection.run(
-              entityId,
-              section.id,
-              "custom",
-              section.title,
-              i,
-              section.renderer,
-              JSON.stringify(section.props ?? {}),
-            );
-          }
         });
       }
       for (const readModel of module?.site?.readModels ?? []) {

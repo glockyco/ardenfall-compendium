@@ -215,7 +215,7 @@ if (!tagDetail.includes(tagProbe.item_name)) {
 }
 
 function readStatProbe(): StatProbeRow {
-  const db = new Database(join(import.meta.dirname, "..", "static", "data.sqlite"), {
+  const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
     readonly: true,
     create: false,
   });
@@ -241,7 +241,7 @@ function readStatProbe(): StatProbeRow {
 }
 
 function readItemCategoryProbe(): ItemCategoryProbeRow {
-  const db = new Database(join(import.meta.dirname, "..", "static", "data.sqlite"), {
+  const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
     readonly: true,
     create: false,
   });
@@ -281,7 +281,7 @@ function readItemCategoryProbe(): ItemCategoryProbeRow {
 }
 
 function readItemTagProbe(): ItemTagProbeRow {
-  const db = new Database(join(import.meta.dirname, "..", "static", "data.sqlite"), {
+  const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
     readonly: true,
     create: false,
   });

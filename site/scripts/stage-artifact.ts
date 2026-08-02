@@ -26,7 +26,7 @@ import validateArtifactManifest from "../../pipeline/dist/validate-artifact-mani
 export interface StageArtifactOptions {
   /** Directory holding `artifact-manifest.json`, `data.sqlite`, assets, and static files. */
   artifactDir: string;
-  /** Destination the validated artifact is copied into. */
+  /** Destination the validated public asset files are copied into. */
   targetDir: string;
   /** Which artifact kind the caller expects. A mismatch is rejected. */
   mode: "fixture" | "release";
@@ -96,6 +96,7 @@ type CountKey = keyof ArtifactCounts;
 
 type PublicRelease = Pick<
   ArtifactManifest,
+  | "createdAt"
   | "schemaVersion"
   | "artifactKind"
   | "artifactId"
@@ -114,7 +115,8 @@ export interface StageArtifactResult {
 }
 
 /**
- * Validates an artifact against its manifest and copies it to `targetDir`.
+ * Validates an artifact and copies its public assets to `targetDir` and its
+ * build-time SQLite database to the sibling `.data` directory.
  *
  * Throws when the manifest is missing or invalid, the artifact kind does not
  * match `mode`, a recorded file hash or byte size disagrees with the file on
@@ -161,15 +163,22 @@ export async function stageArtifact({
   if (!existsSync(redirectsPath)) throw new Error(`missing redirects artifact: ${redirectsPath}`);
 
   const projectRoot = dirname(targetDir);
+  const dataDir = join(projectRoot, ".data");
 
   mkdirSync(targetDir, { recursive: true });
+  mkdirSync(dataDir, { recursive: true });
   rmSync(join(targetDir, "data.sqlite"), { force: true });
+  rmSync(join(targetDir, "data.sqlite-wal"), { force: true });
+  rmSync(join(targetDir, "data.sqlite-shm"), { force: true });
+  rmSync(join(dataDir, "data.sqlite"), { force: true });
+  rmSync(join(dataDir, "data.sqlite-wal"), { force: true });
+  rmSync(join(dataDir, "data.sqlite-shm"), { force: true });
   rmSync(join(targetDir, "_release.json"), { force: true });
   rmSync(join(projectRoot, "_redirects"), { force: true });
   rmSync(join(targetDir, "_redirects"), { force: true });
   rmSync(join(targetDir, "assets"), { recursive: true, force: true });
 
-  copyFileSync(sqlitePath, join(targetDir, "data.sqlite"));
+  copyFileSync(sqlitePath, join(dataDir, "data.sqlite"));
   copyTree(assetsDir, join(targetDir, "assets"));
   copyFileSync(redirectsPath, join(projectRoot, "_redirects"));
   writeFileSync(
@@ -185,6 +194,7 @@ function isArtifactManifest(value: unknown): value is ArtifactManifest {
 
 function publicRelease(manifest: ArtifactManifest): PublicRelease {
   return {
+    createdAt: manifest.createdAt,
     schemaVersion: manifest.schemaVersion,
     artifactKind: manifest.artifactKind,
     artifactId: manifest.artifactId,

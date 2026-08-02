@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 
-const dbPath = () => join(process.cwd(), "static", "data.sqlite");
+const dbPath = () => join(process.cwd(), ".data", "data.sqlite");
 const require = createRequire(import.meta.url);
 
 type SqlParams = readonly unknown[] | Record<string, unknown>;

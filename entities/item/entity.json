@@ -101,22 +101,6 @@
         { "field": "variant", "kind": "categorical" },
         { "field": "value", "kind": "range" }
       ]
-    },
-    "detail": {
-      "sections": [
-        {
-          "id": "summary",
-          "kind": "fieldList",
-          "title": "Summary",
-          "fields": ["name", "weight", "value"]
-        },
-        {
-          "id": "description",
-          "kind": "fieldList",
-          "title": "Description",
-          "fields": ["description"]
-        }
-      ]
     }
   },
 

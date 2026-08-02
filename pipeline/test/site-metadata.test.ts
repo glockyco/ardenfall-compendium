@@ -7,7 +7,7 @@ import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 const ctx = { workspaceRoot: ".", snapshotDir: "", outDir: ".", log: () => undefined };
 
 describe("emitSiteMetadata", () => {
-  it("populates site_entities, fields, columns, sections, item_variants", async () => {
+  it("populates site_entities, fields, columns, item_variants", async () => {
     const desc = await loadDescriptors.run({}, ctx);
     const db = new Database(":memory:");
     db.exec(SITE_METADATA_DDL);
@@ -32,14 +32,6 @@ describe("emitSiteMetadata", () => {
       { field_id: "weight", renderer: "text", sortable: 1 },
       { field_id: "variant", renderer: "text", sortable: 1 },
     ]);
-
-    const sections = db
-      .query(
-        "SELECT section_id, kind FROM site_detail_sections WHERE entity_id = 'item' ORDER BY position",
-      )
-      .all() as { section_id: string; kind: string }[];
-    expect(sections.map((s) => s.section_id)).toEqual(["summary", "description"]);
-    expect(sections.every((s) => s.kind === "fieldList")).toBe(true);
 
     const variants = db
       .query("SELECT variant_id, parent_variant_id FROM item_variants ORDER BY position")

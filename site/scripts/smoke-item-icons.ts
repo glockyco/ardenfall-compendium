@@ -10,7 +10,6 @@ const detail = source(["src", "routes", "items", "[id]", "+page.svelte"]);
 const table = source(["src", "lib", "components", "EntityTable.svelte"]);
 const itemIcon = source(["src", "lib", "components", "items", "ItemIcon.svelte"]);
 const itemHeader = source(["src", "lib", "components", "items", "ItemHeader.svelte"]);
-const tooltipCard = source(["src", "lib", "components", "items", "ItemTooltipCard.svelte"]);
 const richTextNode = source(["src", "lib", "components", "content", "RichTextNode.svelte"]);
 const readModels = source(["src", "lib", "server", "read-models.ts"]);
 const itemReadModel = source(["src", "lib", "server", "entities", "item.ts"]);
@@ -27,7 +26,6 @@ const required: Array<readonly [fileSource: string, snippet: string]> = [
   [itemIcon, "{#if src}"],
   [itemIcon, "alt"],
   [itemHeader, "<ItemIcon"],
-  [tooltipCard, "<ItemIcon"],
   [detail, "ItemHeader"],
   [detail, "ItemPresentationPanel"],
 ];

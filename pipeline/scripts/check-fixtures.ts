@@ -66,7 +66,7 @@ for (const dir of ["fixtures/synthetic", "fixtures/real-capsule"]) {
 }
 
 // Block accidentally-committed forbidden paths in CI checkouts.
-for (const forbidden of ["snapshots", "site/static/data.sqlite", "site/static/assets"]) {
+for (const forbidden of ["snapshots", "site/.data/data.sqlite", "site/static/assets"]) {
   if (statSync(forbidden, { throwIfNoEntry: false })) {
     if (process.env.CI === "true") {
       errors.push(`forbidden path present in CI checkout: ${forbidden}`);

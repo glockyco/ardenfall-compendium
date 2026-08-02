@@ -21,11 +21,11 @@ site/.wrangler/
 # Pipeline outputs
 pipeline/dist/*.mjs.tmp
 pipeline/artifacts/
-site/static/data.sqlite
+site/.data/data.sqlite
 site/static/_release.json
 site/_redirects
-site/static/data.sqlite-wal
-site/static/data.sqlite-shm
+site/.data/data.sqlite-wal
+site/.data/data.sqlite-shm
 site/static/assets/
 site/static/tiles/
 

@@ -1,22 +1,23 @@
 # Site Agent Orientation
 
-SvelteKit static-first site. Generated data is shipped as `static/data.sqlite` plus `static/assets/*.webp`, then read at build time by server-only route loaders so ordinary pages prerender to HTML. The site **never** parses descriptors or schema files at runtime; it reads pipeline-emitted `site_*` tables from SQLite.
+SvelteKit static-first site. Generated data is staged as `.data/data.sqlite` plus `static/assets/*.webp`, then read at build time by server-only route loaders so ordinary pages prerender to HTML. The site **never** parses descriptors or schema files at runtime; it reads pipeline-emitted `site_*` tables from SQLite.
 
 ## Hard rules
 
 - Default route architecture is SSR + prerender + no CSR. Generated compendium pages should be static HTML served by Cloudflare Workers Static Assets. Opt into CSR or request-time Worker rendering only with a documented route-level reason.
 - Game text carries TMP markup. A page must never render a raw game string. Read models keep the source column server-side and expose only the translated rich-text document, so pages render typed rich-text nodes.
-- Design tokens live in `src/app.css`. Component styling uses token-backed Tailwind utilities or CSS variables; do not hardcode colours, shadows, or one-off spacing systems.
-- shadcn-svelte components are owned: edit `src/lib/components/ui/*` freely; do not depend on a specific upstream version.
-- Renderer registries (`sections`, etc.) merge typed exported maps at boot. No global `register()` calls.
+- Design tokens live in `src/app.css`. Component styling uses token-backed Tailwind utilities or CSS variables; do not hardcode colours, shadows, or one-off spacing systems. Tailwind v4 only generates a colour utility when the matching theme variable exists, and a bare `border` resolves to `currentColor`, so a class naming a token that is not defined silently renders nothing. Pair every `border` with an explicit colour.
+- Control boundaries use `border-input-border`, which meets the 3:1 that WCAG 1.4.11 requires. `border-border` is for decorative edges and does not.
+- The build database is private. It lives in `.data/`, outside the served root, because anything under `static/` is published. Only `static/assets/` and `static/_release.json` are meant to be public.
+- shadcn-svelte components are owned: edit `src/lib/components/ui/*` freely; do not depend on a specific upstream version. Only the primitives actually in use are kept, so add one when a page needs it rather than vendoring a set in advance.
 
 ## Layout
 
-- `src/lib/components/ui/` — copied shadcn-svelte primitives (one-owner per file).
-- `src/lib/entity/sections/` — built-in section renderers.
-- `src/lib/entities/<id>/` — per-entity custom renderers.
+- `src/lib/components/ui/` — vendored shadcn-svelte primitives, kept only where consumed.
+- `src/lib/components/<entity>/` — entity-specific presentation components.
 - `src/lib/server/` — server-only build-time read models for prerendering.
 - `src/routes/` — pages.
+- `src/routes/terms/[id]/` renders nothing today and is deliberate, not dead. The pipeline emits `term` entity nodes and rich text links to them when a target resolves. The 2026-08-02 live export produced zero term rows, which is an open question about the emitter rather than proof the game has no terms.
 
 ## UI governance
 

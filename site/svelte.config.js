@@ -7,8 +7,9 @@ const config = {
   kit: {
     // Cloudflare adapter writes a Worker entry plus prerendered/static assets
     // into .svelte-kit/cloudflare. Keep almost all generated routes
-    // prerendered so matching HTML, data.sqlite, and WebP files are served by
-    // Workers Static Assets without invoking the Worker.
+    // prerendered so matching HTML and WebP files are served by Workers Static
+    // Assets without invoking the Worker. The build-time SQLite database stays
+    // in site/.data and is never copied into the served asset bundle.
     adapter: adapter({}),
     alias: { $lib: "src/lib" },
   },

@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 interface ArtifactProbe {
@@ -9,13 +8,14 @@ interface ArtifactProbe {
 
 interface ArtifactManifest {
   artifactId: string;
+  source: { snapshotManifestSha256: string };
   git: { commit: string };
-  outputs: { sqlite: { sha256: string } };
   probes: { items: [ArtifactProbe, ...ArtifactProbe[]] };
 }
 
 interface DeployedRelease {
   artifactId: string;
+  source: { snapshotManifestSha256: string };
   git: { commit: string };
 }
 
@@ -48,16 +48,9 @@ if (deployed.git.commit !== manifest.git.commit) {
     `deployed git commit mismatch: expected ${manifest.git.commit}, got ${deployed.git.commit}`,
   );
 }
-
-const sqliteRes = await fetch(`${origin}/data.sqlite`, {
-  headers: { "cache-control": "no-cache" },
-});
-if (!sqliteRes.ok) throw new Error(`/data.sqlite returned ${sqliteRes.status}`);
-const sqliteBytes = new Uint8Array(await sqliteRes.arrayBuffer());
-const sqliteHash = createHash("sha256").update(sqliteBytes).digest("hex");
-if (sqliteHash !== manifest.outputs.sqlite.sha256) {
+if (deployed.source.snapshotManifestSha256 !== manifest.source.snapshotManifestSha256) {
   throw new Error(
-    `deployed sqlite hash mismatch: expected ${manifest.outputs.sqlite.sha256}, got ${sqliteHash}`,
+    `deployed snapshot manifest mismatch: expected ${manifest.source.snapshotManifestSha256}, got ${deployed.source.snapshotManifestSha256}`,
   );
 }
 
@@ -123,12 +116,12 @@ function isArtifactManifest(value: unknown): value is ArtifactManifest {
     return false;
   }
   const git = value.git;
-  const outputs = value.outputs;
+  const source = value.source;
   const probes = value.probes;
   if (!isRecord(git) || !isString(git.commit)) {
     return false;
   }
-  if (!isRecord(outputs) || !isRecord(outputs.sqlite) || !isString(outputs.sqlite.sha256)) {
+  if (!isRecord(source) || !isString(source.snapshotManifestSha256)) {
     return false;
   }
   return (
@@ -143,5 +136,8 @@ function isDeployedRelease(value: unknown): value is DeployedRelease {
   if (!isRecord(value) || !isString(value.artifactId) || !isRecord(value.git)) {
     return false;
   }
-  return isString(value.git.commit);
+  if (!isString(value.git.commit) || !isRecord(value.source)) {
+    return false;
+  }
+  return isString(value.source.snapshotManifestSha256);
 }

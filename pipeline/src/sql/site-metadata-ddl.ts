@@ -27,24 +27,6 @@ CREATE TABLE site_overview_columns (
   sortable         INTEGER NOT NULL DEFAULT 1,
   PRIMARY KEY (entity_id, column_id)
 );
-CREATE TABLE site_detail_sections (
-  entity_id                TEXT NOT NULL,
-  section_id               TEXT NOT NULL,
-  kind                     TEXT NOT NULL,
-  title                    TEXT NOT NULL,
-  position                 INTEGER NOT NULL,
-  renderer_key             TEXT,
-  payload_schema_version   INTEGER NOT NULL DEFAULT 1,
-  payload_json             TEXT,
-  PRIMARY KEY (entity_id, section_id)
-);
-CREATE TABLE site_detail_section_fields (
-  entity_id        TEXT NOT NULL,
-  section_id       TEXT NOT NULL,
-  field_id         TEXT NOT NULL,
-  position         INTEGER NOT NULL,
-  PRIMARY KEY (entity_id, section_id, field_id)
-);
 CREATE TABLE item_variants (
   variant_id           TEXT PRIMARY KEY,
   label                TEXT NOT NULL,

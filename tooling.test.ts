@@ -882,8 +882,7 @@ describe("site prerender architecture", () => {
     expect(existsSync("site/scripts/smoke-production-release.ts")).toBe(true);
     const remoteSmoke = readFileSync("site/scripts/smoke-production-release.ts", "utf8");
     expect(remoteSmoke).toContain("/_release.json");
-    expect(remoteSmoke).toContain("data.sqlite");
-    expect(remoteSmoke).toContain("manifest.outputs.sqlite.sha256");
+    expect(remoteSmoke).toContain("source.snapshotManifestSha256");
 
     const deploy = readFileSync("site/scripts/deploy-production.ts", "utf8");
     expect(deploy).toContain("stageArtifact");
@@ -903,7 +902,7 @@ describe("site prerender architecture", () => {
     expect(existsSync("site/src/lib/server/read-models.ts")).toBe(true);
     expect(existsSync("site/src/lib/server/db.ts")).toBe(true);
     expect(siteServerDb).toContain("better-sqlite3");
-    expect(siteServerDb).toContain('"static", "data.sqlite"');
+    expect(siteServerDb).toContain('".data", "data.sqlite"');
     expect(siteReadModels).not.toContain("$app/environment");
     expect(siteServerDb).not.toContain("$app/environment");
     expect(siteReadModels).not.toContain("@sqlite.org/sqlite-wasm");

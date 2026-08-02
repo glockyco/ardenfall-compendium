@@ -17,24 +17,6 @@ export interface SiteOverviewColumn {
   sortable: number;
 }
 
-export interface SiteDetailSection {
-  entity_id: string;
-  section_id: string;
-  kind: "fieldList" | "custom";
-  title: string;
-  position: number;
-  renderer_key: string | null;
-  payload_schema_version: number;
-  payload_json: string | null;
-}
-
-export interface SiteDetailSectionField {
-  entity_id: string;
-  section_id: string;
-  field_id: string;
-  position: number;
-}
-
 export interface SiteEntityField {
   entity_id: string;
   field_id: string;
@@ -54,18 +36,6 @@ export const listOverviewColumns = (id: string): SiteOverviewColumn[] =>
   all<SiteOverviewColumn>(
     "SELECT * FROM site_overview_columns WHERE entity_id = ? ORDER BY position",
     [id],
-  );
-
-export const listDetailSections = (id: string): SiteDetailSection[] =>
-  all<SiteDetailSection>(
-    "SELECT * FROM site_detail_sections WHERE entity_id = ? ORDER BY position",
-    [id],
-  );
-
-export const listSectionFields = (entityId: string, sectionId: string): SiteDetailSectionField[] =>
-  all<SiteDetailSectionField>(
-    "SELECT * FROM site_detail_section_fields WHERE entity_id = ? AND section_id = ? ORDER BY position",
-    [entityId, sectionId],
   );
 
 export const getEntityField = (entityId: string, fieldId: string): SiteEntityField | undefined =>
@@ -118,7 +88,11 @@ export { getStatusEffectPresentation, listStatusEffects } from "./entities/statu
 export type { SpellOverviewRow, SpellPresentationRow } from "./entities/spell";
 export { getSpellPresentation, listSpells } from "./entities/spell";
 
-export type { StatTypeOverviewRow, StatTypePresentationRow } from "./entities/stat-type";
+export type {
+  StatTypeOverviewRow,
+  StatTypePresentationRow,
+  StatTypeReference,
+} from "./entities/stat-type";
 export { getStatTypePresentation, listStatTypes } from "./entities/stat-type";
 
 export type {
