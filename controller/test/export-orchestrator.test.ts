@@ -388,6 +388,7 @@ describe("validateSnapshot", () => {
         "item-tag": 1,
         location: 1,
         portal: 1,
+        spell: 1,
       },
     });
   });
@@ -395,7 +396,15 @@ describe("validateSnapshot", () => {
   it("rejects a semantically empty snapshot", async () => {
     const root = await snapshotRoot(roots);
     await writeSnapshot(root, {
-      emptyEntities: ["item", "stat-type", "item-category", "item-tag", "location", "portal"],
+      emptyEntities: [
+        "item",
+        "stat-type",
+        "item-category",
+        "item-tag",
+        "location",
+        "portal",
+        "spell",
+      ],
     });
 
     await expect(validateSnapshot(root)).rejects.toThrow(/snapshot contains no items/);
@@ -520,6 +529,11 @@ describe("validateSnapshot", () => {
         null,
         2,
       ),
+      "spells.json": JSON.stringify(
+        { rows: emptyEntities.has("spell") ? [] : [{ id: "named;spell;spell_fire-shield" }] },
+        null,
+        2,
+      ),
       "asset-manifest.json": JSON.stringify({ assets: [], itemIconMetadata: [] }, null, 2),
       "master-tooltip.json": JSON.stringify({ schemaVersion: 2, tooltipCodes: {} }, null, 2),
     };
@@ -553,6 +567,7 @@ describe("validateSnapshot", () => {
               options.countOverrides?.["item-tag"] ?? (emptyEntities.has("item-tag") ? 0 : 1),
             location: options.countOverrides?.location ?? (emptyEntities.has("location") ? 0 : 1),
             portal: options.countOverrides?.portal ?? (emptyEntities.has("portal") ? 0 : 1),
+            spell: options.countOverrides?.spell ?? (emptyEntities.has("spell") ? 0 : 1),
           },
           hashes,
           diagnostics: { fatal: options.fatalDiagnostics ?? 0 },

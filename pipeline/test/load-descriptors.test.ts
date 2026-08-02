@@ -6,7 +6,7 @@ import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { validateDescriptorCoverage } from "$pipeline/entities/registry";
 
 describe("loadDescriptors", () => {
-  it("loads all six committed entity descriptors", async () => {
+  it("loads every committed entity descriptor", async () => {
     const result = await loadDescriptors.run(
       {},
       {
@@ -23,6 +23,7 @@ describe("loadDescriptors", () => {
       "item-tag",
       "location",
       "portal",
+      "spell",
       "stat-type",
     ]);
   });

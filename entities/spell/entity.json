@@ -1,0 +1,39 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "spell",
+  "kind": "definition",
+  "label": { "singular": "Spell", "plural": "Spells" },
+  "extraction": {
+    "source": "namedAsset",
+    "root": "Resources.FindObjectsOfTypeAll<SpellData>",
+    "walker": "SpellExtractor"
+  },
+  "presentationContext": { "renderContext": "spell-presentation-v1" },
+  "site": {
+    "route": "/spells"
+  },
+  "fields": [
+    { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
+    { "name": "spellName", "type": "string", "from": "spellName", "missingPolicy": "diagnostic" },
+    {
+      "name": "statTypeRef",
+      "type": "ref:asset",
+      "from": "statType",
+      "missingPolicy": "optional-empty"
+    },
+    { "name": "manaCost", "type": "number", "from": "manaCost", "missingPolicy": "diagnostic" },
+    {
+      "name": "isIllegal",
+      "type": "boolean",
+      "from": "isIlligal",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "iconRef",
+      "type": "ref:asset",
+      "from": "icon",
+      "missingPolicy": "optional-empty"
+    }
+  ],
+  "map": null
+}

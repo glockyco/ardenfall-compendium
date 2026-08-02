@@ -10,10 +10,13 @@ import { ITEM_TAG_DDL } from "../sql/item-tag-ddl";
 import { LOCATION_DDL } from "../sql/location-ddl";
 import { PORTAL_DDL } from "../sql/portal-ddl";
 import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
+import { SPELL_DDL } from "../sql/spell-ddl";
 import { canonicaliseItems } from "./item/canonicaliser";
 import { emitItemReadModels } from "./item/read-models";
 import { canonicaliseStatTypes } from "./stat-type/canonicaliser";
 import { emitStatTypeReadModels } from "./stat-type/read-models";
+import { canonicaliseSpells } from "./spell/canonicaliser";
+import { emitSpellReadModels } from "./spell/read-models";
 import { canonicaliseItemCategories } from "./item-category/canonicaliser";
 import { emitItemCategoryReadModels } from "./item-category/read-models";
 import { canonicaliseItemTags } from "./item-tag/canonicaliser";
@@ -159,6 +162,11 @@ export const entityRegistry: Record<string, EntityModule> = {
     canonicalise: ({ db, envelope }) => canonicaliseStatTypes(db, envelope),
     readModel: ({ db, snapshot, entity }) =>
       emitStatTypeReadModels(db, snapshot.masterTooltip, entity.site?.route),
+  },
+  spell: {
+    ddl: SPELL_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseSpells(db, envelope),
+    readModel: ({ db, entity }) => emitSpellReadModels(db, entity.site?.route),
   },
   "item-category": {
     ddl: ITEM_CATEGORY_DDL,

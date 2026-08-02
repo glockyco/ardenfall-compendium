@@ -355,6 +355,15 @@ export interface LocationSnapshotFields {
   volumes: LocationSnapshotVolume[];
 }
 
+export interface SpellSnapshotFields {
+  id: string;
+  spellName: string | null;
+  statTypeRef?: SnapshotRef | null;
+  manaCost?: number;
+  isIllegal?: boolean | null;
+  iconRef?: SnapshotRef | null;
+}
+
 export interface PortalSnapshotFields {
   id: string;
   recordRef: SnapshotRef;
