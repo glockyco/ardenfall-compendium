@@ -29,8 +29,8 @@ public static class ExtractPotionRecipe
         fields["levelModifier"] = recipeSnapshot?.LevelModifier ?? 0f;
         fields["successModifier"] = recipeSnapshot?.SuccessModifier ?? 0f;
         fields["ingredientsJson"] = recipeSnapshot?.Ingredients ?? new List<RecipeIngredientSnapshot>();
-        fields["drinkablePotionRefsJson"] = recipeSnapshot?.DrinkablePotionRefs ?? new List<object?>();
-        fields["throwingPotionRefsJson"] = recipeSnapshot?.ThrowingPotionRefs ?? new List<object?>();
+        fields["drinkablePotionRefsJson"] = recipeSnapshot?.DrinkablePotionRefs ?? new List<SnapshotRef?>();
+        fields["throwingPotionRefsJson"] = recipeSnapshot?.ThrowingPotionRefs ?? new List<SnapshotRef?>();
 
         var recipeProvenance = ProvenanceCapture.ForParameter<PotionRecipe>("recipe.Get()", recipeIsSet, inherited: !recipeIsSet);
         foreach (var field in fields.Keys)

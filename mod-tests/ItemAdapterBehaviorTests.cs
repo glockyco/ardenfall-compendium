@@ -3,7 +3,11 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using Ardenfall;
 using Ardenfall.Item;
+using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item.Adapters;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 using ArdenfallCompendium.Walker;
 using Xunit;
@@ -12,6 +16,25 @@ namespace ArdenfallCompendium.Tests;
 
 public sealed class ItemAdapterBehaviorTests
 {
+    [Fact]
+    public void ResolvedReferenceSlotUsesSnapshotRefJsonShape()
+    {
+        var asset = (StatusEffectData)RuntimeHelpers.GetUninitializedObject(typeof(StatusEffectData));
+        var resolved = ItemAdapterHelpers.ResolveOptionalAsset(new RefResolver(), asset, "statusEffectRef", "fixture", "StatusEffectData.statusEffect");
+        Assert.IsType<SnapshotRef>(resolved);
+
+        var reference = SnapshotRef.LookupAsset("status-guid", "Ardenfall.StatusEffectData", "Burning");
+        var snapshot = new LeveledStatusEffectSnapshot(reference, 2, 30, null);
+
+        Assert.IsType<SnapshotRef>(snapshot.StatusEffectRef);
+
+        var parsed = JObject.Parse(JsonConvert.SerializeObject(snapshot, JsonSettings.Default));
+        Assert.Equal("lookupAsset", parsed["statusEffectRef"]?["kind"]?.Value<string>());
+        Assert.Equal("status-guid", parsed["statusEffectRef"]?["guid"]?.Value<string>());
+        Assert.Equal("Ardenfall.StatusEffectData", parsed["statusEffectRef"]?["unityType"]?.Value<string>());
+        Assert.Equal("Burning", parsed["statusEffectRef"]?["name"]?.Value<string>());
+    }
+
     [Fact]
     public void LeveledStatusEffectSnapshotIncludesStructuredStackMode()
     {

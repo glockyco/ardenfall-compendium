@@ -19,18 +19,18 @@ public sealed record StackModeSnapshot(
     [property: JsonProperty("maxLevel")] float MaxLevel);
 
 public sealed record LeveledStatusEffectSnapshot(
-    [property: JsonProperty("statusEffectRef")] object? StatusEffectRef,
+    [property: JsonProperty("statusEffectRef")] SnapshotRef? StatusEffectRef,
     [property: JsonProperty("level")] float Level,
     [property: JsonProperty("lifetime")] float Lifetime,
     [property: JsonProperty("stackMode")] StackModeSnapshot? StackMode);
 
 public sealed record NoteSectionSnapshot(
     [property: JsonProperty("textContent")] string? TextContent,
-    [property: JsonProperty("imageRef")] object? ImageRef,
+    [property: JsonProperty("imageRef")] SnapshotRef? ImageRef,
     [property: JsonProperty("separator")] bool Separator);
 
 public sealed record RecipeIngredientSnapshot(
-    [property: JsonProperty("tagRef")] object? TagRef,
+    [property: JsonProperty("tagRef")] SnapshotRef? TagRef,
     [property: JsonProperty("count")] int Count);
 
 public sealed record PotionRecipeSnapshot(
@@ -44,8 +44,8 @@ public sealed record PotionRecipeSnapshot(
     [property: JsonProperty("levelModifier")] float LevelModifier,
     [property: JsonProperty("successModifier")] float SuccessModifier,
     [property: JsonProperty("ingredients")] List<RecipeIngredientSnapshot> Ingredients,
-    [property: JsonProperty("drinkablePotionRefs")] List<object?> DrinkablePotionRefs,
-    [property: JsonProperty("throwingPotionRefs")] List<object?> ThrowingPotionRefs);
+    [property: JsonProperty("drinkablePotionRefs")] List<SnapshotRef?> DrinkablePotionRefs,
+    [property: JsonProperty("throwingPotionRefs")] List<SnapshotRef?> ThrowingPotionRefs);
 
 public sealed record ColorSnapshot(
     [property: JsonProperty("r")] float R,
@@ -86,7 +86,7 @@ public sealed record ProjectileSettingsSnapshot(
     [property: JsonProperty("forceOffset")] float ForceOffset);
 
 public sealed record LeveledSpellDataSnapshot(
-    [property: JsonProperty("spellRef")] object? SpellRef,
+    [property: JsonProperty("spellRef")] SnapshotRef? SpellRef,
     [property: JsonProperty("spellName")] string? SpellName,
     [property: JsonProperty("level")] float Level,
     [property: JsonProperty("secondaryLevel")] float SecondaryLevel,
@@ -108,7 +108,7 @@ public static class ItemAdapterHelpers
         return diagnostics;
     }
 
-    public static object? ResolveOptionalAsset(RefResolver? refs, Object? asset, string field, string rowId, string source)
+    public static SnapshotRef? ResolveOptionalAsset(RefResolver? refs, Object? asset, string field, string rowId, string source)
     {
         if (ReferenceEquals(asset, null) || refs == null) return null;
         return refs.ResolveAsset(asset, field, rowId, MissingPolicy.Diagnostic, source);
@@ -266,10 +266,10 @@ public static class ItemAdapterHelpers
         }
         return snapshots;
     }
-    public static List<object?> SnapshotRefs<T>(List<T>? assets, RefResolver? refs, string field, string rowId, string source)
+    public static List<SnapshotRef?> SnapshotRefs<T>(List<T>? assets, RefResolver? refs, string field, string rowId, string source)
         where T : Object
     {
-        var snapshots = new List<object?>();
+        var snapshots = new List<SnapshotRef?>();
         if (assets == null) return snapshots;
         foreach (var asset in assets)
         {
