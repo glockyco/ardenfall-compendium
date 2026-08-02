@@ -9,18 +9,18 @@ function seed(db: Database): void {
   db.exec(LOCATION_DDL);
   db.exec(`
     INSERT INTO locations (
-      id, game_location_id, name, enabled, map_id, source_map_position_json,
-      show_on_map, show_on_map_debug_only, allow_fast_travel, display_on_enter_volume
+      id, name, enabled, map_id, source_map_position_json,
+      show_on_map, show_on_map_debug_only, allow_fast_travel
     ) VALUES
-      ('11111111.fixture-town', 'town', 'Harbor Town', 1, 'ardenfall',
-       '{"x":12,"y":3,"z":-8}', 1, 0, 1, 1),
-      ('22222222.fixture-debug-cave', 'cave', 'Debug Cave', 1, NULL,
-       '{"x":-4,"y":1,"z":6}', 1, 1, 0, 1);
+      ('11111111.fixture-town', 'Harbor Town', 1, 'ardenfall',
+       '{"x":12,"y":3,"z":-8}', 1, 0, 1),
+      ('22222222.fixture-debug-cave', 'Debug Cave', 1, NULL,
+       '{"x":-4,"y":1,"z":6}', 1, 1, 0);
     INSERT INTO placements (
-      entity_id, instance_id, map_id, map_x, map_y, elevation, geometry_json, source_ref_json
+      entity_id, instance_id, map_id, map_x, map_y, elevation, source_ref_json
     ) VALUES
-      ('location', '11111111.fixture-town', 'ardenfall', 12, 8, 3, NULL, '{"kind":"lookupAsset","guid":"11111111.fixture-town"}'),
-      ('location', '22222222.fixture-debug-cave', NULL, -4, -6, 1, NULL, '{"kind":"lookupAsset","guid":"22222222.fixture-debug-cave"}');
+      ('location', '11111111.fixture-town', 'ardenfall', 12, 8, 3, '{"kind":"lookupAsset","guid":"11111111.fixture-town"}'),
+      ('location', '22222222.fixture-debug-cave', NULL, -4, -6, 1, '{"kind":"lookupAsset","guid":"22222222.fixture-debug-cave"}');
   `);
 }
 

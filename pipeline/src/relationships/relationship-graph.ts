@@ -42,10 +42,6 @@ CREATE TABLE IF NOT EXISTS entity_redirects (
   reason TEXT NOT NULL CHECK (reason IN ('legacy-id', 'name-changed', 'merged')),
   PRIMARY KEY (source_type, source_id)
 );
-CREATE TABLE IF NOT EXISTS entity_disambiguations (
-  term_key TEXT PRIMARY KEY,
-  options_json TEXT NOT NULL
-);
 CREATE TABLE IF NOT EXISTS entity_edges (
   edge_id TEXT PRIMARY KEY,
   source_type TEXT NOT NULL,
@@ -81,10 +77,6 @@ CREATE TABLE IF NOT EXISTS pipeline_diagnostics (
 );
 `;
 
-export function buildRelationshipDDL(): string {
-  return ENTITY_GRAPH_DDL;
-}
-
 export type PipelineDiagnostic = {
   severity: "fatal" | "diagnostic";
   code: string;
@@ -94,12 +86,6 @@ export type PipelineDiagnostic = {
   entityId?: string | null;
   field?: string | null;
   evidence?: unknown;
-};
-
-export type DisambiguationOption = {
-  targetType: string;
-  targetId: string;
-  label: string;
 };
 
 export function auditEntityGraph(db: Database): PipelineDiagnostic[] {
@@ -157,13 +143,6 @@ export function auditEntityGraph(db: Database): PipelineDiagnostic[] {
   return diagnostics;
 }
 
-export function insertDisambiguationForDuplicateAliases(
-  termKey: string,
-  options: DisambiguationOption[],
-): { termKey: string; optionsJson: string } {
-  return { termKey, optionsJson: JSON.stringify(options) };
-}
-
 export function insertPipelineDiagnostics(
   db: Database,
   diagnostics: PipelineDiagnostic[],
@@ -189,15 +168,4 @@ export function insertPipelineDiagnostics(
       JSON.stringify(diagnostic.evidence ?? {}),
     );
   }
-}
-
-export function countPipelineDiagnostics(db: Database, source: string): number {
-  return (
-    db
-      .query<
-        { count: number },
-        [string]
-      >("SELECT count(*) AS count FROM pipeline_diagnostics WHERE source = ?")
-      .get(source)?.count ?? 0
-  );
 }

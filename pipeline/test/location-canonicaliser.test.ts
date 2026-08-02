@@ -57,29 +57,24 @@ describe("canonicaliseLocations", () => {
 
     const location = db
       .query(
-        `SELECT id, game_location_id, name, enabled, map_id, show_on_map,
-                show_on_map_debug_only, fast_travel_map_x, fast_travel_map_y,
-                fast_travel_elevation
+        `SELECT id, name, enabled, map_id, show_on_map,
+                show_on_map_debug_only
          FROM locations WHERE id = '11111111.fixture-town'`,
       )
       .get() as Record<string, unknown>;
 
     expect(location).toEqual({
       id: "11111111.fixture-town",
-      game_location_id: "town",
       name: "Harbor Town",
       enabled: 1,
       map_id: "ardenfall",
       show_on_map: 1,
       show_on_map_debug_only: 0,
-      fast_travel_map_x: 14,
-      fast_travel_map_y: 10,
-      fast_travel_elevation: 4,
     });
 
     const placement = db
       .query(
-        `SELECT entity_id, instance_id, map_id, map_x, map_y, elevation, geometry_json
+        `SELECT entity_id, instance_id, map_id, map_x, map_y, elevation
          FROM placements WHERE entity_id = 'location' AND instance_id = '11111111.fixture-town'`,
       )
       .get() as Record<string, unknown>;
@@ -91,7 +86,6 @@ describe("canonicaliseLocations", () => {
       map_x: 12,
       map_y: 8,
       elevation: 3,
-      geometry_json: null,
     });
 
     const volume = db

@@ -6,13 +6,11 @@ CREATE TABLE placements (
   map_x                      REAL NOT NULL,
   map_y                      REAL NOT NULL,
   elevation                  REAL NOT NULL,
-  geometry_json              TEXT,
   source_ref_json            TEXT NOT NULL,
   PRIMARY KEY (entity_id, instance_id)
 );
 CREATE TABLE locations (
   id                         TEXT PRIMARY KEY,
-  game_location_id           TEXT NOT NULL,
   name                       TEXT NOT NULL,
   enabled                    INTEGER NOT NULL,
   map_id                     TEXT,
@@ -22,11 +20,7 @@ CREATE TABLE locations (
   icon_ref_json              TEXT,
   source_map_position_json   TEXT NOT NULL,
   allow_fast_travel          INTEGER NOT NULL,
-  source_fast_travel_json    TEXT,
-  fast_travel_map_x          REAL,
-  fast_travel_map_y          REAL,
-  fast_travel_elevation      REAL,
-  display_on_enter_volume    INTEGER NOT NULL
+  source_fast_travel_json    TEXT
 );
 CREATE TABLE location_volumes (
   id                    TEXT PRIMARY KEY,

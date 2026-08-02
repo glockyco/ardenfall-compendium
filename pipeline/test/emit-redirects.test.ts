@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Database } from "bun:sqlite";
 import { emitRedirects } from "$pipeline/stages/emit-redirects";
-import { buildRelationshipDDL } from "$pipeline/relationships/relationship-graph";
+import { ENTITY_GRAPH_DDL } from "$pipeline/relationships/relationship-graph";
 
 describe("emitRedirects", () => {
   it("writes a Cloudflare _redirects file from entity_redirects", () => {
@@ -13,7 +13,7 @@ describe("emitRedirects", () => {
     try {
       const dbPath = join(root, "data.sqlite");
       const db = new Database(dbPath);
-      db.exec(buildRelationshipDDL());
+      db.exec(ENTITY_GRAPH_DDL);
       db.run(
         `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
          VALUES ('item', 'item-a', 'Iron Sword', '/items/item-a', 'iron-sword--4ed20218', '4ed20218', 1)`,
@@ -45,7 +45,7 @@ describe("emitRedirects", () => {
     try {
       const dbPath = join(root, "data.sqlite");
       const db = new Database(dbPath);
-      db.exec(buildRelationshipDDL());
+      db.exec(ENTITY_GRAPH_DDL);
       db.close();
 
       mkdirSync(join(root, "static"), { recursive: true });

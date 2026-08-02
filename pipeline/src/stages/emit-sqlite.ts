@@ -75,6 +75,7 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
     try {
       db = new Database(tempPath, { create: true, readwrite: true });
       db.exec("PRAGMA journal_mode = DELETE;");
+      db.exec("PRAGMA foreign_keys = ON;");
       db.exec(SITE_METADATA_DDL);
       const desc = inputs["load-descriptors"];
       const snapshot = inputs["load-snapshot"];

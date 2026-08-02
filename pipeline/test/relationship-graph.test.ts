@@ -1,13 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
-import {
-  ENTITY_GRAPH_DDL,
-  auditEntityGraph,
-  buildRelationshipDDL,
-  countPipelineDiagnostics,
-  insertDisambiguationForDuplicateAliases,
-  insertPipelineDiagnostics,
-} from "$pipeline/relationships/relationship-graph";
+import { ENTITY_GRAPH_DDL, auditEntityGraph } from "$pipeline/relationships/relationship-graph";
 
 describe("relationship graph", () => {
   it("audits missing public edge targets", () => {
@@ -27,43 +20,9 @@ describe("relationship graph", () => {
     );
   });
 
-  it("turns duplicate aliases into disambiguation records instead of ambiguous aliases", () => {
-    const options = insertDisambiguationForDuplicateAliases("iron", [
-      { targetType: "item", targetId: "iron-sword", label: "Iron Sword" },
-      { targetType: "item", targetId: "iron-ore", label: "Iron Ore" },
-    ]);
-
-    expect(options.termKey).toBe("iron");
-    expect(JSON.parse(options.optionsJson)).toEqual([
-      { targetType: "item", targetId: "iron-sword", label: "Iron Sword" },
-      { targetType: "item", targetId: "iron-ore", label: "Iron Ore" },
-    ]);
-  });
-
-  it("counts persisted pipeline diagnostics by source", () => {
-    const db = new Database(":memory:");
-    db.exec(ENTITY_GRAPH_DDL);
-    insertPipelineDiagnostics(
-      db,
-      [
-        { severity: "diagnostic", code: "rich", source: "rich-text", message: "rich" },
-        {
-          severity: "diagnostic",
-          code: "relationship",
-          source: "relationship-graph",
-          message: "relationship",
-        },
-      ],
-      "test",
-    );
-
-    expect(countPipelineDiagnostics(db, "rich-text")).toBe(1);
-    expect(countPipelineDiagnostics(db, "relationship-graph")).toBe(1);
-  });
-
   it("enforces (entity_type, canonical_slug) uniqueness on entity_nodes", () => {
     const db = new Database(":memory:");
-    db.exec(buildRelationshipDDL());
+    db.exec(ENTITY_GRAPH_DDL);
     db.run(
       `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
        VALUES ('item', 'a', 'A', '/items/a--abc12345', 'a--abc12345', 'abc12345', 1)`,
@@ -78,7 +37,7 @@ describe("relationship graph", () => {
 
   it("enforces (entity_type, short_id) uniqueness on entity_nodes", () => {
     const db = new Database(":memory:");
-    db.exec(buildRelationshipDDL());
+    db.exec(ENTITY_GRAPH_DDL);
     db.run(
       `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
        VALUES ('item', 'a', 'A', '/items/foo--abc12345', 'foo--abc12345', 'abc12345', 1)`,
@@ -93,7 +52,7 @@ describe("relationship graph", () => {
 
   it("emits a fatal slugCollision diagnostic when two nodes share a (entity_type, short_id)", () => {
     const db = new Database(":memory:");
-    db.exec(buildRelationshipDDL());
+    db.exec(ENTITY_GRAPH_DDL);
     db.exec("DROP INDEX idx_entity_nodes_short_id;");
     db.run(
       `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
@@ -113,7 +72,7 @@ describe("relationship graph", () => {
 
   it("rejects unsupported entity_redirects reasons", () => {
     const db = new Database(":memory:");
-    db.exec(buildRelationshipDDL());
+    db.exec(ENTITY_GRAPH_DDL);
 
     expect(() =>
       db.run(

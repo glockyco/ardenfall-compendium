@@ -27,16 +27,15 @@ export function sourceToMapPoint(point: SnapshotVector3): MapPoint {
 export function canonicaliseLocations(db: Database, envelope: SnapshotEnvelope): void {
   const placementInsert = db.prepare(
     `INSERT INTO placements (
-      entity_id, instance_id, map_id, map_x, map_y, elevation, geometry_json, source_ref_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      entity_id, instance_id, map_id, map_x, map_y, elevation, source_ref_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
   const locationInsert = db.prepare(
     `INSERT INTO locations (
-      id, game_location_id, name, enabled, map_id, map_ref_json,
+      id, name, enabled, map_id, map_ref_json,
       show_on_map, show_on_map_debug_only, icon_ref_json,
-      source_map_position_json, allow_fast_travel, source_fast_travel_json,
-      fast_travel_map_x, fast_travel_map_y, fast_travel_elevation, display_on_enter_volume
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      source_map_position_json, allow_fast_travel, source_fast_travel_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const volumeInsert = db.prepare(
     `INSERT INTO location_volumes (
@@ -50,13 +49,12 @@ export function canonicaliseLocations(db: Database, envelope: SnapshotEnvelope):
     for (const row of entityRows<LocationSnapshotFields>(envelope)) {
       const fields = row.fields;
       const point = sourceToMapPointForRow(row.id, fields.mapPosition, "mapPosition");
-      const fastTravel = fields.fastTravelPosition
-        ? sourceToMapPointForRow(row.id, fields.fastTravelPosition, "fastTravelPosition")
-        : null;
+      if (fields.fastTravelPosition) {
+        sourceToMapPointForRow(row.id, fields.fastTravelPosition, "fastTravelPosition");
+      }
 
       locationInsert.run(
         row.id,
-        fields.gameLocationId,
         fields.name,
         fields.enabled ? 1 : 0,
         fields.mapId ?? null,
@@ -67,10 +65,6 @@ export function canonicaliseLocations(db: Database, envelope: SnapshotEnvelope):
         JSON.stringify(fields.mapPosition),
         fields.allowFastTravel ? 1 : 0,
         fields.fastTravelPosition ? JSON.stringify(fields.fastTravelPosition) : null,
-        fastTravel?.x ?? null,
-        fastTravel?.y ?? null,
-        fastTravel?.elevation ?? null,
-        fields.displayOnEnterVolume ? 1 : 0,
       );
       placementInsert.run(
         "location",
@@ -79,7 +73,6 @@ export function canonicaliseLocations(db: Database, envelope: SnapshotEnvelope):
         point.x,
         point.y,
         point.elevation,
-        null,
         JSON.stringify({ kind: "lookupAsset", guid: row.id, unityType: "LocationAsset" }),
       );
 
