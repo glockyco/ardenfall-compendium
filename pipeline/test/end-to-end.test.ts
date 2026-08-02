@@ -175,8 +175,13 @@ describe("end-to-end pipeline", () => {
         },
       };
 
+      const passingValidation = { errors: [], countsBySeverity: { fatal: 0, diagnostic: 0 } };
+
       expect(() =>
-        emitSqlite.run({ "load-descriptors": desc, "load-snapshot": badSnap }, ctx),
+        emitSqlite.run(
+          { "load-descriptors": desc, "load-snapshot": badSnap, validate: passingValidation },
+          ctx,
+        ),
       ).toThrow(/unknown variant/);
 
       const locationEnvelope = snap.envelopes.location;
@@ -188,7 +193,14 @@ describe("end-to-end pipeline", () => {
       };
 
       expect(() =>
-        emitSqlite.run({ "load-descriptors": desc, "load-snapshot": missingLocationSnap }, ctx),
+        emitSqlite.run(
+          {
+            "load-descriptors": desc,
+            "load-snapshot": missingLocationSnap,
+            validate: passingValidation,
+          },
+          ctx,
+        ),
       ).toThrow(
         /descriptor 'location' has map metadata but snapshot envelope 'location' is missing/,
       );

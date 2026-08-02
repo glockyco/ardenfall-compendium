@@ -22,11 +22,26 @@ import { publishValidatedSqlite } from "../artifacts/sqlite-validation";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type { LoadSnapshotOutput } from "./load-snapshot.ts";
 import type { EmitAssetsOutput } from "./emit-assets.ts";
+import type { ValidateOutput } from "./validate.ts";
+
+export class SnapshotValidationError extends Error {
+  constructor(public readonly validation: ValidateOutput) {
+    super(`pipeline rejected snapshot: ${validation.countsBySeverity.fatal} fatal diagnostics`);
+    this.name = "SnapshotValidationError";
+  }
+}
+
+export function assertSnapshotValidationPassed(validation: ValidateOutput): void {
+  if (validation.countsBySeverity.fatal > 0) {
+    throw new SnapshotValidationError(validation);
+  }
+}
 
 export interface EmitSqliteInputs {
   "load-descriptors": LoadDescriptorsOutput;
   "load-snapshot": LoadSnapshotOutput;
   "emit-assets"?: EmitAssetsOutput;
+  validate: ValidateOutput;
 }
 
 export interface EmitSqliteOutput {
@@ -49,8 +64,9 @@ function validateMappedSnapshotEnvelopes(
 
 export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
   id: "emit-sqlite",
-  inputs: ["load-descriptors", "load-snapshot", "emit-assets"],
+  inputs: ["load-descriptors", "load-snapshot", "emit-assets", "validate"],
   run: (inputs, ctx) => {
+    assertSnapshotValidationPassed(inputs.validate);
     const outputPath = `${ctx.outDir}/data.sqlite`;
     mkdirSync(dirname(outputPath), { recursive: true });
     const tempPath = `${outputPath}.tmp-${process.pid}-${Date.now()}`;

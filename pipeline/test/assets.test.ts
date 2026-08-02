@@ -179,7 +179,12 @@ describe("asset_refs", () => {
       const emitted = await emitAssets.run({ "load-snapshot": snap }, { ...ctx, outDir });
 
       await emitSqlite.run(
-        { "load-descriptors": desc, "load-snapshot": snap, "emit-assets": emitted },
+        {
+          "load-descriptors": desc,
+          "load-snapshot": snap,
+          "emit-assets": emitted,
+          validate: { errors: [], countsBySeverity: { fatal: 0, diagnostic: 0 } },
+        },
         { ...ctx, outDir },
       );
 

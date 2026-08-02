@@ -6,10 +6,16 @@ import { runStages } from "./orchestrator";
 import { loadDescriptors } from "./stages/load-descriptors";
 import { loadSnapshot, type LoadSnapshotOutput } from "./stages/load-snapshot";
 import { validate } from "./stages/validate";
-import { emitSqlite, type EmitSqliteOutput } from "./stages/emit-sqlite";
+import {
+  assertSnapshotValidationPassed,
+  SnapshotValidationError,
+  emitSqlite,
+  type EmitSqliteOutput,
+} from "./stages/emit-sqlite";
 import { emitAssets, type EmitAssetsOutput } from "./stages/emit-assets";
 import { emitRedirects, type EmitRedirectsOutput } from "./stages/emit-redirects";
 import type { ArtifactKind, Stage, StageContext } from "./types.ts";
+import type { ValidateOutput } from "./stages/validate.ts";
 
 const [, , subcommand, firstArg, secondArg] = Bun.argv;
 
@@ -64,22 +70,44 @@ const ctx: StageContext = {
   log: (level, msg) => console.warn(`[${level}] ${msg}`),
 };
 
-const stages = [loadDescriptors, loadSnapshot, validate, emitAssets, emitSqlite] as Stage<
+function removeGeneratedOutputs(): void {
+  rmSync(join(outDir, "data.sqlite"), { force: true });
+  rmSync(join(outDir, "assets"), { recursive: true, force: true });
+  rmSync(join(outDir, "static"), { recursive: true, force: true });
+  rmSync(join(outDir, "artifact-manifest.json"), { force: true });
+}
+
+const gatedEmitAssets: Stage<
+  { "load-snapshot": LoadSnapshotOutput; validate: ValidateOutput },
+  EmitAssetsOutput
+> = {
+  id: emitAssets.id,
+  inputs: ["load-snapshot", "validate"],
+  run: (inputs, stageCtx) => {
+    assertSnapshotValidationPassed(inputs.validate);
+    return emitAssets.run({ "load-snapshot": inputs["load-snapshot"] }, stageCtx);
+  },
+};
+
+const stages = [loadDescriptors, loadSnapshot, validate, gatedEmitAssets, emitSqlite] as Stage<
   unknown,
   unknown
 >[];
 
-const result = await runStages(stages, {}, ctx);
-
-const v = result.validate as {
-  errors: unknown[];
-  countsBySeverity: { fatal: number; diagnostic: number };
-};
-if (v.countsBySeverity.fatal > 0) {
-  console.error(`pipeline rejected snapshot: ${v.countsBySeverity.fatal} fatal diagnostics`);
-  for (const e of v.errors) console.error(JSON.stringify(e));
-  process.exit(1);
+let result: Record<string, unknown>;
+try {
+  result = await runStages(stages, {}, ctx);
+} catch (error) {
+  removeGeneratedOutputs();
+  if (error instanceof SnapshotValidationError) {
+    const v = error.validation;
+    console.error(`pipeline rejected snapshot: ${v.countsBySeverity.fatal} fatal diagnostics`);
+    for (const e of v.errors) console.error(JSON.stringify(e));
+    process.exit(1);
+  }
+  throw error;
 }
+
 const e = result["emit-sqlite"] as EmitSqliteOutput;
 console.warn(`wrote ${e.outputPath} (${e.byteSize} bytes)`);
 const a = result["emit-assets"] as EmitAssetsOutput;
