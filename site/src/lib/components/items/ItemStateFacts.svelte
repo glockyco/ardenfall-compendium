@@ -17,7 +17,7 @@
     <ul class="mt-3 grid gap-2 text-sm">
       {#if durability}
         <li class="flex justify-between gap-4">
-          <span class="text-muted-foreground">Durability</span>
+          <span class="text-muted-foreground">Maximum durability</span>
           <span class="font-medium">{durability.max}</span>
         </li>
       {/if}

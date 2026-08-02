@@ -50,7 +50,7 @@ public sealed class ItemPresentationTests
         Assert.Equal(25, presentation.Value);
         Assert.Equal(3.5f, presentation.Weight);
         Assert.Contains(presentation.StatRows, row =>
-            row.Id == "damage" && row.Label == "Damage" && row.ValueText == "7.5" && row.Comparison == null);
+            row.Id == "damage" && row.Label == "Base damage" && row.ValueText == "7.5" && row.Comparison == null);
         Assert.Contains(presentation.StatRows, row =>
             row.Id == "heavyAttackDamage" && row.Label == "Heavy Attack Damage" && row.ValueText == "11.25");
         Assert.Equal("max-durability", presentation.Durability?.Kind);

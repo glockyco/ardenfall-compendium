@@ -36,6 +36,12 @@
     variant = params.get("variant") ?? "all";
   }
 
+  const displayColumns = $derived(
+    columns.map((column) =>
+      column.field === "value" ? { ...column, label: "Base value" } : column,
+    ),
+  );
+
   const filteredRows = $derived(
     rows.filter((row) => {
       const matchesVariant = variant === "all" || row.variant === variant;
@@ -94,5 +100,5 @@
   </nav>
 
   <p class="text-muted-foreground text-sm">{filteredRows.length} matching items</p>
-  <EntityTable {columns} rows={filteredRows} rowHref={(row) => row.routePath} />
+  <EntityTable columns={displayColumns} rows={filteredRows} rowHref={(row) => row.routePath} />
 </div>

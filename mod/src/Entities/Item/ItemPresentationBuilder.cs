@@ -9,7 +9,7 @@ public static class ItemPresentationBuilder
 {
     private static readonly (string Field, string Label, string Source, string Size)[] StatFields =
     {
-        ("damage", "Damage", "MeleeItem.GetItemStatInfos()", "large"),
+        ("damage", "Base damage", "MeleeItem.GetItemStatInfos()", "large"),
         ("armorRating", "Damage Threshold", "ArmorItem.GetItemStatInfos()", "large"),
         ("quickslotCooldownTime", "Cooldown", "ConsumableItem.quickslotCooldownTime.Get()", "normal"),
         ("manaCostMultiplier", "Mana cost multiplier", "SlateSpellItem.manaCostMultiplier.Get()", "normal"),
