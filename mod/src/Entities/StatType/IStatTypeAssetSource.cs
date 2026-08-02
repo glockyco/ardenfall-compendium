@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Ardenfall;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities;
 using UnityObject = UnityEngine.Object;
 
 namespace ArdenfallCompendium.Entities.StatType;
@@ -23,41 +25,54 @@ public interface IStatTypeAssetSource
     IEnumerable<StatTypeAsset> EnumerateStatTypes();
 }
 
-public sealed class BuiltLookupTableStatTypeAssetSource : IStatTypeAssetSource
+public sealed class LoadedStatTypeAssetSource : IStatTypeAssetSource
 {
-    private readonly Func<IEnumerable<Ardenfall.StatType>> _lookupStatTypes;
+    private readonly Func<IEnumerable<Ardenfall.StatType>> _loadedStatTypes;
     private readonly Func<UnityObject?, bool> _isUnityNull;
     private readonly Func<UnityObject, string> _assetName;
+    private readonly Func<UnityObject, bool> _isAuthoredAsset;
 
-    public BuiltLookupTableStatTypeAssetSource()
+    public LoadedStatTypeAssetSource()
         : this(
-            lookupStatTypes: () => BuiltLookupTable.GetAssetsOfType<Ardenfall.StatType>(),
+            loadedStatTypes: () => UnityEngine.Resources.FindObjectsOfTypeAll<Ardenfall.StatType>(),
             isUnityNull: IsUnityNull,
-            assetName: SafeName)
+            assetName: SafeName,
+            isAuthoredAsset: IsAuthoredAsset)
     {
     }
 
-    public BuiltLookupTableStatTypeAssetSource(
-        Func<IEnumerable<Ardenfall.StatType>> lookupStatTypes,
+    public LoadedStatTypeAssetSource(
+        Func<IEnumerable<Ardenfall.StatType>> loadedStatTypes,
         Func<UnityObject?, bool> isUnityNull,
-        Func<UnityObject, string>? assetName = null)
+        Func<UnityObject, string>? assetName = null,
+        Func<UnityObject, bool>? isAuthoredAsset = null)
     {
-        _lookupStatTypes = lookupStatTypes;
+        _loadedStatTypes = loadedStatTypes;
         _isUnityNull = isUnityNull;
         _assetName = assetName ?? SafeName;
+        _isAuthoredAsset = isAuthoredAsset ?? IsAuthoredAsset;
     }
 
     public IEnumerable<StatTypeAsset> EnumerateStatTypes()
     {
-        foreach (var asset in _lookupStatTypes())
+        var seen = new HashSet<Ardenfall.StatType>(UnityObjectReferenceComparer<Ardenfall.StatType>.Instance);
+        var assets = new List<Ardenfall.StatType>();
+        foreach (var asset in _loadedStatTypes())
         {
-            if (_isUnityNull(asset)) continue;
-            yield return ToAsset(asset);
+            if (_isUnityNull(asset) || !_isAuthoredAsset(asset) || !seen.Add(asset)) continue;
+            assets.Add(asset);
+        }
+
+        foreach (var asset in assets
+                     .Select(asset => ToAsset(asset))
+                     .OrderBy(asset => asset.AssetName, StringComparer.Ordinal))
+        {
+            yield return asset;
         }
     }
 
     private StatTypeAsset ToAsset(Ardenfall.StatType asset) => new(
-        Guid: LookupGuid(asset),
+        Guid: null,
         AssetName: _assetName(asset),
         IsAttribute: asset.isAttribute,
         StatName: asset.statName,
@@ -93,15 +108,15 @@ public sealed class BuiltLookupTableStatTypeAssetSource : IStatTypeAssetSource
         }
     }
 
-    private static string? LookupGuid(UnityObject asset)
+    private static bool IsAuthoredAsset(UnityObject asset)
     {
         try
         {
-            return BuiltLookupTable.Instance != null ? BuiltLookupTable.Instance.GetGuid(asset) : null;
+            return (asset.hideFlags & UnityEngine.HideFlags.DontSave) == 0;
         }
         catch
         {
-            return null;
+            return false;
         }
     }
 

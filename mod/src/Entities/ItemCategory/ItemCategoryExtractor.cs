@@ -14,7 +14,7 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
     private readonly ItemIconAssetPlan? _assetPlan;
 
     public ItemCategoryExtractor()
-        : this(new BuiltLookupTableItemCategoryAssetSource(), assetPlan: null)
+        : this(new LoadedItemCategoryAssetSource(), assetPlan: null)
     {
     }
 
@@ -26,6 +26,7 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
 
     public override IEnumerable<ItemCategorySnapshotRow> Walk()
     {
+        var seenNames = new HashSet<string>(System.StringComparer.Ordinal);
         foreach (var asset in _source.EnumerateItemCategories())
         {
             if (asset == null)
@@ -39,30 +40,42 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
                 });
                 continue;
             }
-            var guid = asset.Guid;
-            if (string.IsNullOrWhiteSpace(guid))
+
+            var assetName = asset.AssetName ?? "";
+            if (!NamedAssetIdentity.TryCreate("item-category", assetName, out var id))
             {
                 Diagnostics.Add(new Diagnostic
                 {
                     Severity = "fatal",
-                    Code = "lookupAssetGuidMissing",
+                    Code = "namedAssetNameMissing",
                     Field = "id",
-                    Message = $"ItemCategory asset '{asset.AssetName}' has no GUID in BuiltLookupTable",
+                    Message = $"ItemCategory asset has empty or whitespace name '{assetName}'",
+                });
+                continue;
+            }
+            if (!seenNames.Add(assetName))
+            {
+                Diagnostics.Add(new Diagnostic
+                {
+                    Severity = "fatal",
+                    Code = "namedAssetNameDuplicate",
+                    Field = "id",
+                    Message = $"ItemCategory asset name '{assetName}' is duplicated",
                 });
                 continue;
             }
 
-            var iconRef = ResolveNullableAsset(asset.Icon, "iconRef", guid, "ItemCategory.icon");
+            var iconRef = ResolveNullableAsset(asset.Icon, "iconRef", id, "ItemCategory.icon");
             var defaultItemIconRef = ResolveNullableAsset(
                 asset.DefaultItemIcon,
                 "defaultItemIconRef",
-                guid,
+                id,
                 "ItemCategory.defaultItemIcon");
 
             if (_assetPlan != null)
             {
-                CaptureSlot(guid, "iconRef", asset.Icon);
-                CaptureSlot(guid, "defaultItemIconRef", asset.DefaultItemIcon);
+                CaptureSlot(id, "iconRef", asset.Icon);
+                CaptureSlot(id, "defaultItemIconRef", asset.DefaultItemIcon);
             }
 
             var columns = asset.Columns;
@@ -74,7 +87,7 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
                     Severity = "diagnostic",
                     Code = "itemCategoryColumnsMalformed",
                     Field = "columns",
-                    Message = $"ItemCategory '{guid}' has null columns data",
+                    Message = $"ItemCategory '{id}' has null columns data",
                 });
             }
             else
@@ -89,20 +102,20 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
                             Severity = "diagnostic",
                             Code = "itemCategoryColumnMalformed",
                             Field = $"columns[{index}]",
-                            Message = $"ItemCategory '{guid}' has null column data at index {index}",
+                            Message = $"ItemCategory '{id}' has null column data at index {index}",
                         });
                         continue;
                     }
-                    columnSnapshots.Add(ToSnapshot(column, guid));
+                    columnSnapshots.Add(ToSnapshot(column, id));
                 }
             }
 
             yield return new ItemCategorySnapshotRow
             {
-                Id = guid,
+                Id = id,
                 Fields = new ItemCategorySnapshot(
-                    Id: guid,
-                    CategoryName: NullIfEmpty(asset.CategoryName) ?? NullIfEmpty(asset.AssetName) ?? guid,
+                    Id: id,
+                    CategoryName: NullIfEmpty(asset.CategoryName) ?? NullIfEmpty(asset.AssetName) ?? id,
                     IconRef: iconRef,
                     DefaultItemIconRef: defaultItemIconRef,
                     CategoryColor: asset.CategoryColor,

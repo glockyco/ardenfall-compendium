@@ -18,8 +18,8 @@ public sealed class CompendiumCommandRegistry : IDisposable
     public CompendiumCommandRegistry(CompendiumRunManager runs, string outputBaseDir)
     {
         var items = new ItemExtractionService(new BuiltLookupTableItemAssetSource());
-        var statTypes = new StatTypeExtractionService(new BuiltLookupTableStatTypeAssetSource());
-        var itemCategories = new ItemCategoryExtractionService(new BuiltLookupTableItemCategoryAssetSource());
+        var statTypes = new StatTypeExtractionService(new LoadedStatTypeAssetSource());
+        var itemCategories = new ItemCategoryExtractionService(new LoadedItemCategoryAssetSource());
         var itemTags = new ItemTagExtractionService(new BuiltLookupTableItemTagAssetSource());
         var locations = new LocationExtractionService(new BuiltLookupTableLocationAssetSource());
         var portals = new PortalExtractionService(new MasterRecordTablePortalRecordSource());

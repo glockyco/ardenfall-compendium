@@ -36,6 +36,27 @@ public sealed class ItemAdapterBehaviorTests
     }
 
     [Fact]
+    public void NamedDefinitionRefsUseNamedAssetSnapshotVariant()
+    {
+        var stat = (StatType)RuntimeHelpers.GetUninitializedObject(typeof(StatType));
+        var category = (ItemCategory)RuntimeHelpers.GetUninitializedObject(typeof(ItemCategory));
+        var refs = new RefResolver(
+            assetName: asset => ReferenceEquals(asset, stat) ? "att_strength" : "itemcat_weapons",
+            isUnityNull: _ => false);
+
+        var statRef = refs.ResolveAsset(stat, "statTypeRef", "item-row", MissingPolicy.Diagnostic);
+        var categoryRef = refs.ResolveAsset(category, "categoryRef", "item-row", MissingPolicy.Diagnostic);
+
+        Assert.Equal("namedAsset", statRef.Kind);
+        Assert.Equal("stat-type", statRef.Entity);
+        Assert.Equal("att_strength", statRef.Name);
+        Assert.Equal("namedAsset", categoryRef.Kind);
+        Assert.Equal("item-category", categoryRef.Entity);
+        Assert.Equal("itemcat_weapons", categoryRef.Name);
+        Assert.DoesNotContain(refs.Diagnostics, d => d.Code == "lookupAssetGuidMissing");
+    }
+
+    [Fact]
     public void LeveledStatusEffectSnapshotIncludesStructuredStackMode()
     {
         var stackMode = new StatusEffectData.StackMode

@@ -14,7 +14,7 @@ namespace ArdenfallCompendium.Tests;
 public sealed class StatTypeExtractorTests
 {
     [Fact]
-    public void ExtractsEveryStatTypeWithGuidAndName()
+    public void ExtractsEveryStatTypeWithNamedIdAndName()
     {
         var source = new FakeStatTypeAssetSource(new[]
         {
@@ -38,7 +38,7 @@ public sealed class StatTypeExtractorTests
         var rows = extractor.Walk().ToList();
 
         Assert.Equal(2, rows.Count);
-        Assert.Equal("stat-strength", rows[0].Id);
+        Assert.Equal("named;stat-type;Strength", rows[0].Id);
         Assert.Equal("Strength", rows[0].Fields.StatName);
         Assert.True(rows[0].Fields.IsAttribute);
         Assert.Contains("melee-damage", rows[0].Fields.Affects);
@@ -46,18 +46,54 @@ public sealed class StatTypeExtractorTests
     }
 
     [Fact]
-    public void DiagnosesAssetMissingGuid()
+    public void EmptyStatNameIsFatal()
     {
         var source = new FakeStatTypeAssetSource(new[]
         {
-            FakeStatTypeAssetSource.BuildWithoutGuid("Floating Stat"),
+            FakeStatTypeAssetSource.Build("ignored", " ", isAttribute: false, statDescription: "", longStatDescription: ""),
         });
         var extractor = new StatTypeExtractor(source);
 
-        var rows = extractor.Walk().ToList();
+        Assert.Empty(extractor.Walk().ToList());
+        var diagnostic = Assert.Single(extractor.Diagnostics, d => d.Code == "namedAssetNameMissing");
+        Assert.Equal("fatal", diagnostic.Severity);
+        Assert.Contains("StatType", diagnostic.Message);
+        Assert.Contains("' '", diagnostic.Message);
+    }
 
-        Assert.Empty(rows);
-        Assert.Contains(extractor.Diagnostics, d => d.Code == "lookupAssetGuidMissing" && d.Field == "id");
+    [Fact]
+    public void DuplicateStatNameIsFatal()
+    {
+        var source = new FakeStatTypeAssetSource(new[]
+        {
+            FakeStatTypeAssetSource.Build("one", "Same", isAttribute: false, statDescription: "", longStatDescription: ""),
+            FakeStatTypeAssetSource.Build("two", "Same", isAttribute: false, statDescription: "", longStatDescription: ""),
+        });
+        var extractor = new StatTypeExtractor(source);
+
+        Assert.Single(extractor.Walk().ToList());
+        var diagnostic = Assert.Single(extractor.Diagnostics, d => d.Code == "namedAssetNameDuplicate");
+        Assert.Equal("fatal", diagnostic.Severity);
+        Assert.Contains("StatType", diagnostic.Message);
+        Assert.Contains("'Same'", diagnostic.Message);
+    }
+
+    [Fact]
+    public void LoadedStatSourceOrdersAndDeduplicatesAssets()
+    {
+        var first = RuntimeStat("one", "Zed", isAttribute: false);
+        var second = RuntimeStat("two", "Alpha", isAttribute: false);
+        var source = new LoadedStatTypeAssetSource(
+            loadedStatTypes: () => new[] { first, second, first },
+            isUnityNull: _ => false,
+            assetName: asset => ReferenceEquals(asset, first) ? "Zed" : "Alpha",
+            isAuthoredAsset: _ => true);
+
+        var firstCall = source.EnumerateStatTypes().Select(asset => asset.AssetName).ToList();
+        var secondCall = source.EnumerateStatTypes().Select(asset => asset.AssetName).ToList();
+
+        Assert.Equal(new[] { "Alpha", "Zed" }, firstCall);
+        Assert.Equal(firstCall, secondCall);
     }
 
     [Fact]
@@ -81,13 +117,13 @@ public sealed class StatTypeExtractorTests
 
         var slot = Assert.Single(plan.Slots);
         Assert.Equal("stat-type", slot.EntityId);
-        Assert.Equal("stat-strength", slot.RowId);
+        Assert.Equal("named;stat-type;Strength", slot.RowId);
         Assert.Equal("iconRef", slot.Slot);
         Assert.Same(icon, slot.Sprite);
     }
 
     [Fact]
-    public void BuiltLookupSourceDoesNotDiscoverStatsFromMasterData()
+    public void LoadedSourceDoesNotDiscoverStatsFromMasterData()
     {
         var master = (ArdenfallMasterData)RuntimeHelpers.GetUninitializedObject(typeof(ArdenfallMasterData));
         master.allAttributes = new List<ArdenfallStatType>
@@ -98,8 +134,8 @@ public sealed class StatTypeExtractorTests
         {
             RuntimeStat("skill-heavy-armor", "Heavy Armor", isAttribute: false),
         };
-        var source = new BuiltLookupTableStatTypeAssetSource(
-            lookupStatTypes: () => System.Array.Empty<ArdenfallStatType>(),
+        var source = new LoadedStatTypeAssetSource(
+            loadedStatTypes: () => System.Array.Empty<ArdenfallStatType>(),
             isUnityNull: _ => false);
 
         Assert.Empty(source.EnumerateStatTypes());
@@ -107,11 +143,11 @@ public sealed class StatTypeExtractorTests
 
 
     [Fact]
-    public void BuiltLookupSourceSkipsUnityNullStatAssets()
+    public void LoadedSourceSkipsUnityNullStatAssets()
     {
         var stat = RuntimeStat("attr-strength", "Strength", isAttribute: true);
-        var source = new BuiltLookupTableStatTypeAssetSource(
-            lookupStatTypes: () => new[] { stat },
+        var source = new LoadedStatTypeAssetSource(
+            loadedStatTypes: () => new[] { stat },
             isUnityNull: _ => true);
 
         Assert.Empty(source.EnumerateStatTypes());
@@ -148,17 +184,6 @@ public sealed class StatTypeExtractorTests
                 Affects: affects ?? new List<string>(),
                 SkillAffects: skillAffects ?? new List<string>());
 
-        public static StatTypeAsset BuildWithoutGuid(string name) => new(
-            Guid: null,
-            AssetName: name,
-            IsAttribute: false,
-            StatName: name,
-            Icon: null,
-            IconColor: new AssetColorSnapshot(),
-            StatDescription: null,
-            LongStatDescription: null,
-            Affects: new List<string>(),
-            SkillAffects: new List<string>());
     }
 
     private static ArdenfallStatType RuntimeStat(string id, string name, bool isAttribute)

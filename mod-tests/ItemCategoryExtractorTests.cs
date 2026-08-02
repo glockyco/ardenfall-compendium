@@ -38,7 +38,7 @@ public sealed class ItemCategoryExtractorTests
         var rows = extractor.Walk().ToList();
 
         Assert.Equal(2, rows.Count);
-        Assert.Equal("category-weapons", rows[0].Id);
+        Assert.Equal("named;item-category;Weapons", rows[0].Id);
         Assert.Equal("Weapons", rows[0].Fields.CategoryName);
         Assert.True(rows[0].Fields.ShowInAllCategory);
         Assert.Single(rows[0].Fields.Columns);
@@ -49,18 +49,36 @@ public sealed class ItemCategoryExtractorTests
     }
 
     [Fact]
-    public void DiagnosesAssetMissingGuid()
+    public void EmptyCategoryNameIsFatal()
     {
         var source = new FakeItemCategoryAssetSource(new[]
         {
-            FakeItemCategoryAssetSource.BuildWithoutGuid("Floating Category"),
+            FakeItemCategoryAssetSource.Build("ignored", " ", showInAllCategory: true),
         });
         var extractor = new ItemCategoryExtractor(source);
 
-        var rows = extractor.Walk().ToList();
+        Assert.Empty(extractor.Walk().ToList());
+        var diagnostic = Assert.Single(extractor.Diagnostics, d => d.Code == "namedAssetNameMissing");
+        Assert.Equal("fatal", diagnostic.Severity);
+        Assert.Contains("ItemCategory", diagnostic.Message);
+        Assert.Contains("' '", diagnostic.Message);
+    }
 
-        Assert.Empty(rows);
-        Assert.Contains(extractor.Diagnostics, d => d.Code == "lookupAssetGuidMissing" && d.Field == "id");
+    [Fact]
+    public void DuplicateCategoryNameIsFatal()
+    {
+        var source = new FakeItemCategoryAssetSource(new[]
+        {
+            FakeItemCategoryAssetSource.Build("one", "Same", showInAllCategory: true),
+            FakeItemCategoryAssetSource.Build("two", "Same", showInAllCategory: true),
+        });
+        var extractor = new ItemCategoryExtractor(source);
+
+        Assert.Single(extractor.Walk().ToList());
+        var diagnostic = Assert.Single(extractor.Diagnostics, d => d.Code == "namedAssetNameDuplicate");
+        Assert.Equal("fatal", diagnostic.Severity);
+        Assert.Contains("ItemCategory", diagnostic.Message);
+        Assert.Contains("'Same'", diagnostic.Message);
     }
 
     [Fact]
@@ -85,7 +103,7 @@ public sealed class ItemCategoryExtractorTests
         Assert.Single(rows);
         Assert.Empty(rows[0].Fields.Columns);
         Assert.Contains(extractor.Diagnostics, d =>
-            d.Code == "itemCategoryColumnsMalformed" && d.Field == "columns" && d.Message.Contains("category-malformed"));
+            d.Code == "itemCategoryColumnsMalformed" && d.Field == "columns" && d.Message.Contains("named;item-category;Malformed"));
     }
 
     [Fact]
@@ -109,21 +127,21 @@ public sealed class ItemCategoryExtractorTests
 
         Assert.Contains(plan.Slots, slot =>
             slot.EntityId == "item-category" &&
-            slot.RowId == "category-weapons" &&
+            slot.RowId == "named;item-category;Weapons" &&
             slot.Slot == "iconRef" &&
             ReferenceEquals(slot.Sprite, icon));
         Assert.Contains(plan.Slots, slot =>
             slot.EntityId == "item-category" &&
-            slot.RowId == "category-weapons" &&
+            slot.RowId == "named;item-category;Weapons" &&
             slot.Slot == "defaultItemIconRef" &&
             ReferenceEquals(slot.Sprite, defaultIcon));
     }
 
     [Fact]
-    public void BuiltLookupSourceDoesNotDiscoverCategoriesFromItemAssets()
+    public void LoadedSourceDoesNotDiscoverCategoriesFromItemAssets()
     {
-        var source = new BuiltLookupTableItemCategoryAssetSource(
-            lookupCategories: () => System.Array.Empty<Ardenfall.ItemCategory>(),
+        var source = new LoadedItemCategoryAssetSource(
+            loadedCategories: () => System.Array.Empty<Ardenfall.ItemCategory>(),
             isUnityNull: _ => false);
 
         Assert.Empty(source.EnumerateItemCategories());
@@ -132,7 +150,6 @@ public sealed class ItemCategoryExtractorTests
     private sealed class FakeItemCategoryAssetSource : IItemCategoryAssetSource
     {
         private readonly IReadOnlyList<ItemCategoryAsset> _assets;
-
         public FakeItemCategoryAssetSource(IReadOnlyList<ItemCategoryAsset> assets)
         {
             _assets = assets;
@@ -155,16 +172,6 @@ public sealed class ItemCategoryExtractorTests
                 CategoryColor: new AssetColorSnapshot { R = 0.9f, G = 0.2f, B = 0.2f, A = 1f },
                 ShowInAllCategory: showInAllCategory,
                 Columns: columns ?? new List<ItemCategoryColumnAsset>());
-
-        public static ItemCategoryAsset BuildWithoutGuid(string name) => new(
-            Guid: null,
-            AssetName: name,
-            CategoryName: name,
-            Icon: null,
-            DefaultItemIcon: null,
-            CategoryColor: new AssetColorSnapshot(),
-            ShowInAllCategory: true,
-            Columns: new List<ItemCategoryColumnAsset>());
 
         public static ItemCategoryColumnAsset Column(
             string label,

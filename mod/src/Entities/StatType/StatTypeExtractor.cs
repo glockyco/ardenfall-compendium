@@ -13,7 +13,7 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
     private readonly ItemIconAssetPlan? _assetPlan;
 
     public StatTypeExtractor()
-        : this(new BuiltLookupTableStatTypeAssetSource(), assetPlan: null)
+        : this(new LoadedStatTypeAssetSource(), assetPlan: null)
     {
     }
 
@@ -25,6 +25,7 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
 
     public override IEnumerable<StatTypeSnapshotRow> Walk()
     {
+        var seenNames = new HashSet<string>(System.StringComparer.Ordinal);
         foreach (var asset in _source.EnumerateStatTypes())
         {
             if (asset == null)
@@ -38,15 +39,27 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
                 });
                 continue;
             }
-            var guid = asset.Guid;
-            if (string.IsNullOrWhiteSpace(guid))
+
+            var assetName = asset.AssetName ?? "";
+            if (!NamedAssetIdentity.TryCreate("stat-type", assetName, out var id))
             {
                 Diagnostics.Add(new Diagnostic
                 {
                     Severity = "fatal",
-                    Code = "lookupAssetGuidMissing",
+                    Code = "namedAssetNameMissing",
                     Field = "id",
-                    Message = $"StatType asset '{asset.AssetName}' has no GUID in BuiltLookupTable",
+                    Message = $"StatType asset has empty or whitespace name '{assetName}'",
+                });
+                continue;
+            }
+            if (!seenNames.Add(assetName))
+            {
+                Diagnostics.Add(new Diagnostic
+                {
+                    Severity = "fatal",
+                    Code = "namedAssetNameDuplicate",
+                    Field = "id",
+                    Message = $"StatType asset name '{assetName}' is duplicated",
                 });
                 continue;
             }
@@ -54,22 +67,22 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
             var iconRef = Refs.ResolveAsset(
                 asset.Icon,
                 "iconRef",
-                guid,
+                id,
                 MissingPolicy.Diagnostic,
                 "StatType.icon");
 
 
             if (_assetPlan != null && asset.Icon is Sprite sprite)
             {
-                _assetPlan.Slots.Add(new ItemIconAssetSlot("stat-type", guid, "iconRef", sprite, "stat-type"));
+                _assetPlan.Slots.Add(new ItemIconAssetSlot("stat-type", id, "iconRef", sprite, "stat-type"));
             }
             yield return new StatTypeSnapshotRow
             {
-                Id = guid,
+                Id = id,
                 Fields = new StatTypeSnapshot(
-                    Id: guid,
+                    Id: id,
                     IsAttribute: asset.IsAttribute,
-                    StatName: NullIfEmpty(asset.StatName) ?? NullIfEmpty(asset.AssetName) ?? guid,
+                    StatName: NullIfEmpty(asset.StatName) ?? NullIfEmpty(asset.AssetName) ?? id,
                     IconRef: iconRef,
                     IconColor: asset.IconColor,
                     StatDescription: NullIfEmpty(asset.StatDescription),

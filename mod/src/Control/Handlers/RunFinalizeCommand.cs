@@ -52,8 +52,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     {
         _runs = runs;
         _items = items;
-        _statTypes = statTypes ?? new StatTypeExtractionService(new BuiltLookupTableStatTypeAssetSource());
-        _itemCategories = itemCategories ?? new ItemCategoryExtractionService(new BuiltLookupTableItemCategoryAssetSource());
+        _statTypes = statTypes ?? new StatTypeExtractionService(new LoadedStatTypeAssetSource());
+        _itemCategories = itemCategories ?? new ItemCategoryExtractionService(new LoadedItemCategoryAssetSource());
         _itemTags = itemTags ?? new ItemTagExtractionService(new BuiltLookupTableItemTagAssetSource());
         _locations = locations ?? new LocationExtractionService(new BuiltLookupTableLocationAssetSource());
         _portals = portals ?? new PortalExtractionService(new MasterRecordTablePortalRecordSource());
