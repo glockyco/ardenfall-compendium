@@ -7,7 +7,7 @@ export const SPELL_READ_MODEL_DDL = `
 CREATE TABLE spell_overview_rows (
   id          TEXT PRIMARY KEY,
   name        TEXT NOT NULL,
-  school      TEXT,
+  skill      TEXT,
   mana_cost   REAL,
   is_illegal  INTEGER NOT NULL DEFAULT 0
 );
@@ -15,8 +15,8 @@ CREATE TABLE spell_presentation_rows (
   id             TEXT PRIMARY KEY,
   name           TEXT NOT NULL,
   render_context TEXT NOT NULL,
-  school         TEXT,
-  school_id      TEXT,
+  skill         TEXT,
+  skill_id      TEXT,
   mana_cost      REAL,
   is_illegal     INTEGER NOT NULL DEFAULT 0
 );
@@ -45,12 +45,12 @@ export function emitSpellReadModels(db: Database, routeBase = "/spells"): Pipeli
   db.exec(ENTITY_GRAPH_DDL);
 
   const overviewInsert = db.prepare(
-    `INSERT INTO spell_overview_rows (id, name, school, mana_cost, is_illegal)
+    `INSERT INTO spell_overview_rows (id, name, skill, mana_cost, is_illegal)
      VALUES (?, ?, ?, ?, ?)`,
   );
   const presentationInsert = db.prepare(
     `INSERT INTO spell_presentation_rows (
-       id, name, render_context, school, school_id, mana_cost, is_illegal
+       id, name, render_context, skill, skill_id, mana_cost, is_illegal
      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
   const edgeInsert = db.prepare(
@@ -81,11 +81,11 @@ export function emitSpellReadModels(db: Database, routeBase = "/spells"): Pipeli
   const tx = db.transaction(() => {
     for (const row of rows) {
       const presentationName = row.spell_name ?? "Unnamed spell";
-      const school = resolveSchool(row, publicStats, diagnostics);
+      const skill = resolveSkill(row, publicStats, diagnostics);
       overviewInsert.run(
         row.id,
         presentationName,
-        school?.label ?? null,
+        skill?.label ?? null,
         row.mana_cost,
         row.is_illegal ?? 0,
       );
@@ -93,8 +93,8 @@ export function emitSpellReadModels(db: Database, routeBase = "/spells"): Pipeli
         row.id,
         presentationName,
         "spell-presentation-v1",
-        school?.label ?? null,
-        school?.id ?? null,
+        skill?.label ?? null,
+        skill?.id ?? null,
         row.mana_cost,
         row.is_illegal ?? 0,
       );
@@ -111,15 +111,15 @@ export function emitSpellReadModels(db: Database, routeBase = "/spells"): Pipeli
         shortId: slug.shortId,
       });
 
-      if (school) {
+      if (skill) {
         edgeInsert.run(
-          `${row.id}:casts_school:stat-type:${school.id}`,
+          `${row.id}:scales_with:stat-type:${skill.id}`,
           "spell",
           row.id,
           "stat-type",
-          school.id,
-          "casts_school",
-          "Casts school",
+          skill.id,
+          "scales_with",
+          "Scales with skill",
           1,
           JSON.stringify({ source: "spells.statTypeRef" }),
           null,
@@ -131,7 +131,7 @@ export function emitSpellReadModels(db: Database, routeBase = "/spells"): Pipeli
   return diagnostics;
 }
 
-function resolveSchool(
+function resolveSkill(
   row: SpellRow,
   publicStats: Map<string, string>,
   diagnostics: PipelineDiagnostic[],
@@ -142,13 +142,13 @@ function resolveSchool(
   try {
     parsed = JSON.parse(row.stat_type_ref_json) as unknown;
   } catch {
-    diagnostics.push(unresolvedSchoolDiagnostic(row, "reference is not valid JSON"));
+    diagnostics.push(unresolvedSkillDiagnostic(row, "reference is not valid JSON"));
     return null;
   }
 
   const ref = namedAssetReference(parsed);
   if (ref === null || ref.entity !== "stat-type") {
-    diagnostics.push(unresolvedSchoolDiagnostic(row, "reference is not a stat-type named asset"));
+    diagnostics.push(unresolvedSkillDiagnostic(row, "reference is not a stat-type named asset"));
     return null;
   }
 
@@ -156,7 +156,7 @@ function resolveSchool(
   const label = publicStats.get(targetId);
   if (label === undefined) {
     diagnostics.push(
-      unresolvedSchoolDiagnostic(row, `target '${targetId}' is not a public stat type`),
+      unresolvedSkillDiagnostic(row, `target '${targetId}' is not a public stat type`),
     );
     return null;
   }
@@ -172,11 +172,11 @@ function namedAssetReference(value: unknown): NamedAssetReference | null {
   return { entity: ref.entity, name: ref.name };
 }
 
-function unresolvedSchoolDiagnostic(row: SpellRow, reason: string): PipelineDiagnostic {
+function unresolvedSkillDiagnostic(row: SpellRow, reason: string): PipelineDiagnostic {
   return {
     severity: "diagnostic",
     source: "relationship-graph",
-    code: "spellSchoolUnresolved",
+    code: "spellSkillUnresolved",
     message: `Spell '${row.id}' has an unresolvable stat type reference: ${reason}.`,
     entityType: "spell",
     entityId: row.id,

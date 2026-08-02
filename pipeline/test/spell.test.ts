@@ -7,10 +7,10 @@ import { SPELL_DDL } from "../src/sql/spell-ddl.ts";
 
 const spellId = "named;spell;spell_fire-shield";
 const namelessSpellId = "named;spell;spell_brawler-fists";
-const schoolId = "named;stat-type;Destruction";
-const schoolRef = { kind: "namedAsset", entity: "stat-type", name: "Destruction" };
+const skillId = "named;stat-type;Destruction";
+const skillRef = { kind: "namedAsset", entity: "stat-type", name: "Destruction" };
 
-function seedSpell(db: Database, statTypeRef: unknown = schoolRef): void {
+function seedSpell(db: Database, statTypeRef: unknown = skillRef): void {
   db.exec(SPELL_DDL);
   canonicaliseSpells(db, {
     entityId: "spell",
@@ -52,7 +52,7 @@ function seedNamelessSpell(db: Database): void {
   });
 }
 
-function seedPublicSchool(db: Database): void {
+function seedPublicSkill(db: Database): void {
   db.exec(ENTITY_GRAPH_DDL);
   db.prepare(
     `INSERT INTO entity_nodes (
@@ -60,7 +60,7 @@ function seedPublicSchool(db: Database): void {
      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     "stat-type",
-    schoolId,
+    skillId,
     "Destruction",
     "/stats/destruction--destruction",
     "destruction--destruction",
@@ -82,7 +82,7 @@ describe("spell pipeline", () => {
     expect(row).toEqual({
       id: spellId,
       spell_name: "Fire Shield",
-      stat_type_ref_json: JSON.stringify(schoolRef),
+      stat_type_ref_json: JSON.stringify(skillRef),
       mana_cost: 12.5,
     });
   });
@@ -145,10 +145,10 @@ describe("spell pipeline", () => {
     });
   });
 
-  it("emits a casts_school edge to a public stat type", () => {
+  it("emits a scales_with edge to a public stat type", () => {
     const db = new Database(":memory:");
     seedSpell(db);
-    seedPublicSchool(db);
+    seedPublicSkill(db);
 
     expect(emitSpellReadModels(db)).toEqual([]);
     const edge = db
@@ -156,7 +156,7 @@ describe("spell pipeline", () => {
         `SELECT source_id, target_id, predicate FROM entity_edges WHERE source_type = 'spell'`,
       )
       .get();
-    expect(edge).toEqual({ source_id: spellId, target_id: schoolId, predicate: "casts_school" });
+    expect(edge).toEqual({ source_id: spellId, target_id: skillId, predicate: "scales_with" });
   });
 
   it("diagnoses a missing public stat type without writing an edge", () => {
@@ -165,7 +165,7 @@ describe("spell pipeline", () => {
 
     const diagnostics = emitSpellReadModels(db);
     expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0]?.code).toBe("spellSchoolUnresolved");
+    expect(diagnostics[0]?.code).toBe("spellSkillUnresolved");
     expect(diagnostics[0]?.severity).toBe("diagnostic");
     expect(db.query(`SELECT COUNT(*) AS count FROM entity_edges`).get()).toEqual({ count: 0 });
   });

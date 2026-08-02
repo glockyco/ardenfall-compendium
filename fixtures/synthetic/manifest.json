@@ -17,7 +17,7 @@
     "ItemTag fixture rows for tag overview/detail routes and item reverse links",
     "LocationAsset fixture rows for map points, debug-only filtering, and axis-aligned volumes",
     "PortalRecord fixture row for record-backed map point placement",
-    "Spell fixture rows for stat-linked, no-school, and illegal spell coverage"
+    "Spell fixture rows for skill-linked, no-skill, and illegal spell coverage"
   ],
   "selection": [
     {
@@ -53,7 +53,7 @@
         "named;spell;spell_arcane-surge",
         "named;spell;spell_forbidden-rite"
       ],
-      "rationale": "complete spell, no-school spell, and illegal spell rows"
+      "rationale": "complete spell, spell with no governing skill, and illegal spell rows"
     },
     {
       "entity": "location",
@@ -69,8 +69,8 @@
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "8f6be0b77d485cd4acd25bff984c2e190b7b967293ba6b1f257fdebc9ba0ac32",
-    "snapshot/items.json": "6ccc345c998c45365dfb41bc834aa4f182002ab277d591454de9317d04cb8cbd",
+    "snapshot/manifest.json": "ff6a338aefe9138930610f3740cafd9ed7a3939eb34969ac1892b3cfa73f0b8b",
+    "snapshot/items.json": "e228143ed18a92ef27648a35bc9a1ba6bae49f4cbe11a16686a8d0c613ff1f4e",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
     "snapshot/assets/items/fixture-icon-blue.png": "d6d4b05209c7541985841a63d955337a411a005d7abb936426791cbfde258f17",

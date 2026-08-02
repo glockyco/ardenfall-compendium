@@ -12,7 +12,7 @@ const seed = () => {
     CREATE TABLE spell_overview_rows (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      school TEXT,
+      skill TEXT,
       mana_cost REAL,
       is_illegal INTEGER NOT NULL DEFAULT 0
     );
@@ -20,8 +20,8 @@ const seed = () => {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       render_context TEXT NOT NULL,
-      school TEXT,
-      school_id TEXT,
+      skill TEXT,
+      skill_id TEXT,
       mana_cost REAL,
       is_illegal INTEGER NOT NULL DEFAULT 0
     );
@@ -51,7 +51,7 @@ const seed = () => {
 };
 
 describe("spell read-model accessors", () => {
-  it("lists spells with school and mana cost", async () => {
+  it("lists spells with skill and mana cost", async () => {
     const originalCwd = process.cwd();
     const root = seed();
     try {
@@ -61,7 +61,7 @@ describe("spell read-model accessors", () => {
         {
           id: "named;spell;spell_fire-shield",
           name: "Fire Shield",
-          school: "Destruction",
+          skill: "Destruction",
           manaCost: 12.5,
           isIllegal: false,
           routePath: "/spells/fire-shield--abc12345",
@@ -69,7 +69,7 @@ describe("spell read-model accessors", () => {
         {
           id: "named;spell;spell_shadow-step",
           name: "Shadow Step",
-          school: null,
+          skill: null,
           manaCost: 4,
           isIllegal: true,
           routePath: "/spells/shadow-step--def67890",
@@ -91,8 +91,8 @@ describe("spell read-model accessors", () => {
         id: "named;spell;spell_fire-shield",
         name: "Fire Shield",
         renderContext: "spell-presentation-v1",
-        school: "Destruction",
-        schoolRoutePath: "/stats/destruction--fedcba98",
+        skill: "Destruction",
+        skillRoutePath: "/stats/destruction--fedcba98",
         manaCost: 12.5,
         isIllegal: false,
       });
@@ -103,7 +103,7 @@ describe("spell read-model accessors", () => {
     }
   });
 
-  it("resolves a spell without a stat type and leaves its school unlinked", async () => {
+  it("resolves a spell without a stat type and leaves its skill unlinked", async () => {
     const originalCwd = process.cwd();
     const root = seed();
     try {
@@ -113,8 +113,8 @@ describe("spell read-model accessors", () => {
         id: "named;spell;spell_shadow-step",
         name: "Shadow Step",
         renderContext: "spell-presentation-v1",
-        school: null,
-        schoolRoutePath: null,
+        skill: null,
+        skillRoutePath: null,
         manaCost: 4,
         isIllegal: true,
       });

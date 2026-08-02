@@ -19,8 +19,10 @@
           <a class="block underline-offset-4 hover:underline" href={spell.routePath}>
             <span class="block font-medium">{spell.name}</span>
             <span class="text-muted-foreground mt-1 block text-sm">
-              {spell.school ?? "No school"} ·
-              {spell.manaCost === null ? "Mana cost unavailable" : `${spell.manaCost} mana`}
+              {spell.skill ? `Governing skill: ${spell.skill}` : "No governing skill"} ·
+              {spell.manaCost === null
+                ? "Base mana cost unavailable"
+                : `Base mana cost: ${spell.manaCost}`}
             </span>
           </a>
         </li>

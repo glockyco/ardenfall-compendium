@@ -378,7 +378,7 @@ Item's descriptor-built DDL and the five fixed constants are the same field rath
 **Status:** done
 **Spec coverage:** investment-priorities §4.
 
-**Delivers:** `spell` as a first-class entity — 56 rows, public routes, and a `casts_school` edge to the stat type each spell belongs to. Identity is `namedAsset`, because none of the 56 is registered in `BuiltLookupTable`, which is the same gap that made stat types and item categories ship empty.
+**Delivers:** `spell` as a first-class entity — 56 rows, public routes, and a `scales_with` edge to the stat type whose skill scales each spell. Identity is `namedAsset`, because none of the 56 is registered in `BuiltLookupTable`, which is the same gap that made stat types and item categories ship empty.
 
 **Why it was invisible.** A live export emitted 1805 `lookupAssetGuidMissing` diagnostics, of which about 1454 were references to Unity sprites, prefabs, and fonts that the compendium deliberately does not catalogue and never could resolve. The 286 spell references that mattered were 16% of the noise. Classifying engine-namespace assets as out of scope, rather than as failures, cut the total to 357 and made the remainder legible. Fixing the spells then took it to 72.
 
