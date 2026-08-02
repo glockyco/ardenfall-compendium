@@ -25,6 +25,62 @@
           "recordType": "PortalRecord"
         }
       }
+    },
+    {
+      "id": "instances;portals;8f17d2c4a6b8490e9d31c7f2e5a4b608",
+      "fields": {
+        "id": "instances;portals;8f17d2c4a6b8490e9d31c7f2e5a4b608",
+        "recordRef": {
+          "kind": "record",
+          "table": "instances",
+          "subtable": "portals",
+          "id": "8f17d2c4a6b8490e9d31c7f2e5a4b608",
+          "recordType": "PortalRecord"
+        },
+        "name": "Cliff Stair",
+        "isAccessible": true,
+        "mapId": "ardenfall",
+        "position": { "x": 26, "y": 5, "z": -18 },
+        "connectedPortalRef": {
+          "kind": "record",
+          "table": "instances",
+          "subtable": "portals",
+          "id": "398213e43a41b4c47bffe4ef1998e782",
+          "recordType": "PortalRecord"
+        }
+      }
+    },
+    {
+      "id": "instances;portals;c4b70e19a5d84f2287ce6013bb95f7da",
+      "fields": {
+        "id": "instances;portals;c4b70e19a5d84f2287ce6013bb95f7da",
+        "recordRef": {
+          "kind": "record",
+          "table": "instances",
+          "subtable": "portals",
+          "id": "c4b70e19a5d84f2287ce6013bb95f7da",
+          "recordType": "PortalRecord"
+        },
+        "name": null,
+        "isAccessible": true,
+        "mapId": "ardenfall",
+        "position": { "x": 12, "y": 5, "z": -44 },
+        "connectedPortalRef": null
+      },
+      "diagnostics": [
+        {
+          "severity": "diagnostic",
+          "code": "portalNameMissing",
+          "field": "friendlyName",
+          "message": "PortalRecord 'instances;portals;c4b70e19a5d84f2287ce6013bb95f7da' has no friendlyName"
+        },
+        {
+          "severity": "diagnostic",
+          "code": "connectedPortalMissing",
+          "field": "connectedPortalRef",
+          "message": "PortalRecord 'instances;portals;c4b70e19a5d84f2287ce6013bb95f7da' has no resolved connected portal"
+        }
+      ]
     }
   ]
 }

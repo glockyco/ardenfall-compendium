@@ -59,7 +59,7 @@
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "61de29e3e569a2b7f789331fad46055ca919bc329ee27abca0c86aabed3319b7",
+    "snapshot/manifest.json": "b0a7516f0f88bacf2acc8becd0bc1e45888567023a9bbefef93e092867903f0b",
     "snapshot/items.json": "133a0726906860f472a7d0597bbf88afae3cb4615d46823b0b6689234a9f9b15",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
@@ -69,6 +69,6 @@
     "snapshot/item-categories.json": "9ddf37b041ec004007851244de1d4d6c0be4b9ad9e3973c7ec12f193f93f5724",
     "snapshot/item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
     "snapshot/locations.json": "333dc28688c556536ad084613d35577ce58915a6b136bfd2763cb9a58731d241",
-    "snapshot/portals.json": "20403ebde38383b817a6f50155d7c2c111ae1003df3cc5763be4ac0717f3c2b7"
+    "snapshot/portals.json": "bee477a22b636e4428377f89af0c6d4ab7eaa2123fb074a652a863fce6bb0f8e"
   }
 }
