@@ -90,6 +90,61 @@ public sealed class PortalExtractorTests
         Assert.Contains(row.Diagnostics, d => d.Severity == "diagnostic" && d.Code == "connectedPortalMissing" && d.Field == "connectedPortalRef");
     }
 
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void DiagnosesMissingFriendlyNameInsteadOfSubstitutingTheRowId(string? friendlyName)
+    {
+        var source = new FakePortalRecordSource(new[]
+        {
+            PortalRecordSourceRow.Build(
+                table: "world",
+                subtable: "portals",
+                id: "portal-a",
+                friendlyName: friendlyName,
+                isAccessible: true,
+                mapId: "overworld",
+                position: new PortalVector3Snapshot(0f, 0f, 0f),
+                connectedPortalRef: null,
+                connectedPortalResolved: false),
+        });
+        var extractor = new PortalExtractor(source);
+
+        var row = Assert.Single(extractor.Walk());
+
+        // The row id must not stand in for a name: an id-shaped label is
+        // indistinguishable from an authored one downstream, which is how an
+        // unnamed portal previously shipped a public route labelled with its id.
+        Assert.Null(row.Fields.Name);
+        Assert.DoesNotContain(row.Diagnostics, d => d.Code == "portalNameMissing" && d.Severity != "diagnostic");
+        Assert.Contains(row.Diagnostics, d => d.Code == "portalNameMissing" && d.Field == "friendlyName");
+    }
+
+    [Fact]
+    public void KeepsAnAuthoredFriendlyNameAndStaysSilent()
+    {
+        var source = new FakePortalRecordSource(new[]
+        {
+            PortalRecordSourceRow.Build(
+                table: "world",
+                subtable: "portals",
+                id: "portal-a",
+                friendlyName: "Harbor Gate",
+                isAccessible: true,
+                mapId: "overworld",
+                position: new PortalVector3Snapshot(0f, 0f, 0f),
+                connectedPortalRef: null,
+                connectedPortalResolved: false),
+        });
+        var extractor = new PortalExtractor(source);
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Equal("Harbor Gate", row.Fields.Name);
+        Assert.DoesNotContain(row.Diagnostics, d => d.Code == "portalNameMissing");
+    }
+
     private sealed class FakePortalRecordSource : IPortalRecordSource
     {
         private readonly IReadOnlyList<PortalRecordSourceRow> _records;

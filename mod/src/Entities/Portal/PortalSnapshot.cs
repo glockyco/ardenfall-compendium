@@ -12,7 +12,7 @@ public sealed record PortalVector3Snapshot(
 public sealed record PortalSnapshot(
     [property: JsonProperty("id")] string Id,
     [property: JsonProperty("recordRef")] SnapshotRef RecordRef,
-    [property: JsonProperty("name")] string Name,
+    [property: JsonProperty("name")] string? Name,
     [property: JsonProperty("isAccessible")] bool IsAccessible,
     [property: JsonProperty("mapId")] string? MapId,
     [property: JsonProperty("position")] PortalVector3Snapshot Position,
