@@ -1,8 +1,10 @@
 {
   "$schema": "../../schemas/entity.schema.json",
   "id": "stat-type",
+  "kind": "definition",
   "label": { "singular": "Stat", "plural": "Stats" },
   "extraction": {
+    "source": "lookupAsset",
     "root": "BuiltLookupTable.GetAssetsOfType<StatType>",
     "walker": "StatTypeExtractor"
   },

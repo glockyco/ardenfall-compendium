@@ -23,14 +23,16 @@ const baseSchema = `
     color_json TEXT NOT NULL, radius REAL, tooltip_fields_json TEXT NOT NULL,
     filters_json TEXT NOT NULL, legend_label TEXT NOT NULL, z_order INTEGER NOT NULL
   );
-  CREATE TABLE location_map_points (
-    id TEXT PRIMARY KEY, name TEXT NOT NULL, map_id TEXT, map_x REAL NOT NULL,
-    map_y REAL NOT NULL, elevation REAL NOT NULL, show_on_map INTEGER NOT NULL,
+  CREATE TABLE map_points (
+    id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
+    name TEXT NOT NULL, map_id TEXT, map_x REAL NOT NULL,
+    map_y REAL NOT NULL, elevation REAL NOT NULL,
     show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
   );
-  CREATE TABLE location_map_volumes (
-    id TEXT PRIMARY KEY, location_id TEXT NOT NULL, name TEXT NOT NULL, map_id TEXT,
-    geometry_json TEXT NOT NULL, elevation_min REAL, elevation_max REAL
+  CREATE TABLE map_volumes (
+    id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
+    name TEXT NOT NULL, map_id TEXT, geometry_json TEXT NOT NULL,
+    elevation_min REAL, elevation_max REAL
   );
   CREATE TABLE entity_nodes (
     entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, label TEXT NOT NULL,
@@ -45,13 +47,14 @@ describe("getMapView", () => {
       db.exec(baseSchema);
       db.exec(`
         INSERT INTO map_layers VALUES
-          ('locations', 'location', 'location_map_points',
-           '["location_map_points","location_map_volumes"]', 'point-or-polygon', 'location',
+          ('locations', 'location', 'map_points',
+           '["map_points","map_volumes"]', 'point-or-polygon', 'location',
            '[120,170,255]', 6, '["name"]', '[]', 'Locations', 0);
-        INSERT INTO location_map_points VALUES
-          ('11111111.fixture-town', 'Harbor Town', 'ardenfall', 12, 8, 3, 1, 0, 1);
-        INSERT INTO location_map_volumes VALUES
-          ('vol-1', '11111111.fixture-town', 'Harbor Town', 'ardenfall',
+        INSERT INTO map_points VALUES
+          ('location:11111111.fixture-town', 'location', '11111111.fixture-town',
+           'Harbor Town', 'ardenfall', 12, 8, 3, 0, 1);
+        INSERT INTO map_volumes VALUES
+          ('vol-1', 'location', '11111111.fixture-town', 'Harbor Town', 'ardenfall',
            '{"ring":[[10,6],[14,6],[14,10],[10,10],[10,6]]}', 0, 2);
         INSERT INTO entity_nodes VALUES
           ('location', '11111111.fixture-town', 'Harbor Town',
@@ -69,7 +72,7 @@ describe("getMapView", () => {
           layerId: "locations",
           entityType: "location",
           renderKind: "point-or-polygon",
-          sourceTables: ["location_map_points", "location_map_volumes"],
+          sourceTables: ["map_points", "map_volumes"],
           fillColor: [120, 170, 255, 255],
           radius: 6,
           icon: "location",
@@ -81,7 +84,9 @@ describe("getMapView", () => {
       ]);
       expect(view.points).toEqual([
         {
-          id: "11111111.fixture-town",
+          id: "location:11111111.fixture-town",
+          entityId: "location",
+          instanceId: "11111111.fixture-town",
           layerId: "locations",
           mapId: "ardenfall",
           position: [12, 8, 0],
@@ -113,7 +118,7 @@ describe("getMapView", () => {
     }
   });
 
-  it("fails fast on a source table that violates the suffix contract", async () => {
+  it("fails fast on an unsupported map source table", async () => {
     const root = withDb((db) => {
       db.exec(baseSchema);
       db.exec(`
@@ -126,7 +131,7 @@ describe("getMapView", () => {
     try {
       process.chdir(root);
       const { getMapView } = await import("../src/lib/server/read-models");
-      expect(() => getMapView()).toThrow(/source table/i);
+      expect(() => getMapView()).toThrow(/must be map_points or map_volumes/i);
     } finally {
       process.chdir(originalCwd);
       rmSync(root, { recursive: true, force: true });

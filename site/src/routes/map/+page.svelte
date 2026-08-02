@@ -57,7 +57,8 @@
     <MapCanvas {store} />
     <noscript>
       <p class="p-4">
-        The interactive map requires JavaScript. Browse locations from the linked compendium pages.
+        The interactive map requires JavaScript. Browse mapped entities from their linked compendium
+        pages.
       </p>
     </noscript>
   </section>

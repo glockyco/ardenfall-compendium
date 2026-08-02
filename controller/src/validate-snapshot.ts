@@ -22,6 +22,7 @@ export const ENTITY_FILES: Record<string, string> = {
   "item-category": "item-categories.json",
   "item-tag": "item-tags.json",
   location: "locations.json",
+  portal: "portals.json",
 };
 
 export async function validateSnapshot(snapshotDir: string): Promise<SnapshotValidationResult> {

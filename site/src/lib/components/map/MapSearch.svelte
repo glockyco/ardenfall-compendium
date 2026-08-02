@@ -17,10 +17,10 @@
 
 <div class="rounded-lg border p-4">
   <label class="block">
-    <span class="sr-only">Search locations</span>
+    <span class="sr-only">Search map markers</span>
     <input
       class="w-full rounded border px-2 py-1"
-      placeholder="Search locations…"
+      placeholder="Search map markers…"
       bind:value={query}
     />
   </label>

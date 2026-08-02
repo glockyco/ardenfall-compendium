@@ -10,8 +10,6 @@ import type {
 } from "../../map/types";
 
 const KNOWN_KINDS: RenderKind[] = ["point-or-polygon", "point", "polygon"];
-const POINT_SUFFIX = "_map_points";
-const VOLUME_SUFFIX = "_map_volumes";
 
 interface MapLayerRecord {
   layer_id: string;
@@ -29,6 +27,8 @@ interface MapLayerRecord {
 
 interface MapPointRecord {
   id: string;
+  entity_id: string;
+  instance_id: string;
   name: string;
   map_id: string | null;
   map_x: number;
@@ -41,7 +41,8 @@ interface MapPointRecord {
 
 interface MapVolumeRecord {
   id: string;
-  location_id: string;
+  entity_id: string;
+  instance_id: string;
   name: string;
   map_id: string | null;
   geometry_json: string;
@@ -79,9 +80,9 @@ function readLayers(): MapLayerConfig[] {
     }
     const sourceTables = JSON.parse(row.source_tables_json) as string[];
     for (const table of sourceTables) {
-      if (!table.endsWith(POINT_SUFFIX) && !table.endsWith(VOLUME_SUFFIX)) {
+      if (table !== "map_points" && table !== "map_volumes") {
         throw new Error(
-          `source table '${table}' for layer '${row.layer_id}' must end in ${POINT_SUFFIX} or ${VOLUME_SUFFIX}`,
+          `source table '${table}' for layer '${row.layer_id}' must be map_points or map_volumes`,
         );
       }
       if (!tableExists(table)) {
@@ -106,19 +107,22 @@ function readLayers(): MapLayerConfig[] {
 
 function readPoints(layer: MapLayerConfig): MapPointRow[] {
   const rows: MapPointRow[] = [];
-  for (const table of layer.sourceTables.filter((t) => t.endsWith(POINT_SUFFIX))) {
+  for (const table of layer.sourceTables.filter((t) => t === "map_points")) {
     const records = all<MapPointRecord>(
-      `SELECT p.id, p.name, p.map_id, p.map_x, p.map_y, p.elevation,
+      `SELECT p.id, p.entity_id, p.instance_id, p.name, p.map_id, p.map_x, p.map_y, p.elevation,
               p.show_on_map_debug_only, p.allow_fast_travel, n.short_id
        FROM ${table} p
        LEFT JOIN entity_nodes n
-         ON n.entity_type = ? AND n.entity_id = p.id AND n.is_public = 1
+         ON n.entity_type = p.entity_id AND n.entity_id = p.instance_id AND n.is_public = 1
+       WHERE p.entity_id = ?
        ORDER BY p.name`,
       [layer.entityType],
     );
     for (const r of records) {
       rows.push({
         id: r.id,
+        entityId: r.entity_id,
+        instanceId: r.instance_id,
         layerId: layer.layerId,
         mapId: r.map_id,
         position: [r.map_x, r.map_y, 0],
@@ -136,17 +140,19 @@ function readPoints(layer: MapLayerConfig): MapPointRow[] {
 
 function readVolumes(layer: MapLayerConfig): MapVolumeRow[] {
   const rows: MapVolumeRow[] = [];
-  for (const table of layer.sourceTables.filter((t) => t.endsWith(VOLUME_SUFFIX))) {
+  for (const table of layer.sourceTables.filter((t) => t === "map_volumes")) {
     const records = all<MapVolumeRecord>(
-      `SELECT id, location_id, name, map_id, geometry_json, elevation_min, elevation_max
-       FROM ${table} ORDER BY name`,
+      `SELECT id, entity_id, instance_id, name, map_id, geometry_json, elevation_min, elevation_max
+       FROM ${table} WHERE entity_id = ? ORDER BY name`,
+      [layer.entityType],
     );
     for (const r of records) {
       const ring = (JSON.parse(r.geometry_json) as { ring: [number, number][] }).ring;
       rows.push({
         id: r.id,
         layerId: layer.layerId,
-        locationId: r.location_id,
+        entityId: r.entity_id,
+        instanceId: r.instance_id,
         mapId: r.map_id,
         ring,
         elevationMin: r.elevation_min,

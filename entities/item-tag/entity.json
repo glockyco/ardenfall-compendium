@@ -1,8 +1,10 @@
 {
   "$schema": "../../schemas/entity.schema.json",
   "id": "item-tag",
+  "kind": "definition",
   "label": { "singular": "Tag", "plural": "Tags" },
   "extraction": {
+    "source": "lookupAsset",
     "root": "BuiltLookupTable.GetAssetsOfType<ItemTag>",
     "walker": "ItemTagExtractor"
   },

@@ -6,7 +6,7 @@ const layer: MapLayerConfig = {
   layerId: "locations",
   entityType: "location",
   renderKind: "point-or-polygon",
-  sourceTables: ["location_map_points", "location_map_volumes"],
+  sourceTables: ["map_points", "map_volumes"],
   fillColor: [120, 170, 255, 255],
   radius: 6,
   icon: "location",
@@ -18,6 +18,8 @@ const layer: MapLayerConfig = {
 
 const point = (id: string, over: Partial<MapPointRow> = {}): MapPointRow => ({
   id,
+  entityId: "location",
+  instanceId: id,
   layerId: "locations",
   mapId: "ardenfall",
   position: [1, 2, 0],
@@ -33,7 +35,8 @@ const point = (id: string, over: Partial<MapPointRow> = {}): MapPointRow => ({
 const volume: MapVolumeRow = {
   id: "v1",
   layerId: "locations",
-  locationId: "town",
+  entityId: "location",
+  instanceId: "town",
   mapId: "ardenfall",
   ring: [
     [0, 0],

@@ -11,12 +11,10 @@ function valueKindOf(type: string): string {
   return "string";
 }
 
-function mapSourceTables(entityId: string, renderKind: string): string[] {
-  if (renderKind === "point-or-polygon") {
-    return [`${entityId}_map_points`, `${entityId}_map_volumes`];
-  }
-  if (renderKind === "polygon") return [`${entityId}_map_volumes`];
-  return [`${entityId}_map_points`];
+function mapSourceTables(_entityId: string, renderKind: string): string[] {
+  if (renderKind === "point-or-polygon") return ["map_points", "map_volumes"];
+  if (renderKind === "polygon") return ["map_volumes"];
+  return ["map_points"];
 }
 
 export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): void {

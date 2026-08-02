@@ -15,6 +15,7 @@ using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Entities.Location;
+using ArdenfallCompendium.Entities.Portal;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
 using HotRepl.Control;
@@ -33,6 +34,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     private readonly IItemCategoryExtractionCache _itemCategories;
     private readonly IItemTagExtractionCache _itemTags;
     private readonly ILocationExtractionCache _locations;
+    private readonly IPortalExtractionCache _portals;
     private readonly IMasterTooltipSnapshotSource _masterTooltip;
     private readonly Func<PreflightReport> _preflight;
 
@@ -44,6 +46,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         IItemCategoryExtractionCache? itemCategories = null,
         IItemTagExtractionCache? itemTags = null,
         ILocationExtractionCache? locations = null,
+        IPortalExtractionCache? portals = null,
         Func<PreflightReport>? preflight = null
     )
     {
@@ -53,6 +56,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         _itemCategories = itemCategories ?? new ItemCategoryExtractionService(new BuiltLookupTableItemCategoryAssetSource());
         _itemTags = itemTags ?? new ItemTagExtractionService(new BuiltLookupTableItemTagAssetSource());
         _locations = locations ?? new LocationExtractionService(new BuiltLookupTableLocationAssetSource());
+        _portals = portals ?? new PortalExtractionService(new MasterRecordTablePortalRecordSource());
         _masterTooltip = masterTooltip ?? RuntimeMasterTooltipSnapshotSource.Instance;
         _preflight = preflight ?? PreflightRunner.Run;
     }
@@ -154,6 +158,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             var itemCategoryAssetPlan = _itemCategories.GetAssetPlan(run);
             var itemTagRows = _itemTags.GetOrExtract(run).ToList();
             var locationRows = _locations.GetOrExtract(run).ToList();
+            var portalRows = _portals.GetOrExtract(run).ToList();
             RecordTiming(timings, "related.extract", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
@@ -181,6 +186,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             WriteJson(stagingDir, "item-tags.json", itemTagEnvelope, hashes);
             var locationEnvelope = new LocationSnapshotEnvelope { Rows = locationRows };
             WriteJson(stagingDir, "locations.json", locationEnvelope, hashes);
+            var portalEnvelope = new PortalSnapshotEnvelope { Rows = portalRows };
+            WriteJson(stagingDir, "portals.json", portalEnvelope, hashes);
             RecordTiming(timings, "metadata.write", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
@@ -201,6 +208,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
             foreach (var diagnostic in _locations.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in _portals.GetWalkerDiagnostics(run))
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
@@ -232,6 +243,13 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                     AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
                 }
             }
+            foreach (var row in portalRows)
+            {
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
+            }
 
             if (diagnostics.Count > 0)
             {
@@ -247,6 +265,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["item-category"] = itemCategoryRows.Count,
                 ["item-tag"] = itemTagRows.Count,
                 ["location"] = locationRows.Count,
+                ["portal"] = portalRows.Count,
             };
             var manifest = ManifestBuilder.Build(
                 preflight,
@@ -274,6 +293,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             run.Counts["item-category"] = itemCategoryRows.Count;
             run.Counts["item-tag"] = itemTagRows.Count;
             run.Counts["location"] = locationRows.Count;
+            run.Counts["portal"] = portalRows.Count;
             phaseStopwatch.Restart();
             _runs.Save(run);
             RecordTiming(timings, "run.save", phaseStopwatch, totalStopwatch);
@@ -296,6 +316,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["item-categories"] = CompendiumCommandResults.FileArtifact("item-categories", Path.Combine(publishedDir, "item-categories.json"), "application/json", hashes["item-categories.json"]),
                 ["item-tags"] = CompendiumCommandResults.FileArtifact("item-tags", Path.Combine(publishedDir, "item-tags.json"), "application/json", hashes["item-tags.json"]),
                 ["locations"] = CompendiumCommandResults.FileArtifact("locations", Path.Combine(publishedDir, "locations.json"), "application/json", hashes["locations.json"]),
+                ["portals"] = CompendiumCommandResults.FileArtifact("portals", Path.Combine(publishedDir, "portals.json"), "application/json", hashes["portals.json"]),
                 ["finalize-timings"] = CompendiumCommandResults.FileArtifact("finalize-timings", Path.Combine(publishedDir, "finalize-timings.json"), "application/json", hashes["finalize-timings.json"]),
             };
             if (hashes.TryGetValue("diagnostics.json", out var diagnosticsHash))

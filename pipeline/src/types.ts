@@ -4,8 +4,19 @@ export type VariantId = string & { readonly __brand: "VariantId" };
 export interface EntityDescriptor {
   $schema?: string;
   id: string;
+  kind: "definition" | "instance" | "role";
   label: { singular: string; plural: string };
-  extraction: { root: string; walker?: string; options?: Record<string, unknown> };
+  extraction: {
+    source: "lookupAsset" | "record" | "scene";
+    root: string;
+    walker?: string;
+    options?: Record<string, unknown>;
+  };
+  definition?: { entity: string; via: string };
+  placement?: { kind: "point" | "volume" | "point+volume"; from: string };
+  facetOf?: string;
+  predicate?: string;
+  placementVia?: string;
   presentationContext?: { renderContext: string };
   fields: FieldSpec[];
   variants?: { dir: string; registry?: string };
@@ -338,6 +349,16 @@ export interface LocationSnapshotFields {
   fastTravelPosition: SnapshotVector3 | null;
   displayOnEnterVolume: boolean;
   volumes: LocationSnapshotVolume[];
+}
+
+export interface PortalSnapshotFields {
+  id: string;
+  recordRef: SnapshotRef;
+  name: string;
+  isAccessible: boolean;
+  mapId: string | null;
+  position: SnapshotVector3;
+  connectedPortalRef?: SnapshotRef | null;
 }
 
 export interface SnapshotDiagnosticArtifactEntry extends SnapshotDiagnostic {

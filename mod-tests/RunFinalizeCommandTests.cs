@@ -13,6 +13,7 @@ using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.Location;
+using ArdenfallCompendium.Entities.Portal;
 using PublicItemTagSnapshot = ArdenfallCompendium.Entities.ItemTag.ItemTagSnapshot;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
@@ -28,6 +29,7 @@ public sealed class RunFinalizeCommandTests
     private static readonly FakeItemCategoryExtractionCache EmptyItemCategories = new(System.Array.Empty<ItemCategorySnapshotRow>());
     private static readonly FakeItemTagExtractionCache EmptyItemTags = new(System.Array.Empty<ItemTagSnapshotRow>());
     private static readonly FakeLocationExtractionCache EmptyLocations = new(System.Array.Empty<LocationSnapshotRow>());
+    private static readonly FakePortalExtractionCache EmptyPortals = new(System.Array.Empty<PortalSnapshotRow>());
 
     [Fact]
     public async Task RejectsFailedPreflightBeforePublishing()
@@ -48,6 +50,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemCategories,
             EmptyItemTags,
             EmptyLocations,
+            EmptyPortals,
             preflight: FailingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -78,6 +81,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemCategories,
             EmptyItemTags,
             EmptyLocations,
+            EmptyPortals,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -105,6 +109,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemCategories,
             EmptyItemTags,
             EmptyLocations,
+            EmptyPortals,
             preflight: PassingPreflight);
 
         await Assert.ThrowsAsync<System.InvalidOperationException>(() =>
@@ -138,7 +143,7 @@ public sealed class RunFinalizeCommandTests
             Diagnostics = new List<Diagnostic> { Diagnostic("fatal", "rowFatal") },
         });
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
-        var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -201,6 +206,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemCategories,
             EmptyItemTags,
             locations,
+            EmptyPortals,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -237,6 +243,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemCategories,
             EmptyItemTags,
             EmptyLocations,
+            EmptyPortals,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -274,7 +281,7 @@ public sealed class RunFinalizeCommandTests
             RowId = "item-a",
             DisplayIconColor = new AssetColorSnapshot(),
         });
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -303,7 +310,7 @@ public sealed class RunFinalizeCommandTests
             Fields = new Dictionary<string, object?>(),
         });
         var source = FakeMasterTooltipSource.Default;
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -366,6 +373,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemCategories,
             EmptyItemTags,
             EmptyLocations,
+            EmptyPortals,
             preflight: PassingPreflight);
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -430,6 +438,7 @@ public sealed class RunFinalizeCommandTests
             itemCategories,
             EmptyItemTags,
             EmptyLocations,
+            EmptyPortals,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -481,6 +490,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemCategories,
             itemTags,
             EmptyLocations,
+            EmptyPortals,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -540,6 +550,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemCategories,
             EmptyItemTags,
             locations,
+            EmptyPortals,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -556,6 +567,59 @@ public sealed class RunFinalizeCommandTests
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(locationsPath)), manifest.Hashes["locations.json"]);
         Assert.Equal(1, manifest.Counts["location"]);
+    }
+
+    [Fact]
+    public async Task WritesPortalsArtifactAndManifestCount()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-portals-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+        var portals = new FakePortalExtractionCache(new[]
+        {
+            new PortalSnapshotRow
+            {
+                Id = "world;portals;portal-a",
+                Fields = new PortalSnapshot(
+                    Id: "world;portals;portal-a",
+                    RecordRef: SnapshotRef.Record("world", "portals", "portal-a", "PortalRecord"),
+                    Name: "Harbor Gate",
+                    IsAccessible: true,
+                    MapId: "ardenfall",
+                    Position: new PortalVector3Snapshot(12f, 3f, -8f),
+                    ConnectedPortalRef: SnapshotRef.Record("world", "portals", "portal-b", "PortalRecord"))
+            }
+        });
+        var command = new RunFinalizeCommand(
+            runs,
+            new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
+            FakeMasterTooltipSource.Default,
+            EmptyStatTypes,
+            EmptyItemCategories,
+            EmptyItemTags,
+            EmptyLocations,
+            portals,
+            preflight: PassingPreflight);
+
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+
+        Assert.Empty(result.Diagnostics);
+        var manifestPath = result.Output!.ManifestPath;
+        var publishedDir = Path.GetDirectoryName(manifestPath)!;
+        var portalsPath = Path.Combine(publishedDir, "portals.json");
+        Assert.True(File.Exists(portalsPath));
+        var envelope = JsonConvert.DeserializeObject<PortalSnapshotEnvelope>(File.ReadAllText(portalsPath), JsonSettings.Default)!;
+        Assert.Single(envelope.Rows);
+        Assert.Equal("Harbor Gate", envelope.Rows[0].Fields.Name);
+        Assert.Contains("portals", result.Artifacts.Keys);
+        var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
+        Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(portalsPath)), manifest.Hashes["portals.json"]);
+        Assert.Equal(1, manifest.Counts["portal"]);
     }
 
     private static Diagnostic Diagnostic(string severity, string code) => new()
@@ -639,6 +703,22 @@ public sealed class RunFinalizeCommandTests
         public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
+    }
+
+    private sealed class FakePortalExtractionCache : IPortalExtractionCache
+    {
+        private readonly IReadOnlyList<PortalSnapshotRow> _rows;
+        private readonly IReadOnlyList<Diagnostic> _diagnostics;
+
+        public FakePortalExtractionCache(IReadOnlyList<PortalSnapshotRow> rows, IReadOnlyList<Diagnostic>? diagnostics = null)
+        {
+            _rows = rows;
+            _diagnostics = diagnostics ?? System.Array.Empty<Diagnostic>();
+        }
+
+        public IReadOnlyList<PortalSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
+
+        public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => _diagnostics;
     }
 
     private sealed class FakeItemCategoryExtractionCache : IItemCategoryExtractionCache

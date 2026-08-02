@@ -20,7 +20,9 @@ import { canonicaliseItemTags } from "$pipeline/entities/item-tag/canonicaliser"
 import { ITEM_TAG_DDL } from "$pipeline/sql/item-tag-ddl";
 import { canonicaliseLocations } from "$pipeline/entities/location/canonicaliser";
 import { LOCATION_DDL } from "$pipeline/sql/location-ddl";
-import { emitLocationReadModels } from "$pipeline/stages/emit-read-models";
+import { emitMapReadModels } from "$pipeline/stages/emit-read-models";
+import { PORTAL_DDL } from "$pipeline/sql/portal-ddl";
+import { canonicalisePortals } from "$pipeline/entities/portal/canonicaliser";
 
 const ctx = {
   workspaceRoot: ".",
@@ -573,7 +575,7 @@ describe("prepareEntityNodeWriter", () => {
   });
 });
 
-describe("emitLocationReadModels", () => {
+describe("emitMapReadModels", () => {
   it("builds map point and volume read models from canonical locations", () => {
     const db = new Database(":memory:");
     db.exec(LOCATION_DDL);
@@ -601,28 +603,31 @@ describe("emitLocationReadModels", () => {
       ],
     });
 
-    emitLocationReadModels(db);
+    emitMapReadModels(db, ["location"]);
 
-    expect(db.query("SELECT * FROM location_map_points").get()).toEqual({
-      id: "11111111.fixture-town",
+    expect(db.query("SELECT * FROM map_points").get()).toEqual({
+      id: "location:11111111.fixture-town",
+      entity_id: "location",
+      instance_id: "11111111.fixture-town",
       name: "Harbor Town",
       map_id: "ardenfall",
       map_x: 12,
       map_y: 8,
       elevation: 3,
-      show_on_map: 1,
       show_on_map_debug_only: 0,
       allow_fast_travel: 1,
     });
 
     const volume = db
-      .query("SELECT location_id, name, geometry_json FROM location_map_volumes")
+      .query("SELECT entity_id, instance_id, name, geometry_json FROM map_volumes")
       .get() as {
-      location_id: string;
+      entity_id: string;
+      instance_id: string;
       name: string;
       geometry_json: string;
     };
-    expect(volume.location_id).toBe("11111111.fixture-town");
+    expect(volume.entity_id).toBe("location");
+    expect(volume.instance_id).toBe("11111111.fixture-town");
     expect(volume.name).toBe("Harbor Town");
     expect(JSON.parse(volume.geometry_json).ring).toEqual([
       [7, 16],
@@ -660,12 +665,101 @@ describe("emitLocationReadModels", () => {
       ],
     });
 
-    emitLocationReadModels(db);
+    emitMapReadModels(db, ["location"]);
 
     expect(
       db
-        .query("SELECT id, show_on_map_debug_only FROM location_map_points WHERE id = ?")
+        .query("SELECT instance_id, show_on_map_debug_only FROM map_points WHERE instance_id = ?")
         .get("22222222.fixture-debug-cave"),
-    ).toEqual({ id: "22222222.fixture-debug-cave", show_on_map_debug_only: 1 });
+    ).toEqual({ instance_id: "22222222.fixture-debug-cave", show_on_map_debug_only: 1 });
+  });
+
+  it("includes record-backed portal map points", () => {
+    const db = new Database(":memory:");
+    db.exec(LOCATION_DDL);
+    db.exec(PORTAL_DDL);
+    canonicaliseLocations(db, {
+      entityId: "location",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "11111111.fixture-town",
+          fields: {
+            id: "11111111.fixture-town",
+            gameLocationId: "town",
+            name: "Harbor Town",
+            enabled: true,
+            mapId: "ardenfall",
+            showOnMap: true,
+            showOnMapDebugOnly: false,
+            mapPosition: { x: 12, y: 3, z: -8 },
+            allowFastTravel: true,
+            fastTravelPosition: null,
+            displayOnEnterVolume: false,
+            volumes: [],
+          },
+        },
+      ],
+    });
+    canonicalisePortals(db, {
+      entityId: "portal",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "world;portals;portal-a",
+          fields: {
+            id: "world;portals;portal-a",
+            recordRef: { kind: "record", table: "world", subtable: "portals", id: "portal-a" },
+            name: "Harbor Gate",
+            isAccessible: true,
+            mapId: "ardenfall",
+            position: { x: 20, y: 5, z: -30 },
+            connectedPortalRef: {
+              kind: "record",
+              table: "world",
+              subtable: "portals",
+              id: "portal-b",
+            },
+          },
+        },
+      ],
+    });
+
+    emitMapReadModels(db, ["location", "portal"]);
+
+    expect(
+      db
+        .query(
+          `SELECT id, entity_id, instance_id, name, map_id, map_x, map_y, elevation
+           FROM map_points WHERE entity_id = 'portal'`,
+        )
+        .get(),
+    ).toEqual({
+      id: "portal:world;portals;portal-a",
+      entity_id: "portal",
+      instance_id: "world;portals;portal-a",
+      name: "Harbor Gate",
+      map_id: "ardenfall",
+      map_x: 20,
+      map_y: 30,
+      elevation: 5,
+    });
+    const node = db
+      .query(
+        `SELECT route_path, short_id FROM entity_nodes
+         WHERE entity_type = 'portal' AND entity_id = 'world;portals;portal-a'`,
+      )
+      .get() as { route_path: string; short_id: string };
+    expect(node.short_id).toBe("portal-world-portals-portal-a");
+    expect(node.route_path).toBe("/map?map=ardenfall&sel=portal-world-portals-portal-a");
+  });
+
+  it("fails fast when a requested entity has no map projection", () => {
+    const db = new Database(":memory:");
+    db.exec(LOCATION_DDL);
+
+    expect(() => emitMapReadModels(db, ["location", "creature"])).toThrow(
+      "no map projection for entity 'creature'",
+    );
   });
 });

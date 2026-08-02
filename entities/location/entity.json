@@ -1,14 +1,17 @@
 {
   "$schema": "../../schemas/entity.schema.json",
   "id": "location",
+  "kind": "definition",
   "label": {
     "singular": "Location",
     "plural": "Locations"
   },
   "extraction": {
+    "source": "lookupAsset",
     "root": "MapLocationManager.GetLocations",
     "walker": "LocationWalker"
   },
+  "placement": { "kind": "point+volume", "from": "fields" },
   "fields": [
     { "name": "id", "type": "id", "from": "guid", "missingPolicy": "fatal" },
     {

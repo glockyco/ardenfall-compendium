@@ -1,0 +1,34 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "portal",
+  "kind": "instance",
+  "label": { "singular": "Portal", "plural": "Portals" },
+  "extraction": {
+    "source": "record",
+    "root": "Ardenfall.RecordSystem.PortalRecord",
+    "options": { "table": "world", "subtable": "portals" }
+  },
+  "placement": { "kind": "point", "from": "transform" },
+  "fields": [
+    { "name": "id", "type": "id", "from": "recordId", "missingPolicy": "fatal" },
+    { "name": "name", "type": "string", "from": "friendlyName", "missingPolicy": "diagnostic" },
+    { "name": "isAccessible", "type": "boolean", "from": "isAccessable", "missingPolicy": "fatal" },
+    { "name": "mapId", "type": "string", "from": "transform.mapID", "missingPolicy": "diagnostic" },
+    {
+      "name": "connectedPortalRef",
+      "type": "ref:record",
+      "from": "connectedPortal",
+      "missingPolicy": "diagnostic"
+    }
+  ],
+  "map": {
+    "layer": "portals",
+    "renderKind": "point",
+    "icon": "portal",
+    "color": [190, 150, 255],
+    "radius": 5,
+    "tooltip": ["name"],
+    "legendLabel": "Portals",
+    "zOrder": 90
+  }
+}

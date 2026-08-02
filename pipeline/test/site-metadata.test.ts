@@ -142,8 +142,8 @@ describe("emitSiteMetadata", () => {
     expect(layer).toEqual({
       layer_id: "locations",
       entity_id: "location",
-      source_table: "location_map_points",
-      source_tables_json: JSON.stringify(["location_map_points", "location_map_volumes"]),
+      source_table: "map_points",
+      source_tables_json: JSON.stringify(["map_points", "map_volumes"]),
       render_kind: "point-or-polygon",
       icon: "location",
       color_json: JSON.stringify([120, 170, 255]),

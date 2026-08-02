@@ -1,0 +1,30 @@
+{
+  "entityId": "portal",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "world;portals;portal-a",
+      "fields": {
+        "id": "world;portals;portal-a",
+        "recordRef": {
+          "kind": "record",
+          "table": "world",
+          "subtable": "portals",
+          "id": "portal-a",
+          "recordType": "PortalRecord"
+        },
+        "name": "Harbor Gate",
+        "isAccessible": true,
+        "mapId": "ardenfall",
+        "position": { "x": 20, "y": 5, "z": -30 },
+        "connectedPortalRef": {
+          "kind": "record",
+          "table": "world",
+          "subtable": "portals",
+          "id": "portal-b",
+          "recordType": "PortalRecord"
+        }
+      }
+    }
+  ]
+}

@@ -23,16 +23,12 @@ export {
   ITEM_TAG_READ_MODEL_DDL,
   emitItemTagReadModels,
 } from "../entities/item-tag/read-models.ts";
-export {
-  LOCATION_READ_MODEL_DDL,
-  emitLocationReadModels,
-} from "../entities/location/read-models.ts";
-
+export { MAP_READ_MODEL_DDL, emitMapReadModels } from "../map/read-models.ts";
 import { emitItemReadModels } from "../entities/item/read-models.ts";
 import { emitStatTypeReadModels } from "../entities/stat-type/read-models.ts";
 import { emitItemCategoryReadModels } from "../entities/item-category/read-models.ts";
 import { emitItemTagReadModels } from "../entities/item-tag/read-models.ts";
-import { emitLocationReadModels } from "../entities/location/read-models.ts";
+import { emitMapReadModels } from "../map/read-models.ts";
 
 export function emitReadModels(
   db: Database,
@@ -59,7 +55,10 @@ export function emitReadModels(
   if (snapshot.envelopes["item-tag"]) {
     emitItemTagReadModels(db, desc.entities["item-tag"]?.site?.route);
   }
-  if (snapshot.envelopes.location) {
-    emitLocationReadModels(db, "/map");
+  const mapEntityIds = Object.keys(desc.entities)
+    .filter((entityId) => desc.entities[entityId]?.map && snapshot.envelopes[entityId])
+    .sort();
+  if (mapEntityIds.length > 0) {
+    emitMapReadModels(db, mapEntityIds, "/map");
   }
 }

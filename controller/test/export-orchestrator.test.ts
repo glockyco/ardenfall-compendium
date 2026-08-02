@@ -310,7 +310,14 @@ describe("validateSnapshot", () => {
 
     await expect(validateSnapshot(root)).resolves.toEqual({
       itemCount: 2,
-      counts: { item: 2, "stat-type": 1, "item-category": 1, "item-tag": 1, location: 1 },
+      counts: {
+        item: 2,
+        "stat-type": 1,
+        "item-category": 1,
+        "item-tag": 1,
+        location: 1,
+        portal: 1,
+      },
     });
   });
 
@@ -333,6 +340,13 @@ describe("validateSnapshot", () => {
     await writeSnapshot(root, { omitFiles: ["locations.json"] });
 
     await expect(validateSnapshot(root)).rejects.toThrow(/locations\.json is missing/);
+  });
+
+  it("rejects a snapshot with a missing portals artifact", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, { omitFiles: ["portals.json"] });
+
+    await expect(validateSnapshot(root)).rejects.toThrow(/portals\.json is missing/);
   });
 
   it("rejects a snapshot with a mismatched non-item hash", async () => {
@@ -389,6 +403,7 @@ describe("validateSnapshot", () => {
       "item-categories.json": JSON.stringify({ rows: [{ id: "category-weapons" }] }, null, 2),
       "item-tags.json": JSON.stringify({ rows: [{ id: "tag-valuable" }] }, null, 2),
       "locations.json": JSON.stringify({ rows: [{ id: "11111111.fixture-town" }] }, null, 2),
+      "portals.json": JSON.stringify({ rows: [{ id: "world;portals;portal-a" }] }, null, 2),
       "asset-manifest.json": JSON.stringify({ assets: [], itemIconMetadata: [] }, null, 2),
       "master-tooltip.json": JSON.stringify({ schemaVersion: 2, tooltipCodes: {} }, null, 2),
     };
@@ -417,6 +432,7 @@ describe("validateSnapshot", () => {
             "item-category": options.countOverrides?.["item-category"] ?? 1,
             "item-tag": options.countOverrides?.["item-tag"] ?? 1,
             location: options.countOverrides?.location ?? 1,
+            portal: options.countOverrides?.portal ?? 1,
           },
           hashes,
           diagnostics: { fatal: options.fatalDiagnostics ?? 0 },

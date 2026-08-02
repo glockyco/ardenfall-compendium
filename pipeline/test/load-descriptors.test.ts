@@ -22,6 +22,8 @@ describe("loadDescriptors", () => {
     if (!itemVariants) throw new Error("item variants not loaded");
     expect(item.id).toBe("item");
     expect(itemVariants.length).toBe(17);
+    expect(item.kind).toBe("definition");
+    expect(item.extraction.source).toBe("lookupAsset");
     const ids = itemVariants.map((v) => v.variantId).sort();
     expect(ids).toEqual([
       "armor",
@@ -130,6 +132,9 @@ describe("loadDescriptors", () => {
     const location = result.entities.location;
     if (!location) throw new Error("location entity not loaded");
 
+    expect(location.kind).toBe("definition");
+    expect(location.extraction.source).toBe("lookupAsset");
+    expect(location.placement).toEqual({ kind: "point+volume", from: "fields" });
     expect(location.site).toBeUndefined();
     expect(location.map).toEqual({
       layer: "locations",
@@ -154,6 +159,39 @@ describe("loadDescriptors", () => {
     ]);
   });
 
+  it("loads the portal descriptor as the first record-backed instance entity", async () => {
+    const result = await loadDescriptors.run(
+      {},
+      {
+        workspaceRoot: ".",
+        snapshotDir: "",
+        outDir: "",
+        log: () => undefined,
+      },
+    );
+    const portal = result.entities.portal;
+    if (!portal) throw new Error("portal entity not loaded");
+
+    expect(portal.kind).toBe("instance");
+    expect(portal.extraction).toEqual({
+      source: "record",
+      root: "Ardenfall.RecordSystem.PortalRecord",
+      options: { table: "world", subtable: "portals" },
+    });
+    expect(portal.definition).toBeUndefined();
+    expect(portal.placement).toEqual({ kind: "point", from: "transform" });
+    expect(portal.map).toEqual({
+      layer: "portals",
+      renderKind: "point",
+      icon: "portal",
+      color: [190, 150, 255],
+      radius: 5,
+      tooltip: ["name"],
+      legendLabel: "Portals",
+      zOrder: 90,
+    });
+  });
+
   it("loads non-variant entity descriptors with presentation contexts", async () => {
     const root = mkdtempSync(join(tmpdir(), "ardenfall-descriptor-"));
     try {
@@ -165,8 +203,10 @@ describe("loadDescriptors", () => {
           {
             $schema: "../../schemas/entity.schema.json",
             id: "stat-type",
+            kind: "definition",
             label: { singular: "Stat type", plural: "Stat types" },
             extraction: {
+              source: "lookupAsset",
               root: "BuiltLookupTable.GetAssetsOfType<StatType>",
               walker: "StatTypeWalker",
             },
@@ -213,8 +253,9 @@ describe("loadDescriptors", () => {
           {
             $schema: "../../schemas/entity.schema.json",
             id: "thing",
+            kind: "definition",
             label: { singular: "Thing", plural: "Things" },
-            extraction: { root: "Thing.Root", walker: "ThingWalker" },
+            extraction: { source: "lookupAsset", root: "Thing.Root", walker: "ThingWalker" },
             fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
             site: { overview: { columns: ["id"] } },
             map: null,
@@ -246,8 +287,9 @@ describe("loadDescriptors", () => {
           {
             $schema: "../../schemas/entity.schema.json",
             id: "thing",
+            kind: "definition",
             label: { singular: "Thing", plural: "Things" },
-            extraction: { root: "Thing.Root", walker: "ThingWalker" },
+            extraction: { source: "lookupAsset", root: "Thing.Root", walker: "ThingWalker" },
             fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
             site: { route: "Things", overview: { columns: ["id"] } },
             map: null,
@@ -286,8 +328,9 @@ describe("loadDescriptors", () => {
         entities: {
           thing: {
             id: "thing",
+            kind: "definition",
             label: { singular: "Thing", plural: "Things" },
-            extraction: { root: "Thing.Root" },
+            extraction: { source: "lookupAsset", root: "Thing.Root" },
             fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
             site: { route: "/things", overview: { columns: ["id"] } },
             map: null,
@@ -306,8 +349,12 @@ describe("loadDescriptors", () => {
         entities: {
           item: {
             id: "item",
+            kind: "definition",
             label: { singular: "Item", plural: "Items" },
-            extraction: { root: "BuiltLookupTable.GetAssetsOfType<ItemData>" },
+            extraction: {
+              source: "lookupAsset",
+              root: "BuiltLookupTable.GetAssetsOfType<ItemData>",
+            },
             fields: [{ name: "id", type: "id", from: "guid", missingPolicy: "fatal" }],
             map: { layer: "items" },
           },

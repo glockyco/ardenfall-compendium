@@ -6,6 +6,7 @@ export const canonicalizerSupport = {
   "item-category": true,
   "item-tag": true,
   location: true,
+  portal: true,
 } as const satisfies Record<string, true>;
 
 export const readModelSupport = {
@@ -17,6 +18,7 @@ export const readModelSupport = {
 
 export const mapReadModelSupport = {
   location: true,
+  portal: true,
 } as const satisfies Record<string, true>;
 
 const hasOwn = <T extends object>(object: T, key: string): key is keyof T =>

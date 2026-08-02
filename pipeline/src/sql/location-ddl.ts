@@ -1,4 +1,15 @@
 export const LOCATION_DDL = `
+CREATE TABLE placements (
+  entity_id                  TEXT NOT NULL,
+  instance_id                TEXT NOT NULL,
+  map_id                     TEXT,
+  map_x                      REAL NOT NULL,
+  map_y                      REAL NOT NULL,
+  elevation                  REAL NOT NULL,
+  geometry_json              TEXT,
+  source_ref_json            TEXT NOT NULL,
+  PRIMARY KEY (entity_id, instance_id)
+);
 CREATE TABLE locations (
   id                         TEXT PRIMARY KEY,
   game_location_id           TEXT NOT NULL,
@@ -10,9 +21,6 @@ CREATE TABLE locations (
   show_on_map_debug_only     INTEGER NOT NULL,
   icon_ref_json              TEXT,
   source_map_position_json   TEXT NOT NULL,
-  map_x                      REAL NOT NULL,
-  map_y                      REAL NOT NULL,
-  elevation                  REAL NOT NULL,
   allow_fast_travel          INTEGER NOT NULL,
   source_fast_travel_json    TEXT,
   fast_travel_map_x          REAL,

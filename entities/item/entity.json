@@ -1,9 +1,11 @@
 {
   "$schema": "../../schemas/entity.schema.json",
   "id": "item",
+  "kind": "definition",
   "label": { "singular": "Item", "plural": "Items" },
 
   "extraction": {
+    "source": "lookupAsset",
     "root": "BuiltLookupTable.GetAssetsOfType<ItemData>",
     "walker": "ItemWalker",
     "options": {

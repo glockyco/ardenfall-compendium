@@ -27,7 +27,7 @@ public sealed class CompendiumInfoCommand : IControlCommandHandler<EmptyArgs, Co
                     ApiVersion = 1,
                     ExtractorVersion = Plugin.Version,
                     GameVersion = Game.GameInfo.Version,
-                    SupportedEntities = new[] { "item" },
+                    SupportedEntities = new[] { "item", "location", "portal" },
                 }
             )
         );

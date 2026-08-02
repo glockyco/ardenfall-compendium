@@ -16,6 +16,8 @@ export interface MapLayerConfig {
 
 export interface MapPointRow {
   id: string;
+  entityId: string;
+  instanceId: string;
   layerId: string;
   mapId: string | null;
   // Top-down render position; z is always 0. Elevation is metadata, not a render axis.
@@ -31,7 +33,8 @@ export interface MapPointRow {
 export interface MapVolumeRow {
   id: string;
   layerId: string;
-  locationId: string;
+  entityId: string;
+  instanceId: string;
   mapId: string | null;
   ring: [number, number][];
   elevationMin: number | null;

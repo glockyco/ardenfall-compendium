@@ -68,12 +68,16 @@ describe("end-to-end pipeline", () => {
         // Both enabled, on-map locations are present, including the debug-only one
         // (the map UI hides it by default and reveals it via the debug filter).
         const locationPointCount = (
-          db.query("SELECT COUNT(*) c FROM location_map_points").get() as { c: number }
+          db.query("SELECT COUNT(*) c FROM map_points WHERE entity_id = 'location'").get() as {
+            c: number;
+          }
         ).c;
         expect(locationPointCount).toBe(2);
         const debugPointCount = (
           db
-            .query("SELECT COUNT(*) c FROM location_map_points WHERE show_on_map_debug_only = 1")
+            .query(
+              "SELECT COUNT(*) c FROM map_points WHERE entity_id = 'location' AND show_on_map_debug_only = 1",
+            )
             .get() as { c: number }
         ).c;
         expect(debugPointCount).toBe(1);
@@ -84,8 +88,8 @@ describe("end-to-end pipeline", () => {
           .get() as { layer_id: string; source_table: string; source_tables_json: string };
         expect(mapLayer).toEqual({
           layer_id: "locations",
-          source_table: "location_map_points",
-          source_tables_json: JSON.stringify(["location_map_points", "location_map_volumes"]),
+          source_table: "map_points",
+          source_tables_json: JSON.stringify(["map_points", "map_volumes"]),
         });
 
         // Variant ancestry is consistent for the melee row.

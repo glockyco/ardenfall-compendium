@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { LOCATION_DDL } from "../src/sql/location-ddl.ts";
 import { ENTITY_GRAPH_DDL } from "../src/relationships/relationship-graph.ts";
-import { emitLocationReadModels } from "../src/entities/location/read-models.ts";
+import { emitMapReadModels } from "../src/map/read-models.ts";
 
 function seed(db: Database): void {
   db.exec(ENTITY_GRAPH_DDL);
@@ -10,13 +10,17 @@ function seed(db: Database): void {
   db.exec(`
     INSERT INTO locations (
       id, game_location_id, name, enabled, map_id, source_map_position_json,
-      show_on_map, show_on_map_debug_only, map_x, map_y, elevation,
-      allow_fast_travel, display_on_enter_volume
+      show_on_map, show_on_map_debug_only, allow_fast_travel, display_on_enter_volume
     ) VALUES
       ('11111111.fixture-town', 'town', 'Harbor Town', 1, 'ardenfall',
-       '{"x":12,"y":3,"z":-8}', 1, 0, 12, 8, 3, 1, 1),
+       '{"x":12,"y":3,"z":-8}', 1, 0, 1, 1),
       ('22222222.fixture-debug-cave', 'cave', 'Debug Cave', 1, NULL,
-       '{"x":-4,"y":1,"z":6}', 1, 1, -4, -6, 1, 0, 1);
+       '{"x":-4,"y":1,"z":6}', 1, 1, 0, 1);
+    INSERT INTO placements (
+      entity_id, instance_id, map_id, map_x, map_y, elevation, geometry_json, source_ref_json
+    ) VALUES
+      ('location', '11111111.fixture-town', 'ardenfall', 12, 8, 3, NULL, '{"kind":"lookupAsset","guid":"11111111.fixture-town"}'),
+      ('location', '22222222.fixture-debug-cave', NULL, -4, -6, 1, NULL, '{"kind":"lookupAsset","guid":"22222222.fixture-debug-cave"}');
   `);
 }
 
@@ -25,7 +29,7 @@ describe("location entity nodes", () => {
     const db = new Database(":memory:");
     seed(db);
 
-    emitLocationReadModels(db, "/map");
+    emitMapReadModels(db, ["location"], "/map");
 
     const nodes = db
       .query<{ entity_id: string; route_path: string; is_public: number; short_id: string }, []>(
@@ -48,7 +52,7 @@ describe("location entity nodes", () => {
   it("does not collide short_ids across locations", () => {
     const db = new Database(":memory:");
     seed(db);
-    emitLocationReadModels(db, "/map");
+    emitMapReadModels(db, ["location"], "/map");
     const collisions = db
       .query<{ cnt: number }, []>(
         `SELECT COUNT(*) AS cnt FROM (
