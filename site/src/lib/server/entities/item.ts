@@ -45,7 +45,6 @@ interface ItemPresentationRecord {
   state_facts_json: string;
   value: number | null;
   weight: number | null;
-  diagnostics_json: string;
 }
 
 export interface ItemOverviewRow {
@@ -77,7 +76,6 @@ export interface ItemPresentationRow {
   stateFacts: ItemPresentationStateFact[];
   value: number | null;
   weight: number | null;
-  diagnostics: ItemPresentationDiagnostic[];
 }
 
 export interface RichTextDocument {
@@ -219,7 +217,6 @@ const toItemPresentationRow = (row: ItemPresentationRecord): ItemPresentationRow
   stateFacts: JSON.parse(row.state_facts_json) as ItemPresentationStateFact[],
   value: row.value,
   weight: row.weight,
-  diagnostics: JSON.parse(row.diagnostics_json) as ItemPresentationDiagnostic[],
 });
 
 const toItemOverviewRow = (row: ItemOverviewRecord): ItemOverviewRow => ({

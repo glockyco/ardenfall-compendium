@@ -1,25 +1,15 @@
 <script lang="ts">
   import RichText from "$lib/components/content/RichText.svelte";
-  import type {
-    ItemPresentationDiagnostic,
-    ItemPresentationEffect,
-    RichTextDocument,
-  } from "$lib/server/read-models";
-  import { itemDiagnosticMessage } from "./itemDiagnostic";
+  import type { ItemPresentationEffect, RichTextDocument } from "$lib/server/read-models";
+  import { UNRESOLVED_EFFECT_TARGET, effectKindLabel } from "./itemEffect";
 
   let {
     effects,
     source,
-    diagnostics,
   }: {
     effects: ItemPresentationEffect[];
     source: RichTextDocument;
-    diagnostics: ItemPresentationDiagnostic[];
   } = $props();
-
-  const unresolvedEffectDiagnostic = $derived(
-    diagnostics.find((diagnostic) => diagnostic.code === "unresolvedEffectTarget"),
-  );
 </script>
 
 {#if source.nodes.length > 0 || effects.length > 0}
@@ -33,16 +23,10 @@
         {#each effects as effect, index (`${effect.kind}-${effect.label}-${index}`)}
           <li>
             <span class="font-medium">{effect.label}</span>
-            <span class="text-muted-foreground">{effect.kind}</span>
+            <span class="text-muted-foreground">{effectKindLabel(effect.kind)}</span>
             {#if effect.targetId === null}
               <span class="text-muted-foreground block text-xs">
-                No link available.
-                {#if unresolvedEffectDiagnostic}
-                  {itemDiagnosticMessage(unresolvedEffectDiagnostic)}
-                {:else}
-                  This effect names a status effect that this snapshot does not publish as its own
-                  page.
-                {/if}
+                {UNRESOLVED_EFFECT_TARGET}
               </span>
             {/if}
           </li>
