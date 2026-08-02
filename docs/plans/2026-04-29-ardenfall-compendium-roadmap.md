@@ -360,6 +360,19 @@ That single gap had produced three symptoms: `/stats` and `/categories` shipped 
 
 **Deferred with reason:** 26 of 33 portal names are authored snake_case (`garkai_sheru-tombs_outside_1`). Those are the content authors' real values, so displaying something friendlier means deriving a label from the connected location — a presentation decision that belongs with the other portal presentation work, not smuggled into a data slice.
 
+### Entity dispatch collapsed into one registry
+
+**Status:** done
+**Spec coverage:** investment-priorities §1.
+
+**Delivers:** one `entityRegistry` keyed by entity id, carrying each entity's DDL, canonicaliser, optional read-model emitter, optional map projection, and site capabilities. Adding an entity is one entry rather than seven edits.
+
+This was deferred on the reasoning that the abstraction should be settled against a third entity shape rather than guessed from two placed entities. That reasoning had already been overtaken. Four shapes ship today: a lookup asset with a standalone route (`item`, `item-tag`), a named asset with a standalone route (`stat-type`, `item-category`), a lookup asset placed as point and volume behind a map deep link (`location`), and a record placed as a point behind a map deep link (`portal`). Waiting for characters would have meant hand-editing the seven sites once more and then refactoring anyway.
+
+Item's descriptor-built DDL and the five fixed constants are the same field rather than a special case, and portal's dependency on the map emitter is a declared phase rather than an ordering someone has to remember. `validateDescriptorCoverage` still fails loudly by name when a descriptor declares a public route with no emitter, or a map layer with no projection — it is runtime, not compile-time, as the earlier note claimed.
+
+**Verification evidence:** confirmed a pure refactor against the fixture artifact — 54 tables before and after, none added or removed, no row count changed, identical public node and edge distributions.
+
 ### Slice 8+ — Map-supporting entities (game-specific)
 
 **Status:** planned (ordered after Slice 7 foundation)
@@ -368,7 +381,7 @@ That single gap had produced three symptoms: `/stats` and `/categories` shipped 
 **Delivers:** the entities that make the map useful. Concrete set is deliberately not pre-enumerated here. Likely candidates for Ardenfall:
 
 - Zone connections / portals: extraction, placement, map markers, and `leads_to` connectivity are delivered. Remaining portal work is presentation depth, not data.
-- Vendors (map placement plus inventory tables linking to items).
+- Vendors (map placement plus inventory tables linking to items). Not viable in the demo build, which authors no vendor stock — see the ordering note below.
 - Monsters / enemies (with map placement plus detail pages with drop tables once items are richly modelled).
 - NPCs and quests.
 - Resource nodes / gathering points.
@@ -377,9 +390,26 @@ That single gap had produced three symptoms: `/stats` and `/categories` shipped 
 Each candidate gets its own slice number (8, 9, …). Ordered by extraction confidence, map-marker value, and detail-page value. Firmed-up ordering for the next planning horizon:
 
 1. ~~Portal connectivity~~ — **done.** See "Portal connectivity and honest portal names" below.
-2. Characters / NPCs plus vendor role — unlocks `sold-at` item edges and spatial NPC/vendor navigation. This slice also owns two decisions deliberately deferred from earlier work, because it is the first to introduce an entity of a genuinely third shape and can settle them against a real case rather than by guessing from two:
-   - **The role vocabulary.** `kind: "role"` and its `facetOf` / `predicate` / `placementVia` fields were removed in Slice 7 rather than shipped unimplemented. Vendor is the first real role; define the vocabulary it actually needs.
-   - **Entity dispatch.** Adding an entity currently means editing four hand-maintained lists: the three support maps in `pipeline/src/entities/registry.ts` plus entity-specific branches in `emit-read-models.ts`, `map/read-models.ts`, and `emit-site-metadata.ts`. Key the emitters off one descriptor-driven registry, keeping `validateDescriptorCoverage`'s compile-time coverage assertion.
+2. **Characters / NPCs** — spatial navigation for the largest body of placed content in the game. Probed against the running demo build on 2026-08-02:
+
+   | | count | mechanism |
+   | --- | --- | --- |
+   | `Ardenfall.CharacterData` definitions | 212 | all registered in `BuiltLookupTable`, so `lookupAsset` |
+   | `NPCRecord` instances | 314 | master record table, so `record`, exactly as portals |
+   | instances carrying a map id | 314 of 314 | `overworld` and `interior` |
+
+   No new identity mechanism is required, and the placement substrate already handles both halves. At 314 placed instances this is roughly four times the locations and portals combined.
+
+   **The vendor role is dropped from this slice, on evidence.** The previous plan claimed characters would unlock `sold-at` item edges. Vendor stock is authored on `CharacterData` rather than assembled at runtime, so that was checkable, and it does not hold for this build:
+
+   | authored merchant field | characters with content |
+   | --- | --- |
+   | `merchantAdditionalItems` | **0** |
+   | `merchantItemLists` | **0** |
+   | `merchantCategories` | 1 (three further characters have the field set but empty) |
+   | `merchantGold` | 2 |
+
+   There is exactly one merchant in the build, `preset_garako-merchant-potionseller`, and it carries a single category filter rather than an inventory. There are no `sold-at` edges to derive. Designing a role vocabulary against a single example with no stock is the same guessing the vocabulary was removed to avoid, so it waits for a build that actually ships vendors. Re-probe before planning it: the check is four expressions against a loaded world.
 3. Monsters / enemies — map placement plus `drops` edges to items and detail pages with drop tables.
 4. Quests — `gives`/`requires` edges enabling transitive `available-at` location links.
 5. Resource nodes / gathering points.

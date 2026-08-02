@@ -16,34 +16,28 @@ Severity: **major** — real defect or invariant violation with a plausible fail
 
 ---
 
-## Major
+## Open
 
-### M10. Four hand-maintained entity-id lists contradict "filesystem is the registry"
+Nothing from the original audit remains open. `M10` (four hand-maintained entity-id lists) and `N5` (test gaps in rich-text parsing, artifact tampering, and a weak table assertion) are resolved, and the temp-directory race in the site tests is gone.
 
-`pipeline/src/entities/registry.ts:3-22` maintains `canonicalizerSupport`, `readModelSupport`, and `mapReadModelSupport` as literal maps of entity ids, while `pipeline/src/stages/load-descriptors.ts:14-48` already discovers descriptors dynamically from disk. Entity-specific dispatch is hardcoded in three further places: `pipeline/src/stages/emit-read-models.ts:49-57`, `pipeline/src/map/read-models.ts` (the `MAP_PROJECTIONS` record), and `pipeline/src/stages/emit-site-metadata.ts:116-155`.
+Two things were found while closing them and are recorded here because they are latent rather than fixed:
 
-This is a genuine tension rather than a clear defect. The maps double as a compile-time coverage assertion via `validateDescriptorCoverage`, which has real value — it is what makes a descriptor without an emitter fail loudly. The problem is that there are four separate hand-edited lists, so adding an entity means finding all of them, and missing one fails at a different layer each time.
+### The rich-text parser treats comparison text as a tag
 
-Worth resolving before the next entity slice adds a fifth reason to edit them. Keep the coverage assertion; key the emitters off one descriptor-driven registry. Deliberately deferred to the slice that adds characters and the vendor role: that slice introduces the first entity of a genuinely third shape, and designing the abstraction against two placed entities would be guessing. `validateDescriptorCoverage` fails loudly in the meantime, so the cost of waiting is a clear error rather than silent breakage.
+`pipeline/src/rich-text/rich-text-v1.ts:52` matches `<...>` loosely enough that ordinary prose containing a comparison, such as `5 < 6 & 7 > 3`, is consumed as an unsupported tag and emits `unsupportedRichTextTag` at line 144. The text node survives unchanged, so nothing renders wrong. The cost is a false diagnostic, and a diagnostic that cries wolf is worse than none.
 
----
+Not fixed, because the live export produces zero rich-text diagnostics of any kind — no authored description in the current build trips it. Tightening the pattern to require a plausible tag name is the fix if a future build makes it fire. The behaviour is pinned by a test, so it cannot change silently.
 
-## Minor
+### Crossed-tag recovery is lossy
 
-### N5. Remaining test gaps
-
-Diagnostic severity aggregation and slug collision behaviour are now covered. These remain, in order of consequence:
-
-1. **Rich-text parsing.** `pipeline/test/rich-text-v1.test.ts` covers well-formed input only. No nested or unterminated tags, no HTML escaping, no parser recovery. The contract can regress while the suite stays green.
-2. **Artifact manifest tampering.** Hash and count mismatch paths are untested.
-
-Fixture realism improved with the portal record ids but the synthetic snapshot is still small and clean — 5 items against a real 1273 — so most end-to-end tests exercise happy paths only.
-
-Weak assertions worth tightening: `pipeline/test/item-subtypes.test.ts:27-33` asserts a table exists without checking its schema.
-
-Several pipeline and site tests use `process.chdir` with `Date.now()`-named temp directories (`site/test/map-read-models.test.ts:8,66`), which is racy under parallel execution.
+`<b><i>x</b></i>` drops the outer formatting and leaves the unmatched `</b>` as literal visible text. If real content ever contains crossed tags, that ships as garbage on the page rather than as a formatting approximation. Same reason for not acting: the current corpus contains none, and the behaviour is now pinned by a test that documents it plainly rather than dressing it up.
 
 ---
+
+## Fixed since the audit, worth knowing
+
+- **Standalone scripts were type-checked by nothing.** `site/scripts/` and the root `scripts/` directory were plain JavaScript, and neither `bun run typecheck` nor `bun run --cwd site check` covered them. That included the artifact tamper gate and the production deploy driver. They are TypeScript now and the root project includes them, verified by injecting an error and watching the gate fail.
+- **Portal connectivity wrote unread relationship sections.** Thirty rows per export that no reader consumed. Removed.
 
 ## Constraints discovered, worth not rediscovering
 
