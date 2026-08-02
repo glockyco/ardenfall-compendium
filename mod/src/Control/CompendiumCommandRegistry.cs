@@ -4,6 +4,7 @@ using HotRepl.Control;
 using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Entities.Spell;
+using ArdenfallCompendium.Entities.StatusEffect;
 using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.Location;
@@ -21,6 +22,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         var items = new ItemExtractionService(new BuiltLookupTableItemAssetSource());
         var statTypes = new StatTypeExtractionService(new LoadedStatTypeAssetSource());
         var spells = new SpellExtractionService(new LoadedSpellAssetSource());
+        var statusEffects = new StatusEffectExtractionService(new BuiltLookupTableStatusEffectAssetSource());
         var itemCategories = new ItemCategoryExtractionService(new LoadedItemCategoryAssetSource());
         var itemTags = new ItemTagExtractionService(new BuiltLookupTableItemTagAssetSource());
         var locations = new LocationExtractionService(new BuiltLookupTableLocationAssetSource());
@@ -33,12 +35,13 @@ public sealed class CompendiumCommandRegistry : IDisposable
         Register(new Handlers.RunStatusCommand(runs));
         Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs, items));
-        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals));
+        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals));
         Register(new Handlers.RunDiscardCommand(runs, new IExtractionCache[]
         {
             items,
             statTypes,
             spells,
+            statusEffects,
             itemCategories,
             itemTags,
             locations,

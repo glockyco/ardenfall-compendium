@@ -10,7 +10,8 @@ public sealed record SpellSnapshot(
     [property: JsonProperty("statTypeRef")] SnapshotRef? StatTypeRef,
     [property: JsonProperty("manaCost")] float ManaCost,
     [property: JsonProperty("isIllegal")] bool IsIllegal,
-    [property: JsonProperty("iconRef")] SnapshotRef? IconRef);
+    [property: JsonProperty("iconRef")] SnapshotRef? IconRef,
+    [property: JsonProperty("tooltipSource")] string? TooltipSource);
 
 public sealed class SpellSnapshotRow
 {

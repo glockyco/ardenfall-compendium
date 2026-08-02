@@ -89,6 +89,7 @@ public sealed class SpellExtractor : WalkerBase<SpellSnapshotRow>
                     id,
                     MissingPolicy.OptionalEmpty,
                     "SpellData.icon");
+            var tooltipSource = NullIfEmpty(asset.TooltipSource);
 
             yield return new SpellSnapshotRow
             {
@@ -99,7 +100,8 @@ public sealed class SpellExtractor : WalkerBase<SpellSnapshotRow>
                     StatTypeRef: statTypeRef,
                     ManaCost: asset.ManaCost,
                     IsIllegal: asset.IsIllegal,
-                    IconRef: iconRef),
+                    IconRef: iconRef,
+                    TooltipSource: tooltipSource),
             };
         }
         Diagnostics.AddRange(Refs.Diagnostics);

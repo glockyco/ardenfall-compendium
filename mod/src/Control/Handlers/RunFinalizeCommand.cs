@@ -15,6 +15,7 @@ using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Entities.Spell;
+using ArdenfallCompendium.Entities.StatusEffect;
 using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Entities.Portal;
 using ArdenfallCompendium.Extraction;
@@ -33,6 +34,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     private readonly IItemExtractionCache _items;
     private readonly IStatTypeExtractionCache _statTypes;
     private readonly ISpellExtractionCache _spells;
+    private readonly IStatusEffectExtractionCache _statusEffects;
     private readonly IItemCategoryExtractionCache _itemCategories;
     private readonly IItemTagExtractionCache _itemTags;
     private readonly ILocationExtractionCache _locations;
@@ -44,6 +46,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         CompendiumRunManager runs,
         IItemExtractionCache items,
         ISpellExtractionCache spells,
+        IStatusEffectExtractionCache statusEffects,
         IMasterTooltipSnapshotSource masterTooltip,
         IStatTypeExtractionCache statTypes,
         IItemCategoryExtractionCache itemCategories,
@@ -60,6 +63,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         // inside tests that meant to pass a fake.
         _statTypes = statTypes;
         _spells = spells;
+        _statusEffects = statusEffects;
         _itemCategories = itemCategories;
         _itemTags = itemTags;
         _locations = locations;
@@ -163,6 +167,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             var statTypeAssetPlan = _statTypes.GetAssetPlan(run);
             var spellRows = _spells.GetOrExtract(run).ToList();
             var spellAssetPlan = _spells.GetAssetPlan(run);
+            var statusEffectRows = _statusEffects.GetOrExtract(run).ToList();
             var itemCategoryRows = _itemCategories.GetOrExtract(run).ToList();
             var itemCategoryAssetPlan = _itemCategories.GetAssetPlan(run);
             var itemTagRows = _itemTags.GetOrExtract(run).ToList();
@@ -194,6 +199,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             WriteJson(stagingDir, "stat-types.json", statTypeEnvelope, hashes);
             var spellEnvelope = new SpellSnapshotEnvelope { Rows = spellRows };
             WriteJson(stagingDir, "spells.json", spellEnvelope, hashes);
+            var statusEffectEnvelope = new StatusEffectSnapshotEnvelope { Rows = statusEffectRows };
+            WriteJson(stagingDir, "status-effects.json", statusEffectEnvelope, hashes);
             var itemCategoryEnvelope = new ItemCategorySnapshotEnvelope { Rows = itemCategoryRows };
             WriteJson(stagingDir, "item-categories.json", itemCategoryEnvelope, hashes);
             var itemTagEnvelope = new ItemTagSnapshotEnvelope { Rows = itemTagRows };
@@ -214,6 +221,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
             foreach (var diagnostic in _spells.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in _statusEffects.GetWalkerDiagnostics(run))
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
@@ -241,6 +252,13 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 }
             }
             foreach (var row in spellRows)
+            {
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
+            }
+            foreach (var row in statusEffectRows)
             {
                 foreach (var diagnostic in row.Diagnostics)
                 {
@@ -288,6 +306,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["item"] = rows.Count,
                 ["stat-type"] = statTypeRows.Count,
                 ["spell"] = spellRows.Count,
+                ["status-effect"] = statusEffectRows.Count,
                 ["item-category"] = itemCategoryRows.Count,
                 ["item-tag"] = itemTagRows.Count,
                 ["location"] = locationRows.Count,
@@ -317,6 +336,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             run.Counts["item"] = rows.Count;
             run.Counts["stat-type"] = statTypeRows.Count;
             run.Counts["spell"] = spellRows.Count;
+            run.Counts["status-effect"] = statusEffectRows.Count;
             run.Counts["item-category"] = itemCategoryRows.Count;
             run.Counts["item-tag"] = itemTagRows.Count;
             run.Counts["location"] = locationRows.Count;
@@ -326,6 +346,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             _items.Evict(run);
             _statTypes.Evict(run);
             _spells.Evict(run);
+            _statusEffects.Evict(run);
             _itemCategories.Evict(run);
             _itemTags.Evict(run);
             _locations.Evict(run);
@@ -349,6 +370,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["master-tooltip"] = CompendiumCommandResults.FileArtifact("master-tooltip", Path.Combine(publishedDir, "master-tooltip.json"), "application/json", hashes["master-tooltip.json"]),
                 ["stat-types"] = CompendiumCommandResults.FileArtifact("stat-types", Path.Combine(publishedDir, "stat-types.json"), "application/json", hashes["stat-types.json"]),
                 ["spells"] = CompendiumCommandResults.FileArtifact("spells", Path.Combine(publishedDir, "spells.json"), "application/json", hashes["spells.json"]),
+                ["status-effects"] = CompendiumCommandResults.FileArtifact("status-effects", Path.Combine(publishedDir, "status-effects.json"), "application/json", hashes["status-effects.json"]),
                 ["item-categories"] = CompendiumCommandResults.FileArtifact("item-categories", Path.Combine(publishedDir, "item-categories.json"), "application/json", hashes["item-categories.json"]),
                 ["item-tags"] = CompendiumCommandResults.FileArtifact("item-tags", Path.Combine(publishedDir, "item-tags.json"), "application/json", hashes["item-tags.json"]),
                 ["locations"] = CompendiumCommandResults.FileArtifact("locations", Path.Combine(publishedDir, "locations.json"), "application/json", hashes["locations.json"]),

@@ -11,6 +11,36 @@ namespace ArdenfallCompendium.Tests;
 public sealed class SpellExtractorTests
 {
     [Fact]
+    public void TooltipYieldsText()
+    {
+        var source = new FakeSpellAssetSource(new[]
+        {
+            Build("spell_tooltip", "Tooltip Spell", "Reduces Target's Vision on Touch"),
+        });
+
+        var row = Assert.Single(new SpellExtractor(source).Walk());
+
+        Assert.Equal("Reduces Target's Vision on Touch", row.Fields.TooltipSource);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(" \t")]
+    public void NullOrWhitespaceTooltipYieldsNullWithoutDiagnostic(string? tooltipSource)
+    {
+        var source = new FakeSpellAssetSource(new[]
+        {
+            Build("spell_no-tooltip", "No Tooltip", tooltipSource),
+        });
+        var extractor = new SpellExtractor(source);
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Null(row.Fields.TooltipSource);
+        Assert.DoesNotContain(extractor.Diagnostics, diagnostic => diagnostic.Field == "tooltipSource");
+    }
+
+    [Fact]
     public void ExtractsEverySpellWithContractFieldsAndNamedId()
     {
         var source = new FakeSpellAssetSource(new[]
@@ -119,24 +149,20 @@ public sealed class SpellExtractorTests
 
         public IEnumerable<SpellAsset> EnumerateSpells() => _assets;
 
-        private static SpellAsset Build(string assetName, string spellName) => new(
-            Guid: null,
-            AssetName: assetName,
-            SpellName: spellName,
-            StatType: null,
-            ManaCost: 0f,
-            IsIllegal: false,
-            Icon: null);
     }
 
-    private static SpellAsset Build(string assetName, string spellName) => new(
+    private static SpellAsset Build(
+        string assetName,
+        string spellName,
+        string? tooltipSource = null) => new(
         Guid: null,
         AssetName: assetName,
         SpellName: spellName,
         StatType: null,
         ManaCost: 0f,
         IsIllegal: false,
-        Icon: null);
+        Icon: null,
+        TooltipSource: tooltipSource);
 
     private static SpellData RuntimeSpell(string id, string name)
     {

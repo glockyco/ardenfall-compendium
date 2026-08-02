@@ -12,7 +12,8 @@ public sealed record SpellAsset(
     UnityObject? StatType,
     float ManaCost,
     bool IsIllegal,
-    UnityObject? Icon);
+    UnityObject? Icon,
+    string? TooltipSource = null);
 
 public interface ISpellAssetSource
 {
@@ -74,7 +75,11 @@ public sealed class LoadedSpellAssetSource : ISpellAssetSource
         ManaCost: asset.manaCost,
         // The game's field is misspelled as isIlligal. Keep that source spelling here.
         IsIllegal: asset.isIlligal,
-        Icon: asset.icon);
+        Icon: asset.icon,
+        TooltipSource: NullIfEmpty(asset.tooltip?.GetTooltip(1f, 1f, asset)));
+
+    private static string? NullIfEmpty(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value;
 
     private static string SafeName(UnityObject asset)
     {
