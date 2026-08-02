@@ -110,7 +110,12 @@ export function emitItemReadModels(
 ): void {
   db.exec(ITEM_READ_MODEL_DDL);
   db.exec(ENTITY_GRAPH_DDL);
-  const itemRoute = desc.entities.item?.site?.route ?? "/items";
+  const itemRoute = desc.entities.item?.site?.route;
+  if (itemRoute === undefined) {
+    throw new Error(
+      "emitItemReadModels: entity descriptor 'item' at entities/item/entity.json is missing site.route",
+    );
+  }
   const colorByItem = new Map(
     itemIconMetadata
       .filter((entry) => entry.entityId === "item")

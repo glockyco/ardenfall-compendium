@@ -37,7 +37,11 @@ export const emitAssets: Stage<EmitAssetsInputs, EmitAssetsOutput> = {
     const manifest = inputs["load-snapshot"].assetManifest;
     const assetsDir = join(ctx.outDir, "assets");
     mkdirSync(assetsDir, { recursive: true });
-    if (!manifest) return { assetsDir, refs: [], itemIconMetadata: [] };
+    if (!manifest) {
+      throw new Error(
+        `missing snapshot asset manifest at ${join(ctx.snapshotDir, "asset-manifest.json")}`,
+      );
+    }
 
     const refs: EmittedAssetRef[] = [];
     const convertedByPngHash = new Map<string, { hash: string; outputPath: string }>();

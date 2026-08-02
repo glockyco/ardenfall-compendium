@@ -40,6 +40,7 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
     }
 
     const envelopes: Record<string, SnapshotEnvelope> = {};
+    const envelopePaths = new Map<string, string>();
     const diagnosticsPath = join(dir, "diagnostics.json");
     const finalizeTimingsPath = join(dir, "finalize-timings.json");
     const masterTooltipPath = join(dir, "master-tooltip.json");
@@ -64,7 +65,14 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
           .join("\n");
         throw new Error(`invalid snapshot envelope at ${path}:\n${detail}`);
       }
+      const previousPath = envelopePaths.get(env.entityId);
+      if (previousPath) {
+        throw new Error(
+          `duplicate snapshot entity '${env.entityId}' declared by ${previousPath} and ${path}`,
+        );
+      }
       envelopes[env.entityId] = env;
+      envelopePaths.set(env.entityId, path);
     }
 
     if (readdirSync(dir).includes("diagnostics.json")) {
