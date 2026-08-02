@@ -93,7 +93,7 @@ describe("portal connectivity", () => {
     expect(edges.some((e) => e.source_id.endsWith("cccccccccccccccccccccccccccccccc"))).toBe(false);
   });
 
-  it("carries the destination label and route into the relationship section", () => {
+  it("writes no relationship section, because a portal has no detail page", () => {
     const db = seed(new Database(":memory:"), [
       {
         key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -105,19 +105,24 @@ describe("portal connectivity", () => {
     emitMapReadModels(db, ["portal"], "/map");
     emitPortalReadModels(db);
 
-    const section = db
-      .query<{ title: string; edges_json: string }, []>(
-        `SELECT title, edges_json FROM entity_relationship_sections
-         WHERE source_id = 'instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'`,
+    // `entity_relationship_sections` groups relationships for a detail page and
+    // denormalises the target's label into JSON. A portal is rendered in the map
+    // panel, which resolves its one destination by joining the edge to the target
+    // node, so a section here would be a second unread copy of the same fact.
+    expect(db.query(`SELECT COUNT(*) AS c FROM entity_relationship_sections`).get()).toEqual({
+      c: 0,
+    });
+    // The edge still resolves to a public node carrying the label the map needs.
+    const destination = db
+      .query<{ label: string; short_id: string }, []>(
+        `SELECT n.label, n.short_id
+         FROM entity_edges e
+         JOIN entity_nodes n ON n.entity_type = e.target_type AND n.entity_id = e.target_id
+         WHERE e.predicate = 'leads_to'`,
       )
       .get()!;
-    const edges = JSON.parse(section.edges_json) as {
-      targetLabel: string;
-      targetRoutePath: string;
-    }[];
-    expect(section.title).toBe("Leads to");
-    expect(edges[0]?.targetLabel).toBe("Cliff Stair");
-    expect(edges[0]?.targetRoutePath).toMatch(/^\/map\?map=ardenfall&sel=[0-9a-f]{8}$/);
+    expect(destination.label).toBe("Cliff Stair");
+    expect(destination.short_id).toMatch(/^[0-9a-f]{8}$/);
   });
 
   it("reports an unresolvable connection instead of emitting a dangling edge", () => {

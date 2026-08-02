@@ -7,12 +7,6 @@ interface ConnectedPortalRow {
   connected_portal_ref_json: string;
 }
 
-interface PortalNodeRow {
-  entity_id: string;
-  label: string;
-  route_path: string;
-}
-
 /**
  * Projects the canonical `portals.connected_portal_ref_json` into `leads_to`
  * relationship edges so the map can express zone connectivity.
@@ -24,24 +18,25 @@ interface PortalNodeRow {
  *
  * Must run after the map read models, which are what publish portal entity
  * nodes; an edge may only target a public node.
+ *
+ * Emits edges only. `entity_relationship_sections` is the grouping contract for
+ * a detail page, and a portal has no page: the map panel resolves its single
+ * destination by joining the edge to its target node.
  */
 export function emitPortalReadModels(db: Database): PipelineDiagnostic[] {
   const diagnostics: PipelineDiagnostic[] = [];
-  const nodesById = new Map(
+  const publicPortalIds = new Set(
     db
-      .query<PortalNodeRow, []>(
-        `SELECT entity_id, label, route_path FROM entity_nodes
+      .query<{ entity_id: string }, []>(
+        `SELECT entity_id FROM entity_nodes
          WHERE entity_type = 'portal' AND is_public = 1`,
       )
       .all()
-      .map((row) => [row.entity_id, row] as const),
+      .map((row) => row.entity_id),
   );
 
   const edgeInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_edges (edge_id, source_type, source_id, target_type, target_id, predicate, label, weight, evidence_json, anchor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  );
-  const sectionInsert = db.prepare(
-    `INSERT OR REPLACE INTO entity_relationship_sections (section_id, source_type, source_id, title, predicate, edges_json, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
 
   const rows = db
@@ -69,8 +64,7 @@ export function emitPortalReadModels(db: Database): PipelineDiagnostic[] {
         continue;
       }
       const targetId = `${ref.table};${ref.subtable};${ref.id}`;
-      const target = nodesById.get(targetId);
-      if (!target) {
+      if (!publicPortalIds.has(targetId)) {
         // Skipping keeps one unresolvable reference from failing the whole
         // artifact through the graph audit, but the gap stays counted and named.
         diagnostics.push({
@@ -96,26 +90,6 @@ export function emitPortalReadModels(db: Database): PipelineDiagnostic[] {
         1,
         JSON.stringify({ source: "portals.connectedPortalRef" }),
         null,
-      );
-      sectionInsert.run(
-        `${row.id}:leads_to`,
-        "portal",
-        row.id,
-        "Leads to",
-        "leads_to",
-        JSON.stringify([
-          {
-            targetType: "portal",
-            targetId,
-            targetLabel: target.label,
-            targetRoutePath: target.route_path,
-            predicate: "leads_to",
-            label: "Leads to",
-            weight: 1,
-            anchor: null,
-          },
-        ]),
-        10,
       );
     }
   });
