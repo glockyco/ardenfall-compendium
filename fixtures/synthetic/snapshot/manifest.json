@@ -34,6 +34,7 @@
   "counts": {
     "item": 5,
     "stat-type": 2,
+    "spell": 4,
     "item-category": 1,
     "item-tag": 2,
     "location": 2,
@@ -41,13 +42,14 @@
   },
   "diagnostics": {
     "fatal": 0,
-    "diagnostic": 2
+    "diagnostic": 3
   },
   "hashes": {
-    "items.json": "133a0726906860f472a7d0597bbf88afae3cb4615d46823b0b6689234a9f9b15",
+    "items.json": "6ccc345c998c45365dfb41bc834aa4f182002ab277d591454de9317d04cb8cbd",
     "asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "master-tooltip.json": "3913c8925bd4585d585162a7e7c361e9074ae646ab60640bfe450cb26fae236b",
     "stat-types.json": "8914e1e2e2329287e831c3b1ce3c8b22043a74baafa7bd9fe3f1f7a431fc4e11",
+    "spells.json": "3ac63dea6ff071a4a1832d69334bfe47364cbb1ad84b2b750203f41195e6a803",
     "item-categories.json": "9ddf37b041ec004007851244de1d4d6c0be4b9ad9e3973c7ec12f193f93f5724",
     "item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
     "locations.json": "333dc28688c556536ad084613d35577ce58915a6b136bfd2763cb9a58731d241",

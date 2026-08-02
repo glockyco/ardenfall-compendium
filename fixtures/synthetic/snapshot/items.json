@@ -356,7 +356,12 @@
         },
         "spellDataJson": {
           "id": "fixture-spark",
-          "name": "Spark"
+          "name": "Spark",
+          "spellRef": {
+            "kind": "namedAsset",
+            "entity": "spell",
+            "name": "spell_fire-shield"
+          }
         },
         "secondarySpellDataJson": {
           "id": "fixture-ward",

@@ -1,0 +1,66 @@
+{
+  "entityId": "spell",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "named;spell;spell_fire-shield",
+      "fields": {
+        "id": "named;spell;spell_fire-shield",
+        "spellName": "Fire Shield",
+        "statTypeRef": {
+          "kind": "namedAsset",
+          "entity": "stat-type",
+          "name": "att_strength"
+        },
+        "manaCost": 12,
+        "isIllegal": false,
+        "iconRef": null
+      }
+    },
+    {
+      "id": "named;spell;spell_arcane-surge",
+      "fields": {
+        "id": "named;spell;spell_arcane-surge",
+        "spellName": "Arcane Surge",
+        "statTypeRef": null,
+        "manaCost": 8,
+        "isIllegal": false,
+        "iconRef": null
+      }
+    },
+    {
+      "id": "named;spell;spell_forbidden-rite",
+      "fields": {
+        "id": "named;spell;spell_forbidden-rite",
+        "spellName": "Forbidden Rite",
+        "statTypeRef": {
+          "kind": "namedAsset",
+          "entity": "stat-type",
+          "name": "sk_alchemy"
+        },
+        "manaCost": 25,
+        "isIllegal": true,
+        "iconRef": null
+      }
+    },
+    {
+      "id": "named;spell;spell_brawler-fists",
+      "fields": {
+        "id": "named;spell;spell_brawler-fists",
+        "spellName": null,
+        "statTypeRef": null,
+        "manaCost": 5,
+        "isIllegal": false,
+        "iconRef": null
+      },
+      "diagnostics": [
+        {
+          "severity": "diagnostic",
+          "code": "spellNameMissing",
+          "field": "spellName",
+          "message": "SpellData 'named;spell;spell_brawler-fists' has empty or whitespace spellName"
+        }
+      ]
+    }
+  ]
+}

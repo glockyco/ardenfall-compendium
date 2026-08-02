@@ -16,7 +16,8 @@
     "ItemCategory fixture row for category pages and item category counts",
     "ItemTag fixture rows for tag overview/detail routes and item reverse links",
     "LocationAsset fixture rows for map points, debug-only filtering, and axis-aligned volumes",
-    "PortalRecord fixture row for record-backed map point placement"
+    "PortalRecord fixture row for record-backed map point placement",
+    "Spell fixture rows for stat-linked, no-school, and illegal spell coverage"
   ],
   "selection": [
     {
@@ -46,6 +47,15 @@
       "rationale": "tag rows for tag pages, descriptions, and item reverse-link coverage"
     },
     {
+      "entity": "spell",
+      "ids": [
+        "named;spell;spell_fire-shield",
+        "named;spell;spell_arcane-surge",
+        "named;spell;spell_forbidden-rite"
+      ],
+      "rationale": "complete spell, no-school spell, and illegal spell rows"
+    },
+    {
       "entity": "location",
       "ids": ["11111111.fixture-town", "22222222.fixture-debug-cave"],
       "rationale": "one public map point with an area volume and one debug-only marker excluded from default map point read models"
@@ -59,13 +69,14 @@
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "b0a7516f0f88bacf2acc8becd0bc1e45888567023a9bbefef93e092867903f0b",
-    "snapshot/items.json": "133a0726906860f472a7d0597bbf88afae3cb4615d46823b0b6689234a9f9b15",
+    "snapshot/manifest.json": "8f6be0b77d485cd4acd25bff984c2e190b7b967293ba6b1f257fdebc9ba0ac32",
+    "snapshot/items.json": "6ccc345c998c45365dfb41bc834aa4f182002ab277d591454de9317d04cb8cbd",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
     "snapshot/assets/items/fixture-icon-blue.png": "d6d4b05209c7541985841a63d955337a411a005d7abb936426791cbfde258f17",
     "snapshot/master-tooltip.json": "3913c8925bd4585d585162a7e7c361e9074ae646ab60640bfe450cb26fae236b",
     "snapshot/stat-types.json": "8914e1e2e2329287e831c3b1ce3c8b22043a74baafa7bd9fe3f1f7a431fc4e11",
+    "snapshot/spells.json": "3ac63dea6ff071a4a1832d69334bfe47364cbb1ad84b2b750203f41195e6a803",
     "snapshot/item-categories.json": "9ddf37b041ec004007851244de1d4d6c0be4b9ad9e3973c7ec12f193f93f5724",
     "snapshot/item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
     "snapshot/locations.json": "333dc28688c556536ad084613d35577ce58915a6b136bfd2763cb9a58731d241",
