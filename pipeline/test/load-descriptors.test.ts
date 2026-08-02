@@ -25,6 +25,7 @@ describe("loadDescriptors", () => {
       "portal",
       "spell",
       "stat-type",
+      "status-effect",
     ]);
   });
 

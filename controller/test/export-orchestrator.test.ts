@@ -389,6 +389,7 @@ describe("validateSnapshot", () => {
         location: 1,
         portal: 1,
         spell: 1,
+        "status-effect": 1,
       },
     });
   });
@@ -404,6 +405,7 @@ describe("validateSnapshot", () => {
         "location",
         "portal",
         "spell",
+        "status-effect",
       ],
     });
 
@@ -534,6 +536,13 @@ describe("validateSnapshot", () => {
         null,
         2,
       ),
+      "status-effects.json": JSON.stringify(
+        {
+          rows: emptyEntities.has("status-effect") ? [] : [{ id: "status-effect-bleed" }],
+        },
+        null,
+        2,
+      ),
       "asset-manifest.json": JSON.stringify({ assets: [], itemIconMetadata: [] }, null, 2),
       "master-tooltip.json": JSON.stringify({ schemaVersion: 2, tooltipCodes: {} }, null, 2),
     };
@@ -568,6 +577,9 @@ describe("validateSnapshot", () => {
             location: options.countOverrides?.location ?? (emptyEntities.has("location") ? 0 : 1),
             portal: options.countOverrides?.portal ?? (emptyEntities.has("portal") ? 0 : 1),
             spell: options.countOverrides?.spell ?? (emptyEntities.has("spell") ? 0 : 1),
+            "status-effect":
+              options.countOverrides?.["status-effect"] ??
+              (emptyEntities.has("status-effect") ? 0 : 1),
           },
           hashes,
           diagnostics: { fatal: options.fatalDiagnostics ?? 0 },

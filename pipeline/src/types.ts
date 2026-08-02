@@ -361,7 +361,16 @@ export interface SpellSnapshotFields {
   statTypeRef?: SnapshotRef | null;
   manaCost?: number;
   isIllegal?: boolean | null;
+  tooltipSource?: string | null;
   iconRef?: SnapshotRef | null;
+}
+
+export interface StatusEffectSnapshotFields {
+  id: string;
+  statusEffectName: string | null;
+  tooltipSource?: string | null;
+  iconRef?: SnapshotRef | null;
+  isHostile?: boolean | null;
 }
 
 export interface PortalSnapshotFields {

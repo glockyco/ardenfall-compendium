@@ -5,6 +5,7 @@ CREATE TABLE spells (
   stat_type_ref_json TEXT,
   mana_cost       REAL,
   is_illegal      INTEGER,
+  tooltip_source  TEXT,
   icon_ref_json   TEXT
 );
 `;

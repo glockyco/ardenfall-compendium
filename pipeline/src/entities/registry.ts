@@ -11,12 +11,15 @@ import { LOCATION_DDL } from "../sql/location-ddl";
 import { PORTAL_DDL } from "../sql/portal-ddl";
 import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
 import { SPELL_DDL } from "../sql/spell-ddl";
+import { STATUS_EFFECT_DDL } from "../sql/status-effect-ddl";
 import { canonicaliseItems } from "./item/canonicaliser";
 import { emitItemReadModels } from "./item/read-models";
 import { canonicaliseStatTypes } from "./stat-type/canonicaliser";
 import { emitStatTypeReadModels } from "./stat-type/read-models";
 import { canonicaliseSpells } from "./spell/canonicaliser";
 import { emitSpellReadModels } from "./spell/read-models";
+import { canonicaliseStatusEffects } from "./status-effect/canonicaliser";
+import { emitStatusEffectReadModels } from "./status-effect/read-models";
 import { canonicaliseItemCategories } from "./item-category/canonicaliser";
 import { emitItemCategoryReadModels } from "./item-category/read-models";
 import { canonicaliseItemTags } from "./item-tag/canonicaliser";
@@ -166,7 +169,14 @@ export const entityRegistry: Record<string, EntityModule> = {
   spell: {
     ddl: SPELL_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseSpells(db, envelope),
-    readModel: ({ db, entity }) => emitSpellReadModels(db, entity.site?.route),
+    readModel: ({ db, entity, snapshot }) =>
+      emitSpellReadModels(db, entity.site?.route, snapshot.masterTooltip),
+  },
+  "status-effect": {
+    ddl: STATUS_EFFECT_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseStatusEffects(db, envelope),
+    readModel: ({ db, entity, snapshot }) =>
+      emitStatusEffectReadModels(db, entity.site?.route, snapshot.masterTooltip),
   },
   "item-category": {
     ddl: ITEM_CATEGORY_DDL,

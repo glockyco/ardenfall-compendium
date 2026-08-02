@@ -29,6 +29,12 @@
       "missingPolicy": "optional-empty"
     },
     {
+      "name": "tooltipSource",
+      "type": "string",
+      "from": "tooltip.GetTooltip(1f, 1f, spell)",
+      "missingPolicy": "optional-empty"
+    },
+    {
       "name": "iconRef",
       "type": "ref:asset",
       "from": "icon",

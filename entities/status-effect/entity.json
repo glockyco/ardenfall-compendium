@@ -1,0 +1,43 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "status-effect",
+  "kind": "definition",
+  "label": { "singular": "Status Effect", "plural": "Status Effects" },
+  "extraction": {
+    "source": "lookupAsset",
+    "root": "BuiltLookupTable.GetAssetsOfType<StatusEffectData>",
+    "walker": "StatusEffectExtractor"
+  },
+  "presentationContext": { "renderContext": "status-effect-presentation-v1" },
+  "site": {
+    "route": "/status-effects"
+  },
+  "fields": [
+    { "name": "id", "type": "id", "from": "guid", "missingPolicy": "fatal" },
+    {
+      "name": "statusEffectName",
+      "type": "string",
+      "from": "statusEffectName",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "tooltipSource",
+      "type": "string",
+      "from": "tooltip.GetTooltip(1f, 1f, false, effect)",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "iconRef",
+      "type": "ref:asset",
+      "from": "statusEffectIcon",
+      "missingPolicy": "optional-empty"
+    },
+    {
+      "name": "isHostile",
+      "type": "boolean",
+      "from": "isHostile",
+      "missingPolicy": "optional-empty"
+    }
+  ],
+  "map": null
+}

@@ -1,4 +1,6 @@
 import type { Database } from "bun:sqlite";
+import type { MasterTooltipVocabulary } from "../../types.ts";
+import { translateRichTextV1 } from "../../rich-text/rich-text-v1.ts";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
 import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
@@ -18,7 +20,9 @@ CREATE TABLE spell_presentation_rows (
   skill         TEXT,
   skill_id      TEXT,
   mana_cost      REAL,
-  is_illegal     INTEGER NOT NULL DEFAULT 0
+  is_illegal     INTEGER NOT NULL DEFAULT 0,
+  tooltip_source TEXT,
+  tooltip_rich_text_json TEXT
 );
 `;
 
@@ -28,6 +32,7 @@ interface SpellRow {
   stat_type_ref_json: string | null;
   mana_cost: number | null;
   is_illegal: number | null;
+  tooltip_source: string | null;
 }
 
 interface PublicStatType {
@@ -40,7 +45,11 @@ interface NamedAssetReference {
   name: string;
 }
 
-export function emitSpellReadModels(db: Database, routeBase = "/spells"): PipelineDiagnostic[] {
+export function emitSpellReadModels(
+  db: Database,
+  routeBase = "/spells",
+  masterTooltip?: MasterTooltipVocabulary,
+): PipelineDiagnostic[] {
   db.exec(SPELL_READ_MODEL_DDL);
   db.exec(ENTITY_GRAPH_DDL);
 
@@ -50,8 +59,9 @@ export function emitSpellReadModels(db: Database, routeBase = "/spells"): Pipeli
   );
   const presentationInsert = db.prepare(
     `INSERT INTO spell_presentation_rows (
-       id, name, render_context, skill, skill_id, mana_cost, is_illegal
-     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       id, name, render_context, skill, skill_id, mana_cost, is_illegal,
+       tooltip_source, tooltip_rich_text_json
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const edgeInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_edges (
@@ -71,7 +81,7 @@ export function emitSpellReadModels(db: Database, routeBase = "/spells"): Pipeli
   );
   const rows = db
     .query<SpellRow, []>(
-      `SELECT id, spell_name, stat_type_ref_json, mana_cost, is_illegal
+      `SELECT id, spell_name, stat_type_ref_json, mana_cost, is_illegal, tooltip_source
        FROM spells
        ORDER BY COALESCE(spell_name, 'Unnamed spell'), id`,
     )
@@ -82,6 +92,17 @@ export function emitSpellReadModels(db: Database, routeBase = "/spells"): Pipeli
     for (const row of rows) {
       const presentationName = row.spell_name ?? "Unnamed spell";
       const skill = resolveSkill(row, publicStats, diagnostics);
+      const tooltip =
+        row.tooltip_source === null
+          ? null
+          : translateRichTextV1(row.tooltip_source, {
+              ...(masterTooltip
+                ? {
+                    tooltipCodes: masterTooltip.tooltipCodes,
+                    tooltipColors: masterTooltip.tooltipColors,
+                  }
+                : {}),
+            });
       overviewInsert.run(
         row.id,
         presentationName,
@@ -97,8 +118,9 @@ export function emitSpellReadModels(db: Database, routeBase = "/spells"): Pipeli
         skill?.id ?? null,
         row.mana_cost,
         row.is_illegal ?? 0,
+        row.tooltip_source,
+        tooltip === null ? null : JSON.stringify(tooltip),
       );
-
       const slug = deriveEntityNodeSlug(presentationName, row.id);
       // The canonical table preserves a missing display name.
       // Presentation supplies a placeholder so the public node remains routable.
@@ -110,6 +132,18 @@ export function emitSpellReadModels(db: Database, routeBase = "/spells"): Pipeli
         canonicalSlug: slug.canonicalSlug,
         shortId: slug.shortId,
       });
+
+      for (const diagnostic of tooltip?.diagnostics ?? []) {
+        diagnostics.push({
+          severity: diagnostic.severity,
+          source: "rich-text",
+          code: diagnostic.code,
+          message: diagnostic.message,
+          entityType: "spell",
+          entityId: row.id,
+          field: diagnostic.field,
+        });
+      }
 
       if (skill) {
         edgeInsert.run(

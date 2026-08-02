@@ -24,6 +24,7 @@ function seedSpell(db: Database, statTypeRef: unknown = skillRef): void {
           statTypeRef,
           manaCost: 12.5,
           isIllegal: false,
+          tooltipSource: "<color=#86FF86>Protects target</color>",
           iconRef: { kind: "engineResource", unityType: "UnityEngine.Sprite", name: "fire" },
         },
       },
@@ -157,6 +158,76 @@ describe("spell pipeline", () => {
       )
       .get();
     expect(edge).toEqual({ source_id: spellId, target_id: skillId, predicate: "scales_with" });
+  });
+
+  it("translates tooltip markup into styled rich-text nodes", () => {
+    const db = new Database(":memory:");
+    seedSpell(db);
+    emitSpellReadModels(db);
+
+    const row = db
+      .query<{ tooltip_source: string | null; tooltip_rich_text_json: string | null }, [string]>(
+        `SELECT tooltip_source, tooltip_rich_text_json
+         FROM spell_presentation_rows WHERE id = ?`,
+      )
+      .get(spellId);
+    expect(row?.tooltip_source).toBe("<color=#86FF86>Protects target</color>");
+    expect(JSON.parse(row?.tooltip_rich_text_json ?? "null").nodes).toEqual([
+      {
+        type: "color",
+        token: null,
+        color: "#86FF86",
+        children: [{ type: "text", text: "Protects target" }],
+      },
+    ]);
+  });
+
+  it("keeps plain and absent tooltips distinguishable", () => {
+    const db = new Database(":memory:");
+    db.exec(SPELL_DDL);
+    canonicaliseSpells(db, {
+      entityId: "spell",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "named;spell;plain",
+          fields: {
+            id: "named;spell;plain",
+            spellName: "Plain",
+            tooltipSource: "No markup here",
+          },
+        },
+        {
+          id: "named;spell;missing",
+          fields: {
+            id: "named;spell;missing",
+            spellName: "Missing",
+            tooltipSource: null,
+          },
+        },
+      ],
+    });
+    emitSpellReadModels(db);
+
+    const rows = db
+      .query<
+        { id: string; tooltip_source: string | null; tooltip_rich_text_json: string | null },
+        []
+      >(
+        `SELECT id, tooltip_source, tooltip_rich_text_json
+         FROM spell_presentation_rows ORDER BY id`,
+      )
+      .all();
+    const plain = rows.find((row) => row.id === "named;spell;plain");
+    expect(plain?.tooltip_source).toBe("No markup here");
+    expect(JSON.parse(plain?.tooltip_rich_text_json ?? "null").nodes).toEqual([
+      { type: "text", text: "No markup here" },
+    ]);
+    expect(rows.find((row) => row.id === "named;spell;missing")).toEqual({
+      id: "named;spell;missing",
+      tooltip_source: null,
+      tooltip_rich_text_json: null,
+    });
   });
 
   it("diagnoses a missing public stat type without writing an edge", () => {
