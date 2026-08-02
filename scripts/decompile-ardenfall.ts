@@ -40,8 +40,59 @@ const BEHAVIOR_TYPES = [
   "Ardenfall.LeveledSpellData",
 ];
 
-function parseArgs(argv = Bun.argv.slice(2)) {
-  const parsed = {
+type ParsedArgs = {
+  assembly: string;
+  gameVersion: string;
+  outRoot: string;
+  fullIl: boolean;
+  allowExternalOutput: boolean;
+};
+
+type ParsedArgsState = Omit<ParsedArgs, "gameVersion"> & {
+  gameVersion: string | undefined;
+};
+
+type DefaultOptionsInput = {
+  assembly: string;
+  gameVersion: string;
+  sha256: string;
+  repoRoot: string;
+  outRoot?: string;
+  fullIl?: boolean;
+};
+
+type DecompileOptions = {
+  assembly: string;
+  gameVersion: string;
+  sha256: string;
+  repoRoot: string;
+  outRoot: string;
+  outputDir: string;
+  fullIl: boolean;
+};
+
+type DecompileCommand = {
+  name: string;
+  args: string[];
+  stdoutPath: string | null;
+  allowFailure?: boolean;
+};
+
+type DecompilePlan = DecompileOptions & {
+  commands: DecompileCommand[];
+};
+
+type CommandResult = {
+  name: string;
+  args: string[];
+  stdoutPath: string | null;
+  stdoutBytes: number;
+  exitCode: number;
+  allowFailure: boolean;
+};
+
+function parseArgs(argv: string[] = Bun.argv.slice(2)): ParsedArgs {
+  const parsed: ParsedArgsState = {
     assembly: "mod/libs/Assembly-CSharp.dll",
     gameVersion: undefined,
     outRoot: ".decompiled",
@@ -70,17 +121,18 @@ function parseArgs(argv = Bun.argv.slice(2)) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!parsed.gameVersion) throw new Error("--game-version is required");
-  return parsed;
+  const gameVersion = parsed.gameVersion;
+  if (!gameVersion) throw new Error("--game-version is required");
+  return { ...parsed, gameVersion };
 }
 
-async function sha256File(path) {
+async function sha256File(path: string): Promise<string> {
   const hasher = new Bun.CryptoHasher("sha256");
   hasher.update(await Bun.file(path).arrayBuffer());
   return hasher.digest("hex");
 }
 
-async function repoRoot() {
+async function repoRoot(): Promise<string> {
   const proc = Bun.spawn(["git", "rev-parse", "--show-toplevel"], { stdout: "pipe" });
   const out = (await new Response(proc.stdout).text()).trim();
   const code = await proc.exited;
@@ -95,7 +147,7 @@ function defaultOptions({
   repoRoot,
   outRoot = ".decompiled",
   fullIl = false,
-}) {
+}: DefaultOptionsInput): DecompileOptions {
   const outputRoot = isAbsolute(outRoot) ? outRoot : resolve(repoRoot, outRoot);
   return {
     assembly: isAbsolute(assembly) ? assembly : resolve(repoRoot, assembly),
@@ -108,13 +160,13 @@ function defaultOptions({
   };
 }
 
-function buildCommandPlan(options) {
+function buildCommandPlan(options: DecompileOptions): DecompilePlan {
   const libsDir = resolve(options.repoRoot, "mod/libs");
   const csharpDir = resolve(options.outputDir, "csharp");
   const metaDir = resolve(options.outputDir, "meta");
   const typesDir = resolve(options.outputDir, "types");
   const ilDir = resolve(options.outputDir, "il");
-  const commands = [
+  const commands: DecompileCommand[] = [
     {
       name: "ilspy project",
       args: [
@@ -165,16 +217,16 @@ function buildCommandPlan(options) {
   return { ...options, commands };
 }
 
-function safeTypeName(type) {
+function safeTypeName(type: string): string {
   return type.replaceAll(".", "_").replaceAll("+", "_");
 }
 
-function isSubpath(parent, child) {
+function isSubpath(parent: string, child: string): boolean {
   const normalizedParent = parent.endsWith("/") ? parent : `${parent}/`;
   return child === parent || child.startsWith(normalizedParent);
 }
 
-async function assertIgnored(path) {
+async function assertIgnored(path: string): Promise<void> {
   const proc = Bun.spawn(["git", "check-ignore", path], { stdout: "pipe" });
   await new Response(proc.stdout).text();
   const code = await proc.exited;
@@ -182,29 +234,42 @@ async function assertIgnored(path) {
     throw new Error(`Output path is inside the worktree but is not gitignored: ${path}`);
 }
 
-async function runCommand(command) {
+async function runCommand(command: DecompileCommand): Promise<CommandResult> {
+  if (command.stdoutPath) {
+    const proc = Bun.spawn(command.args, {
+      stdout: "pipe",
+      stderr: "inherit",
+    });
+    const output = await new Response(proc.stdout).arrayBuffer();
+    const stdoutBytes = output.byteLength;
+    await writeFile(command.stdoutPath, Buffer.from(output));
+    const exitCode = await proc.exited;
+    return {
+      name: command.name,
+      args: command.args,
+      stdoutPath: command.stdoutPath,
+      stdoutBytes,
+      exitCode,
+      allowFailure: command.allowFailure === true,
+    };
+  }
+
   const proc = Bun.spawn(command.args, {
-    stdout: command.stdoutPath ? "pipe" : "inherit",
+    stdout: "inherit",
     stderr: "inherit",
   });
-  let stdoutBytes = 0;
-  if (command.stdoutPath) {
-    const output = await new Response(proc.stdout).arrayBuffer();
-    stdoutBytes = output.byteLength;
-    await writeFile(command.stdoutPath, Buffer.from(output));
-  }
   const exitCode = await proc.exited;
   return {
     name: command.name,
     args: command.args,
     stdoutPath: command.stdoutPath,
-    stdoutBytes,
+    stdoutBytes: 0,
     exitCode,
     allowFailure: command.allowFailure === true,
   };
 }
 
-async function main() {
+async function main(): Promise<void> {
   const args = parseArgs();
   const root = await repoRoot();
   const assembly = isAbsolute(args.assembly) ? args.assembly : resolve(root, args.assembly);
@@ -233,7 +298,7 @@ async function main() {
   await mkdir(resolve(options.outputDir, "types"), { recursive: true });
   await mkdir(resolve(options.outputDir, "il"), { recursive: true });
 
-  const results = [];
+  const results: CommandResult[] = [];
   for (const command of plan.commands) {
     process.stdout.write(`$ ${command.args.join(" ")}\n`);
     const result = await runCommand(command);
@@ -258,7 +323,7 @@ async function main() {
 }
 
 if (import.meta.main) {
-  main().catch((error) => {
+  main().catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   });

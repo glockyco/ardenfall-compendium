@@ -2,7 +2,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const source = (path) => readFileSync(join(import.meta.dirname, "..", ...path), "utf8");
+const source = (path: string[]): string =>
+  readFileSync(join(import.meta.dirname, "..", ...path), "utf8");
 
 const overview = source(["src", "routes", "items", "+page.svelte"]);
 const detail = source(["src", "routes", "items", "[id]", "+page.svelte"]);
@@ -14,7 +15,7 @@ const richTextNode = source(["src", "lib", "components", "content", "RichTextNod
 const readModels = source(["src", "lib", "server", "read-models.ts"]);
 const itemReadModel = source(["src", "lib", "server", "entities", "item.ts"]);
 
-const required = [
+const required: Array<readonly [fileSource: string, snippet: string]> = [
   [itemReadModel, "displayIconSrc"],
   [itemReadModel, "display_icon_hash"],
   [readModels, "ItemOverviewRow"],
@@ -50,7 +51,7 @@ if (overview.includes("{@html") || detail.includes("{@html") || richTextNode.inc
   throw new Error("item presentation must render rich_text_v1 nodes without raw {@html}.");
 }
 
-const titleAttribute = /\stitle=(["'])/;
+const titleAttribute = /\stitle=(['"])/;
 if (titleAttribute.test(overview) || titleAttribute.test(detail) || titleAttribute.test(table)) {
   throw new Error("Item UI must not use browser title attributes for tooltip content.");
 }

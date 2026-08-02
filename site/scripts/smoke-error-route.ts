@@ -8,7 +8,7 @@ const source = readFileSync(sourcePath, "utf8");
 // rendered labels and the fact that recovery is a plain link, not the mechanism
 // behind it: the root layout disables CSR, so any recovery control that needs
 // hydration silently does nothing on the routes that can actually error.
-const requiredSnippets = [
+const requiredSnippets: string[] = [
   "Error {status}",
   "That item doesn't exist",
   "Back to home",

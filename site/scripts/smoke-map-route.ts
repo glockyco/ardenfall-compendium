@@ -4,7 +4,7 @@ import { join } from "node:path";
 const out = join(process.cwd(), ".svelte-kit", "cloudflare", "map.html");
 const html = readFileSync(out, "utf8");
 
-const must = ["Harbor Town", "Loading map", ">Map<"];
+const must: string[] = ["Harbor Town", "Loading map", ">Map<"];
 for (const needle of must) {
   if (!html.includes(needle)) {
     throw new Error(`map.html is missing expected content: ${needle}`);

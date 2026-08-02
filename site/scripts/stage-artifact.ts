@@ -13,11 +13,123 @@ import {
 import { dirname, join, resolve } from "node:path";
 import validateArtifactManifest from "../../pipeline/dist/validate-artifact-manifest.mjs";
 
-export async function stageArtifact({ artifactDir, targetDir, mode }) {
+/**
+ * Hand-written declaration for the JavaScript staging script.
+ *
+ * `stage-artifact.mjs` is plain JavaScript because it runs directly under Node
+ * during the site build, before any TypeScript build step exists. It is also
+ * the only place artifact tamper detection lives, so the pipeline's manifest tests
+ * import it to prove a manipulated artifact is rejected. Declaring its shape here
+ * keeps those callers type-checked instead of suppressed.
+ */
+
+export interface StageArtifactOptions {
+  /** Directory holding `artifact-manifest.json`, `data.sqlite`, assets, and static files. */
+  artifactDir: string;
+  /** Destination the validated artifact is copied into. */
+  targetDir: string;
+  /** Which artifact kind the caller expects. A mismatch is rejected. */
+  mode: "fixture" | "release";
+}
+
+export interface ArtifactManifest {
+  schemaVersion: number;
+  artifactKind: "fixture" | "release";
+  artifactId: string;
+  createdAt: string;
+  source: {
+    kind: "live-game-export" | "synthetic-fixture";
+    fixtureName?: string;
+    snapshotId: string;
+    gameVersion: string;
+    buildIdentifier: string;
+    extractorVersion: string;
+    snapshotManifestSha256: string;
+  };
+  git: {
+    repository: string;
+    commit: string;
+    branch: string;
+    dirty: boolean;
+  };
+  diagnostics: {
+    fatal: number;
+    diagnostic: number;
+  };
+  counts: ArtifactCounts;
+  outputs: {
+    sqlite: {
+      path: "data.sqlite";
+      bytes: number;
+      sha256: string;
+    };
+    assets: {
+      path: "assets";
+      count: number;
+      treeSha256: string;
+    };
+  };
+  probes: {
+    items: {
+      id: string;
+      name: string;
+      displayIconHash: string | null;
+    }[];
+  };
+}
+
+interface ArtifactCounts {
+  [key: string]: number | undefined;
+  itemOverviewRows?: number;
+  itemPresentationRows?: number;
+  itemOverviewFilters?: number;
+  itemOverviewCategories?: number;
+  statTypeOverviewRows?: number;
+  statTypePresentationRows?: number;
+  itemCategoryOverviewRows?: number;
+  itemCategoryPresentationRows?: number;
+  itemTagOverviewRows?: number;
+  itemTagPresentationRows?: number;
+}
+
+type CountKey = keyof ArtifactCounts;
+
+type PublicRelease = Pick<
+  ArtifactManifest,
+  | "schemaVersion"
+  | "artifactKind"
+  | "artifactId"
+  | "source"
+  | "git"
+  | "diagnostics"
+  | "counts"
+  | "outputs"
+  | "probes"
+>;
+
+export interface StageArtifactResult {
+  /** The parsed and validated manifest. */
+  manifest: ArtifactManifest;
+  targetDir: string;
+}
+
+/**
+ * Validates an artifact against its manifest and copies it to `targetDir`.
+ *
+ * Throws when the manifest is missing or invalid, the artifact kind does not
+ * match `mode`, a recorded file hash or byte size disagrees with the file on
+ * disk, a listed asset is absent, a recorded row count disagrees with the
+ * database, or the artifact carries fatal diagnostics.
+ */
+export async function stageArtifact({
+  artifactDir,
+  targetDir,
+  mode,
+}: StageArtifactOptions): Promise<StageArtifactResult> {
   const manifestPath = join(artifactDir, "artifact-manifest.json");
   if (!existsSync(manifestPath)) throw new Error(`missing artifact manifest: ${manifestPath}`);
-  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-  if (!validateArtifactManifest(manifest)) {
+  const manifest: unknown = JSON.parse(readFileSync(manifestPath, "utf8"));
+  if (!isArtifactManifest(manifest)) {
     const detail = (validateArtifactManifest.errors ?? [])
       .map((error) => `artifact-manifest.json#${error.instancePath} — ${error.message}`)
       .join("\n");
@@ -67,7 +179,11 @@ export async function stageArtifact({ artifactDir, targetDir, mode }) {
   return { manifest, targetDir };
 }
 
-function publicRelease(manifest) {
+function isArtifactManifest(value: unknown): value is ArtifactManifest {
+  return validateArtifactManifest(value);
+}
+
+function publicRelease(manifest: ArtifactManifest): PublicRelease {
   return {
     schemaVersion: manifest.schemaVersion,
     artifactKind: manifest.artifactKind,
@@ -81,7 +197,7 @@ function publicRelease(manifest) {
   };
 }
 
-function assertFileHash(path, expectedHash, expectedBytes) {
+function assertFileHash(path: string, expectedHash: string, expectedBytes: number): void {
   const info = statSync(path);
   if (info.size !== expectedBytes) {
     throw new Error(
@@ -96,7 +212,7 @@ function assertFileHash(path, expectedHash, expectedBytes) {
   }
 }
 
-function assertAssetTree(dir, expectedHash) {
+function assertAssetTree(dir: string, expectedHash: string): void {
   const entries = listFiles(dir).map((path) => {
     const relative = path.slice(dir.length + 1).replaceAll("\\", "/");
     const hash = createHash("sha256").update(readFileSync(path)).digest("hex");
@@ -108,7 +224,7 @@ function assertAssetTree(dir, expectedHash) {
   }
 }
 
-function assertSqliteCounts(path, counts) {
+function assertSqliteCounts(path: string, counts: ArtifactCounts): void {
   const db = new Database(path, { readonly: true });
   try {
     assertCount(db, counts, "itemOverviewRows", "item_overview_rows");
@@ -131,31 +247,47 @@ function assertSqliteCounts(path, counts) {
   }
 }
 
-function assertCount(db, counts, key, table) {
-  if (counts[key] === undefined) return;
+function assertCount(db: Database, counts: ArtifactCounts, key: CountKey, table: string): void {
+  const expected = counts[key];
+  if (expected === undefined) return;
   const actual = countRows(db, table);
-  if (actual !== counts[key]) {
-    throw new Error(`${key} mismatch: expected ${counts[key]}, got ${actual}`);
+  if (actual !== expected) {
+    throw new Error(`${key} mismatch: expected ${expected}, got ${actual}`);
   }
 }
 
-function assertRequiredCount(db, counts, key, table) {
+function assertRequiredCount(
+  db: Database,
+  counts: ArtifactCounts,
+  key: CountKey,
+  table: string,
+): void {
   if (counts[key] === undefined) throw new Error(`missing required count ${key}`);
   assertCount(db, counts, key, table);
 }
 
-function countRows(db, table) {
+function countRows(db: Database, table: string): number {
   const tableRow = db
-    .query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
+    .query<{ name: string }, [string]>(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+    )
     .get(table);
   if (!tableRow) throw new Error(`missing sqlite table ${table}`);
-  return db.query(`SELECT COUNT(*) AS count FROM ${table}`).get().count;
+  // SQLite COUNT aggregates always return one row.
+  return db.query<{ count: number }, []>(`SELECT COUNT(*) AS count FROM ${table}`).get()!.count;
 }
 
-function assertArtifactMetadata(path, manifest) {
+interface ArtifactMetadataRow {
+  key: string;
+  value: string;
+}
+
+function assertArtifactMetadata(path: string, manifest: ArtifactManifest): void {
   const db = new Database(path, { readonly: true });
   try {
-    const rows = db.query("SELECT key, value FROM artifact_metadata").all();
+    const rows = db
+      .query<ArtifactMetadataRow, []>("SELECT key, value FROM artifact_metadata")
+      .all();
     const metadata = new Map(rows.map((row) => [row.key, row.value]));
     const expected = {
       artifactKind: manifest.artifactKind,
@@ -176,7 +308,7 @@ function assertArtifactMetadata(path, manifest) {
   }
 }
 
-function copyTree(source, target) {
+function copyTree(source: string, target: string): void {
   mkdirSync(target, { recursive: true });
   for (const sourcePath of listFiles(source)) {
     const relative = sourcePath.slice(source.length + 1);
@@ -186,8 +318,8 @@ function copyTree(source, target) {
   }
 }
 
-function listFiles(dir) {
-  const files = [];
+function listFiles(dir: string): string[] {
+  const files: string[] = [];
   if (!existsSync(dir)) return files;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);

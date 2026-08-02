@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { join, resolve } from "node:path";
-import { stageArtifact } from "./stage-artifact.mjs";
+import { stageArtifact } from "./stage-artifact.ts";
 
 const artifactArg = Bun.argv[2];
 if (!artifactArg) {
@@ -18,9 +18,9 @@ run("bun", ["run", "build:prepared"]);
 run("bun", ["run", "smoke:prerender"]);
 // Keep this literal command visible for tooling guardrails: wrangler deploy
 run("wrangler", ["deploy"]);
-run("bun", ["run", "scripts/smoke-production-release.mjs", manifestPath]);
+run("bun", ["run", "scripts/smoke-production-release.ts", manifestPath]);
 
-function run(command, args) {
+function run(command: string, args: string[]): void {
   const result = spawnSync(command, args, {
     cwd: resolve(import.meta.dirname, ".."),
     stdio: "inherit",

@@ -33,7 +33,7 @@
     "controller:deploy": "bun run controller/src/deploy.ts",
     "controller:export": "bun run controller/src/cli.ts export",
     "controller:test": "bun test controller/test",
-    "decompile:game": "bun run scripts/decompile-ardenfall.mjs"
+    "decompile:game": "bun run scripts/decompile-ardenfall.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",

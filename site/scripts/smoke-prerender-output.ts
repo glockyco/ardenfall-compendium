@@ -3,6 +3,45 @@ import { Database } from "bun:sqlite";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+interface ReleaseProbe {
+  id: string;
+  name: string;
+  displayIconHash: string | null;
+}
+
+interface ReleaseManifest {
+  artifactId: string;
+  probes: { items: ReleaseProbe[] };
+}
+
+interface ArtifactMetadata {
+  artifactId: string;
+}
+
+interface StatProbeRow {
+  id: string;
+  name: string;
+  grouping: string;
+  icon_hash: string;
+  canonical_slug: string;
+}
+
+interface ItemCategoryProbeRow {
+  id: string;
+  name: string;
+  asset_hash: string;
+  canonical_slug: string;
+  item_name: string;
+}
+
+interface ItemTagProbeRow {
+  id: string;
+  name: string;
+  description: string;
+  canonical_slug: string;
+  item_name: string;
+}
+
 const outputDir = join(import.meta.dirname, "..", ".svelte-kit", "cloudflare");
 const releasePath = join(import.meta.dirname, "..", "static", "_release.json");
 const outputReleasePath = join(outputDir, "_release.json");
@@ -19,11 +58,19 @@ if (!overviewPath) {
   throw new Error(`missing prerendered item overview under ${outputDir}`);
 }
 
-const manifest = JSON.parse(readFileSync(releasePath, "utf8"));
-const builtManifest = JSON.parse(readFileSync(outputReleasePath, "utf8"));
+const manifestValue: unknown = JSON.parse(readFileSync(releasePath, "utf8"));
+const builtManifestValue: unknown = JSON.parse(readFileSync(outputReleasePath, "utf8"));
+if (!isReleaseManifest(manifestValue)) {
+  throw new Error("release metadata contains no item probes");
+}
+const manifest = manifestValue;
+const builtManifest = isArtifactMetadata(builtManifestValue)
+  ? builtManifestValue
+  : { artifactId: undefined };
 if (builtManifest.artifactId !== manifest.artifactId) {
+  const builtArtifactId = isRecord(builtManifestValue) ? builtManifestValue.artifactId : undefined;
   throw new Error(
-    `built release metadata mismatch: expected ${manifest.artifactId}, got ${builtManifest.artifactId}`,
+    `built release metadata mismatch: expected ${manifest.artifactId}, got ${String(builtArtifactId)}`,
   );
 }
 const probe = manifest.probes.items[0];
@@ -167,14 +214,14 @@ if (!tagDetail.includes(tagProbe.item_name)) {
   throw new Error(`tag detail HTML missing item ${tagProbe.item_name}`);
 }
 
-function readStatProbe() {
+function readStatProbe(): StatProbeRow {
   const db = new Database(join(import.meta.dirname, "..", "static", "data.sqlite"), {
     readonly: true,
     create: false,
   });
   try {
     const row = db
-      .query(
+      .query<StatProbeRow, []>(
         `SELECT o.id, o.name, o.grouping, o.icon_hash, n.canonical_slug
          FROM stat_type_overview_rows o
          JOIN entity_nodes n
@@ -193,14 +240,14 @@ function readStatProbe() {
   }
 }
 
-function readItemCategoryProbe() {
+function readItemCategoryProbe(): ItemCategoryProbeRow {
   const db = new Database(join(import.meta.dirname, "..", "static", "data.sqlite"), {
     readonly: true,
     create: false,
   });
   try {
     const row = db
-      .query(
+      .query<ItemCategoryProbeRow, []>(
         `SELECT o.id, o.name, COALESCE(o.icon_hash, o.default_item_icon_hash) AS asset_hash,
                 n.canonical_slug,
                 (
@@ -233,14 +280,14 @@ function readItemCategoryProbe() {
   }
 }
 
-function readItemTagProbe() {
+function readItemTagProbe(): ItemTagProbeRow {
   const db = new Database(join(import.meta.dirname, "..", "static", "data.sqlite"), {
     readonly: true,
     create: false,
   });
   try {
     const row = db
-      .query(
+      .query<ItemTagProbeRow, []>(
         `SELECT o.id, o.name, o.description, n.canonical_slug,
                 (
                   SELECT COALESCE(io.name, io.id)
@@ -267,6 +314,32 @@ function readItemTagProbe() {
   }
 }
 
-function firstExisting(paths) {
+function firstExisting(paths: string[]): string | null {
   return paths.find((path) => existsSync(path)) ?? null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || isString(value);
+}
+
+function isReleaseProbe(value: unknown): value is ReleaseProbe {
+  if (!isRecord(value)) return false;
+  return isString(value.id) && isString(value.name) && isNullableString(value.displayIconHash);
+}
+
+function isReleaseManifest(value: unknown): value is ReleaseManifest {
+  if (!isRecord(value) || !isRecord(value.probes) || !isString(value.artifactId)) return false;
+  return Array.isArray(value.probes.items) && value.probes.items.every(isReleaseProbe);
+}
+
+function isArtifactMetadata(value: unknown): value is ArtifactMetadata {
+  return isRecord(value) && isString(value.artifactId);
 }

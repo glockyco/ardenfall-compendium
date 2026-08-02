@@ -1,17 +1,43 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
+interface ArtifactProbe {
+  id: string;
+  name: string;
+  displayIconHash?: string | null;
+}
+
+interface ArtifactManifest {
+  artifactId: string;
+  git: { commit: string };
+  outputs: { sqlite: { sha256: string } };
+  probes: { items: [ArtifactProbe, ...ArtifactProbe[]] };
+}
+
+interface DeployedRelease {
+  artifactId: string;
+  git: { commit: string };
+}
+
 const [artifactManifestPath, origin = "https://ardenfall.compendiums.org"] = Bun.argv.slice(2);
 if (!artifactManifestPath) {
   throw new Error("usage: smoke-production-release <artifact-manifest.json> [origin]");
 }
 
-const manifest = JSON.parse(readFileSync(artifactManifestPath, "utf8"));
+const parsedManifest: unknown = JSON.parse(readFileSync(artifactManifestPath, "utf8"));
+if (!isArtifactManifest(parsedManifest)) {
+  throw new Error("invalid artifact manifest");
+}
+const manifest = parsedManifest;
 const releaseRes = await fetch(`${origin}/_release.json`, {
   headers: { "cache-control": "no-cache" },
 });
 if (!releaseRes.ok) throw new Error(`/_release.json returned ${releaseRes.status}`);
-const deployed = await releaseRes.json();
+const parsedDeployed: unknown = await releaseRes.json();
+if (!isDeployedRelease(parsedDeployed)) {
+  throw new Error("invalid deployed release metadata");
+}
+const deployed = parsedDeployed;
 if (deployed.artifactId !== manifest.artifactId) {
   throw new Error(
     `deployed artifact mismatch: expected ${manifest.artifactId}, got ${deployed.artifactId}`,
@@ -70,8 +96,52 @@ if (probe.displayIconHash) {
 
 process.stdout.write(`production smoke passed for ${manifest.artifactId}\n`);
 
-async function fetchText(url) {
+async function fetchText(url: string): Promise<string> {
   const res = await fetch(url, { headers: { "cache-control": "no-cache" } });
   if (!res.ok) throw new Error(`${url} returned ${res.status}`);
   return await res.text();
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+function isArtifactProbe(value: unknown): value is ArtifactProbe {
+  if (!isRecord(value) || !isString(value.id) || !isString(value.name)) {
+    return false;
+  }
+  const displayIconHash = value.displayIconHash;
+  return displayIconHash === undefined || displayIconHash === null || isString(displayIconHash);
+}
+
+function isArtifactManifest(value: unknown): value is ArtifactManifest {
+  if (!isRecord(value) || !isString(value.artifactId)) {
+    return false;
+  }
+  const git = value.git;
+  const outputs = value.outputs;
+  const probes = value.probes;
+  if (!isRecord(git) || !isString(git.commit)) {
+    return false;
+  }
+  if (!isRecord(outputs) || !isRecord(outputs.sqlite) || !isString(outputs.sqlite.sha256)) {
+    return false;
+  }
+  return (
+    isRecord(probes) &&
+    Array.isArray(probes.items) &&
+    probes.items.length > 0 &&
+    probes.items.every(isArtifactProbe)
+  );
+}
+
+function isDeployedRelease(value: unknown): value is DeployedRelease {
+  if (!isRecord(value) || !isString(value.artifactId) || !isRecord(value.git)) {
+    return false;
+  }
+  return isString(value.git.commit);
 }

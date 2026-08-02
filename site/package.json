@@ -31,12 +31,12 @@
     "build:fixture": "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "smoke:error-route": "bun run scripts/smoke-error-route.mjs",
-    "smoke:item-icons": "bun run scripts/smoke-item-icons.mjs",
-    "smoke:prerender": "bun run scripts/smoke-prerender-output.mjs",
-    "smoke:map": "bun run scripts/smoke-map-route.mjs",
-    "stage:artifact": "bun run scripts/stage-artifact.mjs",
-    "deploy:production": "bun run scripts/deploy-production.mjs"
+    "smoke:error-route": "bun run scripts/smoke-error-route.ts",
+    "smoke:item-icons": "bun run scripts/smoke-item-icons.ts",
+    "smoke:prerender": "bun run scripts/smoke-prerender-output.ts",
+    "smoke:map": "bun run scripts/smoke-map-route.ts",
+    "stage:artifact": "bun run scripts/stage-artifact.ts",
+    "deploy:production": "bun run scripts/deploy-production.ts"
   },
   "type": "module"
 }
