@@ -8,9 +8,21 @@
 
 <svelte:head>
   <title>{spell.name} | Spells | Ardenfall Compendium</title>
+  <meta
+    name="description"
+    content={spell.descriptionText ?? `${spell.name} in the Ardenfall Compendium.`}
+  />
+  <link rel="canonical" href={spell.routePath} />
+  <meta property="og:title" content={`${spell.name} | Spells | Ardenfall Compendium`} />
+  <meta
+    property="og:description"
+    content={spell.descriptionText ?? `${spell.name} in the Ardenfall Compendium.`}
+  />
+  <meta property="og:url" content={spell.routePath} />
+  <meta property="og:type" content="article" />
 </svelte:head>
 
-<a class="text-sm underline" href="/spells">← back to spells</a>
+<a class="text-sm underline" href={data.spellRoute}>← back to spells</a>
 <h1 class="mt-2 text-2xl font-bold">{spell.name}</h1>
 
 <div class="border-border bg-card mt-4 rounded-lg border p-5">

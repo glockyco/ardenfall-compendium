@@ -8,6 +8,22 @@
 
 <svelte:head>
   <title>{stat.name} | Stats | Ardenfall Compendium</title>
+  <meta
+    name="description"
+    content={stat.longDescription ??
+      stat.description ??
+      `${stat.name} stat in the Ardenfall Compendium.`}
+  />
+  <link rel="canonical" href={stat.routePath} />
+  <meta property="og:title" content={`${stat.name} | Stats | Ardenfall Compendium`} />
+  <meta
+    property="og:description"
+    content={stat.longDescription ??
+      stat.description ??
+      `${stat.name} stat in the Ardenfall Compendium.`}
+  />
+  <meta property="og:url" content={stat.routePath} />
+  <meta property="og:type" content="article" />
 </svelte:head>
 
 <a class="text-sm underline" href={data.statTypeRoute}>← back to stats</a>

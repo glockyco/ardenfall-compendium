@@ -47,11 +47,6 @@
       "layer": "items"
     },
     {
-      "id": "items.ItemTooltipCard",
-      "path": "items/ItemTooltipCard.svelte",
-      "layer": "items"
-    },
-    {
       "id": "relationships.EntityLink",
       "path": "relationships/EntityLink.svelte",
       "layer": "relationships"

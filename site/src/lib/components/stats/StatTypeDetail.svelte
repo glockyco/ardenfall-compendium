@@ -8,12 +8,12 @@
   <div class="flex items-center gap-3">
     <span
       class="border-border bg-muted flex size-12 items-center justify-center rounded border"
+      style:background-color={presentation.iconColor ?? undefined}
       aria-hidden="true"
     >
       {#if presentation.iconSrc}
         <img
           class="size-10 object-contain"
-          style:color={presentation.iconColor ?? undefined}
           src={presentation.iconSrc}
           alt=""
           loading="lazy"
@@ -39,8 +39,17 @@
     <section class="mt-6">
       <h2 class="text-lg font-semibold">Affects</h2>
       <ul class="mt-2 list-disc space-y-1 pl-6">
-        {#each presentation.affects as id (id)}
-          <li>{id}</li>
+        {#each presentation.affects as reference (`${reference.label}:${reference.routePath ?? "unresolved"}`)}
+          <li>
+            {#if reference.routePath}
+              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- stat routes are generated from the static read model -->
+              <a class="underline underline-offset-2" href={reference.routePath}
+                >{reference.label}</a
+              >
+            {:else}
+              {reference.label}
+            {/if}
+          </li>
         {/each}
       </ul>
     </section>
@@ -50,8 +59,17 @@
     <section class="mt-6">
       <h2 class="text-lg font-semibold">Skill affects</h2>
       <ul class="mt-2 list-disc space-y-1 pl-6">
-        {#each presentation.skillAffects as id (id)}
-          <li>{id}</li>
+        {#each presentation.skillAffects as reference (`${reference.label}:${reference.routePath ?? "unresolved"}`)}
+          <li>
+            {#if reference.routePath}
+              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- stat routes are generated from the static read model -->
+              <a class="underline underline-offset-2" href={reference.routePath}
+                >{reference.label}</a
+              >
+            {:else}
+              {reference.label}
+            {/if}
+          </li>
         {/each}
       </ul>
     </section>

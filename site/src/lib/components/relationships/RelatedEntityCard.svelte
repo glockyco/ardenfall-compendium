@@ -7,5 +7,4 @@
 
 <li class="border-border rounded-md border p-3 text-sm">
   <EntityLink {edge} />
-  <p class="text-muted-foreground mt-1">{edge.label}</p>
 </li>

@@ -21,6 +21,7 @@ interface ItemCategoryPresentationRecord {
   show_in_all_category: number;
   columns_json: string;
   item_count: number;
+  route_path: string;
 }
 
 export interface ItemCategoryOverviewRow {
@@ -43,6 +44,7 @@ export interface ItemCategoryPresentationRow {
   showInAllCategory: boolean;
   columns: Record<string, unknown>[];
   itemCount: number;
+  routePath: string;
 }
 
 export const listItemCategories = (): ItemCategoryOverviewRow[] =>
@@ -72,9 +74,14 @@ export const getItemCategoryPresentation = (
   if (!node) return undefined;
   const row = get<ItemCategoryPresentationRecord>(
     `SELECT id, name, render_context, icon_hash, default_item_icon_hash,
-            category_color_json, show_in_all_category, columns_json, item_count
-     FROM item_category_presentation_rows
-     WHERE id = ?`,
+            category_color_json, show_in_all_category, columns_json, item_count,
+            n.route_path
+     FROM item_category_presentation_rows p
+     JOIN entity_nodes n
+       ON n.entity_type = 'item-category'
+      AND n.entity_id = p.id
+      AND n.is_public = 1
+     WHERE p.id = ?`,
     [node.entityId],
   );
   if (!row) return undefined;
@@ -88,5 +95,6 @@ export const getItemCategoryPresentation = (
     showInAllCategory: row.show_in_all_category === 1,
     columns: JSON.parse(row.columns_json) as Record<string, unknown>[],
     itemCount: row.item_count,
+    routePath: row.route_path,
   };
 };

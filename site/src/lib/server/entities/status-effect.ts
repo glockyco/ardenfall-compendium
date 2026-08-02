@@ -7,6 +7,7 @@ interface StatusEffectOverviewRecord {
   name: string | null;
   is_hostile: number;
   route_path: string;
+  tooltip_rich_text_json: string | null;
 }
 
 interface StatusEffectPresentationRecord {
@@ -15,12 +16,15 @@ interface StatusEffectPresentationRecord {
   render_context: "status-effect-presentation-v1";
   is_hostile: number;
   tooltip_rich_text_json: string | null;
+  route_path: string;
 }
 
 export interface StatusEffectOverviewRow {
   id: string;
   name: string | null;
   isHostile: boolean;
+  descriptionSummary: string | null;
+  displayName: string;
   routePath: string;
 }
 
@@ -29,13 +33,18 @@ export interface StatusEffectPresentationRow {
   name: string | null;
   renderContext: "status-effect-presentation-v1";
   description: RichTextDocument | null;
+  descriptionText: string | null;
+  displayName: string;
   isHostile: boolean;
+  routePath: string;
 }
 
-export const listStatusEffects = (): StatusEffectOverviewRow[] =>
-  all<StatusEffectOverviewRecord>(
-    `SELECT o.id, o.name, o.is_hostile, n.route_path
+export const listStatusEffects = (): StatusEffectOverviewRow[] => {
+  const rows = all<StatusEffectOverviewRecord>(
+    `SELECT o.id, o.name, o.is_hostile, p.tooltip_rich_text_json, n.route_path
      FROM status_effect_overview_rows o
+     LEFT JOIN status_effect_presentation_rows p
+       ON p.id = o.id
      JOIN entity_nodes n
        ON n.entity_type = 'status-effect'
       AND n.entity_id = o.id
@@ -45,8 +54,20 @@ export const listStatusEffects = (): StatusEffectOverviewRow[] =>
     id: row.id,
     name: row.name,
     isHostile: row.is_hostile === 1,
+    descriptionSummary: row.tooltip_rich_text_json
+      ? firstSentence(richTextPlainText(JSON.parse(row.tooltip_rich_text_json) as RichTextDocument))
+      : null,
+    displayName: statusEffectName(row.name, row.id, row.tooltip_rich_text_json),
     routePath: row.route_path,
   }));
+  const counts = new Map<string, number>();
+  for (const row of rows) counts.set(row.displayName, (counts.get(row.displayName) ?? 0) + 1);
+  return rows.map((row) =>
+    (counts.get(row.displayName) ?? 0) > 1
+      ? { ...row, displayName: `${row.displayName} (${row.id})` }
+      : row,
+  );
+};
 
 export const getStatusEffectPresentation = (
   slug: string,
@@ -54,19 +75,53 @@ export const getStatusEffectPresentation = (
   const node = getEntityNodeBySlug("status-effect", slug);
   if (!node) return undefined;
   const row = get<StatusEffectPresentationRecord>(
-    `SELECT id, name, render_context, is_hostile, tooltip_rich_text_json
-     FROM status_effect_presentation_rows
-     WHERE id = ?`,
+    `SELECT p.id, p.name, p.render_context, p.is_hostile, p.tooltip_rich_text_json,
+            n.route_path
+     FROM status_effect_presentation_rows p
+     JOIN entity_nodes n
+       ON n.entity_type = 'status-effect'
+      AND n.entity_id = p.id
+      AND n.is_public = 1
+     WHERE p.id = ?`,
     [node.entityId],
   );
   if (!row) return undefined;
+  const description = row.tooltip_rich_text_json
+    ? (JSON.parse(row.tooltip_rich_text_json) as RichTextDocument)
+    : null;
   return {
     id: row.id,
     name: row.name,
     renderContext: row.render_context,
-    description: row.tooltip_rich_text_json
-      ? (JSON.parse(row.tooltip_rich_text_json) as RichTextDocument)
-      : null,
+    description,
+    descriptionText: description ? richTextPlainText(description) : null,
+    displayName: statusEffectName(row.name, row.id, row.tooltip_rich_text_json),
     isHostile: row.is_hostile === 1,
+    routePath: row.route_path,
   };
 };
+
+function statusEffectName(name: string | null, id: string, descriptionJson: string | null): string {
+  const normalizedName = name?.trim().toLowerCase();
+  if (name && normalizedName !== "unnamed status effect") return name;
+  const summary = descriptionJson
+    ? firstSentence(richTextPlainText(JSON.parse(descriptionJson) as RichTextDocument))
+    : null;
+  return summary ? `Unnamed status effect · ${summary}` : `Unnamed status effect · ${id}`;
+}
+
+function firstSentence(text: string): string | null {
+  const sentence = text.match(/^.*?(?:[.!?](?:\s|$)|$)/)?.[0]?.trim() ?? "";
+  return sentence || null;
+}
+
+function richTextPlainText(document: RichTextDocument): string {
+  const visit = (node: RichTextDocument["nodes"][number]): string => {
+    if (node.type === "text") return node.text;
+    if (node.type === "lineBreak") return " ";
+    if (node.type === "sprite") return node.name;
+    if (node.type === "termLink") return node.label;
+    return node.children.map(visit).join("");
+  };
+  return document.nodes.map(visit).join("").replace(/\s+/g, " ").trim();
+}

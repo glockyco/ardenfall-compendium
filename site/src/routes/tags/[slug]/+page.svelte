@@ -8,8 +8,22 @@
 
 <svelte:head>
   <title>{tag.name} | Tags | Ardenfall Compendium</title>
+  <meta
+    name="description"
+    content={tag.description ||
+      `Item tag ${tag.name} with ${tag.itemCount} items in the Ardenfall Compendium.`}
+  />
+  <link rel="canonical" href={tag.routePath} />
+  <meta property="og:title" content={`${tag.name} | Tags | Ardenfall Compendium`} />
+  <meta
+    property="og:description"
+    content={tag.description ||
+      `Item tag ${tag.name} with ${tag.itemCount} items in the Ardenfall Compendium.`}
+  />
+  <meta property="og:url" content={tag.routePath} />
+  <meta property="og:type" content="article" />
 </svelte:head>
 
 <a class="text-sm underline" href={data.itemTagRoute}>← back to tags</a>
 <h1 class="mt-2 text-2xl font-bold">{tag.name}</h1>
-<ItemTagDetail presentation={tag} items={data.items} />
+<ItemTagDetail presentation={tag} items={data.items} columns={data.columns} />

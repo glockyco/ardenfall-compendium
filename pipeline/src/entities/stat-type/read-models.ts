@@ -73,6 +73,23 @@ export function emitStatTypeReadModels(
 
   const diagnostics: PipelineDiagnostic[] = [];
   const tx = db.transaction(() => {
+    const statNodes = new Map(
+      rows.map((stat) => {
+        const slug = deriveEntityNodeSlug(stat.stat_name, stat.id);
+        return [stat.stat_name.trim().toLowerCase(), `${routeBase}/${slug.canonicalSlug}`] as const;
+      }),
+    );
+    const resolveReferences = (referencesJson: string, sourceId: string) =>
+      JSON.stringify(
+        (JSON.parse(referencesJson) as unknown[]).map((reference) => {
+          if (typeof reference !== "string") {
+            throw new Error(`invalid stat reference JSON for '${sourceId}'`);
+          }
+          const label = reference.trim();
+          return { label, routePath: statNodes.get(label.toLowerCase()) ?? null };
+        }),
+      );
+
     for (const row of rows) {
       // A StatType is an attribute or a skill. The asset says which. Traits are a
       // separate asset type entirely, so they cannot classify a stat.
@@ -104,8 +121,8 @@ export function emitStatTypeReadModels(
         row.icon_color_json,
         row.stat_description,
         row.long_stat_description,
-        row.affects_json,
-        row.skill_affects_json,
+        resolveReferences(row.affects_json, row.id),
+        resolveReferences(row.skill_affects_json, row.id),
       );
       const slug = deriveEntityNodeSlug(row.stat_name, row.id);
       writeNode({

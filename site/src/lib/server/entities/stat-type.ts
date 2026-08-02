@@ -21,6 +21,12 @@ interface StatTypePresentationRecord {
   long_description: string | null;
   affects_json: string;
   skill_affects_json: string;
+  route_path: string;
+}
+
+export interface StatTypeReference {
+  label: string;
+  routePath: string | null;
 }
 
 export interface StatTypeOverviewRow {
@@ -41,8 +47,9 @@ export interface StatTypePresentationRow {
   iconColor: string | null;
   description: string | null;
   longDescription: string | null;
-  affects: string[];
-  skillAffects: string[];
+  affects: StatTypeReference[];
+  skillAffects: StatTypeReference[];
+  routePath: string;
 }
 
 export const listStatTypes = (): StatTypeOverviewRow[] =>
@@ -68,9 +75,14 @@ export const getStatTypePresentation = (slug: string): StatTypePresentationRow |
   if (!node) return undefined;
   const row = get<StatTypePresentationRecord>(
     `SELECT id, name, grouping, render_context, icon_hash, icon_color,
-            description, long_description, affects_json, skill_affects_json
-     FROM stat_type_presentation_rows
-     WHERE id = ?`,
+            description, long_description, affects_json, skill_affects_json,
+            n.route_path
+     FROM stat_type_presentation_rows p
+     JOIN entity_nodes n
+       ON n.entity_type = 'stat-type'
+      AND n.entity_id = p.id
+      AND n.is_public = 1
+     WHERE p.id = ?`,
     [node.entityId],
   );
   if (!row) return undefined;
@@ -83,7 +95,8 @@ export const getStatTypePresentation = (slug: string): StatTypePresentationRow |
     iconColor: colorCss(row.icon_color),
     description: row.description,
     longDescription: row.long_description,
-    affects: JSON.parse(row.affects_json) as string[],
-    skillAffects: JSON.parse(row.skill_affects_json) as string[],
+    affects: JSON.parse(row.affects_json) as StatTypeReference[],
+    skillAffects: JSON.parse(row.skill_affects_json) as StatTypeReference[],
+    routePath: row.route_path,
   };
 };

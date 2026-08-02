@@ -21,6 +21,7 @@ interface SpellPresentationRecord {
   tooltip_rich_text_json: string | null;
   /** Joined from the governing skill's public node, null when the spell has none. */
   skill_route_path: string | null;
+  route_path: string;
 }
 
 export interface SpellOverviewRow {
@@ -41,6 +42,8 @@ export interface SpellPresentationRow {
   manaCost: number | null;
   isIllegal: boolean;
   description: RichTextDocument | null;
+  descriptionText: string | null;
+  routePath: string;
 }
 
 export const listSpells = (): SpellOverviewRow[] =>
@@ -67,16 +70,24 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
   const row = get<SpellPresentationRecord>(
     `SELECT p.id, p.name, p.render_context, p.skill, p.mana_cost, p.is_illegal,
             p.tooltip_rich_text_json,
-            sn.route_path AS skill_route_path
+            sn.route_path AS skill_route_path,
+            n.route_path
      FROM spell_presentation_rows p
      LEFT JOIN entity_nodes sn
        ON sn.entity_type = 'stat-type'
       AND sn.entity_id = p.skill_id
       AND sn.is_public = 1
+     JOIN entity_nodes n
+       ON n.entity_type = 'spell'
+      AND n.entity_id = p.id
+      AND n.is_public = 1
      WHERE p.id = ?`,
     [node.entityId],
   );
   if (!row) return undefined;
+  const description = row.tooltip_rich_text_json
+    ? (JSON.parse(row.tooltip_rich_text_json) as RichTextDocument)
+    : null;
   return {
     id: row.id,
     name: row.name,
@@ -85,8 +96,19 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
     skillRoutePath: row.skill_route_path,
     manaCost: row.mana_cost,
     isIllegal: row.is_illegal === 1,
-    description: row.tooltip_rich_text_json
-      ? (JSON.parse(row.tooltip_rich_text_json) as RichTextDocument)
-      : null,
+    description,
+    descriptionText: description ? richTextPlainText(description) : null,
+    routePath: row.route_path,
   };
 };
+
+function richTextPlainText(document: RichTextDocument): string {
+  const visit = (node: RichTextDocument["nodes"][number]): string => {
+    if (node.type === "text") return node.text;
+    if (node.type === "lineBreak") return " ";
+    if (node.type === "sprite") return node.name;
+    if (node.type === "termLink") return node.label;
+    return node.children.map(visit).join("");
+  };
+  return document.nodes.map(visit).join("").replace(/\s+/g, " ").trim();
+}

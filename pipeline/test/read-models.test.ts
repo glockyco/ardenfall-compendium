@@ -266,6 +266,10 @@ describe("emitStatTypeReadModels", () => {
       ["stat-type", "named;stat-type;att_strength", "iconRef", "image", "b".repeat(64)],
     );
 
+    db.run("UPDATE stat_types SET affects_json = ? WHERE id = ?", [
+      JSON.stringify(["ALCHEMY  ", " melee-damage "]),
+      "named;stat-type;att_strength",
+    ]);
     emitStatTypeReadModels(db, snap.masterTooltip, "/attributes");
 
     const overview = db
@@ -295,7 +299,15 @@ describe("emitStatTypeReadModels", () => {
       .get();
     expect(presentation?.render_context).toBe("stat-type-presentation-v1");
     expect(presentation?.icon_hash).toBe("b".repeat(64));
-    expect(JSON.parse(presentation?.affects_json ?? "[]")).toContain("melee-damage");
+    const affects = JSON.parse(presentation?.affects_json ?? "[]") as {
+      label: string;
+      routePath: string | null;
+    }[];
+    expect(affects).toContainEqual({
+      label: "ALCHEMY",
+      routePath: "/attributes/alchemy--sk-alchemy",
+    });
+    expect(affects).toContainEqual({ label: "melee-damage", routePath: null });
 
     const node = db
       .query<{ route_path: string; canonical_slug: string; short_id: string }, []>(

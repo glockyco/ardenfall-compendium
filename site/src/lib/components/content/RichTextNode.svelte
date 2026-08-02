@@ -46,6 +46,10 @@
       >{node.label}</a
     >
   {:else}
-    <span class="underline decoration-dotted underline-offset-2">{node.label}</span>
+    <span
+      class="text-muted-foreground"
+      title="No compendium page is available for this term."
+      aria-label={`${node.label} (no compendium page is available)`}>{node.label}</span
+    >
   {/if}
 {/if}

@@ -7,6 +7,18 @@
 
 <svelte:head>
   <title>Stats | Ardenfall Compendium</title>
+  <meta
+    name="description"
+    content={`Browse ${data.stats.length} deterministic stats in the Ardenfall Compendium.`}
+  />
+  <link rel="canonical" href={data.statTypeRoute} />
+  <meta property="og:title" content="Stats | Ardenfall Compendium" />
+  <meta
+    property="og:description"
+    content={`Browse ${data.stats.length} deterministic stats in the Ardenfall Compendium.`}
+  />
+  <meta property="og:url" content={data.statTypeRoute} />
+  <meta property="og:type" content="website" />
 </svelte:head>
 
 <h1 class="text-2xl font-bold">Stats</h1>

@@ -15,6 +15,7 @@ interface ItemTagPresentationRecord {
   render_context: "item-tag-presentation-v1";
   description: string;
   item_count: number;
+  route_path: string;
 }
 
 export interface ItemTagOverviewRow {
@@ -31,6 +32,7 @@ export interface ItemTagPresentationRow {
   renderContext: "item-tag-presentation-v1";
   description: string;
   itemCount: number;
+  routePath: string;
 }
 
 export const listItemTags = (): ItemTagOverviewRow[] =>
@@ -54,9 +56,14 @@ export const getItemTagPresentation = (slug: string): ItemTagPresentationRow | u
   const node = getEntityNodeBySlug("item-tag", slug);
   if (!node) return undefined;
   const row = get<ItemTagPresentationRecord>(
-    `SELECT id, name, render_context, description, item_count
-     FROM item_tag_presentation_rows
-     WHERE id = ?`,
+    `SELECT p.id, p.name, p.render_context, p.description, p.item_count,
+            n.route_path
+     FROM item_tag_presentation_rows p
+     JOIN entity_nodes n
+       ON n.entity_type = 'item-tag'
+      AND n.entity_id = p.id
+      AND n.is_public = 1
+     WHERE p.id = ?`,
     [node.entityId],
   );
   if (!row) return undefined;
@@ -66,5 +73,6 @@ export const getItemTagPresentation = (slug: string): ItemTagPresentationRow | u
     renderContext: row.render_context,
     description: row.description,
     itemCount: row.item_count,
+    routePath: row.route_path,
   };
 };
