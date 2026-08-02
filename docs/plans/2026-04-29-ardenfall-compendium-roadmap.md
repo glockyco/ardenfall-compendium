@@ -472,6 +472,16 @@ Ordered by reader value against extraction cost, now that registration is known 
 
 Each candidate ships data plus its integration, and some earn a follow-up presentation slice. The ordering rule that emerged this session: **a new entity is worth less than an edge to an existing one.** Nodes without edges are a catalogue nobody can navigate.
 
+Tile capture sits outside this ordering. It is not an entity and adds no edges, but it is the only thing that makes the placed content already extracted legible, and it settles the projection question as a side effect.
+
+### Tile capture
+
+Deferred from Slice 6 with the strategy left open. Now designed in [`2026-08-02-tile-capture`](2026-08-02-tile-capture.md), informed by a probe of the game and an audit of two sibling projects that have each built one.
+
+The short version: the game's own map art is not a basemap, so capture means rendering the world through a camera we position, which makes the world-to-pixel mapping ours by construction and closes open question #7 as a side effect. Sizing is around 3,000 WebP tiles across both maps, an order of magnitude inside the Cloudflare Pages file budget.
+
+The audit also produced a number worth keeping in view. Adding one marker type costs **1 file here, 17 in Ancient Kingdoms, and 20 in Erenshor**. Ancient Kingdoms has a generic layer helper and still hardcodes every call, which is the failure mode to watch: a generic renderer does not help when the list of types is restated everywhere else.
+
 Any map-supporting entity slice that ships public detail pages must reuse Slice 4's presentation, rich-text, component, and relationship contracts. Marker-only slices can stay map/read-model focused; public pages must not invent route-local link or tooltip systems.
 
 ### Slice 10 — Search, facets, and cross-cutting design depth
@@ -526,7 +536,7 @@ Any map-supporting entity slice that ships public detail pages must reuse Slice 
 | 3   | Component library / primitive strategy | **closed (foundation + governance seed)**     | Slice 1 chose Tailwind v4/shadcn-svelte/Bits primitives; Slice 4 seeds component catalog, token, and intake governance; Slice 10 scales automation only if needed |
 | 4   | JSON Schema validator                  | **closed**                                    | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §3)                                                                                                             |
 | 5   | Property-test framework                | **closed**                                    | Slice 1 (`2026-05-03-slice1-tooling-decisions.md` §4)                                                                                                             |
-| 6   | Tile capture specifics                 | advanced (vector-first shipped; capture open) | Slice 6 shipped vector-first; tile capture/stitch deferred to a tile slice                                                                                        |
+| 6   | Tile capture specifics                 | advanced (vector-first shipped; capture open) | Slice 6 shipped vector-first. Probed 2026-08-02: shipped map art is not a basemap, so capture means rendering the world. See "Tile capture" below                |
 | 7   | External archive backend               | open                                          | Slice 13                                                                                                                                                          |
 | 8   | Future gameplay-mod surface            | deferred                                      | indefinitely                                                                                                                                                      |
 | 9   | Map-supporting entity ordering         | **closed (firmed up)**                        | Slice 6 plan; ordering recorded in Slice 7+ above                                                                                                                 |

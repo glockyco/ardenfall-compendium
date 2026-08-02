@@ -51,7 +51,9 @@ Three values were qualified rather than removed, since each is genuinely useful 
 
 **The map projection does not match the game's.** `WorldMapUI.GlobalPositionToMapPosition` maps world `x,z` through a per-map `worldMapDivision`, currently `(2.975, 3.185)`, with no sign flip. We map `x, -z` at raw scale. Scale is harmless because we fit bounds, but the sign is not: if the game does not flip, our map is mirrored north to south against the one players know. The game also supports per-map overrides that derive positions through portal anchors, which we do not model at all.
 
-Not fixed, because flipping an axis on a source reading alone could easily make it worse, and there is no ground truth in the repo to check against. Settling it needs a known landmark pair compared between our map and the game's.
+Not fixed, because flipping an axis on a source reading alone could easily make it worse, and there is no ground truth in the repo to check against.
+
+Subsequently reframed rather than settled. The tile capture slice renders the world through a camera we position, so the world-to-pixel mapping becomes ours by construction and this projection stops being a reimplementation of the game's. The question is answered by that work rather than in advance of it, and is not worth a landmark comparison in the meantime.
 
 **Debug-only locations can be revealed in production.** The game gates them on `Debug.isDebugBuild` and additionally on discovery. Our client offers a toggle that reveals them in any build, and shows undiscovered locations unconditionally. Showing undiscovered content is defensible for a compendium and arguably the point, but it should be a decision rather than an accident, and debug-only content is a different question.
 
