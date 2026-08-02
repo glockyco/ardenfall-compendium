@@ -312,7 +312,7 @@ Cloudflare Workers Static Assets documentation states that matching files in the
 
 ### Slice 7 — Entity kinds and placement foundation
 
-**Status:** planned next
+**Status:** delivered
 **Spec coverage:** investment-priorities §4; baseline §10; amendment §17–§18.
 
 **Delivers:** the clean-cut data substrate required before map-supporting entities can ship without one-off extraction paths. The descriptor model gains explicit entity kinds (`definition`, `instance`, `role`); placements become a general contract instead of a location-only table; `map_points` and `map_volumes` are generalized behind descriptor-owned `map_layers`; and runtime extraction is organized around the three verified source mechanisms: lookup assets, master records, and scene `GuidComponent` instances.
@@ -321,6 +321,10 @@ This slice migrates the existing location map data onto the generalized placemen
 
 **Acceptance criteria:** live export still produces items, related item entities, locations, generalized placements, and portal records with fatal diagnostics at zero; pipeline emits SQLite placement/map read models without route-local descriptor parsing; `/map` renders existing locations from the generalized tables; and old location-only public map plumbing is removed in the same cutover.
 
+**Verification evidence:** live export against Ardenfall Demo `0.0.10.91` produced `counts.location` 48 and `counts.portal` 33 with `diagnostics.fatal` 0, and the pipeline materialized 81 `placements` (48 location, 33 portal), 67 `map_points` (34 location, 33 portal), and 60 `map_volumes`, with all 33 portals carrying public `entity_nodes` deep links of the form `/map?map=<mapId>&sel=<shortId>`. `location_map_points` and `location_map_volumes` no longer exist in the emitted database. Local gates passed: `bun test pipeline/test` 109, `bun test site/test` 20, `bun test controller/test` 32, `dotnet test mod-tests/...` 93, `bun run typecheck`, `bun run --cwd site check` 0/0, `bun run codegen:validators`, `bun run check:fixtures`, `bun run artifact:fixture synthetic fixtures/synthetic/snapshot`, `bun run --cwd site build:fixture`, `bun run --cwd site smoke:prerender`, `bun run --cwd site smoke:map`, `bun run format:check`, `bun run lint`, `git diff --check`.
+
+**Plan deviations (as built):** the generalized map emitter lives in `pipeline/src/map/read-models.ts` rather than under `entities/location/`, because it is a cross-entity concern. It is driven by the descriptors that declare a `map` layer instead of probing SQLite for entity tables, so a placed entity without a projection raises a contract error rather than silently emitting an empty map. `node_short_id` is not denormalized into `map_points`; the site joins `entity_nodes` for it.
+
 ### Slice 8+ — Map-supporting entities (game-specific)
 
 **Status:** planned (ordered after Slice 7 foundation)
@@ -328,7 +332,7 @@ This slice migrates the existing location map data onto the generalized placemen
 
 **Delivers:** the entities that make the map useful. Concrete set is deliberately not pre-enumerated here. Likely candidates for Ardenfall:
 
-- Zone connections / portals.
+- Zone connections / portals: extraction, placement, and map markers are delivered in Slice 7; `leads-to` edges and any public presentation remain.
 - Vendors (map placement plus inventory tables linking to items).
 - Monsters / enemies (with map placement plus detail pages with drop tables once items are richly modelled).
 - NPCs and quests.
@@ -337,7 +341,7 @@ This slice migrates the existing location map data onto the generalized placemen
 
 Each candidate gets its own slice number (8, 9, …). Ordered by extraction confidence, map-marker value, and detail-page value. Firmed-up ordering for the next planning horizon:
 
-1. Portals — first record-backed instance entity; proves master-record identity, placement, and `leads-to` relationships without inventory/drop-table complexity.
+1. Portals — record-backed extraction, placement, and map markers shipped with the Slice 7 substrate. Remaining: project the canonical `connected_portal_ref_json` into `leads-to` edges in `entity_edges` so the map can express zone connectivity.
 2. Characters / NPCs plus vendor role — unlocks `sold-at` item edges and spatial NPC/vendor navigation.
 3. Monsters / enemies — map placement plus `drops` edges to items and detail pages with drop tables.
 4. Quests — `gives`/`requires` edges enabling transitive `available-at` location links.
