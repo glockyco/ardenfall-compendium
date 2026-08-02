@@ -64,6 +64,8 @@ export async function validateSnapshot(snapshotDir: string): Promise<SnapshotVal
     resultCounts[entity] = rows.length;
   }
 
+  if (resultCounts.item === 0) throw new Error("snapshot contains no items");
+
   const diagnostics = parsedArtifacts.get("diagnostics.json");
   if (diagnostics !== undefined && !Array.isArray(diagnostics))
     throw new Error("diagnostics.json must be an array");

@@ -31,7 +31,11 @@ class FakeClient implements ControllerClient {
     command("run.finalize", "sync", true),
     command("game.quit", "sync", true),
   ];
-  preflightResult: Record<string, unknown> = { ready: true };
+  preflightResult: Record<string, unknown> = {
+    ready: true,
+    productName: "Ardenfall Demo 2025",
+    gameVersion: "0.0.10.91",
+  };
   preflightResults: Record<string, unknown>[] = [];
   publishedDir = "/tmp/snapshot";
 
@@ -220,9 +224,16 @@ describe("exportCompendium", () => {
     client.preflightResults = [
       {
         ready: false,
+        productName: "Ardenfall Demo 2025",
+        gameVersion: "0.0.10.91",
         checks: [{ name: "ardenfallGame", ok: false, reason: "ArdenfallGame.instance is null" }],
       },
-      { ready: true, checks: [] },
+      {
+        ready: true,
+        productName: "Ardenfall Demo 2025",
+        gameVersion: "0.0.10.91",
+        checks: [],
+      },
     ];
 
     await exportCompendium({
@@ -246,6 +257,8 @@ describe("exportCompendium", () => {
     const client = new FakeClient();
     client.preflightResult = {
       ready: false,
+      productName: "Ardenfall Demo 2025",
+      gameVersion: "0.0.10.91",
       checks: [
         { name: "ardenfallGame", ok: false, reason: "ArdenfallGame.instance is null" },
         { name: "worldData", ok: false, reason: "ArdenfallGame.instance.worldData is null" },
@@ -257,6 +270,24 @@ describe("exportCompendium", () => {
     ).rejects.toThrow(
       /compendium\.preflight is not ready: ardenfallGame: ArdenfallGame\.instance is null; worldData: ArdenfallGame\.instance\.worldData is null/,
     );
+  });
+
+  it("refuses to run when preflight identifies a different game", async () => {
+    const client = new FakeClient();
+    client.preflightResult = {
+      ready: true,
+      productName: "Vespera",
+      gameVersion: "0.9.27.0",
+      checks: [],
+    };
+
+    await expect(
+      exportCompendium({ client, outputBaseDir: "/tmp/out", pipelineOutDir: "/tmp/pipeline" }),
+    ).rejects.toThrow(
+      /expected Unity product name "Ardenfall Demo 2025".*reported "Vespera".*port collision/i,
+    );
+
+    expect(client.calls.map((call) => call.name)).toEqual(["compendium.preflight"]);
   });
 
   it("uses absolute output directories and normalizes published paths", async () => {
@@ -322,6 +353,25 @@ describe("validateSnapshot", () => {
         location: 1,
         portal: 1,
       },
+    });
+  });
+
+  it("rejects a semantically empty snapshot", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, {
+      emptyEntities: ["item", "stat-type", "item-category", "item-tag", "location", "portal"],
+    });
+
+    await expect(validateSnapshot(root)).rejects.toThrow(/snapshot contains no items/);
+  });
+
+  it("accepts an entity with zero rows when its manifest count matches", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, { emptyEntities: ["stat-type"] });
+
+    await expect(validateSnapshot(root)).resolves.toMatchObject({
+      itemCount: 2,
+      counts: { "stat-type": 0 },
     });
   });
 
@@ -393,6 +443,7 @@ describe("validateSnapshot", () => {
   async function writeSnapshot(
     root: string,
     options: {
+      emptyEntities?: string[];
       itemHash?: string;
       hashOverrides?: Record<string, string>;
       countOverrides?: Record<string, number>;
@@ -401,13 +452,38 @@ describe("validateSnapshot", () => {
       fatalDiagnostics?: number;
     } = {},
   ) {
+    const emptyEntities = new Set(options.emptyEntities ?? []);
     const files: Record<string, string> = {
-      "items.json": JSON.stringify({ rows: [{ id: "item-1" }, { id: "item-2" }] }, null, 2),
-      "stat-types.json": JSON.stringify({ rows: [{ id: "stat-strength" }] }, null, 2),
-      "item-categories.json": JSON.stringify({ rows: [{ id: "category-weapons" }] }, null, 2),
-      "item-tags.json": JSON.stringify({ rows: [{ id: "tag-valuable" }] }, null, 2),
-      "locations.json": JSON.stringify({ rows: [{ id: "11111111.fixture-town" }] }, null, 2),
-      "portals.json": JSON.stringify({ rows: [{ id: "world;portals;portal-a" }] }, null, 2),
+      "items.json": JSON.stringify(
+        { rows: emptyEntities.has("item") ? [] : [{ id: "item-1" }, { id: "item-2" }] },
+        null,
+        2,
+      ),
+      "stat-types.json": JSON.stringify(
+        { rows: emptyEntities.has("stat-type") ? [] : [{ id: "stat-strength" }] },
+        null,
+        2,
+      ),
+      "item-categories.json": JSON.stringify(
+        { rows: emptyEntities.has("item-category") ? [] : [{ id: "category-weapons" }] },
+        null,
+        2,
+      ),
+      "item-tags.json": JSON.stringify(
+        { rows: emptyEntities.has("item-tag") ? [] : [{ id: "tag-valuable" }] },
+        null,
+        2,
+      ),
+      "locations.json": JSON.stringify(
+        { rows: emptyEntities.has("location") ? [] : [{ id: "11111111.fixture-town" }] },
+        null,
+        2,
+      ),
+      "portals.json": JSON.stringify(
+        { rows: emptyEntities.has("portal") ? [] : [{ id: "world;portals;portal-a" }] },
+        null,
+        2,
+      ),
       "asset-manifest.json": JSON.stringify({ assets: [], itemIconMetadata: [] }, null, 2),
       "master-tooltip.json": JSON.stringify({ schemaVersion: 2, tooltipCodes: {} }, null, 2),
     };
@@ -431,12 +507,16 @@ describe("validateSnapshot", () => {
       JSON.stringify(
         {
           counts: {
-            item: options.countOverrides?.item ?? 2,
-            "stat-type": options.countOverrides?.["stat-type"] ?? 1,
-            "item-category": options.countOverrides?.["item-category"] ?? 1,
-            "item-tag": options.countOverrides?.["item-tag"] ?? 1,
-            location: options.countOverrides?.location ?? 1,
-            portal: options.countOverrides?.portal ?? 1,
+            item: options.countOverrides?.item ?? (emptyEntities.has("item") ? 0 : 2),
+            "stat-type":
+              options.countOverrides?.["stat-type"] ?? (emptyEntities.has("stat-type") ? 0 : 1),
+            "item-category":
+              options.countOverrides?.["item-category"] ??
+              (emptyEntities.has("item-category") ? 0 : 1),
+            "item-tag":
+              options.countOverrides?.["item-tag"] ?? (emptyEntities.has("item-tag") ? 0 : 1),
+            location: options.countOverrides?.location ?? (emptyEntities.has("location") ? 0 : 1),
+            portal: options.countOverrides?.portal ?? (emptyEntities.has("portal") ? 0 : 1),
           },
           hashes,
           diagnostics: { fatal: options.fatalDiagnostics ?? 0 },

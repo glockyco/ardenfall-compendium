@@ -73,6 +73,7 @@ const REQUIRED_COMMANDS = new Map<string, "sync" | "job">([
 
 const DEFAULT_CONNECT_TIMEOUT_MS = 300_000;
 const DEFAULT_FINALIZE_TIMEOUT_MS = 300_000;
+const EXPECTED_PRODUCT_NAME = "Ardenfall Demo 2025";
 
 export async function exportCompendium(options: ExportOptions): Promise<ExportResult> {
   const log = options.log ?? (() => undefined);
@@ -92,10 +93,20 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
   );
 
   if (shouldWaitForWorld) {
-    await waitForWorld(options.client, { timeoutMs: options.waitForWorldTimeoutMs ?? 60_000 });
+    await waitForWorld(
+      {
+        call: async (name, args) => {
+          const result = await options.client.call(name, args);
+          if (name === "compendium.preflight") assertExpectedProductName(result.output);
+          return result;
+        },
+      },
+      { timeoutMs: options.waitForWorldTimeoutMs ?? 60_000 },
+    );
     log({ phase: "waitForWorld", status: "completed" });
   } else {
     const preflight = await options.client.call("compendium.preflight", {});
+    assertExpectedProductName(preflight.output);
     if (preflight.output.ready !== true) throw new Error(formatPreflightFailure(preflight.output));
   }
   log({ phase: "preflight", status: "completed" });
@@ -223,6 +234,17 @@ function normalizeControllerPath(path: string): string {
 function toRuntimePath(path: string): string {
   if (!path.startsWith("/")) return path;
   return `Z:${path.replaceAll("/", "\\")}`;
+}
+
+function assertExpectedProductName(result: Record<string, unknown>): void {
+  const actual = typeof result.productName === "string" ? result.productName : "<missing>";
+  if (actual !== EXPECTED_PRODUCT_NAME) {
+    throw new Error(
+      `Wrong game connected: expected Unity product name "${EXPECTED_PRODUCT_NAME}", ` +
+        `but HotRepl reported "${actual}". This usually indicates a port collision with ` +
+        "another instrumented game; stop it and reconnect to Ardenfall before exporting.",
+    );
+  }
 }
 
 function formatPreflightFailure(result: Record<string, unknown>): string {
