@@ -34,7 +34,7 @@ Reuses the vocabulary of the 2026-04-29 addendum: Locked invariant, Accepted, Pr
 - Subsystem-owned executable code discovered by convention via typed registries merged per process; no side-effect globals. (Decision 3.)
 - Strict one-way flow: descriptors → pipeline → canonical typed SQLite + generated/validated read models → site reads only emitted read models/metadata. (Decisions 4, 6, 16.)
 - Canonical **typed** SQLite preserving domain shape (root + inheritance-layer + child tables; type-tagged JSON only without query pressure). No EAV. (Decisions 7, 10.)
-- Dual+ identity domains as first-class types (`lookupAsset`, `record`, `runtimeObject`, `missing`) with fatal/diagnostic/optional-empty policy. (Decision 13.)
+- Identity domains as first-class types (`lookupAsset`, `namedAsset`, `record`, `runtimeObject`, `missing`) with fatal/diagnostic/optional-empty policy. (Decision 13.)
 - `BuiltLookupTable` is not a universal root; record-backed extraction is separate; fail-fast preflight; atomic snapshots. (Decision 14.)
 - Generated relationship graph (`entity_nodes`/`entity_edges`/sections) with the fail-fast `relationshipMissingTarget` audit; site renders edges generically. (Slice 4.)
 - Descriptor-owned map-layer contract → data-driven deck.gl layers. (Decision 17 / Slice 6.)
@@ -42,11 +42,11 @@ Reuses the vocabulary of the 2026-04-29 addendum: Locked invariant, Accepted, Pr
 
 ### Replaced / added (the clean cut)
 
-- **Entity-kind taxonomy** (definition / instance / role) made first-class in the descriptor, replacing the implicit "every entity is an asset-backed definition." (§3)
+- **Entity-kind taxonomy** (definition / instance) made first-class in the descriptor, replacing the implicit "every entity is an asset-backed definition." (§3)
 - **Identity generalized** to concrete extraction domains, with an optional instance→definition reference when an instance has a separate definition asset. (§4)
 - **General placement model** (`placements` + generalized `map_points`/`map_volumes`) replacing the location-specific columns and read models. (§5)
-- **Single runtime extraction source with lookup-asset and record mechanisms** behind one uniform snapshot contract. Scene extraction is reserved for a future slice and is not yet built. (§6)
-- **Relationship graph generalized** for the shipped `variant_of` edges and future portal connectivity/spatial edges. (§7)
+- **Single runtime extraction source with lookup-asset, named-asset, and record mechanisms** behind one uniform snapshot contract. Scene extraction is reserved for a future slice and is not yet built. (§6)
+- **Relationship graph generalized** for the shipped `variant_of` and `leads_to` edges, with future spatial edges. (§7)
 
 ## 2. External grounding
 
@@ -64,15 +64,15 @@ References:
 
 ## 3. Entity-kind taxonomy
 
-Every descriptor declares a `kind`. Three kinds cover the model; a fourth (pure relationship) is reserved.
+Every descriptor declares a `kind`. Two kinds cover the current model.
 
 ### 3.1 Definition (`kind: "definition"`)
 
-Flyweight/intrinsic data, sourced from `BuiltLookupTable`, GUID-keyed. The "what it is." Most definitions get public pages.
+Flyweight/intrinsic data, sourced from `BuiltLookupTable` or named-asset discovery. The "what it is." Most definitions get public pages.
 
-Examples: `item`, `spell`, `status-effect`, `faction`, `character` (`CharacterData`), `location` (a definition that _also_ carries intrinsic placement), creature-def.
+Examples: `item`, `spell`, `status-effect`, `faction`, `character` (`CharacterData`), `location` (a definition that _also_ carries intrinsic placement), `stat-type`, `item-category`.
 
-Identity: row id = `BuiltLookupTable.GetGuid(asset)`.
+Identity: row id uses the identity mechanism for the source. `BuiltLookupTable` definitions use their GUID, while named-asset definitions use `named;<entityId>;<assetName>`.
 
 ### 3.2 Instance (`kind: "instance"`)
 
@@ -82,13 +82,7 @@ Examples: `npc` (`NPCRecord` → `character`), `portal` (`PortalRecord`), scene 
 
 Identity: row id from the `record` domain (record id) or, in the future scene mechanism, the `scene` domain (`GuidComponent` GUID). A definition reference applies only when the instance has a separate definition asset; such a reference carries the definition's GUID for the N:1 link. Portals are record-backed instances with no definition reference. All instances carry placement.
 
-### 3.3 Role (`kind: "role"`)
-
-A **facet view** over a definition (and/or its instances) selected by a declared trait predicate. A role is NOT a new extraction or canonical table — it is a generated read model plus relationship edges (and optionally a derived map layer). It never duplicates canonical data.
-
-Example: `vendor` = `character` where the merchant predicate holds (`CharacterData.merchantCategories`/`merchantItemLists` non-empty). The vendor map layer derives from the placements of `npc` instances whose definition matches the predicate.
-
-### 3.4 Descriptor additions (concrete)
+### 3.3 Descriptor additions (concrete)
 
 ```jsonc
 {
@@ -96,7 +90,7 @@ Example: `vendor` = `character` where the merchant predicate holds (`CharacterDa
   "kind": "instance",
   "label": { "singular": "NPC", "plural": "NPCs" },
   "extraction": {
-    "source": "record", // "lookupAsset" | "record" | "scene"
+    "source": "record", // "lookupAsset" | "namedAsset" | "record" | "scene"
     "root": "Ardenfall.RecordSystem.NPCRecord",
     "options": { "subtable": "characters" },
   },
@@ -113,23 +107,9 @@ Example: `vendor` = `character` where the merchant predicate holds (`CharacterDa
 
 ```jsonc
 {
-  "id": "vendor",
-  "kind": "role",
-  "label": { "singular": "Vendor", "plural": "Vendors" },
-  "facetOf": "character",
-  "predicate": "character.isMerchant", // registered predicate op
-  "placementVia": "npc", // instances that carry positions
-  "site": { "route": "/vendors" /* ... */ },
-  "map": {
-    /* derived layer styling */
-  },
-}
-```
-
-```jsonc
-{
   "id": "location",
   "kind": "definition",
+  "label": { "singular": "Location", "plural": "Locations" },
   "extraction": { "source": "lookupAsset", "root": "Ardenfall.LocationAsset" },
   "placement": { "kind": "point+volume", "from": "fields" }, // intrinsic placement
   "fields": [
@@ -141,14 +121,17 @@ Example: `vendor` = `character` where the merchant predicate holds (`CharacterDa
 }
 ```
 
-`kind`, `extraction.source`, and (for instances with a separate definition asset) `definition` are **Locked invariants** of the model. `placement`, `facetOf`/`predicate`/`placementVia` are **Accepted; extensible** as real entities land.
+A role vocabulary will be designed against a real case if and when one arrives.
+
+`kind`, `extraction.source`, and (for instances with a separate definition asset) `definition` are **Locked invariants** of the model. `placement` is **Accepted; extensible** as real entities land.
 
 ## 4. Identity model
 
 **Locked invariant.** Identity domains are never collapsed.
 
-- **Definitions:** `lookupAsset` GUID (existing). Stable across game versions; primary row id.
+- **Definition assets:** `lookupAsset` GUID for assets registered in `BuiltLookupTable`; `namedAsset` for definition assets that `BuiltLookupTable` does not register, identified by asset name. The named-asset row id is `named;<entityId>;<assetName>`, used by `stat-type` and `item-category`.
 - **Record instances:** `record` domain `(table, subtable, id)`; the canonical row id is the record's stable `id` (namespaced by entity where needed). An instance with a separate definition asset carries `definition_ref` equal to that definition's GUID, and many such instances may reference one definition. Portals are record-backed instances without a separate definition asset and therefore have no `definition_ref`.
+- **Runtime and missing references:** `runtimeObject` references are explicitly unstable (`stable: false`) and `missing` references carry the reason and source when no supported identity can be emitted.
 - **Scene instances:** `scene` identity is reserved for a future scene-extraction slice and is not yet built. The planned domain is the serialized `GuidComponent` GUID (a stable, design-time `byte[16]`), alongside `lookupAsset` and `record`. (`runtimeObject { stable:false }` remains for genuinely ephemeral refs only.)
 
 Relationship-graph nodes and `route_path`:
@@ -173,7 +156,7 @@ create table placements (
   map_y       real not null,     -- = -source.z
   elevation   real not null,     -- = source.y
   geometry_json text,            -- optional volume/polygon ring (axis-aligned box, etc.)
-  source_ref_json text not null, -- provenance: lookupAsset | record | scene
+  source_ref_json text not null, -- provenance: lookupAsset | namedAsset | record | scene
   primary key (entity_id, instance_id)
 );
 ```
@@ -189,7 +172,8 @@ create table placements (
 The current extraction mechanisms yield pure DTOs into one snapshot (one manifest, one preflight, one diagnostics model — Decisions 14, 15):
 
 1. **`lookupAsset`** — `BuiltLookupTable.GetAssetsOfType<T>()`. Definitions such as items and locations.
-2. **`record`** — `worldData.masterRecordTable` traversal (`maps → cells → CellRecordTableAsset` subtables; `GetRecords<T>()`). Record-backed instances such as portals. Reading record ScriptableObjects is side-effect-free; the game itself enumerates all `PortalRecord`s at `MapLocationManager.Init`.
+2. **`namedAsset`** — definition assets that `BuiltLookupTable` does not register, identified by asset name. The canonical id is `named;<entityId>;<assetName>`; `stat-type` and `item-category` use this mechanism.
+3. **`record`** — `worldData.masterRecordTable` traversal (`maps → cells → CellRecordTableAsset` subtables; `GetRecords<T>()`). Record-backed instances such as portals. Reading record ScriptableObjects is side-effect-free; the game itself enumerates all `PortalRecord`s at `MapLocationManager.Init`.
 
 ### Scene mechanism (not yet built; future slice)
 
@@ -199,13 +183,15 @@ The intended design is:
 
 - Enumerate all cells via `worldData.maps[i].cells` and load each cell additively with streaming disabled.
 - Read serialized static scene components in the scene-loaded window, capture their stable GUIDs and transforms, dispatch supported component types, and unload scenes directly without save-state writes.
-- Keep scene extraction behind the same snapshot contract as `lookupAsset` and `record`; it must not become a second structured-data toolchain.
+- Keep scene extraction behind the same snapshot contract as `lookupAsset`, `namedAsset`, and `record`; it must not become a second structured-data toolchain.
 
 The mod-side seam mirrors the location adapter pattern already in place (a pure DTO core + a thin Unity adapter boundary), so unit tests never touch Unity singletons.
 
 ## 7. Relationship graph generalization
 
-The shipped relationship graph currently contains only `variant_of` rows. Placement rows and portal connections are retained in their canonical/read-model data but do not currently generate graph edges: portals carry `connected_portal_ref_json`, and `leads-to`, `located-at`, instance↔definition, and bounded transitive spatial edges are not emitted.
+The shipped relationship graph contains `variant_of` rows and portal `leads_to` rows. Portal connectivity is projected from canonical `connected_portal_ref_json` into graph edges. The relation is directed deliberately because the world contains one-way doors and chains; a reciprocal connection is stored as two edges. Placement rows do not currently generate `located-at`, instance↔definition, or bounded transitive spatial edges.
+
+The entity-graph audit runs once, after all read-model emitters, so it covers the complete emitted graph.
 
 A future relationship slice may add:
 
@@ -218,8 +204,7 @@ Any such slice must retain the fail-fast `relationshipMissingTarget` audit and p
 ## 8. Canonical SQLite & read models (generalization)
 
 - Definitions keep typed root + inheritance-layer + child tables (Decisions 7, 10). Unchanged.
-- Instances get typed root tables per instance entity (e.g. `npcs`, `portals`) holding extrinsic fields; `definition_ref` is present only for instances with a separate definition asset. Portal placement lives in `placements`, and portal connectivity remains in `connected_portal_ref_json` until relationship edges are implemented.
-- Roles get **generated read models only** (e.g. `vendor_overview_rows`) filtered from their definition by predicate; no canonical role table.
+- Instances get typed root tables per instance entity (e.g. `npcs`, `portals`) holding extrinsic fields; `definition_ref` is present only for instances with a separate definition asset. Portal placement lives in `placements`, and portal connectivity is emitted as `leads_to` graph edges from `connected_portal_ref_json`.
 - No EAV; type-tagged JSON only for kind-owned, non-queried payloads (existing rule).
 - All read models remain generated, validated, digested (Decision 16). The site consumes only read models/metadata via `site/src/lib/store/` (or the established server read-model facade); it never joins canonical tables.
 
@@ -234,9 +219,8 @@ Icons, map imagery/tiles, meshes are binary native Unity assets, orthogonal to t
 ## 11. Pitfalls explicitly avoided
 
 - No EAV; typed tables remain authoritative.
-- No premature "role" canonical tables — roles are generated read models + edges.
 - No polymorphic JSON sprawl — type-tagged JSON only without query pressure.
-- No identity collapse — asset and record domains stay distinct; the scene domain is reserved for the unbuilt future scene-extraction slice; instances never folded into definitions.
+- No identity collapse — asset, named-asset, and record domains stay distinct; the scene domain is reserved for the unbuilt future scene-extraction slice; instances never folded into definitions.
 - No coordinate re-transform outside pipeline canonicalisation.
 - No offline structured extraction (Odin makes it unreadable).
 - No "everything is a graph node" over-generalization — typed canonical tables + a focused `placements` table + the relationship graph, each with a clear job.
@@ -247,25 +231,23 @@ Location uses the general placement model: its canonical placement is stored in 
 
 ## 13. Sequencing
 
-The entity-kind and generalized placement foundation, including record-backed portal extraction, is shipped in Slice 7. Portal extraction, placement, and map markers are current behavior; only projection of `connected_portal_ref_json` into `leads-to` relationship edges remains for portal connectivity.
+The entity-kind and generalized placement foundation, including record-backed portal extraction, is shipped in Slice 7. Portal extraction, placement, map markers, and projection of `connected_portal_ref_json` into directed `leads_to` relationship edges are current behavior.
 
-1. **Characters** (definition) + **NPCs** (`record` instance) + **vendor** (role) — unlocks item↔vendor↔location relationship work.
+1. **Characters** (definition) + **NPCs** (`record` instance) — future entity slices.
 2. **Scene placements** (`scene` mechanism; §9) — resource nodes, containers, stations, creature spawners, after the future scene-extraction slice is built and validated.
 3. Further definitions (spells, status effects, factions, quests) as their slices come.
 
 ## 14. Open questions / uncertainties
 
-- Exact predicate-op contract for roles (registered op vs declarative field condition) — settle when `vendor` lands.
 - Scene mechanism remains unbuilt and awaits live validation in the future scene-extraction slice (§9).
 - Whether some instance entities (e.g. portals) warrant a thin standalone page vs map-only — decide per entity by detail-page value.
 - Whether a future placement extension needs a child volume table when one definition has multiple intrinsic placements.
 
 ## 15. Acceptance criteria (architecture realized)
 
-- A descriptor can declare `kind: definition | instance` with `extraction.source: lookupAsset | record | scene`; the pipeline canonicalises/validates the shipped kinds, while scene remains reserved for the unbuilt future slice.
+- A descriptor can declare `kind: definition | instance` with `extraction.source: lookupAsset | namedAsset | record | scene`; the pipeline canonicalises/validates the shipped kinds, while scene remains reserved for the unbuilt future slice.
 - An instance with a separate definition asset resolves that definition (N:1) and contributes to `placements`; instances without such an asset, including portals, do not require `definition_ref`.
 - `map_layers` + generalized `map_points`/`map_volumes` render positioned entities on `/map` with no per-entity renderer code; the coordinate transform exists only in pipeline canonicalisation.
-- The mod currently extracts through `lookupAsset` and `record` into one snapshot; scene extraction is not built and awaits the future slice in §9.
+- The mod currently extracts through `lookupAsset`, `namedAsset`, and `record` into one snapshot; scene extraction is not built and awaits the future slice in §9.
 - Location uses the general placement model with the old location-specific tables removed; the `/map` route consumes the generalized substrate.
-- Roles, when introduced, produce generated read models + edges with no canonical role table.
 - No raw Unity/Odin JSON; no offline structured extraction; generated artifacts out of git; fixtures + digests prove behavior.
