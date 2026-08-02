@@ -1,5 +1,6 @@
 import type { Database } from "bun:sqlite";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
+import { entityRegistry } from "../entities/registry";
 
 function valueKindOf(type: string): string {
   if (type === "id") return "id";
@@ -48,6 +49,7 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
 
   const tx = db.transaction(() => {
     for (const [entityId, entity] of Object.entries(desc.entities)) {
+      const module = entityRegistry[entityId];
       if (entity.map) {
         const sourceTables = mapSourceTables(entityId, entity.map.renderKind);
         const sourceTable = sourceTables[0];
@@ -118,7 +120,7 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
       const overview = entity.site?.overview;
       if (overview) {
         overview.columns.forEach((field, i) => {
-          const renderer = entityId === "item" && field === "name" ? "itemNameWithIcon" : "text";
+          const renderer = module?.site?.overviewRenderer?.(field) ?? "text";
           insertColumn.run(entityId, `col_${field}`, field, i, renderer, 1);
         });
       }
@@ -143,23 +145,29 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
           }
         });
       }
-      if (entityId === "item") {
-        // Default read models consumed by the item overview and detail routes.
-        insertReadModel.run("item_overview_rows", "item_overview_rows", entityId, "overview");
-        insertReadModel.run("item_presentation_rows", "item_presentation_rows", entityId, "detail");
+      for (const readModel of module?.site?.readModels ?? []) {
+        insertReadModel.run(
+          readModel.readModelId,
+          readModel.physicalName,
+          entityId,
+          readModel.purpose,
+        );
       }
     }
 
-    for (const v of desc.variants.item ?? []) {
-      insertVariant.run(
-        v.variantId,
-        v.label,
-        v.unityType,
-        v.canonicalTable,
-        v.parentVariantId ?? null,
-        v.position ?? 0,
-        v.isPublicRoute ? 1 : 0,
-      );
+    for (const [entityId, module] of Object.entries(entityRegistry)) {
+      if (!module.site?.emitVariants) continue;
+      for (const v of desc.variants[entityId] ?? []) {
+        insertVariant.run(
+          v.variantId,
+          v.label,
+          v.unityType,
+          v.canonicalTable,
+          v.parentVariantId ?? null,
+          v.position ?? 0,
+          v.isPublicRoute ? 1 : 0,
+        );
+      }
     }
   });
   tx();

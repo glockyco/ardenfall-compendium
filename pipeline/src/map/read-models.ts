@@ -1,6 +1,7 @@
 import type { Database } from "bun:sqlite";
 import { ENTITY_GRAPH_DDL } from "../relationships/relationship-graph.ts";
 import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../entities/item/read-models.ts";
+import { entityRegistry } from "../entities/registry";
 
 export const MAP_READ_MODEL_DDL = `
 CREATE TABLE map_points (
@@ -30,63 +31,11 @@ CREATE INDEX idx_map_volumes_entity_id_map_id ON map_volumes (entity_id, map_id)
 `;
 
 /**
- * Projections from each placed entity's canonical tables into the generalized
- * map read models. Keyed by entity id; every entity whose descriptor declares a
- * `map` layer must appear here (enforced by `mapReadModelSupport`).
- */
-const MAP_PROJECTIONS: Record<string, { points: string; volumes?: string }> = {
-  location: {
-    points: `
-      INSERT INTO map_points (
-        id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
-        show_on_map_debug_only, allow_fast_travel
-      )
-      SELECT 'location:' || l.id, 'location', l.id, l.name, p.map_id, p.map_x, p.map_y, p.elevation,
-             l.show_on_map_debug_only, l.allow_fast_travel
-      FROM locations l
-      JOIN placements p ON p.entity_id = 'location' AND p.instance_id = l.id
-      WHERE l.enabled = 1 AND l.show_on_map = 1
-      ORDER BY l.name;
-    `,
-    volumes: `
-      INSERT INTO map_volumes (
-        id, entity_id, instance_id, name, map_id, geometry_json, elevation_min, elevation_max
-      )
-      SELECT v.id, 'location', v.location_id, l.name, p.map_id, v.geometry_json,
-             v.elevation_min, v.elevation_max
-      FROM location_volumes v
-      JOIN locations l ON l.id = v.location_id
-      JOIN placements p ON p.entity_id = 'location' AND p.instance_id = l.id
-      WHERE l.enabled = 1
-        AND v.geometry_json IS NOT NULL
-      ORDER BY l.name, v.volume_index;
-    `,
-  },
-  portal: {
-    // `portals.name` is nullable because the game genuinely ships portals with an
-    // empty `friendlyName`; the extractor records that as a diagnostic rather than
-    // inventing a value. A map label cannot be null, so presentation supplies a
-    // visibly placeholder one here instead of letting an id masquerade as a name.
-    points: `
-      INSERT INTO map_points (
-        id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
-        show_on_map_debug_only, allow_fast_travel
-      )
-      SELECT 'portal:' || p.id, 'portal', p.id, COALESCE(p.name, 'Unnamed portal'),
-             pl.map_id, pl.map_x, pl.map_y, pl.elevation,
-             0, 0
-      FROM portals p
-      JOIN placements pl ON pl.entity_id = 'portal' AND pl.instance_id = p.id
-      ORDER BY COALESCE(p.name, 'Unnamed portal'), p.id;
-    `,
-  },
-};
-
-/**
  * Emits `map_points`, `map_volumes`, and the map entity nodes for exactly the
  * placed entities named in `entityIds`. Callers derive that list from
- * descriptors plus present snapshot envelopes, so a missing projection is a
- * contract error rather than a silently empty map.
+ * The projection is supplied by the descriptor-driven entity registry. Callers
+ * derive that list from descriptors plus present snapshot envelopes, so a missing
+ * projection is a contract error rather than a silently empty map.
  */
 export function emitMapReadModels(
   db: Database,
@@ -97,7 +46,7 @@ export function emitMapReadModels(
   db.exec(ENTITY_GRAPH_DDL);
 
   for (const entityId of entityIds) {
-    const projection = MAP_PROJECTIONS[entityId];
+    const projection = entityRegistry[entityId]?.mapProjection;
     if (!projection) {
       throw new Error(`emit-map-read-models: no map projection for entity '${entityId}'`);
     }

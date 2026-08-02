@@ -2,6 +2,7 @@ import type { Database } from "bun:sqlite";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type { LoadSnapshotOutput } from "./load-snapshot.ts";
 import type { EmitAssetsOutput } from "./emit-assets.ts";
+import type { PipelineDiagnostic } from "../relationships/relationship-graph.ts";
 
 export {
   ITEM_READ_MODEL_DDL,
@@ -25,12 +26,8 @@ export {
 } from "../entities/item-tag/read-models.ts";
 export { MAP_READ_MODEL_DDL, emitMapReadModels } from "../map/read-models.ts";
 export { emitPortalReadModels } from "../entities/portal/read-models.ts";
-import { emitItemReadModels } from "../entities/item/read-models.ts";
-import { emitStatTypeReadModels } from "../entities/stat-type/read-models.ts";
-import { emitItemCategoryReadModels } from "../entities/item-category/read-models.ts";
-import { emitItemTagReadModels } from "../entities/item-tag/read-models.ts";
+import { entityRegistry } from "../entities/registry";
 import { emitMapReadModels } from "../map/read-models.ts";
-import { emitPortalReadModels } from "../entities/portal/read-models.ts";
 import {
   auditEntityGraph,
   insertPipelineDiagnostics,
@@ -42,25 +39,37 @@ export function emitReadModels(
   snapshot: LoadSnapshotOutput,
   assets?: EmitAssetsOutput,
 ): void {
-  const itemEnvelope = snapshot.envelopes.item;
-  if (!itemEnvelope) throw new Error("emit-read-models: missing item envelope");
-  emitItemReadModels(
-    db,
-    desc,
-    assets?.itemIconMetadata ?? [],
-    itemEnvelope,
-    snapshot.masterTooltip,
+  const requiredEntry = Object.entries(entityRegistry).find(
+    ([, module]) => module.requiredSnapshot,
   );
+  if (!requiredEntry || !snapshot.envelopes[requiredEntry[0]]) {
+    throw new Error(
+      requiredEntry?.[1].requiredSnapshot?.readModelError ??
+        "emit-read-models: missing required entity envelope",
+    );
+  }
 
-  if (snapshot.envelopes["stat-type"]) {
-    emitStatTypeReadModels(db, snapshot.masterTooltip, desc.entities["stat-type"]?.site?.route);
+  const readModelDiagnostics: PipelineDiagnostic[] = [];
+  // Item read models run first. The remaining per-entity emitters follow the
+  // registry order before map read models are emitted.
+  for (const [entityId, module] of Object.entries(entityRegistry)) {
+    if (!module.readModel || module.readModelPhase === "after-map") continue;
+    const entity = desc.entities[entityId];
+    const envelope = snapshot.envelopes[entityId];
+    if (!entity || !envelope) continue;
+    readModelDiagnostics.push(
+      ...(module.readModel({
+        db,
+        desc,
+        snapshot,
+        ...(assets === undefined ? {} : { assets }),
+        entity,
+        variants: desc.variants[entityId] ?? [],
+        envelope,
+      }) ?? []),
+    );
   }
-  if (snapshot.envelopes["item-category"]) {
-    emitItemCategoryReadModels(db, desc.entities["item-category"]?.site?.route);
-  }
-  if (snapshot.envelopes["item-tag"]) {
-    emitItemTagReadModels(db, desc.entities["item-tag"]?.site?.route);
-  }
+
   const mapEntityIds = Object.keys(desc.entities)
     .filter((entityId) => desc.entities[entityId]?.map && snapshot.envelopes[entityId])
     .sort();
@@ -68,11 +77,25 @@ export function emitReadModels(
     emitMapReadModels(db, mapEntityIds, "/map");
   }
   // Portal connectivity targets the nodes the map emitter publishes, so it runs
-  // after it.
-  const readModelDiagnostics = snapshot.envelopes.portal ? emitPortalReadModels(db) : [];
+  // after map read models. The graph audit below runs last over everything.
+  for (const [entityId, module] of Object.entries(entityRegistry)) {
+    if (module.readModelPhase !== "after-map" || !module.readModel) continue;
+    const entity = desc.entities[entityId];
+    const envelope = snapshot.envelopes[entityId];
+    if (!entity || !envelope) continue;
+    readModelDiagnostics.push(
+      ...(module.readModel({
+        db,
+        desc,
+        snapshot,
+        ...(assets === undefined ? {} : { assets }),
+        entity,
+        variants: desc.variants[entityId] ?? [],
+        envelope,
+      }) ?? []),
+    );
+  }
 
-  // Audited once, after every emitter: the graph invariant is about the whole
-  // graph, and an audit run mid-way silently exempts whatever is emitted later.
   const graphDiagnostics = auditEntityGraph(db);
   insertPipelineDiagnostics(
     db,

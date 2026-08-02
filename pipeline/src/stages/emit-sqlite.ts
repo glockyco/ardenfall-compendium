@@ -2,22 +2,10 @@ import { Database } from "bun:sqlite";
 import { mkdirSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
 import type { Stage } from "../types.ts";
-import { buildDDL } from "../sql/ddl";
 import { SITE_METADATA_DDL } from "../sql/site-metadata-ddl";
-import { canonicaliseItems } from "../entities/item/canonicaliser";
-import { canonicaliseStatTypes } from "../entities/stat-type/canonicaliser";
-import { canonicaliseItemCategories } from "../entities/item-category/canonicaliser";
-import { canonicaliseItemTags } from "../entities/item-tag/canonicaliser";
-import { canonicaliseLocations } from "../entities/location/canonicaliser";
-import { canonicalisePortals } from "../entities/portal/canonicaliser";
-import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
-import { ITEM_CATEGORY_DDL } from "../sql/item-category-ddl";
-import { ITEM_TAG_DDL } from "../sql/item-tag-ddl";
-import { LOCATION_DDL } from "../sql/location-ddl";
-import { PORTAL_DDL } from "../sql/portal-ddl";
 import { emitSiteMetadata } from "./emit-site-metadata";
 import { emitReadModels } from "./emit-read-models";
-import { validateDescriptorCoverage } from "../entities/registry";
+import { entityRegistry, validateDescriptorCoverage } from "../entities/registry";
 import { publishValidatedSqlite } from "../artifacts/sqlite-validation";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type { LoadSnapshotOutput } from "./load-snapshot.ts";
@@ -81,38 +69,27 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
       const snapshot = inputs["load-snapshot"];
       validateDescriptorCoverage(desc);
       validateMappedSnapshotEnvelopes(desc, snapshot);
-      const itemEntity = desc.entities.item;
-      const itemVariants = desc.variants.item;
-      const itemEnvelope = snapshot.envelopes.item;
-      if (!itemEntity || !itemVariants || !itemEnvelope) {
-        throw new Error("emit-sqlite: missing item descriptor or envelope");
+      const requiredEntry = Object.entries(entityRegistry).find(
+        ([, module]) => module.requiredSnapshot,
+      );
+      if (
+        !requiredEntry ||
+        !desc.entities[requiredEntry[0]] ||
+        !snapshot.envelopes[requiredEntry[0]] ||
+        (requiredEntry[1].requiredSnapshot?.variants && !desc.variants[requiredEntry[0]])
+      ) {
+        throw new Error(
+          requiredEntry?.[1].requiredSnapshot?.error ??
+            "emit-sqlite: missing required entity descriptor or envelope",
+        );
       }
-      db.exec(buildDDL(itemEntity, itemVariants));
-      canonicaliseItems(db, itemEntity, itemVariants, itemEnvelope);
-      const statTypeEnvelope = snapshot.envelopes["stat-type"];
-      if (statTypeEnvelope) {
-        db.exec(STAT_TYPE_DDL);
-        canonicaliseStatTypes(db, statTypeEnvelope);
-      }
-      const itemCategoryEnvelope = snapshot.envelopes["item-category"];
-      if (itemCategoryEnvelope) {
-        db.exec(ITEM_CATEGORY_DDL);
-        canonicaliseItemCategories(db, itemCategoryEnvelope);
-      }
-      const itemTagEnvelope = snapshot.envelopes["item-tag"];
-      if (itemTagEnvelope) {
-        db.exec(ITEM_TAG_DDL);
-        canonicaliseItemTags(db, itemTagEnvelope);
-      }
-      const locationEnvelope = snapshot.envelopes.location;
-      if (locationEnvelope) {
-        db.exec(LOCATION_DDL);
-        canonicaliseLocations(db, locationEnvelope);
-      }
-      const portalEnvelope = snapshot.envelopes.portal;
-      if (portalEnvelope) {
-        db.exec(PORTAL_DDL);
-        canonicalisePortals(db, portalEnvelope);
+      for (const [entityId, module] of Object.entries(entityRegistry)) {
+        const entity = desc.entities[entityId];
+        const envelope = snapshot.envelopes[entityId];
+        if (!entity || !envelope) continue;
+        const variants = desc.variants[entityId] ?? [];
+        db.exec(typeof module.ddl === "function" ? module.ddl(entity, variants) : module.ddl);
+        module.canonicalise({ db, entity, variants, envelope });
       }
       emitSiteMetadata(db, desc);
       const assetRefInsert = db.prepare(
