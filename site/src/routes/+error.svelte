@@ -32,7 +32,7 @@
   <div class="flex gap-2">
     <Button href={resolve("/")}>Back to home</Button>
     {#if !isNotFound}
-      <Button variant="outline" onclick={() => window.location.reload()}>Reload</Button>
+      <Button variant="outline" href={page.url.pathname + page.url.search}>Reload</Button>
     {/if}
   </div>
 </section>
