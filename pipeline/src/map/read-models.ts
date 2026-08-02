@@ -1,6 +1,5 @@
 import type { Database } from "bun:sqlite";
 import { ENTITY_GRAPH_DDL } from "../relationships/relationship-graph.ts";
-import { kebab } from "../slug/derive-slug.ts";
 import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../entities/item/read-models.ts";
 
 export const MAP_READ_MODEL_DDL = `
@@ -16,6 +15,7 @@ CREATE TABLE map_points (
   show_on_map_debug_only     INTEGER NOT NULL,
   allow_fast_travel          INTEGER NOT NULL
 );
+CREATE INDEX idx_map_points_entity_id_map_id ON map_points (entity_id, map_id);
 CREATE TABLE map_volumes (
   id                         TEXT PRIMARY KEY,
   entity_id                  TEXT NOT NULL,
@@ -26,6 +26,7 @@ CREATE TABLE map_volumes (
   elevation_min              REAL,
   elevation_max              REAL
 );
+CREATE INDEX idx_map_volumes_entity_id_map_id ON map_volumes (entity_id, map_id);
 `;
 
 /**
@@ -108,7 +109,7 @@ export function emitMapReadModels(
     .all();
   const tx = db.transaction(() => {
     for (const row of nodeRows) {
-      const slug = deriveMapEntityNodeSlug(row.entity_id, row.name, row.instance_id);
+      const slug = deriveMapEntityNodeSlug(row.name, row.instance_id);
       const query = row.map_id
         ? `map=${encodeURIComponent(row.map_id)}&sel=${slug.shortId}`
         : `sel=${slug.shortId}`;
@@ -126,18 +127,8 @@ export function emitMapReadModels(
 }
 
 function deriveMapEntityNodeSlug(
-  entityType: string,
   displayName: string,
   entityId: string,
 ): { canonicalSlug: string; shortId: string } {
-  try {
-    return deriveEntityNodeSlug(displayName, entityId);
-  } catch (error) {
-    if (!(error instanceof Error) || !error.message.includes("cannot derive short_id")) throw error;
-    const shortId = kebab(`${entityType}-${entityId}`) || entityType;
-    return {
-      canonicalSlug: `${kebab(displayName) || entityType}--${shortId}`,
-      shortId,
-    };
-  }
+  return deriveEntityNodeSlug(displayName, entityId);
 }

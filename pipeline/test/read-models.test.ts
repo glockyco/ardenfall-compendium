@@ -688,19 +688,24 @@ describe("emitMapReadModels", () => {
       schemaVersion: 1,
       rows: [
         {
-          id: "world;portals;portal-a",
+          id: "instances;portals;398213e43a41b4c47bffe4ef1998e782",
           fields: {
-            id: "world;portals;portal-a",
-            recordRef: { kind: "record", table: "world", subtable: "portals", id: "portal-a" },
+            id: "instances;portals;398213e43a41b4c47bffe4ef1998e782",
+            recordRef: {
+              kind: "record",
+              table: "instances",
+              subtable: "portals",
+              id: "398213e43a41b4c47bffe4ef1998e782",
+            },
             name: "Harbor Gate",
             isAccessible: true,
             mapId: "ardenfall",
             position: { x: 20, y: 5, z: -30 },
             connectedPortalRef: {
               kind: "record",
-              table: "world",
+              table: "instances",
               subtable: "portals",
-              id: "portal-b",
+              id: "8f17d2c4a6b8490e9d31c7f2e5a4b608",
             },
           },
         },
@@ -717,9 +722,9 @@ describe("emitMapReadModels", () => {
         )
         .get(),
     ).toEqual({
-      id: "portal:world;portals;portal-a",
+      id: "portal:instances;portals;398213e43a41b4c47bffe4ef1998e782",
       entity_id: "portal",
-      instance_id: "world;portals;portal-a",
+      instance_id: "instances;portals;398213e43a41b4c47bffe4ef1998e782",
       name: "Harbor Gate",
       map_id: "ardenfall",
       map_x: 20,
@@ -729,11 +734,11 @@ describe("emitMapReadModels", () => {
     const node = db
       .query(
         `SELECT route_path, short_id FROM entity_nodes
-         WHERE entity_type = 'portal' AND entity_id = 'world;portals;portal-a'`,
+         WHERE entity_type = 'portal' AND entity_id = 'instances;portals;398213e43a41b4c47bffe4ef1998e782'`,
       )
       .get() as { route_path: string; short_id: string };
-    expect(node.short_id).toBe("portal-world-portals-portal-a");
-    expect(node.route_path).toBe("/map?map=ardenfall&sel=portal-world-portals-portal-a");
+    expect(node.short_id).toBe("398213e4");
+    expect(node.route_path).toBe("/map?map=ardenfall&sel=398213e4");
   });
 
   it("fails fast when a requested entity has no map projection", () => {

@@ -25,8 +25,21 @@ describe("deriveShortId", () => {
     expect(deriveShortId("ABCDEF0123")).toBe("abcdef01");
   });
 
-  it("throws when the asset id has fewer than 8 hex characters", () => {
+  it("derives the first 8 hex characters from a record id", () => {
+    expect(deriveShortId("instances;portals;398213e43a41b4c47bffe4ef1998e782")).toBe("398213e4");
+  });
+
+  it("keeps collisions for ids sharing the same first 8 hex characters", () => {
+    const first = deriveShortId("instances;portals;398213e43a41b4c47bffe4ef1998e782");
+    const second = deriveShortId("instances;portals;398213e4deadbeef0123456789abcdef");
+    expect(first).toBe(second);
+  });
+
+  it("rejects ids matching neither accepted format", () => {
     expect(() => deriveShortId("abc")).toThrow(/short_id/);
+    expect(() => deriveShortId("world;portals;portal-a")).toThrow(
+      /world;portals;portal-a.*<8hex>.*<table>;<subtable>;<recordId>/,
+    );
   });
 });
 

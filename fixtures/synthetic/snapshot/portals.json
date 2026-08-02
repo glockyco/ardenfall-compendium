@@ -3,14 +3,14 @@
   "schemaVersion": 1,
   "rows": [
     {
-      "id": "world;portals;portal-a",
+      "id": "instances;portals;398213e43a41b4c47bffe4ef1998e782",
       "fields": {
-        "id": "world;portals;portal-a",
+        "id": "instances;portals;398213e43a41b4c47bffe4ef1998e782",
         "recordRef": {
           "kind": "record",
-          "table": "world",
+          "table": "instances",
           "subtable": "portals",
-          "id": "portal-a",
+          "id": "398213e43a41b4c47bffe4ef1998e782",
           "recordType": "PortalRecord"
         },
         "name": "Harbor Gate",
@@ -19,9 +19,9 @@
         "position": { "x": 20, "y": 5, "z": -30 },
         "connectedPortalRef": {
           "kind": "record",
-          "table": "world",
+          "table": "instances",
           "subtable": "portals",
-          "id": "portal-b",
+          "id": "8f17d2c4a6b8490e9d31c7f2e5a4b608",
           "recordType": "PortalRecord"
         }
       }

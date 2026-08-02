@@ -52,7 +52,7 @@
     },
     {
       "entity": "portal",
-      "ids": ["world;portals;portal-a"],
+      "ids": ["instances;portals;398213e43a41b4c47bffe4ef1998e782"],
       "rationale": "record-backed instance entity with transform-derived map placement and connected portal reference"
     }
   ],
@@ -69,6 +69,6 @@
     "snapshot/item-categories.json": "be00a12b6ec41de05ee8faef62086cef3a9570374fed103604b8a12d9135101f",
     "snapshot/item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
     "snapshot/locations.json": "333dc28688c556536ad084613d35577ce58915a6b136bfd2763cb9a58731d241",
-    "snapshot/portals.json": "f12a37a9715d9789d3aaf18eda718fe193e1fe185581cd18c23c5e7e8b10be1a"
+    "snapshot/portals.json": "20403ebde38383b817a6f50155d7c2c111ae1003df3cc5763be4ac0717f3c2b7"
   }
 }
