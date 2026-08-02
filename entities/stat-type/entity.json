@@ -4,8 +4,8 @@
   "kind": "definition",
   "label": { "singular": "Stat", "plural": "Stats" },
   "extraction": {
-    "source": "lookupAsset",
-    "root": "BuiltLookupTable.GetAssetsOfType<StatType>",
+    "source": "namedAsset",
+    "root": "Resources.FindObjectsOfTypeAll<StatType>",
     "walker": "StatTypeExtractor"
   },
   "presentationContext": { "renderContext": "stat-type-presentation-v1" },

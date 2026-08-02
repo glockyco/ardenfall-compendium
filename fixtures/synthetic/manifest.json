@@ -8,7 +8,7 @@
     "manifest preflight + counts",
     "ItemData base + MeleeItemData branch + ArmorItemData branch coverage",
     "Consumable subtype canonicalisation and read-model field coverage",
-    "lookupAsset and missing iconRef",
+    "lookupAsset and namedAsset identity plus missing iconRef",
     "Parameter<T> resolved/inherited shape",
     "SmartListParameter<ItemTag> populated and empty cases",
     "Item icon asset slots and color metadata",
@@ -32,12 +32,12 @@
     },
     {
       "entity": "stat-type",
-      "ids": ["57a70001.fixture-strength", "57a70002.fixture-heavy-armor"],
+      "ids": ["named;stat-type;att_strength", "named;stat-type;sk_alchemy"],
       "rationale": "one attribute and one skill-like stat for grouping and stat page coverage"
     },
     {
       "entity": "item-category",
-      "ids": ["ca7e60a1.fixture-weapons"],
+      "ids": ["named;item-category;itemcat_weapons"],
       "rationale": "category row for item category pages, icon fallback assets, and item count coverage"
     },
     {
@@ -59,14 +59,14 @@
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/manifest.json": "fded39c32066aa1c9b5a07d4a94ba2508c3d7b957fa658a6d396a49e0c5411b8",
-    "snapshot/items.json": "46f5b8a46a1b81046abcb4276f5e6d6a6c09c017bc2b54c1726f2b391a3a7bea",
-    "snapshot/asset-manifest.json": "9d87c696295ef5c9f3f13e7183beed680d13213f35100f7e7b8c7b4e93411c68",
+    "snapshot/manifest.json": "61de29e3e569a2b7f789331fad46055ca919bc329ee27abca0c86aabed3319b7",
+    "snapshot/items.json": "133a0726906860f472a7d0597bbf88afae3cb4615d46823b0b6689234a9f9b15",
+    "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
     "snapshot/assets/items/fixture-icon-blue.png": "d6d4b05209c7541985841a63d955337a411a005d7abb936426791cbfde258f17",
-    "snapshot/master-tooltip.json": "4a042a3cbd86e4a621899485ad3aa1f117c4d47340e39c92d8bfb1a812a79faa",
-    "snapshot/stat-types.json": "4013bd6b248b40cfe9901c4d17015a4071916690f76ae398ea85f03275bd1b52",
-    "snapshot/item-categories.json": "be00a12b6ec41de05ee8faef62086cef3a9570374fed103604b8a12d9135101f",
+    "snapshot/master-tooltip.json": "3913c8925bd4585d585162a7e7c361e9074ae646ab60640bfe450cb26fae236b",
+    "snapshot/stat-types.json": "8914e1e2e2329287e831c3b1ce3c8b22043a74baafa7bd9fe3f1f7a431fc4e11",
+    "snapshot/item-categories.json": "9ddf37b041ec004007851244de1d4d6c0be4b9ad9e3973c7ec12f193f93f5724",
     "snapshot/item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
     "snapshot/locations.json": "333dc28688c556536ad084613d35577ce58915a6b136bfd2763cb9a58731d241",
     "snapshot/portals.json": "20403ebde38383b817a6f50155d7c2c111ae1003df3cc5763be4ac0717f3c2b7"

@@ -7,7 +7,7 @@ export interface EntityDescriptor {
   kind: "definition" | "instance";
   label: { singular: string; plural: string };
   extraction: {
-    source: "lookupAsset" | "record" | "scene";
+    source: "lookupAsset" | "namedAsset" | "record" | "scene";
     root: string;
     walker?: string;
     options?: Record<string, unknown>;
@@ -443,7 +443,7 @@ export interface ArtifactManifest {
 
 export type SnapshotRef =
   | { kind: "lookupAsset"; guid: string; unityType?: string; name?: string }
-  | { kind: "record"; table: string; subtable: string; id: string; recordType?: string }
+  | { kind: "namedAsset"; entity: string; name: string }
   | { kind: "runtimeObject"; extractionId: string; unityType?: string; stable: false }
   | { kind: "missing"; reason: string; source: string };
 

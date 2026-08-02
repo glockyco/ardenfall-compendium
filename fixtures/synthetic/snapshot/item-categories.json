@@ -3,9 +3,9 @@
   "schemaVersion": 1,
   "rows": [
     {
-      "id": "ca7e60a1.fixture-weapons",
+      "id": "named;item-category;itemcat_weapons",
       "fields": {
-        "id": "ca7e60a1.fixture-weapons",
+        "id": "named;item-category;itemcat_weapons",
         "categoryName": "Weapons",
         "iconRef": {
           "kind": "lookupAsset",

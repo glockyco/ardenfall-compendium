@@ -4,8 +4,8 @@
   "kind": "definition",
   "label": { "singular": "Category", "plural": "Categories" },
   "extraction": {
-    "source": "lookupAsset",
-    "root": "BuiltLookupTable.GetAssetsOfType<ItemCategory>",
+    "source": "namedAsset",
+    "root": "Resources.FindObjectsOfTypeAll<ItemCategory>",
     "walker": "ItemCategoryExtractor"
   },
   "presentationContext": { "renderContext": "item-category-presentation-v1" },

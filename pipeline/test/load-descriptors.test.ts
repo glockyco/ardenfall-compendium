@@ -80,7 +80,8 @@ describe("loadDescriptors", () => {
     const statType = result.entities["stat-type"];
     if (!statType) throw new Error("stat-type entity not loaded");
 
-    expect(statType.label.plural).toBe("Stats");
+    expect(statType.extraction.source).toBe("namedAsset");
+    expect(statType.extraction.root).toBe("Resources.FindObjectsOfTypeAll<StatType>");
     expect(statType.presentationContext?.renderContext).toBe("stat-type-presentation-v1");
     expect(statType.fields.map((field) => field.name)).toContain("statName");
     expect(result.variants["stat-type"]).toEqual([]);
@@ -115,7 +116,8 @@ describe("loadDescriptors", () => {
     const category = result.entities["item-category"];
     if (!category) throw new Error("item-category entity not loaded");
 
-    expect(category.label.plural).toBe("Categories");
+    expect(category.extraction.source).toBe("namedAsset");
+    expect(category.extraction.root).toBe("Resources.FindObjectsOfTypeAll<ItemCategory>");
     expect(category.presentationContext?.renderContext).toBe("item-category-presentation-v1");
     expect(category.fields.map((field) => field.name)).toContain("categoryColor");
     expect(result.variants["item-category"]).toEqual([]);

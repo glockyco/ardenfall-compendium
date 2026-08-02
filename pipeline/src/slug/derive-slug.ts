@@ -6,12 +6,28 @@ export function kebab(input: string): string {
 }
 
 /**
- * Derives a short id from either a lookup-asset id (`<8hex>[.suffix]`) or a
- * record id (`<table>;<subtable>;<recordId>`, where `recordId` is 32 hex
- * characters).
+ * Derives a short id from a lookup-asset id (`<8hex>[.suffix]`), a record id
+ * (`<table>;<subtable>;<recordId>`, where `recordId` is 32 hex characters), or
+ * a named-asset id (`named;<entityId>;<assetName>`), whose asset name is
+ * kebab-cased.
  */
 export function deriveShortId(id: string): string {
-  if (id.includes(";")) {
+  if (id.startsWith("named;")) {
+    const parts = id.split(";");
+    const entityId = parts[1];
+    const assetName = parts[2];
+    const shortId = assetName === undefined ? "" : kebab(assetName);
+    if (
+      parts.length === 3 &&
+      entityId !== undefined &&
+      /^[a-z][a-z0-9-]*$/.test(entityId) &&
+      assetName !== undefined &&
+      assetName !== "" &&
+      shortId !== ""
+    ) {
+      return shortId;
+    }
+  } else if (id.includes(";")) {
     const parts = id.split(";");
     const recordId = parts.length === 3 ? parts[2] : undefined;
     if (
@@ -31,7 +47,7 @@ export function deriveShortId(id: string): string {
   }
 
   throw new Error(
-    `cannot derive short_id from id '${id}': need lookup-asset id '<8hex>[.suffix]' or record id '<table>;<subtable>;<recordId>' where recordId is 32 hex characters`,
+    `cannot derive short_id from id '${id}': need lookup-asset id '<8hex>[.suffix]', record id '<table>;<subtable>;<recordId>' where recordId is 32 hex characters, or named-asset id 'named;<entityId>;<assetName>'`,
   );
 }
 

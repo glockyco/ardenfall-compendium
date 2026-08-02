@@ -11,7 +11,7 @@
     },
     {
       "entityId": "stat-type",
-      "rowId": "57a70001.fixture-strength",
+      "rowId": "named;stat-type;att_strength",
       "slot": "iconRef",
       "kind": "image",
       "pngHash": "fixture-red-png",
@@ -43,7 +43,7 @@
     },
     {
       "entityId": "item-category",
-      "rowId": "ca7e60a1.fixture-weapons",
+      "rowId": "named;item-category;itemcat_weapons",
       "slot": "iconRef",
       "kind": "image",
       "pngHash": "fixture-red-png",
@@ -51,7 +51,7 @@
     },
     {
       "entityId": "item-category",
-      "rowId": "ca7e60a1.fixture-weapons",
+      "rowId": "named;item-category;itemcat_weapons",
       "slot": "defaultItemIconRef",
       "kind": "image",
       "pngHash": "fixture-blue-png",

@@ -23,7 +23,7 @@
       "additionalProperties": false,
       "required": ["source", "root"],
       "properties": {
-        "source": { "enum": ["lookupAsset", "record", "scene"] },
+        "source": { "enum": ["lookupAsset", "record", "scene", "namedAsset"] },
         "root": { "type": "string", "minLength": 1 },
         "walker": { "type": "string" },
         "options": { "type": "object" }

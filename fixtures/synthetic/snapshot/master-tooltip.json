@@ -82,7 +82,7 @@
   ],
   "termColorMatch": "\\b({0})\\b",
   "potionRecipeDescription": "Learn the potion recipe {0}.",
-  "allAttributes": ["57a70001.fixture-strength"],
-  "allSkills": ["57a70002.fixture-heavy-armor"],
+  "allAttributes": ["named;stat-type;att_strength"],
+  "allSkills": ["named;stat-type;sk_alchemy"],
   "allTraits": []
 }

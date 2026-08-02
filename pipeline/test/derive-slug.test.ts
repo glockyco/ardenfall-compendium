@@ -29,10 +29,15 @@ describe("deriveShortId", () => {
     expect(deriveShortId("instances;portals;398213e43a41b4c47bffe4ef1998e782")).toBe("398213e4");
   });
 
-  it("keeps collisions for ids sharing the same first 8 hex characters", () => {
-    const first = deriveShortId("instances;portals;398213e43a41b4c47bffe4ef1998e782");
-    const second = deriveShortId("instances;portals;398213e4deadbeef0123456789abcdef");
-    expect(first).toBe(second);
+  it("derives a kebab-cased asset name from a named asset id", () => {
+    expect(deriveShortId("named;stat-type;att_strength")).toBe("att-strength");
+    expect(deriveShortId("named;item-category;itemcat_weapons")).toBe("itemcat-weapons");
+  });
+
+  it("rejects malformed named asset ids", () => {
+    expect(() => deriveShortId("named;stat-type")).toThrow(/named;stat-type/);
+    expect(() => deriveShortId("named;;att_strength")).toThrow(/named-asset/);
+    expect(() => deriveShortId("named;stat-type;!!!")).toThrow(/short_id/);
   });
 
   it("rejects ids matching neither accepted format", () => {

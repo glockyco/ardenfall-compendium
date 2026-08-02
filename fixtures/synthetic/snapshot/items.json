@@ -30,10 +30,9 @@
         "cannotBeOwned": false,
         "quickslotIconRef": null,
         "categoryRef": {
-          "kind": "lookupAsset",
-          "guid": "ca7e60a1.fixture-weapons",
-          "unityType": "Ardenfall.ItemCategory",
-          "name": "Weapons"
+          "kind": "namedAsset",
+          "entity": "item-category",
+          "name": "itemcat_weapons"
         },
         "categoryName": "Weapons",
         "isIllegal": false,

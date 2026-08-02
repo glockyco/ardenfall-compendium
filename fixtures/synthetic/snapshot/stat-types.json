@@ -3,9 +3,9 @@
   "schemaVersion": 1,
   "rows": [
     {
-      "id": "57a70001.fixture-strength",
+      "id": "named;stat-type;att_strength",
       "fields": {
-        "id": "57a70001.fixture-strength",
+        "id": "named;stat-type;att_strength",
         "isAttribute": true,
         "statName": "Strength",
         "iconRef": null,
@@ -13,20 +13,20 @@
         "statDescription": "Raw physical power.",
         "longStatDescription": "Raw physical power. Affects melee damage and carry weight.",
         "affects": ["melee-damage", "carry-weight"],
-        "skillAffects": ["57a70002.fixture-heavy-armor"]
+        "skillAffects": ["named;stat-type;sk_alchemy"]
       }
     },
     {
-      "id": "57a70002.fixture-heavy-armor",
+      "id": "named;stat-type;sk_alchemy",
       "fields": {
-        "id": "57a70002.fixture-heavy-armor",
+        "id": "named;stat-type;sk_alchemy",
         "isAttribute": false,
-        "statName": "Heavy Armor",
+        "statName": "Alchemy",
         "iconRef": null,
         "iconColor": { "r": 0.6, "g": 0.6, "b": 0.65, "a": 1 },
-        "statDescription": "Tolerance for wearing heavy armor.",
-        "longStatDescription": "Tolerance for wearing heavy armor.",
-        "affects": ["damage-threshold"],
+        "statDescription": "Knowledge of brewing potions and creating alchemical mixtures.",
+        "longStatDescription": "Knowledge of brewing potions and creating alchemical mixtures.",
+        "affects": ["potion-effects"],
         "skillAffects": []
       }
     }
