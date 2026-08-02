@@ -400,16 +400,20 @@ Each candidate gets its own slice number (8, 9, …). Ordered by extraction conf
 
    No new identity mechanism is required, and the placement substrate already handles both halves. At 314 placed instances this is roughly four times the locations and portals combined.
 
-   **The vendor role is dropped from this slice, on evidence.** The previous plan claimed characters would unlock `sold-at` item edges. Vendor stock is authored on `CharacterData` rather than assembled at runtime, so that was checkable, and it does not hold for this build:
+   **The vendor role is dropped from this slice, on evidence.** The previous plan claimed characters would unlock `sold-at` item edges. A merchant's stock comes from exactly two authored fields, read in `MerchantController.FillInventory`: `merchantItemLists` and `merchantAdditionalItems`. Both are empty on every character in the build.
 
-   | authored merchant field | characters with content |
-   | --- | --- |
-   | `merchantAdditionalItems` | **0** |
-   | `merchantItemLists` | **0** |
-   | `merchantCategories` | 1 (three further characters have the field set but empty) |
-   | `merchantGold` | 2 |
+   | field | characters with content | what it actually does |
+   | --- | --- | --- |
+   | `merchantItemLists` | **0** | leveled lists, one of the two stock sources |
+   | `merchantAdditionalItems` | **0** | explicit items, the other stock source |
+   | `merchantCategories` | 1 | **not stock** — a pricing filter, applied in `InventoryTradeUI.CalculateItemValue` so off-speciality goods buy at `merchantUnsupportedBuyMult` |
+   | `merchantGold` | 112 | the till, inherited from a base template |
 
-   There is exactly one merchant in the build, `preset_garako-merchant-potionseller`, and it carries a single category filter rather than an inventory. There are no `sold-at` edges to derive. Designing a role vocabulary against a single example with no stock is the same guessing the vocabulary was removed to avoid, so it waits for a build that actually ships vendors. Re-probe before planning it: the check is four expressions against a loaded world.
+   The trade plumbing is wired broadly and stocked nowhere: 112 characters carry merchant gold, and not one has anything to sell. The single character with a category filter, `preset_garako-merchant-potionseller`, will price potions favourably when buying them from the player, and offers nothing.
+
+   **How to probe this correctly, because the first attempt got it wrong.** `CharacterData` extends `ParameterizedObject`, which has a `parent` chain, and `Parameter.IsSet` reports only *local* assignment while `Get()` resolves through the chain. Filtering on `IsSet` undercounts: it reported 2 characters with merchant gold where `Get()` reports 112. Always probe with `Get()`, and always include a control — `itemLists` returns non-empty for 133 characters and `additionalItems` for 40, which is what proves a zero elsewhere is real rather than a broken probe.
+
+   There are no `sold-at` edges to derive. Designing a role vocabulary against one example with no stock is the same guessing the vocabulary was removed to avoid, so it waits for a build that actually ships vendors.
 3. Monsters / enemies — map placement plus `drops` edges to items and detail pages with drop tables.
 4. Quests — `gives`/`requires` edges enabling transitive `available-at` location links.
 5. Resource nodes / gathering points.
