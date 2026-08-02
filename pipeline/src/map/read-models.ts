@@ -63,16 +63,21 @@ const MAP_PROJECTIONS: Record<string, { points: string; volumes?: string }> = {
     `,
   },
   portal: {
+    // `portals.name` is nullable because the game genuinely ships portals with an
+    // empty `friendlyName`; the extractor records that as a diagnostic rather than
+    // inventing a value. A map label cannot be null, so presentation supplies a
+    // visibly placeholder one here instead of letting an id masquerade as a name.
     points: `
       INSERT INTO map_points (
         id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
         show_on_map_debug_only, allow_fast_travel
       )
-      SELECT 'portal:' || p.id, 'portal', p.id, p.name, pl.map_id, pl.map_x, pl.map_y, pl.elevation,
+      SELECT 'portal:' || p.id, 'portal', p.id, COALESCE(p.name, 'Unnamed portal'),
+             pl.map_id, pl.map_x, pl.map_y, pl.elevation,
              0, 0
       FROM portals p
       JOIN placements pl ON pl.entity_id = 'portal' AND pl.instance_id = p.id
-      ORDER BY p.name;
+      ORDER BY COALESCE(p.name, 'Unnamed portal'), p.id;
     `,
   },
 };

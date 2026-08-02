@@ -358,7 +358,7 @@ export interface LocationSnapshotFields {
 export interface PortalSnapshotFields {
   id: string;
   recordRef: SnapshotRef;
-  name: string;
+  name: string | null;
   isAccessible: boolean;
   mapId: string | null;
   position: SnapshotVector3;
@@ -444,6 +444,7 @@ export interface ArtifactManifest {
 export type SnapshotRef =
   | { kind: "lookupAsset"; guid: string; unityType?: string; name?: string }
   | { kind: "namedAsset"; entity: string; name: string }
+  | { kind: "record"; table: string; subtable: string; id: string; recordType?: string | null }
   | { kind: "runtimeObject"; extractionId: string; unityType?: string; stable: false }
   | { kind: "missing"; reason: string; source: string };
 

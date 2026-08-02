@@ -22,7 +22,7 @@ export function canonicalisePortals(db: Database, envelope: SnapshotEnvelope): v
       portalInsert.run(
         row.id,
         JSON.stringify(fields.recordRef),
-        fields.name,
+        fields.name ?? null,
         fields.mapId ?? null,
         JSON.stringify(fields.position),
         fields.connectedPortalRef ? JSON.stringify(fields.connectedPortalRef) : null,
