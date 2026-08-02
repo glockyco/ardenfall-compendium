@@ -6,15 +6,21 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-border: var(--input-border);
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
@@ -27,18 +33,45 @@
   --radius: 0.5rem;
   --background: oklch(0.1 0.02 260);
   --foreground: oklch(0.95 0.01 260);
+  /* Raised panel surface. Same tier as popover, because a card and a popover
+     are both one surface above the page. A popover additionally floats and is
+     separated by its own ring. */
+  --card: oklch(0.16 0.02 260);
+  --card-foreground: oklch(0.95 0.01 260);
   --primary: oklch(0.7 0.18 50); /* Ardenfall amber */
   --primary-foreground: oklch(0.1 0 0);
   --secondary: oklch(0.2 0.02 260);
   --secondary-foreground: oklch(0.95 0.01 260);
+  /* Highlight for the focused or hovered row of a menu or listbox. */
+  --accent: oklch(0.26 0.025 260);
+  --accent-foreground: oklch(0.97 0.01 260);
   --muted: oklch(0.2 0.02 260);
   --muted-foreground: oklch(0.6 0.02 260);
   --popover: oklch(0.16 0.02 260);
   --popover-foreground: oklch(0.95 0.01 260);
+  /* Decorative edges only. 1.51:1 against the page, which is right for a card
+     outline and not enough for a control boundary. */
   --border: oklch(0.3 0.02 260);
-  --ring: oklch(0.7 0.18 50 / 50%);
+  /* Control boundaries. 3.29:1 against the page and 3.14:1 against a card, so
+     inputs and selects clear the 3:1 of WCAG 1.4.11. The 0.42 lightness this
+     started from only measures 2.43:1. */
+  --input-border: oklch(0.49 0.02 260);
+  /* shadcn names the control boundary --input and reuses it as a low-alpha
+     control fill. One role, one source of truth. */
+  --input: var(--input-border);
+  --ring: oklch(0.7 0.18 50);
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(0.95 0 0);
+}
+
+@layer base {
+  /* Controls that draw their own focus treatment opt out with outline-none,
+     which lives in the utilities layer and overrides this. Everything else,
+     plain links included, gets a visible ring instead of the browser default. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
 
 .rich-token-positive {

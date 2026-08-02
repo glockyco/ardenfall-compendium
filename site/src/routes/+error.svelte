@@ -3,25 +3,29 @@
   import { page } from "$app/state";
   import { Button } from "$lib/components/ui/button/index.js";
 
-  const isNotFound = $derived(
-    page.status === 404 || page.error?.message?.includes("Item not found"),
-  );
-  const status = $derived(isNotFound ? 404 : page.status);
-  const title = $derived(
-    isNotFound ? "Item not found" : (page.error?.message ?? "Something went wrong"),
+  const isNotFound = $derived(page.status === 404);
+  // Every route throws its own "<thing> not found" message, so on a 404 the
+  // message is already the right heading. Other statuses get a stable heading
+  // and show the raw message separately, because it is rarely presentable.
+  const heading = $derived(
+    isNotFound ? (page.error?.message ?? "Page not found") : "Something went wrong",
   );
 </script>
 
+<svelte:head>
+  <title>{heading} · Ardenfall Compendium</title>
+</svelte:head>
+
 <section class="mx-auto flex max-w-md flex-col items-start gap-4 px-6 py-16">
-  <p class="text-muted-foreground text-sm tracking-widest uppercase">Error {status}</p>
-  <h1 class="text-3xl font-semibold">{title}</h1>
+  <p class="text-muted-foreground text-sm tracking-widest uppercase">Error {page.status}</p>
+  <h1 class="text-3xl font-semibold">{heading}</h1>
   <p class="text-muted-foreground">
     {#if isNotFound}
-      That item doesn't exist in the current snapshot. It may have been removed in a later patch or
-      never existed at all.
+      This page is not in the current snapshot. It may have been removed in a later game patch, or
+      it may never have existed. The sections in the header list everything this build covers.
     {:else}
-      An unexpected error occurred while loading this page. Reloading may resolve it; if it doesn't,
-      share the error message shown here when reporting the issue.
+      An unexpected error occurred while loading this page. Reloading may resolve it. If it does
+      not, share the error message shown here when reporting the issue.
     {/if}
   </p>
   {#if !isNotFound && page.error?.message}

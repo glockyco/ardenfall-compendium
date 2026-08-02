@@ -9,8 +9,9 @@ const source = readFileSync(sourcePath, "utf8");
 // behind it: the root layout disables CSR, so any recovery control that needs
 // hydration silently does nothing on the routes that can actually error.
 const requiredSnippets: string[] = [
-  "Error {status}",
-  "That item doesn't exist",
+  "<svelte:head>",
+  "Error {page.status}",
+  "This page is not in the current snapshot",
   "Back to home",
   ">Reload<",
   "href={page.url.pathname + page.url.search}",
