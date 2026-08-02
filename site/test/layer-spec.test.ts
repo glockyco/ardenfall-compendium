@@ -27,7 +27,6 @@ const point = (id: string, over: Partial<MapPointRow> = {}): MapPointRow => ({
   name: id,
   tooltip: id,
   debugOnly: false,
-  fastTravel: false,
   nodeShortId: id,
   leadsTo: null,
   ...over,
@@ -51,7 +50,7 @@ const volume: MapVolumeRow = {
   name: "town",
 };
 
-const baseUi = { hiddenLayers: [] as string[], showDebug: false, fastTravelOnly: false };
+const baseUi = { hiddenLayers: [] as string[], showDebug: false };
 
 const pointData = (specs: LayerSpec[]): MapPointRow[] =>
   specs.find((s) => s.kind === "scatterplot")!.data as MapPointRow[];
@@ -75,12 +74,6 @@ describe("buildEntityLayerSpecs", () => {
         (r) => r.id,
       ),
     ).toEqual(["a", "b"]);
-  });
-
-  it("keeps only fast-travel points when fastTravelOnly is set", () => {
-    const rows = [point("a", { fastTravel: true }), point("b", { fastTravel: false })];
-    const specs = buildEntityLayerSpecs(layer, rows, [], { ...baseUi, fastTravelOnly: true });
-    expect(pointData(specs).map((r) => r.id)).toEqual(["a"]);
   });
 
   it("sets visible=false when the layer is hidden, without dropping data", () => {

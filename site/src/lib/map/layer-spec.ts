@@ -3,7 +3,6 @@ import type { MapLayerConfig, MapPointRow, MapVolumeRow, RenderKind } from "./ty
 export interface MapUiFilters {
   hiddenLayers: string[];
   showDebug: boolean;
-  fastTravelOnly: boolean;
 }
 
 export type LayerSpecKind = "scatterplot" | "polygon";
@@ -26,7 +25,7 @@ const KIND_PARTS: Record<RenderKind, LayerSpecKind[]> = {
 };
 
 function filterPoints(rows: MapPointRow[], ui: MapUiFilters): MapPointRow[] {
-  return rows.filter((r) => (ui.showDebug || !r.debugOnly) && (!ui.fastTravelOnly || r.fastTravel));
+  return rows.filter((r) => ui.showDebug || !r.debugOnly);
 }
 
 export function buildEntityLayerSpecs(

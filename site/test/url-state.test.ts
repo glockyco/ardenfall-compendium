@@ -6,7 +6,6 @@ const full: MapUiState = {
   selected: "abc12345",
   hiddenLayers: ["locations"],
   showDebug: true,
-  fastTravelOnly: false,
 };
 
 describe("map url-state", () => {
@@ -22,7 +21,6 @@ describe("map url-state", () => {
       selected: null,
       hiddenLayers: [],
       showDebug: false,
-      fastTravelOnly: false,
     });
   });
 
@@ -32,7 +30,6 @@ describe("map url-state", () => {
       selected: "abc12345",
       hiddenLayers: [],
       showDebug: false,
-      fastTravelOnly: false,
     });
     const params = new URLSearchParams(qs);
     expect(params.get("sel")).toBe("abc12345");
@@ -47,10 +44,9 @@ describe("map url-state", () => {
       selected: null,
       hiddenLayers: ["locations", "vendors"],
       showDebug: false,
-      fastTravelOnly: true,
     });
     const params = new URLSearchParams(qs);
     expect(params.get("hide")).toBe("locations,vendors");
-    expect(params.get("ft")).toBe("1");
+    expect(params.has("ft")).toBe(false);
   });
 });

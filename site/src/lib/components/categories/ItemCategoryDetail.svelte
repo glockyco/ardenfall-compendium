@@ -21,17 +21,6 @@
     </div>
   </div>
 
-  {#if presentation.columns.length > 0}
-    <section class="mt-6">
-      <h2 class="text-lg font-semibold">Columns</h2>
-      <ul class="mt-2 list-disc space-y-1 pl-6">
-        {#each presentation.columns as column, index (index)}
-          <li>{typeof column.label === "string" ? column.label : "Column"}</li>
-        {/each}
-      </ul>
-    </section>
-  {/if}
-
   <section class="mt-6">
     <h2 class="text-lg font-semibold">Items</h2>
     {#if items.length > 0}

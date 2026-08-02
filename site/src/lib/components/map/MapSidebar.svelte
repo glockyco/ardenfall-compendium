@@ -33,9 +33,6 @@
     <label class="flex items-center gap-2">
       <input type="checkbox" bind:checked={store.ui.showDebug} /> Show debug-only
     </label>
-    <label class="flex items-center gap-2">
-      <input type="checkbox" bind:checked={store.ui.fastTravelOnly} /> Fast-travel only
-    </label>
   </div>
 
   {#if store.view.maps.length > 1}

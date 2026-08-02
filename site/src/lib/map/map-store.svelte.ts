@@ -8,7 +8,6 @@ export class MapStore {
     selected: null,
     hiddenLayers: [],
     showDebug: false,
-    fastTravelOnly: false,
   });
 
   constructor(view: MapView) {

@@ -107,7 +107,6 @@ describe("getMapView", () => {
           name: "Harbor Town",
           tooltip: "Harbor Town",
           debugOnly: false,
-          fastTravel: true,
           nodeShortId: "abc12345",
           leadsTo: null,
         },

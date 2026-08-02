@@ -35,7 +35,6 @@ interface MapPointRecord {
   map_y: number;
   elevation: number;
   show_on_map_debug_only: number;
-  allow_fast_travel: number;
   short_id: string | null;
 }
 
@@ -111,7 +110,7 @@ function readPoints(layer: MapLayerConfig): MapPointRow[] {
   for (const table of layer.sourceTables.filter((t) => t === "map_points")) {
     const records = all<MapPointRecord>(
       `SELECT p.id, p.entity_id, p.instance_id, p.name, p.map_id, p.map_x, p.map_y, p.elevation,
-              p.show_on_map_debug_only, p.allow_fast_travel, n.short_id
+              p.show_on_map_debug_only, n.short_id
        FROM ${table} p
        LEFT JOIN entity_nodes n
          ON n.entity_type = p.entity_id AND n.entity_id = p.instance_id AND n.is_public = 1
@@ -131,7 +130,6 @@ function readPoints(layer: MapLayerConfig): MapPointRow[] {
         name: r.name,
         tooltip: r.name,
         debugOnly: r.show_on_map_debug_only === 1,
-        fastTravel: r.allow_fast_travel === 1,
         nodeShortId: r.short_id,
         leadsTo: destinations.get(r.instance_id) ?? null,
       });

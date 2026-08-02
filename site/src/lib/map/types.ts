@@ -26,7 +26,6 @@ export interface MapPointRow {
   name: string;
   tooltip: string;
   debugOnly: boolean;
-  fastTravel: boolean;
   nodeShortId: string | null;
   /** Outgoing `leads_to` destination, for portals that connect somewhere. */
   leadsTo: { label: string; shortId: string } | null;

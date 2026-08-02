@@ -19,8 +19,6 @@
       <dd>{point.position[0]}, {point.position[1]}</dd>
       <dt>Elevation</dt>
       <dd>{point.elevation}</dd>
-      <dt>Fast travel</dt>
-      <dd>{point.fastTravel ? "Yes" : "No"}</dd>
       {#if leadsTo}
         <dt>Leads to</dt>
         <dd>

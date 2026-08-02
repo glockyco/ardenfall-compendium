@@ -3,7 +3,6 @@ export interface MapUiState {
   selected: string | null;
   hiddenLayers: string[];
   showDebug: boolean;
-  fastTravelOnly: boolean;
 }
 
 export function decodeMapState(params: URLSearchParams): MapUiState {
@@ -13,7 +12,6 @@ export function decodeMapState(params: URLSearchParams): MapUiState {
     selected: params.get("sel"),
     hiddenLayers: hidden ? hidden.split(",").filter(Boolean) : [],
     showDebug: params.get("debug") === "1",
-    fastTravelOnly: params.get("ft") === "1",
   };
 }
 
@@ -23,7 +21,6 @@ export function encodeMapState(state: MapUiState): string {
   if (state.selected) params.set("sel", state.selected);
   if (state.hiddenLayers.length > 0) params.set("hide", state.hiddenLayers.join(","));
   if (state.showDebug) params.set("debug", "1");
-  if (state.fastTravelOnly) params.set("ft", "1");
   return params.toString();
 }
 

@@ -8,12 +8,12 @@
   <div class="flex items-center gap-3">
     <span
       class="border-border bg-muted flex size-12 items-center justify-center rounded border"
-      style:background-color={presentation.iconColor ?? undefined}
       aria-hidden="true"
     >
       {#if presentation.iconSrc}
         <img
           class="size-10 object-contain"
+          style:color={presentation.iconColor ?? undefined}
           src={presentation.iconSrc}
           alt=""
           loading="lazy"
@@ -26,12 +26,13 @@
     </p>
   </div>
 
-  {#if presentation.description}
+  <!-- The game shows the long description where it has one and falls back to the
+       short one, so leading with the short text inverts its own priority and can
+       print near-identical prose twice. -->
+  {#if presentation.longDescription}
+    <p class="mt-4">{presentation.longDescription}</p>
+  {:else if presentation.description}
     <p class="mt-4">{presentation.description}</p>
-  {/if}
-
-  {#if presentation.longDescription && presentation.longDescription !== presentation.description}
-    <p class="text-muted-foreground mt-3">{presentation.longDescription}</p>
   {/if}
 
   {#if presentation.affects.length > 0}

@@ -46,7 +46,6 @@
     const ui = {
       hiddenLayers: store.ui.hiddenLayers,
       showDebug: store.ui.showDebug,
-      fastTravelOnly: store.ui.fastTravelOnly,
     };
     const mapId = store.activeMapId;
     const points = store.view.points.filter((p) => p.mapId === mapId);
@@ -132,9 +131,9 @@
     };
   });
 
-  // Re-apply layers when filter/visibility/active-map state changes.
+  // Re-apply layers when visibility or active-map state changes.
   $effect(() => {
-    void [store.ui.hiddenLayers, store.ui.showDebug, store.ui.fastTravelOnly, store.ui.mapId];
+    void [store.ui.hiddenLayers, store.ui.showDebug, store.ui.mapId];
     if (deck && makeLayers) deck.setProps({ layers: makeLayers(currentSpecs()) });
   });
 </script>
