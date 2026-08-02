@@ -1,4 +1,5 @@
 import { all, get } from "../db";
+import type { RichTextDocument } from "./item";
 import { getEntityNodeBySlug } from "./item";
 
 interface SpellOverviewRecord {
@@ -17,6 +18,8 @@ interface SpellPresentationRecord {
   skill: string | null;
   mana_cost: number | null;
   is_illegal: number;
+  tooltip_rich_text_json: string | null;
+  /** Joined from the governing skill's public node, null when the spell has none. */
   skill_route_path: string | null;
 }
 
@@ -37,6 +40,7 @@ export interface SpellPresentationRow {
   skillRoutePath: string | null;
   manaCost: number | null;
   isIllegal: boolean;
+  description: RichTextDocument | null;
 }
 
 export const listSpells = (): SpellOverviewRow[] =>
@@ -62,6 +66,7 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
   if (!node) return undefined;
   const row = get<SpellPresentationRecord>(
     `SELECT p.id, p.name, p.render_context, p.skill, p.mana_cost, p.is_illegal,
+            p.tooltip_rich_text_json,
             sn.route_path AS skill_route_path
      FROM spell_presentation_rows p
      LEFT JOIN entity_nodes sn
@@ -80,5 +85,8 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
     skillRoutePath: row.skill_route_path,
     manaCost: row.mana_cost,
     isIllegal: row.is_illegal === 1,
+    description: row.tooltip_rich_text_json
+      ? (JSON.parse(row.tooltip_rich_text_json) as RichTextDocument)
+      : null,
   };
 };

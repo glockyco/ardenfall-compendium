@@ -1,4 +1,5 @@
 <script lang="ts">
+  import RichText from "$lib/components/content/RichText.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -43,6 +44,19 @@
       </dd>
     </div>
   </dl>
+
+  <section class="border-border mt-6 border-t pt-5">
+    <h2 class="font-semibold">Description</h2>
+    <p class="text-muted-foreground mt-2 text-sm">
+      This is a level 1 sample. In play, spell level is derived from the player's Intelligence and
+      governing skill.
+    </p>
+    {#if spell.description}
+      <p class="mt-3 leading-7"><RichText richText={spell.description} /></p>
+    {:else}
+      <p class="text-muted-foreground mt-3">No description available.</p>
+    {/if}
+  </section>
 
   {#if spell.isIllegal}
     <p class="text-muted-foreground mt-6 text-sm">Illegal spell</p>

@@ -23,7 +23,9 @@ const seed = () => {
       skill TEXT,
       skill_id TEXT,
       mana_cost REAL,
-      is_illegal INTEGER NOT NULL DEFAULT 0
+      is_illegal INTEGER NOT NULL DEFAULT 0,
+      tooltip_source TEXT,
+      tooltip_rich_text_json TEXT
     );
     CREATE TABLE entity_nodes (
       entity_type TEXT NOT NULL,
@@ -39,8 +41,10 @@ const seed = () => {
       ('named;spell;spell_fire-shield', 'Fire Shield', 'Destruction', 12.5, 0),
       ('named;spell;spell_shadow-step', 'Shadow Step', NULL, 4, 1);
     INSERT INTO spell_presentation_rows VALUES
-      ('named;spell;spell_fire-shield', 'Fire Shield', 'spell-presentation-v1', 'Destruction', 'named;stat-type;destruction', 12.5, 0),
-      ('named;spell;spell_shadow-step', 'Shadow Step', 'spell-presentation-v1', NULL, NULL, 4, 1);
+      ('named;spell;spell_fire-shield', 'Fire Shield', 'spell-presentation-v1', 'Destruction', 'named;stat-type;destruction', 12.5, 0,
+       '<color=#86FF86>10</color> damage',
+       '{"schemaVersion":1,"sourceHash":"fixture-spell-tooltip","nodes":[{"type":"text","text":"Deals "},{"type":"color","token":null,"color":"#86FF86","children":[{"type":"text","text":"10"}]},{"type":"text","text":" damage"}],"diagnostics":[]}'),
+      ('named;spell;spell_shadow-step', 'Shadow Step', 'spell-presentation-v1', NULL, NULL, 4, 1, NULL, NULL);
     INSERT INTO entity_nodes VALUES
       ('spell', 'named;spell;spell_fire-shield', 'Fire Shield', '/spells/fire-shield--abc12345', 'fire-shield--abc12345', 'abc12345', 1),
       ('spell', 'named;spell;spell_shadow-step', 'Shadow Step', '/spells/shadow-step--def67890', 'shadow-step--def67890', 'def67890', 1),
@@ -95,6 +99,21 @@ describe("spell read-model accessors", () => {
         skillRoutePath: "/stats/destruction--fedcba98",
         manaCost: 12.5,
         isIllegal: false,
+        description: {
+          schemaVersion: 1,
+          sourceHash: "fixture-spell-tooltip",
+          nodes: [
+            { type: "text", text: "Deals " },
+            {
+              type: "color",
+              token: null,
+              color: "#86FF86",
+              children: [{ type: "text", text: "10" }],
+            },
+            { type: "text", text: " damage" },
+          ],
+          diagnostics: [],
+        },
       });
       expect(readModels.getSpellPresentation("missing--00000000")).toBeUndefined();
     } finally {
@@ -117,6 +136,7 @@ describe("spell read-model accessors", () => {
         skillRoutePath: null,
         manaCost: 4,
         isIllegal: true,
+        description: null,
       });
     } finally {
       process.chdir(originalCwd);

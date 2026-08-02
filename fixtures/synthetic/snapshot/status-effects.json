@@ -1,0 +1,44 @@
+{
+  "entityId": "status-effect",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "91a00001.fixture-status-effect-bleeding",
+      "fields": {
+        "id": "91a00001.fixture-status-effect-bleeding",
+        "statusEffectName": "Bleeding",
+        "tooltipSource": "Adds 1% Bleed Damage Resistance to Target over 1 Seconds",
+        "iconRef": null,
+        "isHostile": true
+      }
+    },
+    {
+      "id": "91a00002.fixture-status-effect-burning",
+      "fields": {
+        "id": "91a00002.fixture-status-effect-burning",
+        "statusEffectName": "Burning",
+        "tooltipSource": "Deals <color=#FF5555>2</color> Fire Damage to Target over 1 Seconds",
+        "iconRef": null,
+        "isHostile": false
+      }
+    },
+    {
+      "id": "91a00003.fixture-status-effect-unnamed",
+      "fields": {
+        "id": "91a00003.fixture-status-effect-unnamed",
+        "statusEffectName": null,
+        "tooltipSource": "Removes 1 Poison from Target",
+        "iconRef": null,
+        "isHostile": false
+      },
+      "diagnostics": [
+        {
+          "severity": "diagnostic",
+          "code": "statusEffectNameMissing",
+          "field": "statusEffectName",
+          "message": "StatusEffect '91a00003.fixture-status-effect-unnamed' has empty or whitespace statusEffectName"
+        }
+      ]
+    }
+  ]
+}

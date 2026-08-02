@@ -13,6 +13,7 @@
           "name": "att_strength"
         },
         "manaCost": 12,
+        "tooltipSource": "Reduces Target's Vision on Touch",
         "isIllegal": false,
         "iconRef": null
       }
@@ -24,6 +25,7 @@
         "spellName": "Arcane Surge",
         "statTypeRef": null,
         "manaCost": 8,
+        "tooltipSource": "Increases Experience gained by <color=#86FF86>0%</color> for 1 Seconds",
         "isIllegal": false,
         "iconRef": null
       }
@@ -39,6 +41,7 @@
           "name": "sk_alchemy"
         },
         "manaCost": 25,
+        "tooltipSource": null,
         "isIllegal": true,
         "iconRef": null
       }
@@ -50,6 +53,7 @@
         "spellName": null,
         "statTypeRef": null,
         "manaCost": 5,
+        "tooltipSource": "Deals 5 Fire Damage to Target",
         "isIllegal": false,
         "iconRef": null
       },
