@@ -48,20 +48,32 @@
 
 <svelte:head><title>Map · Ardenfall Compendium</title></svelte:head>
 
-<div class="grid gap-4 lg:grid-cols-[260px_1fr]">
-  <aside class="space-y-4">
-    <MapSearch {store} />
-    <MapSidebar {store} />
-  </aside>
-  <section class="relative h-[70vh] min-h-[480px] overflow-hidden rounded-lg border">
-    <MapCanvas {store} />
-    <noscript>
-      <p class="p-4">
-        The interactive map requires JavaScript. Browse mapped entities from their linked compendium
-        pages.
-      </p>
-    </noscript>
-  </section>
+<div class="space-y-6">
+  <header>
+    <h1 class="text-2xl font-semibold tracking-tight">Ardenfall map</h1>
+    <p class="text-muted-foreground mt-2 max-w-2xl">
+      Explore locations and portals across the world. The map currently has no basemap, so markers
+      show spatial relationships without terrain or roads.
+    </p>
+  </header>
+
+  <div class="grid gap-4 lg:grid-cols-[260px_1fr]">
+    <aside class="space-y-4">
+      <MapSearch {store} />
+      <MapSidebar {store} />
+    </aside>
+    <section
+      class="border-border relative h-[70vh] min-h-[480px] overflow-hidden rounded-lg border"
+    >
+      <MapCanvas {store} />
+      <noscript>
+        <p class="p-4">
+          The interactive map requires JavaScript. Browse mapped entities from their linked
+          compendium pages.
+        </p>
+      </noscript>
+    </section>
+  </div>
 </div>
 
 <DetailsPanel {store} />

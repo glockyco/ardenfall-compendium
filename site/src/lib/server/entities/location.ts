@@ -190,31 +190,56 @@ function readVolumes(layer: MapLayerConfig): MapVolumeRow[] {
   return rows;
 }
 
+function displayMapLabel(mapId: string | null): string {
+  if (mapId === null) return "Unknown";
+  return mapId.replace(/[-_]+/g, " ").replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
 function computeMaps(points: MapPointRow[], volumes: MapVolumeRow[]): MapSummary[] {
-  const byMap = new Map<string | null, MapBounds | null>();
+  const byMap = new Map<string | null, { bounds: MapBounds | null; contentCount: number }>();
+  const addContent = (mapId: string | null): void => {
+    const previous = byMap.get(mapId);
+    byMap.set(mapId, {
+      bounds: previous?.bounds ?? null,
+      contentCount: (previous?.contentCount ?? 0) + 1,
+    });
+  };
   const extend = (mapId: string | null, x: number, y: number): void => {
-    const prev = byMap.get(mapId) ?? null;
-    const next: MapBounds = prev
+    const previous = byMap.get(mapId);
+    const bounds = previous?.bounds ?? null;
+    const next: MapBounds = bounds
       ? {
-          minX: Math.min(prev.minX, x),
-          minY: Math.min(prev.minY, y),
-          maxX: Math.max(prev.maxX, x),
-          maxY: Math.max(prev.maxY, y),
+          minX: Math.min(bounds.minX, x),
+          minY: Math.min(bounds.minY, y),
+          maxX: Math.max(bounds.maxX, x),
+          maxY: Math.max(bounds.maxY, y),
         }
       : { minX: x, minY: y, maxX: x, maxY: y };
-    byMap.set(mapId, next);
+    byMap.set(mapId, { bounds: next, contentCount: previous?.contentCount ?? 0 });
   };
-  for (const p of points) extend(p.mapId, p.position[0], p.position[1]);
-  for (const v of volumes) for (const [x, y] of v.ring) extend(v.mapId, x, y);
+  for (const p of points) {
+    addContent(p.mapId);
+    extend(p.mapId, p.position[0], p.position[1]);
+  }
+  for (const v of volumes) {
+    addContent(v.mapId);
+    for (const [x, y] of v.ring) extend(v.mapId, x, y);
+  }
   return [...byMap.entries()]
     .sort((a, b) => {
-      // Named maps first, the null/"Unknown" group last, then alphabetical.
+      if (a[1].contentCount !== b[1].contentCount) {
+        return b[1].contentCount - a[1].contentCount;
+      }
       if (a[0] === b[0]) return 0;
       if (a[0] === null) return 1;
       if (b[0] === null) return -1;
       return a[0].localeCompare(b[0]);
     })
-    .map(([mapId, bounds]) => ({ mapId, label: mapId ?? "Unknown", bounds }));
+    .map(([mapId, aggregate]) => ({
+      mapId,
+      label: displayMapLabel(mapId),
+      bounds: aggregate.bounds,
+    }));
 }
 
 export function getMapView(): MapView {

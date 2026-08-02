@@ -13,8 +13,8 @@ describe("item-category read-model accessors", () => {
   it("lists category routes, resolves presentations, and lists category items", async () => {
     const originalCwd = process.cwd();
     const root = mkdtempSync(join(tmpdir(), "ardenfall-site-category-models-"));
-    mkdirSync(join(root, "static"), { recursive: true });
-    const db = new Database(join(root, "static", "data.sqlite"));
+    mkdirSync(join(root, ".data"), { recursive: true });
+    const db = new Database(join(root, ".data", "data.sqlite"));
     db.exec(`
       CREATE TABLE item_category_overview_rows (
         id TEXT PRIMARY KEY,
@@ -121,6 +121,7 @@ describe("item-category read-model accessors", () => {
         showInAllCategory: true,
         columns: [{ label: "Name" }],
         itemCount: 1,
+        routePath: "/categories/weapons--abc12345",
       });
       expect(
         readModels.listItemsByCategory("named;item-category;itemcat_weapons").map((row) => row.id),

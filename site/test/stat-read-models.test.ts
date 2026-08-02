@@ -10,8 +10,8 @@ describe("stat read-model accessors", () => {
   it("lists stat routes and resolves presentation rows by canonical slug", async () => {
     const originalCwd = process.cwd();
     const root = mkdtempSync(join(tmpdir(), "ardenfall-site-stat-models-"));
-    mkdirSync(join(root, "static"), { recursive: true });
-    const db = new Database(join(root, "static", "data.sqlite"));
+    mkdirSync(join(root, ".data"), { recursive: true });
+    const db = new Database(join(root, ".data", "data.sqlite"));
     db.exec(`
       CREATE TABLE stat_type_overview_rows (
         id TEXT PRIMARY KEY,
@@ -46,7 +46,7 @@ describe("stat read-model accessors", () => {
         ('57a70001.fixture-strength', 'Strength', 'attribute', '${iconHash}', '{"r":1,"g":0.5,"b":0.25,"a":1}'),
         ('57a70002.fixture-heavy-armor', 'Heavy Armor', 'skill', NULL, NULL);
       INSERT INTO stat_type_presentation_rows VALUES
-        ('57a70001.fixture-strength', 'Strength', 'attribute', 'stat-type-presentation-v1', '${iconHash}', '{"r":1,"g":0.5,"b":0.25,"a":1}', 'Raw power.', 'Raw power. Affects melee damage.', '["melee-damage"]', '["57a70002.fixture-heavy-armor"]');
+        ('57a70001.fixture-strength', 'Strength', 'attribute', 'stat-type-presentation-v1', '${iconHash}', '{"r":1,"g":0.5,"b":0.25,"a":1}', 'Raw power.', 'Raw power. Affects melee damage.', '[{"label":"Heavy Armor","routePath":"/stats/heavy-armor--def67890"},{"label":"melee-damage","routePath":null}]', '[{"label":"Heavy Armor","routePath":"/stats/heavy-armor--def67890"}]');
       INSERT INTO entity_nodes VALUES
         ('stat-type', '57a70001.fixture-strength', 'Strength', '/stats/strength--abc12345', 'strength--abc12345', 'abc12345', 1),
         ('stat-type', '57a70002.fixture-heavy-armor', 'Heavy Armor', '/stats/heavy-armor--def67890', 'heavy-armor--def67890', 'def67890', 1);
@@ -84,8 +84,12 @@ describe("stat read-model accessors", () => {
         iconColor: "rgba(255, 128, 64, 1)",
         description: "Raw power.",
         longDescription: "Raw power. Affects melee damage.",
-        affects: ["melee-damage"],
-        skillAffects: ["57a70002.fixture-heavy-armor"],
+        affects: [
+          { label: "Heavy Armor", routePath: "/stats/heavy-armor--def67890" },
+          { label: "melee-damage", routePath: null },
+        ],
+        skillAffects: [{ label: "Heavy Armor", routePath: "/stats/heavy-armor--def67890" }],
+        routePath: "/stats/strength--abc12345",
       });
       expect(readModels.getStatTypePresentation("missing--00000000")).toBeUndefined();
     } finally {
@@ -97,8 +101,8 @@ describe("stat read-model accessors", () => {
   it("fails on malformed generated color JSON", async () => {
     const originalCwd = process.cwd();
     const root = mkdtempSync(join(tmpdir(), "ardenfall-site-stat-color-"));
-    mkdirSync(join(root, "static"), { recursive: true });
-    const db = new Database(join(root, "static", "data.sqlite"));
+    mkdirSync(join(root, ".data"), { recursive: true });
+    const db = new Database(join(root, ".data", "data.sqlite"));
     db.exec(`
       CREATE TABLE stat_type_overview_rows (
         id TEXT PRIMARY KEY,

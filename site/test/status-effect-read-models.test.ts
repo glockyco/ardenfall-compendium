@@ -13,8 +13,8 @@ const richText = JSON.stringify({
 
 const seed = () => {
   const root = mkdtempSync(join(tmpdir(), "ardenfall-site-status-effect-models-"));
-  mkdirSync(join(root, "static"), { recursive: true });
-  const db = new Database(join(root, "static", "data.sqlite"));
+  mkdirSync(join(root, ".data"), { recursive: true });
+  const db = new Database(join(root, ".data", "data.sqlite"));
   db.exec(`
     CREATE TABLE status_effect_overview_rows (
       id TEXT PRIMARY KEY,
@@ -41,11 +41,11 @@ const seed = () => {
     );
     INSERT INTO status_effect_overview_rows VALUES
       ('guid-bleed-resistance', 'Bleed Resistance', 0),
-      ('guid-hostile-curse', 'Hostile Curse', 1);
+      ('guid-hostile-curse', 'Unnamed status effect', 1);
     INSERT INTO status_effect_presentation_rows VALUES
       ('guid-bleed-resistance', 'Bleed Resistance', 'status-effect-presentation-v1', 0,
        'Adds 1% Bleed Damage Resistance to Target over 1 Seconds', '${richText}'),
-      ('guid-hostile-curse', 'Hostile Curse', 'status-effect-presentation-v1', 1, NULL, NULL);
+      ('guid-hostile-curse', 'Unnamed status effect', 'status-effect-presentation-v1', 1, NULL, NULL);
     INSERT INTO entity_nodes VALUES
       ('status-effect', 'guid-bleed-resistance', 'Bleed Resistance',
        '/status-effects/bleed-resistance--abc12345', 'bleed-resistance--abc12345', 'abc12345', 1),
@@ -78,12 +78,16 @@ describe("status-effect read-model accessors", () => {
         {
           id: "guid-bleed-resistance",
           name: "Bleed Resistance",
+          descriptionSummary: "Adds 1% Bleed Damage Resistance",
+          displayName: "Bleed Resistance",
           isHostile: false,
           routePath: "/status-effects/bleed-resistance--abc12345",
         },
         {
           id: "guid-hostile-curse",
-          name: "Hostile Curse",
+          name: "Unnamed status effect",
+          descriptionSummary: null,
+          displayName: "Unnamed status effect · guid-hostile-curse",
           isHostile: true,
           routePath: "/status-effects/hostile-curse--def67890",
         },
@@ -103,7 +107,10 @@ describe("status-effect read-model accessors", () => {
           nodes: [{ type: "text", text: "Adds 1% Bleed Damage Resistance" }],
           diagnostics: [],
         },
+        descriptionText: "Adds 1% Bleed Damage Resistance",
+        displayName: "Bleed Resistance",
         isHostile: false,
+        routePath: "/status-effects/bleed-resistance--abc12345",
       });
     });
   });
@@ -112,10 +119,13 @@ describe("status-effect read-model accessors", () => {
     await withSeed((readModels) => {
       expect(readModels.getStatusEffectPresentation("hostile-curse--def67890")).toEqual({
         id: "guid-hostile-curse",
-        name: "Hostile Curse",
+        name: "Unnamed status effect",
         renderContext: "status-effect-presentation-v1",
         description: null,
+        descriptionText: null,
+        displayName: "Unnamed status effect · guid-hostile-curse",
         isHostile: true,
+        routePath: "/status-effects/hostile-curse--def67890",
       });
     });
   });

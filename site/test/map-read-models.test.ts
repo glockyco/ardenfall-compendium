@@ -9,7 +9,7 @@ import { join } from "node:path";
  *
  * Tests `process.chdir` into it and then `await import` the read-model module:
  * the import must happen after the chdir because the module resolves
- * `static/data.sqlite` relative to the working directory at load time, so a
+ * `.data/data.sqlite` relative to the working directory at load time, so a
  * static import would bind to the wrong database.
  */
 function withDb(seed: (db: Database) => void): string {
@@ -17,8 +17,8 @@ function withDb(seed: (db: Database) => void): string {
     tmpdir(),
     `ardenfall-map-models-${process.pid}-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
   );
-  mkdirSync(join(root, "static"), { recursive: true });
-  const db = new Database(join(root, "static", "data.sqlite"));
+  mkdirSync(join(root, ".data"), { recursive: true });
+  const db = new Database(join(root, ".data", "data.sqlite"));
   seed(db);
   db.close();
   return root;
@@ -121,7 +121,7 @@ describe("getMapView", () => {
       expect(view.maps).toEqual([
         {
           mapId: "ardenfall",
-          label: "ardenfall",
+          label: "Ardenfall",
           bounds: { minX: 10, minY: 6, maxX: 14, maxY: 10 },
         },
       ]);

@@ -3,6 +3,7 @@ import type { MapLayerConfig, MapPointRow, MapVolumeRow, RenderKind } from "./ty
 export interface MapUiFilters {
   hiddenLayers: string[];
   showDebug: boolean;
+  selected?: string | null;
 }
 
 export type LayerSpecKind = "scatterplot" | "polygon";
@@ -15,6 +16,7 @@ export interface LayerSpec {
   visible: boolean;
   fillColor: [number, number, number, number];
   radius?: number;
+  selectedNodeShortId?: string | null;
   pickable: boolean;
 }
 
@@ -63,6 +65,7 @@ export function buildEntityLayerSpecs(
         visible,
         fillColor: layer.fillColor,
         radius: layer.radius ?? 6,
+        selectedNodeShortId: ui.selected ?? null,
         pickable: true,
       });
     }

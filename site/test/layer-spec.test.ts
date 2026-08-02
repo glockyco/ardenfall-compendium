@@ -64,6 +64,15 @@ describe("buildEntityLayerSpecs", () => {
     expect(scatter.radius).toBe(6);
   });
 
+  it("marks the selected point for a distinct canvas treatment", () => {
+    const specs = buildEntityLayerSpecs(layer, [point("a"), point("b")], [], {
+      ...baseUi,
+      selected: "b",
+    });
+    const scatter = specs.find((s) => s.kind === "scatterplot")!;
+    expect(scatter.selectedNodeShortId).toBe("b");
+  });
+
   it("hides debug-only points unless showDebug is set", () => {
     const rows = [point("a"), point("b", { debugOnly: true })];
     expect(pointData(buildEntityLayerSpecs(layer, rows, [], baseUi)).map((r) => r.id)).toEqual([

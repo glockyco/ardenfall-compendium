@@ -6,8 +6,8 @@ import { join } from "node:path";
 
 const seed = () => {
   const root = mkdtempSync(join(tmpdir(), "ardenfall-site-spell-models-"));
-  mkdirSync(join(root, "static"), { recursive: true });
-  const db = new Database(join(root, "static", "data.sqlite"));
+  mkdirSync(join(root, ".data"), { recursive: true });
+  const db = new Database(join(root, ".data", "data.sqlite"));
   db.exec(`
     CREATE TABLE spell_overview_rows (
       id TEXT PRIMARY KEY,
@@ -114,6 +114,8 @@ describe("spell read-model accessors", () => {
           ],
           diagnostics: [],
         },
+        descriptionText: "Deals 10 damage",
+        routePath: "/spells/fire-shield--abc12345",
       });
       expect(readModels.getSpellPresentation("missing--00000000")).toBeUndefined();
     } finally {
@@ -137,6 +139,8 @@ describe("spell read-model accessors", () => {
         manaCost: 4,
         isIllegal: true,
         description: null,
+        descriptionText: null,
+        routePath: "/spells/shadow-step--def67890",
       });
     } finally {
       process.chdir(originalCwd);

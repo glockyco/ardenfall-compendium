@@ -10,8 +10,8 @@ describe("item-tag read-model accessors", () => {
   it("lists tag routes, resolves presentations, and lists tagged items", async () => {
     const originalCwd = process.cwd();
     const root = mkdtempSync(join(tmpdir(), "ardenfall-site-tag-models-"));
-    mkdirSync(join(root, "static"), { recursive: true });
-    const db = new Database(join(root, "static", "data.sqlite"));
+    mkdirSync(join(root, ".data"), { recursive: true });
+    const db = new Database(join(root, ".data", "data.sqlite"));
     db.exec(`
       CREATE TABLE item_tag_overview_rows (
         id TEXT PRIMARY KEY,
@@ -117,6 +117,7 @@ describe("item-tag read-model accessors", () => {
         renderContext: "item-tag-presentation-v1",
         description: "Incredibly valuable remedy",
         itemCount: 1,
+        routePath: "/tags/valuable-remedy--abc12345",
       });
       expect(
         readModels.listItemsByTag("7a600001.fixture-tag-valuable-remedy").map((row) => row.id),

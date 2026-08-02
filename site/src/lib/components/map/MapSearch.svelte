@@ -15,11 +15,12 @@
   );
 </script>
 
-<div class="rounded-lg border p-4">
+<div class="border-border rounded-lg border p-4">
   <label class="block">
     <span class="sr-only">Search map markers</span>
     <input
-      class="w-full rounded border px-2 py-1"
+      id="map-search"
+      class="border-input-border w-full rounded border px-3 py-2"
       placeholder="Search map markers…"
       bind:value={query}
     />
@@ -29,7 +30,7 @@
       {#each results as r (r.id)}
         <li>
           <button
-            class="hover:text-foreground w-full text-left"
+            class="hover:text-foreground min-h-11 w-full py-2 text-left"
             onclick={() => store.select(r.nodeShortId)}
           >
             {r.name}
