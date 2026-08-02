@@ -373,6 +373,23 @@ Item's descriptor-built DDL and the five fixed constants are the same field rath
 
 **Verification evidence:** confirmed a pure refactor against the fixture artifact — 54 tables before and after, none added or removed, no row count changed, identical public node and edge distributions.
 
+### Descriptions for spells and status effects
+
+**Status:** done
+**Spec coverage:** investment-priorities §4.
+
+**Delivers:** the text that says what a spell or a status effect actually does, plus `status-effect` as an entity. Live: 172 status effects of which 149 describe themselves, and 38 of 56 spells.
+
+Spell pages had shipped with a governing skill and a base mana cost and nothing else, so a reader learned nothing. The game holds the text and it is reachable at extraction time, which a probe settled before any code was written.
+
+**Both descriptions carry a caveat, because without one they mislead.** A spell's text is generated at level 1, while a real cast derives its level from the player's Intelligence and governing skill, so its numbers are a sample. A status effect's strength and duration are authored on each *reference* to it rather than on the effect, so the same effect lands differently depending on what applied it. Neither is a detail: presenting either number bare would state a specific case as a general fact.
+
+**Tooltips carry the game's markup** and go through the same rich-text translator item descriptions use, including the master tooltip vocabulary. Spell and status tooltips extend the same tooltip infrastructure, so that vocabulary belongs to the shared layer rather than to items, and withholding it would render identical strings differently depending on which entity produced them.
+
+**Deliberately excluded:** the effect graph. Both spell effects and status effect payloads are polymorphic Odin-serialized lists, and they are what would link a spell to the status effect it applies. That link is the natural next depth increment and it is a slice, not a field.
+
+**Notable:** adding status effects took one `entityRegistry` entry, the third entity since the dispatch refactor and the third time it held. Their read models carry no icon column, because an icon hash comes from an asset extraction plan they do not have, so the column could only ever be null.
+
 ### Spells, and the diagnostics that hid them
 
 **Status:** done
@@ -410,7 +427,7 @@ A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.1
 | `Item.ItemTag` | 28 | 28 | yes | `lookupAsset` |
 | `StatType` | 21 | **0** | yes | `namedAsset` |
 | `ItemCategory` | 7 | **0** | yes | `namedAsset` |
-| `StatusEffectData` | 172 | 172 | **no** | `lookupAsset` |
+| `StatusEffectData` | 172 | 172 | yes | `lookupAsset` |
 | `SpellData` | 56 | **0** | yes | `namedAsset` |
 | `Faction` | 48 | 48 | **no** | `lookupAsset` |
 | `PerkAsset` | 18 | 18 | **no** | `lookupAsset` |
@@ -443,7 +460,7 @@ Ordered by reader value against extraction cost, now that registration is known 
 
 1. ~~Portal connectivity~~ — **done.** See "Portal connectivity and honest portal names" below.
 2. ~~Spells~~ — **done.** See "Spells, and the diagnostics that hid them" below.
-3. **Status effects.** 172 assets, already registered. Referenced by spells, consumables, throwing potions, and perks, so it multiplies the value of both the spell slice and the existing item pages.
+3. ~~Status effects~~ — **done.** Shipped together with spell descriptions, since both hang off the same tooltip mechanism. See below.
 4. **Characters / NPCs.** 212 definitions and 314 placed instances across both maps. The largest body of placed content in the game. The vendor role is excluded on evidence — see the note below.
 5. **Traits, perks, factions.** 17, 18, and 48 assets, all registered, all authored, all currently invisible. Small and independent of one another.
 6. **Loot provenance.** `ItemListAsset` and the counted and leveled wrappers. The highest reader value of anything here, because it answers where an item comes from, and the largest modelling job because the structure is a weighted nested graph rather than a flat table.
