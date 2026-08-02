@@ -6,6 +6,27 @@ import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { validateDescriptorCoverage } from "$pipeline/entities/registry";
 
 describe("loadDescriptors", () => {
+  it("loads all six committed entity descriptors", async () => {
+    const result = await loadDescriptors.run(
+      {},
+      {
+        workspaceRoot: ".",
+        snapshotDir: "",
+        outDir: "",
+        log: () => undefined,
+      },
+    );
+
+    expect(Object.keys(result.entities).sort()).toEqual([
+      "item",
+      "item-category",
+      "item-tag",
+      "location",
+      "portal",
+      "stat-type",
+    ]);
+  });
+
   it("loads the item descriptor + variants from entities/", async () => {
     const result = await loadDescriptors.run(
       {},
@@ -242,6 +263,39 @@ describe("loadDescriptors", () => {
     }
   });
 
+  it("rejects definition blocks on definition descriptors", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-kind-conditional-"));
+    try {
+      const entityDir = join(root, "entities", "thing");
+      mkdirSync(entityDir, { recursive: true });
+      writeFileSync(
+        join(entityDir, "entity.json"),
+        `${JSON.stringify(
+          {
+            $schema: "../../schemas/entity.schema.json",
+            id: "thing",
+            kind: "definition",
+            label: { singular: "Thing", plural: "Things" },
+            extraction: { source: "lookupAsset", root: "Thing.Root" },
+            definition: { entity: "thing", via: "definitionRef" },
+            fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
+            map: null,
+          },
+          null,
+          2,
+        )}\n`,
+      );
+
+      expect(() =>
+        loadDescriptors.run(
+          {},
+          { workspaceRoot: root, snapshotDir: "", outDir: "", log: () => undefined },
+        ),
+      ).toThrow(/invalid entity descriptor[\s\S]*boolean schema is false/);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
   it("rejects public descriptors without a route", async () => {
     const root = mkdtempSync(join(tmpdir(), "ardenfall-missing-route-"));
     try {

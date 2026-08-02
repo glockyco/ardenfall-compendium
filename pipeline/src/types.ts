@@ -4,7 +4,7 @@ export type VariantId = string & { readonly __brand: "VariantId" };
 export interface EntityDescriptor {
   $schema?: string;
   id: string;
-  kind: "definition" | "instance" | "role";
+  kind: "definition" | "instance";
   label: { singular: string; plural: string };
   extraction: {
     source: "lookupAsset" | "record" | "scene";
@@ -14,9 +14,6 @@ export interface EntityDescriptor {
   };
   definition?: { entity: string; via: string };
   placement?: { kind: "point" | "volume" | "point+volume"; from: string };
-  facetOf?: string;
-  predicate?: string;
-  placementVia?: string;
   presentationContext?: { renderContext: string };
   fields: FieldSpec[];
   variants?: { dir: string; registry?: string };

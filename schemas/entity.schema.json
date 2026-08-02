@@ -8,7 +8,7 @@
   "properties": {
     "$schema": { "type": "string" },
     "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "kind": { "enum": ["definition", "instance", "role"] },
+    "kind": { "enum": ["definition", "instance"] },
     "label": {
       "type": "object",
       "additionalProperties": false,
@@ -30,6 +30,7 @@
       }
     },
     "definition": {
+      "description": "Optional for instances without a separate definition asset, such as portals.",
       "type": "object",
       "additionalProperties": false,
       "required": ["entity", "via"],
@@ -47,9 +48,6 @@
         "from": { "type": "string", "minLength": 1 }
       }
     },
-    "facetOf": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "predicate": { "type": "string", "minLength": 1 },
-    "placementVia": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
     "presentationContext": {
       "type": "object",
       "additionalProperties": false,
@@ -94,6 +92,26 @@
       "default": null
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "required": ["kind"],
+        "properties": { "kind": { "const": "definition" } }
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "definition": false,
+          "placement": {
+            "type": "object",
+            "properties": {
+              "from": { "not": { "const": "transform" } }
+            }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "field": {
       "type": "object",
