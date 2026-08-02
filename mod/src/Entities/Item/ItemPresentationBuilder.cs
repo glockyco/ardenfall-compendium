@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using ArdenfallCompendium.Dtos;
@@ -38,10 +37,9 @@ public static class ItemPresentationBuilder
             Requirements = BuildRequirements(fields),
             Durability = BuildDurability(fields),
             StateFacts = BuildStateFacts(fields),
-            Omissions = BuildOmissions(variantId),
             Value = IntField(fields, "value"),
             Weight = FloatField(fields, "weight"),
-            Diagnostics = BuildDiagnostics(effects),
+            Diagnostics = BuildDiagnostics(effects, fields),
         };
     }
 
@@ -143,20 +141,6 @@ public static class ItemPresentationBuilder
         return facts;
     }
 
-    private static List<ItemPresentationOmissionSnapshot> BuildOmissions(string variantId)
-    {
-        if (!RequiresEquippedComparison(variantId)) return new List<ItemPresentationOmissionSnapshot>();
-        return new List<ItemPresentationOmissionSnapshot>
-        {
-            new()
-            {
-                Code = "equippedComparisonOmitted",
-                Severity = "diagnostic",
-                Message = "Equipped comparison requires player inventory state.",
-            },
-        };
-    }
-
     private static List<ItemPresentationEffectSnapshot> BuildEffects(IReadOnlyDictionary<string, object?> fields)
     {
         var effects = new List<ItemPresentationEffectSnapshot>();
@@ -186,16 +170,6 @@ public static class ItemPresentationBuilder
             });
         }
 
-        if (fields.ContainsKey("statusEffectsJson"))
-        {
-            effects.Add(new ItemPresentationEffectSnapshot
-            {
-                Kind = "status-effect",
-                Label = "Status effects",
-                TargetType = "status-effect",
-                Source = "statusEffectsJson",
-            });
-        }
         return effects;
     }
 
@@ -214,7 +188,9 @@ public static class ItemPresentationBuilder
         return "Applies status effects";
     }
 
-    private static List<ItemPresentationDiagnosticSnapshot> BuildDiagnostics(IEnumerable<ItemPresentationEffectSnapshot> effects)
+    private static List<ItemPresentationDiagnosticSnapshot> BuildDiagnostics(
+        IEnumerable<ItemPresentationEffectSnapshot> effects,
+        IReadOnlyDictionary<string, object?> fields)
     {
         var diagnostics = new List<ItemPresentationDiagnosticSnapshot>();
         foreach (var effect in effects)
@@ -229,16 +205,17 @@ public static class ItemPresentationBuilder
                 });
             }
         }
+        if (fields.ContainsKey("statusEffectsJson"))
+        {
+            diagnostics.Add(new ItemPresentationDiagnosticSnapshot
+            {
+                Code = "unresolvedEffectTarget",
+                Field = "presentation.effects",
+                Message = "Effect 'Status effects' does not have a resolved status-effect target.",
+            });
+        }
         return diagnostics;
     }
-
-    private static bool RequiresEquippedComparison(string variantId) =>
-        variantId.Contains("weapon", StringComparison.Ordinal) ||
-        variantId.Contains("armor", StringComparison.Ordinal) ||
-        variantId.Contains("hand", StringComparison.Ordinal) ||
-        variantId == "slate-spell" ||
-        variantId == "throwing-item" ||
-        variantId == "throwing-potion";
 
     private static string TitleCaseVariant(string variantId)
     {

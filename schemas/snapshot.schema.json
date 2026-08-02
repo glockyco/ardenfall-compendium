@@ -130,7 +130,6 @@
         "requirements",
         "durability",
         "stateFacts",
-        "omissions",
         "value",
         "weight",
         "diagnostics"
@@ -192,12 +191,6 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/itemPresentationStateFact"
-          }
-        },
-        "omissions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/itemPresentationOmission"
           }
         },
         "value": {
@@ -327,22 +320,6 @@
           "type": "string"
         },
         "description": {
-          "type": "string"
-        }
-      }
-    },
-    "itemPresentationOmission": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["code", "severity", "message"],
-      "properties": {
-        "code": {
-          "type": "string"
-        },
-        "severity": {
-          "enum": ["diagnostic"]
-        },
-        "message": {
           "type": "string"
         }
       }

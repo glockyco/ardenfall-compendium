@@ -158,7 +158,6 @@ export interface ItemPresentationSnapshot {
   requirements: ItemPresentationRequirement[];
   durability: ItemPresentationDurability | null;
   stateFacts: ItemPresentationStateFact[];
-  omissions: ItemPresentationOmission[];
   value: number | null;
   weight: number | null;
   diagnostics: ItemPresentationDiagnostic[];
@@ -201,12 +200,6 @@ export interface ItemPresentationStateFact {
   kind: string;
   label: string;
   description: string;
-}
-
-export interface ItemPresentationOmission {
-  code: string;
-  severity: "diagnostic";
-  message: string;
 }
 
 export interface ItemPresentationDiagnostic {

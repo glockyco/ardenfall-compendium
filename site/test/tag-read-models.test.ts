@@ -57,7 +57,6 @@ describe("item-tag read-model accessors", () => {
         requirements_json TEXT NOT NULL,
         durability_json TEXT,
         state_facts_json TEXT NOT NULL,
-        omissions_json TEXT NOT NULL,
         value INTEGER,
         weight REAL,
         diagnostics_json TEXT NOT NULL
@@ -81,7 +80,7 @@ describe("item-tag read-model accessors", () => {
       INSERT INTO item_overview_rows VALUES
         ('6a71c0de.fixture-stamina-draught', 'Stamina Draught', 0.25, 9, 'consumable', NULL, NULL);
       INSERT INTO item_presentation_rows VALUES
-        ('6a71c0de.fixture-stamina-draught', 'Stamina Draught', 'consumable', 'Consumable', 'item-presentation-v1', NULL, NULL, '', '${richText}', '', '${richText}', '[]', '[]', '[]', NULL, '[]', '[]', 9, 0.25, '[]');
+        ('6a71c0de.fixture-stamina-draught', 'Stamina Draught', 'consumable', 'Consumable', 'item-presentation-v1', NULL, NULL, '', '${richText}', '', '${richText}', '[]', '[]', '[]', NULL, '[]', 9, 0.25, '[]');
       INSERT INTO item_tag_refs VALUES
         ('6a71c0de.fixture-stamina-draught', '7a600001.fixture-tag-valuable-remedy');
       INSERT INTO entity_nodes VALUES

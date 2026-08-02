@@ -58,7 +58,6 @@ public sealed class ItemPresentationTests
             row.Id == "minimum-skill" && row.Label == "Strength" && row.ValueText == "5");
         Assert.Equal(100, presentation.Durability?.Max);
         Assert.DoesNotContain(presentation.StateFacts, fact => fact.Kind == "canonical-state");
-        Assert.Contains(presentation.Omissions, omission => omission.Code == "equippedComparisonOmitted");
     }
 
     [Fact]

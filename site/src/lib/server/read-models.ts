@@ -53,7 +53,6 @@ export type {
   ItemPresentationDiagnostic,
   ItemPresentationDurability,
   ItemPresentationEffect,
-  ItemPresentationOmission,
   ItemPresentationRequirement,
   ItemPresentationRow,
   ItemPresentationStateFact,

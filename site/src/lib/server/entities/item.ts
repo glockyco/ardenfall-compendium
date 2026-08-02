@@ -43,7 +43,6 @@ interface ItemPresentationRecord {
   requirements_json: string;
   durability_json: string | null;
   state_facts_json: string;
-  omissions_json: string;
   value: number | null;
   weight: number | null;
   diagnostics_json: string;
@@ -76,7 +75,6 @@ export interface ItemPresentationRow {
   requirements: ItemPresentationRequirement[];
   durability: ItemPresentationDurability | null;
   stateFacts: ItemPresentationStateFact[];
-  omissions: ItemPresentationOmission[];
   value: number | null;
   weight: number | null;
   diagnostics: ItemPresentationDiagnostic[];
@@ -143,12 +141,6 @@ export interface ItemPresentationStateFact {
   kind: string;
   label: string;
   description: string;
-}
-
-export interface ItemPresentationOmission {
-  code: string;
-  severity: "diagnostic";
-  message: string;
 }
 
 export interface ItemPresentationDiagnostic {
@@ -225,7 +217,6 @@ const toItemPresentationRow = (row: ItemPresentationRecord): ItemPresentationRow
     ? (JSON.parse(row.durability_json) as ItemPresentationDurability)
     : null,
   stateFacts: JSON.parse(row.state_facts_json) as ItemPresentationStateFact[],
-  omissions: JSON.parse(row.omissions_json) as ItemPresentationOmission[],
   value: row.value,
   weight: row.weight,
   diagnostics: JSON.parse(row.diagnostics_json) as ItemPresentationDiagnostic[],

@@ -137,7 +137,7 @@ describe("emitItemReadModels", () => {
 
     const presentation = db
       .query(
-        "SELECT id, render_context, description_rich_text_json, stat_rows_json, effect_facts_json FROM item_presentation_rows WHERE id = '6a71c0de.fixture-stamina-draught'",
+        "SELECT id, render_context, description_rich_text_json, stat_rows_json, effect_facts_json, diagnostics_json FROM item_presentation_rows WHERE id = '6a71c0de.fixture-stamina-draught'",
       )
       .get() as {
       id: string;
@@ -145,6 +145,7 @@ describe("emitItemReadModels", () => {
       description_rich_text_json: string;
       stat_rows_json: string;
       effect_facts_json: string;
+      diagnostics_json: string;
     };
     expect(presentation.render_context).toBe("item-presentation-v1");
     const richDescription = JSON.parse(presentation.description_rich_text_json);
@@ -156,8 +157,12 @@ describe("emitItemReadModels", () => {
     );
     expect(JSON.stringify(richDescription.nodes)).toContain("/terms/stamina");
     expect(JSON.parse(presentation.stat_rows_json)).toEqual([]);
-    expect(JSON.parse(presentation.effect_facts_json)).toContainEqual(
-      expect.objectContaining({ kind: "status-effect", label: "Status effects" }),
+    expect(JSON.parse(presentation.effect_facts_json)).toEqual([]);
+    expect(JSON.parse(presentation.diagnostics_json)).toContainEqual(
+      expect.objectContaining({
+        code: "unresolvedEffectTarget",
+        message: "Effect 'Status effects' does not have a resolved status-effect target.",
+      }),
     );
 
     const variantSection = db

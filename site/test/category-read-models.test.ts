@@ -61,7 +61,6 @@ describe("item-category read-model accessors", () => {
         requirements_json TEXT NOT NULL,
         durability_json TEXT,
         state_facts_json TEXT NOT NULL,
-        omissions_json TEXT NOT NULL,
         value INTEGER,
         weight REAL,
         diagnostics_json TEXT NOT NULL
@@ -85,7 +84,7 @@ describe("item-category read-model accessors", () => {
         ('4ed20218.fixture-iron-sword', 'Iron Sword', 3.5, 25, 'melee-weapon', '${iconHash}', '${categoryColor}'),
         ('fixture-training-dagger', 'Training Dagger', 1.5, 5, 'melee-weapon', '${iconHash}', '${categoryColor}');
       INSERT INTO item_presentation_rows VALUES
-        ('4ed20218.fixture-iron-sword', 'Iron Sword', 'melee-weapon', 'Melee weapon', 'item-presentation-v1', '${iconHash}', '${categoryColor}', '', '${richText}', '', '${richText}', '[]', '[]', '[]', NULL, '[]', '[]', 25, 3.5, '[]');
+        ('4ed20218.fixture-iron-sword', 'Iron Sword', 'melee-weapon', 'Melee weapon', 'item-presentation-v1', '${iconHash}', '${categoryColor}', '', '${richText}', '', '${richText}', '[]', '[]', '[]', NULL, '[]', 25, 3.5, '[]');
       INSERT INTO items VALUES
         ('4ed20218.fixture-iron-sword', '{"kind":"namedAsset","entity":"item-category","name":"itemcat_weapons"}', 'Weapons'),
         ('fixture-training-dagger', '{"kind":"missing","reason":"lookupAssetGuidMissing"}', 'Weapons');

@@ -18,7 +18,6 @@ public sealed class ItemPresentationSnapshot
     [JsonProperty("requirements")] public List<ItemPresentationRequirementSnapshot> Requirements { get; init; } = new();
     [JsonProperty("durability")] public ItemPresentationDurabilitySnapshot? Durability { get; init; }
     [JsonProperty("stateFacts")] public List<ItemPresentationStateFactSnapshot> StateFacts { get; init; } = new();
-    [JsonProperty("omissions")] public List<ItemPresentationOmissionSnapshot> Omissions { get; init; } = new();
     [JsonProperty("value")] public int? Value { get; init; }
     [JsonProperty("weight")] public float? Weight { get; init; }
     [JsonProperty("diagnostics")] public List<ItemPresentationDiagnosticSnapshot> Diagnostics { get; init; } = new();
@@ -66,13 +65,6 @@ public sealed class ItemPresentationStateFactSnapshot
     [JsonProperty("kind")] public string Kind { get; init; } = "";
     [JsonProperty("label")] public string Label { get; init; } = "";
     [JsonProperty("description")] public string Description { get; init; } = "";
-}
-
-public sealed class ItemPresentationOmissionSnapshot
-{
-    [JsonProperty("code")] public string Code { get; init; } = "";
-    [JsonProperty("severity")] public string Severity { get; init; } = "diagnostic";
-    [JsonProperty("message")] public string Message { get; init; } = "";
 }
 
 public sealed class ItemPresentationDiagnosticSnapshot

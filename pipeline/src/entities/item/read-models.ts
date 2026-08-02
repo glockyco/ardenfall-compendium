@@ -40,7 +40,6 @@ CREATE TABLE item_presentation_rows (
   requirements_json           TEXT NOT NULL,
   durability_json             TEXT,
   state_facts_json            TEXT NOT NULL,
-  omissions_json              TEXT NOT NULL,
   value                       INTEGER,
   weight                      REAL,
   diagnostics_json            TEXT NOT NULL
@@ -202,8 +201,8 @@ export function emitItemReadModels(
       id, name, variant, item_type, render_context, display_icon_hash, display_icon_color,
       description_source, description_rich_text_json, effects_source, effects_source_rich_text_json,
       effect_facts_json, stat_rows_json, requirements_json, durability_json, state_facts_json,
-      omissions_json, value, weight, diagnostics_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      value, weight, diagnostics_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const writeNode = prepareEntityNodeWriter(db);
   const aliasInsert = db.prepare(
@@ -284,7 +283,6 @@ export function emitItemReadModels(
         JSON.stringify(presentation.requirements),
         presentation.durability ? JSON.stringify(presentation.durability) : null,
         JSON.stringify(presentation.stateFacts),
-        JSON.stringify(presentation.omissions),
         presentation.value,
         presentation.weight,
         JSON.stringify([

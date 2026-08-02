@@ -85,7 +85,6 @@ const makeItemPresentation = (): ItemPresentationSnapshot => ({
   requirements: [],
   durability: null,
   stateFacts: [],
-  omissions: [],
   value: null,
   weight: null,
   diagnostics: [],

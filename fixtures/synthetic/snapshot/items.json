@@ -105,13 +105,6 @@
             "description": "Base item, no player or inventory context."
           }
         ],
-        "omissions": [
-          {
-            "code": "equippedComparisonOmitted",
-            "severity": "diagnostic",
-            "message": "Equipped comparison requires player inventory state."
-          }
-        ],
         "value": 25,
         "weight": 3.5,
         "diagnostics": []
@@ -199,13 +192,6 @@
             "description": "Base item, no player or inventory context."
           }
         ],
-        "omissions": [
-          {
-            "code": "equippedComparisonOmitted",
-            "severity": "diagnostic",
-            "message": "Equipped comparison requires player inventory state."
-          }
-        ],
         "value": 12,
         "weight": 4,
         "diagnostics": []
@@ -290,16 +276,8 @@
         "itemType": "Consumable",
         "itemTypeSourceMethod": "variant:consumable",
         "descriptionSource": "A <b>small</b> <color=#7CFF8A>draught</color> that restores <link=\"tooltip_stamina\">Stamina</link>.",
-        "effectsSource": "Applies status effects",
-        "effects": [
-          {
-            "kind": "status-effect",
-            "label": "Status effects",
-            "targetType": "status-effect",
-            "targetId": null,
-            "source": "statusEffectsJson"
-          }
-        ],
+        "effectsSource": "",
+        "effects": [],
         "statRows": [],
         "requirements": [],
         "durability": null,
@@ -310,7 +288,6 @@
             "description": "Base item, no player or inventory context."
           }
         ],
-        "omissions": [],
         "value": 9,
         "weight": 0.25,
         "diagnostics": [
@@ -418,13 +395,6 @@
             "kind": "canonical-state",
             "label": "Canonical compendium state",
             "description": "Base item, no player or inventory context."
-          }
-        ],
-        "omissions": [
-          {
-            "code": "equippedComparisonOmitted",
-            "severity": "diagnostic",
-            "message": "Equipped comparison requires player inventory state."
           }
         ],
         "value": 40,
@@ -556,13 +526,6 @@
             "kind": "potion-use-mode",
             "label": "Throwing potion",
             "description": "Uses throwing potion behavior."
-          }
-        ],
-        "omissions": [
-          {
-            "code": "equippedComparisonOmitted",
-            "severity": "diagnostic",
-            "message": "Equipped comparison requires player inventory state."
           }
         ],
         "value": 18,
