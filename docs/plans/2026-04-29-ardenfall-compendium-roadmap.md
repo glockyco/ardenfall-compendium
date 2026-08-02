@@ -456,23 +456,25 @@ A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.1
 
 **Delivers:** the entities that make the compendium answer more questions. The candidate set is no longer speculative — see the coverage table above, which was measured against the running game.
 
-Ordered by reader value against extraction cost, now that registration is known for every candidate:
+Ordered by measured reader value against cost. The survey at [`2026-08-02-program-survey`](2026-08-02-program-survey.md) supplies the evidence, and it changed this ordering: new entities rank below both connective work and the last mile, because 97% of pages currently have no inbound edge and several shipped defects are reader-visible today.
 
-1. ~~Portal connectivity~~ — **done.** See "Portal connectivity and honest portal names" below.
-2. ~~Spells~~ — **done.** See "Spells, and the diagnostics that hid them" below.
-3. ~~Status effects~~ — **done.** Shipped together with spell descriptions, since both hang off the same tooltip mechanism. See below.
-4. **Connect items to status effects.** The compendium now has far more nodes than edges, and the imbalance is stark: 172 status-effect pages have **zero** inbound edges, so they are reachable only by browsing their index. Meanwhile the item presentation already emits a `status-effect` fact whose `targetId` is null, and the mod already resolves the reference to a real GUID. The slot was built for this link and left empty because status effects were not an entity yet. Filling it needs no new extraction, makes 172 orphan pages reachable, and enriches item pages both ways. Cheapest real connection available.
-5. **Connect spells to status effects.** The same relationship from the harder side. It lives in the polymorphic Odin-serialized effect graph, so it is a slice rather than a field, and it is also what would give the 18 tooltip-less spells their meaning: `Fortify Strength` has no text of its own because its meaning *is* the effect it applies.
-6. **Characters / NPCs.** 212 definitions and 314 placed instances across both maps, the largest body of placed content in the game. Ranked below the connective work deliberately, because it adds another island of nodes to a graph that does not yet join up. The vendor role is excluded on evidence — see the note below.
-7. **Item tags, properly.** Already shipped as browsable pages, but understated: tags feed item effect tooltips, match potion recipe ingredients, and `FactionItemTag` modifiers alter faction standing from equipped gear. The extractor emits only name and description, dropping the only structured subtype payload the game has.
-8. **Traits, perks, factions.** 17, 18, and 48 assets, all registered, all authored, all currently invisible. Small and independent of one another.
-9. **Loot provenance.** `ItemListAsset` and the counted and leveled wrappers. The highest reader value of anything on this list, because it answers where an item comes from, and the largest modelling job because the structure is a weighted nested graph rather than a flat table.
-10. **Quests and journal text.** First-class assets with authored phases and objectives, with runtime progress correctly out of scope.
-11. **Monsters and the rest of the placed world.** Resource nodes, points of interest, and lore markers, each earning a slice only once something links to it.
+**Correctness of what already ships.** The site draws transparent cards, the map draws white borders, 967 item pages render an empty Description heading, and every non-item 404 claims an item was missing. Most are trivial fixes. They come first because they are wrong now, on pages already published.
 
-Each candidate ships data plus its integration, and some earn a follow-up presentation slice. The ordering rule that emerged this session: **a new entity is worth less than an edge to an existing one.** Nodes without edges are a catalogue nobody can navigate.
+**Honest gaps, rendered.** 833 items carry omission data and 496 carry diagnostics, all of it emitted by the pipeline and displayed nowhere. The project's principle is to ship gaps honestly and the last step was never taken.
 
-Tile capture sits outside this ordering. It is not an entity and adds no edges, but it is the only thing that makes the placed content already extracted legible, and it settles the projection question as a side effect.
+**Edges.**
+
+1. **Items to status effects.** 231 references across 212 items, `targetId` null on every one, the resolved ref sitting two functions from the slot that needs it. Makes 172 orphan pages reachable and enriches 212 item pages both ways.
+2. **Stat types to stat types.** 16 of 28 `affects` labels already match a stat page by name and none are links.
+3. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference.
+
+**Search.** No site search exists and no FTS table ships. Pagefind runs after prerender and needs no extraction work. Until it exists, crawlers are the only discovery path, which is also why the missing sitemap and meta descriptions matter.
+
+**A current release.** Nothing has been published since 2026-06-05, four entities ago. The path is proven, the blocker was only that old artifacts predate the count contract.
+
+**Then the map.** Tile capture makes 400 extracted markers legible. It is specced and sized, and it deliberately follows the connective work.
+
+**Then new content**, in this order once things link: characters and NPCs, loot provenance through `ItemListAsset`, traits and perks and factions, recipes, quests. Each adds nodes, so each is worth more after the graph and search exist than before.
 
 ### Tile capture
 
