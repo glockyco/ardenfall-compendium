@@ -328,28 +328,20 @@ This slice migrates the existing location map data onto the generalized placemen
 
 ### Slice 7.5 — Asset identity for unregistered definition types
 
-**Status:** ready
+**Status:** done
 **Spec coverage:** baseline §10; investment-priorities §1.
 
-**Problem.** Two entities with public routes ship no rows, and the primary entity's category link is broken for almost every row. `/stats` and `/categories` render empty from a live export, and 1268 of 1273 items carry an unresolvable `categoryRef`.
+**Delivers:** `namedAsset`, a fourth identity mechanism for definition types that `BuiltLookupTable` does not register, and the stat-type and item-category rows that depend on it.
 
-One root cause explains all three. Extraction reaches definition assets through `BuiltLookupTable`, which assigns the stable GUID identity every canonical row needs. Probed against the running game on 2026-08-02:
+Extraction reaches definition assets through `BuiltLookupTable`, which supplies the stable GUID identity a canonical row needs. Two types were never registered in it, so `GetAssetsOfType` returned nothing and `GetGuid` returned null for them while working correctly for every other type. The assets were loaded and real the whole time. Identity for these types now comes from the asset name, carried as `named;<entityId>;<assetName>` so an id declares which mechanism produced it, the same way record ids do.
 
-| type | present in memory | in `BuiltLookupTable` |
-| --- | --- | --- |
-| `Ardenfall.Item.ItemData` | 1273 | 1273 |
-| `Ardenfall.LocationAsset` | 48 | 48 |
-| `Ardenfall.Item.ItemTag` | 28 | 28 |
-| `Ardenfall.StatType` | **21** | **0** |
-| `Ardenfall.ItemCategory` | **7** | **0** |
+That single gap had produced three symptoms: `/stats` and `/categories` shipped empty, and 1268 of 1273 items carried a `categoryRef` that could not resolve.
 
-`BuiltLookupTable.Instance.GetGuid(...)` returns a GUID for an `ItemTag` and null for a `StatType` or `ItemCategory`. The assets are real and loaded — 21 stat types (`att_strength`, `sk_alchemy`, `sk_armor-heavy`, …) and 7 categories (`itemcat_weapons`, `itemcat_armor`, `itemcat_consumables`, …) — they are simply absent from the identity table the extractor depends on, so `GetAssetsOfType` yields nothing and every reference to them degrades to a `lookupAssetGuidMissing` diagnostic.
+**Verification evidence:** live export on 2026-08-02 against Ardenfall Demo `0.0.10.91` produced `counts.stat-type` 21 and `counts.item-category` 7, both previously zero, with `diagnostics.fatal` 0 and non-fatal diagnostics down from 3044 to 1810 as the category references resolved. All 1273 items now carry a resolvable category, distributed across Spells 280, Armor 261, Consumables 239, Misc 202, Weapons 150, Quest 71, and Notes 65. Stats classify as 5 attributes and 16 skills, and public entity nodes now cover 21 stat types and 7 categories with readable routes such as `/stats/agility--att-agility`.
 
-**Delivers:** a stable identity source for definition types the built lookup table does not register, and the resulting stat-type and item-category rows, restoring `/stats`, `/categories`, and item category linkage. Portals solved the analogous problem by taking identity from the master record table rather than the lookup table; these types need their own equivalent. Their asset names are already unique and stable and are the obvious candidate, but the choice is a durable public identity contract and should be made deliberately.
+**Plan deviations (as built):** stat grouping no longer has a `trait` value. It tested whether a stat id appeared in the master tooltip's skill vocabulary, which lists slugs like `heavy_armor` rather than asset ids, so the test could never pass and every non-attribute stat fell through to `trait`. The tooltip lists traits separately as GUIDs of a different asset type, so a `StatType` is an attribute or a skill and the asset's own `isAttribute` decides. Traits, if they ship, will be their own entity.
 
-**Acceptance criteria:** a live export produces non-zero `counts.stat-type` and `counts.item-category`; `categoryRef` resolves for every item that has a category; `/stats` and `/categories` render real content from a release artifact; and the identity rule for these types is documented in the architecture spec alongside the lookup-asset and record mechanisms.
-
-**Why before Slice 8:** every gate runs against `fixtures/synthetic/`, which carries 2 stat types and 1 category while the live game yields 0 of each. The fixture is more complete than reality, so the whole suite passes green over two empty public sections. Adding a fourth entity on top of that widens the surface without fixing the base. The generalisable guard — a descriptor with a public site route producing zero rows should raise a diagnostic at export time — belongs in this slice.
+**Guard added with the fix:** a descriptor that declares a public site route while its snapshot carries zero rows now raises a diagnostic at export time. This condition went unreported for as long as the two entities existed, because the synthetic fixture supplied rows the live game did not, leaving the whole suite green over two empty public sections.
 
 ### Slice 8+ — Map-supporting entities (game-specific)
 
