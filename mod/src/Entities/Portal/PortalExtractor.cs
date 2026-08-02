@@ -22,6 +22,17 @@ public sealed class PortalExtractor : WalkerBase<PortalSnapshotRow>
     {
         foreach (var record in _source.EnumeratePortals())
         {
+            if (record == null)
+            {
+                Diagnostics.Add(new Diagnostic
+                {
+                    Severity = "fatal",
+                    Code = "portalRecordMissing",
+                    Field = "id",
+                    Message = "Portal record source yielded a null row",
+                });
+                continue;
+            }
             if (string.IsNullOrWhiteSpace(record.Table) || string.IsNullOrWhiteSpace(record.Subtable) || string.IsNullOrWhiteSpace(record.Id))
             {
                 Diagnostics.Add(new Diagnostic

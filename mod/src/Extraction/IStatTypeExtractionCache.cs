@@ -6,7 +6,7 @@ using ArdenfallCompendium.Entities.Item;
 
 namespace ArdenfallCompendium.Extraction;
 
-public interface IStatTypeExtractionCache
+public interface IStatTypeExtractionCache : IExtractionCache
 {
     IReadOnlyList<StatTypeSnapshotRow> GetOrExtract(CompendiumRun run);
 

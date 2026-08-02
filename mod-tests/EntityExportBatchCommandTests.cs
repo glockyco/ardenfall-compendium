@@ -102,6 +102,8 @@ public sealed class EntityExportBatchCommandTests
             _rows = rows;
         }
 
+        public void Evict(CompendiumRun run) { }
+
         public IReadOnlyList<ItemSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
         public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => new();

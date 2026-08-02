@@ -64,6 +64,31 @@ public sealed class ItemCategoryExtractorTests
     }
 
     [Fact]
+    public void DiagnosesNullColumnsInsteadOfThrowing()
+    {
+        var source = new FakeItemCategoryAssetSource(new[]
+        {
+            new ItemCategoryAsset(
+                Guid: "category-malformed",
+                AssetName: "Malformed",
+                CategoryName: "Malformed",
+                Icon: null,
+                DefaultItemIcon: null,
+                CategoryColor: new AssetColorSnapshot(),
+                ShowInAllCategory: true,
+                Columns: null),
+        });
+        var extractor = new ItemCategoryExtractor(source);
+
+        var rows = extractor.Walk().ToList();
+
+        Assert.Single(rows);
+        Assert.Empty(rows[0].Fields.Columns);
+        Assert.Contains(extractor.Diagnostics, d =>
+            d.Code == "itemCategoryColumnsMalformed" && d.Field == "columns" && d.Message.Contains("category-malformed"));
+    }
+
+    [Fact]
     public void CapturesCategoryIconAssetSlots()
     {
         var icon = (Sprite)RuntimeHelpers.GetUninitializedObject(typeof(Sprite));

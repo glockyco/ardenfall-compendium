@@ -28,6 +28,17 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
     {
         foreach (var asset in _source.EnumerateItemCategories())
         {
+            if (asset == null)
+            {
+                Diagnostics.Add(new Diagnostic
+                {
+                    Severity = "fatal",
+                    Code = "itemCategoryAssetMissing",
+                    Field = "id",
+                    Message = "ItemCategory asset source yielded a null row",
+                });
+                continue;
+            }
             var guid = asset.Guid;
             if (string.IsNullOrWhiteSpace(guid))
             {
@@ -54,6 +65,38 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
                 CaptureSlot(guid, "defaultItemIconRef", asset.DefaultItemIcon);
             }
 
+            var columns = asset.Columns;
+            var columnSnapshots = new List<ItemCategoryColumnSnapshot>();
+            if (columns == null)
+            {
+                Diagnostics.Add(new Diagnostic
+                {
+                    Severity = "diagnostic",
+                    Code = "itemCategoryColumnsMalformed",
+                    Field = "columns",
+                    Message = $"ItemCategory '{guid}' has null columns data",
+                });
+            }
+            else
+            {
+                for (var index = 0; index < columns.Count; index++)
+                {
+                    var column = columns[index];
+                    if (column == null)
+                    {
+                        Diagnostics.Add(new Diagnostic
+                        {
+                            Severity = "diagnostic",
+                            Code = "itemCategoryColumnMalformed",
+                            Field = $"columns[{index}]",
+                            Message = $"ItemCategory '{guid}' has null column data at index {index}",
+                        });
+                        continue;
+                    }
+                    columnSnapshots.Add(ToSnapshot(column, guid));
+                }
+            }
+
             yield return new ItemCategorySnapshotRow
             {
                 Id = guid,
@@ -64,7 +107,7 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
                     DefaultItemIconRef: defaultItemIconRef,
                     CategoryColor: asset.CategoryColor,
                     ShowInAllCategory: asset.ShowInAllCategory,
-                    Columns: asset.Columns.Select(column => ToSnapshot(column, guid)).ToList()),
+                    Columns: columnSnapshots),
             };
         }
 

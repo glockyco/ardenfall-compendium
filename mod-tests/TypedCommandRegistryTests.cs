@@ -101,6 +101,8 @@ public sealed class TypedCommandRegistryTests
 
     private sealed class FakeItemExtractionCache : IItemExtractionCache
     {
+        public void Evict(CompendiumRun run) { }
+
         public IReadOnlyList<ItemSnapshotRow> GetOrExtract(CompendiumRun run) =>
             Array.Empty<ItemSnapshotRow>();
 

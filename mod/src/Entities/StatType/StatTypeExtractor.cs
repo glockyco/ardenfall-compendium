@@ -27,6 +27,17 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
     {
         foreach (var asset in _source.EnumerateStatTypes())
         {
+            if (asset == null)
+            {
+                Diagnostics.Add(new Diagnostic
+                {
+                    Severity = "fatal",
+                    Code = "statTypeAssetMissing",
+                    Field = "id",
+                    Message = "StatType asset source yielded a null row",
+                });
+                continue;
+            }
             var guid = asset.Guid;
             if (string.IsNullOrWhiteSpace(guid))
             {

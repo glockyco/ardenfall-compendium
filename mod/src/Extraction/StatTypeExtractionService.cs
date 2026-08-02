@@ -18,6 +18,8 @@ public sealed class StatTypeExtractionService : IStatTypeExtractionCache
 
     public IReadOnlyList<StatTypeSnapshotRow> GetOrExtract(CompendiumRun run) => GetState(run).Rows;
 
+    public void Evict(CompendiumRun run) => _byRun.Remove(run.RunId);
+
     public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => GetState(run).AssetPlan;
 
     public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => GetState(run).WalkerDiagnostics;

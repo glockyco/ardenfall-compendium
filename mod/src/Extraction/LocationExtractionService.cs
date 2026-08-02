@@ -17,6 +17,8 @@ public sealed class LocationExtractionService : ILocationExtractionCache
 
     public IReadOnlyList<LocationSnapshotRow> GetOrExtract(CompendiumRun run) => GetState(run).Rows;
 
+    public void Evict(CompendiumRun run) => _byRun.Remove(run.RunId);
+
     public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => GetState(run).WalkerDiagnostics;
 
     private ExtractionState GetState(CompendiumRun run)

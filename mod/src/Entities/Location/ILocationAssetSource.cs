@@ -23,7 +23,7 @@ public sealed record LocationAssetRecord(
     bool AllowFastTravel,
     LocationVector3Snapshot? FastTravelPosition,
     bool DisplayOnEnterVolume,
-    IReadOnlyList<LocationVolumeSnapshot> Volumes);
+    IReadOnlyList<LocationVolumeSnapshot?>? Volumes);
 
 public interface ILocationAssetSource
 {
@@ -89,10 +89,13 @@ public sealed class BuiltLookupTableLocationAssetSource : ILocationAssetSource
             AllowFastTravel: asset.allowFastTravel,
             FastTravelPosition: asset.allowFastTravel ? FromVector3(asset.fastTravelPosition) : null,
             DisplayOnEnterVolume: asset.displayOnEnterVolume,
-            Volumes: asset.volumes
-                .Select((volume, index) =>
-                    new LocationVolumeSnapshot(index, FromVector3(volume.center), FromVector3(volume.size)))
-                .ToList());
+            Volumes: asset.volumes == null
+                ? null
+                : asset.volumes
+                    .Select((volume, index) => volume == null
+                        ? null
+                        : new LocationVolumeSnapshot(index, FromVector3(volume.center), FromVector3(volume.size)))
+                    .ToList());
     }
 
     private static SnapshotRef ResolveAsset(

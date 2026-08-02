@@ -22,6 +22,17 @@ public sealed class LocationExtractor : WalkerBase<LocationSnapshotRow>
     {
         foreach (var asset in _source.EnumerateLocations())
         {
+            if (asset == null)
+            {
+                Diagnostics.Add(new Diagnostic
+                {
+                    Severity = "fatal",
+                    Code = "locationAssetMissing",
+                    Field = "id",
+                    Message = "Location asset source yielded a null row",
+                });
+                continue;
+            }
             if (string.IsNullOrWhiteSpace(asset.Guid))
             {
                 Diagnostics.Add(new Diagnostic
@@ -57,6 +68,37 @@ public sealed class LocationExtractor : WalkerBase<LocationSnapshotRow>
                 });
             }
 
+            var volumes = new List<LocationVolumeSnapshot>();
+            if (asset.Volumes == null)
+            {
+                diagnostics.Add(new Diagnostic
+                {
+                    Severity = "diagnostic",
+                    Code = "locationVolumesMalformed",
+                    Field = "volumes",
+                    Message = $"LocationAsset '{asset.Guid}' has null volume data",
+                });
+            }
+            else
+            {
+                for (var index = 0; index < asset.Volumes.Count; index++)
+                {
+                    var volume = asset.Volumes[index];
+                    if (volume == null)
+                    {
+                        diagnostics.Add(new Diagnostic
+                        {
+                            Severity = "diagnostic",
+                            Code = "locationVolumeMalformed",
+                            Field = $"volumes[{index}]",
+                            Message = $"LocationAsset '{asset.Guid}' has null volume data at index {index}",
+                        });
+                        continue;
+                    }
+                    volumes.Add(volume);
+                }
+            }
+
             yield return new LocationSnapshotRow
             {
                 Id = asset.Guid,
@@ -74,7 +116,7 @@ public sealed class LocationExtractor : WalkerBase<LocationSnapshotRow>
                     AllowFastTravel: asset.AllowFastTravel,
                     FastTravelPosition: asset.FastTravelPosition,
                     DisplayOnEnterVolume: asset.DisplayOnEnterVolume,
-                    Volumes: asset.Volumes),
+                    Volumes: volumes),
                 Diagnostics = diagnostics,
             };
         }

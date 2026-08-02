@@ -39,14 +39,24 @@ public sealed class CompendiumRunManager
         File.Move(tempPath, path);
     }
 
-    public void Discard(string runId)
+    public void ReleaseFinalized(string runId)
     {
         lock (_sync)
         {
-            if (!_runs.TryGetValue(runId, out var run)) return;
+            if (_runs.TryGetValue(runId, out var run) && run.Finalized)
+                _runs.Remove(runId);
+        }
+    }
+
+    public CompendiumRun? Discard(string runId)
+    {
+        lock (_sync)
+        {
+            if (!_runs.TryGetValue(runId, out var run)) return null;
             if (Directory.Exists(run.WorkspaceDir)) Directory.Delete(run.WorkspaceDir, recursive: true);
             run.State = "discarded";
             _runs.Remove(runId);
+            return run;
         }
     }
 }

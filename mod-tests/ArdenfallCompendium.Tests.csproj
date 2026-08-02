@@ -29,6 +29,10 @@
       <HintPath>..\mod\libs\Sirenix.Serialization.Config.dll</HintPath>
       <Private>true</Private>
     </Reference>
+    <Reference Include="Sirenix.Serialization">
+      <HintPath>..\mod\libs\Sirenix.Serialization.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
     <Reference Include="HotRepl.Core">
       <HintPath>..\mod\libs\HotRepl.Core.dll</HintPath>
       <Private>true</Private>

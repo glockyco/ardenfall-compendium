@@ -17,6 +17,8 @@ public sealed class ItemExtractionService : IItemExtractionCache
 
     public IReadOnlyList<ItemSnapshotRow> GetOrExtract(CompendiumRun run) => GetState(run).Rows;
 
+    public void Evict(CompendiumRun run) => _byRun.Remove(run.RunId);
+
     public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => GetState(run).WalkerDiagnostics;
 
     public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => GetState(run).AssetPlan;

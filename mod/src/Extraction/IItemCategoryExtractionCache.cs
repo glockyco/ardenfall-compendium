@@ -6,7 +6,7 @@ using ArdenfallCompendium.Entities.ItemCategory;
 
 namespace ArdenfallCompendium.Extraction;
 
-public interface IItemCategoryExtractionCache
+public interface IItemCategoryExtractionCache : IExtractionCache
 {
     IReadOnlyList<ItemCategorySnapshotRow> GetOrExtract(CompendiumRun run);
 

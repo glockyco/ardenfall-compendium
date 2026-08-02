@@ -12,6 +12,7 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
 {
     private readonly IItemAssetSource _source;
     private readonly ItemIconAssetPlan? _assetPlan;
+    private readonly Func<ItemData, string?> _lookupGuid;
 
     public ItemExtractor()
         : this(new BuiltLookupTableItemAssetSource(), assetPlan: null)
@@ -24,22 +25,38 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
     }
 
     public ItemExtractor(IItemAssetSource source, ItemIconAssetPlan? assetPlan)
+        : this(source, assetPlan, LookupGuid)
+    {
+    }
+
+    public ItemExtractor(
+        IItemAssetSource source,
+        ItemIconAssetPlan? assetPlan,
+        Func<ItemData, string?> lookupGuid)
     {
         _source = source;
         _assetPlan = assetPlan;
+        _lookupGuid = lookupGuid;
     }
 
     public override IEnumerable<ItemSnapshotRow> Walk()
     {
         foreach (var asset in _source.EnumerateItems())
         {
-            if (asset == null) continue;
+            if (asset == null)
+            {
+                Diagnostics.Add(new Diagnostic
+                {
+                    Severity = "fatal",
+                    Code = "itemAssetMissing",
+                    Field = "id",
+                    Message = "Item asset source yielded a null ItemData row",
+                });
+                continue;
+            }
             if (!MarkVisited(asset)) continue;
 
-            var lookup = BuiltLookupTable.Instance;
-            if (lookup == null) yield break;
-
-            var guid = lookup.GetGuid(asset);
+            var guid = _lookupGuid(asset);
             if (guid is null || guid.Length == 0)
             {
                 Diagnostics.Add(new Diagnostic
@@ -59,7 +76,7 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
             {
                 Diagnostics.Add(new Diagnostic
                 {
-                    Severity = "diagnostic",
+                    Severity = "fatal",
                     Code = ItemDiagnosticCodes.UnsupportedSubtype,
                     Field = "variant",
                     Message = $"item '{guid}' is type {asset.GetType().Name}; not yet supported",
@@ -96,6 +113,9 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
         Diagnostics.AddRange(Refs.Diagnostics);
         Refs.Diagnostics.Clear();
     }
+
+    private static string? LookupGuid(ItemData asset) =>
+        BuiltLookupTable.Instance?.GetGuid(asset);
 
     private static void Merge(Dictionary<string, object?> dst, IReadOnlyDictionary<string, object?> src)
     {

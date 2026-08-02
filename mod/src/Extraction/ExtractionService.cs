@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ArdenfallCompendium.Assets;
+using ArdenfallCompendium.Control;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
@@ -10,6 +11,14 @@ using PreflightRunner = ArdenfallCompendium.Preflight.Preflight;
 
 namespace ArdenfallCompendium.Extraction;
 
+public interface IExtractionCache
+{
+    /// Terminal runs release every per-run row, diagnostic, and Unity asset-plan reference.
+    void Evict(CompendiumRun run);
+}
+
+/// Extractors use fatal diagnostics for missing row identity, diagnostic severity for optional
+/// data or malformed row fields, and never omit malformed input without naming its row.
 public sealed class ExtractionService
 {
     public ExtractionResult ExtractAll(ExtractionRequest request)

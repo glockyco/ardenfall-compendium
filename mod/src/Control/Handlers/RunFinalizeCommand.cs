@@ -296,6 +296,13 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             run.Counts["portal"] = portalRows.Count;
             phaseStopwatch.Restart();
             _runs.Save(run);
+            _items.Evict(run);
+            _statTypes.Evict(run);
+            _itemCategories.Evict(run);
+            _itemTags.Evict(run);
+            _locations.Evict(run);
+            _portals.Evict(run);
+            _runs.ReleaseFinalized(run.RunId);
             RecordTiming(timings, "run.save", phaseStopwatch, totalStopwatch);
 
             var manifestPath = Path.Combine(publishedDir, "manifest.json");

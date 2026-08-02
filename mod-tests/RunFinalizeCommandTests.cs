@@ -144,10 +144,11 @@ public sealed class RunFinalizeCommandTests
         });
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
         var command = new RunFinalizeCommand(runs, cache, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
-
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
+        Assert.Equal(1, cache.EvictionCount);
+        Assert.False(runs.TryGet(run.RunId, out _));
         var manifestPath = result.Output!.ManifestPath;
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(1, manifest.Diagnostics.Fatal);
@@ -680,7 +681,11 @@ public sealed class RunFinalizeCommandTests
             _assetPlan = assetPlan ?? new ItemIconAssetPlan();
         }
 
-        public IReadOnlyList<ItemSnapshotRow> GetOrExtract(CompendiumRun run) => new List<ItemSnapshotRow>();
+        public int EvictionCount { get; private set; }
+
+        public void Evict(CompendiumRun run) => EvictionCount++;
+
+        public IReadOnlyList<ItemSnapshotRow> GetOrExtract(CompendiumRun run) => System.Array.Empty<ItemSnapshotRow>();
 
         public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 
@@ -697,6 +702,8 @@ public sealed class RunFinalizeCommandTests
             _rows = rows;
             _assetPlan = assetPlan ?? new ItemIconAssetPlan();
         }
+
+        public void Evict(CompendiumRun run) { }
 
         public IReadOnlyList<StatTypeSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
@@ -716,6 +723,8 @@ public sealed class RunFinalizeCommandTests
             _diagnostics = diagnostics ?? System.Array.Empty<Diagnostic>();
         }
 
+        public void Evict(CompendiumRun run) { }
+
         public IReadOnlyList<PortalSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => _diagnostics;
@@ -731,6 +740,8 @@ public sealed class RunFinalizeCommandTests
             _rows = rows;
             _assetPlan = assetPlan ?? new ItemIconAssetPlan();
         }
+
+        public void Evict(CompendiumRun run) { }
 
         public IReadOnlyList<ItemCategorySnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
@@ -748,6 +759,8 @@ public sealed class RunFinalizeCommandTests
             _rows = rows;
         }
 
+        public void Evict(CompendiumRun run) { }
+
         public IReadOnlyList<ItemTagSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
@@ -763,6 +776,8 @@ public sealed class RunFinalizeCommandTests
             _rows = rows;
             _diagnostics = diagnostics ?? System.Array.Empty<Diagnostic>();
         }
+
+        public void Evict(CompendiumRun run) { }
 
         public IReadOnlyList<LocationSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 

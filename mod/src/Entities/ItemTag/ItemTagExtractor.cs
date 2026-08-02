@@ -22,6 +22,17 @@ public sealed class ItemTagExtractor : WalkerBase<ItemTagSnapshotRow>
     {
         foreach (var asset in _source.EnumerateItemTags())
         {
+            if (asset == null)
+            {
+                Diagnostics.Add(new Diagnostic
+                {
+                    Severity = "fatal",
+                    Code = "itemTagAssetMissing",
+                    Field = "id",
+                    Message = "ItemTag asset source yielded a null row",
+                });
+                continue;
+            }
             var id = asset.Guid;
             if (string.IsNullOrWhiteSpace(id))
             {

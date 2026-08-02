@@ -5,7 +5,7 @@ using ArdenfallCompendium.Entities.Location;
 
 namespace ArdenfallCompendium.Extraction;
 
-public interface ILocationExtractionCache
+public interface ILocationExtractionCache : IExtractionCache
 {
     IReadOnlyList<LocationSnapshotRow> GetOrExtract(CompendiumRun run);
     IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run);

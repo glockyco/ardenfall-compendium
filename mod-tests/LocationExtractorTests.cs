@@ -51,6 +51,31 @@ public sealed class LocationExtractorTests
     }
 
     [Fact]
+    public void DiagnosesNullVolumesInsteadOfThrowing()
+    {
+        var source = new FakeLocationAssetSource(new[]
+        {
+            FakeLocationAssetSource.Build(
+                guid: "location-malformed",
+                assetName: "Malformed",
+                locationId: "malformed",
+                locationName: "Malformed",
+                mapId: "ardenfall",
+                mapPosition: new LocationVector3Snapshot(0f, 0f, 0f),
+                fastTravelPosition: null,
+                volumes: null),
+        });
+        var extractor = new LocationExtractor(source);
+
+        var rows = extractor.Walk().ToList();
+
+        Assert.Single(rows);
+        Assert.Empty(rows[0].Fields.Volumes);
+        Assert.Contains(rows[0].Diagnostics, d =>
+            d.Code == "locationVolumesMalformed" && d.Field == "volumes" && d.Message.Contains("location-malformed"));
+    }
+
+    [Fact]
     public void DiagnosesLocationMissingGuid()
     {
         var source = new FakeLocationAssetSource(new[]
@@ -123,7 +148,7 @@ public sealed class LocationExtractorTests
             string mapId,
             LocationVector3Snapshot mapPosition,
             LocationVector3Snapshot? fastTravelPosition,
-            IReadOnlyList<LocationVolumeSnapshot> volumes) => new(
+            IReadOnlyList<LocationVolumeSnapshot?>? volumes) => new(
                 Guid: guid,
                 AssetName: assetName,
                 Enabled: true,

@@ -1,7 +1,9 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ArdenfallCompendium.Control.Args;
 using ArdenfallCompendium.Control.Results;
+using ArdenfallCompendium.Extraction;
 using HotRepl.Control;
 
 namespace ArdenfallCompendium.Control.Handlers;
@@ -9,10 +11,12 @@ namespace ArdenfallCompendium.Control.Handlers;
 public sealed class RunDiscardCommand : IControlCommandHandler<RunIdArgs, RunDiscardResult>
 {
     private readonly CompendiumRunManager _runs;
+    private readonly IReadOnlyList<IExtractionCache> _caches;
 
-    public RunDiscardCommand(CompendiumRunManager runs)
+    public RunDiscardCommand(CompendiumRunManager runs, IReadOnlyList<IExtractionCache> caches)
     {
         _runs = runs;
+        _caches = caches;
     }
 
     public string Name => "run.discard";
@@ -35,7 +39,11 @@ public sealed class RunDiscardCommand : IControlCommandHandler<RunIdArgs, RunDis
             "runId"
         );
         if (runIdValidation != null) return new(runIdValidation);
-        _runs.Discard(args.RunId);
+        var discarded = _runs.Discard(args.RunId);
+        if (discarded != null)
+        {
+            foreach (var cache in _caches) cache.Evict(discarded);
+        }
         return new(
             ControlCommandResult.Ok(
                 new RunDiscardResult { RunId = args.RunId, Discarded = true }

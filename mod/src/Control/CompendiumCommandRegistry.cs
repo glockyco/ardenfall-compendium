@@ -32,7 +32,15 @@ public sealed class CompendiumCommandRegistry : IDisposable
         Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs, items));
         Register(new Handlers.RunFinalizeCommand(runs, items, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals));
-        Register(new Handlers.RunDiscardCommand(runs));
+        Register(new Handlers.RunDiscardCommand(runs, new IExtractionCache[]
+        {
+            items,
+            statTypes,
+            itemCategories,
+            itemTags,
+            locations,
+            portals,
+        }));
         Register(new Handlers.GameQuitCommand());
     }
 

@@ -33,7 +33,7 @@ public sealed record ItemCategoryAsset(
     UnityObject? DefaultItemIcon,
     AssetColorSnapshot CategoryColor,
     bool ShowInAllCategory,
-    IReadOnlyList<ItemCategoryColumnAsset> Columns);
+    IReadOnlyList<ItemCategoryColumnAsset>? Columns);
 
 public interface IItemCategoryAssetSource
 {
@@ -43,7 +43,7 @@ public interface IItemCategoryAssetSource
 public sealed class BuiltLookupTableItemCategoryAssetSource : IItemCategoryAssetSource
 {
     private readonly Func<IEnumerable<ArdenfallCategory>> _lookupCategories;
-    private readonly Func<ArdenfallCategory, IReadOnlyList<ItemCategoryColumnAsset>> _columns;
+    private readonly Func<ArdenfallCategory, IReadOnlyList<ItemCategoryColumnAsset>?> _columns;
     private readonly Func<UnityObject?, bool> _isUnityNull;
 
     public BuiltLookupTableItemCategoryAssetSource()
@@ -57,7 +57,7 @@ public sealed class BuiltLookupTableItemCategoryAssetSource : IItemCategoryAsset
     public BuiltLookupTableItemCategoryAssetSource(
         Func<IEnumerable<ArdenfallCategory>> lookupCategories,
         Func<UnityObject?, bool> isUnityNull,
-        Func<ArdenfallCategory, IReadOnlyList<ItemCategoryColumnAsset>>? columns = null)
+        Func<ArdenfallCategory, IReadOnlyList<ItemCategoryColumnAsset>?>? columns = null)
     {
         _lookupCategories = lookupCategories;
         _columns = columns ?? Columns;
