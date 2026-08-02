@@ -326,6 +326,31 @@ This slice migrates the existing location map data onto the generalized placemen
 
 **Plan deviations (as built):** the generalized map emitter lives in `pipeline/src/map/read-models.ts` rather than under `entities/location/`, because it is a cross-entity concern. It is driven by the descriptors that declare a `map` layer instead of probing SQLite for entity tables, so a placed entity without a projection raises a contract error rather than silently emitting an empty map. `node_short_id` is not denormalized into `map_points`; the site joins `entity_nodes` for it.
 
+### Slice 7.5 — Asset identity for unregistered definition types
+
+**Status:** ready
+**Spec coverage:** baseline §10; investment-priorities §1.
+
+**Problem.** Two entities with public routes ship no rows, and the primary entity's category link is broken for almost every row. `/stats` and `/categories` render empty from a live export, and 1268 of 1273 items carry an unresolvable `categoryRef`.
+
+One root cause explains all three. Extraction reaches definition assets through `BuiltLookupTable`, which assigns the stable GUID identity every canonical row needs. Probed against the running game on 2026-08-02:
+
+| type | present in memory | in `BuiltLookupTable` |
+| --- | --- | --- |
+| `Ardenfall.Item.ItemData` | 1273 | 1273 |
+| `Ardenfall.LocationAsset` | 48 | 48 |
+| `Ardenfall.Item.ItemTag` | 28 | 28 |
+| `Ardenfall.StatType` | **21** | **0** |
+| `Ardenfall.ItemCategory` | **7** | **0** |
+
+`BuiltLookupTable.Instance.GetGuid(...)` returns a GUID for an `ItemTag` and null for a `StatType` or `ItemCategory`. The assets are real and loaded — 21 stat types (`att_strength`, `sk_alchemy`, `sk_armor-heavy`, …) and 7 categories (`itemcat_weapons`, `itemcat_armor`, `itemcat_consumables`, …) — they are simply absent from the identity table the extractor depends on, so `GetAssetsOfType` yields nothing and every reference to them degrades to a `lookupAssetGuidMissing` diagnostic.
+
+**Delivers:** a stable identity source for definition types the built lookup table does not register, and the resulting stat-type and item-category rows, restoring `/stats`, `/categories`, and item category linkage. Portals solved the analogous problem by taking identity from the master record table rather than the lookup table; these types need their own equivalent. Their asset names are already unique and stable and are the obvious candidate, but the choice is a durable public identity contract and should be made deliberately.
+
+**Acceptance criteria:** a live export produces non-zero `counts.stat-type` and `counts.item-category`; `categoryRef` resolves for every item that has a category; `/stats` and `/categories` render real content from a release artifact; and the identity rule for these types is documented in the architecture spec alongside the lookup-asset and record mechanisms.
+
+**Why before Slice 8:** every gate runs against `fixtures/synthetic/`, which carries 2 stat types and 1 category while the live game yields 0 of each. The fixture is more complete than reality, so the whole suite passes green over two empty public sections. Adding a fourth entity on top of that widens the surface without fixing the base. The generalisable guard — a descriptor with a public site route producing zero rows should raise a diagnostic at export time — belongs in this slice.
+
 ### Slice 8+ — Map-supporting entities (game-specific)
 
 **Status:** planned (ordered after Slice 7 foundation)
