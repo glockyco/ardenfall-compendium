@@ -42,18 +42,6 @@ type DecompileCommand = {
 
 type DecompilePlan = DecompileOptions & { commands: DecompileCommand[] };
 
-type SyncGeneratedArtifactsOptions = {
-  sourceDir?: string;
-  targetDir?: string;
-};
-
-type SyncGeneratedArtifactsResult = {
-  sourceDir: string;
-  targetDir: string;
-  sqliteBytes: number;
-  assetCount: number;
-};
-
 type StageArtifactModule = {
   stageArtifact(options: {
     artifactDir: string;
@@ -67,9 +55,6 @@ const { buildCommandPlan, defaultOptions } = await importModule<{
   buildCommandPlan(options: DecompileOptions): DecompilePlan;
   defaultOptions(options: DecompileOptionsInput): DecompileOptions;
 }>("./scripts/decompile-ardenfall.mjs");
-const { syncGeneratedArtifacts } = await importModule<{
-  syncGeneratedArtifacts(options?: SyncGeneratedArtifactsOptions): SyncGeneratedArtifactsResult;
-}>("./site/scripts/sync-generated-artifacts.mjs");
 const gitignore = readFileSync(".gitignore", "utf8");
 const lefthook = readFileSync("lefthook.yml", "utf8");
 const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
@@ -96,55 +81,6 @@ const siteItemReadModels = readFileSync("site/src/lib/server/entities/item.ts", 
 
 function sha256(content: string | Buffer): string {
   return createHash("sha256").update(content).digest("hex");
-}
-
-function writeSyncArtifactManifest(
-  source: string,
-  sqliteContent: string,
-  assets: Record<string, string>,
-): void {
-  const entries = Object.entries(assets).map(
-    ([relative, content]) => `${relative}\0${sha256(content)}`,
-  );
-  writeFileSync(
-    join(source, "artifact-manifest.json"),
-    JSON.stringify({
-      schemaVersion: 1,
-      artifactKind: "fixture",
-      artifactId: "fixture-sync",
-      createdAt: "2026-05-20T00:00:00.000Z",
-      source: {
-        kind: "synthetic-fixture",
-        fixtureName: "synthetic",
-        snapshotId: "synthetic",
-        gameVersion: "fixture",
-        buildIdentifier: "fixture",
-        extractorVersion: "fixture",
-        snapshotManifestSha256: "a".repeat(64),
-      },
-      git: {
-        repository: "fixture",
-        commit: "b".repeat(40),
-        branch: "main",
-        dirty: false,
-      },
-      diagnostics: { fatal: 0, diagnostic: 0 },
-      counts: {},
-      outputs: {
-        sqlite: {
-          path: "data.sqlite",
-          bytes: Buffer.byteLength(sqliteContent),
-          sha256: sha256(sqliteContent),
-        },
-        assets: {
-          path: "assets",
-          count: entries.length,
-          treeSha256: sha256(entries.sort().join("\n")),
-        },
-      },
-      probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
-    }),
-  );
 }
 
 function writeMinimalArtifactSqlite(
@@ -325,73 +261,9 @@ describe("site deployment tooling", () => {
     expect(sitePackageJson.scripts["deploy:production"]).toBe(
       "bun run scripts/deploy-production.mjs",
     );
-    expect(sitePackageJson.scripts["cf-deploy"]).toBe("bun run deploy:production");
     expect(existsSync("site/scripts/stage-artifact.mjs")).toBe(true);
     expect(sitePrerenderSmoke).toContain("WHERE o.icon_hash IS NOT NULL");
     expect(gitignore).toContain("site/_redirects");
-  });
-
-  it("copies SQLite and assets while pruning stale managed assets", () => {
-    const root = mkdtempSync(join(tmpdir(), "ardenfall-site-generated-"));
-    try {
-      const source = join(root, "pipeline", "dist");
-      const target = join(root, "site", "static");
-      mkdirSync(join(source, "assets"), { recursive: true });
-      mkdirSync(join(target, "assets"), { recursive: true });
-      writeFileSync(join(source, "data.sqlite"), "sqlite bytes");
-      writeFileSync(join(source, "assets", "fresh.webp"), "fresh");
-      writeFileSync(join(target, "assets", "stale.webp"), "stale");
-      writeSyncArtifactManifest(source, "sqlite bytes", { "fresh.webp": "fresh" });
-
-      const result = syncGeneratedArtifacts({ sourceDir: source, targetDir: target });
-
-      expect(result.sqliteBytes).toBe(12);
-      expect(readFileSync(join(target, "data.sqlite"), "utf8")).toBe("sqlite bytes");
-      expect(readFileSync(join(target, "assets", "fresh.webp"), "utf8")).toBe("fresh");
-      expect(existsSync(join(target, "assets", "stale.webp"))).toBe(false);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it("rejects generated artifact sync without an artifact manifest", () => {
-    const root = mkdtempSync(join(tmpdir(), "ardenfall-site-generated-unmanifested-"));
-    try {
-      const source = join(root, "pipeline", "dist");
-      const target = join(root, "site", "static");
-      mkdirSync(join(source, "assets"), { recursive: true });
-      writeFileSync(join(source, "data.sqlite"), "sqlite bytes");
-      writeFileSync(join(source, "assets", "fresh.webp"), "fresh");
-
-      expect(() => syncGeneratedArtifacts({ sourceDir: source, targetDir: target })).toThrow(
-        /missing artifact manifest/,
-      );
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it("rejects missing and empty generated asset bundles", () => {
-    const root = mkdtempSync(join(tmpdir(), "ardenfall-site-generated-invalid-"));
-    try {
-      const source = join(root, "pipeline", "dist");
-      const target = join(root, "site", "static");
-      mkdirSync(source, { recursive: true });
-      writeFileSync(join(source, "data.sqlite"), "sqlite bytes");
-      writeSyncArtifactManifest(source, "sqlite bytes", { "empty.webp": "" });
-
-      expect(() => syncGeneratedArtifacts({ sourceDir: source, targetDir: target })).toThrow(
-        /Missing generated asset bundle/,
-      );
-
-      mkdirSync(join(source, "assets"), { recursive: true });
-      writeFileSync(join(source, "assets", "empty.webp"), "");
-      expect(() => syncGeneratedArtifacts({ sourceDir: source, targetDir: target })).toThrow(
-        /Invalid generated asset/,
-      );
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
   });
 
   it("stages site builds from explicit artifact directories", () => {
@@ -404,7 +276,6 @@ describe("site deployment tooling", () => {
     expect(sitePackageJson.scripts["deploy:production"]).toBe(
       "bun run scripts/deploy-production.mjs",
     );
-    expect(sitePackageJson.scripts["cf-deploy"]).toBe("bun run deploy:production");
   });
 
   it("production staging rejects fixture artifacts by manifest kind", async () => {

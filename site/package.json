@@ -35,10 +35,8 @@
     "smoke:item-icons": "bun run scripts/smoke-item-icons.mjs",
     "smoke:prerender": "bun run scripts/smoke-prerender-output.mjs",
     "smoke:map": "bun run scripts/smoke-map-route.mjs",
-    "sync:generated": "bun run scripts/sync-generated-artifacts.mjs",
     "stage:artifact": "bun run scripts/stage-artifact.mjs",
-    "deploy:production": "bun run scripts/deploy-production.mjs",
-    "cf-deploy": "bun run deploy:production"
+    "deploy:production": "bun run scripts/deploy-production.mjs"
   },
   "type": "module"
 }
