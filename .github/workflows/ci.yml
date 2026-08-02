@@ -21,8 +21,10 @@ jobs:
               - 'pipeline/**'
               - 'entities/**'
               - 'schemas/**'
+              - 'controller/**'
             mod:
               - 'mod/**'
+              - 'mod-tests/**'
             fixtures:
               - 'fixtures/**'
               - 'pipeline/scripts/check-fixtures.ts'
@@ -44,6 +46,7 @@ jobs:
       - run: bun run format:check
       - run: bun run lint
       - run: bun test tooling.test.ts
+      - run: git diff --check
 
   pipeline:
     runs-on: ubuntu-latest
@@ -57,6 +60,7 @@ jobs:
       - run: bun run check:validators
       - run: bun run typecheck
       - run: bun test pipeline/test
+      - run: bun test controller/test
 
   site:
     runs-on: ubuntu-latest
@@ -71,7 +75,9 @@ jobs:
       - name: build synthetic fixture artifact for static prerender
         run: bun run artifact:fixture synthetic fixtures/synthetic/snapshot
       - run: bun run --cwd site check
+      - run: bun test site/test
       - run: bun run --cwd site build
+      - run: bun run --cwd site smoke:prerender
 
   mod:
     runs-on: ubuntu-latest
@@ -83,9 +89,8 @@ jobs:
         with: { dotnet-version: "8.0.x" }
       - name: format-check
         run: dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes
-      # Full `dotnet build` requires Assembly-CSharp.dll, which is not redistributable.
-      # Build/test verification is local-only with mod/libs/ populated via copy-libs.sh;
-      # GitHub CI intentionally verifies formatting only.
+      - name: test
+        run: dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --nologo -v q
 
   fixtures:
     runs-on: ubuntu-latest
