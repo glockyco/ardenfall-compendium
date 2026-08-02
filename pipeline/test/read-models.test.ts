@@ -238,7 +238,7 @@ describe("emitItemReadModels", () => {
 });
 
 describe("emitStatTypeReadModels", () => {
-  it("emits stat overview, presentation, and entity nodes", async () => {
+  async function setupStatReadModel() {
     const snap = await loadSnapshot.run({}, ctx);
     const statEnvelope = snap.envelopes["stat-type"];
     if (!statEnvelope) throw new Error("fixture missing stat-type envelope");
@@ -255,11 +255,16 @@ describe("emitStatTypeReadModels", () => {
         PRIMARY KEY (entity_id, entity_row_id, slot)
       );
     `);
+    canonicaliseStatTypes(db, statEnvelope);
+    return { db, snap };
+  }
+
+  it("emits stat overview, presentation, and entity nodes", async () => {
+    const { db, snap } = await setupStatReadModel();
     db.run(
       "INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)",
       ["stat-type", "named;stat-type;att_strength", "iconRef", "image", "b".repeat(64)],
     );
-    canonicaliseStatTypes(db, statEnvelope);
 
     emitStatTypeReadModels(db, snap.masterTooltip, "/attributes");
 
@@ -300,6 +305,57 @@ describe("emitStatTypeReadModels", () => {
     expect(node?.short_id).toBe("att-strength");
     expect(node?.canonical_slug).toBe("strength--att-strength");
     expect(node?.route_path).toBe(`/attributes/${node?.canonical_slug}`);
+  });
+
+  it("does not diagnose stats present in their published vocabulary", async () => {
+    const { db, snap } = await setupStatReadModel();
+    const diagnostics = emitStatTypeReadModels(db, {
+      ...snap.masterTooltip,
+      allAttributes: ["strength"],
+      allSkills: ["alchemy"],
+    });
+    expect(diagnostics).toEqual([]);
+  });
+
+  it("diagnoses an authored stat absent from its vocabulary while retaining the row", async () => {
+    const { db, snap } = await setupStatReadModel();
+    const diagnostics = emitStatTypeReadModels(db, {
+      ...snap.masterTooltip,
+      allAttributes: ["strength"],
+      allSkills: [],
+    });
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]).toEqual(
+      expect.objectContaining({
+        severity: "diagnostic",
+        message: expect.stringContaining("Alchemy"),
+      }),
+    );
+    expect(
+      db.query("SELECT name FROM stat_type_overview_rows WHERE name = 'Alchemy'").all(),
+    ).toHaveLength(1);
+  });
+
+  it("checks attributes and skills against their respective lists", async () => {
+    const { db, snap } = await setupStatReadModel();
+    const diagnostics = emitStatTypeReadModels(db, {
+      ...snap.masterTooltip,
+      allAttributes: ["strength", "alchemy"],
+      allSkills: [],
+    });
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]).toEqual(
+      expect.objectContaining({
+        severity: "diagnostic",
+        entityId: "named;stat-type;sk_alchemy",
+        message: expect.stringContaining("allSkills"),
+      }),
+    );
+  });
+
+  it("does not diagnose when the master tooltip is absent", async () => {
+    const { db } = await setupStatReadModel();
+    expect(emitStatTypeReadModels(db)).toEqual([]);
   });
 });
 

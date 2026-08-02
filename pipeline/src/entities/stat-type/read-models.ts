@@ -1,4 +1,5 @@
 import type { Database } from "bun:sqlite";
+import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
 import type { MasterTooltipVocabulary } from "../../types.ts";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
 import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
@@ -29,7 +30,7 @@ export function emitStatTypeReadModels(
   db: Database,
   masterTooltip?: MasterTooltipVocabulary,
   routeBase = "/stats",
-): void {
+): PipelineDiagnostic[] {
   db.exec(STAT_TYPE_READ_MODEL_DDL);
   db.exec(ENTITY_GRAPH_DDL);
   const overviewInsert = db.prepare(
@@ -70,12 +71,29 @@ export function emitStatTypeReadModels(
     )
     .all();
 
+  const diagnostics: PipelineDiagnostic[] = [];
   const tx = db.transaction(() => {
     for (const row of rows) {
-      // A StatType is an attribute or a skill; the asset says which. Traits are a
-      // separate asset type entirely — the master tooltip lists them by GUID while
-      // its skill vocabulary uses unrelated slugs, so neither can classify a stat.
+      // A StatType is an attribute or a skill. The asset says which. Traits are a
+      // separate asset type entirely, so they cannot classify a stat.
       const grouping = row.is_attribute === 1 ? "attribute" : "skill";
+      if (masterTooltip) {
+        const vocabularyKey = snakeCaseStatName(row.stat_name);
+        const vocabularyName = grouping === "attribute" ? "allAttributes" : "allSkills";
+        const vocabulary = masterTooltip[vocabularyName];
+        if (!vocabulary.includes(vocabularyKey)) {
+          diagnostics.push({
+            severity: "diagnostic",
+            source: "stat-type-read-model",
+            code: "statVocabularyMissing",
+            message: `Stat '${row.stat_name}' is missing from master tooltip ${vocabularyName}.`,
+            entityType: "stat-type",
+            entityId: row.id,
+            field: "statName",
+            evidence: { statName: row.stat_name, vocabularyKey, vocabularyName },
+          });
+        }
+      }
       overviewInsert.run(row.id, row.stat_name, grouping, row.icon_hash, row.icon_color_json);
       presentationInsert.run(
         row.id,
@@ -101,4 +119,14 @@ export function emitStatTypeReadModels(
     }
   });
   tx();
+  return diagnostics;
+}
+
+function snakeCaseStatName(statName: string): string {
+  return statName
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
 }
