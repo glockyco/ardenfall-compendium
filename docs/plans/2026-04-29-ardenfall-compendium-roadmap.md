@@ -343,6 +343,23 @@ That single gap had produced three symptoms: `/stats` and `/categories` shipped 
 
 **Guard added with the fix:** a descriptor that declares a public site route while its snapshot carries zero rows now raises a diagnostic at export time. This condition went unreported for as long as the two entities existed, because the synthetic fixture supplied rows the live game did not, leaving the whole suite green over two empty public sections.
 
+### Portal connectivity and honest portal names
+
+**Status:** done
+**Spec coverage:** investment-priorities §4.
+
+**Delivers:** `leads_to` edges projecting the canonical `connected_portal_ref_json`, and a portal name contract that reports absence instead of hiding it. This is the first relationship the compendium derives between two instances of the same entity, and the first edge type after `variant_of`.
+
+**Directed, deliberately.** Most connections are authored as reciprocal pairs, but the game also contains chains and at least one one-way door, so a reciprocal connection is stored as two edges rather than one undirected link. Collapsing pairs would invent return paths the world does not have.
+
+**The name contract.** The extractor substituted the row id whenever `friendlyName` was empty, which shipped a public route labelled `instances;portals;bd9b9562…`. Since an id-shaped label is indistinguishable downstream from an authored one, the extractor now emits `portalNameMissing` and leaves the name null, `portals.name` is nullable, and the map layer supplies a visibly placeholder label. The canonical table records what the game contains; only presentation fills the gap.
+
+**Audit scope corrected with it.** `auditEntityGraph` ran inside the item read-model emitter, so it only ever saw edges emitted before it. Any edge added later — including these — was exempt from the invariant that an edge must target a public node. It now runs once after every emitter.
+
+**Verification evidence:** live export on 2026-08-02 against Ardenfall Demo `0.0.10.91` produced 30 `leads_to` edges from 33 portals, matching the 30 that carry a connection, with zero unresolvable targets and `fatal` 0. The single genuinely unnamed portal produced exactly one `portalNameMissing` diagnostic and now renders as `Unnamed portal`. Driven in a browser against the fixture build: selecting a portal shows its destination, following it moves the selection and updates the deep link, and the reciprocal edge leads back.
+
+**Deferred with reason:** 26 of 33 portal names are authored snake_case (`garkai_sheru-tombs_outside_1`). Those are the content authors' real values, so displaying something friendlier means deriving a label from the connected location — a presentation decision that belongs with the other portal presentation work, not smuggled into a data slice.
+
 ### Slice 8+ — Map-supporting entities (game-specific)
 
 **Status:** planned (ordered after Slice 7 foundation)
@@ -350,7 +367,7 @@ That single gap had produced three symptoms: `/stats` and `/categories` shipped 
 
 **Delivers:** the entities that make the map useful. Concrete set is deliberately not pre-enumerated here. Likely candidates for Ardenfall:
 
-- Zone connections / portals: extraction, placement, and map markers are delivered in Slice 7; `leads-to` edges and any public presentation remain.
+- Zone connections / portals: extraction, placement, map markers, and `leads_to` connectivity are delivered. Remaining portal work is presentation depth, not data.
 - Vendors (map placement plus inventory tables linking to items).
 - Monsters / enemies (with map placement plus detail pages with drop tables once items are richly modelled).
 - NPCs and quests.
@@ -359,7 +376,7 @@ That single gap had produced three symptoms: `/stats` and `/categories` shipped 
 
 Each candidate gets its own slice number (8, 9, …). Ordered by extraction confidence, map-marker value, and detail-page value. Firmed-up ordering for the next planning horizon:
 
-1. Portal connectivity — project the canonical `connected_portal_ref_json` into `leads-to` edges in `entity_edges` so the map can express zone connectivity.
+1. ~~Portal connectivity~~ — **done.** See "Portal connectivity and honest portal names" below.
 2. Characters / NPCs plus vendor role — unlocks `sold-at` item edges and spatial NPC/vendor navigation. This slice also owns two decisions deliberately deferred from earlier work, because it is the first to introduce an entity of a genuinely third shape and can settle them against a real case rather than by guessing from two:
    - **The role vocabulary.** `kind: "role"` and its `facetOf` / `predicate` / `placementVia` fields were removed in Slice 7 rather than shipped unimplemented. Vendor is the first real role; define the vocabulary it actually needs.
    - **Entity dispatch.** Adding an entity currently means editing four hand-maintained lists: the three support maps in `pipeline/src/entities/registry.ts` plus entity-specific branches in `emit-read-models.ts`, `map/read-models.ts`, and `emit-site-metadata.ts`. Key the emitters off one descriptor-driven registry, keeping `validateDescriptorCoverage`'s compile-time coverage assertion.
