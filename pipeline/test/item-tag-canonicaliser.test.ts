@@ -24,10 +24,9 @@ describe("canonicaliseItemTags", () => {
     });
 
     const row = db
-      .query<
-        { id: string; tag_name: string; description: string },
-        []
-      >("SELECT id, tag_name, description FROM item_tags")
+      .query<{ id: string; tag_name: string; description: string }, []>(
+        "SELECT id, tag_name, description FROM item_tags",
+      )
       .get();
 
     expect(row).toEqual({

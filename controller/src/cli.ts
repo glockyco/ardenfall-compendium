@@ -35,7 +35,7 @@ async function main(argv: string[]): Promise<void> {
 function parseArgs(args: string[]): CliOptions {
   const values = new Map<string, string>();
   let waitForWorld = true;
-  for (let i = 0; i < args.length; ) {
+  for (let i = 0; i < args.length;) {
     const key = args[i];
     if (!key?.startsWith("--")) throw new Error(`Invalid argument near ${key ?? "<end>"}`);
     if (key === "--no-wait-for-world") {

@@ -102,10 +102,9 @@ export function emitMapReadModels(
 
   const writeNode = prepareEntityNodeWriter(db);
   const nodeRows = db
-    .query<
-      { entity_id: string; instance_id: string; name: string; map_id: string | null },
-      []
-    >(`SELECT DISTINCT entity_id, instance_id, name, map_id FROM map_points ORDER BY entity_id, name`)
+    .query<{ entity_id: string; instance_id: string; name: string; map_id: string | null }, []>(
+      `SELECT DISTINCT entity_id, instance_id, name, map_id FROM map_points ORDER BY entity_id, name`,
+    )
     .all();
   const tx = db.transaction(() => {
     for (const row of nodeRows) {

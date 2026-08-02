@@ -78,13 +78,7 @@ export type SiteSection =
 export interface SiteMap {
   layer: string;
   renderKind:
-    | "point"
-    | "polygon"
-    | "point-or-polygon"
-    | "arc"
-    | "radius"
-    | "relation-overlay"
-    | "custom";
+    "point" | "polygon" | "point-or-polygon" | "arc" | "radius" | "relation-overlay" | "custom";
   icon?: string;
   color?: number[];
   radius?: number;
@@ -95,8 +89,7 @@ export interface SiteMap {
 }
 
 export type SnapshotSource =
-  | { kind: "live-game-export" }
-  | { kind: "synthetic-fixture"; fixtureName: string };
+  { kind: "live-game-export" } | { kind: "synthetic-fixture"; fixtureName: string };
 
 export interface SnapshotManifest {
   schemaVersion: number;

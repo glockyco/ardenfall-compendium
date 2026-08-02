@@ -181,10 +181,9 @@ function countPipelineDiagnostics(sqlitePath: string, source: string): number {
   try {
     return (
       db
-        .query<
-          { count: number },
-          [string]
-        >("SELECT COUNT(*) AS count FROM pipeline_diagnostics WHERE source = ?")
+        .query<{ count: number }, [string]>(
+          "SELECT COUNT(*) AS count FROM pipeline_diagnostics WHERE source = ?",
+        )
         .get(source)?.count ?? 0
     );
   } finally {
@@ -196,10 +195,9 @@ function countItemPresentationDiagnostics(sqlitePath: string): number {
   const db = new Database(sqlitePath, { readonly: true });
   try {
     const rows = db
-      .query<
-        { diagnostics_json: string },
-        []
-      >("SELECT diagnostics_json FROM item_presentation_rows")
+      .query<{ diagnostics_json: string }, []>(
+        "SELECT diagnostics_json FROM item_presentation_rows",
+      )
       .all();
     return rows.reduce((count, row) => {
       const diagnostics = JSON.parse(row.diagnostics_json) as unknown[];

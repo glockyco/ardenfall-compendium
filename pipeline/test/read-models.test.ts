@@ -264,10 +264,9 @@ describe("emitStatTypeReadModels", () => {
     emitStatTypeReadModels(db, snap.masterTooltip, "/attributes");
 
     const overview = db
-      .query<
-        { id: string; name: string; grouping: string; icon_hash: string | null },
-        []
-      >("SELECT id, name, grouping, icon_hash FROM stat_type_overview_rows ORDER BY name")
+      .query<{ id: string; name: string; grouping: string; icon_hash: string | null }, []>(
+        "SELECT id, name, grouping, icon_hash FROM stat_type_overview_rows ORDER BY name",
+      )
       .all();
     expect(overview).toEqual([
       {
@@ -285,20 +284,18 @@ describe("emitStatTypeReadModels", () => {
     ]);
 
     const presentation = db
-      .query<
-        { render_context: string; icon_hash: string | null; affects_json: string },
-        []
-      >("SELECT render_context, icon_hash, affects_json FROM stat_type_presentation_rows WHERE id = '57a70001.fixture-strength'")
+      .query<{ render_context: string; icon_hash: string | null; affects_json: string }, []>(
+        "SELECT render_context, icon_hash, affects_json FROM stat_type_presentation_rows WHERE id = '57a70001.fixture-strength'",
+      )
       .get();
     expect(presentation?.render_context).toBe("stat-type-presentation-v1");
     expect(presentation?.icon_hash).toBe("b".repeat(64));
     expect(JSON.parse(presentation?.affects_json ?? "[]")).toContain("melee-damage");
 
     const node = db
-      .query<
-        { route_path: string; canonical_slug: string; short_id: string },
-        []
-      >("SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'stat-type' AND entity_id = '57a70001.fixture-strength'")
+      .query<{ route_path: string; canonical_slug: string; short_id: string }, []>(
+        "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'stat-type' AND entity_id = '57a70001.fixture-strength'",
+      )
       .get();
     expect(node?.canonical_slug).toMatch(/^strength--[0-9a-f]{8}$/);
     expect(node?.route_path).toBe(`/attributes/${node?.canonical_slug}`);
@@ -407,10 +404,9 @@ describe("emitItemCategoryReadModels", () => {
     expect(presentation?.item_count).toBe(1);
 
     const node = db
-      .query<
-        { route_path: string; canonical_slug: string; short_id: string },
-        []
-      >("SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item-category' AND entity_id = 'ca7e60a1.category-weapons'")
+      .query<{ route_path: string; canonical_slug: string; short_id: string }, []>(
+        "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item-category' AND entity_id = 'ca7e60a1.category-weapons'",
+      )
       .get();
     expect(node?.canonical_slug).toMatch(/^weapons--[0-9a-f]{8}$/);
     expect(node?.route_path).toBe(`/groups/${node?.canonical_slug}`);
@@ -471,10 +467,9 @@ describe("emitItemTagReadModels", () => {
     emitItemTagReadModels(db, "/labels");
 
     const overview = db
-      .query<
-        { id: string; name: string; description: string; item_count: number },
-        []
-      >("SELECT id, name, description, item_count FROM item_tag_overview_rows ORDER BY name")
+      .query<{ id: string; name: string; description: string; item_count: number }, []>(
+        "SELECT id, name, description, item_count FROM item_tag_overview_rows ORDER BY name",
+      )
       .all();
     expect(overview).toEqual([
       { id: "7a600002.tag-rare", name: "Rare", description: "", item_count: 0 },
@@ -487,10 +482,9 @@ describe("emitItemTagReadModels", () => {
     ]);
 
     const presentation = db
-      .query<
-        { render_context: string; description: string; item_count: number },
-        []
-      >("SELECT render_context, description, item_count FROM item_tag_presentation_rows WHERE id = '7a600001.tag-valuable-remedy'")
+      .query<{ render_context: string; description: string; item_count: number }, []>(
+        "SELECT render_context, description, item_count FROM item_tag_presentation_rows WHERE id = '7a600001.tag-valuable-remedy'",
+      )
       .get();
     expect(presentation).toEqual({
       render_context: "item-tag-presentation-v1",
@@ -499,10 +493,9 @@ describe("emitItemTagReadModels", () => {
     });
 
     const node = db
-      .query<
-        { route_path: string; canonical_slug: string; short_id: string },
-        []
-      >("SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item-tag' AND entity_id = '7a600001.tag-valuable-remedy'")
+      .query<{ route_path: string; canonical_slug: string; short_id: string }, []>(
+        "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item-tag' AND entity_id = '7a600001.tag-valuable-remedy'",
+      )
       .get();
     expect(node?.canonical_slug).toBe("valuable-remedy--7a600001");
     expect(node?.route_path).toBe("/labels/valuable-remedy--7a600001");
