@@ -4,7 +4,7 @@ import { getEntityNodeBySlug } from "./item";
 interface StatTypeOverviewRecord {
   id: string;
   name: string;
-  grouping: "attribute" | "skill" | "trait";
+  grouping: "attribute" | "skill";
   icon_hash: string | null;
   icon_color: string | null;
   route_path: string;
@@ -13,7 +13,7 @@ interface StatTypeOverviewRecord {
 interface StatTypePresentationRecord {
   id: string;
   name: string;
-  grouping: "attribute" | "skill" | "trait";
+  grouping: "attribute" | "skill";
   render_context: "stat-type-presentation-v1";
   icon_hash: string | null;
   icon_color: string | null;
@@ -26,7 +26,7 @@ interface StatTypePresentationRecord {
 export interface StatTypeOverviewRow {
   id: string;
   name: string;
-  grouping: "attribute" | "skill" | "trait";
+  grouping: "attribute" | "skill";
   iconSrc: string | null;
   iconColor: string | null;
   routePath: string;
@@ -35,7 +35,7 @@ export interface StatTypeOverviewRow {
 export interface StatTypePresentationRow {
   id: string;
   name: string;
-  grouping: "attribute" | "skill" | "trait";
+  grouping: "attribute" | "skill";
   renderContext: "stat-type-presentation-v1";
   iconSrc: string | null;
   iconColor: string | null;

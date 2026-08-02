@@ -42,7 +42,6 @@ export function emitStatTypeReadModels(
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const writeNode = prepareEntityNodeWriter(db);
-  const skillIds = new Set(masterTooltip?.allSkills ?? []);
   const rows = db
     .query<
       {
@@ -73,8 +72,10 @@ export function emitStatTypeReadModels(
 
   const tx = db.transaction(() => {
     for (const row of rows) {
-      const grouping =
-        row.is_attribute === 1 ? "attribute" : skillIds.has(row.id) ? "skill" : "trait";
+      // A StatType is an attribute or a skill; the asset says which. Traits are a
+      // separate asset type entirely — the master tooltip lists them by GUID while
+      // its skill vocabulary uses unrelated slugs, so neither can classify a stat.
+      const grouping = row.is_attribute === 1 ? "attribute" : "skill";
       overviewInsert.run(row.id, row.stat_name, grouping, row.icon_hash, row.icon_color_json);
       presentationInsert.run(
         row.id,

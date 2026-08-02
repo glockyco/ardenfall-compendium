@@ -7,9 +7,8 @@
   const groupLabels: Record<StatGroup, string> = {
     attribute: "Attributes",
     skill: "Skills",
-    trait: "Traits",
   };
-  const groups = ["attribute", "skill", "trait"] as const;
+  const groups = ["attribute", "skill"] as const;
   const groupedRows = $derived(
     groups.map((group) => ({
       group,
