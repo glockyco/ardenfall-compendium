@@ -14,6 +14,7 @@ using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.StatType;
+using ArdenfallCompendium.Entities.Spell;
 using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Entities.Portal;
 using ArdenfallCompendium.Extraction;
@@ -31,6 +32,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     private readonly CompendiumRunManager _runs;
     private readonly IItemExtractionCache _items;
     private readonly IStatTypeExtractionCache _statTypes;
+    private readonly ISpellExtractionCache _spells;
     private readonly IItemCategoryExtractionCache _itemCategories;
     private readonly IItemTagExtractionCache _itemTags;
     private readonly ILocationExtractionCache _locations;
@@ -41,23 +43,28 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     public RunFinalizeCommand(
         CompendiumRunManager runs,
         IItemExtractionCache items,
-        IMasterTooltipSnapshotSource? masterTooltip = null,
-        IStatTypeExtractionCache? statTypes = null,
-        IItemCategoryExtractionCache? itemCategories = null,
-        IItemTagExtractionCache? itemTags = null,
-        ILocationExtractionCache? locations = null,
-        IPortalExtractionCache? portals = null,
+        ISpellExtractionCache spells,
+        IMasterTooltipSnapshotSource masterTooltip,
+        IStatTypeExtractionCache statTypes,
+        IItemCategoryExtractionCache itemCategories,
+        IItemTagExtractionCache itemTags,
+        ILocationExtractionCache locations,
+        IPortalExtractionCache portals,
         Func<PreflightReport>? preflight = null
     )
     {
         _runs = runs;
         _items = items;
-        _statTypes = statTypes ?? new StatTypeExtractionService(new LoadedStatTypeAssetSource());
-        _itemCategories = itemCategories ?? new ItemCategoryExtractionService(new LoadedItemCategoryAssetSource());
-        _itemTags = itemTags ?? new ItemTagExtractionService(new BuiltLookupTableItemTagAssetSource());
-        _locations = locations ?? new LocationExtractionService(new BuiltLookupTableLocationAssetSource());
-        _portals = portals ?? new PortalExtractionService(new MasterRecordTablePortalRecordSource());
-        _masterTooltip = masterTooltip ?? RuntimeMasterTooltipSnapshotSource.Instance;
+        // Every extraction source is required. A defaulted live service here would
+        // let a wiring mistake compile, and would silently construct Unity sources
+        // inside tests that meant to pass a fake.
+        _statTypes = statTypes;
+        _spells = spells;
+        _itemCategories = itemCategories;
+        _itemTags = itemTags;
+        _locations = locations;
+        _portals = portals;
+        _masterTooltip = masterTooltip;
         _preflight = preflight ?? PreflightRunner.Run;
     }
 
@@ -154,6 +161,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             phaseStopwatch.Restart();
             var statTypeRows = _statTypes.GetOrExtract(run).ToList();
             var statTypeAssetPlan = _statTypes.GetAssetPlan(run);
+            var spellRows = _spells.GetOrExtract(run).ToList();
+            var spellAssetPlan = _spells.GetAssetPlan(run);
             var itemCategoryRows = _itemCategories.GetOrExtract(run).ToList();
             var itemCategoryAssetPlan = _itemCategories.GetAssetPlan(run);
             var itemTagRows = _itemTags.GetOrExtract(run).ToList();
@@ -166,9 +175,12 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             var assetWriter = new ItemAssetManifestWriter(new SpriteAssetExporter());
             assetWriter.WriteSlots(stagingDir, assetPlan);
             assetWriter.WriteSlots(stagingDir, statTypeAssetPlan);
+            assetWriter.WriteSlots(stagingDir, spellAssetPlan);
             assetWriter.WriteSlots(stagingDir, itemCategoryAssetPlan);
             assetPlan.Manifest.Assets.AddRange(statTypeAssetPlan.Manifest.Assets);
             assetPlan.Manifest.ItemIconMetadata.AddRange(statTypeAssetPlan.Manifest.ItemIconMetadata);
+            assetPlan.Manifest.Assets.AddRange(spellAssetPlan.Manifest.Assets);
+            assetPlan.Manifest.ItemIconMetadata.AddRange(spellAssetPlan.Manifest.ItemIconMetadata);
             assetPlan.Manifest.Assets.AddRange(itemCategoryAssetPlan.Manifest.Assets);
             assetPlan.Manifest.ItemIconMetadata.AddRange(itemCategoryAssetPlan.Manifest.ItemIconMetadata);
             WriteJson(stagingDir, "asset-manifest.json", assetPlan.Manifest, hashes);
@@ -180,6 +192,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
 
             var statTypeEnvelope = new StatTypeSnapshotEnvelope { Rows = statTypeRows };
             WriteJson(stagingDir, "stat-types.json", statTypeEnvelope, hashes);
+            var spellEnvelope = new SpellSnapshotEnvelope { Rows = spellRows };
+            WriteJson(stagingDir, "spells.json", spellEnvelope, hashes);
             var itemCategoryEnvelope = new ItemCategorySnapshotEnvelope { Rows = itemCategoryRows };
             WriteJson(stagingDir, "item-categories.json", itemCategoryEnvelope, hashes);
             var itemTagEnvelope = new ItemTagSnapshotEnvelope { Rows = itemTagRows };
@@ -196,6 +210,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
             foreach (var diagnostic in _statTypes.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in _spells.GetWalkerDiagnostics(run))
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
@@ -216,6 +234,13 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
             foreach (var row in statTypeRows)
+            {
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
+            }
+            foreach (var row in spellRows)
             {
                 foreach (var diagnostic in row.Diagnostics)
                 {
@@ -262,6 +287,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             {
                 ["item"] = rows.Count,
                 ["stat-type"] = statTypeRows.Count,
+                ["spell"] = spellRows.Count,
                 ["item-category"] = itemCategoryRows.Count,
                 ["item-tag"] = itemTagRows.Count,
                 ["location"] = locationRows.Count,
@@ -290,6 +316,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             run.State = "finalized";
             run.Counts["item"] = rows.Count;
             run.Counts["stat-type"] = statTypeRows.Count;
+            run.Counts["spell"] = spellRows.Count;
             run.Counts["item-category"] = itemCategoryRows.Count;
             run.Counts["item-tag"] = itemTagRows.Count;
             run.Counts["location"] = locationRows.Count;
@@ -298,6 +325,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             _runs.Save(run);
             _items.Evict(run);
             _statTypes.Evict(run);
+            _spells.Evict(run);
             _itemCategories.Evict(run);
             _itemTags.Evict(run);
             _locations.Evict(run);
@@ -320,6 +348,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["asset-manifest"] = CompendiumCommandResults.FileArtifact("asset-manifest", Path.Combine(publishedDir, "asset-manifest.json"), "application/json", hashes["asset-manifest.json"]),
                 ["master-tooltip"] = CompendiumCommandResults.FileArtifact("master-tooltip", Path.Combine(publishedDir, "master-tooltip.json"), "application/json", hashes["master-tooltip.json"]),
                 ["stat-types"] = CompendiumCommandResults.FileArtifact("stat-types", Path.Combine(publishedDir, "stat-types.json"), "application/json", hashes["stat-types.json"]),
+                ["spells"] = CompendiumCommandResults.FileArtifact("spells", Path.Combine(publishedDir, "spells.json"), "application/json", hashes["spells.json"]),
                 ["item-categories"] = CompendiumCommandResults.FileArtifact("item-categories", Path.Combine(publishedDir, "item-categories.json"), "application/json", hashes["item-categories.json"]),
                 ["item-tags"] = CompendiumCommandResults.FileArtifact("item-tags", Path.Combine(publishedDir, "item-tags.json"), "application/json", hashes["item-tags.json"]),
                 ["locations"] = CompendiumCommandResults.FileArtifact("locations", Path.Combine(publishedDir, "locations.json"), "application/json", hashes["locations.json"]),

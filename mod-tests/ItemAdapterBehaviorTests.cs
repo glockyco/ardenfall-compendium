@@ -79,14 +79,31 @@ public sealed class ItemAdapterBehaviorTests
     }
 
     [Fact]
-    public void UnregisteredArdenfallAssetStillDiagnosesMissingLookupGuid()
+    public void SpellDefinitionRefsUseNamedAssetSnapshotVariant()
     {
         var spellData = (SpellData)RuntimeHelpers.GetUninitializedObject(typeof(SpellData));
         var refs = new RefResolver(
+            assetName: _ => "spell_fire-shield",
             isUnityNull: _ => false,
             lookupGuid: _ => null);
 
         var resolved = refs.ResolveAsset(spellData, "spellRef", "item-row", MissingPolicy.Diagnostic);
+
+        Assert.Equal("namedAsset", resolved.Kind);
+        Assert.Equal("spell", resolved.Entity);
+        Assert.Equal("spell_fire-shield", resolved.Name);
+        Assert.Empty(refs.Diagnostics);
+    }
+
+    [Fact]
+    public void UnregisteredArdenfallAssetStillDiagnosesMissingLookupGuid()
+    {
+        var statusEffect = (StatusEffectData)RuntimeHelpers.GetUninitializedObject(typeof(StatusEffectData));
+        var refs = new RefResolver(
+            isUnityNull: _ => false,
+            lookupGuid: _ => null);
+
+        var resolved = refs.ResolveAsset(statusEffect, "statusEffectRef", "item-row", MissingPolicy.Diagnostic);
 
         Assert.Equal("missing", resolved.Kind);
         Assert.Equal("lookupAssetGuidMissing", resolved.Reason);

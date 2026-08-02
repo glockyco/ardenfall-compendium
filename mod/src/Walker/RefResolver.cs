@@ -11,6 +11,13 @@ public sealed class RefResolver
     private readonly System.Func<Object, string> _assetName;
     private readonly System.Func<Object?, bool> _isUnityNull;
     private readonly System.Func<Object, string?> _lookupGuid;
+    private static readonly IReadOnlyDictionary<System.Type, string> NamedAssetEntities =
+        new Dictionary<System.Type, string>
+        {
+            [typeof(Ardenfall.StatType)] = "stat-type",
+            [typeof(Ardenfall.ItemCategory)] = "item-category",
+            [typeof(Ardenfall.SpellData)] = "spell",
+        };
     public List<Diagnostic> Diagnostics { get; } = new();
 
     public RefResolver(
@@ -35,18 +42,11 @@ public sealed class RefResolver
         {
             return EmitMissing(field, entityRowId, policy, reason: "nullAsset", source: source ?? field);
         }
-        if (asset is Ardenfall.StatType)
+        if (NamedAssetEntities.TryGetValue(asset.GetType(), out var entityId))
         {
             var name = _assetName(asset);
-            return NamedAssetIdentity.TryCreate("stat-type", name, out _)
-                ? SnapshotRef.NamedAsset("stat-type", name)
-                : EmitMissing(field, entityRowId, policy, reason: "lookupAssetGuidMissing", source: source ?? field);
-        }
-        if (asset is Ardenfall.ItemCategory)
-        {
-            var name = _assetName(asset);
-            return NamedAssetIdentity.TryCreate("item-category", name, out _)
-                ? SnapshotRef.NamedAsset("item-category", name)
+            return NamedAssetIdentity.TryCreate(entityId, name, out _)
+                ? SnapshotRef.NamedAsset(entityId, name)
                 : EmitMissing(field, entityRowId, policy, reason: "lookupAssetGuidMissing", source: source ?? field);
         }
 
