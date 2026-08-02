@@ -78,6 +78,9 @@ jobs:
       - run: bun test site/test
       - run: bun run --cwd site build
       - run: bun run --cwd site smoke:prerender
+      - run: bun run --cwd site smoke:map
+      - run: bun run --cwd site smoke:error-route
+      - run: bun run --cwd site smoke:item-icons
 
   mod:
     runs-on: ubuntu-latest
