@@ -98,14 +98,14 @@ const makeRow = (
 
 const makeValidationInputs = (
   entityId: string,
-  row: SnapshotRow,
+  row: SnapshotRow | null,
   entity?: EntityDescriptor,
   diagnostics: SnapshotDiagnosticArtifactEntry[] = [],
 ): ValidateInputs => ({
   "load-snapshot": {
     manifest: testManifest,
     envelopes: {
-      [entityId]: { entityId, schemaVersion: 1, rows: [row] },
+      [entityId]: { entityId, schemaVersion: 1, rows: row ? [row] : [] },
     },
     diagnostics,
     masterTooltip: testMasterTooltip(),
@@ -379,6 +379,38 @@ describe("validate", () => {
     );
   });
 
+  it("reports a zero-row public entity as a diagnostic", async () => {
+    const entity = { ...makeEntity("public-test", []), site: { route: "/public-test" } };
+    const result = await validate.run(makeValidationInputs(entity.id, null, entity), ctx);
+
+    expect(result.countsBySeverity).toEqual({ fatal: 0, diagnostic: 1 });
+    expect(result.errors).toEqual([
+      {
+        entity: "public-test",
+        code: "emptyPublicEntity",
+        message: "public entity 'public-test' has no rows",
+      },
+    ]);
+    expect(result.errors.length).toBe(
+      result.countsBySeverity.fatal + result.countsBySeverity.diagnostic,
+    );
+  });
+
+  it("does not report a populated public entity as empty", async () => {
+    const entity = { ...makeEntity("public-test", []), site: { route: "/public-test" } };
+    const result = await validate.run(makeValidationInputs(entity.id, makeRow(), entity), ctx);
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.countsBySeverity).toEqual({ fatal: 0, diagnostic: 0 });
+  });
+
+  it("does not report a zero-row entity without a public route", async () => {
+    const entity = makeEntity("internal-test", []);
+    const result = await validate.run(makeValidationInputs(entity.id, null, entity), ctx);
+
+    expect(result.errors).toHaveLength(0);
+    expect(result.countsBySeverity).toEqual({ fatal: 0, diagnostic: 0 });
+  });
   it("counts row diagnostics by each diagnostic severity", async () => {
     const entity = makeEntity("test", []);
     const result = await validate.run(

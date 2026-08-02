@@ -31,6 +31,14 @@ export const validate: Stage<ValidateInputs, ValidateOutput> = {
         fatal++;
         continue;
       }
+      if (entity.site?.route && env.rows.length === 0) {
+        errors.push({
+          entity: entityId,
+          code: "emptyPublicEntity",
+          message: `public entity '${entityId}' has no rows`,
+        });
+        diagnostic++;
+      }
       for (const row of env.rows) {
         for (const fieldSpec of entity.fields) {
           const present =
