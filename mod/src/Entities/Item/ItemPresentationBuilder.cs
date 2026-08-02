@@ -145,19 +145,8 @@ public static class ItemPresentationBuilder
     private static List<ItemPresentationEffectSnapshot> BuildEffects(IReadOnlyDictionary<string, object?> fields)
     {
         var effects = new List<ItemPresentationEffectSnapshot>();
-        var spellName = NestedString(fields, "spellDataJson", "spellName") ?? NestedString(fields, "spellDataJson", "name");
-        var spellId = NestedString(fields, "spellDataJson", "id");
-        if (!string.IsNullOrWhiteSpace(spellName))
-        {
-            effects.Add(new ItemPresentationEffectSnapshot
-            {
-                Kind = "spell",
-                Label = spellName!,
-                TargetType = "spell",
-                TargetId = spellId,
-                Source = "spellDataJson",
-            });
-        }
+        AddSpellEffect(fields, "spellDataJson", effects);
+        AddSpellEffect(fields, "secondarySpellDataJson", effects);
 
         var effectName = StringField(fields, "effectName");
         AddStatusEffects(fields, "statusEffectsJson", effectName, effects);
@@ -165,6 +154,29 @@ public static class ItemPresentationBuilder
         AddStatusEffects(fields, "bleedStatusEffectJson", effectName, effects);
 
         return effects;
+    }
+
+    private static void AddSpellEffect(
+        IReadOnlyDictionary<string, object?> fields,
+        string source,
+        List<ItemPresentationEffectSnapshot> effects)
+    {
+        if (!fields.TryGetValue(source, out var value) || value is not LeveledSpellDataSnapshot snapshot) return;
+        if (snapshot.SpellRef == null && string.IsNullOrWhiteSpace(snapshot.SpellName)) return;
+
+        var refName = snapshot.SpellRef?.Name;
+        var label = !string.IsNullOrWhiteSpace(snapshot.SpellName)
+            ? snapshot.SpellName!
+            : !string.IsNullOrWhiteSpace(refName) ? refName! : "";
+        effects.Add(new ItemPresentationEffectSnapshot
+        {
+            Kind = "spell",
+            Label = label,
+            TargetType = "spell",
+            TargetRef = snapshot.SpellRef,
+            Level = snapshot.Level,
+            Source = source,
+        });
     }
 
     private static void AddStatusEffects(
@@ -224,17 +236,18 @@ public static class ItemPresentationBuilder
 
     private static string BuildEffectsSource(IReadOnlyList<ItemPresentationEffectSnapshot> effects, IReadOnlyDictionary<string, object?> fields)
     {
-        if (effects.Count == 0) return "";
-        var spellName = NestedString(fields, "spellDataJson", "spellName") ?? NestedString(fields, "spellDataJson", "name");
-        if (!string.IsNullOrWhiteSpace(spellName))
+        foreach (var effect in effects)
         {
-            return "Casts " + spellName;
+            if (effect.Kind == "spell" && !string.IsNullOrWhiteSpace(effect.Label))
+            {
+                return "Casts " + effect.Label;
+            }
         }
         if (!string.IsNullOrWhiteSpace(StringField(fields, "effectName")))
         {
             return "Effect: " + StringField(fields, "effectName");
         }
-        return "Applies status effects";
+        return effects.Count == 0 ? "" : "Applies status effects";
     }
 
     private static List<ItemPresentationDiagnosticSnapshot> BuildDiagnostics(
@@ -252,6 +265,20 @@ public static class ItemPresentationBuilder
                         Code = "unresolvedEffectTarget",
                         Field = effect.Source,
                         Message = $"Effect '{effect.Label}' does not have a status-effect reference.",
+                    });
+                }
+                continue;
+            }
+
+            if (effect.TargetType == "spell")
+            {
+                if (effect.TargetRef == null)
+                {
+                    diagnostics.Add(new ItemPresentationDiagnosticSnapshot
+                    {
+                        Code = "unresolvedEffectTarget",
+                        Field = effect.Source,
+                        Message = $"Effect '{effect.Label}' does not have a spell reference.",
                     });
                 }
                 continue;
@@ -322,18 +349,4 @@ public static class ItemPresentationBuilder
         };
     }
 
-    private static string? NestedString(IReadOnlyDictionary<string, object?> fields, string key, string nestedKey)
-    {
-        if (!fields.TryGetValue(key, out var value) || value == null) return null;
-        if (value is IReadOnlyDictionary<string, object?> dict && dict.TryGetValue(nestedKey, out var nested))
-        {
-            return nested?.ToString();
-        }
-        if (value is IReadOnlyDictionary<string, string> stringDict && stringDict.TryGetValue(nestedKey, out var nestedString))
-        {
-            return nestedString;
-        }
-        var property = value.GetType().GetProperty(nestedKey) ?? value.GetType().GetProperty(char.ToUpperInvariant(nestedKey[0]) + nestedKey[1..]);
-        return property?.GetValue(value)?.ToString();
-    }
 }

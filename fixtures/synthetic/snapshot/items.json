@@ -378,8 +378,8 @@
           "a": 1
         },
         "spellDataJson": {
-          "id": "fixture-spark",
-          "name": "Spark",
+          "spellName": "Fire Shield",
+          "level": 1,
           "spellRef": {
             "kind": "namedAsset",
             "entity": "spell",
@@ -387,8 +387,13 @@
           }
         },
         "secondarySpellDataJson": {
-          "id": "fixture-ward",
-          "name": "Ward"
+          "spellName": "Arcane Surge",
+          "level": 2,
+          "spellRef": {
+            "kind": "namedAsset",
+            "entity": "spell",
+            "name": "spell_arcane-surge"
+          }
         },
         "spawnWhenSheathed": false,
         "spellItemType": "Offensive",
@@ -419,16 +424,33 @@
         "itemType": "Slate spell",
         "itemTypeSourceMethod": "variant:slate-spell",
         "descriptionSource": "A slate spell used to test secondary icon color metadata.",
-        "effectsSource": "Casts Spark",
+        "effectsSource": "Casts Fire Shield and Arcane Surge",
         "effects": [
           {
             "kind": "spell",
-            "label": "Spark",
+            "label": "Fire Shield",
             "targetType": "spell",
-            "targetId": "fixture-spark",
-            "targetRef": null,
-            "level": null,
+            "targetId": null,
+            "targetRef": {
+              "kind": "namedAsset",
+              "entity": "spell",
+              "name": "spell_fire-shield"
+            },
+            "level": 1,
             "source": "spellDataJson"
+          },
+          {
+            "kind": "spell",
+            "label": "Arcane Surge",
+            "targetType": "spell",
+            "targetId": null,
+            "targetRef": {
+              "kind": "namedAsset",
+              "entity": "spell",
+              "name": "spell_arcane-surge"
+            },
+            "level": 2,
+            "source": "secondarySpellDataJson"
           }
         ],
         "statRows": [],
@@ -513,6 +535,15 @@
         },
         "visualLevel": 2,
         "effectName": "Burning",
+        "spellDataJson": {
+          "spellName": "Unpublished Spell",
+          "level": 3,
+          "spellRef": {
+            "kind": "namedAsset",
+            "entity": "spell",
+            "name": "spell_unpublished"
+          }
+        },
         "isDrinkingPotion": false
       },
       "tags": ["7a600002.fixture-tag-rare"],
@@ -539,7 +570,7 @@
         "itemType": "Throwing potion",
         "itemTypeSourceMethod": "itemTypeTooltip",
         "descriptionSource": "A throwing potion used to test display and secondary icon slots.",
-        "effectsSource": "Effect: Burning <shake>volatile</shake>",
+        "effectsSource": "Effect: Burning <shake>volatile</shake>. Casts Unpublished Spell.",
         "effects": [
           {
             "kind": "status-effect",
@@ -555,6 +586,19 @@
             },
             "level": 1.0,
             "source": "effectName"
+          },
+          {
+            "kind": "spell",
+            "label": "Unpublished Spell",
+            "targetType": "spell",
+            "targetId": null,
+            "targetRef": {
+              "kind": "namedAsset",
+              "entity": "spell",
+              "name": "spell_unpublished"
+            },
+            "level": 3,
+            "source": "spellDataJson"
           }
         ],
         "statRows": [

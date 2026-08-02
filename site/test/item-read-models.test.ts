@@ -46,13 +46,17 @@ const seed = () => {
       '', '${richText}', '', '${richText}',
       '[
         {"kind":"status-effect","label":"Attack Speed I","targetType":"status-effect","targetId":"status-speed","level":1,"source":"items.statusEffectRef"},
-        {"kind":"status-effect","label":"Unknown Effect I","targetType":null,"targetId":null,"level":1,"source":"items.statusEffectRef"}
+        {"kind":"status-effect","label":"Unknown Effect I","targetType":null,"targetId":null,"level":1,"source":"items.statusEffectRef"},
+        {"kind":"spell","label":"Fire Shield","targetType":"spell","targetId":"named;spell;spell_fire-shield","level":2,"source":"items.spellRef"},
+        {"kind":"spell","label":"Unknown Spell","targetType":"spell","targetId":"named;spell;spell_missing","level":1,"source":"items.spellRef"}
       ]',
       '[]', '[]', NULL, '[]', 10, 1.5
     );
     INSERT INTO entity_nodes VALUES
       ('status-effect', 'status-speed', 'Attack Speed',
-       '/status-effects/attack-speed--abc12345', 'attack-speed--abc12345', 'abc12345', 1);
+       '/status-effects/attack-speed--abc12345', 'attack-speed--abc12345', 'abc12345', 1),
+      ('spell', 'named;spell;spell_fire-shield', 'Fire Shield',
+       '/spells/fire-shield--abc12345', 'fire-shield--abc12345', 'abc12345', 1);
   `);
   db.close();
   return root;
@@ -83,6 +87,24 @@ describe("item effect read-model accessors", () => {
           targetRoutePath: null,
           level: 1,
           source: "items.statusEffectRef",
+        },
+        {
+          kind: "spell",
+          label: "Fire Shield",
+          targetType: "spell",
+          targetId: "named;spell;spell_fire-shield",
+          targetRoutePath: "/spells/fire-shield--abc12345",
+          level: 2,
+          source: "items.spellRef",
+        },
+        {
+          kind: "spell",
+          label: "Unknown Spell",
+          targetType: "spell",
+          targetId: "named;spell;spell_missing",
+          targetRoutePath: null,
+          level: 1,
+          source: "items.spellRef",
         },
       ]);
     } finally {

@@ -37,6 +37,18 @@ const seed = () => {
       is_public INTEGER NOT NULL,
       PRIMARY KEY (entity_type, entity_id)
     );
+    CREATE TABLE entity_edges (
+      edge_id TEXT PRIMARY KEY,
+      source_type TEXT NOT NULL,
+      source_id TEXT NOT NULL,
+      target_type TEXT NOT NULL,
+      target_id TEXT NOT NULL,
+      predicate TEXT NOT NULL,
+      label TEXT NOT NULL,
+      weight REAL NOT NULL,
+      evidence_json TEXT NOT NULL,
+      anchor TEXT
+    );
     INSERT INTO spell_overview_rows VALUES
       ('named;spell;spell_fire-shield', 'Fire Shield', 'Destruction', 12.5, 0),
       ('named;spell;spell_shadow-step', 'Shadow Step', NULL, 4, 1);
@@ -48,7 +60,12 @@ const seed = () => {
     INSERT INTO entity_nodes VALUES
       ('spell', 'named;spell;spell_fire-shield', 'Fire Shield', '/spells/fire-shield--abc12345', 'fire-shield--abc12345', 'abc12345', 1),
       ('spell', 'named;spell;spell_shadow-step', 'Shadow Step', '/spells/shadow-step--def67890', 'shadow-step--def67890', 'def67890', 1),
-      ('stat-type', 'named;stat-type;destruction', 'Destruction', '/stats/destruction--fedcba98', 'destruction--fedcba98', 'fedcba98', 1);
+      ('stat-type', 'named;stat-type;destruction', 'Destruction', '/stats/destruction--fedcba98', 'destruction--fedcba98', 'fedcba98', 1),
+      ('item', 'item-sword', 'Iron Sword', '/items/iron-sword--11111111', 'iron-sword--11111111', '11111111', 1);
+    INSERT INTO entity_edges VALUES
+      ('item-sword:casts:spell:named;spell;spell_fire-shield', 'item', 'item-sword',
+       'spell', 'named;spell;spell_fire-shield', 'casts', 'Casts', 2,
+       '{"source":"items.spellRef","level":2}', NULL);
   `);
   db.close();
   return root;
@@ -124,6 +141,30 @@ describe("spell read-model accessors", () => {
     }
   });
 
+  it("lists items carrying a spell and returns empty for an uncarried spell", async () => {
+    const originalCwd = process.cwd();
+    const root = seed();
+    try {
+      process.chdir(root);
+      const readModels = await import("../src/lib/server/read-models");
+      expect(readModels.listItemsCarryingSpell("named;spell;spell_fire-shield")).toEqual([
+        {
+          targetType: "item",
+          targetId: "item-sword",
+          targetLabel: "Iron Sword",
+          targetRoutePath: "/items/iron-sword--11111111",
+          predicate: "casts",
+          label: "Casts",
+          weight: 2,
+          anchor: null,
+        },
+      ]);
+      expect(readModels.listItemsCarryingSpell("named;spell;spell_shadow-step")).toEqual([]);
+    } finally {
+      process.chdir(originalCwd);
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
   it("resolves a spell without a stat type and leaves its skill unlinked", async () => {
     const originalCwd = process.cwd();
     const root = seed();

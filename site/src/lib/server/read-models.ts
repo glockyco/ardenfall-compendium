@@ -89,7 +89,7 @@ export {
 } from "./entities/status-effect";
 
 export type { SpellOverviewRow, SpellPresentationRow } from "./entities/spell";
-export { getSpellPresentation, listSpells } from "./entities/spell";
+export { getSpellPresentation, listItemsCarryingSpell, listSpells } from "./entities/spell";
 
 export type {
   StatTypeOverviewRow,

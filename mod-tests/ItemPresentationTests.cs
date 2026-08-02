@@ -127,17 +127,24 @@ public sealed class ItemPresentationTests
     }
 
     [Fact]
-    public void BuilderDerivesSafeEffectFactsFromExtractedFields()
+    public void BuilderEmitsPrimaryAndSecondarySpellFactsWithReferencesAndSources()
     {
+        var primary = SnapshotRef.NamedAsset("spell", "spell_spark");
+        var secondary = SnapshotRef.NamedAsset("spell", "spell_flame");
         var fields = new Dictionary<string, object?>
         {
-            ["name"] = "Spark Slate",
-            ["description"] = "Casts a spell.",
-            ["spellDataJson"] = new Dictionary<string, object?>
-            {
-                ["id"] = "fixture-spark",
-                ["name"] = "Spark",
-            },
+            ["spellDataJson"] = new LeveledSpellDataSnapshot(
+                SpellRef: primary,
+                SpellName: "Spark",
+                Level: 2,
+                SecondaryLevel: 2,
+                SubSpells: new List<SubSpellSnapshot>()),
+            ["secondarySpellDataJson"] = new LeveledSpellDataSnapshot(
+                SpellRef: secondary,
+                SpellName: null,
+                Level: 3,
+                SecondaryLevel: 3,
+                SubSpells: new List<SubSpellSnapshot>()),
         };
 
         var presentation = ItemPresentationBuilder.FromExtractedFields(
@@ -147,11 +154,56 @@ public sealed class ItemPresentationTests
             provenance: new Dictionary<string, Provenance>());
 
         Assert.Equal("Casts Spark", presentation.EffectsSource);
-        Assert.Contains(presentation.Effects, effect =>
-            effect.Kind == "spell" &&
-            effect.Label == "Spark" &&
-            effect.TargetType == "spell" &&
-            effect.TargetId == "fixture-spark");
+        Assert.Empty(presentation.Diagnostics);
+        Assert.Collection(
+            presentation.Effects,
+            first =>
+            {
+                Assert.Equal("spell", first.Kind);
+                Assert.Equal("Spark", first.Label);
+                Assert.Same(primary, first.TargetRef);
+                Assert.Equal(2, first.Level);
+                Assert.Null(first.TargetId);
+                Assert.Equal("spellDataJson", first.Source);
+            },
+            second =>
+            {
+                Assert.Equal("spell", second.Kind);
+                Assert.Equal("spell_flame", second.Label);
+                Assert.Same(secondary, second.TargetRef);
+                Assert.Equal(3, second.Level);
+                Assert.Null(second.TargetId);
+                Assert.Equal("secondarySpellDataJson", second.Source);
+            });
+    }
+
+    [Fact]
+    public void BuilderSkipsUnconfiguredSpellParameter()
+    {
+        var fields = new Dictionary<string, object?>
+        {
+            ["spellDataJson"] = new LeveledSpellDataSnapshot(
+                SpellRef: null,
+                SpellName: null,
+                Level: 0,
+                SecondaryLevel: 0,
+                SubSpells: new List<SubSpellSnapshot>()),
+            ["secondarySpellDataJson"] = new LeveledSpellDataSnapshot(
+                SpellRef: null,
+                SpellName: null,
+                Level: 0,
+                SecondaryLevel: 0,
+                SubSpells: new List<SubSpellSnapshot>()),
+        };
+
+        var presentation = ItemPresentationBuilder.FromExtractedFields(
+            rowId: "fixture-unconfigured-slate",
+            variantId: "slate-spell",
+            fields,
+            provenance: new Dictionary<string, Provenance>());
+
+        Assert.Empty(presentation.Effects);
+        Assert.Empty(presentation.Diagnostics);
     }
 
     [Fact]
@@ -305,10 +357,14 @@ public sealed class ItemPresentationTests
             fields,
             provenance: new Dictionary<string, Provenance>());
 
-        Assert.Equal("Casts Spark", presentation.EffectsSource);
-        Assert.Contains(presentation.Effects, effect =>
-            effect.Kind == "spell" &&
-            effect.Label == "Spark" &&
-            effect.TargetType == "spell");
+        var effect = Assert.Single(presentation.Effects);
+        Assert.Equal("spell", effect.Kind);
+        Assert.Equal("Spark", effect.Label);
+        Assert.Equal("spell", effect.TargetType);
+        Assert.Null(effect.TargetRef);
+        Assert.Null(effect.TargetId);
+        var diagnostic = Assert.Single(presentation.Diagnostics);
+        Assert.Equal("spellDataJson", diagnostic.Field);
+        Assert.Equal("unresolvedEffectTarget", diagnostic.Code);
     }
 }

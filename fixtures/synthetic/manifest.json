@@ -71,8 +71,8 @@
   "hashes": {
     "snapshot/spells.json": "5ecc4fcb99e2da4f337ea180d9814f5edd1dff6f11952cd8a7fbf5292d910cba",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
-    "snapshot/manifest.json": "9958813de91820c8de89316b2859bfab6cfa46678e6f43d2fb9304dd47ff3075",
-    "snapshot/items.json": "ec26ce4ac3bf5d04b901ed32711485e03cbc85ec759cc3184be3ebf16746a7f9",
+    "snapshot/manifest.json": "19f9aef3c5469df8f1dc51ae7fdb562dce686fd1da5415c47a33bd2491b0c78d",
+    "snapshot/items.json": "f996a81c10379bcf22c10f910065b9a3e70c9e78c989ebbf73530118abf9022a",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
     "snapshot/assets/items/fixture-icon-blue.png": "d6d4b05209c7541985841a63d955337a411a005d7abb936426791cbfde258f17",

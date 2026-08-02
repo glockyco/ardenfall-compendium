@@ -22,6 +22,7 @@ import { canonicaliseLocations } from "$pipeline/entities/location/canonicaliser
 import { LOCATION_DDL } from "$pipeline/sql/location-ddl";
 import { emitMapReadModels } from "$pipeline/stages/emit-read-models";
 import { PORTAL_DDL } from "$pipeline/sql/portal-ddl";
+import { SPELL_DDL } from "$pipeline/sql/spell-ddl";
 import { canonicalisePortals } from "$pipeline/entities/portal/canonicaliser";
 
 const ctx = {
@@ -65,6 +66,12 @@ describe("emitItemReadModels", () => {
       INSERT INTO status_effects (id) VALUES
         ('91a00001.fixture-status-effect-bleeding'),
         ('91a00002.fixture-status-effect-burning');
+    `);
+    db.exec(SPELL_DDL);
+    db.exec(`
+      INSERT INTO spells (id, spell_name) VALUES
+        ('named;spell;spell_fire-shield', 'Fire Shield'),
+        ('named;spell;spell_arcane-surge', 'Arcane Surge');
     `);
 
     db.exec(`
@@ -217,6 +224,60 @@ describe("emitItemReadModels", () => {
       source: "items.statusEffectRef",
       level: 2.5,
     });
+    const slateFacts = db
+      .query<{ effect_facts_json: string }, [string]>(
+        `SELECT effect_facts_json FROM item_presentation_rows WHERE id = ?`,
+      )
+      .get("7ab10c55.fixture-slate-spell");
+    expect(JSON.parse(slateFacts!.effect_facts_json)).toEqual([
+      expect.objectContaining({
+        targetId: "named;spell;spell_fire-shield",
+        level: 1,
+        source: "spellDataJson",
+      }),
+      expect.objectContaining({
+        targetId: "named;spell;spell_arcane-surge",
+        level: 2,
+        source: "secondarySpellDataJson",
+      }),
+    ]);
+    const castsEdges = db
+      .query(
+        `SELECT edge_id, target_id, predicate, label, evidence_json
+         FROM entity_edges
+         WHERE source_id = '7ab10c55.fixture-slate-spell' AND predicate = 'casts'
+         ORDER BY edge_id`,
+      )
+      .all() as {
+      edge_id: string;
+      target_id: string;
+      predicate: string;
+      label: string;
+      evidence_json: string;
+    }[];
+    expect(castsEdges).toHaveLength(2);
+    expect(castsEdges).toEqual([
+      expect.objectContaining({
+        edge_id: "7ab10c55.fixture-slate-spell:casts:spell:named;spell;spell_arcane-surge",
+        target_id: "named;spell;spell_arcane-surge",
+        predicate: "casts",
+        label: "Casts",
+      }),
+      expect.objectContaining({
+        edge_id: "7ab10c55.fixture-slate-spell:casts:spell:named;spell;spell_fire-shield",
+        target_id: "named;spell;spell_fire-shield",
+        predicate: "casts",
+        label: "Casts",
+      }),
+    ]);
+    expect(JSON.parse(castsEdges[0]!.evidence_json)).toEqual({
+      source: "items.spellRef",
+      level: 2,
+    });
+    expect(JSON.parse(castsEdges[1]!.evidence_json)).toEqual({
+      source: "items.spellRef",
+      level: 1,
+    });
     const fireFacts = db
       .query<{ effect_facts_json: string }, [string]>(
         `SELECT effect_facts_json FROM item_presentation_rows WHERE id = ?`,
@@ -225,11 +286,14 @@ describe("emitItemReadModels", () => {
     expect(JSON.parse(fireFacts!.effect_facts_json)[0]).toEqual(
       expect.objectContaining({ targetId: null }),
     );
+    expect(JSON.parse(fireFacts!.effect_facts_json)[1]).toEqual(
+      expect.objectContaining({ targetId: null, targetType: "spell" }),
+    );
     expect(
       db
         .query(
           `SELECT count(*) AS count FROM entity_edges
-           WHERE source_id = '8c0ffee0.fixture-throwing-potion' AND predicate = 'applies'`,
+           WHERE source_id = '8c0ffee0.fixture-throwing-potion' AND predicate = 'casts'`,
         )
         .get(),
     ).toEqual({ count: 0 });
