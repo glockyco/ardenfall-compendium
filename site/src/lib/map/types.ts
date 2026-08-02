@@ -28,6 +28,8 @@ export interface MapPointRow {
   debugOnly: boolean;
   fastTravel: boolean;
   nodeShortId: string | null;
+  /** Outgoing `leads_to` destination, for portals that connect somewhere. */
+  leadsTo: { label: string; shortId: string } | null;
 }
 
 export interface MapVolumeRow {

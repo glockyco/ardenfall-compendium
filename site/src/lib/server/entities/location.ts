@@ -106,6 +106,7 @@ function readLayers(): MapLayerConfig[] {
 }
 
 function readPoints(layer: MapLayerConfig): MapPointRow[] {
+  const destinations = readLeadsToDestinations(layer.entityType);
   const rows: MapPointRow[] = [];
   for (const table of layer.sourceTables.filter((t) => t === "map_points")) {
     const records = all<MapPointRecord>(
@@ -132,10 +133,37 @@ function readPoints(layer: MapLayerConfig): MapPointRow[] {
         debugOnly: r.show_on_map_debug_only === 1,
         fastTravel: r.allow_fast_travel === 1,
         nodeShortId: r.short_id,
+        leadsTo: destinations.get(r.instance_id) ?? null,
       });
     }
   }
   return rows;
+}
+
+/**
+ * Outgoing `leads_to` destinations keyed by source instance, loaded separately
+ * rather than joined into the point query: an entity may hold several edges, and
+ * joining them would multiply the map markers rather than the destinations.
+ */
+function readLeadsToDestinations(
+  entityType: string,
+): Map<string, { label: string; shortId: string }> {
+  const records = all<{ source_id: string; label: string; short_id: string }>(
+    `SELECT e.source_id, n.label, n.short_id
+     FROM entity_edges e
+     JOIN entity_nodes n
+       ON n.entity_type = e.target_type AND n.entity_id = e.target_id AND n.is_public = 1
+     WHERE e.predicate = 'leads_to' AND e.source_type = ?
+     ORDER BY e.source_id, n.label`,
+    [entityType],
+  );
+  const bySource = new Map<string, { label: string; shortId: string }>();
+  for (const r of records) {
+    if (!bySource.has(r.source_id)) {
+      bySource.set(r.source_id, { label: r.label, shortId: r.short_id });
+    }
+  }
+  return bySource;
 }
 
 function readVolumes(layer: MapLayerConfig): MapVolumeRow[] {

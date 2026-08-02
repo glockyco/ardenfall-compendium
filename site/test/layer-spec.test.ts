@@ -29,6 +29,7 @@ const point = (id: string, over: Partial<MapPointRow> = {}): MapPointRow => ({
   debugOnly: false,
   fastTravel: false,
   nodeShortId: id,
+  leadsTo: null,
   ...over,
 });
 

@@ -44,4 +44,14 @@ export class MapStore {
   select(shortId: string | null): void {
     this.ui.selected = shortId;
   }
+
+  /**
+   * Select a point and switch to the map it sits on. Portal connections cross
+   * maps, so following one has to move the view as well as the selection.
+   */
+  goToPoint(shortId: string): void {
+    const point = this.view.points.find((p) => p.nodeShortId === shortId);
+    if (point?.mapId) this.ui.mapId = point.mapId;
+    this.ui.selected = shortId;
+  }
 }

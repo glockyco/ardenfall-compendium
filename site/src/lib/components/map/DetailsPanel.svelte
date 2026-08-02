@@ -3,6 +3,7 @@
 
   let { store }: { store: MapStore } = $props();
   const point = $derived(store.selectedPoint);
+  const leadsTo = $derived(point?.leadsTo ?? null);
 </script>
 
 {#if point}
@@ -20,6 +21,17 @@
       <dd>{point.elevation}</dd>
       <dt>Fast travel</dt>
       <dd>{point.fastTravel ? "Yes" : "No"}</dd>
+      {#if leadsTo}
+        <dt>Leads to</dt>
+        <dd>
+          <button
+            class="hover:text-foreground text-left underline underline-offset-2"
+            onclick={() => store.goToPoint(leadsTo.shortId)}
+          >
+            {leadsTo.label}
+          </button>
+        </dd>
+      {/if}
     </dl>
   </aside>
 {/if}

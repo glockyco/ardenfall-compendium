@@ -4,6 +4,14 @@ import { mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+/**
+ * Seeds a throwaway SQLite database under a fresh root and returns that root.
+ *
+ * Tests `process.chdir` into it and then `await import` the read-model module:
+ * the import must happen after the chdir because the module resolves
+ * `static/data.sqlite` relative to the working directory at load time, so a
+ * static import would bind to the wrong database.
+ */
 function withDb(seed: (db: Database) => void): string {
   const root = join(
     tmpdir(),
@@ -38,6 +46,11 @@ const baseSchema = `
     entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, label TEXT NOT NULL,
     route_path TEXT NOT NULL, canonical_slug TEXT NOT NULL, short_id TEXT NOT NULL,
     is_public INTEGER NOT NULL, PRIMARY KEY (entity_type, entity_id)
+  );
+  CREATE TABLE entity_edges (
+    edge_id TEXT PRIMARY KEY, source_type TEXT NOT NULL, source_id TEXT NOT NULL,
+    target_type TEXT NOT NULL, target_id TEXT NOT NULL, predicate TEXT NOT NULL,
+    label TEXT NOT NULL, weight REAL NOT NULL, evidence_json TEXT NOT NULL, anchor TEXT
   );
 `;
 
@@ -96,6 +109,7 @@ describe("getMapView", () => {
           debugOnly: false,
           fastTravel: true,
           nodeShortId: "abc12345",
+          leadsTo: null,
         },
       ]);
       expect(view.volumes[0]?.ring).toEqual([
@@ -112,6 +126,45 @@ describe("getMapView", () => {
           bounds: { minX: 10, minY: 6, maxX: 14, maxY: 10 },
         },
       ]);
+    } finally {
+      process.chdir(originalCwd);
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("attaches a leads_to destination to its source point and leaves others null", async () => {
+    const root = withDb((db) => {
+      db.exec(baseSchema);
+      db.exec(`
+        INSERT INTO map_layers VALUES
+          ('portals', 'portal', 'map_points',
+           '["map_points"]', 'point', 'portal',
+           '[190,150,255]', 5, '["name"]', '[]', 'Portals', 903);
+        INSERT INTO map_points VALUES
+          ('portal:a', 'portal', 'a', 'Harbor Gate', 'ardenfall', 1, 1, 0, 0, 0),
+          ('portal:b', 'portal', 'b', 'Cliff Stair', 'interior', 2, 2, 0, 0, 0),
+          ('portal:c', 'portal', 'c', 'Sealed Door', 'ardenfall', 3, 3, 0, 0, 0);
+        INSERT INTO entity_nodes VALUES
+          ('portal', 'a', 'Harbor Gate', '/map?map=ardenfall&sel=aaaa1111', 'harbor-gate--aaaa1111', 'aaaa1111', 1),
+          ('portal', 'b', 'Cliff Stair', '/map?map=interior&sel=bbbb2222', 'cliff-stair--bbbb2222', 'bbbb2222', 1),
+          ('portal', 'c', 'Sealed Door', '/map?map=ardenfall&sel=cccc3333', 'sealed-door--cccc3333', 'cccc3333', 1);
+        INSERT INTO entity_edges VALUES
+          ('a:leads_to:portal:b', 'portal', 'a', 'portal', 'b', 'leads_to', 'Leads to', 1, '{}', NULL);
+      `);
+    });
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      const { getMapView } = await import("../src/lib/server/read-models");
+      const byName = new Map(getMapView().points.map((p) => [p.name, p.leadsTo]));
+
+      // The destination carries the target's own label, so the panel can name
+      // where a portal goes without a second lookup.
+      expect(byName.get("Harbor Gate")).toEqual({ label: "Cliff Stair", shortId: "bbbb2222" });
+      // Directed: the edge exists one way only, so the target does not gain a
+      // return link it was never given.
+      expect(byName.get("Cliff Stair")).toBeNull();
+      expect(byName.get("Sealed Door")).toBeNull();
     } finally {
       process.chdir(originalCwd);
       rmSync(root, { recursive: true, force: true });
