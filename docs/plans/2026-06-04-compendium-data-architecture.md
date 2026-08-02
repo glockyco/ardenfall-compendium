@@ -34,7 +34,7 @@ Reuses the vocabulary of the 2026-04-29 addendum: Locked invariant, Accepted, Pr
 - Subsystem-owned executable code discovered by convention via typed registries merged per process; no side-effect globals. (Decision 3.)
 - Strict one-way flow: descriptors → pipeline → canonical typed SQLite + generated/validated read models → site reads only emitted read models/metadata. (Decisions 4, 6, 16.)
 - Canonical **typed** SQLite preserving domain shape (root + inheritance-layer + child tables; type-tagged JSON only without query pressure). No EAV. (Decisions 7, 10.)
-- Identity domains as first-class types (`lookupAsset`, `namedAsset`, `record`, `runtimeObject`, `missing`) with fatal/diagnostic/optional-empty policy. (Decision 13.)
+- Reference resolution preserves four outcomes as first-class data: `lookupAsset` GUID, `namedAsset`, `record`, and an out-of-scope engine resource. Missing references retain their reason and source, with fatal/diagnostic/optional-empty policy.
 - `BuiltLookupTable` is not a universal root; record-backed extraction is separate; fail-fast preflight; atomic snapshots. (Decision 14.)
 - Generated relationship graph (`entity_nodes`/`entity_edges`/sections) with the fail-fast `relationshipMissingTarget` audit; site renders edges generically. (Slice 4.)
 - Descriptor-owned map-layer contract → data-driven deck.gl layers. (Decision 17 / Slice 6.)
@@ -46,11 +46,12 @@ Reuses the vocabulary of the 2026-04-29 addendum: Locked invariant, Accepted, Pr
 - **Identity generalized** to concrete extraction domains, with an optional instance→definition reference when an instance has a separate definition asset. (§4)
 - **General placement model** (`placements` + generalized `map_points`/`map_volumes`) replacing the location-specific columns and read models. (§5)
 - **Single runtime extraction source with lookup-asset, named-asset, and record mechanisms** behind one uniform snapshot contract. Scene extraction is reserved for a future slice and is not yet built. (§6)
-- **Relationship graph generalized** for the shipped `variant_of` and `leads_to` edges, with future spatial edges. (§7)
+- **One entity registry** supplies pipeline dispatch for each descriptor, including canonicalisation, optional read models, optional map projection, and site capabilities. (§6)
+- **Relationship graph generalized** for the shipped `variant_of`, `scales_with`, and `leads_to` edges. Relationship sections remain a detail-page grouping contract, with future spatial edges kept separate. (§7)
 
 ## 2. External grounding
 
-- **Definition vs instance (flyweight) separation** is the canonical, modern model for game content: shared intrinsic "what it is" vs per-placement extrinsic "where/which." Ardenfall is itself built this way (`CharacterData` definition + `NPCRecord` instance), so the compendium mirrors the game. Source: Game Programming Patterns — Flyweight (https://gameprogrammingpatterns.com/flyweight.html).
+- **Definition vs instance (flyweight) separation** is the canonical, modern model for game content: shared intrinsic "what it is" vs per-placement extrinsic "where/which." Ardenfall's game data uses this separation, so the compendium mirrors it. Source: Game Programming Patterns — Flyweight (https://gameprogrammingpatterns.com/flyweight.html).
 - **EAV is the anti-pattern to avoid**; keep typed tables with JSON only for kind-owned, non-queried payloads. Source: "EAV design — don't do it" (https://www.cybertec-postgresql.com/en/entity-attribute-value-eav-design-in-postgresql-dont-do-it/).
 - **Ardenfall is pervasively Odin/Sirenix serialized** (`SerializedScriptableObject`, `[OdinSerialize] Parameter<T>/SmartListParameter<T>`), and `Parameter<T>.Get()` is runtime-computed (resolves inheritance/override chains). Offline asset extractors cannot read this: Odin stores a proprietary forward-only binary blob (`SerializationData.SerializedBytes`) with external Unity refs shunted into a side list. Sources: Odin Serializer README (https://github.com/TeamSirenix/odin-serializer/blob/master/README.md); AssetRipper docs (https://github.com/AssetRipper/AssetRipper).
 - **Therefore the live runtime is the only viable structured-data source.** AssetRipper/offline extractors are not used for data; a lightweight asset extractor may be used for binary media (icons/maps) if/when needed — orthogonal to the data pipeline.
@@ -70,37 +71,36 @@ Every descriptor declares a `kind`. Two kinds cover the current model.
 
 Flyweight/intrinsic data, sourced from `BuiltLookupTable` or named-asset discovery. The "what it is." Most definitions get public pages.
 
-Examples: `item`, `spell`, `status-effect`, `faction`, `character` (`CharacterData`), `location` (a definition that _also_ carries intrinsic placement), `stat-type`, `item-category`.
+Examples in the current descriptor set: `item`, `spell`, `status-effect`, `stat-type`, `item-category`, `item-tag`, and `location`. `spell` is a named-asset definition. The other current definition entities are lookup-asset definitions except `stat-type` and `item-category`, which are also named assets.
 
 Identity: row id uses the identity mechanism for the source. `BuiltLookupTable` definitions use their GUID, while named-asset definitions use `named;<entityId>;<assetName>`.
 
 ### 3.2 Instance (`kind: "instance"`)
 
-Instances are extrinsic placement records sourced from `MasterRecordTable` records or, in a future unbuilt scene-extraction slice, scene components. An instance may reference a separate definition asset; record-backed portals are instances without a separate definition asset. The "where/which." Instances usually have **no standalone page** — they surface on the map and on their definition's page.
+Instances are extrinsic placement records sourced from `MasterRecordTable` records. The current instance descriptor is `portal` (`PortalRecord`), which has no separate definition asset and no standalone detail page. Scene components remain a future unbuilt extraction mechanism. Instances surface on the map rather than on a definition page.
 
-Examples: `npc` (`NPCRecord` → `character`), `portal` (`PortalRecord`), scene placements (`plant`, `container`, `creature-spawner`).
+Example: `portal` (`PortalRecord`).
 
-Identity: row id from the `record` domain (record id) or, in the future scene mechanism, the `scene` domain (`GuidComponent` GUID). A definition reference applies only when the instance has a separate definition asset; such a reference carries the definition's GUID for the N:1 link. Portals are record-backed instances with no definition reference. All instances carry placement.
+Identity: the current instance row id comes from the `record` domain. A future instance with a separate definition asset may carry a definition reference for an N:1 link. Portals are record-backed instances with no definition reference. All current instances carry placement.
 
 ### 3.3 Descriptor additions (concrete)
 
 ```jsonc
 {
-  "id": "npc",
+  "id": "portal",
   "kind": "instance",
-  "label": { "singular": "NPC", "plural": "NPCs" },
+  "label": { "singular": "Portal", "plural": "Portals" },
   "extraction": {
-    "source": "record", // "lookupAsset" | "namedAsset" | "record" | "scene"
-    "root": "Ardenfall.RecordSystem.NPCRecord",
-    "options": { "subtable": "characters" },
+    "source": "record",
+    "root": "Ardenfall.RecordSystem.PortalRecord",
+    "options": { "table": "world", "subtable": "portals" },
   },
-  "definition": { "entity": "character", "via": "characterData" },
   "placement": { "kind": "point", "from": "transform" },
   "fields": [
     /* ... extrinsic fields only ... */
   ],
   "map": {
-    /* siteMap layer styling, as today */
+    /* site map-layer styling */
   },
 }
 ```
@@ -110,7 +110,7 @@ Identity: row id from the `record` domain (record id) or, in the future scene me
   "id": "location",
   "kind": "definition",
   "label": { "singular": "Location", "plural": "Locations" },
-  "extraction": { "source": "lookupAsset", "root": "Ardenfall.LocationAsset" },
+  "extraction": { "source": "lookupAsset", "root": "MapLocationManager.GetLocations" },
   "placement": { "kind": "point+volume", "from": "fields" }, // intrinsic placement
   "fields": [
     /* ... */
@@ -127,12 +127,14 @@ A role vocabulary will be designed against a real case if and when one arrives.
 
 ## 4. Identity model
 
-**Locked invariant.** Identity domains are never collapsed.
+**Locked invariant.** Resolving a reference preserves its concrete outcome rather than collapsing identity domains.
 
-- **Definition assets:** `lookupAsset` GUID for assets registered in `BuiltLookupTable`; `namedAsset` for definition assets that `BuiltLookupTable` does not register, identified by asset name. The named-asset row id is `named;<entityId>;<assetName>`, used by `stat-type` and `item-category`.
-- **Record instances:** `record` domain `(table, subtable, id)`; the canonical row id is the record's stable `id` (namespaced by entity where needed). An instance with a separate definition asset carries `definition_ref` equal to that definition's GUID, and many such instances may reference one definition. Portals are record-backed instances without a separate definition asset and therefore have no `definition_ref`.
-- **Runtime and missing references:** `runtimeObject` references are explicitly unstable (`stable: false`) and `missing` references carry the reason and source when no supported identity can be emitted.
-- **Scene instances:** `scene` identity is reserved for a future scene-extraction slice and is not yet built. The planned domain is the serialized `GuidComponent` GUID (a stable, design-time `byte[16]`), alongside `lookupAsset` and `record`. (`runtimeObject { stable:false }` remains for genuinely ephemeral refs only.)
+- **`lookupAsset`:** an Ardenfall asset registered in `BuiltLookupTable`, represented by its lookup GUID. Current definitions using this outcome include `item`, `item-tag`, `location`, and `status-effect`.
+- **`namedAsset`:** an authored asset that is not registered in `BuiltLookupTable`, represented by its entity and asset name. The resolver's type-to-entity registry currently maps `StatType` to `stat-type`, `ItemCategory` to `item-category`, and `SpellData` to `spell`. Its canonical row id is `named;<entityId>;<assetName>`.
+- **`record`:** a record-backed instance identified by `(table, subtable, id)`. The current `portal` rows carry their stable record id and have no definition reference.
+- **Engine resource:** a Unity object outside the `Ardenfall` namespace, such as a sprite or prefab, is deliberately outside the compendium's catalogue. It yields a missing reference with reason `engineResource` and no diagnostic. An unregistered asset whose type is in the `Ardenfall` namespace is different: it is expected catalogue content, so a missing lookup GUID yields `lookupAssetGuidMissing` and a diagnostic under the field's missing policy.
+
+Missing references preserve their reason and source. The resolver still applies the field's fatal, diagnostic, or optional-empty policy to genuine catalogue gaps. Scene identity remains reserved for a future scene-extraction slice and is not built.
 
 Relationship-graph nodes and `route_path`:
 
@@ -145,11 +147,11 @@ Missing/criticality policy (fatal/diagnostic/optional-empty) is unchanged (Decis
 
 **Locked invariant for all positioned entities.** Replaces the location-specific encoding.
 
-Any positioned entity — definition with intrinsic placement (location) or instance (npc, portal, scene objects) — contributes rows to one canonical placement table. The Unity→compendium coordinate transform happens **once**, here, in canonicalisation:
+Any positioned entity — currently the `location` definition and `portal` instance, with scene objects reserved for a future slice — contributes rows to one canonical placement table. The Unity→compendium coordinate transform happens **once**, here, in canonicalisation:
 
 ```sql
 create table placements (
-  entity_id   text not null,     -- 'location' | 'npc' | 'portal' | 'plant' | ...
+  entity_id   text not null,     -- 'location' | 'portal' | ...
   instance_id text not null,     -- definition GUID (intrinsic-placement defs) or instance id
   map_id      text,              -- game map id (nullable)
   map_x       real not null,     -- = source.x
@@ -169,11 +171,17 @@ create table placements (
 
 **Locked invariant.** The live runtime (BepInEx mod) is the only structured-data source. Offline asset extraction (AssetRipper et al.) is not used for data; only the runtime can resolve Odin/`Parameter<T>` semantics (§2).
 
+### Entity dispatch registry
+
+`pipeline/src/entities/registry.ts` exports the sole `entityRegistry`, keyed by entity id. Each entry supplies the entity DDL and canonicaliser, and may supply a read-model emitter, map projection, site read-model registrations or renderer capabilities, and phase or snapshot requirements. SQLite emission, read-model emission, map projections, and site metadata all dispatch through this registry rather than maintaining per-entity branches. `validateDescriptorCoverage` fails at runtime when a descriptor declares a public route without a read-model emitter or a map layer without a map projection. Adding an entity to pipeline dispatch is now one registry entry.
+
+The current descriptor set is `item`, `spell`, `status-effect`, `stat-type`, `item-category`, `item-tag`, `location`, and `portal`. The public detail/list sections are Items, Spells, Status Effects, Stats, Categories, Tags, and Map. `location` and `portal` are map-only entities.
+
 The current extraction mechanisms yield pure DTOs into one snapshot (one manifest, one preflight, one diagnostics model — Decisions 14, 15):
 
-1. **`lookupAsset`** — `BuiltLookupTable.GetAssetsOfType<T>()`. Definitions such as items and locations.
-2. **`namedAsset`** — definition assets that `BuiltLookupTable` does not register, identified by asset name. The canonical id is `named;<entityId>;<assetName>`; `stat-type` and `item-category` use this mechanism.
-3. **`record`** — `worldData.masterRecordTable` traversal (`maps → cells → CellRecordTableAsset` subtables; `GetRecords<T>()`). Record-backed instances such as portals. Reading record ScriptableObjects is side-effect-free; the game itself enumerates all `PortalRecord`s at `MapLocationManager.Init`.
+1. **`lookupAsset`** — `BuiltLookupTable.GetAssetsOfType<T>()`. Definitions such as items, locations, and status effects.
+2. **`namedAsset`** — definition assets that `BuiltLookupTable` does not register, identified by asset name. The canonical id is `named;<entityId>;<assetName>`; `stat-type`, `item-category`, and `spell` use this mechanism.
+3. **`record`** — `worldData.masterRecordTable` traversal (`maps → cells → CellRecordTableAsset` subtables; `GetRecords<T>()`). The current record-backed instance is `portal`. Reading record ScriptableObjects is side-effect-free; the game itself enumerates all `PortalRecord`s at `MapLocationManager.Init`.
 
 ### Scene mechanism (not yet built; future slice)
 
@@ -189,24 +197,34 @@ The mod-side seam mirrors the location adapter pattern already in place (a pure 
 
 ## 7. Relationship graph generalization
 
-The shipped relationship graph contains `variant_of` rows and portal `leads_to` rows. Portal connectivity is projected from canonical `connected_portal_ref_json` into graph edges. The relation is directed deliberately because the world contains one-way doors and chains; a reciprocal connection is stored as two edges. Placement rows do not currently generate `located-at`, instance↔definition, or bounded transitive spatial edges.
+The shipped relationship graph contains exactly three predicates: `variant_of` for item variants, `scales_with` from a spell to its stat-type skill, and `leads_to` between connected portals. Portal connectivity is projected from canonical `connected_portal_ref_json` into directed graph edges. The relation is directed deliberately because the world contains one-way doors and chains. A reciprocal connection is stored as two edges.
+
+`entity_relationship_sections` is a detail-page grouping contract, not a second edge store. Entities without detail pages write edges only. Portals therefore emit `leads_to` edges but no relationship sections because a portal has no detail page and a section would duplicate the map relationship. Placement rows do not currently generate `located-at`, instance↔definition, or bounded transitive spatial edges.
 
 The entity-graph audit runs once, after all read-model emitters, so it covers the complete emitted graph.
 
 A future relationship slice may add:
 
-- instance↔definition edges for instances with a separate definition asset;
+- instance↔definition edges for future instances with a separate definition asset;
 - placement edges derived from `placements`; and
 - bounded transitive spatial edges such as `item --obtainable-at--> location`, with intermediary evidence and bounded depth.
 
-Any such slice must retain the fail-fast `relationshipMissingTarget` audit and prevent link explosion through explicit hop bounds and aggregation.
+Any such slice must retain the fail-fast `relationshipMissingTarget` audit and prevent link explosion through explicit hop bounds and aggregation. It must also preserve the rule that relationship sections are emitted only for entities with a detail page.
 
 ## 8. Canonical SQLite & read models (generalization)
 
+### Rich text and presentation
+
+Rich text translation applies to item descriptions and effects, spell tooltips, and status-effect tooltips. The pipeline passes each source through `translateRichTextV1` with the master tooltip vocabulary. Each applicable read model stores both the game-authored source column and the translated JSON column. Site readers publish only the translated JSON form, never the source string.
+
+### Semantics constraint
+
+A field's meaning is established at the game's call site, not inferred from its declaration or type. A label that asserts more than the game does is a defect even when the extracted value is correct. For example, `SpellData.statType` is consumed as the skill that scales a spell, so the public model calls it `skill` and emits `scales_with`, rather than publishing it as a spell school.
+
 - Definitions keep typed root + inheritance-layer + child tables (Decisions 7, 10). Unchanged.
-- Instances get typed root tables per instance entity (e.g. `npcs`, `portals`) holding extrinsic fields; `definition_ref` is present only for instances with a separate definition asset. Portal placement lives in `placements`, and portal connectivity is emitted as `leads_to` graph edges from `connected_portal_ref_json`.
+- The current instance table is `portals`, holding extrinsic fields. `definition_ref` is reserved for future instances with a separate definition asset. Portal placement lives in `placements`, and portal connectivity is emitted as `leads_to` graph edges from `connected_portal_ref_json`.
 - No EAV; type-tagged JSON only for kind-owned, non-queried payloads (existing rule).
-- All read models remain generated, validated, digested (Decision 16). The site consumes only read models/metadata via `site/src/lib/store/` (or the established server read-model facade); it never joins canonical tables.
+- All read models remain generated, validated, digested (Decision 16). The site consumes only read models/metadata via the established server read-model facade in `site/src/lib/server/`, it never joins canonical tables.
 
 ## 9. Scene-only data — unbuilt future slice
 
@@ -220,7 +238,7 @@ Icons, map imagery/tiles, meshes are binary native Unity assets, orthogonal to t
 
 - No EAV; typed tables remain authoritative.
 - No polymorphic JSON sprawl — type-tagged JSON only without query pressure.
-- No identity collapse — asset, named-asset, and record domains stay distinct; the scene domain is reserved for the unbuilt future scene-extraction slice; instances never folded into definitions.
+- No identity collapse — `lookupAsset`, `namedAsset`, `record`, and deliberately out-of-scope engine-resource references retain distinct outcomes; instances never folded into definitions.
 - No coordinate re-transform outside pipeline canonicalisation.
 - No offline structured extraction (Odin makes it unreadable).
 - No "everything is a graph node" over-generalization — typed canonical tables + a focused `placements` table + the relationship graph, each with a clear job.
@@ -233,14 +251,11 @@ Location uses the general placement model: its canonical placement is stored in 
 
 The entity-kind and generalized placement foundation, including record-backed portal extraction, is shipped in Slice 7. Portal extraction, placement, map markers, and projection of `connected_portal_ref_json` into directed `leads_to` relationship edges are current behavior.
 
-1. **Characters** (definition) + **NPCs** (`record` instance) — future entity slices.
-2. **Scene placements** (`scene` mechanism; §9) — resource nodes, containers, stations, creature spawners, after the future scene-extraction slice is built and validated.
-3. Further definitions (spells, status effects, factions, quests) as their slices come.
+The current descriptor set is `item`, `spell`, `status-effect`, `stat-type`, `item-category`, `item-tag`, `location`, and `portal`. The current public sections are Items, Spells, Status Effects, Stats, Categories, Tags, and Map. Future work is limited to additional extraction mechanisms such as scene placements, which must first be built and validated under §6.
 
 ## 14. Open questions / uncertainties
 
 - Scene mechanism remains unbuilt and awaits live validation in the future scene-extraction slice (§9).
-- Whether some instance entities (e.g. portals) warrant a thin standalone page vs map-only — decide per entity by detail-page value.
 - Whether a future placement extension needs a child volume table when one definition has multiple intrinsic placements.
 
 ## 15. Acceptance criteria (architecture realized)
