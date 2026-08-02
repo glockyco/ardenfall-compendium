@@ -8,7 +8,6 @@ import type {
 import { translateRichTextV1 } from "../../rich-text/rich-text-v1.ts";
 import {
   ENTITY_GRAPH_DDL,
-  auditEntityGraph,
   insertPipelineDiagnostics,
 } from "../../relationships/relationship-graph.ts";
 import type { RichTextNode } from "../../rich-text/rich-text-v1.ts";
@@ -406,18 +405,6 @@ export function emitItemReadModels(
   });
   tx();
   insertPipelineDiagnostics(db, richTextDiagnostics, "item-presentation-read-model");
-  const graphDiagnostics = auditEntityGraph(db);
-  insertPipelineDiagnostics(db, graphDiagnostics, "item-presentation-read-model");
-  const fatalGraphDiagnostics = graphDiagnostics.filter(
-    (diagnostic) => diagnostic.severity === "fatal",
-  );
-  if (fatalGraphDiagnostics.length > 0) {
-    throw new Error(
-      `pipeline rejected entity graph: ${fatalGraphDiagnostics
-        .map((diagnostic) => diagnostic.message)
-        .join(" ")}`,
-    );
-  }
 }
 
 function collectTermLinks(nodes: RichTextNode[]): { termId: string; label: string }[] {

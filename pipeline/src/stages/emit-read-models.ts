@@ -24,11 +24,17 @@ export {
   emitItemTagReadModels,
 } from "../entities/item-tag/read-models.ts";
 export { MAP_READ_MODEL_DDL, emitMapReadModels } from "../map/read-models.ts";
+export { emitPortalReadModels } from "../entities/portal/read-models.ts";
 import { emitItemReadModels } from "../entities/item/read-models.ts";
 import { emitStatTypeReadModels } from "../entities/stat-type/read-models.ts";
 import { emitItemCategoryReadModels } from "../entities/item-category/read-models.ts";
 import { emitItemTagReadModels } from "../entities/item-tag/read-models.ts";
 import { emitMapReadModels } from "../map/read-models.ts";
+import { emitPortalReadModels } from "../entities/portal/read-models.ts";
+import {
+  auditEntityGraph,
+  insertPipelineDiagnostics,
+} from "../relationships/relationship-graph.ts";
 
 export function emitReadModels(
   db: Database,
@@ -60,5 +66,27 @@ export function emitReadModels(
     .sort();
   if (mapEntityIds.length > 0) {
     emitMapReadModels(db, mapEntityIds, "/map");
+  }
+  // Portal connectivity targets the nodes the map emitter publishes, so it runs
+  // after it.
+  const readModelDiagnostics = snapshot.envelopes.portal ? emitPortalReadModels(db) : [];
+
+  // Audited once, after every emitter: the graph invariant is about the whole
+  // graph, and an audit run mid-way silently exempts whatever is emitted later.
+  const graphDiagnostics = auditEntityGraph(db);
+  insertPipelineDiagnostics(
+    db,
+    [...readModelDiagnostics, ...graphDiagnostics],
+    "entity-graph-read-model",
+  );
+  const fatalGraphDiagnostics = graphDiagnostics.filter(
+    (diagnostic) => diagnostic.severity === "fatal",
+  );
+  if (fatalGraphDiagnostics.length > 0) {
+    throw new Error(
+      `pipeline rejected entity graph: ${fatalGraphDiagnostics
+        .map((diagnostic) => diagnostic.message)
+        .join(" ")}`,
+    );
   }
 }
