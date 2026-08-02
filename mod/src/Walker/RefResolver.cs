@@ -10,14 +10,17 @@ public sealed class RefResolver
 {
     private readonly System.Func<Object, string> _assetName;
     private readonly System.Func<Object?, bool> _isUnityNull;
+    private readonly System.Func<Object, string?> _lookupGuid;
     public List<Diagnostic> Diagnostics { get; } = new();
 
     public RefResolver(
         System.Func<Object, string>? assetName = null,
-        System.Func<Object?, bool>? isUnityNull = null)
+        System.Func<Object?, bool>? isUnityNull = null,
+        System.Func<Object, string?>? lookupGuid = null)
     {
         _assetName = assetName ?? SafeAssetName;
         _isUnityNull = isUnityNull ?? IsUnityNull;
+        _lookupGuid = lookupGuid ?? LookupGuid;
     }
 
 
@@ -47,14 +50,32 @@ public sealed class RefResolver
                 : EmitMissing(field, entityRowId, policy, reason: "lookupAssetGuidMissing", source: source ?? field);
         }
 
-        var guid = BuiltLookupTable.Instance != null
-            ? BuiltLookupTable.Instance.GetGuid(asset)
-            : null;
+        if (!IsArdenfallContent(asset))
+        {
+            // Engine resources are out of scope by design. An unregistered Ardenfall asset is a gap worth reporting.
+            return SnapshotRef.Missing("engineResource", source ?? field);
+        }
+
+        var guid = _lookupGuid(asset);
         if (guid is null || guid.Length == 0)
         {
             return EmitMissing(field, entityRowId, policy, reason: "lookupAssetGuidMissing", source: source ?? field);
         }
         return SnapshotRef.LookupAsset(guid, asset.GetType().FullName, _assetName(asset));
+    }
+
+    private static string? LookupGuid(Object asset)
+    {
+        return BuiltLookupTable.Instance != null
+            ? BuiltLookupTable.Instance.GetGuid(asset)
+            : null;
+    }
+
+    private static bool IsArdenfallContent(Object asset)
+    {
+        var ns = asset.GetType().Namespace;
+        return ns == "Ardenfall"
+            || (ns != null && ns.StartsWith("Ardenfall.", System.StringComparison.Ordinal));
     }
 
     private static bool IsUnityNull(Object? asset)

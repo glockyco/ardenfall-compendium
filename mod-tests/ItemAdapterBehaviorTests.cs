@@ -57,6 +57,57 @@ public sealed class ItemAdapterBehaviorTests
     }
 
     [Fact]
+    public void EngineResourceRefDoesNotDiagnoseMissingLookupGuid()
+    {
+        var sprite = (Sprite)RuntimeHelpers.GetUninitializedObject(typeof(Sprite));
+        var lookupCalled = false;
+        var refs = new RefResolver(
+            isUnityNull: _ => false,
+            lookupGuid: _ =>
+            {
+                lookupCalled = true;
+                return null;
+            });
+
+        var resolved = refs.ResolveAsset(sprite, "iconRef", "item-row", MissingPolicy.Diagnostic);
+
+        Assert.Equal("missing", resolved.Kind);
+        Assert.Equal("engineResource", resolved.Reason);
+        Assert.Equal("iconRef", resolved.Source);
+        Assert.Empty(refs.Diagnostics);
+        Assert.False(lookupCalled);
+    }
+
+    [Fact]
+    public void UnregisteredArdenfallAssetStillDiagnosesMissingLookupGuid()
+    {
+        var spellData = (SpellData)RuntimeHelpers.GetUninitializedObject(typeof(SpellData));
+        var refs = new RefResolver(
+            isUnityNull: _ => false,
+            lookupGuid: _ => null);
+
+        var resolved = refs.ResolveAsset(spellData, "spellRef", "item-row", MissingPolicy.Diagnostic);
+
+        Assert.Equal("missing", resolved.Kind);
+        Assert.Equal("lookupAssetGuidMissing", resolved.Reason);
+        var diagnostic = Assert.Single(refs.Diagnostics);
+        Assert.Equal("lookupAssetGuidMissing", diagnostic.Code);
+    }
+
+    [Fact]
+    public void NullAssetRefKeepsNullAssetReason()
+    {
+        var refs = new RefResolver();
+
+        var resolved = refs.ResolveAsset(null, "iconRef", "item-row", MissingPolicy.Diagnostic);
+
+        Assert.Equal("missing", resolved.Kind);
+        Assert.Equal("nullAsset", resolved.Reason);
+        var diagnostic = Assert.Single(refs.Diagnostics);
+        Assert.Equal("nullAsset", diagnostic.Code);
+    }
+
+    [Fact]
     public void LeveledStatusEffectSnapshotIncludesStructuredStackMode()
     {
         var stackMode = new StatusEffectData.StackMode
