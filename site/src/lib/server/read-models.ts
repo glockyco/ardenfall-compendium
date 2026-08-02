@@ -109,6 +109,9 @@ export {
   listTermIds,
 } from "./entities/item";
 
+export type { SpellOverviewRow, SpellPresentationRow } from "./entities/spell";
+export { getSpellPresentation, listSpells } from "./entities/spell";
+
 export type { StatTypeOverviewRow, StatTypePresentationRow } from "./entities/stat-type";
 export { getStatTypePresentation, listStatTypes } from "./entities/stat-type";
 
