@@ -67,6 +67,7 @@ describe("canonicaliseItems", () => {
     }[];
     expect(tagRows).toEqual([
       { item_id: "6a71c0de.fixture-stamina-draught", tag: "7a600001.fixture-tag-valuable-remedy" },
+      { item_id: "6a71c0de.fixture-stamina-draught", tag: "7a600002.fixture-tag-rare" },
       { item_id: "8c0ffee0.fixture-throwing-potion", tag: "7a600002.fixture-tag-rare" },
     ]);
   });

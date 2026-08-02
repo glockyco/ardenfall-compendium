@@ -190,13 +190,36 @@ export function emitItemReadModels(
   }
   const itemById = new Map(
     (
-      db.query("SELECT id, name, variant FROM items").all() as {
+      db.query('SELECT id, name, variant, "categoryRef" AS category_ref FROM items').all() as {
         id: string;
         name: string;
         variant: string;
+        category_ref: string | null;
       }[]
     ).map((row) => [row.id, row] as const),
   );
+  const publicCategoryIds = new Set(
+    db
+      .query<{ id: string }, []>("SELECT id FROM item_categories")
+      .all()
+      .map((row) => row.id),
+  );
+  const publicTagIds = new Set(
+    db
+      .query<{ id: string }, []>("SELECT id FROM item_tags")
+      .all()
+      .map((row) => row.id),
+  );
+  const tagsByItem = new Map<string, string[]>();
+  for (const row of db
+    .query<{ item_id: string; tag: string }, []>(
+      "SELECT item_id, tag FROM item_tag_refs ORDER BY item_id, tag",
+    )
+    .all()) {
+    const tags = tagsByItem.get(row.item_id) ?? [];
+    tags.push(row.tag);
+    tagsByItem.set(row.item_id, tags);
+  }
   const statusEffectIds = new Set<string>();
   const hasStatusEffectsTable = db
     .query<{ name: string }, []>(
@@ -239,11 +262,72 @@ export function emitItemReadModels(
     `INSERT OR REPLACE INTO entity_relationship_sections (section_id, source_type, source_id, title, predicate, edges_json, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
   const richTextDiagnostics: Parameters<typeof insertPipelineDiagnostics>[1] = [];
+  const emitTaxonomyEdges = (
+    itemId: string,
+    categoryRef: string | null | undefined,
+    tagIds: string[],
+  ) => {
+    for (const tagId of tagIds) {
+      if (!publicTagIds.has(tagId)) {
+        richTextDiagnostics.push({
+          severity: "diagnostic",
+          source: "relationship-graph",
+          code: "itemTagUnresolved",
+          message: `Item '${itemId}' has an unresolvable tag reference '${tagId}'.`,
+          entityType: "item",
+          entityId: itemId,
+          field: "item_tag_refs.tag",
+          evidence: { tagId },
+        });
+        continue;
+      }
+      edgeInsert.run(
+        `${itemId}:tagged:item-tag:${tagId}`,
+        "item",
+        itemId,
+        "item-tag",
+        tagId,
+        "tagged",
+        "Tagged",
+        1,
+        JSON.stringify({ source: "items.tags" }),
+        null,
+      );
+    }
+    if (categoryRef === null || categoryRef === undefined) return;
+    const categoryId = resolveNamedAssetId(categoryRef, publicCategoryIds);
+    if (categoryId === null) {
+      richTextDiagnostics.push({
+        severity: "diagnostic",
+        source: "relationship-graph",
+        code: "itemCategoryUnresolved",
+        message: `Item '${itemId}' has an unresolvable category reference.`,
+        entityType: "item",
+        entityId: itemId,
+        field: "items.categoryRef",
+        evidence: { categoryRef },
+      });
+      return;
+    }
+    edgeInsert.run(
+      `${itemId}:categorised_as:item-category:${categoryId}`,
+      "item",
+      itemId,
+      "item-category",
+      categoryId,
+      "categorised_as",
+      "Category",
+      1,
+      JSON.stringify({ source: "items.categoryRef" }),
+      null,
+    );
+  };
   const tx = db.transaction(() => {
     for (const snapshotRow of itemEnvelope.rows) {
+      const item = itemById.get(snapshotRow.id);
+      emitTaxonomyEdges(snapshotRow.id, item?.category_ref, tagsByItem.get(snapshotRow.id) ?? []);
       const presentation = snapshotRow.presentation;
       if (!presentation) continue;
-      const item = itemById.get(snapshotRow.id);
       const description = translateRichTextV1(presentation.descriptionSource, {
         ...(masterTooltip
           ? {
@@ -499,9 +583,25 @@ function resolveSpellId(
   targetRef: SnapshotRef | null | undefined,
   spellIds: Set<string>,
 ): string | null {
-  if (targetRef?.kind !== "namedAsset") return null;
-  const targetId = `named;${targetRef.entity};${targetRef.name}`;
-  return spellIds.has(targetId) ? targetId : null;
+  return resolveNamedAssetId(targetRef, spellIds);
+}
+
+export function resolveNamedAssetId(value: unknown, publicIds: ReadonlySet<string>): string | null {
+  let parsed = value;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed) as unknown;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+  const ref = parsed as { kind?: unknown; entity?: unknown; name?: unknown };
+  if (ref.kind !== "namedAsset" || typeof ref.entity !== "string" || typeof ref.name !== "string") {
+    return null;
+  }
+  const targetId = `named;${ref.entity};${ref.name}`;
+  return publicIds.has(targetId) ? targetId : null;
 }
 function collectTermLinks(nodes: RichTextNode[]): { termId: string; label: string }[] {
   const terms: { termId: string; label: string }[] = [];

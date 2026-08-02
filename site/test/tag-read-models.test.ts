@@ -71,6 +71,18 @@ describe("item-tag read-model accessors", () => {
         is_public INTEGER NOT NULL,
         PRIMARY KEY (entity_type, entity_id)
       );
+      CREATE TABLE entity_edges (
+        edge_id TEXT PRIMARY KEY,
+        source_type TEXT NOT NULL,
+        source_id TEXT NOT NULL,
+        target_type TEXT NOT NULL,
+        target_id TEXT NOT NULL,
+        predicate TEXT NOT NULL,
+        label TEXT NOT NULL,
+        weight REAL NOT NULL,
+        evidence_json TEXT NOT NULL,
+        anchor TEXT
+      );
       INSERT INTO item_tag_overview_rows VALUES
         ('7a600001.fixture-tag-valuable-remedy', 'Valuable remedy', 'Incredibly valuable remedy', 1),
         ('7a600002.fixture-tag-rare', 'Rare', 'Difficult to find.', 0);
@@ -87,8 +99,12 @@ describe("item-tag read-model accessors", () => {
         ('item-tag', '7a600001.fixture-tag-valuable-remedy', 'Valuable remedy', '/tags/valuable-remedy--abc12345', 'valuable-remedy--abc12345', 'abc12345', 1),
         ('item-tag', '7a600002.fixture-tag-rare', 'Rare', '/tags/rare--def67890', 'rare--def67890', 'def67890', 1),
         ('item', '6a71c0de.fixture-stamina-draught', 'Stamina Draught', '/items/6a71c0de.fixture-stamina-draught', 'stamina-draught--6a71c0de', '6a71c0de', 1);
+      INSERT INTO entity_edges VALUES
+        ('6a71c0de.fixture-stamina-draught:tagged:item-tag:7a600001.fixture-tag-valuable-remedy',
+         'item', '6a71c0de.fixture-stamina-draught', 'item-tag',
+         '7a600001.fixture-tag-valuable-remedy', 'tagged', 'Tagged', 1,
+         '{"source":"items.tags"}', NULL);
     `);
-    db.close();
 
     try {
       process.chdir(root);
@@ -118,9 +134,19 @@ describe("item-tag read-model accessors", () => {
         itemCount: 1,
         routePath: "/tags/valuable-remedy--abc12345",
       });
-      expect(
-        readModels.listItemsByTag("7a600001.fixture-tag-valuable-remedy").map((row) => row.id),
-      ).toEqual(["6a71c0de.fixture-stamina-draught"]);
+      expect(readModels.listTagsForItem("6a71c0de.fixture-stamina-draught")).toEqual([
+        {
+          targetType: "item-tag",
+          targetId: "7a600001.fixture-tag-valuable-remedy",
+          targetLabel: "Valuable remedy",
+          targetRoutePath: "/tags/valuable-remedy--abc12345",
+          predicate: "tagged",
+          label: "Tagged",
+          weight: 1,
+          anchor: null,
+        },
+      ]);
+      expect(readModels.listTagsForItem("item-without-tags")).toEqual([]);
     } finally {
       process.chdir(originalCwd);
       rmSync(root, { recursive: true, force: true });

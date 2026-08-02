@@ -61,6 +61,15 @@ describe("emitItemReadModels", () => {
     const db = new Database(":memory:");
     db.exec(buildDDL(itemEntity, itemVariants));
     canonicaliseItems(db, itemEntity, itemVariants, itemEnvelope);
+    const itemCategoryEnvelope = snap.envelopes["item-category"];
+    const itemTagEnvelope = snap.envelopes["item-tag"];
+    if (!itemCategoryEnvelope || !itemTagEnvelope) {
+      throw new Error("fixture missing item category/tag envelopes");
+    }
+    db.exec(ITEM_CATEGORY_DDL);
+    db.exec(ITEM_TAG_DDL);
+    canonicaliseItemCategories(db, itemCategoryEnvelope);
+    canonicaliseItemTags(db, itemTagEnvelope);
     db.exec(`
       CREATE TABLE status_effects (id TEXT PRIMARY KEY);
       INSERT INTO status_effects (id) VALUES
@@ -315,6 +324,93 @@ describe("emitItemReadModels", () => {
       ),
     ).toEqual([]);
 
+    const taggedEdges = db
+      .query(
+        `SELECT edge_id, target_id, predicate, label, evidence_json
+         FROM entity_edges
+         WHERE source_id = '6a71c0de.fixture-stamina-draught' AND predicate = 'tagged'
+         ORDER BY edge_id`,
+      )
+      .all() as {
+      edge_id: string;
+      target_id: string;
+      predicate: string;
+      label: string;
+      evidence_json: string;
+    }[];
+    expect(taggedEdges).toHaveLength(2);
+    expect(taggedEdges.map((edge) => edge.edge_id)).toEqual([
+      "6a71c0de.fixture-stamina-draught:tagged:item-tag:7a600001.fixture-tag-valuable-remedy",
+      "6a71c0de.fixture-stamina-draught:tagged:item-tag:7a600002.fixture-tag-rare",
+    ]);
+    expect(taggedEdges.map((edge) => edge.target_id)).toEqual([
+      "7a600001.fixture-tag-valuable-remedy",
+      "7a600002.fixture-tag-rare",
+    ]);
+    expect(
+      taggedEdges.every((edge) => edge.predicate === "tagged" && edge.label === "Tagged"),
+    ).toBe(true);
+    expect(JSON.parse(taggedEdges[0]!.evidence_json)).toEqual({ source: "items.tags" });
+    expect(
+      db
+        .query(
+          `SELECT COUNT(*) AS count FROM entity_edges
+           WHERE source_id = '4ed20218.fixture-iron-sword' AND predicate = 'tagged'`,
+        )
+        .get(),
+    ).toEqual({ count: 0 });
+    expect(
+      db
+        .query(
+          `SELECT COUNT(*) AS count FROM pipeline_diagnostics
+           WHERE entity_id = '4ed20218.fixture-iron-sword' AND code = 'itemTagUnresolved'`,
+        )
+        .get(),
+    ).toEqual({ count: 0 });
+    const categoryEdges = db
+      .query(
+        `SELECT edge_id, target_id, predicate, label, evidence_json
+         FROM entity_edges
+         WHERE source_id = '4ed20218.fixture-iron-sword' AND predicate = 'categorised_as'`,
+      )
+      .all() as {
+      edge_id: string;
+      target_id: string;
+      predicate: string;
+      label: string;
+      evidence_json: string;
+    }[];
+    expect(categoryEdges).toEqual([
+      {
+        edge_id:
+          "4ed20218.fixture-iron-sword:categorised_as:item-category:named;item-category;itemcat_weapons",
+        target_id: "named;item-category;itemcat_weapons",
+        predicate: "categorised_as",
+        label: "Category",
+        evidence_json: JSON.stringify({ source: "items.categoryRef" }),
+      },
+    ]);
+    expect(
+      db
+        .query(
+          `SELECT COUNT(*) AS count FROM entity_edges
+           WHERE source_id = '8c0ffee0.fixture-throwing-potion' AND predicate = 'categorised_as'`,
+        )
+        .get(),
+    ).toEqual({ count: 0 });
+    expect(
+      db
+        .query(
+          `SELECT code, entity_id, field FROM pipeline_diagnostics
+           WHERE entity_id = '8c0ffee0.fixture-throwing-potion' AND code = 'itemCategoryUnresolved'`,
+        )
+        .get(),
+    ).toEqual({
+      code: "itemCategoryUnresolved",
+      entity_id: "8c0ffee0.fixture-throwing-potion",
+      field: "items.categoryRef",
+    });
+
     const variantSection = db
       .query(
         "SELECT title, edges_json FROM entity_relationship_sections WHERE source_type = 'item' AND source_id = '4ed20218.fixture-iron-sword' AND predicate = 'variant_of'",
@@ -366,7 +462,7 @@ describe("emitItemReadModels", () => {
           "SELECT count(*) AS count FROM pipeline_diagnostics WHERE source = 'relationship-graph'",
         )
         .get(),
-    ).toEqual({ count: 0 });
+    ).toEqual({ count: 1 });
 
     const categories = db
       .query(

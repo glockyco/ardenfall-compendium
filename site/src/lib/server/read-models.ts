@@ -102,10 +102,14 @@ export type {
   ItemCategoryOverviewRow,
   ItemCategoryPresentationRow,
 } from "./entities/item-category";
-export { getItemCategoryPresentation, listItemCategories } from "./entities/item-category";
+export {
+  getItemCategoryPresentation,
+  listCategoriesForItem,
+  listItemCategories,
+} from "./entities/item-category";
 
 export type { ItemTagOverviewRow, ItemTagPresentationRow } from "./entities/item-tag";
-export { getItemTagPresentation, listItemTags } from "./entities/item-tag";
+export { getItemTagPresentation, listItemTags, listTagsForItem } from "./entities/item-tag";
 
 export type {
   MapBounds,

@@ -255,7 +255,7 @@
           }
         ]
       },
-      "tags": ["7a600001.fixture-tag-valuable-remedy"],
+      "tags": ["7a600001.fixture-tag-valuable-remedy", "7a600002.fixture-tag-rare"],
       "provenance": {
         "name": {
           "kind": "parameter",
@@ -492,12 +492,13 @@
         "notLootableChance": 0,
         "cannotBeOwned": false,
         "quickslotIconRef": null,
-        "categoryRef": null,
+        "categoryRef": {
+          "kind": "namedAsset",
+          "entity": "item-category",
+          "name": "itemcat_unpublished"
+        },
         "isIllegal": false,
         "equipSlot": "Weapon",
-        "animationSpeedMultiplier": 1,
-        "twoHanded": false,
-        "itemTypeTooltip": "Throwing potion",
         "missileRef": null,
         "missileRotationJson": {
           "x": 0,
