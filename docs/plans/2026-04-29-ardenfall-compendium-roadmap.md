@@ -343,7 +343,9 @@ This slice migrates the existing location map data onto the generalized placemen
 Each candidate gets its own slice number (8, 9, …). Ordered by extraction confidence, map-marker value, and detail-page value. Firmed-up ordering for the next planning horizon:
 
 1. Portal connectivity — project the canonical `connected_portal_ref_json` into `leads-to` edges in `entity_edges` so the map can express zone connectivity.
-2. Characters / NPCs plus vendor role — unlocks `sold-at` item edges and spatial NPC/vendor navigation.
+2. Characters / NPCs plus vendor role — unlocks `sold-at` item edges and spatial NPC/vendor navigation. This slice also owns two decisions deliberately deferred from earlier work, because it is the first to introduce an entity of a genuinely third shape and can settle them against a real case rather than by guessing from two:
+   - **The role vocabulary.** `kind: "role"` and its `facetOf` / `predicate` / `placementVia` fields were removed in Slice 7 rather than shipped unimplemented. Vendor is the first real role; define the vocabulary it actually needs.
+   - **Entity dispatch.** Adding an entity currently means editing four hand-maintained lists: the three support maps in `pipeline/src/entities/registry.ts` plus entity-specific branches in `emit-read-models.ts`, `map/read-models.ts`, and `emit-site-metadata.ts`. Key the emitters off one descriptor-driven registry, keeping `validateDescriptorCoverage`'s compile-time coverage assertion.
 3. Monsters / enemies — map placement plus `drops` edges to items and detail pages with drop tables.
 4. Quests — `gives`/`requires` edges enabling transitive `available-at` location links.
 5. Resource nodes / gathering points.
