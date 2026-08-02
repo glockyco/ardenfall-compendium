@@ -266,9 +266,14 @@ function translateTooltipColor(
 
 function resolveTermLink(termId: string, label: string, options: RichTextOptions): RichTextNode {
   const resolution = options.resolveTerm?.(termId, label);
-  return resolution
-    ? { type: "termLink", termId, label, ...resolution }
-    : { type: "termLink", termId, label };
+  if (!resolution) return { type: "termLink", termId, label };
+  const { termId: resolvedTermId, label: resolvedLabel, ...resolutionDetails } = resolution;
+  return {
+    type: "termLink",
+    termId: resolvedTermId,
+    label: resolvedLabel,
+    ...resolutionDetails,
+  };
 }
 
 function nodeText(node: RichTextNode): string {

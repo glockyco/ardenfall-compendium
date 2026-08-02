@@ -5,6 +5,7 @@ import type {
   SnapshotEnvelope,
   SnapshotVector3,
 } from "../../types.ts";
+import { entityRows } from "../../types.ts";
 
 export interface MapPoint {
   x: number;
@@ -46,7 +47,7 @@ export function canonicaliseLocations(db: Database, envelope: SnapshotEnvelope):
   );
 
   const tx = db.transaction(() => {
-    for (const row of envelope.rows as Array<{ id: string; fields: LocationSnapshotFields }>) {
+    for (const row of entityRows<LocationSnapshotFields>(envelope)) {
       const fields = row.fields;
       const point = sourceToMapPointForRow(row.id, fields.mapPosition, "mapPosition");
       const fastTravel = fields.fastTravelPosition

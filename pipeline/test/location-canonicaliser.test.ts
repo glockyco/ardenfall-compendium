@@ -137,7 +137,20 @@ describe("canonicaliseLocations", () => {
     const signedArea =
       ring.slice(0, -1).reduce((area, point, index) => {
         const next = ring[index + 1];
-        return area + point[0] * next[1] - next[0] * point[1];
+        if (point === undefined || next === undefined) {
+          throw new Error("fixture ring is missing a point");
+        }
+        const [pointX, pointY] = point;
+        const [nextX, nextY] = next;
+        if (
+          pointX === undefined ||
+          pointY === undefined ||
+          nextX === undefined ||
+          nextY === undefined
+        ) {
+          throw new Error("fixture ring point is missing a coordinate");
+        }
+        return area + pointX * nextY - nextX * pointY;
       }, 0) / 2;
     expect(ring[0]).toEqual(ring.at(-1));
     expect(signedArea).toBeGreaterThan(0);
@@ -216,7 +229,9 @@ describe("canonicaliseLocations", () => {
       diagnostics_json: string;
     }[];
 
-    expect(rows[0]).toEqual({
+    const firstRow = rows[0];
+    if (firstRow === undefined) throw new Error("expected negative-size volume row");
+    expect(firstRow).toEqual({
       volume_index: 0,
       kind: "invalid-axis-aligned-box",
       geometry_json: null,
@@ -224,8 +239,10 @@ describe("canonicaliseLocations", () => {
         { severity: "diagnostic", code: "locationVolumeNegativeSize", field: "volumes[0].size" },
       ]),
     });
-    expect(rows[1].kind).toBe("degenerate-axis-aligned-box");
-    expect(JSON.parse(rows[1].diagnostics_json)).toEqual([
+    const secondRow = rows[1];
+    if (secondRow === undefined) throw new Error("expected degenerate-size volume row");
+    expect(secondRow.kind).toBe("degenerate-axis-aligned-box");
+    expect(JSON.parse(secondRow.diagnostics_json)).toEqual([
       { severity: "diagnostic", code: "locationVolumeDegenerateSize", field: "volumes[1].size" },
     ]);
   });

@@ -16,7 +16,9 @@ describe("emitSiteMetadata", () => {
     const ent = db.query("SELECT * FROM site_entities WHERE entity_id = 'item'").get() as {
       route_path: string;
     };
-    expect(ent.route_path).toBe(desc.entities.item?.site?.route);
+    const item = desc.entities.item;
+    if (!item?.site?.route) throw new Error("descriptor missing item site route");
+    expect(ent.route_path).toBe(item.site.route);
     expect(ent.route_path).toBe("/items");
 
     const cols = db
@@ -99,8 +101,9 @@ describe("emitSiteMetadata", () => {
       entities: {
         internal: {
           id: "internal",
+          kind: "instance",
           label: { singular: "Internal", plural: "Internals" },
-          extraction: { root: "Internal.Root" },
+          extraction: { source: "record", root: "Internal.Root" },
           fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
           map: null,
         },

@@ -27,7 +27,7 @@ const DEFAULT_CONNECT_TIMEOUT_MS = 300_000;
 const DEFAULT_RETRY_INTERVAL_MS = 1_000;
 
 export class SdkControllerClient implements ControllerClient {
-  private session?: Session;
+  private session: Session | undefined;
   private readonly jobs = new Map<string, JobHandle>();
 
   constructor(

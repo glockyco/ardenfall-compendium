@@ -4,8 +4,9 @@ import type { EntityDescriptor, VariantDescriptor } from "$pipeline/types";
 
 const item: EntityDescriptor = {
   id: "item",
+  kind: "definition",
   label: { singular: "Item", plural: "Items" },
-  extraction: { root: "x" },
+  extraction: { source: "lookupAsset", root: "x" },
   fields: [
     { name: "id", type: "id", from: "guid", missingPolicy: "fatal" },
     { name: "name", type: "string", from: "n", missingPolicy: "diagnostic" },

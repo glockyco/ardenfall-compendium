@@ -1,5 +1,6 @@
 import type { Database } from "bun:sqlite";
 import type { PortalSnapshotFields, SnapshotEnvelope } from "../../types.ts";
+import { entityRows } from "../../types.ts";
 import { sourceToMapPoint } from "../location/canonicaliser.ts";
 
 export function canonicalisePortals(db: Database, envelope: SnapshotEnvelope): void {
@@ -15,7 +16,7 @@ export function canonicalisePortals(db: Database, envelope: SnapshotEnvelope): v
   );
 
   const tx = db.transaction(() => {
-    for (const row of envelope.rows as Array<{ id: string; fields: PortalSnapshotFields }>) {
+    for (const row of entityRows<PortalSnapshotFields>(envelope)) {
       const fields = row.fields;
       const point = sourceToMapPoint(fields.position);
       portalInsert.run(

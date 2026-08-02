@@ -72,11 +72,7 @@ describe("emitItemReadModels", () => {
     `);
     db.run(
       "INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)",
-      "item",
-      "4ed20218.fixture-iron-sword",
-      "displayIcon",
-      "image",
-      "a".repeat(64),
+      ["item", "4ed20218.fixture-iron-sword", "displayIcon", "image", "a".repeat(64)],
     );
     const iconMetadata = [
       {
@@ -261,11 +257,7 @@ describe("emitStatTypeReadModels", () => {
     `);
     db.run(
       "INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)",
-      "stat-type",
-      "57a70001.fixture-strength",
-      "iconRef",
-      "image",
-      "b".repeat(64),
+      ["stat-type", "57a70001.fixture-strength", "iconRef", "image", "b".repeat(64)],
     );
     canonicaliseStatTypes(db, statEnvelope);
 
@@ -353,27 +345,21 @@ describe("emitItemCategoryReadModels", () => {
         },
       ],
     });
-    db.run(
-      `INSERT INTO items (id, name, "categoryRef", "categoryName") VALUES (?, ?, ?, ?)`,
+    db.run(`INSERT INTO items (id, name, "categoryRef", "categoryName") VALUES (?, ?, ?, ?)`, [
       "4ed20218.fixture-iron-sword",
       "Iron Sword",
       JSON.stringify({ kind: "lookupAsset", guid: "ca7e60a1.category-weapons" }),
       "Weapons",
-    );
-    db.run(
-      `INSERT INTO items (id, name, "categoryRef", "categoryName") VALUES (?, ?, ?, ?)`,
+    ]);
+    db.run(`INSERT INTO items (id, name, "categoryRef", "categoryName") VALUES (?, ?, ?, ?)`, [
       "fixture-training-dagger",
       "Training Dagger",
       JSON.stringify({ kind: "missing", reason: "lookupAssetGuidMissing" }),
       "Weapons",
-    );
+    ]);
     db.run(
       "INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash) VALUES (?, ?, ?, ?, ?)",
-      "item-category",
-      "ca7e60a1.category-weapons",
-      "defaultItemIconRef",
-      "image",
-      "c".repeat(64),
+      ["item-category", "ca7e60a1.category-weapons", "defaultItemIconRef", "image", "c".repeat(64)],
     );
 
     emitItemCategoryReadModels(db, "/groups");
@@ -475,16 +461,12 @@ describe("emitItemTagReadModels", () => {
     });
     db.run(
       "INSERT INTO item_overview_rows (id, name, display_icon_hash, display_icon_color) VALUES (?, ?, ?, ?)",
-      "6a71c0de.fixture-stamina-draught",
-      "Stamina Draught",
-      null,
-      null,
+      ["6a71c0de.fixture-stamina-draught", "Stamina Draught", null, null],
     );
-    db.run(
-      "INSERT INTO item_tag_refs (item_id, tag) VALUES (?, ?)",
+    db.run("INSERT INTO item_tag_refs (item_id, tag) VALUES (?, ?)", [
       "6a71c0de.fixture-stamina-draught",
       "7a600001.tag-valuable-remedy",
-    );
+    ]);
 
     emitItemTagReadModels(db, "/labels");
 

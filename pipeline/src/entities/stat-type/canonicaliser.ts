@@ -1,5 +1,6 @@
 import type { Database } from "bun:sqlite";
 import type { SnapshotEnvelope } from "../../types.ts";
+import { entityRows } from "../../types.ts";
 
 export interface StatTypeFields {
   id: string;
@@ -21,7 +22,7 @@ export function canonicaliseStatTypes(db: Database, envelope: SnapshotEnvelope):
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const tx = db.transaction(() => {
-    for (const row of envelope.rows as Array<{ id: string; fields: StatTypeFields }>) {
+    for (const row of entityRows<StatTypeFields>(envelope)) {
       const fields = row.fields;
       insert.run(
         row.id,

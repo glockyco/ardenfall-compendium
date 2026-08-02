@@ -356,7 +356,7 @@ describe("loadDescriptors", () => {
               root: "BuiltLookupTable.GetAssetsOfType<ItemData>",
             },
             fields: [{ name: "id", type: "id", from: "guid", missingPolicy: "fatal" }],
-            map: { layer: "items" },
+            map: { layer: "items", renderKind: "point" },
           },
         },
         variants: { item: [] },

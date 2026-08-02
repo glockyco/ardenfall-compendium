@@ -240,6 +240,7 @@ function fixtureSnapshot(kind: "live-game-export" | "synthetic-fixture"): LoadSn
     },
     envelopes: {},
     diagnostics: [],
+    finalizeTimings: [],
     masterTooltip: {
       schemaVersion: 2,
       tooltipCodes: {},
@@ -260,6 +261,9 @@ function fixtureSnapshot(kind: "live-game-export" | "synthetic-fixture"): LoadSn
       globalTermSets: [],
       termColorMatch: "\\b({0})\\b",
       potionRecipeDescription: "",
+      allAttributes: [],
+      allSkills: [],
+      allTraits: [],
     },
   };
 }

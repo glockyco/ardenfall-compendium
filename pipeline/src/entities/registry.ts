@@ -21,7 +21,7 @@ export const mapReadModelSupport = {
   portal: true,
 } as const satisfies Record<string, true>;
 
-const hasOwn = <T extends object>(object: T, key: string): key is keyof T =>
+const hasOwn = <T extends object, K extends PropertyKey>(object: T, key: K): key is K & keyof T =>
   Object.prototype.hasOwnProperty.call(object, key);
 
 export function validateDescriptorCoverage(desc: LoadDescriptorsOutput): void {

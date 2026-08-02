@@ -113,6 +113,13 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
       );
     }
     const masterTooltip = rawMasterTooltip as MasterTooltipVocabulary;
-    return { manifest, envelopes, diagnostics, finalizeTimings, assetManifest, masterTooltip };
+    return {
+      manifest,
+      envelopes,
+      diagnostics,
+      finalizeTimings,
+      ...(assetManifest === undefined ? {} : { assetManifest }),
+      masterTooltip,
+    };
   },
 };

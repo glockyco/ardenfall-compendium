@@ -140,6 +140,20 @@ export interface SnapshotRow<F = Record<string, unknown>> {
   presentation?: ItemPresentationSnapshot;
 }
 
+/**
+ * Narrows a loaded envelope's rows to a specific entity's field shape.
+ *
+ * `stages/load-snapshot` is entity-agnostic, so it yields rows whose `fields`
+ * are `Record<string, unknown>`. `stages/validate` then checks every row
+ * against that entity's JSON Schema, so by the time a canonicaliser runs the
+ * field shape is established. This function is the single place that
+ * post-validation knowledge is expressed as a type assertion; canonicalisers
+ * must not re-assert it inline.
+ */
+export function entityRows<F>(envelope: SnapshotEnvelope): SnapshotRow<F>[] {
+  return envelope.rows as SnapshotRow<F>[];
+}
+
 export interface ItemPresentationSnapshot {
   schemaVersion: 1;
   renderContext: "item-presentation-v1";

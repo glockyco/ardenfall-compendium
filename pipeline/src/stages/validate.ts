@@ -95,7 +95,7 @@ export const validate: Stage<ValidateInputs, ValidateOutput> = {
       else diagnostic++;
       errors.push({
         entity: "snapshot",
-        row: d.rowId ?? undefined,
+        ...(d.rowId === null ? {} : { row: d.rowId }),
         field: d.field,
         code: d.code,
         message: d.message ?? d.code,

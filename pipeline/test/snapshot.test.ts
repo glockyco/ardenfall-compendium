@@ -100,7 +100,9 @@ describe("loadSnapshot", () => {
       const items = JSON.parse(readFileSync("fixtures/synthetic/snapshot/items.json", "utf8")) as {
         rows: { presentation?: unknown }[];
       };
-      delete items.rows[0].presentation;
+      const firstItemRow = items.rows[0];
+      if (!firstItemRow) throw new Error("fixture item envelope has no rows");
+      delete firstItemRow.presentation;
       writeFileSync(join(dir, "items.json"), `${JSON.stringify(items, null, 2)}\n`);
 
       const snap = await loadSnapshot.run({}, { ...ctx, snapshotDir: dir });

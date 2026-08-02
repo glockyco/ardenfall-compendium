@@ -21,7 +21,7 @@ class FakeClient implements ControllerClient {
   }> = [];
   readonly jobs: Array<{ name: string; args: Record<string, unknown> }> = [];
   readonly jobPolls: string[] = [];
-  describeOptions?: Record<string, unknown>;
+  describeOptions: Record<string, unknown> | undefined;
   commands = [
     command("compendium.preflight"),
     command("compendium.continueFromMenu", "sync", true),
@@ -42,7 +42,11 @@ class FakeClient implements ControllerClient {
     return this.commands;
   }
   async call(name: string, args: Record<string, unknown>, options?: Record<string, unknown>) {
-    this.calls.push({ name, args, options });
+    this.calls.push({
+      name,
+      args,
+      ...(options === undefined ? {} : { options }),
+    });
     if (name === "compendium.preflight") {
       const output = this.preflightResults.shift() ?? this.preflightResult;
       return { status: "ok", output, artifacts: {} };

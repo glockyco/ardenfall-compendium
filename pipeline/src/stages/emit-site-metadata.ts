@@ -50,10 +50,14 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
     for (const [entityId, entity] of Object.entries(desc.entities)) {
       if (entity.map) {
         const sourceTables = mapSourceTables(entityId, entity.map.renderKind);
+        const sourceTable = sourceTables[0];
+        if (sourceTable === undefined) {
+          throw new Error(`map layer '${entity.map.layer}' has no source table`);
+        }
         insertMapLayer.run(
           entity.map.layer,
           entityId,
-          sourceTables[0],
+          sourceTable,
           JSON.stringify(sourceTables),
           entity.map.renderKind,
           entity.map.icon ?? null,

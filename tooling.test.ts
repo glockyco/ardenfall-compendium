@@ -11,11 +11,65 @@ import {
 import { describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
 import { join } from "node:path";
-import { buildCommandPlan, defaultOptions } from "./scripts/decompile-ardenfall.mjs";
 import { tmpdir } from "node:os";
-
-import { syncGeneratedArtifacts } from "./site/scripts/sync-generated-artifacts.mjs";
 import { ENTITY_FILES } from "./controller/src/validate-snapshot";
+
+type DecompileOptionsInput = {
+  assembly: string;
+  gameVersion: string;
+  sha256: string;
+  repoRoot: string;
+  outRoot?: string;
+  fullIl?: boolean;
+};
+
+type DecompileOptions = {
+  assembly: string;
+  gameVersion: string;
+  sha256: string;
+  repoRoot: string;
+  outRoot: string;
+  outputDir: string;
+  fullIl: boolean;
+};
+
+type DecompileCommand = {
+  name: string;
+  args: string[];
+  stdoutPath: string | null;
+  allowFailure?: boolean;
+};
+
+type DecompilePlan = DecompileOptions & { commands: DecompileCommand[] };
+
+type SyncGeneratedArtifactsOptions = {
+  sourceDir?: string;
+  targetDir?: string;
+};
+
+type SyncGeneratedArtifactsResult = {
+  sourceDir: string;
+  targetDir: string;
+  sqliteBytes: number;
+  assetCount: number;
+};
+
+type StageArtifactModule = {
+  stageArtifact(options: {
+    artifactDir: string;
+    targetDir: string;
+    mode: "fixture" | "release";
+  }): Promise<{ manifest: object; targetDir: string }>;
+};
+
+const importModule = <T>(specifier: string) => import(specifier) as Promise<T>;
+const { buildCommandPlan, defaultOptions } = await importModule<{
+  buildCommandPlan(options: DecompileOptions): DecompilePlan;
+  defaultOptions(options: DecompileOptionsInput): DecompileOptions;
+}>("./scripts/decompile-ardenfall.mjs");
+const { syncGeneratedArtifacts } = await importModule<{
+  syncGeneratedArtifacts(options?: SyncGeneratedArtifactsOptions): SyncGeneratedArtifactsResult;
+}>("./site/scripts/sync-generated-artifacts.mjs");
 const gitignore = readFileSync(".gitignore", "utf8");
 const lefthook = readFileSync("lefthook.yml", "utf8");
 const ciWorkflow = readFileSync(".github/workflows/ci.yml", "utf8");
@@ -395,13 +449,9 @@ describe("site deployment tooling", () => {
         }),
       );
 
-      const { stageArtifact } = (await import("./site/scripts/stage-artifact.mjs")) as {
-        stageArtifact: (options: {
-          artifactDir: string;
-          targetDir: string;
-          mode: "fixture" | "release";
-        }) => Promise<unknown>;
-      };
+      const { stageArtifact } = await importModule<StageArtifactModule>(
+        "./site/scripts/stage-artifact.mjs",
+      );
 
       await expect(
         stageArtifact({ artifactDir: artifact, targetDir: target, mode: "release" }),
@@ -483,13 +533,9 @@ describe("site deployment tooling", () => {
         }),
       );
 
-      const { stageArtifact } = (await import("./site/scripts/stage-artifact.mjs")) as {
-        stageArtifact: (options: {
-          artifactDir: string;
-          targetDir: string;
-          mode: "fixture" | "release";
-        }) => Promise<unknown>;
-      };
+      const { stageArtifact } = await importModule<StageArtifactModule>(
+        "./site/scripts/stage-artifact.mjs",
+      );
 
       await expect(
         stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),
@@ -576,13 +622,9 @@ describe("site deployment tooling", () => {
         }),
       );
 
-      const { stageArtifact } = (await import("./site/scripts/stage-artifact.mjs")) as {
-        stageArtifact: (options: {
-          artifactDir: string;
-          targetDir: string;
-          mode: "fixture" | "release";
-        }) => Promise<unknown>;
-      };
+      const { stageArtifact } = await importModule<StageArtifactModule>(
+        "./site/scripts/stage-artifact.mjs",
+      );
 
       await stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" });
 
@@ -663,13 +705,9 @@ describe("site deployment tooling", () => {
         }),
       );
 
-      const { stageArtifact } = (await import("./site/scripts/stage-artifact.mjs")) as {
-        stageArtifact: (options: {
-          artifactDir: string;
-          targetDir: string;
-          mode: "fixture" | "release";
-        }) => Promise<unknown>;
-      };
+      const { stageArtifact } = await importModule<StageArtifactModule>(
+        "./site/scripts/stage-artifact.mjs",
+      );
 
       await expect(
         stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),
@@ -742,13 +780,9 @@ describe("site deployment tooling", () => {
         }),
       );
 
-      const { stageArtifact } = (await import("./site/scripts/stage-artifact.mjs")) as {
-        stageArtifact: (options: {
-          artifactDir: string;
-          targetDir: string;
-          mode: "fixture" | "release";
-        }) => Promise<unknown>;
-      };
+      const { stageArtifact } = await importModule<StageArtifactModule>(
+        "./site/scripts/stage-artifact.mjs",
+      );
 
       await expect(
         stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),
@@ -832,13 +866,9 @@ describe("site deployment tooling", () => {
         }),
       );
 
-      const { stageArtifact } = (await import("./site/scripts/stage-artifact.mjs")) as {
-        stageArtifact: (options: {
-          artifactDir: string;
-          targetDir: string;
-          mode: "fixture" | "release";
-        }) => Promise<unknown>;
-      };
+      const { stageArtifact } = await importModule<StageArtifactModule>(
+        "./site/scripts/stage-artifact.mjs",
+      );
 
       await expect(
         stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),

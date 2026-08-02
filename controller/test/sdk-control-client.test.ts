@@ -99,7 +99,13 @@ class FakeRuntimeTransport implements RuntimeTransport {
           durationMs: 1,
         };
       case "job_cancel":
-        return { type: "job_cancel_result", id: request.id, accepted: true, state: "cancelled" };
+        return {
+          type: "job_cancel_result",
+          id: request.id,
+          jobId: request.jobId,
+          accepted: true,
+          state: "cancelled",
+        };
       default:
         return {
           type: "error",

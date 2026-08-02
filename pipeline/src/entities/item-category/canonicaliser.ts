@@ -1,5 +1,6 @@
 import type { Database } from "bun:sqlite";
 import type { SnapshotEnvelope } from "../../types.ts";
+import { entityRows } from "../../types.ts";
 
 export interface ItemCategoryFields {
   id: string;
@@ -19,7 +20,7 @@ export function canonicaliseItemCategories(db: Database, envelope: SnapshotEnvel
      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
   const tx = db.transaction(() => {
-    for (const row of envelope.rows as Array<{ id: string; fields: ItemCategoryFields }>) {
+    for (const row of entityRows<ItemCategoryFields>(envelope)) {
       const fields = row.fields;
       insert.run(
         row.id,

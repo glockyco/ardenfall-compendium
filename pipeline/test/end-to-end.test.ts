@@ -162,13 +162,15 @@ describe("end-to-end pipeline", () => {
       const snap = result["load-snapshot"] as Awaited<ReturnType<(typeof loadSnapshot)["run"]>>;
       const itemEnvelope = snap.envelopes.item;
       if (!itemEnvelope) throw new Error("fixture missing item envelope");
+      const firstItemRow = itemEnvelope.rows[0];
+      if (!firstItemRow) throw new Error("fixture missing first item row");
       const badSnap = {
         ...snap,
         envelopes: {
           ...snap.envelopes,
           item: {
             ...itemEnvelope,
-            rows: [{ ...itemEnvelope.rows[0], variant: "unknown-variant" }],
+            rows: [{ ...firstItemRow, variant: "unknown-variant" }],
           },
         },
       };
@@ -179,12 +181,10 @@ describe("end-to-end pipeline", () => {
 
       const locationEnvelope = snap.envelopes.location;
       if (!locationEnvelope) throw new Error("fixture missing location envelope");
+      const { location: _omittedLocation, ...envelopesWithoutLocation } = snap.envelopes;
       const missingLocationSnap = {
         ...snap,
-        envelopes: {
-          ...snap.envelopes,
-          location: undefined,
-        },
+        envelopes: envelopesWithoutLocation,
       };
 
       expect(() =>

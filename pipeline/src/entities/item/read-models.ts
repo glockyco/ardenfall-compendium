@@ -218,8 +218,12 @@ export function emitItemReadModels(
       if (!presentation) continue;
       const item = itemById.get(snapshotRow.id);
       const description = translateRichTextV1(presentation.descriptionSource, {
-        tooltipCodes: masterTooltip?.tooltipCodes,
-        tooltipColors: masterTooltip?.tooltipColors,
+        ...(masterTooltip
+          ? {
+              tooltipCodes: masterTooltip.tooltipCodes,
+              tooltipColors: masterTooltip.tooltipColors,
+            }
+          : {}),
         resolveTerm: (termId, label) => ({
           termId,
           label,
@@ -231,8 +235,12 @@ export function emitItemReadModels(
         }),
       });
       const effectsSource = translateRichTextV1(presentation.effectsSource, {
-        tooltipCodes: masterTooltip?.tooltipCodes,
-        tooltipColors: masterTooltip?.tooltipColors,
+        ...(masterTooltip
+          ? {
+              tooltipCodes: masterTooltip.tooltipCodes,
+              tooltipColors: masterTooltip.tooltipColors,
+            }
+          : {}),
         resolveTerm: (termId, label) => ({
           termId,
           label,
@@ -245,6 +253,9 @@ export function emitItemReadModels(
       });
       const itemLabel = item?.name ?? presentation.displayName;
       const variantId = item?.variant ?? snapshotRow.variant;
+      if (variantId === undefined) {
+        throw new Error(`Item '${snapshotRow.id}' is missing a variant`);
+      }
       writeNode({
         entityType: "item",
         entityId: snapshotRow.id,
@@ -255,7 +266,7 @@ export function emitItemReadModels(
       presentationInsert.run(
         snapshotRow.id,
         item?.name ?? presentation.displayName,
-        item?.variant ?? snapshotRow.variant,
+        item?.variant ?? snapshotRow.variant ?? null,
         presentation.itemType,
         presentation.renderContext,
         displayIconByItem.get(snapshotRow.id) ?? null,

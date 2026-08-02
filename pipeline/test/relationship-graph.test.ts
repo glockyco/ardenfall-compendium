@@ -15,26 +15,11 @@ describe("relationship graph", () => {
     db.exec(ENTITY_GRAPH_DDL);
     db.run(
       "INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      "item",
-      "source",
-      "Source",
-      "/items/source--abc12345",
-      "source--abc12345",
-      "abc12345",
-      1,
+      ["item", "source", "Source", "/items/source--abc12345", "source--abc12345", "abc12345", 1],
     );
     db.run(
       "INSERT INTO entity_edges (edge_id, source_type, source_id, target_type, target_id, predicate, label, weight, evidence_json, anchor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      "edge-1",
-      "item",
-      "source",
-      "item",
-      "missing",
-      "variant_of",
-      "Variant of",
-      1,
-      "{}",
-      null,
+      ["edge-1", "item", "source", "item", "missing", "variant_of", "Variant of", 1, "{}", null],
     );
 
     expect(auditEntityGraph(db)).toContainEqual(
