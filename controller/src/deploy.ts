@@ -6,6 +6,7 @@ export interface DeployOptions {
   ardenfallModOutDir: string;
   pluginsDir: string;
   bindHost?: string;
+  port?: number;
 }
 
 export interface DeployResult {
@@ -64,6 +65,8 @@ async function requireFile(path: string): Promise<void> {
   }
 }
 
+const DEFAULT_HOTREPL_PORT = 18590;
+
 async function writeHotReplConfig(options: DeployOptions): Promise<void> {
   if (!options.bindHost) return;
   const configDir = join(dirname(options.pluginsDir), "config");
@@ -71,7 +74,7 @@ async function writeHotReplConfig(options: DeployOptions): Promise<void> {
   await writeFile(
     join(configDir, "hotrepl.bepinex.cfg"),
     `[Server]
-Port = 18590
+Port = ${options.port ?? DEFAULT_HOTREPL_PORT}
 BindHost = ${options.bindHost}
 `,
   );
@@ -91,11 +94,18 @@ function parseArgs(args: string[]): DeployOptions {
   const ardenfallModOutDir = values.get("--mod-out");
   const pluginsDir = values.get("--plugins");
   const bindHost = values.get("--bind-host");
+  const rawPort = values.get("--port");
   if (!hotReplOutDir) throw new Error("--hotrepl-out is required");
   if (!ardenfallModOutDir) throw new Error("--mod-out is required");
   if (!pluginsDir) throw new Error("--plugins is required");
   const options: DeployOptions = { hotReplOutDir, ardenfallModOutDir, pluginsDir };
   if (bindHost !== undefined) options.bindHost = bindHost;
+  if (rawPort !== undefined) {
+    const port = Number(rawPort);
+    if (!Number.isInteger(port) || port < 1 || port > 65535)
+      throw new Error(`--port must be an integer in 1-65535, got '${rawPort}'`);
+    options.port = port;
+  }
   return options;
 }
 

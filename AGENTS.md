@@ -22,6 +22,7 @@ This repository is the static compendium for the game Ardenfall. The durable rul
 ## Live data and game logic
 
 - Live extraction is automated. With a configured repo-root `.env` (game paths, `HOTREPL_URL`, launch command), run `bun run hotrepl:setup` (build + deploy the mod), `bun run hotrepl:launch` (start the game), then `bun run hotrepl:export` (drive HotRepl → snapshot → pipeline; see `controller/src/export-orchestrator.ts` for the step sequence).
+- `hotrepl:deploy` rewrites the game's `hotrepl.bepinex.cfg` from `HOTREPL_BIND_HOST` and `HOTREPL_PORT` (default `18590`). If another HotRepl-instrumented game already holds the default port, set `HOTREPL_PORT` and the matching `HOTREPL_URL` in `.env` rather than hand-editing the config, which every deploy overwrites. Two games claiming one port do not error: connections land on whichever bound first, so an export can silently target the wrong game.
 - Probe a running game directly with HotRepl. Use the **CLI** for interactive C# eval/inspection (`hotrepl eval '<C#>'`, `describe`, `watch`) and `@hotrepl/sdk` for automation; do not use the MCP server. The HotRepl checkout is `$HOTREPL_REPO`. The world must be loaded (`compendium.continueFromMenu`) before `worldData`/records are reachable.
 - Ground game-logic decisions in the decompiled source, not guesses. The gitignored cache lives at `.decompiled/<gameVersion>-<sha>/` (regenerate with `bun run decompile:game`). Never commit decompiled source, raw game JSON, snapshots, or generated databases.
 
