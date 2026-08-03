@@ -26,7 +26,7 @@ Five parallel surveys of the whole project: code health, site quality, content c
 | portal | 33 | 29 |
 | stat-type | 21 | 20 |
 
-1,455 of 1,640 public pages still have no inbound edge, down from 1,591. The graph carries 3,255 edges: `variant_of` 1273, `categorised_as` 1268, `casts` 286, `applies` 266, `tagged` 76, `scales_with` 56, `leads_to` 30.
+1,122 of 1,852 public pages have no inbound edge, down from 1,591 of 1,640. The graph carries 5,381 edges: `drops` 2126, `variant_of` 1273, `categorised_as` 1268, `casts` 286, `applies` 266, `tagged` 76, `scales_with` 56, `leads_to` 30. The node count grew because characters are now published.
 
 Items now link to the status effects they apply, the spells they carry, their category, and their tags. Every one of the 552 item effect facts resolves and unresolved-target diagnostics are zero. Stat pages link the stats they affect.
 

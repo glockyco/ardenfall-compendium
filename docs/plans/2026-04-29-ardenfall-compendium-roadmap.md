@@ -475,11 +475,15 @@ So the next connective work is no longer a field, it is an entity:
 
 **Before that**, relationships were unified. Four slices in one day each grew a bespoke site accessor beside a generic mechanism that already existed, which is the Ancient Kingdoms failure exactly. Relationships are now declared once by predicate, the pipeline projects sections from the edges it emits, and an unregistered predicate fails the build. Adding a relationship is one registry entry and no site change, which matters because obtainability adds five at once.
 
-5. **Item obtainability.** Not loot alone. [`2026-08-02-item-obtainability`](2026-08-02-item-obtainability.md) audits every route by which a player can get an item, and there are nine. Loot tables are one.
+5. **Item obtainability**, in progress. Not loot alone. [`2026-08-02-item-obtainability`](2026-08-02-item-obtainability.md) audits every route by which a player can get an item, and there are nine. Loot tables are one.
 
    The authored half is fully enumerable today and needs no world traversal: 348 loot lists, 314 placed NPC records whose inventories double as their death drops, merchant stock, 13 quests whose Odin graphs turn out to be traversable at runtime, and 48 potion recipes whose ingredients are matched by tag rather than by item. That is the slice.
 
    The placed half is containers and spawners, which are not record-backed and exist only as scene objects in a world of 683 streamed cells. Completing them needs a world walk, which tile capture also needs, so the two should be planned together rather than each paying for traversal separately.
+
+   **Characters shipped first**, see [`2026-08-03-item-provenance-characters`](2026-08-03-item-provenance-characters.md). 212 pages, 2,126 `drops` edges, and 545 of 1,273 items now name a source. Merchant stock was specced and then cut on measurement, because the game implements it fully and no character in the demo has any configured.
+
+   That leaves 728 items still unsourced. Quest rewards and recipes are the remaining authored sources and they are small, 13 quests and 48 recipes, so most of the remainder is almost certainly in containers. Measure before picking the next one.
 6. **Spells to status effects.** The 116 unreachable status effects are referenced from the Odin-serialised effect graph on `SpellData`. A slice rather than a field.
 7. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference, but the extractor does not currently emit it, so it needs mod work first.
 
