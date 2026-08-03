@@ -22,7 +22,7 @@ Five audits ran over gate flags, publicity rules, numeric units, display names a
 
 ## What was already fixed
 
-**`showOnMap` used as a page gate.** `Ardenfall/LocationAsset.cs:25` puts the field under a literal `[Header("In-game Map")]`. `Ardenfall/UI/PlayerWorldMapUI.cs:85` reads it to draw a marker and combines it with whether the player found the place. `Ardenfall/MapLocationManager.cs:58` filters live content with `where loc.enabled`. All 48 locations are enabled, so the marker flag alone withheld 14. See [`2026-08-03-location-pages`](2026-08-03-location-pages.md).
+**`showOnMap` used as a page gate.** `Ardenfall/LocationAsset.cs:25` puts the field under a literal `[Header("In-game Map")]`. `Ardenfall/UI/PlayerWorldMapUI.cs:85` reads it to draw a marker and combines it with whether the player found the place. `Ardenfall/MapLocationManager.cs:58` filters live content with `where loc.enabled`. All 48 locations are enabled, so the marker flag alone withheld 14. See [`2026-08-03-location-pages`](archive/2026-08-03-location-pages.md).
 
 ## Findings
 
