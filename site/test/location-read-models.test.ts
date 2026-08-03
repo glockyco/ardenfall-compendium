@@ -46,7 +46,10 @@ const seed = () => {
     INSERT INTO entity_relationship_sections VALUES
       ('location-shisivi:found_at', 'location', 'location-shisivi',
        'Characters found here', 'found_at', 0,
-       '[{"targetType":"character","targetId":"character-ada","targetLabel":"Ada","targetRoutePath":"/characters/ada--22222222","predicate":"found_at","label":"Found at","weight":1,"anchor":null}]');
+       '[{"targetType":"npc","targetId":"npc-fisher","targetLabel":"Fishermen","targetRoutePath":"/map?npc=npc-fisher","targetHasPage":false,"predicate":"found_at","label":"Found at","weight":1,"anchor":null},{"targetType":"npc","targetId":"npc-unnamed","targetLabel":null,"targetRoutePath":"/map?npc=npc-unnamed","targetHasPage":false,"predicate":"found_at","label":"Found at","weight":1,"anchor":null}]'),
+      ('location-disabled:found_at', 'location', 'location-disabled',
+       'Characters found here', 'found_at', 0,
+       '[{"targetType":"npc","targetId":"npc-unnamed","targetLabel":null,"targetRoutePath":"/map?npc=npc-unnamed","targetHasPage":false,"predicate":"found_at","label":"Found at","weight":1,"anchor":null}]');
   `);
   db.close();
   return root;
@@ -80,29 +83,21 @@ describe("location read-model accessors", () => {
     });
   });
 
-  it("lists characters found at a location", async () => {
+  it("lists named NPCs found at a location and omits nameless NPCs", async () => {
     await withSeed((readModels) => {
-      expect(readModels.listRelationshipSections("location", "location-shisivi")).toEqual([
-        {
-          id: "location-shisivi:found_at",
-          title: "Characters found here",
-          predicate: "found_at",
-          edges: [
-            {
-              targetType: "character",
-              targetId: "character-ada",
-              targetLabel: "Ada",
-              targetRoutePath: "/characters/ada--22222222",
-              predicate: "found_at",
-              label: "Found at",
-              weight: 1,
-              anchor: null,
-            },
-          ],
-        },
-      ]);
+      const sections = readModels.listRelationshipSections("location", "location-shisivi");
+      expect(sections).toHaveLength(1);
+      const characters = sections.flatMap((section) =>
+        section.edges.map((edge) => ({
+          name: edge.targetLabel,
+          href: edge.targetHasPage === true ? edge.targetRoutePath : null,
+        })),
+      );
+      expect(characters).toEqual([{ name: "Fishermen", href: null }]);
+      expect(readModels.listRelationshipSections("location", "location-disabled")).toEqual([]);
     });
   });
+
   it("reads the location facts and returns no row for an unknown slug", async () => {
     await withSeed((readModels) => {
       expect(readModels.getLocationPresentation("shisivi-wood--11111111")).toEqual({

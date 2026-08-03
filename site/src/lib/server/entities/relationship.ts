@@ -11,8 +11,9 @@ export interface RelationshipSection {
 export interface RelationshipEdge {
   targetType: string;
   targetId: string;
-  targetLabel: string;
-  targetRoutePath: string;
+  targetLabel: string | null;
+  targetRoutePath: string | null;
+  targetHasPage?: boolean;
   predicate: string;
   label: string;
   weight: number;
@@ -31,15 +32,17 @@ export const listRelationshipSections = (
   }>(
     "SELECT section_id, title, predicate, edges_json FROM entity_relationship_sections WHERE source_type = ? AND source_id = ? ORDER BY sort_order, title",
     [sourceType, sourceId],
-  ).map((row) => ({
-    id: row.section_id,
-    title: row.title,
-    predicate: row.predicate,
-    edges: parseGeneratedJson(
-      row.edges_json,
-      sourceType,
-      "edges_json",
-      sourceId,
-      isRelationshipEdgeArray,
-    ),
-  }));
+  )
+    .map((row) => ({
+      id: row.section_id,
+      title: row.title,
+      predicate: row.predicate,
+      edges: parseGeneratedJson(
+        row.edges_json,
+        sourceType,
+        "edges_json",
+        sourceId,
+        isRelationshipEdgeArray,
+      ).filter((edge) => edge.targetLabel !== null),
+    }))
+    .filter((section) => section.edges.length > 0);

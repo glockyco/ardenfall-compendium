@@ -69,13 +69,13 @@ const withSeed = async (
 };
 
 describe("faction read-model accessors", () => {
-  it("lists factions and disambiguates repeated and missing names", async () => {
+  it("lists factions and disambiguates repeated names while naming missing entries", async () => {
     await withSeed((readModels) => {
       expect(readModels.listFactions()).toEqual([
         {
           id: "faction-nameless",
           name: null,
-          displayName: "Unnamed faction · aaaa1111",
+          displayName: "Unnamed faction",
           description: "",
           routePath: "/factions/unnamed-faction--aaaa1111",
         },
@@ -103,10 +103,11 @@ describe("faction read-model accessors", () => {
         id: "faction-nameless",
         name: null,
         renderContext: "faction-presentation-v1",
-        displayName: "Unnamed faction · aaaa1111",
+        displayName: "Unnamed faction",
         description: "",
         alliable: false,
         enableReputation: true,
+        alwaysShowInUI: true,
         canBeDisguised: false,
         enableBounty: true,
         routePath: "/factions/unnamed-faction--aaaa1111",

@@ -16,7 +16,8 @@ const seed = () => {
     CREATE TABLE character_presentation_rows (
       id TEXT PRIMARY KEY,
       name TEXT,
-      render_context TEXT NOT NULL
+      render_context TEXT NOT NULL,
+      drop_refs_json TEXT NOT NULL
     );
     CREATE TABLE entity_nodes (
       entity_type TEXT NOT NULL,
@@ -28,14 +29,19 @@ const seed = () => {
       has_page INTEGER NOT NULL,
       PRIMARY KEY (entity_type, entity_id)
     );
+    CREATE TABLE entity_relationship_sections (
+      section_id TEXT NOT NULL, source_type TEXT NOT NULL, source_id TEXT NOT NULL,
+      title TEXT NOT NULL, predicate TEXT NOT NULL, sort_order INTEGER NOT NULL,
+      edges_json TEXT NOT NULL
+    );
     INSERT INTO character_overview_rows VALUES
       ('character-zed', 'Zed'),
       ('character-ada', 'Ada'),
       ('character-nameless', NULL);
     INSERT INTO character_presentation_rows VALUES
-      ('character-zed', 'Zed', 'character-presentation-v1'),
-      ('character-ada', 'Ada', 'character-presentation-v1'),
-      ('character-nameless', NULL, 'character-presentation-v1');
+      ('character-zed', 'Zed', 'character-presentation-v1', '[{"label":"Iron Sword","routePath":"/items/iron-sword--44444444"},{"label":"Unnamed item","routePath":null}]'),
+      ('character-ada', 'Ada', 'character-presentation-v1', '[]'),
+      ('character-nameless', NULL, 'character-presentation-v1', '[]');
     INSERT INTO entity_nodes VALUES
       ('character', 'character-zed', 'Zed',
        '/characters/zed--11111111', 'zed--11111111', '11111111', 1),
@@ -43,6 +49,10 @@ const seed = () => {
        '/characters/ada--22222222', 'ada--22222222', '22222222', 1),
       ('character', 'character-nameless', 'Unnamed character',
        '/characters/unnamed-character--33333333', 'unnamed-character--33333333', '33333333', 1);
+    INSERT INTO entity_relationship_sections VALUES
+      ('character-ada:found_at', 'character', 'character-ada',
+       'Found at', 'found_at', 0,
+       '[{"targetType":"location","targetId":"location-shisivi","targetLabel":"Shisivi Wood","targetRoutePath":"/locations/shisivi-wood--11111111","predicate":"found_at","label":"Found at","weight":1,"anchor":null}]');
   `);
   db.close();
   return root;
@@ -70,7 +80,7 @@ describe("character read-model accessors", () => {
         {
           id: "character-nameless",
           name: null,
-          displayName: "Unnamed character · 33333333",
+          displayName: "Unnamed character",
           routePath: "/characters/unnamed-character--33333333",
         },
         {
@@ -89,6 +99,30 @@ describe("character read-model accessors", () => {
     });
   });
 
+  it("lists places where a character is found", async () => {
+    await withSeed((readModels) => {
+      expect(readModels.listRelationshipSections("character", "character-ada")).toEqual([
+        {
+          id: "character-ada:found_at",
+          title: "Found at",
+          predicate: "found_at",
+          edges: [
+            {
+              targetType: "location",
+              targetId: "location-shisivi",
+              targetLabel: "Shisivi Wood",
+              targetRoutePath: "/locations/shisivi-wood--11111111",
+              predicate: "found_at",
+              label: "Found at",
+              weight: 1,
+              anchor: null,
+            },
+          ],
+        },
+      ]);
+    });
+  });
+
   it("resolves one character by slug and returns undefined for an unknown slug", async () => {
     await withSeed((readModels) => {
       expect(readModels.getCharacterPresentation("ada--22222222")).toEqual({
@@ -96,18 +130,28 @@ describe("character read-model accessors", () => {
         name: "Ada",
         renderContext: "character-presentation-v1",
         displayName: "Ada",
+        drops: [],
         routePath: "/characters/ada--22222222",
+      });
+      expect(readModels.getCharacterPresentation("zed--11111111")).toMatchObject({
+        drops: [
+          { label: "Iron Sword", routePath: "/items/iron-sword--44444444" },
+          { label: "Unnamed item", routePath: null },
+        ],
       });
       expect(readModels.getCharacterPresentation("missing--99999999")).toBeUndefined();
     });
   });
 
-  it("gives a nameless character a distinguishable display name", async () => {
+  it("names a nameless character without exposing its identifier", async () => {
     await withSeed((readModels) => {
       expect(readModels.getCharacterPresentation("unnamed-character--33333333")).toMatchObject({
         name: null,
-        displayName: "Unnamed character · 33333333",
+        displayName: "Unnamed character",
       });
+      expect(
+        readModels.getCharacterPresentation("unnamed-character--33333333")?.displayName,
+      ).not.toContain("33333333");
     });
   });
 });

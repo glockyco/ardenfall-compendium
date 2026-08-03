@@ -91,7 +91,7 @@ describe("status-effect read-model accessors", () => {
           id: "guid-hostile-curse",
           name: "Unnamed status effect",
           descriptionSummary: null,
-          displayName: "Unnamed status effect · guid-hostile-curse",
+          displayName: "Unnamed status effect",
           isHostile: true,
           routePath: "/status-effects/hostile-curse--def67890",
         },
@@ -119,7 +119,7 @@ describe("status-effect read-model accessors", () => {
     });
   });
 
-  it("resolves an effect with no description", async () => {
+  it("resolves an effect with no description without exposing its identifier", async () => {
     await withSeed((readModels) => {
       expect(readModels.getStatusEffectPresentation("hostile-curse--def67890")).toEqual({
         id: "guid-hostile-curse",
@@ -127,7 +127,7 @@ describe("status-effect read-model accessors", () => {
         renderContext: "status-effect-presentation-v1",
         description: null,
         descriptionText: null,
-        displayName: "Unnamed status effect · guid-hostile-curse",
+        displayName: "Unnamed status effect",
         isHostile: true,
         routePath: "/status-effects/hostile-curse--def67890",
       });

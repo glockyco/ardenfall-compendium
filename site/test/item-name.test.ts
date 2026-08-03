@@ -2,31 +2,36 @@ import { describe, expect, it } from "bun:test";
 import { itemNameForDisplay, itemNameForList } from "../src/lib/components/items/itemName";
 
 describe("item display names", () => {
-  it("replaces game format strings with the unavailable label", () => {
-    expect(itemNameForDisplay("Recipe of {0}")).toBe("Name unavailable");
-    expect(itemNameForDisplay("Potion of {lvl} {name}")).toBe("Name unavailable");
+  it("uses the unnamed item label for game format strings", () => {
+    expect(itemNameForDisplay("Recipe of {0}")).toBe("Unnamed item");
+    expect(itemNameForDisplay("Potion of {lvl} {name}")).toBe("Unnamed item");
+    expect(itemNameForDisplay("BASE Helmet")).toBe("Unnamed item");
   });
 
-  it("adds a reader-facing variant label and short id when needed", () => {
+  it("keeps the authored variant label without exposing a short id", () => {
     const row = {
       name: "Recipe of {0}",
       variantLabel: "Melee Weapon",
       shortId: "abc12345",
     };
-    expect(itemNameForList(row, {})).toBe("Name unavailable — Melee Weapon · abc12345");
+    const label = itemNameForList(row, {});
+    expect(label).toBe("Unnamed item — Melee Weapon");
+    expect(label).not.toContain(row.shortId);
   });
 
-  it("adds a reader-facing variant label and short id when a name is missing", () => {
+  it("uses the unnamed item label for a blank name", () => {
     expect(
-      itemNameForList({ name: null, variantLabel: "Melee Weapon", shortId: "abc12345" }, {}),
-    ).toBe("Name unavailable — Melee Weapon · abc12345");
+      itemNameForList({ name: "  ", variantLabel: "Melee Weapon", shortId: "abc12345" }, {}),
+    ).toBe("Unnamed item — Melee Weapon");
   });
 
-  const duplicateNames = { Sword: 2 };
-  expect(
-    itemNameForList(
+  it("adds the authored variant label for repeated names without an identifier", () => {
+    const duplicateNames = { Sword: 2 };
+    const label = itemNameForList(
       { name: "Sword", variantLabel: "Melee Weapon", shortId: "abc12345" },
       duplicateNames,
-    ),
-  ).toBe("Sword — Melee Weapon · abc12345");
+    );
+    expect(label).toBe("Sword — Melee Weapon");
+    expect(label).not.toContain("abc12345");
+  });
 });

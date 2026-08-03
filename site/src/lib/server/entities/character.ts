@@ -1,6 +1,6 @@
 import { disambiguateLabels } from "../disambiguate-labels";
 import { all, get } from "../db";
-import { validateRenderContext } from "../json";
+import { parseGeneratedJson, validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
 
 interface CharacterOverviewRecord {
@@ -14,9 +14,26 @@ interface CharacterPresentationRecord {
   id: string;
   name: string | null;
   render_context: string;
+  drop_refs_json: string;
   route_path: string;
-  short_id: string;
 }
+
+export interface CharacterDrop {
+  label: string;
+  routePath: string | null;
+}
+
+const isCharacterDropArray = (value: unknown): value is CharacterDrop[] =>
+  Array.isArray(value) &&
+  value.every(
+    (drop) =>
+      typeof drop === "object" &&
+      drop !== null &&
+      !Array.isArray(drop) &&
+      typeof (drop as { label?: unknown }).label === "string" &&
+      ((drop as { routePath?: unknown }).routePath === null ||
+        typeof (drop as { routePath?: unknown }).routePath === "string"),
+  );
 
 export interface CharacterOverviewRow {
   id: string;
@@ -30,6 +47,7 @@ export interface CharacterPresentationRow {
   name: string | null;
   renderContext: "character-presentation-v1";
   displayName: string;
+  drops: CharacterDrop[];
   routePath: string;
 }
 
@@ -45,7 +63,7 @@ export const listCharacters = (): CharacterOverviewRow[] => {
   ).map((row) => ({
     id: row.id,
     name: row.name,
-    displayName: characterName(row.name, row.short_id),
+    displayName: characterName(row.name),
     routePath: row.route_path,
     shortId: row.short_id,
   }));
@@ -58,7 +76,7 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
   const node = getEntityNodeBySlug("character", slug);
   if (!node) return undefined;
   const row = get<CharacterPresentationRecord>(
-    `SELECT p.id, p.name, p.render_context, n.route_path, n.short_id
+    `SELECT p.id, p.name, p.render_context, p.drop_refs_json, n.route_path
      FROM character_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'character'
@@ -77,15 +95,20 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
       row.id,
       "character-presentation-v1",
     ),
-    displayName: characterName(row.name, row.short_id),
+    displayName: characterName(row.name),
+    drops: parseGeneratedJson(
+      row.drop_refs_json,
+      "character",
+      "drop_refs_json",
+      row.id,
+      isCharacterDropArray,
+    ),
     routePath: row.route_path,
   };
 };
 
-// A character without a name still needs a distinct heading, so the fallback carries the
-// short id that relationship sections and the character list already show.
-function characterName(name: string | null, shortId: string): string {
+function characterName(name: string | null): string {
   const normalizedName = name?.trim().toLowerCase();
-  if (name && normalizedName !== "unnamed character") return name;
-  return `Unnamed character · ${shortId}`;
+  if (name && normalizedName && normalizedName !== "unnamed character") return name;
+  return "Unnamed character";
 }

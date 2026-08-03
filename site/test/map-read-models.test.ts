@@ -131,6 +131,54 @@ describe("getMapView", () => {
     }
   });
 
+  it("keeps a page-less NPC marker selectable by its map short id", async () => {
+    const root = withDb((db) => {
+      db.exec(baseSchema);
+      db.exec(`
+        INSERT INTO map_layers VALUES
+          ('npcs', 'npc', 'map_points',
+           '["map_points"]', 'point', 'character',
+           '[255,200,120]', 4, '["characterName"]', '[]', 'Placed characters', 80);
+        INSERT INTO map_points VALUES
+          ('npc:record-1', 'npc', 'record-1', 'Ada', 'overworld', 4, 5, 2, 0, 0);
+        INSERT INTO entity_nodes VALUES
+          ('npc', 'record-1', 'Ada', '/map?map=overworld&sel=npc11111',
+           'ada--npc11111', 'npc11111', 0);
+      `);
+    });
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      const { getMapView } = await import("../src/lib/server/read-models");
+      const view = getMapView();
+      const point = view.points[0];
+      expect(view.layers).toContainEqual({
+        layerId: "npcs",
+        entityType: "npc",
+        renderKind: "point",
+        sourceTables: ["map_points"],
+        fillColor: [255, 200, 120, 255],
+        radius: 4,
+        icon: "character",
+        tooltipFields: ["characterName"],
+        filters: [],
+        legendLabel: "Placed characters",
+        zOrder: 80,
+      });
+      expect(point).toMatchObject({
+        entityId: "npc",
+        instanceId: "record-1",
+        name: "Ada",
+        tooltip: "Ada",
+        nodeShortId: "npc11111",
+      });
+      expect(point?.name).not.toContain("record-1");
+    } finally {
+      process.chdir(originalCwd);
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it("attaches a leads_to destination to its source point and leaves others null", async () => {
     const root = withDb((db) => {
       db.exec(baseSchema);

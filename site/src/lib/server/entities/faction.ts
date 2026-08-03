@@ -18,11 +18,10 @@ interface FactionPresentationRecord {
   description: string;
   alliable: number;
   enable_reputation: number;
+  always_show_in_ui: number;
   can_be_disguised: number;
   enable_bounty: number;
   route_path: string;
-  short_id: string;
-  name_count: number;
 }
 
 export interface FactionOverviewRow {
@@ -41,6 +40,7 @@ export interface FactionPresentationRow {
   description: string;
   alliable: boolean;
   enableReputation: boolean;
+  alwaysShowInUI: boolean;
   canBeDisguised: boolean;
   enableBounty: boolean;
   routePath: string;
@@ -58,7 +58,7 @@ export const listFactions = (): FactionOverviewRow[] => {
   ).map((row) => ({
     id: row.id,
     name: row.name,
-    displayName: factionName(row.name, row.short_id),
+    displayName: factionName(row.name),
     description: row.description,
     routePath: row.route_path,
     shortId: row.short_id,
@@ -73,10 +73,8 @@ export const getFactionPresentation = (slug: string): FactionPresentationRow | u
   if (!node) return undefined;
   const row = get<FactionPresentationRecord>(
     `SELECT p.id, p.name, p.render_context, p.description, p.alliable,
-            p.enable_reputation, p.can_be_disguised, p.enable_bounty,
-            n.route_path, n.short_id,
-            (SELECT COUNT(*) FROM faction_presentation_rows same_name
-              WHERE same_name.name = p.name) AS name_count
+            p.enable_reputation, p.always_show_in_ui, p.can_be_disguised, p.enable_bounty,
+            n.route_path
      FROM faction_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'faction'
@@ -95,17 +93,19 @@ export const getFactionPresentation = (slug: string): FactionPresentationRow | u
       row.id,
       "faction-presentation-v1",
     ),
-    displayName: factionName(row.name, row.short_id, row.name_count > 1),
+    displayName: factionName(row.name),
     description: row.description,
     alliable: row.alliable === 1,
     enableReputation: row.enable_reputation === 1,
+    alwaysShowInUI: row.always_show_in_ui === 1,
     canBeDisguised: row.can_be_disguised === 1,
     enableBounty: row.enable_bounty === 1,
     routePath: row.route_path,
   };
 };
 
-function factionName(name: string | null, shortId: string, repeated = false): string {
-  const label = name?.trim() || "Unnamed faction";
-  return !name?.trim() || repeated ? `${label} · ${shortId}` : label;
+function factionName(name: string | null): string {
+  const trimmedName = name?.trim();
+  if (!trimmedName || trimmedName.toLowerCase() === "unnamed faction") return "Unnamed faction";
+  return trimmedName;
 }

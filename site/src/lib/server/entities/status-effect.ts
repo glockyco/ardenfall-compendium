@@ -67,7 +67,7 @@ export const listStatusEffects = (): StatusEffectOverviewRow[] => {
       name: row.name,
       isHostile: row.is_hostile === 1,
       descriptionSummary: description ? firstSentence(richTextPlainText(description)) : null,
-      displayName: statusEffectName(row.name, row.id, description),
+      displayName: statusEffectName(row.name, description),
       routePath: row.route_path,
       shortId: row.short_id,
     };
@@ -114,21 +114,17 @@ export const getStatusEffectPresentation = (
     ),
     description,
     descriptionText: description ? richTextPlainText(description) : null,
-    displayName: statusEffectName(row.name, row.id, description),
+    displayName: statusEffectName(row.name, description),
     isHostile: row.is_hostile === 1,
     routePath: row.route_path,
   };
 };
 
-function statusEffectName(
-  name: string | null,
-  id: string,
-  description: RichTextDocument | null,
-): string {
+function statusEffectName(name: string | null, description: RichTextDocument | null): string {
   const normalizedName = name?.trim().toLowerCase();
-  if (name && normalizedName !== "unnamed status effect") return name;
+  if (name && normalizedName && normalizedName !== "unnamed status effect") return name;
   const summary = description ? firstSentence(richTextPlainText(description)) : null;
-  return summary ? `Unnamed status effect · ${summary}` : `Unnamed status effect · ${id}`;
+  return summary ? `Unnamed status effect · ${summary}` : "Unnamed status effect";
 }
 
 function firstSentence(text: string): string | null {

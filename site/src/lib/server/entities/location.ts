@@ -313,14 +313,14 @@ function computeMaps(points: MapPointRow[], volumes: MapVolumeRow[]): MapSummary
 export const listLocations = (): LocationOverviewRow[] =>
   disambiguateLabels(
     all<LocationOverviewRecord>(
-      `SELECT l.id, l.name, n.route_path, n.short_id
+      `SELECT l.id, n.label AS name, n.route_path, n.short_id
        FROM locations l
        JOIN entity_nodes n
          ON n.entity_type = 'location'
         AND n.entity_id = l.id
         AND n.has_page = 1
        WHERE l.enabled = 1
-       ORDER BY l.name, l.id`,
+       ORDER BY n.label, l.id`,
     ).map((row) => ({
       id: row.id,
       name: row.name,
@@ -335,7 +335,7 @@ export const getLocationPresentation = (slug: string): LocationPresentationRow |
   const node = getEntityNodeBySlug("location", slug);
   if (!node || !node.hasPage) return undefined;
   const row = get<LocationPresentationRecord>(
-    `SELECT l.id, l.name, l.map_id, l.allow_fast_travel, n.route_path
+    `SELECT l.id, n.label AS name, l.map_id, l.allow_fast_travel, n.route_path
      FROM locations l
      JOIN entity_nodes n
        ON n.entity_type = 'location'
