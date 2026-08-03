@@ -12,6 +12,7 @@ import { LOCATION_DDL } from "../sql/location-ddl";
 import { FACTION_DDL } from "../sql/faction-ddl";
 import { CHARACTER_DDL } from "../sql/character-ddl";
 import { PORTAL_DDL } from "../sql/portal-ddl";
+import { NPC_DDL } from "../sql/npc-ddl";
 import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
 import { SPELL_DDL } from "../sql/spell-ddl";
 import { STATUS_EFFECT_DDL } from "../sql/status-effect-ddl";
@@ -34,14 +35,16 @@ import { canonicaliseLocations } from "./location/canonicaliser";
 import { emitCharacterReadModels } from "./character/read-models";
 import { canonicalisePortals } from "./portal/canonicaliser";
 import { emitPortalReadModels } from "./portal/read-models";
+import { canonicaliseNpcs } from "./npc/canonicaliser";
+import { emitNpcReadModels } from "./npc/read-models";
 import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "./item/read-models";
 
-export interface MapProjection {
+interface MapProjection {
   points: string;
   volumes?: string;
 }
 
-export interface ReadModelContext {
+interface ReadModelContext {
   db: Database;
   desc: LoadDescriptorsOutput;
   snapshot: LoadSnapshotOutput;
@@ -51,13 +54,7 @@ export interface ReadModelContext {
   envelope: SnapshotEnvelope;
 }
 
-export interface SiteReadModelRegistration {
-  readModelId: string;
-  physicalName: string;
-  purpose: string;
-}
-
-export interface EntityModule {
+interface EntityModule {
   ddl: string | ((entity: EntityDescriptor, variants: VariantDescriptor[]) => string);
   canonicalise: (context: {
     db: Database;
@@ -70,7 +67,6 @@ export interface EntityModule {
   mapProjection?: MapProjection;
   site?: {
     overviewRenderer?: (field: string) => string;
-    readModels?: readonly SiteReadModelRegistration[];
     emitVariants?: boolean;
   };
   requiredSnapshot?: {
@@ -152,18 +148,28 @@ const portalProjection: MapProjection = {
     `,
 };
 
-const itemSiteReadModels: readonly SiteReadModelRegistration[] = [
-  {
-    readModelId: "item_overview_rows",
-    physicalName: "item_overview_rows",
-    purpose: "overview",
-  },
-  {
-    readModelId: "item_presentation_rows",
-    physicalName: "item_presentation_rows",
-    purpose: "detail",
-  },
-];
+const npcProjection: MapProjection = {
+  points: `
+      INSERT INTO map_points (
+        id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
+        show_on_map_debug_only, allow_fast_travel
+      )
+      SELECT 'npc:' || n.id, 'npc', n.id,
+             COALESCE(NULLIF(c.character_name, ''), 'Unnamed character'),
+             p.map_id, p.map_x, p.map_y, p.elevation,
+             0, 0
+      FROM npcs n
+      JOIN placements p ON p.entity_id = 'npc' AND p.instance_id = n.id
+      LEFT JOIN characters c ON c.id = CASE
+        WHEN json_extract(n.character_ref_json, '$.kind') = 'lookupAsset'
+          THEN json_extract(n.character_ref_json, '$.guid')
+        WHEN json_extract(n.character_ref_json, '$.kind') = 'namedAsset'
+          THEN 'named;' || json_extract(n.character_ref_json, '$.entity') || ';' || json_extract(n.character_ref_json, '$.name')
+        ELSE NULL
+      END
+      ORDER BY COALESCE(NULLIF(c.character_name, ''), 'Unnamed character'), n.id;
+    `,
+};
 
 /**
  * The sole dispatch registry. Its insertion order is pipeline order for the
@@ -184,7 +190,6 @@ export const entityRegistry: Record<string, EntityModule> = {
       ),
     site: {
       overviewRenderer: (field: string) => (field === "name" ? "itemNameWithIcon" : "text"),
-      readModels: itemSiteReadModels,
       emitVariants: true,
     },
     requiredSnapshot: {
@@ -227,18 +232,6 @@ export const entityRegistry: Record<string, EntityModule> = {
     readModel: ({ db, entity }) => emitFactionReadModels(db, entity.site?.route),
     site: {
       overviewRenderer: () => "text",
-      readModels: [
-        {
-          readModelId: "faction_overview_rows",
-          physicalName: "faction_overview_rows",
-          purpose: "overview",
-        },
-        {
-          readModelId: "faction_presentation_rows",
-          physicalName: "faction_presentation_rows",
-          purpose: "detail",
-        },
-      ],
     },
   },
   character: {
@@ -247,18 +240,6 @@ export const entityRegistry: Record<string, EntityModule> = {
     readModel: ({ db, entity }) => emitCharacterReadModels(db, entity.site?.route),
     site: {
       overviewRenderer: () => "text",
-      readModels: [
-        {
-          readModelId: "character_overview_rows",
-          physicalName: "character_overview_rows",
-          purpose: "overview",
-        },
-        {
-          readModelId: "character_presentation_rows",
-          physicalName: "character_presentation_rows",
-          purpose: "detail",
-        },
-      ],
     },
   },
   location: {
@@ -273,6 +254,13 @@ export const entityRegistry: Record<string, EntityModule> = {
     readModelPhase: "after-map",
     readModel: ({ db }) => emitPortalReadModels(db),
     mapProjection: portalProjection,
+  },
+  npc: {
+    ddl: NPC_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseNpcs(db, envelope),
+    readModelPhase: "after-map",
+    readModel: ({ db }) => emitNpcReadModels(db),
+    mapProjection: npcProjection,
   },
 };
 

@@ -36,7 +36,6 @@ CREATE TABLE location_volumes (
   elevation_min         REAL,
   elevation_max         REAL,
   geometry_json         TEXT,
-  diagnostics_json      TEXT NOT NULL DEFAULT '[]',
   UNIQUE(location_id, volume_index)
 );
 `;

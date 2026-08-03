@@ -51,9 +51,6 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
   const insertVariant = db.prepare(
     `INSERT INTO item_variants (variant_id, label, unity_type, canonical_table, parent_variant_id, position, has_page) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
-  const insertReadModel = db.prepare(
-    `INSERT INTO site_read_models (read_model_id, physical_name, entity_id, purpose) VALUES (?, ?, ?, ?)`,
-  );
   const insertMapLayer = db.prepare(
     `INSERT INTO map_layers (
       layer_id, entity_id, source_table, source_tables_json, render_kind, icon,
@@ -131,14 +128,6 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
           const renderer = module?.site?.overviewRenderer?.(field) ?? "text";
           insertColumn.run(entityId, `col_${field}`, field, i, renderer, 1);
         });
-      }
-      for (const readModel of module?.site?.readModels ?? []) {
-        insertReadModel.run(
-          readModel.readModelId,
-          readModel.physicalName,
-          entityId,
-          readModel.purpose,
-        );
       }
     }
 

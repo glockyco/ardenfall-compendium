@@ -16,12 +16,6 @@ export interface MapPoint {
   elevation: number;
 }
 
-interface VolumeDiagnostic {
-  severity: "diagnostic";
-  code: "locationVolumeNegativeSize" | "locationVolumeDegenerateSize";
-  field: string;
-}
-
 export function sourceToMapPoint(point: SnapshotVector3): MapPoint {
   assertFiniteVector(point, "mapPosition");
   return mapPointUnchecked(point);
@@ -44,8 +38,8 @@ export function canonicaliseLocations(db: Database, envelope: SnapshotEnvelope):
     `INSERT INTO location_volumes (
       id, location_id, volume_index, kind, source_center_json, source_size_json,
       map_min_x, map_min_y, map_max_x, map_max_y, elevation_min, elevation_max,
-      geometry_json, diagnostics_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      geometry_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   const tx = db.transaction(() => {
@@ -97,7 +91,6 @@ export function canonicaliseLocations(db: Database, envelope: SnapshotEnvelope):
           canonical.elevationMin,
           canonical.elevationMax,
           canonical.geometry ? JSON.stringify(canonical.geometry) : null,
-          JSON.stringify(canonical.diagnostics),
         );
       }
     }
@@ -109,14 +102,8 @@ function canonicaliseVolume(locationId: string, volume: LocationSnapshotVolume) 
   assertFiniteVectorForRow(locationId, volume.center, `volumes[${volume.index}].center`);
   assertFiniteVectorForRow(locationId, volume.size, `volumes[${volume.index}].size`);
 
-  const diagnostics: VolumeDiagnostic[] = [];
   if (volume.size.x < 0 || volume.size.y < 0 || volume.size.z < 0) {
-    diagnostics.push({
-      severity: "diagnostic",
-      code: "locationVolumeNegativeSize",
-      field: `volumes[${volume.index}].size`,
-    });
-    return nullVolume("invalid-axis-aligned-box", diagnostics);
+    return nullVolume("invalid-axis-aligned-box");
   }
 
   const halfX = volume.size.x / 2;
@@ -133,15 +120,8 @@ function canonicaliseVolume(locationId: string, volume: LocationSnapshotVolume) 
   const elevationMin = volume.center.y - halfY;
   const elevationMax = volume.center.y + halfY;
 
-  if (volume.size.x === 0 || volume.size.z === 0) {
-    diagnostics.push({
-      severity: "diagnostic",
-      code: "locationVolumeDegenerateSize",
-      field: `volumes[${volume.index}].size`,
-    });
-  }
-
-  const kind = diagnostics.length > 0 ? "degenerate-axis-aligned-box" : "axis-aligned-box";
+  const kind =
+    volume.size.x === 0 || volume.size.z === 0 ? "degenerate-axis-aligned-box" : "axis-aligned-box";
   const geometry = {
     schemaVersion: 1,
     kind: "axis-aligned-box",
@@ -163,11 +143,10 @@ function canonicaliseVolume(locationId: string, volume: LocationSnapshotVolume) 
     elevationMin,
     elevationMax,
     geometry,
-    diagnostics,
   };
 }
 
-function nullVolume(kind: string, diagnostics: VolumeDiagnostic[]) {
+function nullVolume(kind: string) {
   return {
     kind,
     mapMinX: null,
@@ -177,7 +156,6 @@ function nullVolume(kind: string, diagnostics: VolumeDiagnostic[]) {
     elevationMin: null,
     elevationMax: null,
     geometry: null,
-    diagnostics,
   };
 }
 

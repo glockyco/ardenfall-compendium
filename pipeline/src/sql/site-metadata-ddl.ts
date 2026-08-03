@@ -35,12 +35,6 @@ CREATE TABLE item_variants (
   position             INTEGER NOT NULL,
   has_page             INTEGER NOT NULL DEFAULT 0
 );
-CREATE TABLE site_read_models (
-  read_model_id    TEXT PRIMARY KEY,
-  physical_name    TEXT NOT NULL,
-  entity_id        TEXT NOT NULL,
-  purpose          TEXT NOT NULL
-);
 CREATE TABLE asset_refs (
   entity_id        TEXT NOT NULL,
   entity_row_id    TEXT NOT NULL,

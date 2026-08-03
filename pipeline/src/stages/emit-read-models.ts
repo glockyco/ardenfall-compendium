@@ -3,30 +3,6 @@ import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type { LoadSnapshotOutput } from "./load-snapshot.ts";
 import type { EmitAssetsOutput } from "./emit-assets.ts";
 import type { PipelineDiagnostic } from "../relationships/relationship-graph.ts";
-
-export {
-  ITEM_READ_MODEL_DDL,
-  emitItemReadModels,
-  prepareEntityNodeWriter,
-  deriveEntityNodeSlug,
-  type EntityNodeInput,
-  type EntityNodeWriter,
-} from "../entities/item/read-models.ts";
-export {
-  STAT_TYPE_READ_MODEL_DDL,
-  emitStatTypeReadModels,
-} from "../entities/stat-type/read-models.ts";
-export {
-  ITEM_CATEGORY_READ_MODEL_DDL,
-  emitItemCategoryReadModels,
-} from "../entities/item-category/read-models.ts";
-export {
-  ITEM_TAG_READ_MODEL_DDL,
-  emitItemTagReadModels,
-} from "../entities/item-tag/read-models.ts";
-export { MAP_READ_MODEL_DDL, emitMapReadModels } from "../map/read-models.ts";
-export { emitRelationshipSections } from "../relationships/relationship-sections.ts";
-export { emitFactionReadModels, FACTION_READ_MODEL_DDL } from "../entities/faction/read-models.ts";
 import { entityRegistry } from "../entities/registry";
 import { emitMapReadModels } from "../map/read-models.ts";
 import {

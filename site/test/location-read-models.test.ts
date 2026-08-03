@@ -20,24 +20,33 @@ const seed = () => {
       id TEXT PRIMARY KEY, location_id TEXT NOT NULL, volume_index INTEGER NOT NULL,
       kind TEXT NOT NULL, source_center_json TEXT NOT NULL, source_size_json TEXT NOT NULL,
       map_min_x REAL, map_min_y REAL, map_max_x REAL, map_max_y REAL,
-      elevation_min REAL, elevation_max REAL, geometry_json TEXT, diagnostics_json TEXT NOT NULL
+      elevation_min REAL, elevation_max REAL, geometry_json TEXT
     );
     CREATE TABLE entity_nodes (
       entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, label TEXT NOT NULL,
       route_path TEXT NOT NULL, canonical_slug TEXT NOT NULL, short_id TEXT NOT NULL,
       has_page INTEGER NOT NULL, PRIMARY KEY (entity_type, entity_id)
     );
+    CREATE TABLE entity_relationship_sections (
+      section_id TEXT NOT NULL, source_type TEXT NOT NULL, source_id TEXT NOT NULL,
+      title TEXT NOT NULL, predicate TEXT NOT NULL, sort_order INTEGER NOT NULL,
+      edges_json TEXT NOT NULL
+    );
     INSERT INTO locations VALUES
       ('location-shisivi', 'Shisivi Wood', 1, 'overworld', '{}', 0, 0, NULL, '{}', 1, NULL),
       ('location-disabled', 'Disabled Place', 0, 'overworld', '{}', 1, 0, NULL, '{}', 0, NULL);
     INSERT INTO location_volumes VALUES
       ('location-shisivi:volume:0', 'location-shisivi', 0, 'axis-aligned-box', '{}', '{}',
-       -4, 2, 8, 14, -1, 5, '{}', '[]');
+       -4, 2, 8, 14, -1, 5, '{}');
     INSERT INTO entity_nodes VALUES
       ('location', 'location-shisivi', 'Shisivi Wood', '/locations/shisivi-wood--11111111',
        'shisivi-wood--11111111', '11111111', 1),
       ('location', 'location-disabled', 'Disabled Place', '/locations/disabled-place--22222222',
        'disabled-place--22222222', '22222222', 1);
+    INSERT INTO entity_relationship_sections VALUES
+      ('location-shisivi:found_at', 'location', 'location-shisivi',
+       'Characters found here', 'found_at', 0,
+       '[{"targetType":"character","targetId":"character-ada","targetLabel":"Ada","targetRoutePath":"/characters/ada--22222222","predicate":"found_at","label":"Found at","weight":1,"anchor":null}]');
   `);
   db.close();
   return root;
@@ -71,6 +80,29 @@ describe("location read-model accessors", () => {
     });
   });
 
+  it("lists characters found at a location", async () => {
+    await withSeed((readModels) => {
+      expect(readModels.listRelationshipSections("location", "location-shisivi")).toEqual([
+        {
+          id: "location-shisivi:found_at",
+          title: "Characters found here",
+          predicate: "found_at",
+          edges: [
+            {
+              targetType: "character",
+              targetId: "character-ada",
+              targetLabel: "Ada",
+              targetRoutePath: "/characters/ada--22222222",
+              predicate: "found_at",
+              label: "Found at",
+              weight: 1,
+              anchor: null,
+            },
+          ],
+        },
+      ]);
+    });
+  });
   it("reads the location facts and returns no row for an unknown slug", async () => {
     await withSeed((readModels) => {
       expect(readModels.getLocationPresentation("shisivi-wood--11111111")).toEqual({

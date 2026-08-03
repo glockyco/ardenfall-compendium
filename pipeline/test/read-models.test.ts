@@ -2,13 +2,10 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { buildDDL } from "$pipeline/sql/ddl";
 import { canonicaliseItems } from "$pipeline/entities/item/canonicaliser";
-import {
-  emitItemReadModels,
-  emitStatTypeReadModels,
-  prepareEntityNodeWriter,
-  emitItemCategoryReadModels,
-  emitItemTagReadModels,
-} from "$pipeline/stages/emit-read-models";
+import { emitItemReadModels, prepareEntityNodeWriter } from "$pipeline/entities/item/read-models";
+import { emitStatTypeReadModels } from "$pipeline/entities/stat-type/read-models";
+import { emitItemCategoryReadModels } from "$pipeline/entities/item-category/read-models";
+import { emitItemTagReadModels } from "$pipeline/entities/item-tag/read-models";
 import { ENTITY_GRAPH_DDL } from "$pipeline/relationships/relationship-graph";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { loadSnapshot } from "$pipeline/stages/load-snapshot";
@@ -20,7 +17,7 @@ import { canonicaliseItemTags } from "$pipeline/entities/item-tag/canonicaliser"
 import { ITEM_TAG_DDL } from "$pipeline/sql/item-tag-ddl";
 import { canonicaliseLocations } from "$pipeline/entities/location/canonicaliser";
 import { LOCATION_DDL } from "$pipeline/sql/location-ddl";
-import { emitMapReadModels } from "$pipeline/stages/emit-read-models";
+import { emitMapReadModels } from "$pipeline/map/read-models";
 import { PORTAL_DDL } from "$pipeline/sql/portal-ddl";
 import { SPELL_DDL } from "$pipeline/sql/spell-ddl";
 import { canonicalisePortals } from "$pipeline/entities/portal/canonicaliser";

@@ -177,7 +177,7 @@ describe("canonicaliseLocations", () => {
     ).toThrow(/location 'bad-location' has non-finite mapPosition.x/);
   });
 
-  it("diagnoses negative or degenerate volume sizes without inventing geometry", () => {
+  it("keeps invalid volume geometry absent and marks degenerate geometry", () => {
     const db = new Database(":memory:");
     db.exec(LOCATION_DDL);
 
@@ -207,14 +207,11 @@ describe("canonicaliseLocations", () => {
     });
 
     const rows = db
-      .query(
-        "SELECT volume_index, kind, geometry_json, diagnostics_json FROM location_volumes ORDER BY volume_index",
-      )
+      .query("SELECT volume_index, kind, geometry_json FROM location_volumes ORDER BY volume_index")
       .all() as {
       volume_index: number;
       kind: string;
       geometry_json: string | null;
-      diagnostics_json: string;
     }[];
 
     const firstRow = rows[0];
@@ -223,15 +220,10 @@ describe("canonicaliseLocations", () => {
       volume_index: 0,
       kind: "invalid-axis-aligned-box",
       geometry_json: null,
-      diagnostics_json: JSON.stringify([
-        { severity: "diagnostic", code: "locationVolumeNegativeSize", field: "volumes[0].size" },
-      ]),
     });
     const secondRow = rows[1];
     if (secondRow === undefined) throw new Error("expected degenerate-size volume row");
     expect(secondRow.kind).toBe("degenerate-axis-aligned-box");
-    expect(JSON.parse(secondRow.diagnostics_json)).toEqual([
-      { severity: "diagnostic", code: "locationVolumeDegenerateSize", field: "volumes[1].size" },
-    ]);
+    expect(secondRow.geometry_json).not.toBeNull();
   });
 });
