@@ -2,6 +2,8 @@ import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 
+import { isColorObject, parseGeneratedJson } from "./json";
+
 const dbPath = () => join(process.cwd(), ".data", "data.sqlite");
 const require = createRequire(import.meta.url);
 
@@ -21,14 +23,14 @@ let db: { path: string; handle: SqliteDatabase } | null = null;
 export const assetSrc = (hash: string | null): string | null =>
   hash ? `/assets/${hash}.webp` : null;
 
-export const colorCss = (json: string | null): string | null => {
+export const colorCss = (
+  json: string | null,
+  entity = "generated",
+  column = "color_json",
+  rowId = json ?? "unknown",
+): string | null => {
   if (!json) return null;
-  let color: { r?: unknown; g?: unknown; b?: unknown; a?: unknown };
-  try {
-    color = JSON.parse(json) as { r?: unknown; g?: unknown; b?: unknown; a?: unknown };
-  } catch (error) {
-    throw new Error(`invalid generated color JSON: ${json}`, { cause: error });
-  }
+  const color = parseGeneratedJson(json, entity, column, rowId, isColorObject);
   if (
     typeof color.r !== "number" ||
     !Number.isFinite(color.r) ||

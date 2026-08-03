@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities;
 using ArdenfallCompendium.Walker;
 
 namespace ArdenfallCompendium.Entities.ItemTag;
@@ -18,44 +19,55 @@ public sealed class ItemTagExtractor : WalkerBase<ItemTagSnapshotRow>
         _source = source;
     }
 
-    public override IEnumerable<ItemTagSnapshotRow> Walk()
-    {
-        foreach (var asset in _source.EnumerateItemTags())
-        {
-            if (asset == null)
+    public override IEnumerable<ItemTagSnapshotRow> Walk() =>
+        ExtractorLifecycle.Run(
+            _source.EnumerateItemTags(),
+            Diagnostics,
+            Refs,
+            () => new Diagnostic
             {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "itemTagAssetMissing",
-                    Field = "id",
-                    Message = "ItemTag asset source yielded a null row",
-                });
-                continue;
-            }
-            var id = asset.Guid;
-            if (string.IsNullOrWhiteSpace(id))
+                Severity = "fatal",
+                Code = "itemTagAssetMissing",
+                Field = "id",
+                Message = "ItemTag asset source yielded a null row",
+            },
+            asset =>
             {
-                Diagnostics.Add(new Diagnostic
+                if (string.IsNullOrWhiteSpace(asset.Guid))
                 {
-                    Severity = "fatal",
-                    Code = "lookupAssetGuidMissing",
-                    Field = "id",
-                    Message = $"ItemTag asset '{asset.AssetName}' has no GUID in BuiltLookupTable",
-                });
-                continue;
-            }
+                    return ExtractorIdentity.Invalid(new Diagnostic
+                    {
+                        Severity = "fatal",
+                        Code = "lookupAssetGuidMissing",
+                        Field = "id",
+                        Message = $"ItemTag asset '{asset.AssetName}' has no GUID in BuiltLookupTable",
+                    });
+                }
+                return ExtractorIdentity.Valid(asset.Guid);
+            },
+            (asset, id) =>
+            {
+                var tagName = NullIfEmpty(asset.TagName);
+                if (tagName == null)
+                {
+                    Diagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "itemTagNameMissing",
+                        Field = "tagName",
+                        Message = $"ItemTag '{id}' has empty or whitespace tagName",
+                    });
+                }
 
-            yield return new ItemTagSnapshotRow
-            {
-                Id = id,
-                Fields = new ItemTagSnapshot(
-                    Id: id,
-                    TagName: NullIfEmpty(asset.TagName) ?? NullIfEmpty(asset.AssetName) ?? id,
-                    Description: asset.Description ?? ""),
-            };
-        }
-    }
+                return new ItemTagSnapshotRow
+                {
+                    Id = id,
+                    Fields = new ItemTagSnapshot(
+                        Id: id,
+                        TagName: tagName,
+                        Description: asset.Description ?? ""),
+                };
+            });
 
     private static string? NullIfEmpty(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value;

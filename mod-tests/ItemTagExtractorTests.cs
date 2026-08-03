@@ -31,8 +31,9 @@ public sealed class ItemTagExtractorTests
         Assert.Equal("tag-valuable-remedy", rows[0].Id);
         Assert.Equal("Valuable remedy", rows[0].Fields.TagName);
         Assert.Equal("Incredibly valuable remedy", rows[0].Fields.Description);
-        Assert.Equal("rare", rows[1].Fields.TagName);
         Assert.Equal("", rows[1].Fields.Description);
+        Assert.Contains(extractor.Diagnostics, diagnostic =>
+            diagnostic.Code == "itemTagNameMissing" && diagnostic.Field == "tagName");
     }
 
     [Fact]

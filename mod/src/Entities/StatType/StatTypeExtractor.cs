@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities;
 using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Walker;
 using UnityEngine;
@@ -26,74 +27,84 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
     public override IEnumerable<StatTypeSnapshotRow> Walk()
     {
         var seenNames = new HashSet<string>(System.StringComparer.Ordinal);
-        foreach (var asset in _source.EnumerateStatTypes())
+        return ExtractorLifecycle.Run(
+            _source.EnumerateStatTypes(),
+            Diagnostics,
+            Refs,
+            () => new Diagnostic
+            {
+                Severity = "fatal",
+                Code = "statTypeAssetMissing",
+                Field = "id",
+                Message = "StatType asset source yielded a null row",
+            },
+            asset => CreateIdentity(asset, seenNames),
+            (asset, id) =>
+            {
+                var statName = NullIfEmpty(asset.StatName);
+                if (statName == null)
+                {
+                    Diagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "statTypeNameMissing",
+                        Field = "statName",
+                        Message = $"StatType '{id}' has empty or whitespace statName",
+                    });
+                }
+
+                var iconRef = Refs.ResolveAsset(
+                    asset.Icon!,
+                    "iconRef",
+                    id,
+                    MissingPolicy.Diagnostic,
+                    "StatType.icon");
+
+                if (_assetPlan != null && asset.Icon is Sprite sprite)
+                {
+                    _assetPlan.Slots.Add(new ItemIconAssetSlot("stat-type", id, "iconRef", sprite, "stat-type"));
+                }
+                return new StatTypeSnapshotRow
+                {
+                    Id = id,
+                    Fields = new StatTypeSnapshot(
+                        Id: id,
+                        IsAttribute: asset.IsAttribute,
+                        StatName: statName,
+                        IconRef: iconRef,
+                        IconColor: asset.IconColor,
+                        StatDescription: NullIfEmpty(asset.StatDescription),
+                        LongStatDescription: NullIfEmpty(asset.LongStatDescription),
+                        Affects: asset.Affects?.ToList() ?? new List<string>(),
+                        SkillAffects: asset.SkillAffects?.ToList() ?? new List<string>()),
+                };
+            });
+    }
+
+    private static ExtractorIdentity CreateIdentity(StatTypeAsset asset, HashSet<string> seenNames)
+    {
+        var assetName = asset.AssetName ?? "";
+        if (!NamedAssetIdentity.TryCreate("stat-type", assetName, out var id))
         {
-            if (asset == null)
+            return ExtractorIdentity.Invalid(new Diagnostic
             {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "statTypeAssetMissing",
-                    Field = "id",
-                    Message = "StatType asset source yielded a null row",
-                });
-                continue;
-            }
-
-            var assetName = asset.AssetName ?? "";
-            if (!NamedAssetIdentity.TryCreate("stat-type", assetName, out var id))
-            {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "namedAssetNameMissing",
-                    Field = "id",
-                    Message = $"StatType asset has empty or whitespace name '{assetName}'",
-                });
-                continue;
-            }
-            if (!seenNames.Add(assetName))
-            {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "namedAssetNameDuplicate",
-                    Field = "id",
-                    Message = $"StatType asset name '{assetName}' is duplicated",
-                });
-                continue;
-            }
-
-            var iconRef = Refs.ResolveAsset(
-                asset.Icon,
-                "iconRef",
-                id,
-                MissingPolicy.Diagnostic,
-                "StatType.icon");
-
-
-            if (_assetPlan != null && asset.Icon is Sprite sprite)
-            {
-                _assetPlan.Slots.Add(new ItemIconAssetSlot("stat-type", id, "iconRef", sprite, "stat-type"));
-            }
-            yield return new StatTypeSnapshotRow
-            {
-                Id = id,
-                Fields = new StatTypeSnapshot(
-                    Id: id,
-                    IsAttribute: asset.IsAttribute,
-                    StatName: NullIfEmpty(asset.StatName) ?? NullIfEmpty(asset.AssetName) ?? id,
-                    IconRef: iconRef,
-                    IconColor: asset.IconColor,
-                    StatDescription: NullIfEmpty(asset.StatDescription),
-                    LongStatDescription: NullIfEmpty(asset.LongStatDescription),
-                    Affects: asset.Affects?.ToList() ?? new List<string>(),
-                    SkillAffects: asset.SkillAffects?.ToList() ?? new List<string>()),
-            };
+                Severity = "fatal",
+                Code = "namedAssetNameMissing",
+                Field = "id",
+                Message = $"StatType asset has empty or whitespace name '{assetName}'",
+            });
         }
-
-        Diagnostics.AddRange(Refs.Diagnostics);
-        Refs.Diagnostics.Clear();
+        if (!seenNames.Add(assetName))
+        {
+            return ExtractorIdentity.Invalid(new Diagnostic
+            {
+                Severity = "fatal",
+                Code = "namedAssetNameDuplicate",
+                Field = "id",
+                Message = $"StatType asset name '{assetName}' is duplicated",
+            });
+        }
+        return ExtractorIdentity.Valid(id);
     }
 
     private static string? NullIfEmpty(string? value) =>

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities;
 using ArdenfallCompendium.Walker;
 
 namespace ArdenfallCompendium.Entities.Location;
@@ -20,106 +21,119 @@ public sealed class LocationExtractor : WalkerBase<LocationSnapshotRow>
 
     public override IEnumerable<LocationSnapshotRow> Walk()
     {
-        foreach (var asset in _source.EnumerateLocations())
-        {
-            if (asset == null)
+        return ExtractorLifecycle.Run(
+            _source.EnumerateLocations(),
+            Diagnostics,
+            Refs,
+            () => new Diagnostic
             {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "locationAssetMissing",
-                    Field = "id",
-                    Message = "Location asset source yielded a null row",
-                });
-                continue;
-            }
-            if (string.IsNullOrWhiteSpace(asset.Guid))
+                Severity = "fatal",
+                Code = "locationAssetMissing",
+                Field = "id",
+                Message = "Location asset source yielded a null row",
+            },
+            asset =>
             {
-                Diagnostics.Add(new Diagnostic
+                if (string.IsNullOrWhiteSpace(asset.Guid))
                 {
-                    Severity = "fatal",
-                    Code = "lookupAssetGuidMissing",
-                    Field = "id",
-                    Message = $"LocationAsset '{asset.AssetName}' has no GUID in BuiltLookupTable",
-                });
-                continue;
-            }
-            if (string.IsNullOrWhiteSpace(asset.GameLocationId))
-            {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "locationIdMissing",
-                    Field = "gameLocationId",
-                    Message = $"LocationAsset '{asset.Guid}' has no locationID",
-                });
-                continue;
-            }
-
-            var diagnostics = new List<Diagnostic>();
-            if (asset.MapId == null)
-            {
-                diagnostics.Add(new Diagnostic
-                {
-                    Severity = "diagnostic",
-                    Code = "locationMapMissing",
-                    Field = "mapId",
-                    Message = $"LocationAsset '{asset.Guid}' has no map",
-                });
-            }
-
-            var volumes = new List<LocationVolumeSnapshot>();
-            if (asset.Volumes == null)
-            {
-                diagnostics.Add(new Diagnostic
-                {
-                    Severity = "diagnostic",
-                    Code = "locationVolumesMalformed",
-                    Field = "volumes",
-                    Message = $"LocationAsset '{asset.Guid}' has null volume data",
-                });
-            }
-            else
-            {
-                for (var index = 0; index < asset.Volumes.Count; index++)
-                {
-                    var volume = asset.Volumes[index];
-                    if (volume == null)
+                    return ExtractorIdentity.Invalid(new Diagnostic
                     {
-                        diagnostics.Add(new Diagnostic
-                        {
-                            Severity = "diagnostic",
-                            Code = "locationVolumeMalformed",
-                            Field = $"volumes[{index}]",
-                            Message = $"LocationAsset '{asset.Guid}' has null volume data at index {index}",
-                        });
-                        continue;
-                    }
-                    volumes.Add(volume);
+                        Severity = "fatal",
+                        Code = "lookupAssetGuidMissing",
+                        Field = "id",
+                        Message = $"LocationAsset '{asset.AssetName}' has no GUID in BuiltLookupTable",
+                    });
                 }
-            }
-
-            yield return new LocationSnapshotRow
+                if (string.IsNullOrWhiteSpace(asset.GameLocationId))
+                {
+                    return ExtractorIdentity.Invalid(new Diagnostic
+                    {
+                        Severity = "fatal",
+                        Code = "locationIdMissing",
+                        Field = "gameLocationId",
+                        Message = $"LocationAsset '{asset.Guid}' has no locationID",
+                    });
+                }
+                return ExtractorIdentity.Valid(asset.Guid);
+            },
+            (asset, id) =>
             {
-                Id = asset.Guid,
-                Fields = new LocationSnapshot(
-                    Id: asset.Guid,
-                    GameLocationId: asset.GameLocationId,
-                    Name: NullIfEmpty(asset.LocationName) ?? NullIfEmpty(asset.AssetName) ?? asset.Guid,
-                    Enabled: asset.Enabled,
-                    MapRef: asset.MapRef,
-                    MapId: asset.MapId,
-                    ShowOnMap: asset.ShowOnMap,
-                    ShowOnMapDebugOnly: asset.ShowOnMapDebugOnly,
-                    IconRef: asset.IconRef,
-                    MapPosition: asset.MapPosition,
-                    AllowFastTravel: asset.AllowFastTravel,
-                    FastTravelPosition: asset.FastTravelPosition,
-                    DisplayOnEnterVolume: asset.DisplayOnEnterVolume,
-                    Volumes: volumes),
-                Diagnostics = diagnostics,
-            };
-        }
+                var rowDiagnostics = new List<Diagnostic>();
+                if (asset.MapId == null)
+                {
+                    rowDiagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "locationMapMissing",
+                        Field = "mapId",
+                        Message = $"LocationAsset '{id}' has no map",
+                    });
+                }
+
+                var volumes = new List<LocationVolumeSnapshot>();
+                if (asset.Volumes == null)
+                {
+                    rowDiagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "locationVolumesMalformed",
+                        Field = "volumes",
+                        Message = $"LocationAsset '{id}' has null volume data",
+                    });
+                }
+                else
+                {
+                    for (var index = 0; index < asset.Volumes.Count; index++)
+                    {
+                        var volume = asset.Volumes[index];
+                        if (volume == null)
+                        {
+                            rowDiagnostics.Add(new Diagnostic
+                            {
+                                Severity = "diagnostic",
+                                Code = "locationVolumeMalformed",
+                                Field = $"volumes[{index}]",
+                                Message = $"LocationAsset '{id}' has null volume data at index {index}",
+                            });
+                            continue;
+                        }
+                        volumes.Add(volume);
+                    }
+                }
+
+                var name = NullIfEmpty(asset.LocationName);
+                if (name == null)
+                {
+                    rowDiagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "locationNameMissing",
+                        Field = "name",
+                        Message = $"LocationAsset '{id}' has empty or whitespace locationName",
+                    });
+                }
+
+                return new LocationSnapshotRow
+                {
+                    Id = id,
+                    Fields = new LocationSnapshot(
+                        Id: id,
+                        GameLocationId: asset.GameLocationId!,
+                        Name: name,
+                        Enabled: asset.Enabled,
+                        MapRef: asset.MapRef,
+                        MapId: asset.MapId,
+                        ShowOnMap: asset.ShowOnMap,
+                        ShowOnMapDebugOnly: asset.ShowOnMapDebugOnly,
+                        IconRef: asset.IconRef,
+                        MapPosition: asset.MapPosition,
+                        AllowFastTravel: asset.AllowFastTravel,
+                        FastTravelPosition: asset.FastTravelPosition,
+                        DisplayOnEnterVolume: asset.DisplayOnEnterVolume,
+                        Volumes: volumes),
+                    Diagnostics = rowDiagnostics,
+                };
+            });
     }
 
     private static string? NullIfEmpty(string? value) =>

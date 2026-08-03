@@ -1,4 +1,5 @@
 import { all, assetSrc, get } from "../db";
+import { isRecordArray, parseGeneratedJson, validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
 
 interface ItemCategoryOverviewRecord {
@@ -14,7 +15,7 @@ interface ItemCategoryOverviewRecord {
 interface ItemCategoryPresentationRecord {
   id: string;
   name: string;
-  render_context: "item-category-presentation-v1";
+  render_context: string;
   icon_hash: string | null;
   default_item_icon_hash: string | null;
   category_color_json: string;
@@ -88,12 +89,23 @@ export const getItemCategoryPresentation = (
   return {
     id: row.id,
     name: row.name,
-    renderContext: row.render_context,
+    renderContext: validateRenderContext(
+      row.render_context,
+      "item-category",
+      row.id,
+      "item-category-presentation-v1",
+    ),
     iconSrc: assetSrc(row.icon_hash),
     defaultItemIconSrc: assetSrc(row.default_item_icon_hash),
     categoryColor: row.category_color_json,
     showInAllCategory: row.show_in_all_category === 1,
-    columns: JSON.parse(row.columns_json) as Record<string, unknown>[],
+    columns: parseGeneratedJson(
+      row.columns_json,
+      "item-category",
+      "columns_json",
+      row.id,
+      isRecordArray,
+    ),
     itemCount: row.item_count,
     routePath: row.route_path,
   };

@@ -17,7 +17,7 @@ public sealed record LocationVolumeSnapshot(
 public sealed record LocationSnapshot(
     [property: JsonProperty("id")] string Id,
     [property: JsonProperty("gameLocationId")] string GameLocationId,
-    [property: JsonProperty("name")] string Name,
+    [property: JsonProperty("name")] string? Name,
     [property: JsonProperty("enabled")] bool Enabled,
     [property: JsonProperty("mapRef")] SnapshotRef? MapRef,
     [property: JsonProperty("mapId")] string? MapId,

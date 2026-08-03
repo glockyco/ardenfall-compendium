@@ -6,7 +6,7 @@ namespace ArdenfallCompendium.Entities.ItemCategory;
 
 public sealed record ItemCategorySnapshot(
     [property: JsonProperty("id")] string Id,
-    [property: JsonProperty("categoryName")] string CategoryName,
+    [property: JsonProperty("categoryName")] string? CategoryName,
     [property: JsonProperty("iconRef")] SnapshotRef? IconRef,
     [property: JsonProperty("defaultItemIconRef")] SnapshotRef? DefaultItemIconRef,
     [property: JsonProperty("categoryColor")] AssetColorSnapshot CategoryColor,

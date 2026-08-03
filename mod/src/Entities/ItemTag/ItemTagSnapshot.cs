@@ -6,7 +6,7 @@ namespace ArdenfallCompendium.Entities.ItemTag;
 
 public sealed record ItemTagSnapshot(
     [property: JsonProperty("id")] string Id,
-    [property: JsonProperty("tagName")] string TagName,
+    [property: JsonProperty("tagName")] string? TagName,
     [property: JsonProperty("description")] string Description);
 
 public sealed class ItemTagSnapshotRow

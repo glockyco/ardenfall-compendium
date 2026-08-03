@@ -1,4 +1,5 @@
 import { all, get } from "../db";
+import { validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
 
 interface CharacterOverviewRecord {
@@ -10,7 +11,7 @@ interface CharacterOverviewRecord {
 interface CharacterPresentationRecord {
   id: string;
   name: string | null;
-  render_context: "character-presentation-v1";
+  render_context: string;
   route_path: string;
 }
 
@@ -70,7 +71,12 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
   return {
     id: row.id,
     name: row.name,
-    renderContext: row.render_context,
+    renderContext: validateRenderContext(
+      row.render_context,
+      "character",
+      row.id,
+      "character-presentation-v1",
+    ),
     displayName: characterName(row.name, row.id),
     routePath: row.route_path,
   };

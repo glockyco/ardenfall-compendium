@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities;
 using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Walker;
 using UnityEngine;
@@ -27,105 +28,116 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
     public override IEnumerable<ItemCategorySnapshotRow> Walk()
     {
         var seenNames = new HashSet<string>(System.StringComparer.Ordinal);
-        foreach (var asset in _source.EnumerateItemCategories())
-        {
-            if (asset == null)
+        return ExtractorLifecycle.Run(
+            _source.EnumerateItemCategories(),
+            Diagnostics,
+            Refs,
+            () => new Diagnostic
             {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "itemCategoryAssetMissing",
-                    Field = "id",
-                    Message = "ItemCategory asset source yielded a null row",
-                });
-                continue;
-            }
+                Severity = "fatal",
+                Code = "itemCategoryAssetMissing",
+                Field = "id",
+                Message = "ItemCategory asset source yielded a null row",
+            },
+            asset => CreateIdentity(asset, seenNames),
+            (asset, id) =>
+            {
+                var iconRef = ResolveNullableAsset(asset.Icon, "iconRef", id, "ItemCategory.icon");
+                var defaultItemIconRef = ResolveNullableAsset(
+                    asset.DefaultItemIcon,
+                    "defaultItemIconRef",
+                    id,
+                    "ItemCategory.defaultItemIcon");
 
-            var assetName = asset.AssetName ?? "";
-            if (!NamedAssetIdentity.TryCreate("item-category", assetName, out var id))
-            {
-                Diagnostics.Add(new Diagnostic
+                if (_assetPlan != null)
                 {
-                    Severity = "fatal",
-                    Code = "namedAssetNameMissing",
-                    Field = "id",
-                    Message = $"ItemCategory asset has empty or whitespace name '{assetName}'",
-                });
-                continue;
-            }
-            if (!seenNames.Add(assetName))
-            {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "namedAssetNameDuplicate",
-                    Field = "id",
-                    Message = $"ItemCategory asset name '{assetName}' is duplicated",
-                });
-                continue;
-            }
-
-            var iconRef = ResolveNullableAsset(asset.Icon, "iconRef", id, "ItemCategory.icon");
-            var defaultItemIconRef = ResolveNullableAsset(
-                asset.DefaultItemIcon,
-                "defaultItemIconRef",
-                id,
-                "ItemCategory.defaultItemIcon");
-
-            if (_assetPlan != null)
-            {
-                CaptureSlot(id, "iconRef", asset.Icon);
-                CaptureSlot(id, "defaultItemIconRef", asset.DefaultItemIcon);
-            }
-
-            var columns = asset.Columns;
-            var columnSnapshots = new List<ItemCategoryColumnSnapshot>();
-            if (columns == null)
-            {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "diagnostic",
-                    Code = "itemCategoryColumnsMalformed",
-                    Field = "columns",
-                    Message = $"ItemCategory '{id}' has null columns data",
-                });
-            }
-            else
-            {
-                for (var index = 0; index < columns.Count; index++)
-                {
-                    var column = columns[index];
-                    if (column == null)
-                    {
-                        Diagnostics.Add(new Diagnostic
-                        {
-                            Severity = "diagnostic",
-                            Code = "itemCategoryColumnMalformed",
-                            Field = $"columns[{index}]",
-                            Message = $"ItemCategory '{id}' has null column data at index {index}",
-                        });
-                        continue;
-                    }
-                    columnSnapshots.Add(ToSnapshot(column, id));
+                    CaptureSlot(id, "iconRef", asset.Icon);
+                    CaptureSlot(id, "defaultItemIconRef", asset.DefaultItemIcon);
                 }
-            }
 
-            yield return new ItemCategorySnapshotRow
+                var categoryName = NullIfEmpty(asset.CategoryName);
+                if (categoryName == null)
+                {
+                    Diagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "itemCategoryNameMissing",
+                        Field = "categoryName",
+                        Message = $"ItemCategory '{id}' has empty or whitespace categoryName",
+                    });
+                }
+
+                var columns = asset.Columns;
+                var columnSnapshots = new List<ItemCategoryColumnSnapshot>();
+                if (columns == null)
+                {
+                    Diagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "itemCategoryColumnsMalformed",
+                        Field = "columns",
+                        Message = $"ItemCategory '{id}' has null columns data",
+                    });
+                }
+                else
+                {
+                    for (var index = 0; index < columns.Count; index++)
+                    {
+                        var column = columns[index];
+                        if (column == null)
+                        {
+                            Diagnostics.Add(new Diagnostic
+                            {
+                                Severity = "diagnostic",
+                                Code = "itemCategoryColumnMalformed",
+                                Field = $"columns[{index}]",
+                                Message = $"ItemCategory '{id}' has null column data at index {index}",
+                            });
+                            continue;
+                        }
+                        columnSnapshots.Add(ToSnapshot(column!, id));
+                    }
+                }
+
+                return new ItemCategorySnapshotRow
+                {
+                    Id = id,
+                    Fields = new ItemCategorySnapshot(
+                        Id: id,
+                        CategoryName: categoryName,
+                        IconRef: iconRef,
+                        DefaultItemIconRef: defaultItemIconRef,
+                        CategoryColor: asset.CategoryColor,
+                        ShowInAllCategory: asset.ShowInAllCategory,
+                        Columns: columnSnapshots),
+                };
+            });
+    }
+
+    private static ExtractorIdentity CreateIdentity(ItemCategoryAsset asset, HashSet<string> seenNames)
+    {
+        var assetName = asset.AssetName ?? "";
+        if (!NamedAssetIdentity.TryCreate("item-category", assetName, out var id))
+        {
+            return ExtractorIdentity.Invalid(new Diagnostic
             {
-                Id = id,
-                Fields = new ItemCategorySnapshot(
-                    Id: id,
-                    CategoryName: NullIfEmpty(asset.CategoryName) ?? NullIfEmpty(asset.AssetName) ?? id,
-                    IconRef: iconRef,
-                    DefaultItemIconRef: defaultItemIconRef,
-                    CategoryColor: asset.CategoryColor,
-                    ShowInAllCategory: asset.ShowInAllCategory,
-                    Columns: columnSnapshots),
-            };
+                Severity = "fatal",
+                Code = "namedAssetNameMissing",
+                Field = "id",
+                Message = $"ItemCategory asset has empty or whitespace name '{assetName}'",
+            });
         }
-
-        Diagnostics.AddRange(Refs.Diagnostics);
-        Refs.Diagnostics.Clear();
+        if (!seenNames.Add(assetName))
+        {
+            return ExtractorIdentity.Invalid(new Diagnostic
+            {
+                Severity = "fatal",
+                Code = "namedAssetNameDuplicate",
+                Field = "id",
+                Message = $"ItemCategory asset name '{assetName}' is duplicated",
+            });
+        }
+        return ExtractorIdentity.Valid(id);
     }
 
     private SnapshotRef? ResolveNullableAsset(UnityObject? value, string field, string entityRowId, string source) =>

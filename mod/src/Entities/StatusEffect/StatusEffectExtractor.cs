@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities;
 using ArdenfallCompendium.Walker;
 
 namespace ArdenfallCompendium.Entities.StatusEffect;
@@ -20,70 +21,64 @@ public sealed class StatusEffectExtractor : WalkerBase<StatusEffectSnapshotRow>
 
     public override IEnumerable<StatusEffectSnapshotRow> Walk()
     {
-        foreach (var asset in _source.EnumerateStatusEffects())
-        {
-            if (asset == null)
+        return ExtractorLifecycle.Run(
+            _source.EnumerateStatusEffects(),
+            Diagnostics,
+            Refs,
+            () => new Diagnostic
             {
-                Diagnostics.Add(new Diagnostic
+                Severity = "fatal",
+                Code = "statusEffectAssetMissing",
+                Field = "id",
+                Message = "StatusEffectData asset source yielded a null row",
+            },
+            asset =>
+            {
+                if (string.IsNullOrWhiteSpace(asset.Guid))
                 {
-                    Severity = "fatal",
-                    Code = "statusEffectAssetMissing",
-                    Field = "id",
-                    Message = "StatusEffectData asset source yielded a null row",
-                });
-                continue;
-            }
-
-            var id = asset.Guid;
-            if (string.IsNullOrWhiteSpace(id))
+                    return ExtractorIdentity.Invalid(new Diagnostic
+                    {
+                        Severity = "fatal",
+                        Code = "lookupAssetGuidMissing",
+                        Field = "id",
+                        Message = $"StatusEffectData asset '{asset.AssetName}' has no GUID in BuiltLookupTable",
+                    });
+                }
+                return ExtractorIdentity.Valid(asset.Guid);
+            },
+            (asset, id) =>
             {
-                Diagnostics.Add(new Diagnostic
+                var statusEffectName = NullIfEmpty(asset.StatusEffectName);
+                if (statusEffectName == null)
                 {
-                    Severity = "fatal",
-                    Code = "lookupAssetGuidMissing",
-                    Field = "id",
-                    Message = $"StatusEffectData asset '{asset.AssetName}' has no GUID in BuiltLookupTable",
-                });
-                continue;
-            }
+                    Diagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "statusEffectNameMissing",
+                        Field = "statusEffectName",
+                        Message = $"StatusEffectData '{id}' has empty or whitespace statusEffectName",
+                    });
+                }
 
-            var statusEffectName = NullIfEmpty(asset.StatusEffectName);
-            if (statusEffectName == null)
-            {
-                Diagnostics.Add(new Diagnostic
+                var iconRef = ReferenceEquals(asset.Icon, null)
+                    ? null
+                    : Refs.ResolveAsset(
+                        asset.Icon,
+                        "iconRef",
+                        id,
+                        MissingPolicy.OptionalEmpty,
+                        "StatusEffectData.statusEffectIcon");
+                return new StatusEffectSnapshotRow
                 {
-                    Severity = "diagnostic",
-                    Code = "statusEffectNameMissing",
-                    Field = "statusEffectName",
-                    Message = $"StatusEffectData '{id}' has empty or whitespace statusEffectName",
-                });
-            }
-
-            var iconRef = ReferenceEquals(asset.Icon, null)
-                ? null
-                : Refs.ResolveAsset(
-                    asset.Icon,
-                    "iconRef",
-                    id,
-                    MissingPolicy.OptionalEmpty,
-                    "StatusEffectData.statusEffectIcon");
-
-            var tooltipSource = NullIfEmpty(asset.TooltipSource);
-
-            yield return new StatusEffectSnapshotRow
-            {
-                Id = id,
-                Fields = new StatusEffectSnapshot(
-                    Id: id,
-                    StatusEffectName: statusEffectName,
-                    TooltipSource: tooltipSource,
-                    IconRef: iconRef,
-                    IsHostile: asset.IsHostile),
-            };
-        }
-
-        Diagnostics.AddRange(Refs.Diagnostics);
-        Refs.Diagnostics.Clear();
+                    Id = id,
+                    Fields = new StatusEffectSnapshot(
+                        Id: id,
+                        StatusEffectName: statusEffectName,
+                        TooltipSource: NullIfEmpty(asset.TooltipSource),
+                        IconRef: iconRef,
+                        IsHostile: asset.IsHostile),
+                };
+            });
     }
 
     private static string? NullIfEmpty(string? value) =>

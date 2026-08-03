@@ -1,18 +1,9 @@
 import { createHash } from "node:crypto";
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { ENTITY_FILES } from "./controller/src/validate-snapshot";
 
 type DecompileOptionsInput = {
   assembly: string;
@@ -192,22 +183,6 @@ describe("ci site build tooling", () => {
       "bun run codegen:validators && git diff --exit-code -- pipeline/dist/validate-*.mjs pipeline/dist/validate-*.d.mts",
     );
     expect(ciWorkflow).toContain("bun run check:validators");
-  });
-});
-
-describe("snapshot artifact contract", () => {
-  it("keeps controller entity files aligned with descriptors", () => {
-    const descriptorIds = readdirSync("entities", { withFileTypes: true })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => {
-        const descriptor = JSON.parse(
-          readFileSync(join("entities", entry.name, "entity.json"), "utf8"),
-        ) as { id: string };
-        return descriptor.id;
-      })
-      .sort();
-
-    expect(Object.keys(ENTITY_FILES).sort()).toEqual(descriptorIds);
   });
 });
 

@@ -1,17 +1,38 @@
-import type { EntityDescriptor, FieldSpec, VariantDescriptor } from "../types.ts";
+import type { EntityDescriptor, FieldSpec, FieldType, VariantDescriptor } from "../types.ts";
 
-function sqlType(t: string): string {
-  if (t === "id" || t === "string") return "TEXT";
-  if (t === "integer" || t === "boolean") return "INTEGER";
-  if (t === "number") return "REAL";
-  if (t.startsWith("ref:")) return "TEXT"; // FK string id
-  return "TEXT";
+function sqlType(fieldName: string, type: FieldType): string {
+  switch (type) {
+    case "id":
+      return "TEXT";
+    case "string":
+      return "TEXT";
+    case "integer":
+      return "INTEGER";
+    case "number":
+      return "REAL";
+    case "boolean":
+      return "INTEGER";
+    case "json":
+      return "TEXT";
+    case "ref:asset":
+      return "TEXT";
+    case "ref:asset[]":
+      return "TEXT";
+    case "ref:record":
+      return "TEXT";
+    default:
+      return unsupportedFieldType(fieldName, type);
+  }
+}
+
+function unsupportedFieldType(fieldName: string, type: never): never {
+  throw new Error(`unsupported type '${type}' for field '${fieldName}'`);
 }
 
 function column(field: FieldSpec): string {
   if (field.type === "id") return `"${field.name}" TEXT NOT NULL PRIMARY KEY`;
   const nullable = field.missingPolicy === "fatal" ? "NOT NULL" : "";
-  return `"${field.name}" ${sqlType(field.type)} ${nullable}`.trim();
+  return `"${field.name}" ${sqlType(field.name, field.type)} ${nullable}`.trim();
 }
 
 export function buildDDL(entity: EntityDescriptor, variants: VariantDescriptor[]): string {
@@ -35,7 +56,7 @@ export function buildDDL(entity: EntityDescriptor, variants: VariantDescriptor[]
     const cols: string[] = [`"id" TEXT NOT NULL PRIMARY KEY REFERENCES "${entity.id}s"("id")`];
     for (const f of variant.fields) {
       const nullable = f.missingPolicy === "fatal" ? "NOT NULL" : "";
-      cols.push(`"${f.name}" ${sqlType(f.type)} ${nullable}`.trim());
+      cols.push(`"${f.name}" ${sqlType(f.name, f.type)} ${nullable}`.trim());
     }
     out.push(`CREATE TABLE "${variant.canonicalTable}" (${cols.join(", ")});`);
   }

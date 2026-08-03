@@ -1,4 +1,16 @@
 import { all, assetSrc, get } from "../db";
+import {
+  isDurability,
+  isEffectArray,
+  isOptionsArray,
+  isRequirementArray,
+  isRichTextDocument,
+  isStateFactArray,
+  isStatRowArray,
+  isStringRecord,
+  parseGeneratedJson,
+  validateRenderContext,
+} from "../json";
 
 interface ItemOverviewRecord {
   id: string;
@@ -31,7 +43,7 @@ interface ItemPresentationRecord {
   name: string | null;
   variant: string | null;
   item_type: string | null;
-  render_context: "item-presentation-v1";
+  render_context: string;
   display_icon_hash: string | null;
   display_icon_color: string | null;
   description_source: string;
@@ -183,11 +195,19 @@ export interface EntityNodeRow {
 }
 
 const toItemPresentationRow = (row: ItemPresentationRecord): ItemPresentationRow => {
-  const effectRoutes = JSON.parse(row.effect_target_routes_json) as Record<string, string>;
-  const effects = (
-    JSON.parse(row.effect_facts_json) as Array<
-      Omit<ItemPresentationEffect, "targetRoutePath" | "level"> & { level?: number | null }
-    >
+  const effectRoutes = parseGeneratedJson(
+    row.effect_target_routes_json,
+    "item",
+    "effect_target_routes_json",
+    row.id,
+    isStringRecord,
+  );
+  const effects = parseGeneratedJson(
+    row.effect_facts_json,
+    "item",
+    "effect_facts_json",
+    row.id,
+    isEffectArray,
   ).map((effect) => ({
     ...effect,
     level: typeof effect.level === "number" ? effect.level : null,
@@ -199,19 +219,54 @@ const toItemPresentationRow = (row: ItemPresentationRecord): ItemPresentationRow
     name: row.name,
     variant: row.variant,
     itemType: row.item_type,
-    renderContext: row.render_context,
+    renderContext: validateRenderContext(
+      row.render_context,
+      "item",
+      row.id,
+      "item-presentation-v1",
+    ),
     displayIconSrc: assetSrc(row.display_icon_hash),
     displayIconColor: row.display_icon_color,
-    description: JSON.parse(row.description_rich_text_json) as RichTextDocument,
+    description: parseGeneratedJson(
+      row.description_rich_text_json,
+      "item",
+      "description_rich_text_json",
+      row.id,
+      isRichTextDocument,
+    ),
     effectsSource: row.effects_source,
-    effectsSourceRichText: JSON.parse(row.effects_source_rich_text_json) as RichTextDocument,
+    effectsSourceRichText: parseGeneratedJson(
+      row.effects_source_rich_text_json,
+      "item",
+      "effects_source_rich_text_json",
+      row.id,
+      isRichTextDocument,
+    ),
     effects,
-    statRows: JSON.parse(row.stat_rows_json) as ItemPresentationStatRow[],
-    requirements: JSON.parse(row.requirements_json) as ItemPresentationRequirement[],
+    statRows: parseGeneratedJson(
+      row.stat_rows_json,
+      "item",
+      "stat_rows_json",
+      row.id,
+      isStatRowArray,
+    ),
+    requirements: parseGeneratedJson(
+      row.requirements_json,
+      "item",
+      "requirements_json",
+      row.id,
+      isRequirementArray,
+    ),
     durability: row.durability_json
-      ? (JSON.parse(row.durability_json) as ItemPresentationDurability)
+      ? parseGeneratedJson(row.durability_json, "item", "durability_json", row.id, isDurability)
       : null,
-    stateFacts: JSON.parse(row.state_facts_json) as ItemPresentationStateFact[],
+    stateFacts: parseGeneratedJson(
+      row.state_facts_json,
+      "item",
+      "state_facts_json",
+      row.id,
+      isStateFactArray,
+    ),
     value: row.value,
     weight: row.weight,
   };
@@ -299,7 +354,13 @@ export const listItemOverviewFilters = (): ItemOverviewFilter[] =>
       id: row.filter_id,
       label: row.label,
       kind: row.kind,
-      options: JSON.parse(row.options_json) as ItemOverviewFilter["options"],
+      options: parseGeneratedJson(
+        row.options_json,
+        "item-overview",
+        "options_json",
+        row.filter_id,
+        isOptionsArray,
+      ),
     }),
   );
 

@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export interface SnapshotValidationResult {
@@ -13,20 +13,9 @@ interface ManifestShape {
 }
 
 interface EnvelopeShape {
+  entityId?: unknown;
   rows?: unknown[];
 }
-
-export const ENTITY_FILES: Record<string, string> = {
-  item: "items.json",
-  "stat-type": "stat-types.json",
-  "item-category": "item-categories.json",
-  "item-tag": "item-tags.json",
-  location: "locations.json",
-  portal: "portals.json",
-  spell: "spells.json",
-  character: "characters.json",
-  "status-effect": "status-effects.json",
-};
 
 export async function validateSnapshot(snapshotDir: string): Promise<SnapshotValidationResult> {
   const manifestText = await readRequiredText(snapshotDir, "manifest.json");
@@ -49,16 +38,47 @@ export async function validateSnapshot(snapshotDir: string): Promise<SnapshotVal
     }),
   );
 
+  for (const file of await readdir(snapshotDir)) {
+    if (!file.endsWith(".json") || parsedArtifacts.has(file)) continue;
+    parsedArtifacts.set(file, parseJson(file, await readRequiredText(snapshotDir, file)));
+  }
+
+  // Envelope identity is derived from its own entityId, so controller does not duplicate the pipeline's non-entity skip list.
+  const envelopes = new Map<string, { file: string; artifact: EnvelopeShape }>();
+  for (const [file, artifact] of parsedArtifacts) {
+    if (!isRecord(artifact) || typeof artifact.entityId !== "string") continue;
+    const previous = envelopes.get(artifact.entityId);
+    if (previous !== undefined)
+      throw new Error(
+        `duplicate snapshot entity '${artifact.entityId}' declared by ${previous.file} and ${file}`,
+      );
+    envelopes.set(artifact.entityId, { file, artifact });
+  }
+
+  const expectedEntities = Object.keys(counts).sort();
+  const discoveredEntities = [...envelopes.keys()].sort();
+  if (
+    expectedEntities.length !== discoveredEntities.length ||
+    expectedEntities.some((entity, index) => entity !== discoveredEntities[index])
+  ) {
+    const missing = expectedEntities.filter((entity) => !envelopes.has(entity));
+    const unexpected = discoveredEntities.filter((entity) => counts[entity] === undefined);
+    const details = [
+      ...(missing.length > 0 ? [`missing envelopes for ${missing.join(", ")}`] : []),
+      ...(unexpected.length > 0 ? [`unexpected envelopes for ${unexpected.join(", ")}`] : []),
+    ];
+    throw new Error(`manifest counts do not match snapshot envelopes: ${details.join("; ")}`);
+  }
+
   const resultCounts: Record<string, number> = {};
-  for (const [entity, file] of Object.entries(ENTITY_FILES)) {
+  for (const entity of discoveredEntities) {
+    const { file, artifact } = envelopes.get(entity)!;
     const expectedCount = counts[entity];
     if (expectedCount === undefined) throw new Error(`manifest is missing ${entity} count`);
     if (!Number.isInteger(expectedCount) || expectedCount < 0)
       throw new Error(`manifest ${entity} count must be a non-negative integer`);
 
-    const artifact = parsedArtifacts.get(file);
-    if (artifact === undefined) throw new Error(`manifest is missing ${file} hash`);
-    const rows = (artifact as EnvelopeShape).rows;
+    const rows = artifact.rows;
     if (!Array.isArray(rows)) throw new Error(`${file} rows must be an array`);
     if (expectedCount !== rows.length)
       throw new Error(
@@ -67,6 +87,7 @@ export async function validateSnapshot(snapshotDir: string): Promise<SnapshotVal
     resultCounts[entity] = rows.length;
   }
 
+  if (resultCounts.item === undefined) throw new Error("manifest is missing item count");
   if (resultCounts.item === 0) throw new Error("snapshot contains no items");
 
   const diagnostics = parsedArtifacts.get("diagnostics.json");
@@ -76,6 +97,10 @@ export async function validateSnapshot(snapshotDir: string): Promise<SnapshotVal
     throw new Error("snapshot contains fatal diagnostics");
 
   return { itemCount: resultCounts.item ?? 0, counts: resultCounts };
+}
+
+function isRecord(value: unknown): value is EnvelopeShape {
+  return typeof value === "object" && value !== null;
 }
 
 async function readRequiredText(snapshotDir: string, file: string): Promise<string> {

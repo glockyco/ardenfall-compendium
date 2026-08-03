@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Ardenfall;
 using Ardenfall.Item;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities;
 using ArdenfallCompendium.Entities.Item.Adapters;
 using ArdenfallCompendium.Walker;
 
@@ -41,77 +42,85 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
 
     public override IEnumerable<ItemSnapshotRow> Walk()
     {
-        foreach (var asset in _source.EnumerateItems())
-        {
-            if (asset == null)
+        return ExtractorLifecycle.Run(
+            _source.EnumerateItems(),
+            Diagnostics,
+            Refs,
+            () => new Diagnostic
             {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "itemAssetMissing",
-                    Field = "id",
-                    Message = "Item asset source yielded a null ItemData row",
-                });
-                continue;
-            }
-            if (!MarkVisited(asset)) continue;
-
-            var guid = _lookupGuid(asset);
-            if (guid is null || guid.Length == 0)
+                Severity = "fatal",
+                Code = "itemAssetMissing",
+                Field = "id",
+                Message = "Item asset source yielded a null ItemData row",
+            },
+            asset =>
             {
-                Diagnostics.Add(new Diagnostic
+                if (!MarkVisited(asset)) return new ExtractorIdentity(null, null);
+                var guid = _lookupGuid(asset);
+                if (string.IsNullOrWhiteSpace(guid))
                 {
-                    Severity = "fatal",
-                    Code = "lookupAssetGuidMissing",
-                    Field = "id",
-                    Message = $"ItemData asset '{asset.name}' has no GUID in BuiltLookupTable",
-                });
-                continue;
-            }
-
-            var (fields, provenance, diagnostics, tags) = ExtractItem.Extract(asset, Refs, guid);
-
-            var classified = ItemVariantClassifier.Classify(asset);
-            if (classified.VariantId == "unsupported")
-            {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = ItemDiagnosticCodes.UnsupportedSubtype,
-                    Field = "variant",
-                    Message = $"item '{guid}' is type {asset.GetType().Name}; not yet supported",
-                });
-                continue;
-            }
-
-            foreach (var layer in classified.Layers)
-            {
-                Merge(fields, provenance, diagnostics, layer.Extract(asset, Refs, guid));
-                if (Refs.Diagnostics.Count > 0)
-                {
-                    diagnostics.AddRange(Refs.Diagnostics);
-                    Refs.Diagnostics.Clear();
+                    return ExtractorIdentity.Invalid(new Diagnostic
+                    {
+                        Severity = "fatal",
+                        Code = "lookupAssetGuidMissing",
+                        Field = "id",
+                        Message = $"ItemData asset '{asset.name}' has no GUID in BuiltLookupTable",
+                    });
                 }
-            }
-
-            var variantId = classified.VariantId;
-            var presentation = ItemPresentationBuilder.FromExtractedFields(guid, variantId, fields, provenance);
-            if (_assetPlan != null) ItemIconAssetPlanner.CaptureItem(_assetPlan, asset, guid);
-
-            yield return new ItemSnapshotRow
+                return ExtractorIdentity.Valid(guid);
+            },
+            (asset, guid) =>
             {
-                Id = guid,
-                Variant = variantId,
-                Fields = fields,
-                Tags = tags,
-                Presentation = presentation,
-                Provenance = provenance,
-                Diagnostics = diagnostics,
-            };
-        }
+                var (fields, provenance, diagnostics, tags) = ExtractItem.Extract(asset, Refs, guid);
+                if (fields["name"] is not string itemName || string.IsNullOrWhiteSpace(itemName))
+                {
+                    fields["name"] = null;
+                    Diagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "itemNameMissing",
+                        Field = "name",
+                        Message = $"ItemData '{guid}' has empty or whitespace itemName",
+                    });
+                }
+                var classified = ItemVariantClassifier.Classify(asset);
+                if (classified.VariantId == "unsupported")
+                {
+                    Diagnostics.Add(new Diagnostic
+                    {
+                        Severity = "fatal",
+                        Code = ItemDiagnosticCodes.UnsupportedSubtype,
+                        Field = "variant",
+                        Message = $"item '{guid}' is type {asset.GetType().Name}; not yet supported",
+                    });
+                    return null;
+                }
 
-        Diagnostics.AddRange(Refs.Diagnostics);
-        Refs.Diagnostics.Clear();
+                foreach (var layer in classified.Layers)
+                {
+                    Merge(fields, provenance, diagnostics, layer.Extract(asset, Refs, guid));
+                    if (Refs.Diagnostics.Count > 0)
+                    {
+                        diagnostics.AddRange(Refs.Diagnostics);
+                        Refs.Diagnostics.Clear();
+                    }
+                }
+
+                var variantId = classified.VariantId;
+                var presentation = ItemPresentationBuilder.FromExtractedFields(guid, variantId, fields, provenance);
+                if (_assetPlan != null) ItemIconAssetPlanner.CaptureItem(_assetPlan, asset, guid);
+
+                return new ItemSnapshotRow
+                {
+                    Id = guid,
+                    Variant = variantId,
+                    Fields = fields,
+                    Tags = tags,
+                    Presentation = presentation,
+                    Provenance = provenance,
+                    Diagnostics = diagnostics,
+                };
+            });
     }
 
     private static string? LookupGuid(ItemData asset) =>

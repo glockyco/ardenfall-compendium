@@ -1,4 +1,5 @@
 import { all, assetSrc, colorCss, get } from "../db";
+import { isStatReferenceArray, parseGeneratedJson, validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
 
 interface StatTypeOverviewRecord {
@@ -14,7 +15,7 @@ interface StatTypePresentationRecord {
   id: string;
   name: string;
   grouping: "attribute" | "skill";
-  render_context: "stat-type-presentation-v1";
+  render_context: string;
   icon_hash: string | null;
   icon_color: string | null;
   description: string | null;
@@ -66,7 +67,7 @@ export const listStatTypes = (): StatTypeOverviewRow[] =>
     name: row.name,
     grouping: row.grouping,
     iconSrc: assetSrc(row.icon_hash),
-    iconColor: colorCss(row.icon_color),
+    iconColor: colorCss(row.icon_color, "stat-type", "icon_color", row.id),
     routePath: row.route_path,
   }));
 
@@ -90,13 +91,30 @@ export const getStatTypePresentation = (slug: string): StatTypePresentationRow |
     id: row.id,
     name: row.name,
     grouping: row.grouping,
-    renderContext: row.render_context,
+    renderContext: validateRenderContext(
+      row.render_context,
+      "stat-type",
+      row.id,
+      "stat-type-presentation-v1",
+    ),
     iconSrc: assetSrc(row.icon_hash),
-    iconColor: colorCss(row.icon_color),
+    iconColor: colorCss(row.icon_color, "stat-type", "icon_color", row.id),
     description: row.description,
     longDescription: row.long_description,
-    affects: JSON.parse(row.affects_json) as StatTypeReference[],
-    skillAffects: JSON.parse(row.skill_affects_json) as StatTypeReference[],
+    affects: parseGeneratedJson(
+      row.affects_json,
+      "stat-type",
+      "affects_json",
+      row.id,
+      isStatReferenceArray,
+    ),
+    skillAffects: parseGeneratedJson(
+      row.skill_affects_json,
+      "stat-type",
+      "skill_affects_json",
+      row.id,
+      isStatReferenceArray,
+    ),
     routePath: row.route_path,
   };
 };

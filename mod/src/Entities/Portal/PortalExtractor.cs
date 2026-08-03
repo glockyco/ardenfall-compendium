@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities;
 using ArdenfallCompendium.Walker;
 
 namespace ArdenfallCompendium.Entities.Portal;
@@ -20,90 +21,93 @@ public sealed class PortalExtractor : WalkerBase<PortalSnapshotRow>
 
     public override IEnumerable<PortalSnapshotRow> Walk()
     {
-        foreach (var record in _source.EnumeratePortals())
-        {
-            if (record == null)
+        return ExtractorLifecycle.Run(
+            _source.EnumeratePortals(),
+            Diagnostics,
+            Refs,
+            () => new Diagnostic
             {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "portalRecordMissing",
-                    Field = "id",
-                    Message = "Portal record source yielded a null row",
-                });
-                continue;
-            }
-            if (string.IsNullOrWhiteSpace(record.Table) || string.IsNullOrWhiteSpace(record.Subtable) || string.IsNullOrWhiteSpace(record.Id))
+                Severity = "fatal",
+                Code = "portalRecordMissing",
+                Field = "id",
+                Message = "Portal record source yielded a null row",
+            },
+            record =>
             {
-                Diagnostics.Add(new Diagnostic
+                if (string.IsNullOrWhiteSpace(record.Table) ||
+                    string.IsNullOrWhiteSpace(record.Subtable) ||
+                    string.IsNullOrWhiteSpace(record.Id))
                 {
-                    Severity = "fatal",
-                    Code = "portalRecordIdMissing",
-                    Field = "id",
-                    Message = "PortalRecord has no complete RecordID",
-                });
-                continue;
-            }
-            if (record.Position == null)
+                    return ExtractorIdentity.Invalid(new Diagnostic
+                    {
+                        Severity = "fatal",
+                        Code = "portalRecordIdMissing",
+                        Field = "id",
+                        Message = "PortalRecord has no complete RecordID",
+                    });
+                }
+                var rowId = $"{record.Table};{record.Subtable};{record.Id}";
+                if (record.Position == null)
+                {
+                    return ExtractorIdentity.Invalid(new Diagnostic
+                    {
+                        Severity = "fatal",
+                        Code = "portalTransformMissing",
+                        Field = "position",
+                        Message = $"PortalRecord '{rowId}' has no transform",
+                    });
+                }
+                return ExtractorIdentity.Valid(rowId);
+            },
+            (record, rowId) =>
             {
-                Diagnostics.Add(new Diagnostic
+                var rowDiagnostics = new List<Diagnostic>();
+                if (string.IsNullOrWhiteSpace(record.MapId))
                 {
-                    Severity = "fatal",
-                    Code = "portalTransformMissing",
-                    Field = "position",
-                    Message = $"PortalRecord '{record.Table};{record.Subtable};{record.Id}' has no transform",
-                });
-                continue;
-            }
+                    rowDiagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "portalMapMissing",
+                        Field = "mapId",
+                        Message = $"PortalRecord '{rowId}' has no transform mapID",
+                    });
+                }
+                if (record.ConnectedPortalRef == null || !record.ConnectedPortalResolved)
+                {
+                    rowDiagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "connectedPortalMissing",
+                        Field = "connectedPortalRef",
+                        Message = $"PortalRecord '{rowId}' has no resolved connected portal",
+                    });
+                }
+                var name = NullIfEmpty(record.FriendlyName);
+                if (name == null)
+                {
+                    rowDiagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "portalNameMissing",
+                        Field = "friendlyName",
+                        Message = $"PortalRecord '{rowId}' has no friendlyName",
+                    });
+                }
 
-            var rowId = $"{record.Table};{record.Subtable};{record.Id}";
-            var diagnostics = new List<Diagnostic>();
-            if (string.IsNullOrWhiteSpace(record.MapId))
-            {
-                diagnostics.Add(new Diagnostic
+                return new PortalSnapshotRow
                 {
-                    Severity = "diagnostic",
-                    Code = "portalMapMissing",
-                    Field = "mapId",
-                    Message = $"PortalRecord '{rowId}' has no transform mapID",
-                });
-            }
-            if (record.ConnectedPortalRef == null || !record.ConnectedPortalResolved)
-            {
-                diagnostics.Add(new Diagnostic
-                {
-                    Severity = "diagnostic",
-                    Code = "connectedPortalMissing",
-                    Field = "connectedPortalRef",
-                    Message = $"PortalRecord '{rowId}' has no resolved connected portal",
-                });
-            }
-            var name = NullIfEmpty(record.FriendlyName);
-            if (name == null)
-            {
-                diagnostics.Add(new Diagnostic
-                {
-                    Severity = "diagnostic",
-                    Code = "portalNameMissing",
-                    Field = "friendlyName",
-                    Message = $"PortalRecord '{rowId}' has no friendlyName",
-                });
-            }
-
-            yield return new PortalSnapshotRow
-            {
-                Id = rowId,
-                Fields = new PortalSnapshot(
-                    Id: rowId,
-                    RecordRef: SnapshotRef.Record(record.Table, record.Subtable, record.Id, "PortalRecord"),
-                    Name: name,
-                    IsAccessible: record.IsAccessible,
-                    MapId: NullIfEmpty(record.MapId),
-                    Position: record.Position,
-                    ConnectedPortalRef: record.ConnectedPortalRef),
-                Diagnostics = diagnostics,
-            };
-        }
+                    Id = rowId,
+                    Fields = new PortalSnapshot(
+                        Id: rowId,
+                        RecordRef: SnapshotRef.Record(record.Table!, record.Subtable!, record.Id!, "PortalRecord"),
+                        Name: name,
+                        IsAccessible: record.IsAccessible,
+                        MapId: NullIfEmpty(record.MapId),
+                        Position: record.Position!,
+                        ConnectedPortalRef: record.ConnectedPortalRef),
+                    Diagnostics = rowDiagnostics,
+                };
+            });
     }
 
     private static string? NullIfEmpty(string? value) =>

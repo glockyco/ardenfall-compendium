@@ -2,11 +2,71 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { emitSiteMetadata } from "$pipeline/stages/emit-site-metadata";
 import { SITE_METADATA_DDL } from "$pipeline/sql/site-metadata-ddl";
+import type { EntityDescriptor, FieldType } from "$pipeline/types";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
+import type { LoadDescriptorsOutput } from "$pipeline/stages/load-descriptors";
 
 const ctx = { workspaceRoot: ".", snapshotDir: "", outDir: ".", log: () => undefined };
 
+const fieldTypeKinds: Array<[string, FieldType, string]> = [
+  ["id", "id", "id"],
+  ["string", "string", "string"],
+  ["integer", "integer", "integer"],
+  ["number", "number", "number"],
+  ["boolean", "boolean", "boolean"],
+  ["json", "json", "json"],
+  ["assetRef", "ref:asset", "ref"],
+  ["assetRefs", "ref:asset[]", "json"],
+  ["recordRef", "ref:record", "ref"],
+];
+
 describe("emitSiteMetadata", () => {
+  it("maps every descriptor field type to its site value kind", () => {
+    const entity: EntityDescriptor = {
+      id: "type-test",
+      kind: "instance",
+      label: { singular: "Type test", plural: "Type tests" },
+      extraction: { source: "record", root: "TypeTest.Root" },
+      fields: fieldTypeKinds.map(([name, type]) => ({ name, type, from: name })),
+      site: { route: "/type-test" },
+      map: null,
+    };
+    const db = new Database(":memory:");
+    db.exec(SITE_METADATA_DDL);
+    emitSiteMetadata(db, { entities: { [entity.id]: entity }, variants: {} });
+
+    const rows = db
+      .query(
+        "SELECT field_id, value_kind FROM site_entity_fields WHERE entity_id = 'type-test' ORDER BY field_id",
+      )
+      .all() as { field_id: string; value_kind: string }[];
+    expect(rows).toEqual(
+      [...fieldTypeKinds]
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([fieldId, , valueKind]) => ({ field_id: fieldId, value_kind: valueKind })),
+    );
+  });
+
+  it("throws when an unknown field type reaches the dispatcher", () => {
+    const entity = {
+      id: "type-test",
+      kind: "instance",
+      label: { singular: "Type test", plural: "Type tests" },
+      extraction: { source: "record", root: "TypeTest.Root" },
+      fields: [{ name: "mystery", type: "mystery", from: "value" }],
+      site: { route: "/type-test" },
+      map: null,
+    } as unknown as EntityDescriptor;
+    const db = new Database(":memory:");
+    db.exec(SITE_METADATA_DDL);
+
+    expect(() =>
+      emitSiteMetadata(db, {
+        entities: { [entity.id]: entity },
+        variants: {},
+      } as LoadDescriptorsOutput),
+    ).toThrow("unsupported type 'mystery' for field 'mystery'");
+  });
   it("populates site_entities, fields, columns, item_variants", async () => {
     const desc = await loadDescriptors.run({}, ctx);
     const db = new Database(":memory:");

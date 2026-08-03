@@ -1,15 +1,35 @@
 import type { Database } from "bun:sqlite";
 import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
+import type { FieldType } from "../types.ts";
 import { entityRegistry } from "../entities/registry";
 
-function valueKindOf(type: string): string {
-  if (type === "id") return "id";
-  if (type === "string") return "string";
-  if (type === "integer") return "integer";
-  if (type === "number") return "number";
-  if (type === "boolean") return "boolean";
-  if (type.startsWith("ref:")) return "ref";
-  return "string";
+function valueKindOf(fieldName: string, type: FieldType): string {
+  switch (type) {
+    case "id":
+      return "id";
+    case "string":
+      return "string";
+    case "integer":
+      return "integer";
+    case "number":
+      return "number";
+    case "boolean":
+      return "boolean";
+    case "json":
+      return "json";
+    case "ref:asset":
+      return "ref";
+    case "ref:asset[]":
+      return "json";
+    case "ref:record":
+      return "ref";
+    default:
+      return unsupportedFieldType(fieldName, type);
+  }
+}
+
+function unsupportedFieldType(fieldName: string, type: never): never {
+  throw new Error(`unsupported type '${type}' for field '${fieldName}'`);
 }
 
 function mapSourceTables(_entityId: string, renderKind: string): string[] {
@@ -80,7 +100,7 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
           `${entityId}s`,
           f.name,
           f.label ?? f.name,
-          valueKindOf(f.type),
+          valueKindOf(f.name, f.type),
           f.missingPolicy ?? "diagnostic",
         );
       }
@@ -93,7 +113,7 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
             v.canonicalTable,
             f.name,
             f.label ?? f.name,
-            valueKindOf(f.type),
+            valueKindOf(f.name, f.type),
             f.missingPolicy ?? "diagnostic",
           );
         }

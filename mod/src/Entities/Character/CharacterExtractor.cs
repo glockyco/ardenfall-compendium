@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Ardenfall.Item;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities;
 using ArdenfallCompendium.Walker;
 using UnityObject = UnityEngine.Object;
 
@@ -24,105 +25,104 @@ public sealed class CharacterExtractor : WalkerBase<CharacterSnapshotRow>
     public override IEnumerable<CharacterSnapshotRow> Walk()
     {
         var seenNames = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var asset in _source.EnumerateCharacters())
+        return ExtractorLifecycle.Run(
+            _source.EnumerateCharacters(),
+            Diagnostics,
+            Refs,
+            () => new Diagnostic
+            {
+                Severity = "fatal",
+                Code = "characterAssetMissing",
+                Field = "id",
+                Message = "CharacterData asset source yielded a null row",
+            },
+            asset => CreateIdentity(asset, seenNames),
+            (asset, id) =>
+            {
+                var name = NullIfEmpty(asset.CharacterName);
+                if (name == null)
+                {
+                    Diagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "characterNameMissing",
+                        Field = "name",
+                        Message = $"CharacterData '{id}' has empty or whitespace stored charName",
+                    });
+                }
+
+                var dropItems = CharacterDropWalker.Flatten<
+                    ItemListAsset,
+                    object,
+                    BaseWeightedItemData,
+                    Ardenfall.Item.ItemData>(
+                    roots: RootLists(asset.ItemLists),
+                    listGroups: ListGroups,
+                    groupEntries: GroupEntries,
+                    isGroup: entry => entry is WeightedItemData weighted && weighted.isGroup,
+                    entryGroups: EntryGroups,
+                    isList: entry => entry.isList,
+                    entryList: entry => entry.listAsset,
+                    entryItem: entry => entry.singleItem,
+                    listComparer: UnityReferenceComparer<ItemListAsset>.Instance,
+                    itemComparer: UnityReferenceComparer<Ardenfall.Item.ItemData>.Instance);
+
+                var additionalItems = asset.AdditionalItems ?? Array.Empty<CountedItemData>();
+                var dropRefs = new List<SnapshotRef>(dropItems.Count);
+                foreach (var item in dropItems)
+                {
+                    dropRefs.Add(Refs.ResolveAsset(
+                        item,
+                        "dropRefs",
+                        id,
+                        MissingPolicy.Diagnostic,
+                        "CharacterData.itemLists"));
+                }
+                foreach (var counted in additionalItems)
+                {
+                    var item = counted?.item;
+                    if (item == null || ContainsItem(dropItems, item)) continue;
+                    dropItems = AddItem(dropItems, item);
+                    dropRefs.Add(Refs.ResolveAsset(
+                        item,
+                        "dropRefs",
+                        id,
+                        MissingPolicy.Diagnostic,
+                        "CharacterData.additionalItems"));
+                }
+
+                return new CharacterSnapshotRow
+                {
+                    Id = id,
+                    Fields = new CharacterSnapshot(id, name, dropRefs),
+                };
+            });
+    }
+
+    private static ExtractorIdentity CreateIdentity(CharacterAsset asset, HashSet<string> seenNames)
+    {
+        var assetName = asset.AssetName ?? "";
+        if (!NamedAssetIdentity.TryCreate("character", assetName, out var id))
         {
-            if (asset == null)
+            return ExtractorIdentity.Invalid(new Diagnostic
             {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "characterAssetMissing",
-                    Field = "id",
-                    Message = "CharacterData asset source yielded a null row",
-                });
-                continue;
-            }
-
-            var assetName = asset.AssetName ?? "";
-            if (!NamedAssetIdentity.TryCreate("character", assetName, out var id))
-            {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "namedAssetNameMissing",
-                    Field = "id",
-                    Message = $"CharacterData asset has empty or whitespace name '{assetName}'",
-                });
-                continue;
-            }
-            if (!seenNames.Add(assetName))
-            {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "fatal",
-                    Code = "namedAssetNameDuplicate",
-                    Field = "id",
-                    Message = $"CharacterData asset name '{assetName}' is duplicated",
-                });
-                continue;
-            }
-
-            var name = NullIfEmpty(asset.CharacterName);
-            if (name == null)
-            {
-                Diagnostics.Add(new Diagnostic
-                {
-                    Severity = "diagnostic",
-                    Code = "characterNameMissing",
-                    Field = "name",
-                    Message = $"CharacterData '{id}' has empty or whitespace stored charName",
-                });
-            }
-
-            var dropItems = CharacterDropWalker.Flatten<
-                ItemListAsset,
-                object,
-                BaseWeightedItemData,
-                Ardenfall.Item.ItemData>(
-                roots: RootLists(asset.ItemLists),
-                listGroups: ListGroups,
-                groupEntries: GroupEntries,
-                isGroup: entry => entry is WeightedItemData weighted && weighted.isGroup,
-                entryGroups: EntryGroups,
-                isList: entry => entry.isList,
-                entryList: entry => entry.listAsset,
-                entryItem: entry => entry.singleItem,
-                listComparer: UnityReferenceComparer<ItemListAsset>.Instance,
-                itemComparer: UnityReferenceComparer<Ardenfall.Item.ItemData>.Instance);
-
-            var additionalItems = asset.AdditionalItems ?? Array.Empty<CountedItemData>();
-            var dropRefs = new List<SnapshotRef>(dropItems.Count);
-            foreach (var item in dropItems)
-            {
-                dropRefs.Add(Refs.ResolveAsset(
-                    item,
-                    "dropRefs",
-                    id,
-                    MissingPolicy.Diagnostic,
-                    "CharacterData.itemLists"));
-            }
-            foreach (var counted in additionalItems)
-            {
-                var item = counted?.item;
-                if (item == null || ContainsItem(dropItems, item)) continue;
-                dropItems = AddItem(dropItems, item);
-                dropRefs.Add(Refs.ResolveAsset(
-                    item,
-                    "dropRefs",
-                    id,
-                    MissingPolicy.Diagnostic,
-                    "CharacterData.additionalItems"));
-            }
-
-            yield return new CharacterSnapshotRow
-            {
-                Id = id,
-                Fields = new CharacterSnapshot(id, name, dropRefs),
-            };
+                Severity = "fatal",
+                Code = "namedAssetNameMissing",
+                Field = "id",
+                Message = $"CharacterData asset has empty or whitespace name '{assetName}'",
+            });
         }
-
-        Diagnostics.AddRange(Refs.Diagnostics);
-        Refs.Diagnostics.Clear();
+        if (!seenNames.Add(assetName))
+        {
+            return ExtractorIdentity.Invalid(new Diagnostic
+            {
+                Severity = "fatal",
+                Code = "namedAssetNameDuplicate",
+                Field = "id",
+                Message = $"CharacterData asset name '{assetName}' is duplicated",
+            });
+        }
+        return ExtractorIdentity.Valid(id);
     }
 
     private static IEnumerable<ItemListAsset> RootLists(

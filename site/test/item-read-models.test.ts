@@ -124,6 +124,68 @@ describe("item effect read-model accessors", () => {
       rmSync(root, { recursive: true, force: true });
     }
   });
+  it("fails with the item, column, and row when rich text is malformed", async () => {
+    const originalCwd = process.cwd();
+    const root = seed();
+    try {
+      const db = new Database(join(root, ".data", "data.sqlite"));
+      db.run("UPDATE item_presentation_rows SET description_rich_text_json = ? WHERE id = ?", [
+        "{}",
+        "item-sword",
+      ]);
+      db.close();
+      process.chdir(root);
+      const readModels = await import("../src/lib/server/read-models");
+      expect(() => readModels.getItemPresentation("item-sword")).toThrow(
+        "invalid generated JSON shape for item.description_rich_text_json row item-sword",
+      );
+    } finally {
+      process.chdir(originalCwd);
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("fails with the item, column, and row when an effect shape is malformed", async () => {
+    const originalCwd = process.cwd();
+    const root = seed();
+    try {
+      const db = new Database(join(root, ".data", "data.sqlite"));
+      db.run("UPDATE item_presentation_rows SET effect_facts_json = ? WHERE id = ?", [
+        '[{"kind":"spell"}]',
+        "item-sword",
+      ]);
+      db.close();
+      process.chdir(root);
+      const readModels = await import("../src/lib/server/read-models");
+      expect(() => readModels.getItemPresentation("item-sword")).toThrow(
+        "invalid generated JSON shape for item.effect_facts_json row item-sword",
+      );
+    } finally {
+      process.chdir(originalCwd);
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("fails rather than rendering an unknown item context", async () => {
+    const originalCwd = process.cwd();
+    const root = seed();
+    try {
+      const db = new Database(join(root, ".data", "data.sqlite"));
+      db.run("UPDATE item_presentation_rows SET render_context = ? WHERE id = ?", [
+        "item-presentation-v9",
+        "item-sword",
+      ]);
+      db.close();
+      process.chdir(root);
+      const readModels = await import("../src/lib/server/read-models");
+      expect(() => readModels.getItemPresentation("item-sword")).toThrow(
+        "unknown render_context 'item-presentation-v9' for item row item-sword",
+      );
+    } finally {
+      process.chdir(originalCwd);
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
   it("lists populated relationship sections and returns no sections for an empty entity", async () => {
     const originalCwd = process.cwd();
     const root = seed();

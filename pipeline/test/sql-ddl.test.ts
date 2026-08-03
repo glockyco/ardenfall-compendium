@@ -1,6 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { buildDDL } from "$pipeline/sql/ddl";
-import type { EntityDescriptor, VariantDescriptor } from "$pipeline/types";
+import { loadDescriptors } from "$pipeline/stages/load-descriptors";
+import type { EntityDescriptor, FieldType, VariantDescriptor } from "$pipeline/types";
 
 const item: EntityDescriptor = {
   id: "item",
@@ -23,6 +24,18 @@ const equipment: VariantDescriptor = {
   fields: [{ name: "equipSlot", type: "string", from: "s", missingPolicy: "diagnostic" }],
 };
 
+const allFieldTypes: Array<[string, FieldType, string]> = [
+  ["id", "id", "TEXT"],
+  ["string", "string", "TEXT"],
+  ["integer", "integer", "INTEGER"],
+  ["number", "number", "REAL"],
+  ["boolean", "boolean", "INTEGER"],
+  ["json", "json", "TEXT"],
+  ["assetRef", "ref:asset", "TEXT"],
+  ["assetRefs", "ref:asset[]", "TEXT"],
+  ["recordRef", "ref:record", "TEXT"],
+];
+
 describe("buildDDL", () => {
   it("emits items table with id PRIMARY KEY", () => {
     const ddl = buildDDL(item, []);
@@ -36,6 +49,48 @@ describe("buildDDL", () => {
     const ddl = buildDDL(item, [equipment]);
     expect(ddl).toContain('CREATE TABLE "item_equipment"');
     expect(ddl).toContain('"id" TEXT NOT NULL PRIMARY KEY REFERENCES "items"("id")');
+  });
+
+  it("maps every descriptor field type to its SQL type", () => {
+    const entity: EntityDescriptor = {
+      ...item,
+      fields: [{ name: "id", type: "id", from: "guid", missingPolicy: "fatal" }],
+    };
+    const variant: VariantDescriptor = {
+      ...equipment,
+      fields: allFieldTypes.map(([name, type]) => ({
+        name,
+        type,
+        from: name,
+        missingPolicy: "diagnostic" as const,
+      })),
+    };
+    const ddl = buildDDL(entity, [variant]);
+
+    for (const [name, , sqlType] of allFieldTypes) {
+      expect(ddl).toContain(`"${name}" ${sqlType}`);
+    }
+  });
+
+  it("throws when an unknown field type reaches the dispatcher", () => {
+    const entity = {
+      ...item,
+      fields: [{ name: "mystery", type: "mystery", from: "value" }],
+    } as unknown as EntityDescriptor;
+
+    expect(() => buildDDL(entity, [])).toThrow("unsupported type 'mystery' for field 'mystery'");
+  });
+
+  it("stores item equipment minimumSkill as INTEGER", async () => {
+    const desc = await loadDescriptors.run(
+      {},
+      { workspaceRoot: ".", snapshotDir: "", outDir: ".", log: () => undefined },
+    );
+    const entity = desc.entities.item;
+    const variants = desc.variants.item;
+    if (!entity || !variants) throw new Error("item descriptors are missing");
+
+    expect(buildDDL(entity, variants)).toContain('"minimumSkill" INTEGER');
   });
 
   it("emits item_tag_refs child table for entities with tags", () => {

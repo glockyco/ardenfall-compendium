@@ -14,7 +14,7 @@
     },
     {
       "name": "minimumSkill",
-      "type": "int",
+      "type": "integer",
       "from": "minimumSkill.Get()",
       "missingPolicy": "diagnostic"
     },

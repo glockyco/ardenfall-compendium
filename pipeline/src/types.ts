@@ -34,9 +34,20 @@ export interface VariantDescriptor {
   fields: FieldSpec[];
 }
 
+export type FieldType =
+  | "id"
+  | "string"
+  | "integer"
+  | "number"
+  | "boolean"
+  | "json"
+  | "ref:asset"
+  | "ref:asset[]"
+  | "ref:record";
+
 export interface FieldSpec {
   name: string;
-  type: string;
+  type: FieldType;
   from: string;
   operation?: string;
   missingPolicy?: "fatal" | "diagnostic" | "optional-empty";

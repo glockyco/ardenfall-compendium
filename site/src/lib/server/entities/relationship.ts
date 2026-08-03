@@ -1,4 +1,5 @@
 import { all } from "../db";
+import { isRelationshipEdgeArray, parseGeneratedJson } from "../json";
 
 export interface RelationshipSection {
   id: string;
@@ -34,5 +35,11 @@ export const listRelationshipSections = (
     id: row.section_id,
     title: row.title,
     predicate: row.predicate,
-    edges: JSON.parse(row.edges_json) as RelationshipEdge[],
+    edges: parseGeneratedJson(
+      row.edges_json,
+      sourceType,
+      "edges_json",
+      sourceId,
+      isRelationshipEdgeArray,
+    ),
   }));

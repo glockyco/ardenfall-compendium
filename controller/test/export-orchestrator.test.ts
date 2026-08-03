@@ -395,6 +395,30 @@ describe("validateSnapshot", () => {
     });
   });
 
+  it("rejects an envelope that is absent from manifest counts", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root);
+    await writeFile(
+      join(root, "new-entity.json"),
+      JSON.stringify({ entityId: "new-entity", schemaVersion: 1, rows: [] }),
+    );
+
+    await expect(validateSnapshot(root)).rejects.toThrow(/unexpected envelopes for new-entity/);
+  });
+
+  it("rejects a manifest count with no matching envelope", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, { extraCounts: { "missing-entity": 0 } });
+
+    await expect(validateSnapshot(root)).rejects.toThrow(/missing envelopes for missing-entity/);
+  });
+
+  it("ignores non-entity artifacts while discovering envelopes", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root);
+
+    await expect(validateSnapshot(root)).resolves.toMatchObject({ itemCount: 2 });
+  });
   it("rejects a semantically empty snapshot", async () => {
     const root = await snapshotRoot(roots);
     await writeSnapshot(root, {
@@ -499,54 +523,89 @@ describe("validateSnapshot", () => {
       omitFiles?: string[];
       diagnosticsText?: string;
       fatalDiagnostics?: number;
+      extraCounts?: Record<string, number>;
     } = {},
   ) {
     const emptyEntities = new Set(options.emptyEntities ?? []);
     const files: Record<string, string> = {
       "items.json": JSON.stringify(
-        { rows: emptyEntities.has("item") ? [] : [{ id: "item-1" }, { id: "item-2" }] },
+        {
+          entityId: "item",
+          schemaVersion: 1,
+          rows: emptyEntities.has("item") ? [] : [{ id: "item-1" }, { id: "item-2" }],
+        },
         null,
         2,
       ),
       "stat-types.json": JSON.stringify(
-        { rows: emptyEntities.has("stat-type") ? [] : [{ id: "stat-strength" }] },
+        {
+          entityId: "stat-type",
+          schemaVersion: 1,
+          rows: emptyEntities.has("stat-type") ? [] : [{ id: "stat-strength" }],
+        },
         null,
         2,
       ),
       "item-categories.json": JSON.stringify(
-        { rows: emptyEntities.has("item-category") ? [] : [{ id: "category-weapons" }] },
+        {
+          entityId: "item-category",
+          schemaVersion: 1,
+          rows: emptyEntities.has("item-category") ? [] : [{ id: "category-weapons" }],
+        },
         null,
         2,
       ),
       "item-tags.json": JSON.stringify(
-        { rows: emptyEntities.has("item-tag") ? [] : [{ id: "tag-valuable" }] },
+        {
+          entityId: "item-tag",
+          schemaVersion: 1,
+          rows: emptyEntities.has("item-tag") ? [] : [{ id: "tag-valuable" }],
+        },
         null,
         2,
       ),
       "locations.json": JSON.stringify(
-        { rows: emptyEntities.has("location") ? [] : [{ id: "11111111.fixture-town" }] },
+        {
+          entityId: "location",
+          schemaVersion: 1,
+          rows: emptyEntities.has("location") ? [] : [{ id: "11111111.fixture-town" }],
+        },
         null,
         2,
       ),
       "portals.json": JSON.stringify(
-        { rows: emptyEntities.has("portal") ? [] : [{ id: "world;portals;portal-a" }] },
+        {
+          entityId: "portal",
+          schemaVersion: 1,
+          rows: emptyEntities.has("portal") ? [] : [{ id: "world;portals;portal-a" }],
+        },
         null,
         2,
       ),
       "spells.json": JSON.stringify(
-        { rows: emptyEntities.has("spell") ? [] : [{ id: "named;spell;spell_fire-shield" }] },
+        {
+          entityId: "spell",
+          schemaVersion: 1,
+          rows: emptyEntities.has("spell") ? [] : [{ id: "named;spell;spell_fire-shield" }],
+        },
         null,
         2,
       ),
       "status-effects.json": JSON.stringify(
         {
+          entityId: "status-effect",
+          schemaVersion: 1,
           rows: emptyEntities.has("status-effect") ? [] : [{ id: "status-effect-bleed" }],
         },
         null,
         2,
       ),
       "characters.json": JSON.stringify(
-        { rows: emptyEntities.has("character") ? [] : [{ id: "named;character;character-a" }] },
+        {
+          entityId: "character",
+          schemaVersion: 1,
+          rows: emptyEntities.has("character") ? [] : [{ id: "named;character;character-a" }],
+        },
         null,
         2,
       ),
@@ -589,6 +648,7 @@ describe("validateSnapshot", () => {
             "status-effect":
               options.countOverrides?.["status-effect"] ??
               (emptyEntities.has("status-effect") ? 0 : 1),
+            ...options.extraCounts,
           },
           hashes,
           diagnostics: { fatal: options.fatalDiagnostics ?? 0 },

@@ -1,4 +1,5 @@
 import { all, get } from "../db";
+import { isRichTextDocument, parseGeneratedJson, validateRenderContext } from "../json";
 import type { RichTextDocument } from "./item";
 import { getEntityNodeBySlug } from "./item";
 
@@ -14,7 +15,7 @@ interface SpellOverviewRecord {
 interface SpellPresentationRecord {
   id: string;
   name: string;
-  render_context: "spell-presentation-v1";
+  render_context: string;
   skill: string | null;
   mana_cost: number | null;
   is_illegal: number;
@@ -86,12 +87,23 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
   );
   if (!row) return undefined;
   const description = row.tooltip_rich_text_json
-    ? (JSON.parse(row.tooltip_rich_text_json) as RichTextDocument)
+    ? parseGeneratedJson(
+        row.tooltip_rich_text_json,
+        "spell",
+        "tooltip_rich_text_json",
+        row.id,
+        isRichTextDocument,
+      )
     : null;
   return {
     id: row.id,
     name: row.name,
-    renderContext: row.render_context,
+    renderContext: validateRenderContext(
+      row.render_context,
+      "spell",
+      row.id,
+      "spell-presentation-v1",
+    ),
     skill: row.skill,
     skillRoutePath: row.skill_route_path,
     manaCost: row.mana_cost,

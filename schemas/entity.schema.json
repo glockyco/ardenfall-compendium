@@ -119,7 +119,19 @@
       "required": ["name", "type", "from"],
       "properties": {
         "name": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9_]*$" },
-        "type": { "type": "string", "minLength": 1 },
+        "type": {
+          "enum": [
+            "id",
+            "string",
+            "integer",
+            "number",
+            "boolean",
+            "json",
+            "ref:asset",
+            "ref:asset[]",
+            "ref:record"
+          ]
+        },
         "from": { "type": "string", "minLength": 1 },
         "operation": { "type": "string" },
         "missingPolicy": {

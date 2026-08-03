@@ -1,4 +1,5 @@
 import { all, get } from "../db";
+import { isRichTextDocument, parseGeneratedJson, validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
 import type { RichTextDocument } from "./item";
 
@@ -13,7 +14,7 @@ interface StatusEffectOverviewRecord {
 interface StatusEffectPresentationRecord {
   id: string;
   name: string | null;
-  render_context: "status-effect-presentation-v1";
+  render_context: string;
   is_hostile: number;
   tooltip_rich_text_json: string | null;
   route_path: string;
@@ -49,16 +50,25 @@ export const listStatusEffects = (): StatusEffectOverviewRow[] => {
       AND n.entity_id = o.id
       AND n.is_public = 1
      ORDER BY o.name, o.id`,
-  ).map((row) => ({
-    id: row.id,
-    name: row.name,
-    isHostile: row.is_hostile === 1,
-    descriptionSummary: row.tooltip_rich_text_json
-      ? firstSentence(richTextPlainText(JSON.parse(row.tooltip_rich_text_json) as RichTextDocument))
-      : null,
-    displayName: statusEffectName(row.name, row.id, row.tooltip_rich_text_json),
-    routePath: row.route_path,
-  }));
+  ).map((row) => {
+    const description = row.tooltip_rich_text_json
+      ? parseGeneratedJson(
+          row.tooltip_rich_text_json,
+          "status-effect",
+          "tooltip_rich_text_json",
+          row.id,
+          isRichTextDocument,
+        )
+      : null;
+    return {
+      id: row.id,
+      name: row.name,
+      isHostile: row.is_hostile === 1,
+      descriptionSummary: description ? firstSentence(richTextPlainText(description)) : null,
+      displayName: statusEffectName(row.name, row.id, description),
+      routePath: row.route_path,
+    };
+  });
   const counts = new Map<string, number>();
   for (const row of rows) counts.set(row.displayName, (counts.get(row.displayName) ?? 0) + 1);
   return rows.map((row) =>
@@ -86,26 +96,39 @@ export const getStatusEffectPresentation = (
   );
   if (!row) return undefined;
   const description = row.tooltip_rich_text_json
-    ? (JSON.parse(row.tooltip_rich_text_json) as RichTextDocument)
+    ? parseGeneratedJson(
+        row.tooltip_rich_text_json,
+        "status-effect",
+        "tooltip_rich_text_json",
+        row.id,
+        isRichTextDocument,
+      )
     : null;
   return {
     id: row.id,
     name: row.name,
-    renderContext: row.render_context,
+    renderContext: validateRenderContext(
+      row.render_context,
+      "status-effect",
+      row.id,
+      "status-effect-presentation-v1",
+    ),
     description,
     descriptionText: description ? richTextPlainText(description) : null,
-    displayName: statusEffectName(row.name, row.id, row.tooltip_rich_text_json),
+    displayName: statusEffectName(row.name, row.id, description),
     isHostile: row.is_hostile === 1,
     routePath: row.route_path,
   };
 };
 
-function statusEffectName(name: string | null, id: string, descriptionJson: string | null): string {
+function statusEffectName(
+  name: string | null,
+  id: string,
+  description: RichTextDocument | null,
+): string {
   const normalizedName = name?.trim().toLowerCase();
   if (name && normalizedName !== "unnamed status effect") return name;
-  const summary = descriptionJson
-    ? firstSentence(richTextPlainText(JSON.parse(descriptionJson) as RichTextDocument))
-    : null;
+  const summary = description ? firstSentence(richTextPlainText(description)) : null;
   return summary ? `Unnamed status effect · ${summary}` : `Unnamed status effect · ${id}`;
 }
 

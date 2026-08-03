@@ -1,4 +1,5 @@
 import { all } from "../db";
+import { isColorArray, isGeometry, isStringArray, parseGeneratedJson } from "../json";
 import type {
   MapBounds,
   MapLayerConfig,
@@ -49,19 +50,10 @@ interface MapVolumeRecord {
   elevation_max: number | null;
 }
 
-function toFillColor(json: string): [number, number, number, number] {
-  const parsed = JSON.parse(json) as unknown;
-  if (!Array.isArray(parsed) || parsed.length < 3) {
-    throw new Error(`invalid map layer color JSON: ${json}`);
-  }
-  const r = Number(parsed[0]);
-  const g = Number(parsed[1]);
-  const b = Number(parsed[2]);
-  const a = parsed[3] === undefined ? 255 : Number(parsed[3]);
-  if (![r, g, b, a].every((n) => Number.isFinite(n))) {
-    throw new Error(`invalid map layer color JSON: ${json}`);
-  }
-  return [r, g, b, a];
+function toFillColor(json: string, layerId: string): [number, number, number, number] {
+  const parsed = parseGeneratedJson(json, "map-layer", "color_json", layerId, isColorArray);
+  const [r, g, b, a = 255] = parsed;
+  return [r, g, b, a] as [number, number, number, number];
 }
 
 function tableExists(name: string): boolean {
@@ -77,7 +69,13 @@ function readLayers(): MapLayerConfig[] {
     if (!KNOWN_KINDS.includes(row.render_kind as RenderKind)) {
       throw new Error(`unknown render kind '${row.render_kind}' for layer '${row.layer_id}'`);
     }
-    const sourceTables = JSON.parse(row.source_tables_json) as string[];
+    const sourceTables = parseGeneratedJson(
+      row.source_tables_json,
+      "map-layer",
+      "source_tables_json",
+      row.layer_id,
+      isStringArray,
+    );
     for (const table of sourceTables) {
       if (table !== "map_points" && table !== "map_volumes") {
         throw new Error(
@@ -93,11 +91,23 @@ function readLayers(): MapLayerConfig[] {
       entityType: row.entity_id,
       renderKind: row.render_kind as RenderKind,
       sourceTables,
-      fillColor: toFillColor(row.color_json),
+      fillColor: toFillColor(row.color_json, row.layer_id),
       radius: row.radius,
       icon: row.icon,
-      tooltipFields: JSON.parse(row.tooltip_fields_json) as string[],
-      filters: JSON.parse(row.filters_json) as string[],
+      tooltipFields: parseGeneratedJson(
+        row.tooltip_fields_json,
+        "map-layer",
+        "tooltip_fields_json",
+        row.layer_id,
+        isStringArray,
+      ),
+      filters: parseGeneratedJson(
+        row.filters_json,
+        "map-layer",
+        "filters_json",
+        row.layer_id,
+        isStringArray,
+      ),
       legendLabel: row.legend_label,
       zOrder: row.z_order,
     };
@@ -173,7 +183,13 @@ function readVolumes(layer: MapLayerConfig): MapVolumeRow[] {
       [layer.entityType],
     );
     for (const r of records) {
-      const ring = (JSON.parse(r.geometry_json) as { ring: [number, number][] }).ring;
+      const ring = parseGeneratedJson(
+        r.geometry_json,
+        "map-volume",
+        "geometry_json",
+        r.id,
+        isGeometry,
+      ).ring;
       rows.push({
         id: r.id,
         layerId: layer.layerId,

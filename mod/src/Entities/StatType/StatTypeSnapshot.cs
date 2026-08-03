@@ -7,7 +7,7 @@ namespace ArdenfallCompendium.Entities.StatType;
 public sealed record StatTypeSnapshot(
     [property: JsonProperty("id")] string Id,
     [property: JsonProperty("isAttribute")] bool IsAttribute,
-    [property: JsonProperty("statName")] string StatName,
+    [property: JsonProperty("statName")] string? StatName,
     [property: JsonProperty("iconRef")] SnapshotRef? IconRef,
     [property: JsonProperty("iconColor")] AssetColorSnapshot? IconColor,
     [property: JsonProperty("statDescription")] string? StatDescription,
