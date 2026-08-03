@@ -6,6 +6,7 @@ import { runStages } from "./orchestrator";
 import { loadDescriptors } from "./stages/load-descriptors";
 import { loadSnapshot, type LoadSnapshotOutput } from "./stages/load-snapshot";
 import { validate } from "./stages/validate";
+import { validateDescriptorFields } from "./stages/validate-descriptor-fields";
 import {
   assertSnapshotValidationPassed,
   SnapshotValidationError,
@@ -89,10 +90,14 @@ const gatedEmitAssets: Stage<
   },
 };
 
-const stages = [loadDescriptors, loadSnapshot, validate, gatedEmitAssets, emitSqlite] as Stage<
-  unknown,
-  unknown
->[];
+const stages = [
+  loadDescriptors,
+  loadSnapshot,
+  validateDescriptorFields,
+  validate,
+  gatedEmitAssets,
+  emitSqlite,
+] as Stage<unknown, unknown>[];
 
 let result: Record<string, unknown>;
 try {

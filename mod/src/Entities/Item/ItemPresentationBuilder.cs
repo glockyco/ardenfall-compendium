@@ -19,7 +19,8 @@ public static class ItemPresentationBuilder
         string rowId,
         string variantId,
         IReadOnlyDictionary<string, object?> fields,
-        IReadOnlyDictionary<string, Provenance> provenance)
+        IReadOnlyDictionary<string, Provenance> provenance,
+        IReadOnlyDictionary<string, object?>? presentationOnlyFields = null)
     {
         var displayName = StringField(fields, "name") ?? rowId;
         var effects = BuildEffects(fields);
@@ -34,7 +35,7 @@ public static class ItemPresentationBuilder
             DescriptionSource = StringField(fields, "description") ?? "",
             EffectsSource = BuildEffectsSource(effects, fields),
             Effects = effects,
-            StatRows = BuildStatRows(fields),
+            StatRows = BuildStatRows(fields, presentationOnlyFields),
             Requirements = BuildRequirements(fields),
             Durability = BuildDurability(fields),
             StateFacts = BuildStateFacts(fields),
@@ -44,7 +45,9 @@ public static class ItemPresentationBuilder
         };
     }
 
-    private static List<ItemPresentationStatRowSnapshot> BuildStatRows(IReadOnlyDictionary<string, object?> fields)
+    private static List<ItemPresentationStatRowSnapshot> BuildStatRows(
+        IReadOnlyDictionary<string, object?> fields,
+        IReadOnlyDictionary<string, object?>? presentationOnlyFields)
     {
         var rows = new List<ItemPresentationStatRowSnapshot>();
         foreach (var stat in StatFields)
@@ -60,17 +63,18 @@ public static class ItemPresentationBuilder
                 Size = stat.Size,
                 Source = stat.Source,
             });
-            if (stat.Field == "damage") AddHeavyAttackDamageRow(fields, rows);
+            if (stat.Field == "damage") AddHeavyAttackDamageRow(fields, presentationOnlyFields, rows);
         }
         return rows;
     }
 
     private static void AddHeavyAttackDamageRow(
         IReadOnlyDictionary<string, object?> fields,
+        IReadOnlyDictionary<string, object?>? presentationOnlyFields,
         List<ItemPresentationStatRowSnapshot> rows)
     {
         var damage = FloatField(fields, "damage");
-        var multiplier = FloatField(fields, "hardAttackDamMult");
+        var multiplier = presentationOnlyFields == null ? null : FloatField(presentationOnlyFields, "hardAttackDamMult");
         if (damage == null || multiplier == null) return;
 
         var value = damage.Value * multiplier.Value;

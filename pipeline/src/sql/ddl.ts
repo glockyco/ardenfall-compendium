@@ -39,7 +39,7 @@ export function buildDDL(entity: EntityDescriptor, variants: VariantDescriptor[]
   const out: string[] = [];
 
   // Root table.
-  const rootColumns = entity.fields.map(column);
+  const rootColumns = entity.fields.filter((field) => field.storage !== "projected").map(column);
   rootColumns.push(`"variant" TEXT`);
   out.push(`CREATE TABLE "${entity.id}s" (${rootColumns.join(", ")});`);
 
@@ -55,6 +55,7 @@ export function buildDDL(entity: EntityDescriptor, variants: VariantDescriptor[]
   for (const variant of variants) {
     const cols: string[] = [`"id" TEXT NOT NULL PRIMARY KEY REFERENCES "${entity.id}s"("id")`];
     for (const f of variant.fields) {
+      if (f.storage === "projected") continue;
       const nullable = f.missingPolicy === "fatal" ? "NOT NULL" : "";
       cols.push(`"${f.name}" ${sqlType(f.name, f.type)} ${nullable}`.trim());
     }

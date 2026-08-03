@@ -31,6 +31,6 @@ public static class ExtractArrow
             ["projectileSettingsJson"] = ProvenanceCapture.ForParameter<ProjectileSettings>("projectileSettings.Get()", asset.projectileSettings.IsSet, inherited: !asset.projectileSettings.IsSet),
             ["projectileRef"] = ProvenanceCapture.ForParameter<object>("projectilePrefab.Get()", asset.projectilePrefab.IsSet, inherited: !asset.projectilePrefab.IsSet),
         };
-        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs));
+        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs), ItemAdapterHelpers.EmptyPresentationOnlyFields());
     }
 }

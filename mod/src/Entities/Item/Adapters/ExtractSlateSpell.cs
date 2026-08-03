@@ -37,7 +37,7 @@ public static class ExtractSlateSpell
             ["durabilityMax"] = ProvenanceCapture.ForParameter<int>("durabilityMax.Get()", asset.durabilityMax.IsSet, inherited: !asset.durabilityMax.IsSet),
             ["manaCostMultiplier"] = ProvenanceCapture.ForParameter<float>("manaCostMultiplier.Get()", asset.manaCostMultiplier.IsSet, inherited: !asset.manaCostMultiplier.IsSet),
         };
-        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs));
+        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs), ItemAdapterHelpers.EmptyPresentationOnlyFields());
     }
 
     public static string? RequirementStatTypeLabel(ArdenfallStatType? equipStatType, LeveledSpellData? spellData) =>

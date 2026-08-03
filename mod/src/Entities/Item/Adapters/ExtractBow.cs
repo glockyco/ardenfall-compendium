@@ -53,6 +53,6 @@ public static class ExtractBow
             ["aimAnimationSpeedMultiplier"] = ProvenanceCapture.ForParameter<float>("aimAnimationSpeedMultiplier.Get()", asset.aimAnimationSpeedMultiplier.IsSet, inherited: !asset.aimAnimationSpeedMultiplier.IsSet),
             ["bleedStatusEffectJson"] = ProvenanceCapture.ForParameter<LeveledStatusEffect>("bleedStatusEffect.Get()", asset.bleedStatusEffect.IsSet, inherited: !asset.bleedStatusEffect.IsSet),
         };
-        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs));
+        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs), ItemAdapterHelpers.EmptyPresentationOnlyFields());
     }
 }

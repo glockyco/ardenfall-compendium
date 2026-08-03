@@ -59,6 +59,7 @@ jobs:
         with: { bun-version: 1.3.13 }
       - run: bun install --frozen-lockfile
       - run: bun run check:validators
+      - run: bun run check:entity-fields
       - run: bun run typecheck
       - run: bun test pipeline/test
       - run: bun test controller/test
@@ -73,6 +74,7 @@ jobs:
         with: { bun-version: 1.3.13 }
       - run: bun install --frozen-lockfile
       - run: bun run check:validators
+      - run: bun run check:entity-fields
       - name: build synthetic fixture artifact for static prerender
         run: bun run artifact:fixture synthetic fixtures/synthetic/snapshot
       - run: bun run --cwd site check
@@ -106,5 +108,6 @@ jobs:
         with: { bun-version: 1.3.13 }
       - run: bun install --frozen-lockfile
       - run: bun run check:validators
+      - run: bun run check:entity-fields
       - run: bun run check:fixtures
         env: { CI: "true" }

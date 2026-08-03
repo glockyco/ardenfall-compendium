@@ -19,6 +19,6 @@ public static class ExtractLockpick
         fields["successChance"] = successChance;
         provenance["successChance"] = ProvenanceCapture.ForParameter<float>("successChance.Get()", successChanceIsSet, inherited: !successChanceIsSet);
 
-        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs));
+        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs), ItemAdapterHelpers.EmptyPresentationOnlyFields());
     }
 }

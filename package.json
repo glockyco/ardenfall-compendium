@@ -19,6 +19,8 @@
     "typecheck": "tsc --noEmit -p . && tsc --noEmit -p pipeline && tsc --noEmit -p controller",
     "codegen:validators": "bun run pipeline/scripts/codegen-validators.ts",
     "check:validators": "bun run codegen:validators && git diff --exit-code -- pipeline/dist/validate-*.mjs pipeline/dist/validate-*.d.mts",
+    "codegen:entity-fields": "bun run pipeline/scripts/codegen-entity-fields.ts",
+    "check:entity-fields": "bun run codegen:entity-fields && git diff --exit-code -- pipeline/dist/entity-fields.mjs pipeline/dist/entity-fields.d.mts",
     "check:fixtures": "bun run pipeline/scripts/check-fixtures.ts",
     "pipeline:run": "bun run pipeline/src/cli.ts run",
     "artifact:fixture": "bun run pipeline/src/cli.ts build-fixture",

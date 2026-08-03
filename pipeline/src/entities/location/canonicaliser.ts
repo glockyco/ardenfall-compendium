@@ -1,11 +1,14 @@
 import type { Database } from "bun:sqlite";
-import type {
-  LocationSnapshotFields,
-  LocationSnapshotVolume,
-  SnapshotEnvelope,
-  SnapshotVector3,
-} from "../../types.ts";
+import type { LocationFieldName, LocationSnapshotFields } from "../../../dist/entity-fields.mjs";
+import type { LocationSnapshotVolume, SnapshotEnvelope, SnapshotVector3 } from "../../types.ts";
 import { entityRows } from "../../types.ts";
+
+export function locationField<K extends LocationFieldName & keyof LocationSnapshotFields>(
+  fields: LocationSnapshotFields,
+  key: K,
+): LocationSnapshotFields[K] {
+  return fields[key];
+}
 
 export interface MapPoint {
   x: number;
@@ -48,35 +51,37 @@ export function canonicaliseLocations(db: Database, envelope: SnapshotEnvelope):
   const tx = db.transaction(() => {
     for (const row of entityRows<LocationSnapshotFields>(envelope)) {
       const fields = row.fields;
-      const point = sourceToMapPointForRow(row.id, fields.mapPosition, "mapPosition");
-      if (fields.fastTravelPosition) {
-        sourceToMapPointForRow(row.id, fields.fastTravelPosition, "fastTravelPosition");
+      const mapPosition = locationField(fields, "mapPosition");
+      const fastTravelPosition = locationField(fields, "fastTravelPosition");
+      const point = sourceToMapPointForRow(row.id, mapPosition, "mapPosition");
+      if (fastTravelPosition) {
+        sourceToMapPointForRow(row.id, fastTravelPosition, "fastTravelPosition");
       }
 
       locationInsert.run(
         row.id,
-        fields.name,
-        fields.enabled ? 1 : 0,
-        fields.mapId ?? null,
-        fields.mapRef ? JSON.stringify(fields.mapRef) : null,
-        fields.showOnMap ? 1 : 0,
-        fields.showOnMapDebugOnly ? 1 : 0,
-        fields.iconRef ? JSON.stringify(fields.iconRef) : null,
-        JSON.stringify(fields.mapPosition),
-        fields.allowFastTravel ? 1 : 0,
-        fields.fastTravelPosition ? JSON.stringify(fields.fastTravelPosition) : null,
+        locationField(fields, "name"),
+        locationField(fields, "enabled") ? 1 : 0,
+        locationField(fields, "mapId") ?? null,
+        locationField(fields, "mapRef") ? JSON.stringify(locationField(fields, "mapRef")) : null,
+        locationField(fields, "showOnMap") ? 1 : 0,
+        locationField(fields, "showOnMapDebugOnly") ? 1 : 0,
+        locationField(fields, "iconRef") ? JSON.stringify(locationField(fields, "iconRef")) : null,
+        JSON.stringify(mapPosition),
+        locationField(fields, "allowFastTravel") ? 1 : 0,
+        fastTravelPosition ? JSON.stringify(fastTravelPosition) : null,
       );
       placementInsert.run(
         "location",
         row.id,
-        fields.mapId ?? null,
+        locationField(fields, "mapId") ?? null,
         point.x,
         point.y,
         point.elevation,
         JSON.stringify({ kind: "lookupAsset", guid: row.id, unityType: "LocationAsset" }),
       );
 
-      for (const volume of fields.volumes) {
+      for (const volume of locationField(fields, "volumes")) {
         const canonical = canonicaliseVolume(row.id, volume);
         volumeInsert.run(
           `${row.id}:volume:${volume.index}`,

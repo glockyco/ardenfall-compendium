@@ -19,7 +19,6 @@ public sealed class ItemPresentationTests
             ["weight"] = 3.5f,
             ["damage"] = 7.5f,
             ["meleeDurabilityMax"] = 100,
-            ["hardAttackDamMult"] = 1.5f,
             ["minimumSkill"] = 5,
             ["statType"] = "Strength",
         };
@@ -38,8 +37,13 @@ public sealed class ItemPresentationTests
             rowId: "fixture-iron-sword",
             variantId: "melee-weapon",
             fields,
-            provenance);
+            provenance,
+            presentationOnlyFields: new Dictionary<string, object?>
+            {
+                ["hardAttackDamMult"] = 1.5f,
+            });
 
+        Assert.DoesNotContain("hardAttackDamMult", fields.Keys);
         Assert.Equal(1, presentation.SchemaVersion);
         Assert.Equal("item-presentation-v1", presentation.RenderContext);
         Assert.Equal("Iron Sword", presentation.DisplayName);

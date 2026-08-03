@@ -178,9 +178,14 @@ describe("loadDescriptors", () => {
       "name",
       "enabled",
       "mapId",
+      "mapRef",
       "showOnMap",
+      "iconRef",
+      "mapPosition",
       "showOnMapDebugOnly",
       "allowFastTravel",
+      "fastTravelPosition",
+      "volumes",
       "displayOnEnterVolume",
     ]);
   });

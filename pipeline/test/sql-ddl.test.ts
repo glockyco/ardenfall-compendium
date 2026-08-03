@@ -50,6 +50,40 @@ describe("buildDDL", () => {
     expect(ddl).toContain('CREATE TABLE "item_equipment"');
     expect(ddl).toContain('"id" TEXT NOT NULL PRIMARY KEY REFERENCES "items"("id")');
   });
+  it("omits projected fields from entity and variant tables", () => {
+    const projectedEntity: EntityDescriptor = {
+      ...item,
+      fields: [
+        ...item.fields,
+        {
+          name: "mapPosition",
+          type: "json",
+          from: "mapPosition",
+          storage: "projected",
+          destination: "map_points",
+        },
+      ],
+    };
+    const projectedVariant: VariantDescriptor = {
+      ...equipment,
+      fields: [
+        ...equipment.fields,
+        {
+          name: "volumes",
+          type: "json",
+          from: "volumes",
+          storage: "projected",
+          destination: "location_volumes",
+        },
+      ],
+    };
+
+    const ddl = buildDDL(projectedEntity, [projectedVariant]);
+    expect(ddl).not.toContain('"mapPosition"');
+    expect(ddl).not.toContain('"volumes"');
+    expect(ddl).toContain('"name" TEXT');
+    expect(ddl).toContain('"equipSlot" TEXT');
+  });
 
   it("maps every descriptor field type to its SQL type", () => {
     const entity: EntityDescriptor = {

@@ -24,6 +24,6 @@ public static class ExtractConsumable
         fields["statusEffectsJson"] = ItemAdapterHelpers.SnapshotLeveledStatusEffects(statusEffects, refs, rowId);
         provenance["statusEffectsJson"] = ProvenanceCapture.ForParameter<LeveledStatusEffect[]>("statusEffects.Get()", statusEffectsIsSet, inherited: !statusEffectsIsSet);
 
-        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs));
+        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs), ItemAdapterHelpers.EmptyPresentationOnlyFields());
     }
 }

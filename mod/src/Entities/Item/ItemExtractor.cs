@@ -72,6 +72,7 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
             (asset, guid) =>
             {
                 var (fields, provenance, diagnostics, tags) = ExtractItem.Extract(asset, Refs, guid);
+                var presentationOnlyFields = new Dictionary<string, object?>(StringComparer.Ordinal);
                 if (fields["name"] is not string itemName || string.IsNullOrWhiteSpace(itemName))
                 {
                     fields["name"] = null;
@@ -98,7 +99,9 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
 
                 foreach (var layer in classified.Layers)
                 {
-                    Merge(fields, provenance, diagnostics, layer.Extract(asset, Refs, guid));
+                    var result = layer.Extract(asset, Refs, guid);
+                    Merge(fields, provenance, diagnostics, result);
+                    Merge(presentationOnlyFields, result.PresentationOnlyFields);
                     if (Refs.Diagnostics.Count > 0)
                     {
                         diagnostics.AddRange(Refs.Diagnostics);
@@ -107,7 +110,12 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
                 }
 
                 var variantId = classified.VariantId;
-                var presentation = ItemPresentationBuilder.FromExtractedFields(guid, variantId, fields, provenance);
+                var presentation = ItemPresentationBuilder.FromExtractedFields(
+                    guid,
+                    variantId,
+                    fields,
+                    provenance,
+                    presentationOnlyFields);
                 if (_assetPlan != null) ItemIconAssetPlanner.CaptureItem(_assetPlan, asset, guid);
 
                 return new ItemSnapshotRow

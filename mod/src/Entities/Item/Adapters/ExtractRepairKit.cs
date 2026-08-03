@@ -34,6 +34,6 @@ public static class ExtractRepairKit
         fields["repairSkillMultAmount"] = repairSkillMultAmount;
         provenance["repairSkillMultAmount"] = ProvenanceCapture.ForParameter<float>("repairSkillMultAmount.Get()", repairSkillMultAmountIsSet, inherited: !repairSkillMultAmountIsSet);
 
-        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs));
+        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs), ItemAdapterHelpers.EmptyPresentationOnlyFields());
     }
 }

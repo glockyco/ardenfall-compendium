@@ -7,6 +7,7 @@ import { runStages } from "$pipeline/orchestrator";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { loadSnapshot } from "$pipeline/stages/load-snapshot";
 import { validate } from "$pipeline/stages/validate";
+import { validateDescriptorFields } from "$pipeline/stages/validate-descriptor-fields";
 import { emitSqlite } from "$pipeline/stages/emit-sqlite";
 import { emitAssets } from "$pipeline/stages/emit-assets";
 import type { Stage } from "$pipeline/types";
@@ -21,10 +22,14 @@ describe("end-to-end pipeline", () => {
         outDir: out,
         log: () => undefined,
       };
-      const stages = [loadDescriptors, loadSnapshot, validate, emitAssets, emitSqlite] as Stage<
-        unknown,
-        unknown
-      >[];
+      const stages = [
+        loadDescriptors,
+        loadSnapshot,
+        validateDescriptorFields,
+        validate,
+        emitAssets,
+        emitSqlite,
+      ] as Stage<unknown, unknown>[];
       const result = await runStages(stages, {}, ctx);
       const v = result.validate as { countsBySeverity: { fatal: number } };
       expect(v.countsBySeverity.fatal).toBe(0);
@@ -124,10 +129,14 @@ describe("end-to-end pipeline", () => {
         outDir: out,
         log: () => undefined,
       };
-      const stages = [loadDescriptors, loadSnapshot, validate, emitAssets, emitSqlite] as Stage<
-        unknown,
-        unknown
-      >[];
+      const stages = [
+        loadDescriptors,
+        loadSnapshot,
+        validateDescriptorFields,
+        validate,
+        emitAssets,
+        emitSqlite,
+      ] as Stage<unknown, unknown>[];
 
       await runStages(stages, {}, ctx);
       const result = await runStages(stages, {}, ctx);
@@ -149,10 +158,14 @@ describe("end-to-end pipeline", () => {
         outDir: out,
         log: () => undefined,
       };
-      const stages = [loadDescriptors, loadSnapshot, validate, emitAssets, emitSqlite] as Stage<
-        unknown,
-        unknown
-      >[];
+      const stages = [
+        loadDescriptors,
+        loadSnapshot,
+        validateDescriptorFields,
+        validate,
+        emitAssets,
+        emitSqlite,
+      ] as Stage<unknown, unknown>[];
       const result = await runStages(stages, {}, ctx);
       const dbPath = join(out, "data.sqlite");
 

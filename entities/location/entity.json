@@ -24,7 +24,28 @@
     { "name": "name", "type": "string", "from": "locationName", "missingPolicy": "fatal" },
     { "name": "enabled", "type": "boolean", "from": "enabled", "missingPolicy": "fatal" },
     { "name": "mapId", "type": "string", "from": "map.id", "missingPolicy": "diagnostic" },
+    {
+      "name": "mapRef",
+      "type": "ref:asset",
+      "from": "mapRef",
+      "storage": "projected",
+      "destination": "locations"
+    },
     { "name": "showOnMap", "type": "boolean", "from": "showOnMap", "missingPolicy": "fatal" },
+    {
+      "name": "iconRef",
+      "type": "ref:asset",
+      "from": "iconRef",
+      "storage": "projected",
+      "destination": "locations"
+    },
+    {
+      "name": "mapPosition",
+      "type": "json",
+      "from": "mapPosition",
+      "storage": "projected",
+      "destination": "map_points"
+    },
     {
       "name": "showOnMapDebugOnly",
       "type": "boolean",
@@ -38,6 +59,20 @@
       "from": "allowFastTravel",
       "missingPolicy": "fatal",
       "label": "Allows fast travel"
+    },
+    {
+      "name": "fastTravelPosition",
+      "type": "json",
+      "from": "fastTravelPosition",
+      "storage": "projected",
+      "destination": "locations"
+    },
+    {
+      "name": "volumes",
+      "type": "json",
+      "from": "volumes",
+      "storage": "projected",
+      "destination": "location_volumes"
     },
     {
       "name": "displayOnEnterVolume",

@@ -73,7 +73,11 @@ public static class ItemVariantClassifier
         };
 
     private static ItemAdapterResult FromFields(Dictionary<string, object?> fields) =>
-        new(fields, new Dictionary<string, Provenance>(StringComparer.Ordinal), new List<Diagnostic>());
+        new(
+            fields,
+            new Dictionary<string, Provenance>(StringComparer.Ordinal),
+            new List<Diagnostic>(),
+            ItemAdapterHelpers.EmptyPresentationOnlyFields());
 
     private static ItemAdapterResult ExtractEquipmentLayer(ItemData asset, RefResolver refs, string rowId) =>
         FromFields(ExtractEquipment.Extract((EquipItemData)asset));
@@ -85,7 +89,7 @@ public static class ItemVariantClassifier
         FromFields(ExtractPrimaryHand.Extract((PrimaryHandItemData)asset));
 
     private static ItemAdapterResult ExtractMeleeLayer(ItemData asset, RefResolver refs, string rowId) =>
-        FromFields(ExtractMelee.Extract((MeleeItemData)asset));
+        ExtractMelee.Extract((MeleeItemData)asset);
 
     private static ItemAdapterResult ExtractArmorLayer(ItemData asset, RefResolver refs, string rowId) =>
         FromFields(ExtractArmor.Extract((ArmorItemData)asset));

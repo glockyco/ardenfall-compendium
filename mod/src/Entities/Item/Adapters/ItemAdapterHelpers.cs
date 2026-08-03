@@ -8,10 +8,13 @@ using UnityEngine;
 
 namespace ArdenfallCompendium.Entities.Item.Adapters;
 
+// Fields is the published cross-subsystem contract validated against the descriptor.
+// PresentationOnlyFields stays inside the mod and never reaches the snapshot pipeline.
 public sealed record ItemAdapterResult(
     Dictionary<string, object?> Fields,
     Dictionary<string, Provenance> Provenance,
-    List<Diagnostic> Diagnostics);
+    List<Diagnostic> Diagnostics,
+    Dictionary<string, object?> PresentationOnlyFields);
 
 public sealed record StackModeSnapshot(
     [property: JsonProperty("type")] string? Type,
@@ -99,7 +102,14 @@ public sealed record SubSpellSnapshot(
 public static class ItemAdapterHelpers
 {
     public static ItemAdapterResult EmptyResult() =>
-        new(new Dictionary<string, object?>(System.StringComparer.Ordinal), new Dictionary<string, Provenance>(System.StringComparer.Ordinal), new List<Diagnostic>());
+        new(
+            new Dictionary<string, object?>(System.StringComparer.Ordinal),
+            new Dictionary<string, Provenance>(System.StringComparer.Ordinal),
+            new List<Diagnostic>(),
+            EmptyPresentationOnlyFields());
+
+    public static Dictionary<string, object?> EmptyPresentationOnlyFields() =>
+        new(System.StringComparer.Ordinal);
 
     public static List<Diagnostic> DrainDiagnostics(RefResolver refs)
     {

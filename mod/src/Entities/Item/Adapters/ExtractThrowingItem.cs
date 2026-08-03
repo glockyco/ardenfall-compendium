@@ -58,6 +58,6 @@ public static class ExtractThrowingItem
             ["addItemToInventoryChance"] = ProvenanceCapture.ForParameter<float>("addItemToInventoryChance.Get()", asset.addItemToInventoryChance.IsSet, inherited: !asset.addItemToInventoryChance.IsSet),
             ["missileSettingsJson"] = ProvenanceCapture.ForParameter<ProjectileSettings>("missileSettings.Get()", asset.missileSettings.IsSet, inherited: !asset.missileSettings.IsSet),
         };
-        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs));
+        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs), ItemAdapterHelpers.EmptyPresentationOnlyFields());
     }
 }

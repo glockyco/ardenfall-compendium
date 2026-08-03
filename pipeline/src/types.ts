@@ -51,6 +51,8 @@ export interface FieldSpec {
   from: string;
   operation?: string;
   missingPolicy?: "fatal" | "diagnostic" | "optional-empty";
+  storage?: "column" | "projected";
+  destination?: string;
   label?: string;
   description?: string;
 }

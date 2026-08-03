@@ -11,9 +11,28 @@
   "placement": { "kind": "point", "from": "transform" },
   "fields": [
     { "name": "id", "type": "id", "from": "recordId", "missingPolicy": "fatal" },
+    {
+      "name": "recordRef",
+      "type": "ref:record",
+      "from": "recordRef",
+      "storage": "projected",
+      "destination": "portals"
+    },
     { "name": "name", "type": "string", "from": "friendlyName", "missingPolicy": "diagnostic" },
     { "name": "isAccessible", "type": "boolean", "from": "isAccessable", "missingPolicy": "fatal" },
-    { "name": "mapId", "type": "string", "from": "transform.mapID", "missingPolicy": "diagnostic" },
+    {
+      "name": "position",
+      "type": "json",
+      "from": "position",
+      "storage": "projected",
+      "destination": "map_points"
+    },
+    {
+      "name": "mapId",
+      "type": "string",
+      "from": "transform.mapID",
+      "missingPolicy": "diagnostic"
+    },
     {
       "name": "connectedPortalRef",
       "type": "ref:record",

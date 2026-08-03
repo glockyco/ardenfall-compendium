@@ -41,6 +41,6 @@ public static class ExtractNote
         fields["gainStatCount"] = gainStatCount;
         provenance["gainStatCount"] = ProvenanceCapture.ForParameter<int>("gainStatCount.Get()", gainStatCountIsSet, inherited: !gainStatCountIsSet);
 
-        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs));
+        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs), ItemAdapterHelpers.EmptyPresentationOnlyFields());
     }
 }

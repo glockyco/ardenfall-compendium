@@ -32,7 +32,7 @@ public static class ExtractThrowingPotion
             ["effectName"] = ProvenanceCapture.ForParameter<string>("GetEffectName()", true, inherited: false),
             ["isDrinkingPotion"] = ProvenanceCapture.ForParameter<bool>("isDrinkingPotion.Get()", asset.isDrinkingPotion.IsSet, inherited: !asset.isDrinkingPotion.IsSet),
         };
-        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs));
+        return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs), ItemAdapterHelpers.EmptyPresentationOnlyFields());
     }
 
     public static string? GetEffectNameSafe(LeveledStatusEffect[]? areaOfEffect, float visualLevel)
