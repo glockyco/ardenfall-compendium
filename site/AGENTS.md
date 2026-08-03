@@ -32,5 +32,5 @@ SvelteKit static-first site. Generated data is staged as `.data/data.sqlite` plu
 - `site/static` is a staging cache. Its generated files must come from exactly one validated artifact and can be deleted/recreated at any time.
 - Fixture builds use `bun run --cwd site build:fixture` after `bun run artifact:fixture synthetic fixtures/synthetic/snapshot`; fixture artifacts are valid for tests but must never be accepted by production deploy scripts.
 - `bun run --cwd site build` must leave generated HTML under `.svelte-kit/cloudflare` for ordinary routes such as `/items` and `/items/[id]`; these should be static assets, not empty SPA shells.
-- Wrangler auth is operator-local: run `wrangler login` (or otherwise provide a valid Wrangler auth context) before deploying.
+- Wrangler auth is operator-local. Wrangler is a site dev dependency and is not installed globally, so run `bunx wrangler login` from inside `site/`, or otherwise provide a valid Wrangler auth context, before deploying. A bare `wrangler login` fails with `command not found`.
 - CI verifies the fixture build; it does not deploy and does not assume Cloudflare API token/account secrets.

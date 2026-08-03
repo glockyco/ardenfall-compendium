@@ -77,6 +77,14 @@ The HotRepl workflow deploys the local BepInEx host, starts the game, and connec
 
 ### Build and deploy a production artifact
 
+Wrangler is a `site` dev dependency, not a global command, so authenticate through it once:
+
+```bash
+cd site && bunx wrangler login && cd ..
+```
+
+Then build the artifact and deploy it:
+
 ```bash
 bun run artifact:release snapshots/snapshots/<snapshot-id>
 bun run --cwd site deploy:production ../pipeline/artifacts/releases/<snapshot-id>

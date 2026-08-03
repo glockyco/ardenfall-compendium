@@ -77,6 +77,8 @@ What is actually wrong is narrower. None of the three previously committed relea
 
 CI never builds a real release, never deploys, and never runs the production smoke. It gates the synthetic fixture only.
 
+**Nothing is published, and that is now the single largest gap.** Every count in this document describes a site that only a local build shows. A release artifact cuts cleanly, the prerender and both smokes pass at real scale, and the deploy command is one line, so the blocker is operator authentication rather than engineering. Wrangler is a `site` dev dependency and not a global command, so a bare `wrangler login` fails with `command not found`. Run `bunx wrangler login` from inside `site/`, then `bun run --cwd site deploy:production ../pipeline/artifacts/releases/<snapshot-id>`.
+
 ## Content coverage
 
 Unmodelled authored content, all confirmed as ScriptableObject types in the decompiled source. Counts require a live probe, since the cache holds type definitions and not asset instances.
@@ -96,10 +98,11 @@ Worth doing now:
 - ~~`controller/src/validate-snapshot.ts` hardcodes `ENTITY_FILES`~~ - **done.** Deleted. The controller identifies envelopes by the id inside each file, as the pipeline always has, and cross-checks the discovered set against the manifest counts, which also catches an unexpected file. A tenth entity needs no controller change.
 - ~~Extract the extractor lifecycle in the mod~~ - **done.** One lifecycle across all nine extractors, 630 lines removed. The display-name policy is uniform: a diagnostic and a nullable column, never a fallback to the asset name, which had been putting internal identifiers like `itemcat_weapons` in front of readers. Measured first and confirmed after: no row in any affected entity is missing a name, and a live export produces byte-identical diagnostics.
 - ~~Add search~~ - **done.** Pagefind indexes all 1,843 prerendered pages in the build, so every page is findable by name even when nothing links to it. Detail pages rank first for real names, which was measured before deciding whether listing pages needed exclusion. They did not. Search reaches an entity only through a page, which is what made the 67 page-less locations and portals measurable and led to the location work.
-- **Give locations and portals a page.** 34 locations and 33 portals exist only as map selections. No HTML holds their names, so search cannot find them, a crawler cannot read them, and 67 sitemap entries point at no page. The data for a page already ships: name, map, extent, elevation, fast travel, and the 30 `leads_to` edges between connected portals.
-- **Fix the sitemap in the same pass.** It selects every public node, so it lists the 67 map-only entities as documents and omits all ten listing pages including the home page. A sitemap is a claim about what exists, and both halves of that claim are currently wrong.
-- **Add the two missing meta descriptions.** Six of eight detail routes ship one. The two without are `items`, which is 1,273 pages and the largest section, and `terms`.
-- **Stop swallowing Unity lookup failures.** Roughly a dozen sites catch and return `""` or `null` with no diagnostic, which makes a destroyed object indistinguishable from genuinely absent data.
+- ~~Give locations and portals a page~~ - **done for locations, and deliberately not for portals.** All 48 locations have a page, up from 34, because the publicity gate had been reading a flag that controls the player's in-game map marker. Portals keep an identity and a map route without a page, since 29 of their 32 names are authoring identifiers.
+- ~~Fix the sitemap in the same pass~~ - **done.** The URL set equals the built page set exactly, 1,844 each, and a test reads the route tree so a new static page cannot be added without updating the list.
+- ~~Add the two missing meta descriptions~~ - **done.** Every detail route ships one.
+- **Stop swallowing Unity lookup failures.** Ten sites under `mod/src/Entities/*/I*Source.cs` catch and return `""`, `null` or `false` with no diagnostic, which makes a destroyed object indistinguishable from genuinely absent data.
+- **Split the asset-source contracts from their Unity implementations.** All nine `I*AssetSource` interface files name `UnityEngine` or `Ardenfall` types, so the seam that exists to make extraction testable cannot be exercised without the engine. This is why every extractor test fakes at the extractor level instead of the source level.
 - ~~Validate JSON at the site boundary~~ - **done.** Every server parse of a generated column goes through one helper that names the entity, column and row on failure. Shapes consumed structurally are validated, pass-through blobs are container-checked only rather than given invented schemas.
 - ~~Close the descriptor type vocabulary~~ - **done.** The set is closed in three layers that each catch a different mistake: a schema enum for the author, a TypeScript union for the compiler, and a throw for a dispatcher meeting an unknown token. `minimumSkill` was declared `int`, fell through to TEXT, and is now INTEGER, so a sort no longer places 40 before 5.
 
@@ -111,6 +114,16 @@ Building search exposed four reader-facing defects that browsing had hidden, all
 - **Every navigation link was 20 px tall.** WCAG 2.5.8 asks for 24 px. The header links and the back link now meet it.
 
 One defect is recorded and not fixed. One item is named `Recipe of {0}`, which is the game's own format string with an argument the runtime substitutes. The pipeline does not extract that binding, so the correct name is not derivable from the snapshot today.
+
+## Not covered by any plan
+
+Three concerns no planning doc mentions. Each is measured, and none blocks a deploy.
+
+**No attribution or status statement anywhere.** The repository is MIT licensed, which covers our code. The pages publish another party's game content, and neither the site nor the README says the project is unofficial or names the game's owner. Every comparable fan reference carries such a statement. This is the cheapest item here and the only one with a non-engineering risk.
+
+**The item index ships 488 KB of hydration payload.** `items.html` is 620 KB, of which 78 percent is the inline row data that drives client-side filtering, and 72 KB over the wire after gzip. It is the heaviest page by a factor of two, and the cost falls on the reader least able to pay it. Server-side filtering or pagination would remove it, at the cost of the instant filter interaction. Measure the interaction people actually use before choosing.
+
+**Accessibility has no standard recorded and a partial gate.** Svelte's compiler checks markup-level a11y and reports clean, but the criteria this project keeps breaking are not markup-level: duplicate link text under WCAG 2.4.4 was fixed twice, in relationship sections and again in three listings, and target size under 2.5.8 was fixed once across every navigation link. Nothing prevents a fourth instance. Naming the target level and adding one automated check would turn a recurring reactive fix into a gate.
 
 Leave alone: `RunFinalizeCommand` is genuinely multi-phase orchestration, the per-entity read model modules are small and readable, `EntityTable` is a real generic component, and every detail route already fails cleanly with a 404.
 
