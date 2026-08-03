@@ -40,6 +40,10 @@ describe("item-tag read-model accessors", () => {
         display_icon_hash TEXT,
         display_icon_color TEXT
       );
+      CREATE TABLE item_variants (
+        variant_id TEXT PRIMARY KEY,
+        label TEXT NOT NULL
+      );
       CREATE TABLE item_presentation_rows (
         id TEXT PRIMARY KEY,
         name TEXT,
@@ -77,6 +81,7 @@ describe("item-tag read-model accessors", () => {
       INSERT INTO item_tag_presentation_rows VALUES
         ('7a600001.fixture-tag-valuable-remedy', 'Valuable remedy', 'item-tag-presentation-v1', 'Incredibly valuable remedy', 1),
         ('7a600002.fixture-tag-rare', 'Rare', 'item-tag-presentation-v1', 'Difficult to find.', 0);
+      INSERT INTO item_variants VALUES ('consumable', 'Consumable');
       INSERT INTO item_overview_rows VALUES
         ('6a71c0de.fixture-stamina-draught', 'Stamina Draught', 0.25, 9, 'consumable', NULL, NULL);
       INSERT INTO item_presentation_rows VALUES
@@ -117,6 +122,20 @@ describe("item-tag read-model accessors", () => {
         itemCount: 1,
         routePath: "/tags/valuable-remedy--abc12345",
       });
+      expect(readModels.listItemsByTag("7a600001.fixture-tag-valuable-remedy")).toEqual([
+        {
+          id: "6a71c0de.fixture-stamina-draught",
+          name: "Stamina Draught",
+          weight: 0.25,
+          value: 9,
+          variant: "consumable",
+          variantLabel: "Consumable",
+          shortId: "6a71c0de",
+          displayIconSrc: null,
+          displayIconColor: null,
+          routePath: "/items/6a71c0de.fixture-stamina-draught",
+        },
+      ]);
     } finally {
       process.chdir(originalCwd);
       rmSync(root, { recursive: true, force: true });

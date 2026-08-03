@@ -390,7 +390,7 @@ export function emitItemReadModels(
             "applies",
             "Applies",
             1,
-            JSON.stringify({ source: "items.statusEffectRef", level: effect.level ?? null }),
+            JSON.stringify({ source: `items.${effect.source}`, level: effect.level ?? null }),
             null,
           );
           return { ...effect, targetId };

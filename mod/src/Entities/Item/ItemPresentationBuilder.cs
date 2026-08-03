@@ -7,12 +7,12 @@ namespace ArdenfallCompendium.Entities.Item;
 
 public static class ItemPresentationBuilder
 {
-    private static readonly (string Field, string Label, string Source, string Size)[] StatFields =
+    private static readonly (string Field, string Label, string Source, string Size, (string One, string Many)? Unit)[] StatFields =
     {
-        ("damage", "Base damage", "MeleeItem.GetItemStatInfos()", "large"),
-        ("armorRating", "Damage Threshold", "ArmorItem.GetItemStatInfos()", "large"),
-        ("quickslotCooldownTime", "Cooldown", "ConsumableItem.quickslotCooldownTime.Get()", "normal"),
-        ("manaCostMultiplier", "Mana cost multiplier", "SlateSpellItem.manaCostMultiplier.Get()", "normal"),
+        ("damage", "Base damage", "MeleeItem.GetItemStatInfos()", "large", null),
+        ("armorRating", "Damage Threshold", "ArmorItem.GetItemStatInfos()", "large", null),
+        ("quickslotCooldownTime", "Cooldown", "ConsumableItem.quickslotCooldownTime.Get()", "normal", (" Second", " Seconds")),
+        ("manaCostMultiplier", "Mana cost multiplier", "SlateSpellItem.manaCostMultiplier.Get()", "normal", null),
     };
 
     public static ItemPresentationSnapshot FromExtractedFields(
@@ -22,7 +22,7 @@ public static class ItemPresentationBuilder
         IReadOnlyDictionary<string, Provenance> provenance,
         IReadOnlyDictionary<string, object?>? presentationOnlyFields = null)
     {
-        var displayName = StringField(fields, "name") ?? rowId;
+        var displayName = StringField(fields, "name");
         var effects = BuildEffects(fields);
         return new ItemPresentationSnapshot
         {
@@ -54,18 +54,29 @@ public static class ItemPresentationBuilder
         {
             var value = FloatField(fields, stat.Field);
             if (value == null) continue;
+            var valueText = FormatNumber(value.Value);
             rows.Add(new ItemPresentationStatRowSnapshot
             {
                 Id = stat.Field,
                 Label = stat.Label,
                 Value = value,
-                ValueText = FormatNumber(value.Value),
+                ValueText = valueText,
+                Suffix = UnitFor(stat.Unit, valueText),
                 Size = stat.Size,
                 Source = stat.Source,
             });
             if (stat.Field == "damage") AddHeavyAttackDamageRow(fields, presentationOnlyFields, rows);
         }
         return rows;
+    }
+
+    // A unit must agree with the number a reader sees, so the choice follows the formatted
+    // text rather than the raw value. A value of 1 reads "1 Second" and every other value
+    // reads "Seconds".
+    private static string? UnitFor((string One, string Many)? unit, string valueText)
+    {
+        if (unit == null) return null;
+        return valueText == "1" ? unit.Value.One : unit.Value.Many;
     }
 
     private static void AddHeavyAttackDamageRow(

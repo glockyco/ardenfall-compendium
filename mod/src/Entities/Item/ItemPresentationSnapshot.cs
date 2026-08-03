@@ -8,7 +8,7 @@ public sealed class ItemPresentationSnapshot
 {
     [JsonProperty("schemaVersion")] public int SchemaVersion { get; init; } = 1;
     [JsonProperty("renderContext")] public string RenderContext { get; init; } = "item-presentation-v1";
-    [JsonProperty("displayName")] public string DisplayName { get; init; } = "";
+    [JsonProperty("displayName")] public string? DisplayName { get; init; }
     [JsonProperty("displayNameSourceMethod")] public string DisplayNameSourceMethod { get; init; } = "unknown";
     [JsonProperty("itemType")] public string? ItemType { get; init; }
     [JsonProperty("itemTypeSourceMethod")] public string? ItemTypeSourceMethod { get; init; }

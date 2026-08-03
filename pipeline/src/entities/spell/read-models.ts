@@ -38,6 +38,7 @@ interface SpellRow {
 interface PublicStatType {
   entity_id: string;
   label: string;
+  grouping: "attribute" | "skill";
 }
 
 interface NamedAssetReference {
@@ -70,15 +71,24 @@ export function emitSpellReadModels(
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const writeNode = prepareEntityNodeWriter(db);
-  const publicStats = new Map(
-    db
+  const publicStats = new Map<string, PublicStatType>();
+  const hasStatTypeOverviewTable = db
+    .query<{ name: string }, []>(
+      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'stat_type_overview_rows'`,
+    )
+    .get();
+  if (hasStatTypeOverviewTable) {
+    for (const row of db
       .query<PublicStatType, []>(
-        `SELECT entity_id, label FROM entity_nodes
-         WHERE entity_type = 'stat-type' AND is_public = 1`,
+        `SELECT n.entity_id, n.label, o.grouping
+         FROM entity_nodes n
+         JOIN stat_type_overview_rows o ON o.id = n.entity_id
+         WHERE n.entity_type = 'stat-type' AND n.is_public = 1`,
       )
-      .all()
-      .map((row) => [row.entity_id, row.label] as const),
-  );
+      .all()) {
+      publicStats.set(row.entity_id, row);
+    }
+  }
   const rows = db
     .query<SpellRow, []>(
       `SELECT id, spell_name, stat_type_ref_json, mana_cost, is_illegal, tooltip_source
@@ -153,7 +163,7 @@ export function emitSpellReadModels(
           "stat-type",
           skill.id,
           "scales_with",
-          "Scales with skill",
+          "Scales with " + skill.grouping,
           1,
           JSON.stringify({ source: "spells.statTypeRef" }),
           null,
@@ -167,9 +177,9 @@ export function emitSpellReadModels(
 
 function resolveSkill(
   row: SpellRow,
-  publicStats: Map<string, string>,
+  publicStats: Map<string, PublicStatType>,
   diagnostics: PipelineDiagnostic[],
-): { id: string; label: string } | null {
+): { id: string; label: string; grouping: "attribute" | "skill" } | null {
   if (row.stat_type_ref_json === null) return null;
 
   let parsed: unknown;
@@ -187,14 +197,14 @@ function resolveSkill(
   }
 
   const targetId = `named;${ref.entity};${ref.name}`;
-  const label = publicStats.get(targetId);
-  if (label === undefined) {
+  const stat = publicStats.get(targetId);
+  if (stat === undefined) {
     diagnostics.push(
       unresolvedSkillDiagnostic(row, `target '${targetId}' is not a public stat type`),
     );
     return null;
   }
-  return { id: targetId, label };
+  return { id: targetId, label: stat.label, grouping: stat.grouping };
 }
 
 function namedAssetReference(value: unknown): NamedAssetReference | null {

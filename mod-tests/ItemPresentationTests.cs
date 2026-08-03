@@ -65,6 +65,23 @@ public sealed class ItemPresentationTests
     }
 
     [Fact]
+    public void CooldownUnitAgreesWithTheDisplayedNumber()
+    {
+        var presentation = ItemPresentationBuilder.FromExtractedFields(
+            rowId: "fixture-one-second",
+            variantId: "consumable",
+            new Dictionary<string, object?>
+            {
+                ["name"] = "Quick Tonic",
+                ["quickslotCooldownTime"] = 1f,
+            },
+            provenance: new Dictionary<string, Provenance>());
+
+        Assert.Contains(presentation.StatRows, row =>
+            row.Id == "quickslotCooldownTime" && row.ValueText == "1" && row.Suffix == " Second");
+    }
+
+    [Fact]
     public void BuilderDoesNotSynthesizePlayerInventoryOrMerchantState()
     {
         var fields = new Dictionary<string, object?>
@@ -81,13 +98,30 @@ public sealed class ItemPresentationTests
             fields,
             provenance: new Dictionary<string, Provenance>());
 
-        Assert.All(presentation.StatRows, row => Assert.Null(row.Comparison));
+        Assert.Contains(presentation.StatRows, row =>
+            row.Id == "quickslotCooldownTime" && row.Label == "Cooldown" && row.ValueText == "12.5" && row.Suffix == " Seconds");
+        Assert.All(presentation.StatRows.FindAll(row => row.Id != "quickslotCooldownTime"), row => Assert.Null(row.Suffix));
         Assert.DoesNotContain(presentation.StateFacts, fact => fact.Kind.Contains("merchant"));
         Assert.DoesNotContain(presentation.StateFacts, fact => fact.Kind.Contains("inventory"));
         Assert.Contains(presentation.StateFacts, fact =>
             fact.Kind == "stacking" && fact.Label == "Stackable");
     }
 
+    [Fact]
+    public void BuilderDoesNotInventMissingDisplayName()
+    {
+        var presentation = ItemPresentationBuilder.FromExtractedFields(
+            rowId: "internal-item-id",
+            variantId: "consumable",
+            fields: new Dictionary<string, object?>
+            {
+                ["name"] = null,
+            },
+            provenance: new Dictionary<string, Provenance>());
+
+        Assert.Null(presentation.DisplayName);
+        Assert.Equal("fields.name", presentation.DisplayNameSourceMethod);
+    }
     [Fact]
     public void BuilderHidesAmbiguousRequirementsAndZeroDurability()
     {

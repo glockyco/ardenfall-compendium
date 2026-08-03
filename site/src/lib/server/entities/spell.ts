@@ -10,6 +10,7 @@ interface SpellOverviewRecord {
   mana_cost: number | null;
   is_illegal: number;
   route_path: string;
+  short_id: string;
 }
 
 interface SpellPresentationRecord {
@@ -47,9 +48,9 @@ export interface SpellPresentationRow {
   routePath: string;
 }
 
-export const listSpells = (): SpellOverviewRow[] =>
-  all<SpellOverviewRecord>(
-    `SELECT o.id, o.name, o.skill, o.mana_cost, o.is_illegal, n.route_path
+export const listSpells = (): SpellOverviewRow[] => {
+  const rows = all<SpellOverviewRecord>(
+    `SELECT o.id, o.name, o.skill, o.mana_cost, o.is_illegal, n.route_path, n.short_id
      FROM spell_overview_rows o
      JOIN entity_nodes n
        ON n.entity_type = 'spell'
@@ -63,7 +64,20 @@ export const listSpells = (): SpellOverviewRow[] =>
     manaCost: row.mana_cost,
     isIllegal: row.is_illegal === 1,
     routePath: row.route_path,
+    shortId: row.short_id,
   }));
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    if (row.name) counts.set(row.name, (counts.get(row.name) ?? 0) + 1);
+  }
+  // Two spells can share a name. A reader needs to tell two links apart, so a repeated name
+  // gets the short id that relationship sections already show.
+  return rows.map(({ shortId, ...row }) =>
+    row.name && (counts.get(row.name) ?? 0) > 1
+      ? { ...row, name: `${row.name} \u00b7 ${shortId}` }
+      : row,
+  );
+};
 
 export const getSpellPresentation = (slug: string): SpellPresentationRow | undefined => {
   const node = getEntityNodeBySlug("spell", slug);

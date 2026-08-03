@@ -1,5 +1,6 @@
 <script lang="ts" generics="T extends { id: string | number }">
   import ItemIcon from "$lib/components/items/ItemIcon.svelte";
+  import { itemNameForList, type ItemNameRow } from "$lib/components/items/itemName";
   type Column = {
     id: string;
     label: string;
@@ -15,6 +16,23 @@
   };
 
   let { rows, columns, rowHref }: Props = $props();
+
+  const duplicateNames = $derived.by(() => {
+    const counts: Record<string, number> = Object.create(null) as Record<string, number>;
+    for (const row of rows) {
+      const name = (row as T & ItemNameRow).name;
+      if (name) counts[name] = (counts[name] ?? 0) + 1;
+    }
+    return counts;
+  });
+
+  function cellValue(row: T, col: Column): string | number {
+    const value = row[col.field];
+    if (col.renderer === "itemNameWithIcon") {
+      return itemNameForList(row as T & ItemNameRow, duplicateNames);
+    }
+    return (value as string | number | null | undefined) ?? "";
+  }
 
   function iconSrc(row: T): string | null {
     const value = (row as T & { displayIconSrc?: unknown }).displayIconSrc;
@@ -47,16 +65,16 @@
                 <ItemIcon src={iconSrc(row)} displayIconColor={iconColor(row)} size="sm" />
                 {#if i === 0 && rowHref}
                   <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the rowHref callback is caller-supplied and is expected to wrap with resolve() at the call site -->
-                  <a href={rowHref(row)} class="underline">{row[col.field] ?? ""}</a>
+                  <a href={rowHref(row)} class="underline">{cellValue(row, col)}</a>
                 {:else}
-                  <span>{row[col.field] ?? ""}</span>
+                  <span>{cellValue(row, col)}</span>
                 {/if}
               </span>
             {:else if i === 0 && rowHref}
               <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the rowHref callback is caller-supplied and is expected to wrap with resolve() at the call site -->
-              <a href={rowHref(row)} class="underline">{row[col.field] ?? ""}</a>
+              <a href={rowHref(row)} class="underline">{cellValue(row, col)}</a>
             {:else}
-              {row[col.field] ?? ""}
+              {cellValue(row, col)}
             {/if}
           </td>
         {/each}

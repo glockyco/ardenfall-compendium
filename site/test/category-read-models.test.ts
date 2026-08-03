@@ -44,6 +44,10 @@ describe("item-category read-model accessors", () => {
         display_icon_hash TEXT,
         display_icon_color TEXT
       );
+      CREATE TABLE item_variants (
+        variant_id TEXT PRIMARY KEY,
+        label TEXT NOT NULL
+      );
       CREATE TABLE item_presentation_rows (
         id TEXT PRIMARY KEY,
         name TEXT,
@@ -80,6 +84,7 @@ describe("item-category read-model accessors", () => {
         ('named;item-category;itemcat_weapons', 'Weapons', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1);
       INSERT INTO item_category_presentation_rows VALUES
         ('named;item-category;itemcat_weapons', 'Weapons', 'item-category-presentation-v1', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1, '[{"label":"Name"}]', 1);
+      INSERT INTO item_variants VALUES ('melee-weapon', 'Melee Weapon');
       INSERT INTO item_overview_rows VALUES
         ('4ed20218.fixture-iron-sword', 'Iron Sword', 3.5, 25, 'melee-weapon', '${iconHash}', '${categoryColor}'),
         ('fixture-training-dagger', 'Training Dagger', 1.5, 5, 'melee-weapon', '${iconHash}', '${categoryColor}');
@@ -121,6 +126,20 @@ describe("item-category read-model accessors", () => {
         itemCount: 1,
         routePath: "/categories/weapons--abc12345",
       });
+      expect(readModels.listItemsByCategory("named;item-category;itemcat_weapons")).toEqual([
+        {
+          id: "4ed20218.fixture-iron-sword",
+          name: "Iron Sword",
+          weight: 3.5,
+          value: 25,
+          variant: "melee-weapon",
+          variantLabel: "Melee Weapon",
+          shortId: "4ed20218",
+          displayIconSrc: `/assets/${iconHash}.webp`,
+          displayIconColor: categoryColor,
+          routePath: "/items/4ed20218.fixture-iron-sword",
+        },
+      ]);
     } finally {
       process.chdir(originalCwd);
       rmSync(root, { recursive: true, force: true });

@@ -8,6 +8,7 @@ interface StatusEffectOverviewRecord {
   name: string | null;
   is_hostile: number;
   route_path: string;
+  short_id: string;
   tooltip_rich_text_json: string | null;
 }
 
@@ -41,7 +42,7 @@ export interface StatusEffectPresentationRow {
 
 export const listStatusEffects = (): StatusEffectOverviewRow[] => {
   const rows = all<StatusEffectOverviewRecord>(
-    `SELECT o.id, o.name, o.is_hostile, p.tooltip_rich_text_json, n.route_path
+    `SELECT o.id, o.name, o.is_hostile, p.tooltip_rich_text_json, n.route_path, n.short_id
      FROM status_effect_overview_rows o
      LEFT JOIN status_effect_presentation_rows p
        ON p.id = o.id
@@ -67,13 +68,16 @@ export const listStatusEffects = (): StatusEffectOverviewRow[] => {
       descriptionSummary: description ? firstSentence(richTextPlainText(description)) : null,
       displayName: statusEffectName(row.name, row.id, description),
       routePath: row.route_path,
+      shortId: row.short_id,
     };
   });
   const counts = new Map<string, number>();
   for (const row of rows) counts.set(row.displayName, (counts.get(row.displayName) ?? 0) + 1);
-  return rows.map((row) =>
+  // Several status effects share a name. A reader needs to tell two links apart, so a
+  // repeated name gets the short id that relationship sections already show.
+  return rows.map(({ shortId, ...row }) =>
     (counts.get(row.displayName) ?? 0) > 1
-      ? { ...row, displayName: `${row.displayName} (${row.id})` }
+      ? { ...row, displayName: `${row.displayName} \u00b7 ${shortId}` }
       : row,
   );
 };

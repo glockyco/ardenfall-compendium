@@ -2,7 +2,7 @@
   import { browser } from "$app/environment";
   import EntityTable from "$lib/components/EntityTable.svelte";
   import type { ItemOverviewFilter, ItemOverviewRow } from "$lib/server/read-models";
-  import { isPlaceholderItemName } from "./itemName";
+  import { itemNameForList } from "./itemName";
 
   type Column = {
     id: string;
@@ -53,16 +53,10 @@
   });
 
   const tableRows = $derived(
-    filteredRows.map((row) => {
-      const disambiguator = row.variant ?? row.id;
-      if (!row.name || isPlaceholderItemName(row.name)) {
-        return { ...row, name: `Name unavailable — ${disambiguator}` };
-      }
-      if ((duplicateNames[row.name] ?? 0) > 1) {
-        return { ...row, name: `${row.name} — ${disambiguator}` };
-      }
-      return row;
-    }),
+    filteredRows.map((row) => ({
+      ...row,
+      name: itemNameForList(row, duplicateNames),
+    })),
   );
 
   const pageCount = $derived(Math.max(1, Math.ceil(tableRows.length / pageSize)));

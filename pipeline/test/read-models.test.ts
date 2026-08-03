@@ -227,11 +227,11 @@ describe("emitItemReadModels", () => {
       }),
     ]);
     expect(JSON.parse(appliesEdges[0]!.evidence_json)).toEqual({
-      source: "items.statusEffectRef",
+      source: "items.statusEffectsJson",
       level: 1,
     });
     expect(JSON.parse(appliesEdges[1]!.evidence_json)).toEqual({
-      source: "items.statusEffectRef",
+      source: "items.statusEffectsJson",
       level: 2.5,
     });
     const slateFacts = db

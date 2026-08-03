@@ -12,8 +12,12 @@
   <div>
     <h1 class="text-2xl font-bold">{itemNameForDisplay(item.name)}</h1>
     {#if placeholderName}
-      <p class="text-muted-foreground text-sm">Source value: {item.name}</p>
+      <p class="text-muted-foreground text-sm">
+        The game builds this name while you play, so the compendium cannot show one.
+      </p>
     {/if}
-    <p class="text-muted-foreground">{item.itemType ?? item.variant}</p>
+    {#if item.itemType}
+      <p class="text-muted-foreground">{item.itemType}</p>
+    {/if}
   </div>
 </header>

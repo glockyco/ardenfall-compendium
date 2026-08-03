@@ -53,8 +53,9 @@ function seedNamelessSpell(db: Database): void {
   });
 }
 
-function seedPublicSkill(db: Database): void {
+function seedPublicStat(db: Database, grouping: "attribute" | "skill" = "skill"): void {
   db.exec(ENTITY_GRAPH_DDL);
+  db.exec(`CREATE TABLE stat_type_overview_rows (id TEXT PRIMARY KEY, grouping TEXT NOT NULL);`);
   db.prepare(
     `INSERT INTO entity_nodes (
        entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public
@@ -67,6 +68,10 @@ function seedPublicSkill(db: Database): void {
     "destruction--destruction",
     "destruction",
     1,
+  );
+  db.prepare(`INSERT INTO stat_type_overview_rows (id, grouping) VALUES (?, ?)`).run(
+    skillId,
+    grouping,
   );
 }
 
@@ -149,95 +154,112 @@ describe("spell pipeline", () => {
   it("emits a scales_with edge to a public stat type", () => {
     const db = new Database(":memory:");
     seedSpell(db);
-    seedPublicSkill(db);
+    seedPublicStat(db);
 
     expect(emitSpellReadModels(db)).toEqual([]);
     const edge = db
-      .query<{ source_id: string; target_id: string; predicate: string }, []>(
-        `SELECT source_id, target_id, predicate FROM entity_edges WHERE source_type = 'spell'`,
+      .query<{ source_id: string; target_id: string; predicate: string; label: string }, []>(
+        `SELECT source_id, target_id, predicate, label FROM entity_edges WHERE source_type = 'spell'`,
       )
       .get();
-    expect(edge).toEqual({ source_id: spellId, target_id: skillId, predicate: "scales_with" });
+    expect(edge).toEqual({
+      source_id: spellId,
+      target_id: skillId,
+      predicate: "scales_with",
+      label: "Scales with skill",
+    });
   });
 
-  it("translates tooltip markup into styled rich-text nodes", () => {
+  it("labels an attribute scaling edge as an attribute", () => {
     const db = new Database(":memory:");
     seedSpell(db);
-    emitSpellReadModels(db);
+    seedPublicStat(db, "attribute");
 
-    const row = db
-      .query<{ tooltip_source: string | null; tooltip_rich_text_json: string | null }, [string]>(
-        `SELECT tooltip_source, tooltip_rich_text_json
+    expect(emitSpellReadModels(db)).toEqual([]);
+    const edge = db
+      .query<{ label: string }, []>(
+        `SELECT label FROM entity_edges WHERE source_type = 'spell' AND predicate = 'scales_with'`,
+      )
+      .get();
+    expect(edge).toEqual({ label: "Scales with attribute" });
+  });
+
+  const db = new Database(":memory:");
+  seedSpell(db);
+  emitSpellReadModels(db);
+
+  const row = db
+    .query<{ tooltip_source: string | null; tooltip_rich_text_json: string | null }, [string]>(
+      `SELECT tooltip_source, tooltip_rich_text_json
          FROM spell_presentation_rows WHERE id = ?`,
-      )
-      .get(spellId);
-    expect(row?.tooltip_source).toBe("<color=#86FF86>Protects target</color>");
-    expect(JSON.parse(row?.tooltip_rich_text_json ?? "null").nodes).toEqual([
+    )
+    .get(spellId);
+  expect(row?.tooltip_source).toBe("<color=#86FF86>Protects target</color>");
+  expect(JSON.parse(row?.tooltip_rich_text_json ?? "null").nodes).toEqual([
+    {
+      type: "color",
+      token: null,
+      color: "#86FF86",
+      children: [{ type: "text", text: "Protects target" }],
+    },
+  ]);
+});
+
+it("keeps plain and absent tooltips distinguishable", () => {
+  const db = new Database(":memory:");
+  db.exec(SPELL_DDL);
+  canonicaliseSpells(db, {
+    entityId: "spell",
+    schemaVersion: 1,
+    rows: [
       {
-        type: "color",
-        token: null,
-        color: "#86FF86",
-        children: [{ type: "text", text: "Protects target" }],
-      },
-    ]);
-  });
-
-  it("keeps plain and absent tooltips distinguishable", () => {
-    const db = new Database(":memory:");
-    db.exec(SPELL_DDL);
-    canonicaliseSpells(db, {
-      entityId: "spell",
-      schemaVersion: 1,
-      rows: [
-        {
+        id: "named;spell;plain",
+        fields: {
           id: "named;spell;plain",
-          fields: {
-            id: "named;spell;plain",
-            spellName: "Plain",
-            tooltipSource: "No markup here",
-          },
+          spellName: "Plain",
+          tooltipSource: "No markup here",
         },
-        {
+      },
+      {
+        id: "named;spell;missing",
+        fields: {
           id: "named;spell;missing",
-          fields: {
-            id: "named;spell;missing",
-            spellName: "Missing",
-            tooltipSource: null,
-          },
+          spellName: "Missing",
+          tooltipSource: null,
         },
-      ],
-    });
-    emitSpellReadModels(db);
+      },
+    ],
+  });
+  emitSpellReadModels(db);
 
-    const rows = db
-      .query<
-        { id: string; tooltip_source: string | null; tooltip_rich_text_json: string | null },
-        []
-      >(
-        `SELECT id, tooltip_source, tooltip_rich_text_json
+  const rows = db
+    .query<
+      { id: string; tooltip_source: string | null; tooltip_rich_text_json: string | null },
+      []
+    >(
+      `SELECT id, tooltip_source, tooltip_rich_text_json
          FROM spell_presentation_rows ORDER BY id`,
-      )
-      .all();
-    const plain = rows.find((row) => row.id === "named;spell;plain");
-    expect(plain?.tooltip_source).toBe("No markup here");
-    expect(JSON.parse(plain?.tooltip_rich_text_json ?? "null").nodes).toEqual([
-      { type: "text", text: "No markup here" },
-    ]);
-    expect(rows.find((row) => row.id === "named;spell;missing")).toEqual({
-      id: "named;spell;missing",
-      tooltip_source: null,
-      tooltip_rich_text_json: null,
-    });
+    )
+    .all();
+  const plain = rows.find((row) => row.id === "named;spell;plain");
+  expect(plain?.tooltip_source).toBe("No markup here");
+  expect(JSON.parse(plain?.tooltip_rich_text_json ?? "null").nodes).toEqual([
+    { type: "text", text: "No markup here" },
+  ]);
+  expect(rows.find((row) => row.id === "named;spell;missing")).toEqual({
+    id: "named;spell;missing",
+    tooltip_source: null,
+    tooltip_rich_text_json: null,
   });
+});
 
-  it("diagnoses a missing public stat type without writing an edge", () => {
-    const db = new Database(":memory:");
-    seedSpell(db);
+it("diagnoses a missing public stat type without writing an edge", () => {
+  const db = new Database(":memory:");
+  seedSpell(db);
 
-    const diagnostics = emitSpellReadModels(db);
-    expect(diagnostics).toHaveLength(1);
-    expect(diagnostics[0]?.code).toBe("spellSkillUnresolved");
-    expect(diagnostics[0]?.severity).toBe("diagnostic");
-    expect(db.query(`SELECT COUNT(*) AS count FROM entity_edges`).get()).toEqual({ count: 0 });
-  });
+  const diagnostics = emitSpellReadModels(db);
+  expect(diagnostics).toHaveLength(1);
+  expect(diagnostics[0]?.code).toBe("spellSkillUnresolved");
+  expect(diagnostics[0]?.severity).toBe("diagnostic");
+  expect(db.query(`SELECT COUNT(*) AS count FROM entity_edges`).get()).toEqual({ count: 0 });
 });
