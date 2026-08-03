@@ -27,7 +27,8 @@ const seed = () => {
       render_context TEXT NOT NULL,
       is_hostile INTEGER NOT NULL DEFAULT 0,
       tooltip_source TEXT,
-      tooltip_rich_text_json TEXT
+      tooltip_rich_text_json TEXT,
+      display_icon_hash TEXT
     );
     CREATE TABLE entity_nodes (
       entity_type TEXT NOT NULL,
@@ -44,8 +45,8 @@ const seed = () => {
       ('guid-hostile-curse', 'Unnamed status effect', 1);
     INSERT INTO status_effect_presentation_rows VALUES
       ('guid-bleed-resistance', 'Bleed Resistance', 'status-effect-presentation-v1', 0,
-       'Adds 1% Bleed Damage Resistance to Target over 1 Seconds', '${richText}'),
-      ('guid-hostile-curse', 'Unnamed status effect', 'status-effect-presentation-v1', 1, NULL, NULL);
+       'Adds 1% Bleed Damage Resistance to Target over 1 Seconds', '${richText}', 'status-icon-hash'),
+      ('guid-hostile-curse', 'Unnamed status effect', 'status-effect-presentation-v1', 1, NULL, NULL, NULL);
     INSERT INTO entity_nodes VALUES
       ('status-effect', 'guid-bleed-resistance', 'Bleed Resistance',
        '/status-effects/bleed-resistance--abc12345', 'bleed-resistance--abc12345', 'abc12345', 1),
@@ -114,6 +115,7 @@ describe("status-effect read-model accessors", () => {
         descriptionText: "Adds 1% Bleed Damage Resistance",
         displayName: "Bleed Resistance",
         isHostile: false,
+        displayIconSrc: "/assets/status-icon-hash.webp",
         routePath: "/status-effects/bleed-resistance--abc12345",
       });
     });
@@ -129,6 +131,7 @@ describe("status-effect read-model accessors", () => {
         descriptionText: null,
         displayName: "Unnamed status effect",
         isHostile: true,
+        displayIconSrc: null,
         routePath: "/status-effects/hostile-curse--def67890",
       });
     });

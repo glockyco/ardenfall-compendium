@@ -22,7 +22,12 @@ function envelope(): SnapshotEnvelope<FactionSnapshotFields & Record<string, unk
           name: "Black Moth",
           factionId: "blackmoth",
           description: "A hidden faction.",
-          iconRef: null,
+          iconRef: {
+            kind: "lookupAsset",
+            guid: "b1ac4d02.11400000",
+            unityType: "UnityEngine.Sprite",
+            name: "black-moth",
+          },
           alliable: true,
           enableReputation: true,
           alwaysShowInUI: true,
@@ -67,6 +72,14 @@ function database(): Database {
   const db = new Database(":memory:");
   db.exec(FACTION_DDL);
   db.exec(ENTITY_GRAPH_DDL);
+  db.exec(`CREATE TABLE asset_refs (
+    entity_id TEXT NOT NULL,
+    entity_row_id TEXT NOT NULL,
+    slot TEXT NOT NULL,
+    asset_kind TEXT NOT NULL,
+    asset_hash TEXT NOT NULL,
+    PRIMARY KEY (entity_id, entity_row_id, slot)
+  );`);
   return db;
 }
 
@@ -108,6 +121,11 @@ describe("faction pipeline", () => {
   it("emits faction nodes, routes, and both relationship predicates", () => {
     const db = database();
     canonicaliseFactions(db, envelope());
+    db.run(
+      `INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash)
+       VALUES (?, ?, ?, ?, ?)`,
+      ["faction", blackMoth, "iconRef", "image", "f".repeat(64)],
+    );
     expect(emitFactionReadModels(db)).toEqual([]);
 
     const nodes = db
@@ -131,14 +149,39 @@ describe("faction pipeline", () => {
       { name: "Unnamed faction" },
     );
     expect(
-      db.query(`SELECT name FROM faction_presentation_rows WHERE id = ?`).get(magesGuild),
-    ).toEqual({ name: "Unnamed faction" });
+      db
+        .query(`SELECT name, display_icon_hash FROM faction_presentation_rows WHERE id = ?`)
+        .get(magesGuild),
+    ).toEqual({ name: "Unnamed faction", display_icon_hash: null });
+    expect(
+      db
+        .query(`SELECT display_icon_hash FROM faction_presentation_rows WHERE id = ?`)
+        .get(blackMoth),
+    ).toEqual({ display_icon_hash: "f".repeat(64) });
     expect(db.query("SELECT predicate, label FROM entity_edges ORDER BY edge_id").all()).toEqual([
       { predicate: "starts_opposed_to", label: "Enemy" },
       { predicate: "starts_opposed_to", label: "Standing -600" },
     ]);
   });
 
+  it("diagnoses an authored faction icon without an exported asset", () => {
+    const db = database();
+    canonicaliseFactions(db, envelope());
+
+    const diagnostics = emitFactionReadModels(db);
+    expect(diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "factionIconUnresolved",
+        entityType: "faction",
+        entityId: blackMoth,
+      }),
+    );
+    expect(
+      db
+        .query(`SELECT display_icon_hash FROM faction_presentation_rows WHERE id = ?`)
+        .get(blackMoth),
+    ).toEqual({ display_icon_hash: null });
+  });
   it("treats a whitespace-only faction name as unnamed", () => {
     const db = database();
     db.run(

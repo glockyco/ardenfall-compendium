@@ -32,13 +32,13 @@ public sealed class ExtractionService
         var staging = writer.BeginStaging(request.GameVersion);
         try
         {
-            var assetPlan = new ItemIconAssetPlan();
+            var assetPlan = new IconAssetPlan();
             var extractor = new ItemExtractor(new BuiltLookupTableItemAssetSource(), assetPlan);
             var rows = extractor.Walk().ToList();
             var envelope = new ItemSnapshotEnvelope { Rows = rows };
             var path = writer.WriteEntityFile(staging, "item", envelope);
             var json = File.ReadAllText(path);
-            new ItemAssetManifestWriter(new SpriteAssetExporter()).WriteSlots(staging, assetPlan);
+            new IconAssetManifestWriter(new SpriteAssetExporter()).WriteSlots(staging, assetPlan);
             writer.WriteAssetManifest(staging, assetPlan.Manifest);
             var assetManifestJson = File.ReadAllText(Path.Combine(staging, "asset-manifest.json"));
 

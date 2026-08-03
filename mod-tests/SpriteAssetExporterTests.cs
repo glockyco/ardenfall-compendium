@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using ArdenfallCompendium.Assets;
 using Xunit;
 
@@ -39,6 +40,27 @@ public sealed class SpriteAssetExporterTests
             crop);
     }
 
+    [Fact]
+    public void FailedIconExportProducesEntityFieldDiagnostic()
+    {
+        var plan = new IconAssetPlan();
+        plan.Slots.Add(new IconAssetSlot(
+            "spell",
+            "named;spell;broken",
+            "iconRef",
+            (UnityEngine.Sprite)RuntimeHelpers.GetUninitializedObject(typeof(UnityEngine.Sprite)),
+            "spell",
+            "SpellData.icon"));
+
+        new IconAssetManifestWriter(new SpriteAssetExporter()).WriteSlots("", plan);
+
+        var diagnostic = Assert.Single(plan.Diagnostics);
+        Assert.Equal("assetExportFailed", diagnostic.Code);
+        Assert.Equal("iconRef", diagnostic.Field);
+        Assert.Contains("spell", diagnostic.Message);
+        Assert.Contains("named;spell;broken", diagnostic.Message);
+        Assert.Contains("SpellData.icon", diagnostic.Message);
+    }
     [Fact]
     public void Sha256HexIsContentStable()
     {

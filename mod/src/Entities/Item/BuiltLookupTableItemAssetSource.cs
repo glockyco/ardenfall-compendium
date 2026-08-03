@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System;
 using System.Collections.Generic;
 using Ardenfall;
@@ -12,7 +13,7 @@ public sealed class BuiltLookupTableItemAssetSource : IItemAssetSource
 {
     private readonly Func<IEnumerable<ItemData>> _lookupItems;
     private readonly Func<ItemData, string?> _lookupGuid;
-    private ItemIconAssetPlan? _assetPlan;
+    private IconAssetPlan? _assetPlan;
 
     public BuiltLookupTableItemAssetSource()
         : this(
@@ -29,7 +30,7 @@ public sealed class BuiltLookupTableItemAssetSource : IItemAssetSource
         _lookupGuid = lookupGuid ?? LookupGuid;
     }
 
-    public void AttachAssetPlan(ItemIconAssetPlan? assetPlan) => _assetPlan = assetPlan;
+    public void AttachAssetPlan(IconAssetPlan? assetPlan) => _assetPlan = assetPlan;
 
     public IEnumerable<ItemAsset> EnumerateItems()
     {
@@ -112,7 +113,7 @@ public sealed class BuiltLookupTableItemAssetSource : IItemAssetSource
             Provenance = provenance,
             Diagnostics = diagnostics,
         };
-        if (_assetPlan != null) ItemIconAssetPlanner.CaptureItem(_assetPlan, asset, guid);
+        if (_assetPlan != null) IconAssetPlanner.CaptureItem(_assetPlan, asset, guid);
         return new ItemAsset(guid, asset.name ?? "", row);
     }
 

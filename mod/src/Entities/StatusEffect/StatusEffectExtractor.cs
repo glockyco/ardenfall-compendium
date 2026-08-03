@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities;
@@ -14,9 +15,10 @@ public sealed class StatusEffectExtractor : WalkerBase<StatusEffectSnapshotRow>
     {
     }
 
-    public StatusEffectExtractor(IStatusEffectAssetSource source)
+    public StatusEffectExtractor(IStatusEffectAssetSource source, IconAssetPlan? assetPlan = null)
     {
         _source = source;
+        if (source is IIconAssetPlanSink sink) sink.AttachAssetPlan(assetPlan);
     }
 
     public override IEnumerable<StatusEffectSnapshotRow> Walk()

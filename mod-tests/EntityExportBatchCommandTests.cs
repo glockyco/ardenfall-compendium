@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -106,7 +107,7 @@ public sealed class EntityExportBatchCommandTests
 
         public IReadOnlyList<ItemSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
-        public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => new();
+        public IconAssetPlan GetAssetPlan(CompendiumRun run) => new();
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
     }

@@ -1,8 +1,5 @@
-using System.Collections.Generic;
 using Ardenfall;
 using Ardenfall.Item;
-using ArdenfallCompendium.Assets;
-using ArdenfallCompendium.Dtos;
 using UnityEngine;
 
 namespace ArdenfallCompendium.Entities.Item;
@@ -58,67 +55,5 @@ public static class ItemIconSlots
         if (item is SlateSpellItemData slate) return slate.quickslotSecondaryColor?.Get();
         if (item is ThrowingPotionData potion) return potion.quickslotSecondaryColor?.Get();
         return null;
-    }
-}
-
-public sealed record ItemIconAssetSlot(string EntityId, string RowId, string Slot, Sprite Sprite, string OutputSubdir);
-
-public interface IIconAssetPlanSink
-{
-    void AttachAssetPlan(ItemIconAssetPlan? assetPlan);
-}
-
-public sealed class ItemIconAssetPlan
-{
-    public List<ItemIconAssetSlot> Slots { get; } = new();
-    public AssetManifest Manifest { get; } = new();
-}
-
-public static class ItemIconAssetPlanner
-{
-    public static void CaptureItem(ItemIconAssetPlan plan, ItemData item, string rowId)
-    {
-        CaptureSlot(plan, rowId, "displayIcon", ItemIconSlots.DisplayIcon(item));
-        CaptureSlot(plan, rowId, "secondaryIcon", ItemIconSlots.SecondaryIcon(item));
-        var secondaryColor = ItemIconSlots.SecondaryColor(item);
-        plan.Manifest.ItemIconMetadata.Add(new ItemIconMetadataEntry
-        {
-            EntityId = "item",
-            RowId = rowId,
-            DisplayIconColor = AssetColorSnapshot.FromColor(ItemIconSlots.DisplayColor(item)),
-            SecondaryIconColor = secondaryColor.HasValue ? AssetColorSnapshot.FromColor(secondaryColor.Value) : null,
-        });
-    }
-
-    private static void CaptureSlot(ItemIconAssetPlan plan, string rowId, string slot, Sprite? sprite)
-    {
-        if (sprite != null) plan.Slots.Add(new ItemIconAssetSlot("item", rowId, slot, sprite, "item"));
-    }
-}
-
-public sealed class ItemAssetManifestWriter
-{
-    private readonly SpriteAssetExporter _exporter;
-
-    public ItemAssetManifestWriter(SpriteAssetExporter exporter)
-    {
-        _exporter = exporter;
-    }
-
-    public void WriteSlots(string outputDir, ItemIconAssetPlan plan)
-    {
-        foreach (var slot in plan.Slots)
-        {
-            var exported = _exporter.WriteSpritePng(slot.Sprite, outputDir, slot.OutputSubdir);
-            plan.Manifest.Assets.Add(new AssetManifestEntry
-            {
-                EntityId = slot.EntityId,
-                RowId = slot.RowId,
-                Slot = slot.Slot,
-                Kind = "image",
-                PngHash = exported.PngHash,
-                SourcePath = exported.SourcePath,
-            });
-        }
     }
 }

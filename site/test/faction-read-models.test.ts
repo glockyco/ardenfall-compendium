@@ -19,7 +19,7 @@ const seed = () => {
       name TEXT,
       render_context TEXT NOT NULL,
       description TEXT NOT NULL,
-      icon_ref_json TEXT,
+      display_icon_hash TEXT,
       alliable INTEGER NOT NULL,
       enable_reputation INTEGER NOT NULL,
       always_show_in_ui INTEGER NOT NULL,
@@ -41,9 +41,9 @@ const seed = () => {
       ('faction-black-moth-a', 'Black Moth', 'A hidden order.'),
       ('faction-black-moth-b', 'Black Moth', 'A second order.');
     INSERT INTO faction_presentation_rows VALUES
-      ('faction-nameless', NULL, 'faction-presentation-v1', '', '{}', 0, 1, 1, 0, 1),
-      ('faction-black-moth-a', 'Black Moth', 'faction-presentation-v1', 'A hidden order.', '{}', 1, 1, 0, 1, 0),
-      ('faction-black-moth-b', 'Black Moth', 'faction-presentation-v1', 'A second order.', '{}', 1, 0, 1, 0, 0);
+      ('faction-nameless', NULL, 'faction-presentation-v1', '', NULL, 0, 1, 1, 0, 1),
+      ('faction-black-moth-a', 'Black Moth', 'faction-presentation-v1', 'A hidden order.', 'faction-icon-hash', 1, 1, 0, 1, 0),
+      ('faction-black-moth-b', 'Black Moth', 'faction-presentation-v1', 'A second order.', NULL, 1, 0, 1, 0, 0);
     INSERT INTO entity_nodes VALUES
       ('faction', 'faction-nameless', 'Unnamed faction', '/factions/unnamed-faction--aaaa1111', 'unnamed-faction--aaaa1111', 'aaaa1111', 1),
       ('faction', 'faction-black-moth-a', 'Black Moth', '/factions/black-moth--bbbb2222', 'black-moth--bbbb2222', 'bbbb2222', 1),
@@ -110,7 +110,22 @@ describe("faction read-model accessors", () => {
         alwaysShowInUI: true,
         canBeDisguised: false,
         enableBounty: true,
+        displayIconSrc: null,
         routePath: "/factions/unnamed-faction--aaaa1111",
+      });
+      expect(readModels.getFactionPresentation("black-moth--bbbb2222")).toEqual({
+        id: "faction-black-moth-a",
+        name: "Black Moth",
+        renderContext: "faction-presentation-v1",
+        displayName: "Black Moth",
+        description: "A hidden order.",
+        alliable: true,
+        enableReputation: true,
+        alwaysShowInUI: false,
+        canBeDisguised: true,
+        enableBounty: false,
+        displayIconSrc: "/assets/faction-icon-hash.webp",
+        routePath: "/factions/black-moth--bbbb2222",
       });
       expect(readModels.getFactionPresentation("missing--99999999")).toBeUndefined();
     });

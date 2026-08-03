@@ -1,8 +1,8 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using System.Linq;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities;
-using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Walker;
 using UnityEngine;
 
@@ -11,14 +11,14 @@ namespace ArdenfallCompendium.Entities.StatType;
 public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
 {
     private readonly IStatTypeAssetSource _source;
-    private readonly ItemIconAssetPlan? _assetPlan;
+    private readonly IconAssetPlan? _assetPlan;
 
     public StatTypeExtractor()
         : this(new LoadedStatTypeAssetSource(), assetPlan: null)
     {
     }
 
-    public StatTypeExtractor(IStatTypeAssetSource source, ItemIconAssetPlan? assetPlan = null)
+    public StatTypeExtractor(IStatTypeAssetSource source, IconAssetPlan? assetPlan = null)
     {
         _source = source;
         _assetPlan = assetPlan;

@@ -1,5 +1,6 @@
 <script lang="ts">
   import BackLink from "$lib/components/navigation/BackLink.svelte";
+  import EntityDetailHeader from "$lib/components/EntityDetailHeader.svelte";
   import RichText from "$lib/components/content/RichText.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
@@ -30,7 +31,7 @@
 </svelte:head>
 
 <BackLink href={data.statusEffectRoute} label="status effects" />
-<h1 class="mt-2 text-2xl font-bold">{statusEffect.displayName}</h1>
+<EntityDetailHeader title={statusEffect.displayName} iconSrc={statusEffect.displayIconSrc} />
 
 <div class="mt-4 grid gap-6">
   <div class="border-border bg-card rounded-lg border p-5">

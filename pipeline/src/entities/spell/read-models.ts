@@ -17,6 +17,7 @@ CREATE TABLE spell_presentation_rows (
   id             TEXT PRIMARY KEY,
   name           TEXT NOT NULL,
   render_context TEXT NOT NULL,
+  display_icon_hash TEXT,
   skill         TEXT,
   skill_id      TEXT,
   mana_cost      REAL,
@@ -34,6 +35,8 @@ interface SpellRow {
   mana_cost: number | null;
   is_illegal: number | null;
   tooltip_source: string | null;
+  icon_ref_json: string | null;
+  display_icon_hash: string | null;
 }
 
 interface PageStatType {
@@ -85,9 +88,9 @@ export function emitSpellReadModels(
   );
   const presentationInsert = db.prepare(
     `INSERT INTO spell_presentation_rows (
-       id, name, render_context, skill, skill_id, mana_cost, is_illegal,
+       id, name, render_context, display_icon_hash, skill, skill_id, mana_cost, is_illegal,
        tooltip_source, tooltip_rich_text_json, effects_json
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const edgeInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_edges (
@@ -116,9 +119,16 @@ export function emitSpellReadModels(
   }
   const rows = db
     .query<SpellRow, []>(
-      `SELECT id, spell_name, stat_type_ref_json, mana_cost, is_illegal, tooltip_source
-       FROM spells
-       ORDER BY COALESCE(NULLIF(TRIM(spell_name), ''), 'Unnamed spell'), id`,
+      `SELECT s.id, s.spell_name, s.stat_type_ref_json, s.mana_cost, s.is_illegal,
+              s.tooltip_source, s.icon_ref_json,
+              icon.asset_hash AS display_icon_hash
+       FROM spells s
+       LEFT JOIN asset_refs icon
+         ON icon.entity_id = 'spell'
+        AND icon.entity_row_id = s.id
+        AND icon.slot = 'iconRef'
+        AND icon.asset_kind = 'image'
+       ORDER BY COALESCE(NULLIF(TRIM(s.spell_name), ''), 'Unnamed spell'), s.id`,
     )
     .all();
   const statusEffects = new Map<string, { label: string | null }>();
@@ -153,6 +163,18 @@ export function emitSpellReadModels(
   const tx = db.transaction(() => {
     for (const row of rows) {
       const presentationName = row.spell_name?.trim() || "Unnamed spell";
+      if (hasAuthoredIconReference(row.icon_ref_json) && row.display_icon_hash === null) {
+        diagnostics.push({
+          severity: "diagnostic",
+          source: "spell-read-model",
+          code: "spellIconUnresolved",
+          message: `Spell '${row.id}' has an unresolvable icon reference.`,
+          entityType: "spell",
+          entityId: row.id,
+          field: "spells.icon_ref_json",
+          evidence: { iconRef: row.icon_ref_json },
+        });
+      }
       const skill = resolveSkill(row, pageStats, diagnostics);
       const tooltip =
         row.tooltip_source === null
@@ -255,6 +277,7 @@ export function emitSpellReadModels(
         row.id,
         presentationName,
         "spell-presentation-v1",
+        row.display_icon_hash,
         skill?.label ?? null,
         skill?.id ?? null,
         row.mana_cost,
@@ -340,6 +363,16 @@ function resolveStatusEffectId(value: string | null): string | null {
     return `named;status-effect;${ref.name}`;
   }
   return null;
+}
+
+function hasAuthoredIconReference(value: string | null): boolean {
+  if (value === null) return false;
+  try {
+    const parsed = JSON.parse(value) as { kind?: unknown };
+    return parsed.kind !== "missing";
+  } catch {
+    return true;
+  }
 }
 
 function unresolvedSkillDiagnostic(row: SpellRow, reason: string): PipelineDiagnostic {

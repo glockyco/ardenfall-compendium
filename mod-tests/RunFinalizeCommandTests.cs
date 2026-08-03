@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -308,7 +309,7 @@ public sealed class RunFinalizeCommandTests
             Id = "item-a",
             Fields = new Dictionary<string, object?>(),
         });
-        var assetPlan = new ItemIconAssetPlan();
+        var assetPlan = new IconAssetPlan();
         assetPlan.Manifest.ItemIconMetadata.Add(new ItemIconMetadataEntry
         {
             EntityId = "item",
@@ -372,7 +373,7 @@ public sealed class RunFinalizeCommandTests
             Id = "item-a",
             Fields = new Dictionary<string, object?>(),
         });
-        var statAssetPlan = new ItemIconAssetPlan();
+        var statAssetPlan = new IconAssetPlan();
         statAssetPlan.Manifest.Assets.Add(new AssetManifestEntry
         {
             EntityId = "stat-type",
@@ -444,7 +445,7 @@ public sealed class RunFinalizeCommandTests
             Id = "item-a",
             Fields = new Dictionary<string, object?>(),
         });
-        var categoryAssetPlan = new ItemIconAssetPlan();
+        var categoryAssetPlan = new IconAssetPlan();
         categoryAssetPlan.Manifest.Assets.Add(new AssetManifestEntry
         {
             EntityId = "item-category",
@@ -793,12 +794,12 @@ public sealed class RunFinalizeCommandTests
     private sealed class FakeItemExtractionCache : IItemExtractionCache
     {
         private readonly IReadOnlyList<Diagnostic> _diagnostics;
-        private readonly ItemIconAssetPlan _assetPlan;
+        private readonly IconAssetPlan _assetPlan;
 
-        public FakeItemExtractionCache(IReadOnlyList<Diagnostic> diagnostics, ItemIconAssetPlan? assetPlan = null)
+        public FakeItemExtractionCache(IReadOnlyList<Diagnostic> diagnostics, IconAssetPlan? assetPlan = null)
         {
             _diagnostics = diagnostics;
-            _assetPlan = assetPlan ?? new ItemIconAssetPlan();
+            _assetPlan = assetPlan ?? new IconAssetPlan();
         }
 
         public int EvictionCount { get; private set; }
@@ -807,7 +808,7 @@ public sealed class RunFinalizeCommandTests
 
         public IReadOnlyList<ItemSnapshotRow> GetOrExtract(CompendiumRun run) => System.Array.Empty<ItemSnapshotRow>();
 
-        public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
+        public IconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => _diagnostics;
     }
@@ -815,19 +816,19 @@ public sealed class RunFinalizeCommandTests
     private sealed class FakeStatTypeExtractionCache : IStatTypeExtractionCache
     {
         private readonly IReadOnlyList<StatTypeSnapshotRow> _rows;
-        private readonly ItemIconAssetPlan _assetPlan;
+        private readonly IconAssetPlan _assetPlan;
 
-        public FakeStatTypeExtractionCache(IReadOnlyList<StatTypeSnapshotRow> rows, ItemIconAssetPlan? assetPlan = null)
+        public FakeStatTypeExtractionCache(IReadOnlyList<StatTypeSnapshotRow> rows, IconAssetPlan? assetPlan = null)
         {
             _rows = rows;
-            _assetPlan = assetPlan ?? new ItemIconAssetPlan();
+            _assetPlan = assetPlan ?? new IconAssetPlan();
         }
 
         public void Evict(CompendiumRun run) { }
 
         public IReadOnlyList<StatTypeSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
-        public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
+        public IconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
     }
@@ -839,7 +840,7 @@ public sealed class RunFinalizeCommandTests
         public IReadOnlyList<SpellSnapshotRow> GetOrExtract(CompendiumRun run) =>
             System.Array.Empty<SpellSnapshotRow>();
 
-        public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => new();
+        public IconAssetPlan GetAssetPlan(CompendiumRun run) => new();
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) =>
             System.Array.Empty<Diagnostic>();
@@ -858,10 +859,19 @@ public sealed class RunFinalizeCommandTests
 
     private sealed class FakeStatusEffectExtractionCache : IStatusEffectExtractionCache
     {
+        private readonly IconAssetPlan _assetPlan;
+
+        public FakeStatusEffectExtractionCache(IconAssetPlan? assetPlan = null)
+        {
+            _assetPlan = assetPlan ?? new IconAssetPlan();
+        }
+
         public void Evict(CompendiumRun run) { }
 
         public IReadOnlyList<StatusEffectSnapshotRow> GetOrExtract(CompendiumRun run) =>
             System.Array.Empty<StatusEffectSnapshotRow>();
+
+        public IconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) =>
             System.Array.Empty<Diagnostic>();
@@ -888,19 +898,19 @@ public sealed class RunFinalizeCommandTests
     private sealed class FakeItemCategoryExtractionCache : IItemCategoryExtractionCache
     {
         private readonly IReadOnlyList<ItemCategorySnapshotRow> _rows;
-        private readonly ItemIconAssetPlan _assetPlan;
+        private readonly IconAssetPlan _assetPlan;
 
-        public FakeItemCategoryExtractionCache(IReadOnlyList<ItemCategorySnapshotRow> rows, ItemIconAssetPlan? assetPlan = null)
+        public FakeItemCategoryExtractionCache(IReadOnlyList<ItemCategorySnapshotRow> rows, IconAssetPlan? assetPlan = null)
         {
             _rows = rows;
-            _assetPlan = assetPlan ?? new ItemIconAssetPlan();
+            _assetPlan = assetPlan ?? new IconAssetPlan();
         }
 
         public void Evict(CompendiumRun run) { }
 
         public IReadOnlyList<ItemCategorySnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
-        public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
+        public IconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
     }
@@ -942,15 +952,19 @@ public sealed class RunFinalizeCommandTests
     private sealed class FakeFactionExtractionCache : IFactionExtractionCache
     {
         private readonly IReadOnlyList<FactionSnapshotRow> _rows;
+        private readonly IconAssetPlan _assetPlan;
 
-        public FakeFactionExtractionCache(IReadOnlyList<FactionSnapshotRow> rows)
+        public FakeFactionExtractionCache(IReadOnlyList<FactionSnapshotRow> rows, IconAssetPlan? assetPlan = null)
         {
             _rows = rows;
+            _assetPlan = assetPlan ?? new IconAssetPlan();
         }
 
         public void Evict(CompendiumRun run) { }
 
         public IReadOnlyList<FactionSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
+
+        public IconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
     }

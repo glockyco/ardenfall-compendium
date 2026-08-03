@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using ArdenfallCompendium.Control;
 using ArdenfallCompendium.Dtos;
@@ -9,7 +10,7 @@ public interface IItemExtractionCache : IExtractionCache
 {
     IReadOnlyList<ItemSnapshotRow> GetOrExtract(CompendiumRun run);
 
-    ItemIconAssetPlan GetAssetPlan(CompendiumRun run);
+    IconAssetPlan GetAssetPlan(CompendiumRun run);
 
     IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run);
 }

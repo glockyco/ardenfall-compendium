@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System;
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
@@ -15,9 +16,10 @@ public sealed class FactionExtractor : WalkerBase<FactionSnapshotRow>
     {
     }
 
-    public FactionExtractor(IFactionAssetSource source)
+    public FactionExtractor(IFactionAssetSource source, IconAssetPlan? assetPlan = null)
     {
         _source = source;
+        if (source is IIconAssetPlanSink sink) sink.AttachAssetPlan(assetPlan);
     }
 
     public override IEnumerable<FactionSnapshotRow> Walk()

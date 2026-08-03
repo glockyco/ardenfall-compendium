@@ -1,5 +1,6 @@
 <script lang="ts">
   import BackLink from "$lib/components/navigation/BackLink.svelte";
+  import EntityDetailHeader from "$lib/components/EntityDetailHeader.svelte";
   import RichText from "$lib/components/content/RichText.svelte";
   import SpellEffectList from "$lib/components/spells/SpellEffectList.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
@@ -26,7 +27,7 @@
 </svelte:head>
 
 <BackLink href={data.spellRoute} label="spells" />
-<h1 class="mt-2 text-2xl font-bold">{spell.name}</h1>
+<EntityDetailHeader title={spell.name} iconSrc={spell.displayIconSrc} />
 
 <div class="mt-4 grid gap-6">
   <div class="border-border bg-card rounded-lg border p-5">

@@ -14,7 +14,7 @@ CREATE TABLE faction_presentation_rows (
   name                TEXT NOT NULL,
   render_context      TEXT NOT NULL,
   description         TEXT NOT NULL,
-  icon_ref_json       TEXT,
+  display_icon_hash   TEXT,
   alliable            INTEGER NOT NULL,
   enable_reputation   INTEGER NOT NULL,
   always_show_in_ui   INTEGER NOT NULL,
@@ -28,6 +28,7 @@ interface FactionRow {
   name: string | null;
   description: string;
   icon_ref_json: string | null;
+  display_icon_hash: string | null;
   alliable: number;
   enable_reputation: number;
   always_show_in_ui: number;
@@ -52,7 +53,7 @@ export function emitFactionReadModels(db: Database, routeBase = "/factions"): Pi
   );
   const presentationInsert = db.prepare(
     `INSERT INTO faction_presentation_rows (
-      id, name, render_context, description, icon_ref_json, alliable, enable_reputation,
+      id, name, render_context, description, display_icon_hash, alliable, enable_reputation,
       always_show_in_ui, can_be_disguised, enable_bounty
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
@@ -65,10 +66,17 @@ export function emitFactionReadModels(db: Database, routeBase = "/factions"): Pi
   const writeNode = prepareEntityNodeWriter(db);
   const rows = db
     .query<FactionRow, []>(
-      `SELECT id, name, description, icon_ref_json, alliable, enable_reputation,
-              always_show_in_ui, can_be_disguised, enable_bounty
-       FROM factions
-       ORDER BY COALESCE(NULLIF(TRIM(name), ''), 'Unnamed faction'), id`,
+      `SELECT f.id, f.name, f.description, f.icon_ref_json,
+              icon.asset_hash AS display_icon_hash,
+              f.alliable, f.enable_reputation,
+              f.always_show_in_ui, f.can_be_disguised, f.enable_bounty
+       FROM factions f
+       LEFT JOIN asset_refs icon
+         ON icon.entity_id = 'faction'
+        AND icon.entity_row_id = f.id
+        AND icon.slot = 'iconRef'
+        AND icon.asset_kind = 'image'
+       ORDER BY COALESCE(NULLIF(TRIM(f.name), ''), 'Unnamed faction'), f.id`,
     )
     .all();
   const factionIds = new Set(rows.map((row) => row.id));
@@ -84,13 +92,25 @@ export function emitFactionReadModels(db: Database, routeBase = "/factions"): Pi
   const tx = db.transaction(() => {
     for (const row of rows) {
       const label = row.name?.trim() || "Unnamed faction";
+      if (hasAuthoredIconReference(row.icon_ref_json) && row.display_icon_hash === null) {
+        diagnostics.push({
+          severity: "diagnostic",
+          source: "faction-read-model",
+          code: "factionIconUnresolved",
+          message: `Faction '${row.id}' has an unresolvable icon reference.`,
+          entityType: "faction",
+          entityId: row.id,
+          field: "factions.icon_ref_json",
+          evidence: { iconRef: row.icon_ref_json },
+        });
+      }
       overviewInsert.run(row.id, label, row.description);
       presentationInsert.run(
         row.id,
         label,
         "faction-presentation-v1",
         row.description,
-        row.icon_ref_json,
+        row.display_icon_hash,
         row.alliable,
         row.enable_reputation,
         row.always_show_in_ui,
@@ -144,4 +164,14 @@ export function emitFactionReadModels(db: Database, routeBase = "/factions"): Pi
   });
   tx();
   return diagnostics;
+}
+
+function hasAuthoredIconReference(value: string | null): boolean {
+  if (value === null) return false;
+  try {
+    const parsed = JSON.parse(value) as { kind?: unknown };
+    return parsed.kind !== "missing";
+  } catch {
+    return true;
+  }
 }

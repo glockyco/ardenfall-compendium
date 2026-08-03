@@ -1,5 +1,5 @@
 import { disambiguateLabels } from "../disambiguate-labels";
-import { all, get } from "../db";
+import { all, assetSrc, get } from "../db";
 import { isRichTextDocument, parseGeneratedJson, validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
 import type { RichTextDocument } from "./item";
@@ -19,6 +19,7 @@ interface StatusEffectPresentationRecord {
   render_context: string;
   is_hostile: number;
   tooltip_rich_text_json: string | null;
+  display_icon_hash: string | null;
   route_path: string;
 }
 export interface StatusEffectOverviewRow {
@@ -38,6 +39,7 @@ export interface StatusEffectPresentationRow {
   descriptionText: string | null;
   displayName: string;
   isHostile: boolean;
+  displayIconSrc: string | null;
   routePath: string;
 }
 
@@ -84,7 +86,7 @@ export const getStatusEffectPresentation = (
   if (!node) return undefined;
   const row = get<StatusEffectPresentationRecord>(
     `SELECT p.id, p.name, p.render_context, p.is_hostile, p.tooltip_rich_text_json,
-            n.route_path
+            p.display_icon_hash, n.route_path
      FROM status_effect_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'status-effect'
@@ -116,6 +118,7 @@ export const getStatusEffectPresentation = (
     descriptionText: description ? richTextPlainText(description) : null,
     displayName: statusEffectName(row.name, description),
     isHostile: row.is_hostile === 1,
+    displayIconSrc: assetSrc(row.display_icon_hash),
     routePath: row.route_path,
   };
 };

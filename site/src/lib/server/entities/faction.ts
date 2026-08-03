@@ -1,5 +1,5 @@
 import { disambiguateLabels } from "../disambiguate-labels";
-import { all, get } from "../db";
+import { all, assetSrc, get } from "../db";
 import { validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
 
@@ -21,6 +21,7 @@ interface FactionPresentationRecord {
   always_show_in_ui: number;
   can_be_disguised: number;
   enable_bounty: number;
+  display_icon_hash: string | null;
   route_path: string;
 }
 
@@ -43,6 +44,7 @@ export interface FactionPresentationRow {
   alwaysShowInUI: boolean;
   canBeDisguised: boolean;
   enableBounty: boolean;
+  displayIconSrc: string | null;
   routePath: string;
 }
 
@@ -74,7 +76,7 @@ export const getFactionPresentation = (slug: string): FactionPresentationRow | u
   const row = get<FactionPresentationRecord>(
     `SELECT p.id, p.name, p.render_context, p.description, p.alliable,
             p.enable_reputation, p.always_show_in_ui, p.can_be_disguised, p.enable_bounty,
-            n.route_path
+            p.display_icon_hash, n.route_path
      FROM faction_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'faction'
@@ -100,6 +102,7 @@ export const getFactionPresentation = (slug: string): FactionPresentationRow | u
     alwaysShowInUI: row.always_show_in_ui === 1,
     canBeDisguised: row.can_be_disguised === 1,
     enableBounty: row.enable_bounty === 1,
+    displayIconSrc: assetSrc(row.display_icon_hash),
     routePath: row.route_path,
   };
 };

@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -221,6 +222,46 @@ public sealed class SpellExtractorTests
 
         Assert.Equal(new[] { "Alpha", "Zed" }, firstCall);
         Assert.Equal(firstCall, secondCall);
+    }
+
+    [Fact]
+    public void LoadedSpellSourceCapturesIconSlot()
+    {
+        var spell = RuntimeSpell("spell-with-icon", "With Icon");
+        spell.icon = (Sprite)RuntimeHelpers.GetUninitializedObject(typeof(Sprite));
+        var source = new LoadedSpellAssetSource(
+            loadedSpells: () => new[] { spell },
+            isUnityNull: _ => false,
+            assetName: _ => "With Icon",
+            isAuthoredAsset: _ => true);
+        var plan = new IconAssetPlan();
+        source.AttachAssetPlan(plan);
+
+        _ = source.EnumerateSpells().ToList();
+
+        var slot = Assert.Single(plan.Slots);
+        Assert.Equal("spell", slot.EntityId);
+        Assert.Equal("named;spell;With Icon", slot.RowId);
+        Assert.Equal("iconRef", slot.Slot);
+        Assert.Equal("SpellData.icon", slot.SourceField);
+    }
+
+    [Fact]
+    public void LoadedSpellSourceDoesNotCaptureMissingIcon()
+    {
+        var spell = RuntimeSpell("spell-without-icon", "Without Icon");
+        var source = new LoadedSpellAssetSource(
+            loadedSpells: () => new[] { spell },
+            isUnityNull: _ => false,
+            assetName: _ => "Without Icon",
+            isAuthoredAsset: _ => true);
+        var plan = new IconAssetPlan();
+        source.AttachAssetPlan(plan);
+
+        _ = source.EnumerateSpells().ToList();
+
+        Assert.Empty(plan.Slots);
+        Assert.Empty(plan.Diagnostics);
     }
 
     private sealed class FakeSpellAssetSource : ISpellAssetSource

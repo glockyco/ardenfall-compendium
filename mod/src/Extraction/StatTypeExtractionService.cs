@@ -1,8 +1,8 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using ArdenfallCompendium.Control;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities.StatType;
-using ArdenfallCompendium.Entities.Item;
 
 namespace ArdenfallCompendium.Extraction;
 
@@ -20,7 +20,7 @@ public sealed class StatTypeExtractionService : IStatTypeExtractionCache
 
     public void Evict(CompendiumRun run) => _byRun.Remove(run.RunId);
 
-    public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => GetState(run).AssetPlan;
+    public IconAssetPlan GetAssetPlan(CompendiumRun run) => GetState(run).AssetPlan;
 
     public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => GetState(run).WalkerDiagnostics;
 
@@ -28,7 +28,7 @@ public sealed class StatTypeExtractionService : IStatTypeExtractionCache
     {
         if (_byRun.TryGetValue(run.RunId, out var state)) return state;
 
-        var assetPlan = new ItemIconAssetPlan();
+        var assetPlan = new IconAssetPlan();
         var extractor = new StatTypeExtractor(_source, assetPlan);
         var rows = new List<StatTypeSnapshotRow>();
         foreach (var row in extractor.Walk()) rows.Add(row);
@@ -40,6 +40,6 @@ public sealed class StatTypeExtractionService : IStatTypeExtractionCache
 
     private sealed record ExtractionState(
         IReadOnlyList<StatTypeSnapshotRow> Rows,
-        ItemIconAssetPlan AssetPlan,
+        IconAssetPlan AssetPlan,
         IReadOnlyList<Diagnostic> WalkerDiagnostics);
 }

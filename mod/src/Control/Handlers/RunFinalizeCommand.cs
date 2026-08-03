@@ -181,26 +181,34 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             var spellAssetPlan = _spells.GetAssetPlan(run);
             var characterRows = _characters.GetOrExtract(run).ToList();
             var statusEffectRows = _statusEffects.GetOrExtract(run).ToList();
+            var statusEffectAssetPlan = _statusEffects.GetAssetPlan(run);
             var itemCategoryRows = _itemCategories.GetOrExtract(run).ToList();
             var itemCategoryAssetPlan = _itemCategories.GetAssetPlan(run);
             var itemTagRows = _itemTags.GetOrExtract(run).ToList();
             var locationRows = _locations.GetOrExtract(run).ToList();
             var portalRows = _portals.GetOrExtract(run).ToList();
             var factionRows = _factions.GetOrExtract(run).ToList();
+            var factionAssetPlan = _factions.GetAssetPlan(run);
             var npcRows = _npcs.GetOrExtract(run).ToList();
             RecordTiming(timings, "related.extract", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
             var assetPlan = _items.GetAssetPlan(run);
-            var assetWriter = new ItemAssetManifestWriter(new SpriteAssetExporter());
+            var assetWriter = new IconAssetManifestWriter(new SpriteAssetExporter());
             assetWriter.WriteSlots(stagingDir, assetPlan);
             assetWriter.WriteSlots(stagingDir, statTypeAssetPlan);
             assetWriter.WriteSlots(stagingDir, spellAssetPlan);
+            assetWriter.WriteSlots(stagingDir, statusEffectAssetPlan);
+            assetWriter.WriteSlots(stagingDir, factionAssetPlan);
             assetWriter.WriteSlots(stagingDir, itemCategoryAssetPlan);
             assetPlan.Manifest.Assets.AddRange(statTypeAssetPlan.Manifest.Assets);
             assetPlan.Manifest.ItemIconMetadata.AddRange(statTypeAssetPlan.Manifest.ItemIconMetadata);
             assetPlan.Manifest.Assets.AddRange(spellAssetPlan.Manifest.Assets);
             assetPlan.Manifest.ItemIconMetadata.AddRange(spellAssetPlan.Manifest.ItemIconMetadata);
+            assetPlan.Manifest.Assets.AddRange(statusEffectAssetPlan.Manifest.Assets);
+            assetPlan.Manifest.ItemIconMetadata.AddRange(statusEffectAssetPlan.Manifest.ItemIconMetadata);
+            assetPlan.Manifest.Assets.AddRange(factionAssetPlan.Manifest.Assets);
+            assetPlan.Manifest.ItemIconMetadata.AddRange(factionAssetPlan.Manifest.ItemIconMetadata);
             assetPlan.Manifest.Assets.AddRange(itemCategoryAssetPlan.Manifest.Assets);
             assetPlan.Manifest.ItemIconMetadata.AddRange(itemCategoryAssetPlan.Manifest.ItemIconMetadata);
             WriteJson(stagingDir, "asset-manifest.json", assetPlan.Manifest, hashes);
@@ -237,11 +245,23 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
+            foreach (var diagnostic in assetPlan.Diagnostics)
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
             foreach (var diagnostic in _statTypes.GetWalkerDiagnostics(run))
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
+            foreach (var diagnostic in statTypeAssetPlan.Diagnostics)
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
             foreach (var diagnostic in _spells.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in spellAssetPlan.Diagnostics)
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
@@ -253,7 +273,15 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
+            foreach (var diagnostic in statusEffectAssetPlan.Diagnostics)
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
             foreach (var diagnostic in _itemCategories.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in itemCategoryAssetPlan.Diagnostics)
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
@@ -270,6 +298,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
             foreach (var diagnostic in _factions.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in factionAssetPlan.Diagnostics)
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }

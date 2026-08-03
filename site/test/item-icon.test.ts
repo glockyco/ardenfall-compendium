@@ -7,6 +7,14 @@ const builtItemsPage = [
   join(import.meta.dir, "../.svelte-kit/cloudflare/items.html"),
 ].find(existsSync);
 if (!builtItemsPage) throw new Error("missing built item overview page");
+const detailHeaderSource = readFileSync(
+  join(import.meta.dir, "../src/lib/components/EntityDetailHeader.svelte"),
+  "utf8",
+);
+const itemIconSource = readFileSync(
+  join(import.meta.dir, "../src/lib/components/items/ItemIcon.svelte"),
+  "utf8",
+);
 
 describe("ItemIcon rendering", () => {
   it("renders a tinted bitmap icon in the built item overview", () => {
@@ -21,6 +29,13 @@ describe("ItemIcon rendering", () => {
     );
   });
 
+  it("renders the shared icon shell only for a resolved row icon", () => {
+    expect(detailHeaderSource).toContain("{#if iconSrc}");
+    expect(detailHeaderSource).toContain('<ItemIcon src={iconSrc} size="lg" />');
+    expect(detailHeaderSource).not.toContain("{:else}");
+    expect(itemIconSource).toContain('alt = ""');
+    expect(itemIconSource).toContain("aria-hidden={alt.length === 0}");
+  });
   it("renders bitmap image elements in the built item overview", () => {
     const output = readFileSync(builtItemsPage, "utf8");
 

@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using ArdenfallCompendium.Control;
 using ArdenfallCompendium.Dtos;
@@ -21,13 +22,13 @@ public sealed class ItemExtractionService : IItemExtractionCache
 
     public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => GetState(run).WalkerDiagnostics;
 
-    public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => GetState(run).AssetPlan;
+    public IconAssetPlan GetAssetPlan(CompendiumRun run) => GetState(run).AssetPlan;
 
     private ExtractionState GetState(CompendiumRun run)
     {
         if (_byRun.TryGetValue(run.RunId, out var state)) return state;
 
-        var assetPlan = new ItemIconAssetPlan();
+        var assetPlan = new IconAssetPlan();
         var extractor = new ItemExtractor(_source, assetPlan);
         var rows = new List<ItemSnapshotRow>();
         foreach (var row in extractor.Walk()) rows.Add(row);
@@ -39,6 +40,6 @@ public sealed class ItemExtractionService : IItemExtractionCache
 
     private sealed record ExtractionState(
         IReadOnlyList<ItemSnapshotRow> Rows,
-        ItemIconAssetPlan AssetPlan,
+        IconAssetPlan AssetPlan,
         IReadOnlyList<Diagnostic> WalkerDiagnostics);
 }

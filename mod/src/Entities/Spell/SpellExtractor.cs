@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities;
@@ -14,9 +15,10 @@ public sealed class SpellExtractor : WalkerBase<SpellSnapshotRow>
     {
     }
 
-    public SpellExtractor(ISpellAssetSource source)
+    public SpellExtractor(ISpellAssetSource source, IconAssetPlan? assetPlan = null)
     {
         _source = source;
+        if (source is IIconAssetPlanSink sink) sink.AttachAssetPlan(assetPlan);
     }
 
     public override IEnumerable<SpellSnapshotRow> Walk()

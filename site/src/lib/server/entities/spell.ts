@@ -1,5 +1,5 @@
 import { disambiguateLabels } from "../disambiguate-labels";
-import { all, get } from "../db";
+import { all, assetSrc, get } from "../db";
 import { isRecord, isRichTextDocument, parseGeneratedJson, validateRenderContext } from "../json";
 import type { RichTextDocument } from "./item";
 import { getEntityNodeBySlug } from "./item";
@@ -57,6 +57,7 @@ interface SpellPresentationRecord {
   is_illegal: number;
   tooltip_rich_text_json: string | null;
   effects_json: string;
+  display_icon_hash: string | null;
   /** Joined from the governing skill's node with a page, null when the spell has none. */
   skill_route_path: string | null;
   route_path: string;
@@ -94,6 +95,7 @@ export interface SpellPresentationRow {
   description: RichTextDocument | null;
   descriptionText: string | null;
   effects: SpellPresentationEffect[];
+  displayIconSrc: string | null;
   routePath: string;
 }
 
@@ -127,6 +129,7 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
     `SELECT p.id, p.name, p.render_context, p.skill, p.mana_cost, p.is_illegal,
             p.tooltip_rich_text_json,
             p.effects_json,
+            p.display_icon_hash,
             sn.route_path AS skill_route_path,
             n.route_path
      FROM spell_presentation_rows p
@@ -170,6 +173,7 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
     description,
     descriptionText: description ? richTextPlainText(description) : null,
     effects,
+    displayIconSrc: assetSrc(row.display_icon_hash),
     routePath: row.route_path,
   };
 };

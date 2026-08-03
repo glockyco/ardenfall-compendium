@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using ArdenfallCompendium.Dtos;
-using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Entities.ItemCategory;
 using UnityEngine;
 using Xunit;

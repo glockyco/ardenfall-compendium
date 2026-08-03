@@ -1,14 +1,17 @@
+using ArdenfallCompendium.Assets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Walker;
 using UnityObject = UnityEngine.Object;
 
 namespace ArdenfallCompendium.Entities.Spell;
 
-public sealed class LoadedSpellAssetSource : ISpellAssetSource
+public sealed class LoadedSpellAssetSource : ISpellAssetSource, IIconAssetPlanSink
 {
+    private IconAssetPlan? _assetPlan;
     private readonly Func<IEnumerable<Ardenfall.SpellData>> _loadedSpells;
     private readonly Func<UnityObject?, bool> _isUnityNull;
     private readonly Func<UnityObject, string> _assetName;
@@ -34,6 +37,8 @@ public sealed class LoadedSpellAssetSource : ISpellAssetSource
         _assetName = assetName ?? SafeName;
         _isAuthoredAsset = isAuthoredAsset ?? IsAuthoredAsset;
     }
+
+    public void AttachAssetPlan(IconAssetPlan? assetPlan) => _assetPlan = assetPlan;
 
     public IEnumerable<SpellAsset> EnumerateSpells()
     {
@@ -63,6 +68,11 @@ public sealed class LoadedSpellAssetSource : ISpellAssetSource
     {
         var statType = asset.statType;
         var icon = asset.icon;
+        if (_assetPlan != null && NamedAssetIdentity.TryCreate("spell", _assetName(asset), out var id) && icon is UnityEngine.Sprite sprite)
+        {
+            _assetPlan.Slots.Add(new IconAssetSlot("spell", id, "iconRef", sprite, "spell", "SpellData.icon"));
+        }
+
         return new SpellAsset(
             Guid: null,
             AssetName: _assetName(asset),

@@ -1,8 +1,8 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using System.Linq;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities;
-using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Walker;
 using UnityEngine;
 using UnityObject = UnityEngine.Object;
@@ -12,14 +12,14 @@ namespace ArdenfallCompendium.Entities.ItemCategory;
 public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
 {
     private readonly IItemCategoryAssetSource _source;
-    private readonly ItemIconAssetPlan? _assetPlan;
+    private readonly IconAssetPlan? _assetPlan;
 
     public ItemCategoryExtractor()
         : this(new LoadedItemCategoryAssetSource(), assetPlan: null)
     {
     }
 
-    public ItemCategoryExtractor(IItemCategoryAssetSource source, ItemIconAssetPlan? assetPlan = null)
+    public ItemCategoryExtractor(IItemCategoryAssetSource source, IconAssetPlan? assetPlan = null)
     {
         _source = source;
         _assetPlan = assetPlan;

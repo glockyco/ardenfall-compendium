@@ -1,10 +1,10 @@
+using ArdenfallCompendium.Assets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Ardenfall;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities;
-using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Walker;
 using UnityObject = UnityEngine.Object;
 
@@ -12,7 +12,7 @@ namespace ArdenfallCompendium.Entities.StatType;
 
 public sealed class LoadedStatTypeAssetSource : IStatTypeAssetSource, IIconAssetPlanSink
 {
-    private ItemIconAssetPlan? _assetPlan;
+    private IconAssetPlan? _assetPlan;
     private readonly Func<IEnumerable<Ardenfall.StatType>> _loadedStatTypes;
     private readonly Func<UnityObject?, bool> _isUnityNull;
     private readonly Func<UnityObject, string> _assetName;
@@ -39,7 +39,7 @@ public sealed class LoadedStatTypeAssetSource : IStatTypeAssetSource, IIconAsset
         _isAuthoredAsset = isAuthoredAsset ?? IsAuthoredAsset;
     }
 
-    public void AttachAssetPlan(ItemIconAssetPlan? assetPlan) => _assetPlan = assetPlan;
+    public void AttachAssetPlan(IconAssetPlan? assetPlan) => _assetPlan = assetPlan;
 
     public IEnumerable<StatTypeAsset> EnumerateStatTypes()
     {
@@ -71,7 +71,7 @@ public sealed class LoadedStatTypeAssetSource : IStatTypeAssetSource, IIconAsset
         {
             if (asset.icon is UnityEngine.Sprite sprite)
             {
-                _assetPlan.Slots.Add(new ItemIconAssetSlot("stat-type", id, "iconRef", sprite, "stat-type"));
+                _assetPlan.Slots.Add(new IconAssetSlot("stat-type", id, "iconRef", sprite, "stat-type"));
             }
         }
         return new StatTypeAsset(

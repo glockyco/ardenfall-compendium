@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,9 @@ using GameFaction = Ardenfall.Faction;
 
 namespace ArdenfallCompendium.Entities.Faction;
 
-public sealed class BuiltLookupTableFactionAssetSource : IFactionAssetSource
+public sealed class BuiltLookupTableFactionAssetSource : IFactionAssetSource, IIconAssetPlanSink
 {
+    private IconAssetPlan? _assetPlan;
     private readonly Func<IEnumerable<GameFaction>> _lookupFactions;
     private readonly Func<UnityObject?, bool> _isUnityNull;
     private readonly Func<UnityObject, string?> _lookupGuid;
@@ -37,6 +39,8 @@ public sealed class BuiltLookupTableFactionAssetSource : IFactionAssetSource
         _assetName = assetName ?? SafeName;
     }
 
+    public void AttachAssetPlan(IconAssetPlan? assetPlan) => _assetPlan = assetPlan;
+
     public IEnumerable<FactionAssetRecord> EnumerateFactions()
     {
         foreach (var asset in _lookupFactions())
@@ -50,7 +54,7 @@ public sealed class BuiltLookupTableFactionAssetSource : IFactionAssetSource
         }
     }
 
-    private static FactionAssetRecord ToRecord(
+    private FactionAssetRecord ToRecord(
         GameFaction asset,
         Func<UnityObject, string?> lookupGuid,
         Func<UnityObject, string> assetName)
@@ -66,13 +70,21 @@ public sealed class BuiltLookupTableFactionAssetSource : IFactionAssetSource
                         IsEnemy: relationship.isEnemy))
                 .ToList();
 
+        var icon = asset.icon;
+        var iconRef = ResolveAsset(icon, lookupGuid, assetName, "Faction.icon");
+        var guid = lookupGuid(asset);
+        if (_assetPlan != null && !string.IsNullOrWhiteSpace(guid) && icon is Sprite sprite)
+        {
+            _assetPlan.Slots.Add(new IconAssetSlot("faction", guid, "iconRef", sprite, "faction", "Faction.icon"));
+        }
+
         return new FactionAssetRecord(
-            Guid: lookupGuid(asset),
+            Guid: guid,
             AssetName: assetName(asset),
             Title: asset.title,
             FactionId: asset.id,
             Description: asset.description,
-            IconRef: ResolveAsset(asset.icon, lookupGuid, assetName, "Faction.icon"),
+            IconRef: iconRef,
             Alliable: asset.alliable,
             EnableReputation: asset.enableReputation,
             AlwaysShowInUI: asset.alwaysShowInUI,

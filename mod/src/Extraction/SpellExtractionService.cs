@@ -1,7 +1,7 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using ArdenfallCompendium.Control;
 using ArdenfallCompendium.Dtos;
-using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Entities.Spell;
 
 namespace ArdenfallCompendium.Extraction;
@@ -20,7 +20,7 @@ public sealed class SpellExtractionService : ISpellExtractionCache
 
     public void Evict(CompendiumRun run) => _byRun.Remove(run.RunId);
 
-    public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => GetState(run).AssetPlan;
+    public IconAssetPlan GetAssetPlan(CompendiumRun run) => GetState(run).AssetPlan;
 
     public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => GetState(run).WalkerDiagnostics;
 
@@ -28,8 +28,8 @@ public sealed class SpellExtractionService : ISpellExtractionCache
     {
         if (_byRun.TryGetValue(run.RunId, out var state)) return state;
 
-        var assetPlan = new ItemIconAssetPlan();
-        var extractor = new SpellExtractor(_source);
+        var assetPlan = new IconAssetPlan();
+        var extractor = new SpellExtractor(_source, assetPlan);
         var rows = new List<SpellSnapshotRow>();
         foreach (var row in extractor.Walk()) rows.Add(row);
 
@@ -40,6 +40,6 @@ public sealed class SpellExtractionService : ISpellExtractionCache
 
     private sealed record ExtractionState(
         IReadOnlyList<SpellSnapshotRow> Rows,
-        ItemIconAssetPlan AssetPlan,
+        IconAssetPlan AssetPlan,
         IReadOnlyList<Diagnostic> WalkerDiagnostics);
 }

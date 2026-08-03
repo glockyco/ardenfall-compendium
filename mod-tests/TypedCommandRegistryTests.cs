@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -106,7 +107,7 @@ public sealed class TypedCommandRegistryTests
         public IReadOnlyList<ItemSnapshotRow> GetOrExtract(CompendiumRun run) =>
             Array.Empty<ItemSnapshotRow>();
 
-        public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => new();
+        public IconAssetPlan GetAssetPlan(CompendiumRun run) => new();
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) =>
             Array.Empty<Diagnostic>();

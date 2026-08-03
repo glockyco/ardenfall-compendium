@@ -1,5 +1,6 @@
 <script lang="ts">
   import BackLink from "$lib/components/navigation/BackLink.svelte";
+  import EntityDetailHeader from "$lib/components/EntityDetailHeader.svelte";
   import FactionDetail from "$lib/components/factions/FactionDetail.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
@@ -25,7 +26,7 @@
 </svelte:head>
 
 <BackLink href={data.factionRoute} label="factions" />
-<h1 class="mt-2 text-2xl font-bold">{faction.displayName}</h1>
+<EntityDetailHeader title={faction.displayName} iconSrc={faction.displayIconSrc} />
 
 <div class="mt-4 grid gap-6">
   <FactionDetail presentation={faction} />

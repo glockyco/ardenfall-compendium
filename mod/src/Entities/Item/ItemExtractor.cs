@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities;
@@ -19,7 +20,7 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
         _source = source;
     }
 
-    public ItemExtractor(IItemAssetSource source, ItemIconAssetPlan? assetPlan)
+    public ItemExtractor(IItemAssetSource source, IconAssetPlan? assetPlan)
         : this(source)
     {
         if (source is BuiltLookupTableItemAssetSource built) built.AttachAssetPlan(assetPlan);

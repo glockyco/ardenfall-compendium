@@ -9,6 +9,14 @@ const namelessId = "cafebabe.status-unknown";
 
 function seedStatusEffects(db: Database): void {
   db.exec(STATUS_EFFECT_DDL);
+  db.exec(`CREATE TABLE asset_refs (
+    entity_id TEXT NOT NULL,
+    entity_row_id TEXT NOT NULL,
+    slot TEXT NOT NULL,
+    asset_kind TEXT NOT NULL,
+    asset_hash TEXT NOT NULL,
+    PRIMARY KEY (entity_id, entity_row_id, slot)
+  );`);
   canonicaliseStatusEffects(db, {
     entityId: "status-effect",
     schemaVersion: 1,
@@ -35,6 +43,11 @@ function seedStatusEffects(db: Database): void {
       },
     ],
   });
+  db.run(
+    `INSERT INTO asset_refs (entity_id, entity_row_id, slot, asset_kind, asset_hash)
+     VALUES (?, ?, ?, ?, ?)`,
+    ["status-effect", bleedId, "iconRef", "image", "d".repeat(64)],
+  );
 }
 
 describe("status-effect pipeline", () => {
@@ -63,15 +76,21 @@ describe("status-effect pipeline", () => {
 
     const rows = db
       .query<
-        { id: string; tooltip_source: string | null; tooltip_rich_text_json: string | null },
+        {
+          id: string;
+          tooltip_source: string | null;
+          tooltip_rich_text_json: string | null;
+          display_icon_hash: string | null;
+        },
         []
       >(
-        `SELECT id, tooltip_source, tooltip_rich_text_json
+        `SELECT id, tooltip_source, tooltip_rich_text_json, display_icon_hash
          FROM status_effect_presentation_rows ORDER BY id`,
       )
       .all();
     const bleed = rows.find((row) => row.id === bleedId);
     expect(bleed?.tooltip_source).toBe("<color=#86FF86>Adds 1% Bleed Resistance</color>");
+    expect(bleed?.display_icon_hash).toBe("d".repeat(64));
     expect(JSON.parse(bleed?.tooltip_rich_text_json ?? "null").nodes[0]).toEqual({
       type: "color",
       token: null,
@@ -81,7 +100,30 @@ describe("status-effect pipeline", () => {
     expect(rows.find((row) => row.id === namelessId)).toMatchObject({
       tooltip_source: null,
       tooltip_rich_text_json: null,
+      display_icon_hash: null,
     });
+  });
+
+  it("diagnoses an authored status effect icon without an exported asset", () => {
+    const db = new Database(":memory:");
+    seedStatusEffects(db);
+    db.run(`DELETE FROM asset_refs WHERE entity_id = 'status-effect' AND entity_row_id = ?`, [
+      bleedId,
+    ]);
+
+    const diagnostics = emitStatusEffectReadModels(db);
+    expect(diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "statusEffectIconUnresolved",
+        entityType: "status-effect",
+        entityId: bleedId,
+      }),
+    );
+    expect(
+      db
+        .query(`SELECT display_icon_hash FROM status_effect_presentation_rows WHERE id = ?`)
+        .get(bleedId),
+    ).toEqual({ display_icon_hash: null });
   });
 
   it("ships nameless status effects under a presentation label", () => {

@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System.Runtime.CompilerServices;
 using Ardenfall;
 using Ardenfall.Item;
@@ -44,9 +45,9 @@ public sealed class ItemIconSlotTests
     public void CaptureItemAddsColorMetadataEvenWithoutIconSlots()
     {
         var item = (ItemData)RuntimeHelpers.GetUninitializedObject(typeof(ItemData));
-        var plan = new ItemIconAssetPlan();
+        var plan = new IconAssetPlan();
 
-        ItemIconAssetPlanner.CaptureItem(plan, item, "fixture-item");
+        IconAssetPlanner.CaptureItem(plan, item, "fixture-item");
 
         Assert.Empty(plan.Slots);
         Assert.Empty(plan.Manifest.Assets);

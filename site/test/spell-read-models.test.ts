@@ -26,7 +26,8 @@ const seed = () => {
       is_illegal INTEGER NOT NULL DEFAULT 0,
       tooltip_source TEXT,
       tooltip_rich_text_json TEXT,
-      effects_json TEXT NOT NULL
+      effects_json TEXT NOT NULL,
+      display_icon_hash TEXT
     );
     CREATE TABLE entity_nodes (
       entity_type TEXT NOT NULL,
@@ -45,8 +46,9 @@ const seed = () => {
       ('named;spell;spell_fire-shield', 'Fire Shield', 'spell-presentation-v1', 'Destruction', 'named;stat-type;destruction', 12.5, 0,
        '<color=#86FF86>10</color> damage',
        '{"schemaVersion":1,"sourceHash":"fixture-spell-tooltip","nodes":[{"type":"text","text":"Deals "},{"type":"color","token":null,"color":"#86FF86","children":[{"type":"text","text":"10"}]},{"type":"text","text":" damage"}],"diagnostics":[]}',
-       '[{"kind":"apply-status-to-self","statusEffectId":"status-speed","statusEffectLabel":"Attack Speed","statusEffectRoutePath":"/status-effects/attack-speed--abc12345","sampleLevel":1,"sampleLifetimeSeconds":5,"appliesToSelf":true,"damage":null,"damageType":null},{"kind":"projectile","statusEffectId":null,"statusEffectLabel":null,"statusEffectRoutePath":null,"sampleLevel":null,"sampleLifetimeSeconds":null,"appliesToSelf":null,"damage":10,"damageType":"Fire"},{"kind":"area-of-effect","statusEffectId":null,"statusEffectLabel":null,"statusEffectRoutePath":null,"sampleLevel":null,"sampleLifetimeSeconds":null,"appliesToSelf":null,"damage":null,"damageType":null}]'),
-      ('named;spell;spell_shadow-step', 'Shadow Step', 'spell-presentation-v1', NULL, NULL, 4, 1, NULL, NULL, '[]');
+       '[{"kind":"apply-status-to-self","statusEffectId":"status-speed","statusEffectLabel":"Attack Speed","statusEffectRoutePath":"/status-effects/attack-speed--abc12345","sampleLevel":1,"sampleLifetimeSeconds":5,"appliesToSelf":true,"damage":null,"damageType":null},{"kind":"projectile","statusEffectId":null,"statusEffectLabel":null,"statusEffectRoutePath":null,"sampleLevel":null,"sampleLifetimeSeconds":null,"appliesToSelf":null,"damage":10,"damageType":"Fire"},{"kind":"area-of-effect","statusEffectId":null,"statusEffectLabel":null,"statusEffectRoutePath":null,"sampleLevel":null,"sampleLifetimeSeconds":null,"appliesToSelf":null,"damage":null,"damageType":null}]',
+       'spell-icon-hash'),
+      ('named;spell;spell_shadow-step', 'Shadow Step', 'spell-presentation-v1', NULL, NULL, 4, 1, NULL, NULL, '[]', NULL);
     INSERT INTO entity_nodes VALUES
       ('spell', 'named;spell;spell_fire-shield', 'Fire Shield', '/spells/fire-shield--abc12345', 'fire-shield--abc12345', 'abc12345', 1),
       ('spell', 'named;spell;spell_shadow-step', 'Shadow Step', '/spells/shadow-step--def67890', 'shadow-step--def67890', 'def67890', 1),
@@ -153,6 +155,7 @@ describe("spell read-model accessors", () => {
             damageType: null,
           },
         ],
+        displayIconSrc: "/assets/spell-icon-hash.webp",
         routePath: "/spells/fire-shield--abc12345",
       });
       expect(readModels.getSpellPresentation("missing--00000000")).toBeUndefined();
@@ -179,6 +182,7 @@ describe("spell read-model accessors", () => {
         description: null,
         descriptionText: null,
         effects: [],
+        displayIconSrc: null,
         routePath: "/spells/shadow-step--def67890",
       });
     } finally {

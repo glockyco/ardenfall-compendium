@@ -1,3 +1,4 @@
+using ArdenfallCompendium.Assets;
 using System.Collections.Generic;
 using ArdenfallCompendium.Control;
 using ArdenfallCompendium.Dtos;
@@ -19,22 +20,26 @@ public sealed class FactionExtractionService : IFactionExtractionCache
 
     public void Evict(CompendiumRun run) => _byRun.Remove(run.RunId);
 
+    public IconAssetPlan GetAssetPlan(CompendiumRun run) => GetState(run).AssetPlan;
+
     public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => GetState(run).WalkerDiagnostics;
 
     private ExtractionState GetState(CompendiumRun run)
     {
         if (_byRun.TryGetValue(run.RunId, out var state)) return state;
 
-        var extractor = new FactionExtractor(_source);
+        var assetPlan = new IconAssetPlan();
+        var extractor = new FactionExtractor(_source, assetPlan);
         var rows = new List<FactionSnapshotRow>();
         foreach (var row in extractor.Walk()) rows.Add(row);
 
-        state = new ExtractionState(rows, extractor.Diagnostics.AsReadOnly());
+        state = new ExtractionState(rows, assetPlan, extractor.Diagnostics.AsReadOnly());
         _byRun[run.RunId] = state;
         return state;
     }
 
     private sealed record ExtractionState(
         IReadOnlyList<FactionSnapshotRow> Rows,
+        IconAssetPlan AssetPlan,
         IReadOnlyList<Diagnostic> WalkerDiagnostics);
 }

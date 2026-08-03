@@ -1,10 +1,10 @@
+using ArdenfallCompendium.Assets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Ardenfall;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities;
-using ArdenfallCompendium.Entities.Item;
 using ArdenfallCompendium.Walker;
 using ArdenfallCategory = Ardenfall.ItemCategory;
 using UnityObject = UnityEngine.Object;
@@ -13,7 +13,7 @@ namespace ArdenfallCompendium.Entities.ItemCategory;
 
 public sealed class LoadedItemCategoryAssetSource : IItemCategoryAssetSource, IIconAssetPlanSink
 {
-    private ItemIconAssetPlan? _assetPlan;
+    private IconAssetPlan? _assetPlan;
     private readonly Func<IEnumerable<ArdenfallCategory>> _loadedCategories;
     private readonly Func<ArdenfallCategory, IReadOnlyList<ItemCategoryColumnAsset>?> _columns;
     private readonly Func<UnityObject?, bool> _isUnityNull;
@@ -44,7 +44,7 @@ public sealed class LoadedItemCategoryAssetSource : IItemCategoryAssetSource, II
         _isAuthoredAsset = isAuthoredAsset ?? IsAuthoredAsset;
     }
 
-    public void AttachAssetPlan(ItemIconAssetPlan? assetPlan) => _assetPlan = assetPlan;
+    public void AttachAssetPlan(IconAssetPlan? assetPlan) => _assetPlan = assetPlan;
 
     public IEnumerable<ItemCategoryAsset> EnumerateItemCategories()
     {
@@ -92,7 +92,7 @@ public sealed class LoadedItemCategoryAssetSource : IItemCategoryAssetSource, II
     {
         if (_assetPlan != null && value is UnityEngine.Sprite sprite)
         {
-            _assetPlan.Slots.Add(new ItemIconAssetSlot("item-category", rowId, slot, sprite, "item-category"));
+            _assetPlan.Slots.Add(new IconAssetSlot("item-category", rowId, slot, sprite, "item-category"));
         }
     }
 
