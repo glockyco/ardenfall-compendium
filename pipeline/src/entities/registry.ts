@@ -5,6 +5,7 @@ import type { LoadSnapshotOutput } from "../stages/load-snapshot.ts";
 import type { EntityDescriptor, SnapshotEnvelope, VariantDescriptor } from "../types.ts";
 import type { PipelineDiagnostic } from "../relationships/relationship-graph.ts";
 import { buildDDL } from "../sql/ddl";
+import { ENTITY_GRAPH_DDL } from "../relationships/relationship-graph.ts";
 import { ITEM_CATEGORY_DDL } from "../sql/item-category-ddl";
 import { ITEM_TAG_DDL } from "../sql/item-tag-ddl";
 import { LOCATION_DDL } from "../sql/location-ddl";
@@ -30,6 +31,7 @@ import { canonicaliseCharacters } from "./character/canonicaliser";
 import { emitCharacterReadModels } from "./character/read-models";
 import { canonicalisePortals } from "./portal/canonicaliser";
 import { emitPortalReadModels } from "./portal/read-models";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "./item/read-models";
 
 export interface MapProjection {
   points: string;
@@ -75,6 +77,31 @@ export interface EntityModule {
   };
 }
 
+export function emitLocationReadModels(db: Database): void {
+  db.exec(ENTITY_GRAPH_DDL);
+  const writeNode = prepareEntityNodeWriter(db);
+  const rows = db
+    .query<{ id: string; name: string }, []>(
+      `SELECT id, name FROM locations WHERE enabled = 1 ORDER BY name, id`,
+    )
+    .all();
+  const tx = db.transaction(() => {
+    for (const row of rows) {
+      const slug = deriveEntityNodeSlug(row.name, row.id);
+      writeNode({
+        entityType: "location",
+        entityId: row.id,
+        label: row.name,
+        routePath: `/locations/${slug.canonicalSlug}`,
+        canonicalSlug: slug.canonicalSlug,
+        shortId: slug.shortId,
+        isPublic: true,
+      });
+    }
+  });
+  tx();
+}
+
 const locationProjection: MapProjection = {
   points: `
       INSERT INTO map_points (
@@ -85,7 +112,7 @@ const locationProjection: MapProjection = {
              l.show_on_map_debug_only, l.allow_fast_travel
       FROM locations l
       JOIN placements p ON p.entity_id = 'location' AND p.instance_id = l.id
-      WHERE l.enabled = 1 AND l.show_on_map = 1
+      WHERE l.enabled = 1
       ORDER BY l.name;
     `,
   volumes: `
@@ -214,6 +241,7 @@ export const entityRegistry: Record<string, EntityModule> = {
   location: {
     ddl: LOCATION_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseLocations(db, envelope),
+    readModel: ({ db }) => emitLocationReadModels(db),
     mapProjection: locationProjection,
   },
   portal: {

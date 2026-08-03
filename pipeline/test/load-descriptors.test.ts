@@ -145,7 +145,7 @@ describe("loadDescriptors", () => {
     expect(result.variants["item-tag"]).toEqual([]);
   });
 
-  it("loads the map-only location descriptor", async () => {
+  it("loads the location descriptor with a public route and a map layer", async () => {
     const result = await loadDescriptors.run(
       {},
       {
@@ -161,7 +161,7 @@ describe("loadDescriptors", () => {
     expect(location.kind).toBe("definition");
     expect(location.extraction.source).toBe("lookupAsset");
     expect(location.placement).toEqual({ kind: "point+volume", from: "fields" });
-    expect(location.site).toBeUndefined();
+    expect(location.site).toEqual({ route: "/locations" });
     expect(location.map).toEqual({
       layer: "locations",
       renderKind: "point-or-polygon",

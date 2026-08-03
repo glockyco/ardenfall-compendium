@@ -1,5 +1,6 @@
-import { all } from "../db";
+import { all, get } from "../db";
 import { isColorArray, isGeometry, isStringArray, parseGeneratedJson } from "../json";
+import { getEntityNodeBySlug } from "./item";
 import type {
   MapBounds,
   MapLayerConfig,
@@ -39,6 +40,15 @@ interface MapPointRecord {
   short_id: string | null;
 }
 
+interface LocationVolumeRecord {
+  map_min_x: number | null;
+  map_min_y: number | null;
+  map_max_x: number | null;
+  map_max_y: number | null;
+  elevation_min: number | null;
+  elevation_max: number | null;
+}
+
 interface MapVolumeRecord {
   id: string;
   entity_id: string;
@@ -48,6 +58,46 @@ interface MapVolumeRecord {
   geometry_json: string;
   elevation_min: number | null;
   elevation_max: number | null;
+}
+
+interface LocationOverviewRecord {
+  id: string;
+  name: string;
+  route_path: string;
+}
+
+interface LocationPresentationRecord {
+  id: string;
+  name: string;
+  map_id: string | null;
+  allow_fast_travel: number;
+  route_path: string;
+}
+
+export interface LocationOverviewRow {
+  id: string;
+  name: string;
+  routePath: string;
+}
+
+export interface LocationExtent {
+  width: number;
+  height: number;
+}
+
+export interface LocationElevation {
+  min: number;
+  max: number;
+}
+
+export interface LocationPresentationRow {
+  id: string;
+  name: string;
+  routePath: string;
+  mapLabel: string;
+  allowFastTravel: boolean;
+  extent: LocationExtent | null;
+  elevation: LocationElevation | null;
 }
 
 function toFillColor(json: string, layerId: string): [number, number, number, number] {
@@ -123,7 +173,7 @@ function readPoints(layer: MapLayerConfig): MapPointRow[] {
               p.show_on_map_debug_only, n.short_id
        FROM ${table} p
        LEFT JOIN entity_nodes n
-         ON n.entity_type = p.entity_id AND n.entity_id = p.instance_id AND n.is_public = 1
+         ON n.entity_type = p.entity_id AND n.entity_id = p.instance_id
        WHERE p.entity_id = ?
        ORDER BY p.name`,
       [layer.entityType],
@@ -160,7 +210,7 @@ function readLeadsToDestinations(
     `SELECT e.source_id, n.label, n.short_id
      FROM entity_edges e
      JOIN entity_nodes n
-       ON n.entity_type = e.target_type AND n.entity_id = e.target_id AND n.is_public = 1
+       ON n.entity_type = e.target_type AND n.entity_id = e.target_id
      WHERE e.predicate = 'leads_to' AND e.source_type = ?
      ORDER BY e.source_id, n.label`,
     [entityType],
@@ -257,6 +307,83 @@ function computeMaps(points: MapPointRow[], volumes: MapVolumeRow[]): MapSummary
       bounds: aggregate.bounds,
     }));
 }
+
+export const listLocations = (): LocationOverviewRow[] =>
+  all<LocationOverviewRecord>(
+    `SELECT l.id, l.name, n.route_path
+     FROM locations l
+     JOIN entity_nodes n
+       ON n.entity_type = 'location'
+      AND n.entity_id = l.id
+      AND n.is_public = 1
+     WHERE l.enabled = 1
+     ORDER BY l.name, l.id`,
+  ).map((row) => ({ id: row.id, name: row.name, routePath: row.route_path }));
+
+export const getLocationPresentation = (slug: string): LocationPresentationRow | undefined => {
+  const node = getEntityNodeBySlug("location", slug);
+  if (!node || !node.isPublic) return undefined;
+  const row = get<LocationPresentationRecord>(
+    `SELECT l.id, l.name, l.map_id, l.allow_fast_travel, n.route_path
+     FROM locations l
+     JOIN entity_nodes n
+       ON n.entity_type = 'location'
+      AND n.entity_id = l.id
+      AND n.is_public = 1
+     WHERE l.id = ? AND l.enabled = 1`,
+    [node.entityId],
+  );
+  if (!row) return undefined;
+
+  const volumes = all<LocationVolumeRecord>(
+    `SELECT map_min_x, map_min_y, map_max_x, map_max_y, elevation_min, elevation_max
+     FROM location_volumes
+     WHERE location_id = ?
+     ORDER BY volume_index`,
+    [row.id],
+  );
+  let minX: number | null = null;
+  let minY: number | null = null;
+  let maxX: number | null = null;
+  let maxY: number | null = null;
+  let elevationMin: number | null = null;
+  let elevationMax: number | null = null;
+  for (const volume of volumes) {
+    if (
+      volume.map_min_x !== null &&
+      volume.map_min_y !== null &&
+      volume.map_max_x !== null &&
+      volume.map_max_y !== null
+    ) {
+      minX = minX === null ? volume.map_min_x : Math.min(minX, volume.map_min_x);
+      minY = minY === null ? volume.map_min_y : Math.min(minY, volume.map_min_y);
+      maxX = maxX === null ? volume.map_max_x : Math.max(maxX, volume.map_max_x);
+      maxY = maxY === null ? volume.map_max_y : Math.max(maxY, volume.map_max_y);
+    }
+    if (volume.elevation_min !== null && volume.elevation_max !== null) {
+      elevationMin =
+        elevationMin === null ? volume.elevation_min : Math.min(elevationMin, volume.elevation_min);
+      elevationMax =
+        elevationMax === null ? volume.elevation_max : Math.max(elevationMax, volume.elevation_max);
+    }
+  }
+
+  return {
+    id: row.id,
+    name: row.name,
+    routePath: row.route_path,
+    mapLabel: displayMapLabel(row.map_id),
+    allowFastTravel: row.allow_fast_travel === 1,
+    extent:
+      minX === null || minY === null || maxX === null || maxY === null
+        ? null
+        : { width: maxX - minX, height: maxY - minY },
+    elevation:
+      elevationMin === null || elevationMax === null
+        ? null
+        : { min: elevationMin, max: elevationMax },
+  };
+};
 
 export function getMapView(): MapView {
   const layers = readLayers();

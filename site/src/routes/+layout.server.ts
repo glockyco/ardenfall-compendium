@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import {
   listCharacters,
+  listLocations,
   getEntity,
   getMapView,
   listItemCategories,
@@ -50,6 +51,7 @@ export interface SiteChrome {
   itemCategoryRoute: string;
   itemTagRoute: string;
   characterRoute: string;
+  locationRoute: string;
 }
 
 /** The subset of the deployed `/_release.json` the footer needs. */
@@ -184,10 +186,21 @@ function buildLayoutData(): SiteChrome {
   const itemCategory = entitySection("item-category", listItemCategories().length);
   const itemTag = entitySection("item-tag", listItemTags().length);
   const character = entitySection("character", listCharacters().length);
+  const location = entitySection("location", listLocations().length);
   const map = mapSection();
 
   return {
-    sections: [item, spell, statusEffect, statType, itemCategory, itemTag, character, map],
+    sections: [
+      item,
+      spell,
+      statusEffect,
+      statType,
+      itemCategory,
+      itemTag,
+      character,
+      location,
+      map,
+    ],
     ...loadRelease(),
     mapRoute: map.href,
     itemRoute: item.href,
@@ -197,6 +210,7 @@ function buildLayoutData(): SiteChrome {
     itemCategoryRoute: itemCategory.href,
     itemTagRoute: itemTag.href,
     characterRoute: character.href,
+    locationRoute: location.href,
   };
 }
 

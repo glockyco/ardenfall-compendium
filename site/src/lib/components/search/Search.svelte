@@ -41,6 +41,7 @@
     { prefix: "/categories", label: "Categories" },
     { prefix: "/tags", label: "Tags" },
     { prefix: "/characters", label: "Characters" },
+    { prefix: "/locations", label: "Locations" },
     { prefix: "/map", label: "Map" },
   ];
 

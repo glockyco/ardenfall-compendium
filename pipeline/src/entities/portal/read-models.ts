@@ -1,6 +1,7 @@
 import type { Database } from "bun:sqlite";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
 import type { SnapshotRef } from "../../types.ts";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
 
 interface ConnectedPortalRow {
   id: string;
@@ -16,20 +17,48 @@ interface ConnectedPortalRow {
  * collapsing a pair into a single undirected link would invent return paths the
  * world does not have. A reciprocal connection is simply two edges.
  *
- * Must run after the map read models, which are what publish portal entity
- * nodes; an edge may only target a public node.
+ * Must run after the map read models, which create the graph tables. This
+ * emitter creates portal nodes from canonical rows before it projects edges.
+ * An edge can target a non-public node because `is_public` means that an entity
+ * has a page.
  *
- * Emits edges only. `entity_relationship_sections` is the grouping contract for
- * a detail page, and a portal has no page: the map panel resolves its single
- * destination by joining the edge to its target node.
+ * Emits nodes and edges. `entity_relationship_sections` is the grouping
+ * contract for a detail page, and a portal has no page. The map panel resolves
+ * its destination by joining the edge to its target node.
  */
 export function emitPortalReadModels(db: Database): PipelineDiagnostic[] {
   const diagnostics: PipelineDiagnostic[] = [];
-  const publicPortalIds = new Set(
+  const writeNode = prepareEntityNodeWriter(db);
+  const nodeRows = db
+    .query<{ id: string; name: string | null; map_id: string | null }, []>(
+      `SELECT id, name, map_id FROM portals ORDER BY COALESCE(name, 'Unnamed portal'), id`,
+    )
+    .all();
+  const nodeTx = db.transaction(() => {
+    for (const row of nodeRows) {
+      const label = row.name ?? "Unnamed portal";
+      const slug = deriveEntityNodeSlug(label, row.id);
+      const query = row.map_id
+        ? `map=${encodeURIComponent(row.map_id)}&sel=${slug.shortId}`
+        : `sel=${slug.shortId}`;
+      writeNode({
+        entityType: "portal",
+        entityId: row.id,
+        label,
+        routePath: `/map?${query}`,
+        canonicalSlug: slug.canonicalSlug,
+        shortId: slug.shortId,
+        isPublic: false,
+      });
+    }
+  });
+  nodeTx();
+
+  const portalIds = new Set(
     db
       .query<{ entity_id: string }, []>(
         `SELECT entity_id FROM entity_nodes
-         WHERE entity_type = 'portal' AND is_public = 1`,
+         WHERE entity_type = 'portal'`,
       )
       .all()
       .map((row) => row.entity_id),
@@ -64,14 +93,14 @@ export function emitPortalReadModels(db: Database): PipelineDiagnostic[] {
         continue;
       }
       const targetId = `${ref.table};${ref.subtable};${ref.id}`;
-      if (!publicPortalIds.has(targetId)) {
+      if (!portalIds.has(targetId)) {
         // Skipping keeps one unresolvable reference from failing the whole
         // artifact through the graph audit, but the gap stays counted and named.
         diagnostics.push({
           severity: "diagnostic",
           source: "relationship-graph",
           code: "portalConnectionUnresolved",
-          message: `Portal '${row.id}' connects to '${targetId}', which is not a public portal.`,
+          message: `Portal '${row.id}' connects to '${targetId}', which is not a portal node.`,
           entityType: "portal",
           entityId: row.id,
           field: "connected_portal_ref_json",

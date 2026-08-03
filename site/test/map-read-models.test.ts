@@ -71,7 +71,7 @@ describe("getMapView", () => {
            '{"ring":[[10,6],[14,6],[14,10],[10,10],[10,6]]}', 0, 2);
         INSERT INTO entity_nodes VALUES
           ('location', '11111111.fixture-town', 'Harbor Town',
-           '/map?map=ardenfall&sel=abc12345', 'harbor-town--abc12345', 'abc12345', 1);
+           '/map?map=ardenfall&sel=abc12345', 'harbor-town--abc12345', 'abc12345', 0);
       `);
     });
     const originalCwd = process.cwd();
@@ -144,9 +144,9 @@ describe("getMapView", () => {
           ('portal:b', 'portal', 'b', 'Cliff Stair', 'interior', 2, 2, 0, 0, 0),
           ('portal:c', 'portal', 'c', 'Sealed Door', 'ardenfall', 3, 3, 0, 0, 0);
         INSERT INTO entity_nodes VALUES
-          ('portal', 'a', 'Harbor Gate', '/map?map=ardenfall&sel=aaaa1111', 'harbor-gate--aaaa1111', 'aaaa1111', 1),
-          ('portal', 'b', 'Cliff Stair', '/map?map=interior&sel=bbbb2222', 'cliff-stair--bbbb2222', 'bbbb2222', 1),
-          ('portal', 'c', 'Sealed Door', '/map?map=ardenfall&sel=cccc3333', 'sealed-door--cccc3333', 'cccc3333', 1);
+          ('portal', 'a', 'Harbor Gate', '/map?map=ardenfall&sel=aaaa1111', 'harbor-gate--aaaa1111', 'aaaa1111', 0),
+          ('portal', 'b', 'Cliff Stair', '/map?map=interior&sel=bbbb2222', 'cliff-stair--bbbb2222', 'bbbb2222', 0),
+          ('portal', 'c', 'Sealed Door', '/map?map=ardenfall&sel=cccc3333', 'sealed-door--cccc3333', 'cccc3333', 0);
         INSERT INTO entity_edges VALUES
           ('a:leads_to:portal:b', 'portal', 'a', 'portal', 'b', 'leads_to', 'Leads to', 1, '{}', NULL);
       `);

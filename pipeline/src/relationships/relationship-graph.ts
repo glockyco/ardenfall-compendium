@@ -1,4 +1,5 @@
 import type { Database } from "bun:sqlite";
+import { relationshipRegistry } from "./registry.ts";
 
 /**
  * Pipeline diagnostic source taxonomy for Slice 4.5:
@@ -105,7 +106,7 @@ export function auditEntityGraph(db: Database): PipelineDiagnostic[] {
        FROM entity_edges e
        WHERE NOT EXISTS (
          SELECT 1 FROM entity_nodes n
-         WHERE n.entity_type = e.target_type AND n.entity_id = e.target_id AND n.is_public = 1
+         WHERE n.entity_type = e.target_type AND n.entity_id = e.target_id
        )`,
     )
     .all()) {
@@ -113,7 +114,46 @@ export function auditEntityGraph(db: Database): PipelineDiagnostic[] {
       severity: "fatal",
       source: "relationship-graph",
       code: "relationshipMissingTarget",
-      message: `Relationship edge '${row.edge_id}' targets non-public or missing ${row.target_type}:${row.target_id}.`,
+      message: `Relationship edge '${row.edge_id}' targets missing ${row.target_type}:${row.target_id}.`,
+      entityType: row.source_type,
+      entityId: row.source_id,
+      field: "entity_edges.target_id",
+      evidence: { edgeId: row.edge_id, targetType: row.target_type, targetId: row.target_id },
+    });
+  }
+  // A target without a page is only a fault when a section was going to render it. A
+  // predicate that declares no title renders no section, so `leads_to` can point at a
+  // portal, which has an identity and no page. A predicate that declares a title and finds
+  // no page would print an empty section instead, which is the quieter failure.
+  const sectionPredicates = Object.entries(relationshipRegistry)
+    .filter(([, d]) => d.forwardTitle !== null || d.inverseTitle !== null)
+    .map(([predicate]) => predicate);
+  for (const row of db
+    .query<
+      {
+        edge_id: string;
+        source_type: string;
+        source_id: string;
+        target_type: string;
+        target_id: string;
+        predicate: string;
+      },
+      string[]
+    >(
+      `SELECT edge_id, source_type, source_id, target_type, target_id, predicate
+       FROM entity_edges e
+       WHERE e.predicate IN (${sectionPredicates.map(() => "?").join(", ")})
+         AND EXISTS (
+           SELECT 1 FROM entity_nodes n
+           WHERE n.entity_type = e.target_type AND n.entity_id = e.target_id AND n.is_public = 0
+         )`,
+    )
+    .all(...sectionPredicates)) {
+    diagnostics.push({
+      severity: "fatal",
+      source: "relationship-graph",
+      code: "relationshipTargetHasNoPage",
+      message: `Relationship edge '${row.edge_id}' renders a '${row.predicate}' section, but ${row.target_type}:${row.target_id} has no page.`,
       entityType: row.source_type,
       entityId: row.source_id,
       field: "entity_edges.target_id",

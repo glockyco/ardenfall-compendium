@@ -2,6 +2,7 @@ import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { LOCATION_DDL } from "../src/sql/location-ddl.ts";
 import { ENTITY_GRAPH_DDL } from "../src/relationships/relationship-graph.ts";
+import { emitLocationReadModels } from "../src/entities/registry.ts";
 import { emitMapReadModels } from "../src/map/read-models.ts";
 
 function seed(db: Database): void {
@@ -15,7 +16,9 @@ function seed(db: Database): void {
       ('11111111.fixture-town', 'Harbor Town', 1, 'ardenfall',
        '{"x":12,"y":3,"z":-8}', 1, 0, 1),
       ('22222222.fixture-debug-cave', 'Debug Cave', 1, NULL,
-       '{"x":-4,"y":1,"z":6}', 1, 1, 0);
+       '{"x":-4,"y":1,"z":6}', 0, 1, 0),
+      ('33333333.fixture-hidden-grove', 'Hidden Grove', 1, NULL,
+       '{"x":8,"y":1,"z":9}', 0, 0, 0);
     INSERT INTO placements (
       entity_id, instance_id, map_id, map_x, map_y, elevation, source_ref_json
     ) VALUES
@@ -25,10 +28,10 @@ function seed(db: Database): void {
 }
 
 describe("location entity nodes", () => {
-  it("emits a public node per enabled location with a map deep-link route_path", () => {
+  it("emits a public location page node for every enabled location", () => {
     const db = new Database(":memory:");
     seed(db);
-
+    emitLocationReadModels(db);
     emitMapReadModels(db, ["location"], "/map");
 
     const nodes = db
@@ -38,20 +41,24 @@ describe("location entity nodes", () => {
       )
       .all();
 
-    expect(nodes).toHaveLength(2);
+    expect(nodes).toHaveLength(3);
     const town = nodes.find((n) => n.entity_id === "11111111.fixture-town")!;
     expect(town.is_public).toBe(1);
-    expect(town.route_path).toBe(`/map?map=ardenfall&sel=${town.short_id}`);
+    expect(town.route_path).toBe("/locations/harbor-town--11111111");
 
     const cave = nodes.find((n) => n.entity_id === "22222222.fixture-debug-cave")!;
-    // No mapId -> deep link omits the map param.
-    expect(cave.route_path).toBe(`/map?sel=${cave.short_id}`);
+    expect(cave.route_path).toBe("/locations/debug-cave--22222222");
     expect(cave.is_public).toBe(1);
+
+    const hidden = nodes.find((n) => n.entity_id === "33333333.fixture-hidden-grove")!;
+    expect(hidden.route_path).toBe("/locations/hidden-grove--33333333");
+    expect(hidden.is_public).toBe(1);
   });
 
   it("does not collide short_ids across locations", () => {
     const db = new Database(":memory:");
     seed(db);
+    emitLocationReadModels(db);
     emitMapReadModels(db, ["location"], "/map");
     const collisions = db
       .query<{ cnt: number }, []>(

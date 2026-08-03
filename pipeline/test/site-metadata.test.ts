@@ -171,7 +171,7 @@ describe("emitSiteMetadata", () => {
     expect(db.query("SELECT * FROM site_entities WHERE entity_id = 'internal'").get()).toBeNull();
   });
 
-  it("emits descriptor-owned map layers for map-only entities", async () => {
+  it("emits a descriptor-owned map layer and a site entity for locations", async () => {
     const desc = await loadDescriptors.run({}, ctx);
     const db = new Database(":memory:");
     db.exec(SITE_METADATA_DDL);
@@ -214,6 +214,10 @@ describe("emitSiteMetadata", () => {
       z_order: 100,
     });
 
-    expect(db.query("SELECT * FROM site_entities WHERE entity_id = 'location'").get()).toBeNull();
+    // A location has both a map layer and a page, so it must reach `site_entities`. The site
+    // resolves a route and a label from that row, and it fails loudly without one.
+    expect(
+      db.query("SELECT * FROM site_entities WHERE entity_id = 'location'").get(),
+    ).toMatchObject({ entity_id: "location", canonical_table: "locations" });
   });
 });

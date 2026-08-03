@@ -24,6 +24,7 @@ import { emitMapReadModels } from "$pipeline/stages/emit-read-models";
 import { PORTAL_DDL } from "$pipeline/sql/portal-ddl";
 import { SPELL_DDL } from "$pipeline/sql/spell-ddl";
 import { canonicalisePortals } from "$pipeline/entities/portal/canonicaliser";
+import { emitPortalReadModels } from "$pipeline/entities/portal/read-models";
 
 const ctx = {
   workspaceRoot: ".",
@@ -1024,6 +1025,7 @@ describe("emitMapReadModels", () => {
     });
 
     emitMapReadModels(db, ["location", "portal"]);
+    emitPortalReadModels(db);
 
     expect(
       db
@@ -1044,12 +1046,13 @@ describe("emitMapReadModels", () => {
     });
     const node = db
       .query(
-        `SELECT route_path, short_id FROM entity_nodes
+        `SELECT route_path, short_id, is_public FROM entity_nodes
          WHERE entity_type = 'portal' AND entity_id = 'instances;portals;398213e43a41b4c47bffe4ef1998e782'`,
       )
-      .get() as { route_path: string; short_id: string };
+      .get() as { route_path: string; short_id: string; is_public: number };
     expect(node.short_id).toBe("398213e4");
     expect(node.route_path).toBe("/map?map=ardenfall&sel=398213e4");
+    expect(node.is_public).toBe(0);
   });
 
   it("fails fast when a requested entity has no map projection", () => {

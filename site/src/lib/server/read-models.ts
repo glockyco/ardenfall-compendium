@@ -105,6 +105,13 @@ export type { ItemTagOverviewRow, ItemTagPresentationRow } from "./entities/item
 export { getItemTagPresentation, listItemTags } from "./entities/item-tag";
 
 export type {
+  LocationElevation,
+  LocationExtent,
+  LocationOverviewRow,
+  LocationPresentationRow,
+} from "./entities/location";
+export { getLocationPresentation, listLocations } from "./entities/location";
+export type {
   MapBounds,
   MapLayerConfig,
   MapPointRow,
