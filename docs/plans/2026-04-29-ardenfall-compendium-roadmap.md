@@ -432,7 +432,8 @@ A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.1
 | `Faction` | 48 | 48 | **no** | `lookupAsset` |
 | `PerkAsset` | 18 | 18 | **no** | `lookupAsset` |
 | `TraitType` | 17 | 17 | **no** | `lookupAsset` |
-| `CharacterData` | 212 | 212 | **no** | `lookupAsset` |
+| `CharacterData` | 212 | 212 | yes | `lookupAsset` |
+| `PortalRecord` instances | 33 | n/a | yes, without a page | `record` |
 | `NPCRecord` instances | 314 | n/a | **no** | `record` |
 
 **Spells are the same defect that made stat types ship empty, still live.** 56 `SpellData` assets exist and none is registered, so all 286 item references to them fail. The catalogue already publishes 280 items in a `Spells` category whose actual spell definition is unreachable. `namedAsset` solves it exactly as it solved stat types, and `RefResolver` currently hardcodes that mechanism for two types, which is the same hand-maintained-list smell the pipeline registry just removed.
@@ -458,9 +459,9 @@ A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.1
 
 Ordered by measured reader value against cost. The survey at [`2026-08-02-program-survey`](2026-08-02-program-survey.md) supplies the evidence, and it changed this ordering: new entities rank below both connective work and the last mile, because most pages still have no inbound edge and several shipped defects were reader-visible when the survey ran.
 
-**Correctness of what already ships.** The site draws transparent cards, the map draws white borders, 967 item pages render an empty Description heading, and every non-item 404 claims an item was missing. Most are trivial fixes. They come first because they are wrong now, on pages already published.
+**Correctness of what already ships** - **done.** Cards are opaque, the map uses white only for the selected marker's highlight ring, no item page renders an empty Description heading, and the error page names the page rather than claiming an item was missing.
 
-**Honest gaps, rendered.** 833 items carry omission data and 496 carry diagnostics, all of it emitted by the pipeline and displayed nowhere. The project's principle is to ship gaps honestly and the last step was never taken.
+**Honest gaps, rendered** - **overtaken.** The omission tables no longer exist and the pipeline now emits one diagnostic row for the whole snapshot, `statVocabularyMissing`. Gaps are stated where a reader meets them instead: an item whose game name is a template says the game builds it during play, a location states that its extent has no unit, and a nameless row carries a diagnostic and a null rather than an invented value.
 
 **Edges.**
 
@@ -511,16 +512,18 @@ Any map-supporting entity slice that ships public detail pages must reuse Slice 
 
 ### Slice 10 — Search, facets, and cross-cutting design depth
 
-**Status:** planned
+**Status:** search done, facets planned
 **Spec coverage:** baseline §11, §14, §15 P5; amendment §16; investment-priorities §5.
 
-**Delivers:** Cross-entity FTS5/Pagefind search routes, broad facets, generated search/filter read models, and scale-up governance only if accumulated Slice 4+ pressure proves it necessary: lint rules, Storybook, visual regression, or richer catalog automation. It does not introduce the design-system foundation; it extends the Slice 4 catalog/component/token contract when the lighter dev-gallery path stops being cheaper.
+**Delivered:** Pagefind search across every page. The index is built by `build:prepared`, so no deployable build can omit it, and a smoke fails on an absent or empty index. FTS5 was not needed, because Pagefind indexes the prerendered HTML and adds no pipeline work.
+
+**Still planned:** broad facets and generated filter read models. Only the map has filters today. Scale-up governance stays conditional on accumulated pressure: lint rules, Storybook, visual regression, or richer catalog automation. It does not introduce the design-system foundation, it extends the Slice 4 catalog/component/token contract when the lighter dev-gallery path stops being cheaper.
 
 **Why later than the AK precedent's design slice:** Ardenfall Compendium seeds design-system governance in Slice 4 beside the first deep content surface. Slice 10 waits for enough cross-entity content and component volume to justify search infrastructure and heavier governance automation.
 
 ### Slice 11 — Spells
 
-**Status:** planned
+**Status:** done
 **Spec coverage:** amendment §18; investment-priorities §1 (spells after items/maps).
 
 **Delivers:** `SpellData` extraction and canonicalisation: typed `spells` root table; generated tooltips through the shared `rich_text_v1` contract when feasible; references to `StatType`; type-tagged validated JSON for `SpellEffect` / `SubSpellData.effects`; public spell nodes/routes in the shared relationship graph; resolution of Slice 4 slate-spell item references without introducing a spell-specific HTML or link pipeline.
