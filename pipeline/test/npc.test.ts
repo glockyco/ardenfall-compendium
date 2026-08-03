@@ -214,7 +214,7 @@ describe("NPC pipeline", () => {
       render_context: "placed-character-presentation-v1",
       map_id: "ardenfall",
       map_x: 1,
-      map_y: -3,
+      map_y: 3,
       elevation: 2,
       location_ids_json: '["town"]',
       map_query: "map=ardenfall&sel=4b1c9e07",

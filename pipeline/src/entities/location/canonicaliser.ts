@@ -115,8 +115,8 @@ function canonicaliseVolume(locationId: string, volume: LocationSnapshotVolume) 
   const sourceMaxZ = volume.center.z + halfZ;
   const mapMinX = sourceMinX;
   const mapMaxX = sourceMaxX;
-  const mapMinY = -sourceMaxZ;
-  const mapMaxY = -sourceMinZ;
+  const mapMinY = sourceMinZ;
+  const mapMaxY = sourceMaxZ;
   const elevationMin = volume.center.y - halfY;
   const elevationMax = volume.center.y + halfY;
 
@@ -168,8 +168,24 @@ function sourceToMapPointForRow(
   return mapPointUnchecked(point);
 }
 
+/**
+ * Projects a world position onto the top-down map plane.
+ *
+ * The game's own projection is `WorldMapUI.GlobalPositionToMapPosition`, which takes
+ * `(x - centre.x) / division.x` and `(z - centre.z) / division.y` and applies no sign
+ * change. `worldMapDivision` is positive on both maps, measured live as (3.00, 3.00) for
+ * `overworld` and (2.98, 3.19) for `interior`, so the game's map y rises with world z. The
+ * game draws that into a Unity UI rect where y rises up the screen, and the site draws it
+ * through a deck.gl `OrthographicView` with `flipY: false`, which also puts y up. So world
+ * z maps to map y unchanged. Negating it mirrored every marker north to south against the
+ * map a player knows.
+ *
+ * Scale is deliberately not applied. The site fits bounds, so a uniform factor makes no
+ * difference. The two maps do have different x and y divisions, which is a real aspect
+ * difference this projection does not yet carry.
+ */
 function mapPointUnchecked(point: SnapshotVector3): MapPoint {
-  return { x: point.x, y: -point.z, elevation: point.y };
+  return { x: point.x, y: point.z, elevation: point.y };
 }
 
 function assertFiniteVector(point: SnapshotVector3, field: string): void {

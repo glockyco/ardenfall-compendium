@@ -913,7 +913,7 @@ describe("emitMapReadModels", () => {
       name: "Harbor Town",
       map_id: "ardenfall",
       map_x: 12,
-      map_y: 8,
+      map_y: -8,
       elevation: 3,
       show_on_map_debug_only: 0,
       allow_fast_travel: 1,
@@ -931,11 +931,11 @@ describe("emitMapReadModels", () => {
     expect(volume.instance_id).toBe("11111111.fixture-town");
     expect(volume.name).toBe("Harbor Town");
     expect(JSON.parse(volume.geometry_json).ring).toEqual([
-      [7, 16],
-      [13, 16],
-      [13, 24],
-      [7, 24],
-      [7, 16],
+      [7, -24],
+      [13, -24],
+      [13, -16],
+      [7, -16],
+      [7, -24],
     ]);
   });
 
@@ -1043,7 +1043,7 @@ describe("emitMapReadModels", () => {
       name: "Harbor Gate",
       map_id: "ardenfall",
       map_x: 20,
-      map_y: 30,
+      map_y: -30,
       elevation: 5,
     });
     const node = db

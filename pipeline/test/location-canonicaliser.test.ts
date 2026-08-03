@@ -39,10 +39,12 @@ const envelope: SnapshotEnvelope = {
 };
 
 describe("sourceToMapPoint", () => {
+  // The game's own projection keeps the sign of world z, and both it and the site draw
+  // into a y-up space, so map y must rise with world z. Negating it mirrored the map.
   it("maps Unity x/z to compendium x/y and preserves elevation", () => {
-    expect(sourceToMapPoint({ x: 12, y: 3, z: -8 })).toEqual({ x: 12, y: 8, elevation: 3 });
-    expect(sourceToMapPoint({ x: -5, y: -2, z: 9 })).toEqual({ x: -5, y: -9, elevation: -2 });
-    expect(sourceToMapPoint({ x: 0, y: 0, z: 0 })).toEqual({ x: 0, y: -0, elevation: 0 });
+    expect(sourceToMapPoint({ x: 12, y: 3, z: -8 })).toEqual({ x: 12, y: -8, elevation: 3 });
+    expect(sourceToMapPoint({ x: -5, y: -2, z: 9 })).toEqual({ x: -5, y: 9, elevation: -2 });
+    expect(sourceToMapPoint({ x: 0, y: 0, z: 0 })).toEqual({ x: 0, y: 0, elevation: 0 });
   });
 });
 
@@ -82,7 +84,7 @@ describe("canonicaliseLocations", () => {
       instance_id: "11111111.fixture-town",
       map_id: "ardenfall",
       map_x: 12,
-      map_y: 8,
+      map_y: -8,
       elevation: 3,
     });
 
@@ -110,19 +112,19 @@ describe("canonicaliseLocations", () => {
     expect(volume.kind).toBe("axis-aligned-box");
     expect(volume.map_min_x).toBe(7);
     expect(volume.map_max_x).toBe(13);
-    expect(volume.map_min_y).toBe(16);
-    expect(volume.map_max_y).toBe(24);
+    expect(volume.map_min_y).toBe(-24);
+    expect(volume.map_max_y).toBe(-16);
     expect(volume.elevation_min).toBe(0);
     expect(volume.elevation_max).toBe(4);
     expect(JSON.parse(volume.geometry_json)).toEqual({
       schemaVersion: 1,
       kind: "axis-aligned-box",
       ring: [
-        [7, 16],
-        [13, 16],
-        [13, 24],
-        [7, 24],
-        [7, 16],
+        [7, -24],
+        [13, -24],
+        [13, -16],
+        [7, -16],
+        [7, -24],
       ],
     });
     const ring = JSON.parse(volume.geometry_json).ring as number[][];
