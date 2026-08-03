@@ -1,59 +1,51 @@
 # Repo Agent Orientation
 
-This repository is the static compendium for the game Ardenfall. The durable rules live in this file and the subsystem `AGENTS.md` files; `docs/plans/` holds planning specs and plans that are scaffolding (they get archived once delivered), so treat them as background, not as the source of truth.
-
 ## Where to look first
 
-- Living roadmap (delivered and planned state): `docs/plans/2026-04-29-ardenfall-compendium-roadmap.md`
+- Living roadmap: `docs/plans/2026-04-29-ardenfall-compendium-roadmap.md`
 
 ## Subsystem entry points
 
-- `mod/AGENTS.md` — BepInEx walker, DTOs, snapshot writer.
-- `pipeline/AGENTS.md` — descriptor loader, stage orchestrator, canonicaliser, site-metadata emitter.
-- `site/AGENTS.md` — SvelteKit pages, store accessors, design tokens, deck.gl map.
+- `mod/AGENTS.md` — BepInEx walker, DTOs, and snapshot writer.
+- `pipeline/AGENTS.md` — descriptor loader, stage orchestrator, canonicaliser, and site-metadata emitter.
+- `site/AGENTS.md` — SvelteKit pages, store accessors, design tokens, and deck.gl map.
 
 ## Commands
 
 - Pipeline: `bun test pipeline/test` · Site: `bun run --cwd site check` and `bun test site/test` · Mod (C#): `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --nologo -v q` · Controller: `bun test controller/test` · Cross-package: `bun test tooling.test.ts artifact-staging.test.ts`.
 - Repo-wide: `bun run typecheck` · `bun run lint` · `bun run format` · `bun run check:fixtures` · `bun run codegen:validators`.
-- `bun run typecheck` checks the root tooling and standalone TypeScript scripts under `scripts/`, `site/scripts/`, and `fixtures/scripts/`, plus the `pipeline` and `controller` projects. The site is typechecked separately by `svelte-check` via `bun run --cwd site check`. Both are required — neither covers the other.
-- Stay on TypeScript 6. TypeScript 7 is released but `svelte-check` peers `^5 || ^6` and `typescript-eslint` peers `<6.1.0`, so adopting it breaks typechecking and linting. Recheck when both publish support.
+- `bun run typecheck` checks root tooling, standalone TypeScript scripts, `pipeline`, and `controller`. The site is typechecked separately with `bun run --cwd site check`. Run both.
+- Keep TypeScript on version 6. `svelte-check` peers `^5 || ^6`, and `typescript-eslint` peers `<6.1.0`.
 - Site dev server: `bun run dev`.
-- Before yielding non-trivial work, run the full gate (the scoped tests above plus `bun run artifact:fixture synthetic fixtures/synthetic/snapshot`, `bun run --cwd site build:fixture`, `bun run --cwd site smoke:prerender`, `bun run --cwd site smoke:pagefind`, `bun run format:check`, `bun run lint`, `git diff --check`). Commit through `skill://commit`; never bypass hooks with `--no-verify`.
+- Before yielding non-trivial work, run the full gate:
+  - Run the scoped tests above.
+  - Run `bun run artifact:fixture synthetic fixtures/synthetic/snapshot`.
+  - Run `bun run --cwd site build:fixture`.
+  - Run `bun run --cwd site smoke:prerender`.
+  - Run `bun run --cwd site smoke:pagefind`.
+  - Run `bun run format:check`.
+  - Run `bun run lint`.
+  - Run `git diff --check`.
+- Commit through `skill://commit`.
 
 ## Live data and game logic
 
-- Live extraction is automated. With a configured repo-root `.env` (game paths, `HOTREPL_URL`, launch command), run `bun run hotrepl:setup` (build + deploy the mod), `bun run hotrepl:launch` (start the game), then `bun run hotrepl:export` (drive HotRepl → snapshot → pipeline; see `controller/src/export-orchestrator.ts` for the step sequence).
-- `hotrepl:deploy` rewrites the game's `hotrepl.bepinex.cfg` from `HOTREPL_BIND_HOST` and `HOTREPL_PORT` (default `18590`). If another HotRepl-instrumented game already holds the default port, set `HOTREPL_PORT` and the matching `HOTREPL_URL` in `.env` rather than hand-editing the config, which every deploy overwrites. Two games claiming one port do not error: connections land on whichever bound first, so an export can silently target the wrong game.
-- Probe a running game directly with HotRepl. Use the **CLI** for interactive C# eval/inspection (`hotrepl eval '<C#>'`, `describe`, `watch`) and `@hotrepl/sdk` for automation. The controller declares the `@hotrepl/protocol` and `@hotrepl/sdk` dependencies. Do not use the MCP server. The HotRepl checkout is `$HOTREPL_REPO`. The world must be loaded (`compendium.continueFromMenu`) before `worldData`/records are reachable.
-- Ground game-logic decisions in the decompiled source, not guesses. The gitignored cache lives at `.decompiled/<gameVersion>-<sha>/` (regenerate with `bun run decompile:game`). Never commit decompiled source, raw game JSON, snapshots, or generated databases.
+- For live extraction, use `skill://live-extraction`.
 
 ## Non-negotiable invariants
 
-- The descriptor at `entities/<id>/entity.json` is the only cross-subsystem source of truth for entity shape. Do not duplicate it in TS, SQL, or C#. Its `site.route` also decides whether an entity gets a public page, so giving an entity a page starts there and not in a route file.
+- The descriptor's `site.route` decides whether an entity gets a public page. Start page work in the descriptor, not in a route file.
 - The descriptor filesystem under `entities/<id>/entity.json` is the entity registry for discovery. Do not maintain manual indexes, enums, or unions of descriptor ids.
-- Synthetic fixtures must preserve awkward shapes from live data, including nameless rows and absent references. Do not make fixtures tidier than the game data.
+- Synthetic fixtures must preserve awkward live-data shapes, including nameless rows and absent references.
 - The site reads pipeline-emitted SQLite metadata only. It does not parse descriptors directly.
-- No raw Unity / Odin / game-object JSON in snapshots. The mod walks live runtime graphs and emits explicit DTOs.
-- Public presentation and link contracts are generated pipeline data. The site renders typed read models, rich-text nodes, and relationship edges; it does not render raw TMP/HTML or infer durable cross-entity links in route code.
-- Public contract replacements are clean cutovers. When a new read model, route contract, or shared UI primitive replaces an old one, remove the old public fallback/plumbing in the same slice; use private `_debug_*` views or diagnostics for temporary inspection.
-- Fail fast instead of adding secondary discovery paths, guessed identifiers, or silent fallbacks. Missing source-of-truth data should produce diagnostics or fail the slice; recovery logic is acceptable only when it is an explicit, continuously verified contract.
-- Pre-commit runs Prettier, ESLint, and `dotnet format` via lefthook. Do not bypass with `--no-verify` for routine work.
-- Generated deploy artifacts are identified by `artifact-manifest.json`. Production deploys consume only release artifacts under `pipeline/artifacts/releases/*`; fixture artifacts under `pipeline/artifacts/fixtures/*` are never deployable.
-- `site/static` is a staging cache populated from a validated artifact. Do not treat it as source-of-truth and do not manually edit generated files there.
+- Public presentation and link contracts are generated pipeline data. The site renders typed read models, rich-text nodes, and relationship edges. It does not render raw TMP/HTML or infer durable cross-entity links in route code.
+- Public contract replacements are clean cutovers. When a new read model, route contract, or shared UI primitive replaces an old one, remove the old public fallback in the same slice. Use private `_debug_*` views or diagnostics for temporary inspection.
 
 ## Environment variables and `bun run`
 
-`bun run <script>` does NOT auto-load `.env` files before invoking the script
-body (oven-sh/bun#23962). Bun does load `.env` for its own runtime
-(`process.env` in `bun -e ...` or `bun file.ts`), but the shell command in a
-package.json script runs in a child environment that does not see it.
+`bun run <script>` does not auto-load `.env` files into the script body (oven-sh/bun#23962). Bun loads `.env` for its own runtime, such as `process.env` in `bun -e ...` or `bun file.ts`. A package script runs in a child environment that does not receive those values.
 
-To bridge the gap, every package.json script that depends on values from
-`.env` is routed through `scripts/with-env.sh`, which sources the repo-root
-`.env` (if present) and `exec`s the rest of its arguments. New env-dependent
-scripts MUST use the same wrapper — never assume `bun run` will surface
-`.env` for you.
+Route every package script that depends on `.env` through `scripts/with-env.sh`. The wrapper sources the repo-root `.env`, when present, and then runs the command. New environment-dependent scripts must use this wrapper.
 
 Pattern:
 
@@ -61,7 +53,6 @@ Pattern:
 "my:task": "scripts/with-env.sh bash -c ': \"${REQUIRED:?set REQUIRED}\"; ...'"
 ```
 
-CI and contributors who export variables directly (or use direnv) are
-unaffected — the wrapper is a no-op when `.env` is absent.
+CI and contributors that export variables directly, or use direnv, are unaffected. The wrapper is a no-op when `.env` is absent.
 
-If you find this document outdated, update it in the same commit as the change that outdates it.
+If this guide becomes outdated, update it in the same commit as the change that makes it outdated.

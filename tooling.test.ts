@@ -53,8 +53,6 @@ const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
   scripts: Record<string, string>;
 };
 const prettierIgnore = readFileSync(".prettierignore", "utf8");
-const rootAgents = readFileSync("AGENTS.md", "utf8");
-const siteAgents = readFileSync("site/AGENTS.md", "utf8");
 
 const sitePackageJson = JSON.parse(readFileSync("site/package.json", "utf8")) as {
   scripts: Record<string, string>;
@@ -782,8 +780,12 @@ describe("site prerender architecture", () => {
 
   it("documents release artifact provenance as the deploy contract", () => {
     const readme = readFileSync("README.md", "utf8");
+    // The agent-facing home for this rule is `.omp/RULES.md`, which the harness reattaches
+    // near the current turn. `AGENTS.md` is opening context that compaction can drop, so a
+    // rule this expensive to violate belongs on the sticky surface instead.
+    const rules = readFileSync(".omp/RULES.md", "utf8");
 
-    for (const text of [rootAgents, siteAgents, readme]) {
+    for (const text of [rules, readme]) {
       expect(text).toContain("artifact-manifest.json");
       expect(text).toContain("site/static");
       expect(text).toContain("staging cache");
