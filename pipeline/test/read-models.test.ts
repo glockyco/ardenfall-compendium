@@ -308,10 +308,15 @@ describe("emitItemReadModels", () => {
       db
         .query(
           `SELECT code, entity_id FROM pipeline_diagnostics
-           WHERE entity_id = '8c0ffee0.fixture-throwing-potion' AND code = 'unresolvedEffectTarget'`,
+           WHERE entity_id = '8c0ffee0.fixture-throwing-potion'
+             AND code IN ('itemStatusEffectUnresolved', 'itemSpellUnresolved')
+           ORDER BY code`,
         )
-        .get(),
-    ).toEqual({ code: "unresolvedEffectTarget", entity_id: "8c0ffee0.fixture-throwing-potion" });
+        .all(),
+    ).toEqual([
+      { code: "itemSpellUnresolved", entity_id: "8c0ffee0.fixture-throwing-potion" },
+      { code: "itemStatusEffectUnresolved", entity_id: "8c0ffee0.fixture-throwing-potion" },
+    ]);
     expect(
       JSON.parse(
         db
@@ -1048,8 +1053,8 @@ describe("emitMapReadModels", () => {
       )
       .get() as { route_path: string; short_id: string; has_page: number };
     expect(node.short_id).toBe("398213e4");
-    expect(node.route_path).toBe("/map?map=ardenfall&sel=398213e4");
-    expect(node.has_page).toBe(0);
+    expect(node.route_path).toBe("/portals/harbor-gate--398213e4");
+    expect(node.has_page).toBe(1);
   });
 
   it("fails fast when a requested entity has no map projection", () => {

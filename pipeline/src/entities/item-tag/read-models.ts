@@ -34,7 +34,7 @@ export function emitItemTagReadModels(db: Database, routeBase = "/tags"): void {
     .query<
       {
         id: string;
-        tag_name: string;
+        tag_name: string | null;
         description: string;
         item_count: number;
       },
@@ -53,19 +53,20 @@ export function emitItemTagReadModels(db: Database, routeBase = "/tags"): void {
 
   const tx = db.transaction(() => {
     for (const row of rows) {
-      overviewInsert.run(row.id, row.tag_name, row.description, row.item_count);
+      const label = row.tag_name?.trim() || "Unnamed tag";
+      overviewInsert.run(row.id, label, row.description, row.item_count);
       presentationInsert.run(
         row.id,
-        row.tag_name,
+        label,
         "item-tag-presentation-v1",
         row.description,
         row.item_count,
       );
-      const slug = deriveEntityNodeSlug(row.tag_name, row.id);
+      const slug = deriveEntityNodeSlug(label, row.id);
       writeNode({
         entityType: "item-tag",
         entityId: row.id,
-        label: row.tag_name,
+        label: label,
         routePath: `${routeBase}/${slug.canonicalSlug}`,
         canonicalSlug: slug.canonicalSlug,
         shortId: slug.shortId,

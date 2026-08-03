@@ -1,8 +1,8 @@
 export const STAT_TYPE_DDL = `
 CREATE TABLE stat_types (
-  id                    TEXT PRIMARY KEY,
+  id                    TEXT PRIMARY KEY NOT NULL,
   is_attribute          INTEGER NOT NULL,
-  stat_name             TEXT NOT NULL,
+  stat_name             TEXT,
   icon_ref_json         TEXT,
   icon_color_json       TEXT,
   stat_description      TEXT,

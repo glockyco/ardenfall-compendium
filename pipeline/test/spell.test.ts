@@ -226,7 +226,7 @@ describe("spell pipeline", () => {
   it("uses a presentation label and usable slug for a nameless spell", () => {
     const db = new Database(":memory:");
     seedNamelessSpell(db);
-    emitSpellReadModels(db);
+    expect(emitSpellReadModels(db)).toEqual([]);
 
     const overview = db
       .query<{ id: string; name: string }, [string]>(
@@ -253,6 +253,20 @@ describe("spell pipeline", () => {
       canonical_slug: "unnamed-spell--spell-brawler-fists",
     });
   });
+  it("treats a whitespace-only spell name as unnamed", () => {
+    const db = new Database(":memory:");
+    seedNamelessSpell(db);
+    db.run(`UPDATE spells SET spell_name = ? WHERE id = ?`, [" \t ", namelessSpellId]);
+
+    expect(emitSpellReadModels(db)).toEqual([]);
+    expect(db.query(`SELECT name FROM spell_overview_rows`).get()).toEqual({
+      name: "Unnamed spell",
+    });
+    expect(db.query(`SELECT name FROM spell_presentation_rows`).get()).toEqual({
+      name: "Unnamed spell",
+    });
+  });
+
   it("emits a page node with a named-asset route and short id", () => {
     const db = new Database(":memory:");
     seedSpell(db);

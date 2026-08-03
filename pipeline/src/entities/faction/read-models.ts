@@ -68,7 +68,7 @@ export function emitFactionReadModels(db: Database, routeBase = "/factions"): Pi
       `SELECT id, name, description, icon_ref_json, alliable, enable_reputation,
               always_show_in_ui, can_be_disguised, enable_bounty
        FROM factions
-       ORDER BY COALESCE(name, 'Unnamed faction'), id`,
+       ORDER BY COALESCE(NULLIF(TRIM(name), ''), 'Unnamed faction'), id`,
     )
     .all();
   const factionIds = new Set(rows.map((row) => row.id));
@@ -83,7 +83,7 @@ export function emitFactionReadModels(db: Database, routeBase = "/factions"): Pi
   const diagnostics: PipelineDiagnostic[] = [];
   const tx = db.transaction(() => {
     for (const row of rows) {
-      const label = row.name ?? "Unnamed faction";
+      const label = row.name?.trim() || "Unnamed faction";
       overviewInsert.run(row.id, label, row.description);
       presentationInsert.run(
         row.id,

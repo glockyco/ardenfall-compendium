@@ -48,7 +48,7 @@ export function emitStatTypeReadModels(
       {
         id: string;
         is_attribute: number;
-        stat_name: string;
+        stat_name: string | null;
         icon_hash: string | null;
         icon_color_json: string | null;
         stat_description: string | null;
@@ -73,12 +73,13 @@ export function emitStatTypeReadModels(
 
   const diagnostics: PipelineDiagnostic[] = [];
   const tx = db.transaction(() => {
-    const statNodes = new Map(
-      rows.map((stat) => {
-        const slug = deriveEntityNodeSlug(stat.stat_name, stat.id);
-        return [stat.stat_name.trim().toLowerCase(), `${routeBase}/${slug.canonicalSlug}`] as const;
-      }),
-    );
+    const statNodes = new Map<string, string>();
+    for (const stat of rows) {
+      const statName = stat.stat_name?.trim();
+      if (!statName) continue;
+      const slug = deriveEntityNodeSlug(statName, stat.id);
+      statNodes.set(statName.toLowerCase(), `${routeBase}/${slug.canonicalSlug}`);
+    }
     const resolveReferences = (referencesJson: string, sourceId: string) =>
       JSON.stringify(
         (JSON.parse(referencesJson) as unknown[]).map((reference) => {
@@ -91,10 +92,11 @@ export function emitStatTypeReadModels(
       );
 
     for (const row of rows) {
+      const label = row.stat_name?.trim() || "Unnamed stat";
       // A StatType is an attribute or a skill. The asset says which. Traits are a
       // separate asset type entirely, so they cannot classify a stat.
       const grouping = row.is_attribute === 1 ? "attribute" : "skill";
-      if (masterTooltip) {
+      if (masterTooltip && row.stat_name) {
         const vocabularyKey = snakeCaseStatName(row.stat_name);
         const vocabularyName = grouping === "attribute" ? "allAttributes" : "allSkills";
         const vocabulary = masterTooltip[vocabularyName];
@@ -111,10 +113,10 @@ export function emitStatTypeReadModels(
           });
         }
       }
-      overviewInsert.run(row.id, row.stat_name, grouping, row.icon_hash, row.icon_color_json);
+      overviewInsert.run(row.id, label, grouping, row.icon_hash, row.icon_color_json);
       presentationInsert.run(
         row.id,
-        row.stat_name,
+        label,
         grouping,
         "stat-type-presentation-v1",
         row.icon_hash,
@@ -124,11 +126,11 @@ export function emitStatTypeReadModels(
         resolveReferences(row.affects_json, row.id),
         resolveReferences(row.skill_affects_json, row.id),
       );
-      const slug = deriveEntityNodeSlug(row.stat_name, row.id);
+      const slug = deriveEntityNodeSlug(label, row.id);
       writeNode({
         entityType: "stat-type",
         entityId: row.id,
-        label: row.stat_name,
+        label,
         routePath: `${routeBase}/${slug.canonicalSlug}`,
         canonicalSlug: slug.canonicalSlug,
         shortId: slug.shortId,

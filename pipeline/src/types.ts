@@ -395,7 +395,7 @@ export interface FactionSnapshotFields {
   id: string;
   name: string | null;
   factionId: string | null;
-  description: string;
+  description: string | null;
   iconRef?: SnapshotRef | null;
   alliable: boolean;
   enableReputation: boolean;
@@ -432,7 +432,7 @@ export interface PortalSnapshotFields {
 export interface NPCSnapshotFields {
   id: string;
   recordRef: SnapshotRef;
-  characterRef: SnapshotRef | null;
+  friendlyName: string | null;
   spawnPoint: SnapshotVector3;
   mapId: string | null;
   containingLocationRefs: SnapshotRef[];

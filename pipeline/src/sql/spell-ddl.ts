@@ -1,6 +1,6 @@
 export const SPELL_DDL = `
 CREATE TABLE spells (
-  id              TEXT PRIMARY KEY,
+  id              TEXT PRIMARY KEY NOT NULL,
   spell_name      TEXT,
   stat_type_ref_json TEXT,
   mana_cost       REAL,

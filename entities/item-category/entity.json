@@ -19,7 +19,7 @@
       "name": "categoryName",
       "type": "string",
       "from": "categoryName",
-      "missingPolicy": "fatal",
+      "missingPolicy": "diagnostic",
       "column": "category_name"
     },
     {

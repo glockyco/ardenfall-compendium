@@ -9,7 +9,7 @@ public sealed record StatusEffectSnapshot(
     [property: JsonProperty("statusEffectName")] string? StatusEffectName,
     [property: JsonProperty("tooltipSource")] string? TooltipSource,
     [property: JsonProperty("iconRef")] SnapshotRef? IconRef,
-    [property: JsonProperty("isHostile")] bool IsHostile);
+    [property: JsonProperty("isHostile")] bool? IsHostile);
 
 public sealed class StatusEffectSnapshotRow
 {

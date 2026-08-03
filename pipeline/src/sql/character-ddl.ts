@@ -1,6 +1,6 @@
 export const CHARACTER_DDL = `
 CREATE TABLE characters (
-  id              TEXT PRIMARY KEY,
+  id              TEXT PRIMARY KEY NOT NULL,
   character_name  TEXT,
   drop_refs_json  TEXT NOT NULL
 );

@@ -4,7 +4,7 @@ import { entityRows } from "../../types.ts";
 
 export interface ItemCategoryFields {
   id: string;
-  categoryName: string;
+  categoryName: string | null;
   iconRef?: unknown;
   defaultItemIconRef?: unknown;
   categoryColor: unknown;

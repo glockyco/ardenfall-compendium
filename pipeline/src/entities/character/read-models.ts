@@ -12,7 +12,8 @@ CREATE TABLE character_overview_rows (
 CREATE TABLE character_presentation_rows (
   id             TEXT PRIMARY KEY,
   name           TEXT NOT NULL,
-  render_context TEXT NOT NULL
+  render_context TEXT NOT NULL,
+  drop_refs_json TEXT NOT NULL
 );
 `;
 
@@ -36,7 +37,8 @@ export function emitCharacterReadModels(
 
   const overviewInsert = db.prepare(`INSERT INTO character_overview_rows (id, name) VALUES (?, ?)`);
   const presentationInsert = db.prepare(
-    `INSERT INTO character_presentation_rows (id, name, render_context) VALUES (?, ?, ?)`,
+    `INSERT INTO character_presentation_rows (id, name, render_context, drop_refs_json)
+     VALUES (?, ?, ?, ?)`,
   );
   const edgeInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_edges (
@@ -45,6 +47,25 @@ export function emitCharacterReadModels(
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const writeNode = prepareEntityNodeWriter(db);
+  const itemNodes = new Map(
+    db
+      .query<{ entity_id: string; label: string; route_path: string; has_page: number }, []>(
+        `SELECT entity_id, label, route_path, has_page
+         FROM entity_nodes WHERE entity_type = 'item'`,
+      )
+      .all()
+      .map(
+        (row) =>
+          [
+            row.entity_id,
+            {
+              label: row.label.trim() || "Unnamed item",
+              routePath: row.has_page === 1 ? row.route_path : null,
+            },
+          ] as const,
+      ),
+  );
+  const itemIds = new Set(itemNodes.keys());
   const pageItems = new Set(
     db
       .query<{ entity_id: string }, []>(
@@ -76,16 +97,15 @@ export function emitCharacterReadModels(
     .query<CharacterRow, []>(
       `SELECT id, character_name, drop_refs_json
        FROM characters
-       ORDER BY COALESCE(character_name, 'Unnamed character'), id`,
+       ORDER BY COALESCE(NULLIF(TRIM(character_name), ''), 'Unnamed character'), id`,
     )
     .all();
 
   const diagnostics: PipelineDiagnostic[] = [];
   const tx = db.transaction(() => {
     for (const row of rows) {
-      const presentationName = row.character_name ?? "Unnamed character";
+      const presentationName = row.character_name?.trim() || "Unnamed character";
       overviewInsert.run(row.id, presentationName);
-      presentationInsert.run(row.id, presentationName, "character-presentation-v1");
       const slug = deriveEntityNodeSlug(presentationName, row.id);
       writeNode({
         entityType: "character",
@@ -101,12 +121,38 @@ export function emitCharacterReadModels(
         refs = JSON.parse(row.drop_refs_json) as unknown;
       } catch {
         diagnostics.push(unresolvedDropDiagnostic(row, "reference list is not valid JSON"));
+        presentationInsert.run(
+          row.id,
+          presentationName,
+          "character-presentation-v1",
+          JSON.stringify([]),
+        );
         continue;
       }
       if (!Array.isArray(refs)) {
         diagnostics.push(unresolvedDropDiagnostic(row, "reference list is not an array"));
+        presentationInsert.run(
+          row.id,
+          presentationName,
+          "character-presentation-v1",
+          JSON.stringify([]),
+        );
         continue;
       }
+      const drops = refs.map((value) => {
+        const targetId = resolveItemId(value, itemIds);
+        const target = targetId === null ? null : itemNodes.get(targetId);
+        return {
+          label: target?.label ?? "Unnamed item",
+          routePath: target?.routePath ?? null,
+        };
+      });
+      presentationInsert.run(
+        row.id,
+        presentationName,
+        "character-presentation-v1",
+        JSON.stringify(drops),
+      );
       for (const value of refs) {
         const targetId = resolveItemId(value, pageItems);
         if (targetId === null) {

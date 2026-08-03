@@ -10,8 +10,8 @@ CREATE TABLE placements (
   PRIMARY KEY (entity_id, instance_id)
 );
 CREATE TABLE locations (
-  id                         TEXT PRIMARY KEY,
-  name                       TEXT NOT NULL,
+  id                         TEXT PRIMARY KEY NOT NULL,
+  name                       TEXT,
   enabled                    INTEGER NOT NULL,
   map_id                     TEXT,
   map_ref_json               TEXT,

@@ -19,7 +19,7 @@
       "name": "tagName",
       "type": "string",
       "from": "tagName",
-      "missingPolicy": "fatal",
+      "missingPolicy": "diagnostic",
       "column": "tag_name"
     },
     {

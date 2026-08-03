@@ -27,8 +27,8 @@ public sealed record SpellSnapshot(
     [property: JsonProperty("id")] string Id,
     [property: JsonProperty("spellName")] string? SpellName,
     [property: JsonProperty("statTypeRef")] SnapshotRef? StatTypeRef,
-    [property: JsonProperty("manaCost")] float ManaCost,
-    [property: JsonProperty("isIllegal")] bool IsIllegal,
+    [property: JsonProperty("manaCost")] float? ManaCost,
+    [property: JsonProperty("isIllegal")] bool? IsIllegal,
     [property: JsonProperty("iconRef")] SnapshotRef? IconRef,
     [property: JsonProperty("tooltipSource")] string? TooltipSource,
     [property: JsonProperty("spellEffects")] IReadOnlyList<SpellEffectSnapshot> SpellEffects);

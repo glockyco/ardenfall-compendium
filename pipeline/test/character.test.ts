@@ -63,6 +63,12 @@ describe("character pipeline", () => {
       drop_refs_json: JSON.stringify([{ kind: "lookupAsset", guid: itemId }]),
     });
     expect(emitCharacterReadModels(db)).toEqual([]);
+    expect(db.query(`SELECT name, drop_refs_json FROM character_presentation_rows`).get()).toEqual({
+      name: "Bandit",
+      drop_refs_json: JSON.stringify([
+        { label: "Iron Sword", routePath: "/items/iron-sword--4ed20218" },
+      ]),
+    });
     expect(
       db
         .query(
@@ -80,6 +86,45 @@ describe("character pipeline", () => {
         evidence_json: JSON.stringify({ source: "characters.itemLists" }),
       },
     ]);
+  });
+
+  it("uses an unnamed label for a nameless character", () => {
+    const db = seedDatabase();
+    canonicaliseCharacters(db, {
+      entityId: "character",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: characterId,
+          fields: { id: characterId, name: null, dropRefs: [] },
+        },
+      ],
+    });
+
+    expect(emitCharacterReadModels(db)).toEqual([]);
+    expect(db.query(`SELECT name FROM character_overview_rows`).get()).toEqual({
+      name: "Unnamed character",
+    });
+    expect(db.query(`SELECT name FROM character_presentation_rows`).get()).toEqual({
+      name: "Unnamed character",
+    });
+  });
+
+  it("treats a whitespace-only character name as unnamed", () => {
+    const db = seedDatabase();
+    db.run(`INSERT INTO characters (id, character_name, drop_refs_json) VALUES (?, ?, ?)`, [
+      characterId,
+      " \t ",
+      "[]",
+    ]);
+
+    expect(emitCharacterReadModels(db)).toEqual([]);
+    expect(db.query(`SELECT name FROM character_overview_rows`).get()).toEqual({
+      name: "Unnamed character",
+    });
+    expect(db.query(`SELECT name FROM character_presentation_rows`).get()).toEqual({
+      name: "Unnamed character",
+    });
   });
 
   it("canonicalises reference collections independent of arrival order", () => {

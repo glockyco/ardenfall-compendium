@@ -87,13 +87,36 @@ describe("status-effect pipeline", () => {
   it("ships nameless status effects under a presentation label", () => {
     const db = new Database(":memory:");
     seedStatusEffects(db);
-    emitStatusEffectReadModels(db);
+    expect(emitStatusEffectReadModels(db)).toEqual([]);
 
-    const row = db
+    const rows = db
+      .query<{ name: string | null }, [string]>(
+        `SELECT name FROM status_effect_overview_rows WHERE id = ?`,
+      )
+      .get(namelessId);
+    expect(rows).toEqual({ name: "Unnamed status effect" });
+
+    const presentation = db
       .query<{ name: string }, [string]>(
         `SELECT name FROM status_effect_presentation_rows WHERE id = ?`,
       )
       .get(namelessId);
-    expect(row).toEqual({ name: "Unnamed status effect" });
+    expect(presentation).toEqual({ name: "Unnamed status effect" });
+  });
+
+  it("treats a whitespace-only status effect name as unnamed", () => {
+    const db = new Database(":memory:");
+    seedStatusEffects(db);
+    db.run(`UPDATE status_effects SET status_effect_name = ? WHERE id = ?`, [" \t ", namelessId]);
+
+    expect(emitStatusEffectReadModels(db)).toEqual([]);
+    expect(
+      db.query(`SELECT name FROM status_effect_overview_rows WHERE id = ?`).get(namelessId),
+    ).toEqual({
+      name: "Unnamed status effect",
+    });
+    expect(
+      db.query(`SELECT name FROM status_effect_presentation_rows WHERE id = ?`).get(namelessId),
+    ).toEqual({ name: "Unnamed status effect" });
   });
 });

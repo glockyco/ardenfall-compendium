@@ -52,14 +52,14 @@ export function emitStatusEffectReadModels(
       `SELECT s.id, s.status_effect_name, s.tooltip_source,
               s.is_hostile
        FROM status_effects s
-       ORDER BY COALESCE(s.status_effect_name, 'Unnamed status effect'), s.id`,
+       ORDER BY COALESCE(NULLIF(TRIM(s.status_effect_name), ''), 'Unnamed status effect'), s.id`,
     )
     .all();
 
   const diagnostics: PipelineDiagnostic[] = [];
   const tx = db.transaction(() => {
     for (const row of rows) {
-      const presentationName = row.status_effect_name ?? "Unnamed status effect";
+      const presentationName = row.status_effect_name?.trim() || "Unnamed status effect";
       const tooltip =
         row.tooltip_source === null
           ? null
@@ -71,7 +71,7 @@ export function emitStatusEffectReadModels(
                   }
                 : {}),
             });
-      overviewInsert.run(row.id, row.status_effect_name, row.is_hostile);
+      overviewInsert.run(row.id, presentationName, row.is_hostile);
       presentationInsert.run(
         row.id,
         presentationName,

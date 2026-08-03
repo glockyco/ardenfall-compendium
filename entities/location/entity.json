@@ -18,7 +18,7 @@
   "placement": { "kind": "point+volume", "from": "fields" },
   "fields": [
     { "name": "id", "type": "id", "from": "guid", "missingPolicy": "fatal" },
-    { "name": "name", "type": "string", "from": "locationName", "missingPolicy": "fatal" },
+    { "name": "name", "type": "string", "from": "locationName", "missingPolicy": "diagnostic" },
     { "name": "enabled", "type": "boolean", "from": "enabled", "missingPolicy": "fatal" },
     {
       "name": "mapId",

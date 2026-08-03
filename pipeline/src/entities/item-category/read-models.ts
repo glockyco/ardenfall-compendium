@@ -43,7 +43,7 @@ export function emitItemCategoryReadModels(db: Database, routeBase = "/categorie
     .query<
       {
         id: string;
-        category_name: string;
+        category_name: string | null;
         icon_hash: string | null;
         default_item_icon_hash: string | null;
         category_color_json: string;
@@ -81,9 +81,10 @@ export function emitItemCategoryReadModels(db: Database, routeBase = "/categorie
 
   const tx = db.transaction(() => {
     for (const row of rows) {
+      const label = row.category_name?.trim() || "Unnamed category";
       overviewInsert.run(
         row.id,
-        row.category_name,
+        label,
         row.icon_hash,
         row.default_item_icon_hash,
         row.category_color_json,
@@ -91,7 +92,7 @@ export function emitItemCategoryReadModels(db: Database, routeBase = "/categorie
       );
       presentationInsert.run(
         row.id,
-        row.category_name,
+        label,
         "item-category-presentation-v1",
         row.icon_hash,
         row.default_item_icon_hash,
@@ -100,11 +101,11 @@ export function emitItemCategoryReadModels(db: Database, routeBase = "/categorie
         row.columns_json,
         row.item_count,
       );
-      const slug = deriveEntityNodeSlug(row.category_name, row.id);
+      const slug = deriveEntityNodeSlug(label, row.id);
       writeNode({
         entityType: "item-category",
         entityId: row.id,
-        label: row.category_name,
+        label,
         routePath: `${routeBase}/${slug.canonicalSlug}`,
         canonicalSlug: slug.canonicalSlug,
         shortId: slug.shortId,

@@ -4,7 +4,7 @@ import { entityRows } from "../../types.ts";
 
 export interface ItemTagFields {
   id: string;
-  tagName: string;
+  tagName: string | null;
   description?: string | null;
 }
 

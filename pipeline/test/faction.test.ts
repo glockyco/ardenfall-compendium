@@ -127,10 +127,35 @@ describe("faction pipeline", () => {
         route_path: expect.stringMatching(/^\/factions\/unnamed-faction/),
       }),
     ]);
+    expect(db.query(`SELECT name FROM faction_overview_rows WHERE id = ?`).get(magesGuild)).toEqual(
+      { name: "Unnamed faction" },
+    );
+    expect(
+      db.query(`SELECT name FROM faction_presentation_rows WHERE id = ?`).get(magesGuild),
+    ).toEqual({ name: "Unnamed faction" });
     expect(db.query("SELECT predicate, label FROM entity_edges ORDER BY edge_id").all()).toEqual([
       { predicate: "starts_opposed_to", label: "Enemy" },
       { predicate: "starts_opposed_to", label: "Standing -600" },
     ]);
+  });
+
+  it("treats a whitespace-only faction name as unnamed", () => {
+    const db = database();
+    db.run(
+      `INSERT INTO factions (
+         id, name, faction_id, description, icon_ref_json, alliable, enable_reputation,
+         always_show_in_ui, can_be_disguised, enable_bounty
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ["b1a0c4d2.11400000", " \t ", "blank", "", null, 0, 0, 0, 0, 0],
+    );
+
+    expect(emitFactionReadModels(db)).toEqual([]);
+    expect(db.query(`SELECT name FROM faction_overview_rows`).get()).toEqual({
+      name: "Unnamed faction",
+    });
+    expect(db.query(`SELECT name FROM faction_presentation_rows`).get()).toEqual({
+      name: "Unnamed faction",
+    });
   });
 
   it("declares both faction predicates", () => {

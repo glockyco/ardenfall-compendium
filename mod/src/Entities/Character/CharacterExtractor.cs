@@ -59,7 +59,7 @@ public sealed class CharacterExtractor : WalkerBase<CharacterSnapshotRow>
                         name,
                         dropRefs,
                         asset.StartingFactions == null
-                            ? new List<SnapshotRef>()
+                            ? null
                             : new List<SnapshotRef>(asset.StartingFactions)),
                 };
             });

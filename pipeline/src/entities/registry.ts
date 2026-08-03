@@ -81,7 +81,8 @@ export function emitLocationReadModels(db: Database): void {
   const writeNode = prepareEntityNodeWriter(db);
   const rows = db
     .query<{ id: string; name: string }, []>(
-      `SELECT id, name FROM locations WHERE enabled = 1 ORDER BY name, id`,
+      `SELECT id, COALESCE(NULLIF(TRIM(name), ''), 'Unnamed location') AS name
+       FROM locations WHERE enabled = 1 ORDER BY name, id`,
     )
     .all();
   const tx = db.transaction(() => {
@@ -107,25 +108,29 @@ const locationProjection: MapProjection = {
         id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
         show_on_map_debug_only, allow_fast_travel
       )
-      SELECT 'location:' || l.id, 'location', l.id, l.name, p.map_id, p.map_x, p.map_y, p.elevation,
+      SELECT 'location:' || l.id, 'location', l.id,
+             COALESCE(NULLIF(TRIM(l.name), ''), 'Unnamed location'),
+             p.map_id, p.map_x, p.map_y, p.elevation,
              l.show_on_map_debug_only, l.allow_fast_travel
       FROM locations l
       JOIN placements p ON p.entity_id = 'location' AND p.instance_id = l.id
       WHERE l.enabled = 1
-      ORDER BY l.name;
+      ORDER BY COALESCE(NULLIF(TRIM(l.name), ''), 'Unnamed location'), l.id;
     `,
   volumes: `
       INSERT INTO map_volumes (
         id, entity_id, instance_id, name, map_id, geometry_json, elevation_min, elevation_max
       )
-      SELECT v.id, 'location', v.location_id, l.name, p.map_id, v.geometry_json,
+      SELECT v.id, 'location', v.location_id,
+             COALESCE(NULLIF(TRIM(l.name), ''), 'Unnamed location'),
+             p.map_id, v.geometry_json,
              v.elevation_min, v.elevation_max
       FROM location_volumes v
       JOIN locations l ON l.id = v.location_id
       JOIN placements p ON p.entity_id = 'location' AND p.instance_id = l.id
       WHERE l.enabled = 1
         AND v.geometry_json IS NOT NULL
-      ORDER BY l.name, v.volume_index;
+      ORDER BY COALESCE(NULLIF(TRIM(l.name), ''), 'Unnamed location'), v.volume_index;
     `,
 };
 
@@ -155,19 +160,12 @@ const npcProjection: MapProjection = {
         show_on_map_debug_only, allow_fast_travel
       )
       SELECT 'npc:' || n.id, 'npc', n.id,
-             COALESCE(NULLIF(c.character_name, ''), 'Unnamed character'),
+             COALESCE(NULLIF(TRIM(n.friendly_name), ''), 'Unnamed character'),
              p.map_id, p.map_x, p.map_y, p.elevation,
              0, 0
       FROM npcs n
       JOIN placements p ON p.entity_id = 'npc' AND p.instance_id = n.id
-      LEFT JOIN characters c ON c.id = CASE
-        WHEN json_extract(n.character_ref_json, '$.kind') = 'lookupAsset'
-          THEN json_extract(n.character_ref_json, '$.guid')
-        WHEN json_extract(n.character_ref_json, '$.kind') = 'namedAsset'
-          THEN 'named;' || json_extract(n.character_ref_json, '$.entity') || ';' || json_extract(n.character_ref_json, '$.name')
-        ELSE NULL
-      END
-      ORDER BY COALESCE(NULLIF(c.character_name, ''), 'Unnamed character'), n.id;
+      ORDER BY COALESCE(NULLIF(TRIM(n.friendly_name), ''), 'Unnamed character'), n.id;
     `,
 };
 

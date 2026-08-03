@@ -118,7 +118,7 @@ export function emitSpellReadModels(
     .query<SpellRow, []>(
       `SELECT id, spell_name, stat_type_ref_json, mana_cost, is_illegal, tooltip_source
        FROM spells
-       ORDER BY COALESCE(spell_name, 'Unnamed spell'), id`,
+       ORDER BY COALESCE(NULLIF(TRIM(spell_name), ''), 'Unnamed spell'), id`,
     )
     .all();
   const statusEffects = new Map<string, { label: string | null }>();
@@ -152,7 +152,7 @@ export function emitSpellReadModels(
   const diagnostics: PipelineDiagnostic[] = [];
   const tx = db.transaction(() => {
     for (const row of rows) {
-      const presentationName = row.spell_name ?? "Unnamed spell";
+      const presentationName = row.spell_name?.trim() || "Unnamed spell";
       const skill = resolveSkill(row, pageStats, diagnostics);
       const tooltip =
         row.tooltip_source === null
@@ -215,12 +215,10 @@ export function emitSpellReadModels(
                 evidence: { statusEffectRef: effect.status_effect_ref_json },
               });
             } else {
-              statusEffectLabel = statusEffects.get(statusEffectCandidate)?.label ?? null;
+              statusEffectLabel =
+                statusEffects.get(statusEffectCandidate)?.label ?? "Unnamed status effect";
               statusEffectId = statusEffectCandidate;
-              const slug = deriveEntityNodeSlug(
-                statusEffectLabel ?? "Unnamed status effect",
-                statusEffectId,
-              );
+              const slug = deriveEntityNodeSlug(statusEffectLabel, statusEffectId);
               statusEffectRoutePath = `/status-effects/${slug.canonicalSlug}`;
               edgeInsert.run(
                 `${row.id}:applies:status-effect:${statusEffectId}`,

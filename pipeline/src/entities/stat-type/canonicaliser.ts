@@ -5,7 +5,7 @@ import { entityRows } from "../../types.ts";
 export interface StatTypeFields {
   id: string;
   isAttribute: boolean;
-  statName: string;
+  statName: string | null;
   iconRef?: unknown;
   iconColor?: unknown;
   statDescription?: string | null;
