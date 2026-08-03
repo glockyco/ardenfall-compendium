@@ -29,6 +29,12 @@
     </div>
     <div>
       <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+        Always shown in UI
+      </dt>
+      <dd class="mt-1">{presentation.alwaysShowInUI ? "Yes" : "No"}</dd>
+    </div>
+    <div>
+      <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
         Can be disguised as
       </dt>
       <dd class="mt-1">{presentation.canBeDisguised ? "Yes" : "No"}</dd>

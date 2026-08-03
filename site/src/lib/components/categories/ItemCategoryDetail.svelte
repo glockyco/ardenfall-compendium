@@ -22,6 +22,15 @@
     columns: Column[];
     variantRoutePath: string | null;
   } = $props();
+
+  const columnLabel = (column: Record<string, unknown>): string | null => {
+    if (column.isItemIconAndCategory === true) return "Item icon";
+    if (column.itemName === true) return "Name";
+    if (column.itemValue === true) return "Value";
+    if (typeof column.label !== "string") return null;
+    const label = column.label.replace(/<sprite\b[^>]*>/g, "").trim();
+    return label || null;
+  };
 </script>
 
 <div class="border-border bg-card mt-4 rounded-lg border p-5">
@@ -45,6 +54,19 @@
       >
     {/if}
   </p>
+
+  {#if presentation.columns.length > 0}
+    <section class="border-border mt-6 border-t pt-5">
+      <h2 class="font-semibold">Inventory columns</h2>
+      <ul class="text-muted-foreground mt-3 grid gap-2 text-sm sm:grid-cols-2">
+        {#each presentation.columns as column, index (`${columnLabel(column) ?? "column"}-${index}`)}
+          {#if columnLabel(column)}
+            <li>{columnLabel(column)}</li>
+          {/if}
+        {/each}
+      </ul>
+    </section>
+  {/if}
 
   {#if items.length > 0}
     <section class="mt-6">
