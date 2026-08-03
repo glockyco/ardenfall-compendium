@@ -8,37 +8,54 @@
     "root": "Resources.FindObjectsOfTypeAll<SpellData>",
     "walker": "SpellExtractor"
   },
+  "canonicalTable": "spells",
   "presentationContext": { "renderContext": "spell-presentation-v1" },
   "site": {
     "route": "/spells"
   },
   "fields": [
     { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
-    { "name": "spellName", "type": "string", "from": "spellName", "missingPolicy": "diagnostic" },
+    {
+      "name": "spellName",
+      "type": "string",
+      "from": "spellName",
+      "missingPolicy": "diagnostic",
+      "column": "spell_name"
+    },
     {
       "name": "statTypeRef",
       "type": "ref:asset",
       "from": "statType",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "stat_type_ref_json"
     },
-    { "name": "manaCost", "type": "number", "from": "manaCost", "missingPolicy": "diagnostic" },
+    {
+      "name": "manaCost",
+      "type": "number",
+      "from": "manaCost",
+      "missingPolicy": "diagnostic",
+      "column": "mana_cost"
+    },
     {
       "name": "isIllegal",
       "type": "boolean",
       "from": "isIlligal",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "is_illegal"
     },
     {
       "name": "tooltipSource",
       "type": "string",
       "from": "tooltip.GetTooltip(1f, 1f, spell)",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "tooltip_source"
     },
     {
       "name": "iconRef",
       "type": "ref:asset",
       "from": "icon",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "icon_ref_json"
     }
   ],
   "map": null

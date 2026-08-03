@@ -7,6 +7,7 @@ const item: EntityDescriptor = {
   id: "item",
   kind: "definition",
   label: { singular: "Item", plural: "Items" },
+  canonicalTable: "items",
   extraction: { source: "lookupAsset", root: "x" },
   fields: [
     { name: "id", type: "id", from: "guid", missingPolicy: "fatal" },
@@ -50,8 +51,8 @@ describe("buildDDL", () => {
     expect(ddl).toContain('CREATE TABLE "item_equipment"');
     expect(ddl).toContain('"id" TEXT NOT NULL PRIMARY KEY REFERENCES "items"("id")');
   });
-  it("omits projected fields from entity and variant tables", () => {
-    const projectedEntity: EntityDescriptor = {
+  it("omits unstored fields from entity and variant tables", () => {
+    const unstoredEntity: EntityDescriptor = {
       ...item,
       fields: [
         ...item.fields,
@@ -59,12 +60,13 @@ describe("buildDDL", () => {
           name: "mapPosition",
           type: "json",
           from: "mapPosition",
-          storage: "projected",
-          destination: "map_points",
+          storage: "unstored",
+          reason: "Projects to map_points.",
+          projects: "map_points",
         },
       ],
     };
-    const projectedVariant: VariantDescriptor = {
+    const unstoredVariant: VariantDescriptor = {
       ...equipment,
       fields: [
         ...equipment.fields,
@@ -72,13 +74,14 @@ describe("buildDDL", () => {
           name: "volumes",
           type: "json",
           from: "volumes",
-          storage: "projected",
-          destination: "location_volumes",
+          storage: "unstored",
+          reason: "Projects to location_volumes.",
+          projects: "location_volumes",
         },
       ],
     };
 
-    const ddl = buildDDL(projectedEntity, [projectedVariant]);
+    const ddl = buildDDL(unstoredEntity, [unstoredVariant]);
     expect(ddl).not.toContain('"mapPosition"');
     expect(ddl).not.toContain('"volumes"');
     expect(ddl).toContain('"name" TEXT');

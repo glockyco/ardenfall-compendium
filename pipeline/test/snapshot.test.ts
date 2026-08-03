@@ -68,6 +68,7 @@ const makeEntity = (id: string, fields: EntityDescriptor["fields"]): EntityDescr
   kind: "definition",
   label: { singular: id, plural: `${id}s` },
   extraction: { source: "record", root: "Test.Record" },
+  canonicalTable: `${id}s`,
   fields,
 });
 

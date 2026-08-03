@@ -16,7 +16,6 @@ public sealed record LocationVolumeSnapshot(
 
 public sealed record LocationSnapshot(
     [property: JsonProperty("id")] string Id,
-    [property: JsonProperty("gameLocationId")] string GameLocationId,
     [property: JsonProperty("name")] string? Name,
     [property: JsonProperty("enabled")] bool Enabled,
     [property: JsonProperty("mapRef")] SnapshotRef? MapRef,
@@ -27,7 +26,6 @@ public sealed record LocationSnapshot(
     [property: JsonProperty("mapPosition")] LocationVector3Snapshot MapPosition,
     [property: JsonProperty("allowFastTravel")] bool AllowFastTravel,
     [property: JsonProperty("fastTravelPosition")] LocationVector3Snapshot? FastTravelPosition,
-    [property: JsonProperty("displayOnEnterVolume")] bool DisplayOnEnterVolume,
     [property: JsonProperty("volumes")] IReadOnlyList<LocationVolumeSnapshot> Volumes);
 
 public sealed class LocationSnapshotRow

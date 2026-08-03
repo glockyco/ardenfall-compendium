@@ -12,6 +12,7 @@ export interface EntityDescriptor {
     walker?: string;
     options?: Record<string, unknown>;
   };
+  canonicalTable: string;
   definition?: { entity: string; via: string };
   placement?: { kind: "point" | "volume" | "point+volume"; from: string };
   presentationContext?: { renderContext: string };
@@ -51,8 +52,10 @@ export interface FieldSpec {
   from: string;
   operation?: string;
   missingPolicy?: "fatal" | "diagnostic" | "optional-empty";
-  storage?: "column" | "projected";
-  destination?: string;
+  storage?: "column" | "unstored";
+  column?: string;
+  projects?: string;
+  reason?: string;
   label?: string;
   description?: string;
 }
@@ -348,7 +351,6 @@ export interface LocationSnapshotVolume {
 
 export interface LocationSnapshotFields {
   id: string;
-  gameLocationId: string;
   name: string;
   enabled: boolean;
   mapId: string | null;
@@ -359,7 +361,6 @@ export interface LocationSnapshotFields {
   mapPosition: SnapshotVector3;
   allowFastTravel: boolean;
   fastTravelPosition: SnapshotVector3 | null;
-  displayOnEnterVolume: boolean;
   volumes: LocationSnapshotVolume[];
 }
 
@@ -391,7 +392,6 @@ export interface PortalSnapshotFields {
   id: string;
   recordRef: SnapshotRef;
   name: string | null;
-  isAccessible: boolean;
   mapId: string | null;
   position: SnapshotVector3;
   connectedPortalRef?: SnapshotRef | null;

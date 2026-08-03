@@ -2,6 +2,7 @@
   "$schema": "../../schemas/entity.schema.json",
   "id": "item",
   "kind": "definition",
+  "canonicalTable": "items",
   "label": { "singular": "Item", "plural": "Items" },
 
   "extraction": {

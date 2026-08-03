@@ -12,7 +12,6 @@ const envelope: SnapshotEnvelope = {
       id: "11111111.fixture-town",
       fields: {
         id: "11111111.fixture-town",
-        gameLocationId: "town",
         name: "Harbor Town",
         enabled: true,
         mapId: "ardenfall",
@@ -27,7 +26,6 @@ const envelope: SnapshotEnvelope = {
         mapPosition: { x: 12, y: 3, z: -8 },
         allowFastTravel: true,
         fastTravelPosition: { x: 14, y: 4, z: -10 },
-        displayOnEnterVolume: true,
         volumes: [
           {
             index: 0,
@@ -163,7 +161,6 @@ describe("canonicaliseLocations", () => {
             id: "bad-location",
             fields: {
               id: "bad-location",
-              gameLocationId: "bad",
               name: "Bad",
               enabled: true,
               mapId: "ardenfall",
@@ -172,7 +169,6 @@ describe("canonicaliseLocations", () => {
               mapPosition: { x: Number.NaN, y: 0, z: 0 },
               allowFastTravel: false,
               fastTravelPosition: null,
-              displayOnEnterVolume: false,
               volumes: [],
             },
           },
@@ -193,7 +189,6 @@ describe("canonicaliseLocations", () => {
           id: "degenerate-location",
           fields: {
             id: "degenerate-location",
-            gameLocationId: "degenerate",
             name: "Degenerate",
             enabled: true,
             mapId: "ardenfall",
@@ -202,7 +197,6 @@ describe("canonicaliseLocations", () => {
             mapPosition: { x: 0, y: 0, z: 0 },
             allowFastTravel: false,
             fastTravelPosition: null,
-            displayOnEnterVolume: false,
             volumes: [
               { index: 0, center: { x: 0, y: 0, z: 0 }, size: { x: -1, y: 1, z: 1 } },
               { index: 1, center: { x: 0, y: 0, z: 0 }, size: { x: 0, y: 1, z: 0 } },

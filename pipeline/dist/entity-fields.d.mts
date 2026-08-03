@@ -4,7 +4,6 @@ import type { LocationSnapshotFields as SourceLocationSnapshotFields } from "../
 
 export declare const locationFieldNames: readonly [
   "id",
-  "gameLocationId",
   "name",
   "enabled",
   "mapId",
@@ -15,8 +14,7 @@ export declare const locationFieldNames: readonly [
   "showOnMapDebugOnly",
   "allowFastTravel",
   "fastTravelPosition",
-  "volumes",
-  "displayOnEnterVolume"
+  "volumes"
 ];
 export type LocationFieldName = (typeof locationFieldNames)[number];
 export type LocationSnapshotFields = Pick<
@@ -30,7 +28,6 @@ export declare const portalFieldNames: readonly [
   "id",
   "recordRef",
   "name",
-  "isAccessible",
   "position",
   "mapId",
   "connectedPortalRef"

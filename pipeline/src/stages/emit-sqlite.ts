@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import { mkdirSync, rmSync } from "node:fs";
 import { dirname } from "node:path";
-import type { Stage } from "../types.ts";
+import type { EntityDescriptor, Stage } from "../types.ts";
 import { SITE_METADATA_DDL } from "../sql/site-metadata-ddl";
 import { emitSiteMetadata } from "./emit-site-metadata";
 import { emitReadModels } from "./emit-read-models";
@@ -22,6 +22,51 @@ export class SnapshotValidationError extends Error {
 export function assertSnapshotValidationPassed(validation: ValidateOutput): void {
   if (validation.countsBySeverity.fatal > 0) {
     throw new SnapshotValidationError(validation);
+  }
+}
+
+export function assertCanonicalTableContract(db: Database, entity: EntityDescriptor): void {
+  const tableName = entity.canonicalTable;
+  if (!tableName) {
+    throw new Error(
+      `entity '${entity.id}' canonical-table assertion failed: descriptor has no canonicalTable`,
+    );
+  }
+  const table = db
+    .query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?")
+    .get(tableName) as { name: string } | null;
+  if (!table) {
+    throw new Error(
+      `entity '${entity.id}' canonical-table assertion failed: canonical table '${tableName}' does not exist`,
+    );
+  }
+  const actualColumns = (
+    db.query(`PRAGMA table_info("${tableName}")`).all() as { name: string }[]
+  ).map((column) => column.name);
+  const declaredByColumn = new Map<string, string[]>();
+  for (const field of entity.fields) {
+    if (field.storage === "unstored") continue;
+    const column = field.column ?? field.name;
+    const fields = declaredByColumn.get(column) ?? [];
+    fields.push(field.name);
+    declaredByColumn.set(column, fields);
+    if (!actualColumns.includes(column)) {
+      throw new Error(
+        `entity '${entity.id}' field '${field.name}' declares missing column '${column}' in canonical table '${tableName}' (field-to-column direction)`,
+      );
+    }
+  }
+  for (const column of actualColumns) {
+    // Item's generated root table has a pipeline-owned variant discriminator.
+    if (entity.id === "item" && column === "variant") continue;
+    const fields = declaredByColumn.get(column) ?? [];
+    if (fields.length !== 1) {
+      const explanation =
+        fields.length === 0 ? "no declared field" : `declared by fields '${fields.join("', '")}'`;
+      throw new Error(
+        `entity '${entity.id}' canonical table '${tableName}' column '${column}' has ${explanation} (column-to-field direction)`,
+      );
+    }
   }
 }
 
@@ -89,6 +134,7 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
         if (!entity || !envelope) continue;
         const variants = desc.variants[entityId] ?? [];
         db.exec(typeof module.ddl === "function" ? module.ddl(entity, variants) : module.ddl);
+        assertCanonicalTableContract(db, entity);
         module.canonicalise({ db, entity, variants, envelope });
       }
       emitSiteMetadata(db, desc);

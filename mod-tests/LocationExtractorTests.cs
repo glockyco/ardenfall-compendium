@@ -20,7 +20,6 @@ public sealed class LocationExtractorTests
             FakeLocationAssetSource.Build(
                 guid: "11111111.fixture-town",
                 assetName: "Town Asset",
-                locationId: "town",
                 locationName: "Harbor Town",
                 mapId: "ardenfall",
                 mapPosition: new LocationVector3Snapshot(12f, 3f, -8f),
@@ -35,14 +34,12 @@ public sealed class LocationExtractorTests
         var row = Assert.Single(extractor.Walk());
 
         Assert.Equal("11111111.fixture-town", row.Id);
-        Assert.Equal("town", row.Fields.GameLocationId);
         Assert.Equal("Harbor Town", row.Fields.Name);
         Assert.True(row.Fields.Enabled);
         Assert.Equal("ardenfall", row.Fields.MapId);
         Assert.True(row.Fields.ShowOnMap);
         Assert.False(row.Fields.ShowOnMapDebugOnly);
         Assert.True(row.Fields.AllowFastTravel);
-        Assert.True(row.Fields.DisplayOnEnterVolume);
         Assert.Equal(12f, row.Fields.MapPosition.X);
         var volume = Assert.Single(row.Fields.Volumes);
         Assert.Equal(0, volume.Index);
@@ -58,7 +55,6 @@ public sealed class LocationExtractorTests
             FakeLocationAssetSource.Build(
                 guid: "location-malformed",
                 assetName: "Malformed",
-                locationId: "malformed",
                 locationName: "Malformed",
                 mapId: "ardenfall",
                 mapPosition: new LocationVector3Snapshot(0f, 0f, 0f),
@@ -91,29 +87,6 @@ public sealed class LocationExtractorTests
     }
 
     [Fact]
-    public void DiagnosesLocationMissingGameLocationId()
-    {
-        var source = new FakeLocationAssetSource(new[]
-        {
-            FakeLocationAssetSource.Build(
-                guid: "11111111.fixture-town",
-                assetName: "Town Asset",
-                locationId: "",
-                locationName: "Harbor Town",
-                mapId: "ardenfall",
-                mapPosition: new LocationVector3Snapshot(12f, 3f, -8f),
-                fastTravelPosition: null,
-                volumes: System.Array.Empty<LocationVolumeSnapshot>()),
-        });
-        var extractor = new LocationExtractor(source);
-
-        var rows = extractor.Walk().ToList();
-
-        Assert.Empty(rows);
-        Assert.Contains(extractor.Diagnostics, d => d.Code == "locationIdMissing" && d.Field == "gameLocationId");
-    }
-
-    [Fact]
     public void BuiltLookupSourceSkipsUnityNullAndDisabledLocations()
     {
         var enabled = RuntimeLocation("enabled", enabled: true);
@@ -126,7 +99,7 @@ public sealed class LocationExtractorTests
 
         var row = Assert.Single(source.EnumerateLocations());
 
-        Assert.Equal("enabled", row.GameLocationId);
+        Assert.Equal("enabled-guid", row.Guid);
     }
 
     private sealed class FakeLocationAssetSource : ILocationAssetSource
@@ -143,7 +116,6 @@ public sealed class LocationExtractorTests
         public static LocationAssetRecord Build(
             string guid,
             string assetName,
-            string locationId,
             string locationName,
             string mapId,
             LocationVector3Snapshot mapPosition,
@@ -153,7 +125,6 @@ public sealed class LocationExtractorTests
                 AssetName: assetName,
                 Enabled: true,
                 LocationName: locationName,
-                GameLocationId: locationId,
                 MapRef: SnapshotRef.LookupAsset("map-guid", "MapData", mapId),
                 MapId: mapId,
                 ShowOnMap: true,
@@ -162,7 +133,6 @@ public sealed class LocationExtractorTests
                 MapPosition: mapPosition,
                 AllowFastTravel: fastTravelPosition != null,
                 FastTravelPosition: fastTravelPosition,
-                DisplayOnEnterVolume: true,
                 Volumes: volumes);
 
         public static LocationAssetRecord BuildWithoutGuid(string name) => new(
@@ -170,7 +140,6 @@ public sealed class LocationExtractorTests
             AssetName: name,
             Enabled: true,
             LocationName: name,
-            GameLocationId: "missing-guid",
             MapRef: null,
             MapId: null,
             ShowOnMap: true,
@@ -179,7 +148,6 @@ public sealed class LocationExtractorTests
             MapPosition: new LocationVector3Snapshot(0f, 0f, 0f),
             AllowFastTravel: false,
             FastTravelPosition: null,
-            DisplayOnEnterVolume: false,
             Volumes: new List<LocationVolumeSnapshot>());
     }
 

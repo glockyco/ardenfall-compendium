@@ -8,33 +8,55 @@
     "root": "Resources.FindObjectsOfTypeAll<ItemCategory>",
     "walker": "ItemCategoryExtractor"
   },
+  "canonicalTable": "item_categories",
   "presentationContext": { "renderContext": "item-category-presentation-v1" },
   "site": {
     "route": "/categories"
   },
   "fields": [
     { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
-    { "name": "categoryName", "type": "string", "from": "categoryName", "missingPolicy": "fatal" },
+    {
+      "name": "categoryName",
+      "type": "string",
+      "from": "categoryName",
+      "missingPolicy": "fatal",
+      "column": "category_name"
+    },
     {
       "name": "iconRef",
       "type": "ref:asset",
       "from": "iconRef",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "icon_ref_json"
     },
     {
       "name": "defaultItemIconRef",
       "type": "ref:asset",
       "from": "defaultItemIconRef",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "default_item_icon_ref_json"
     },
-    { "name": "categoryColor", "type": "json", "from": "categoryColor", "missingPolicy": "fatal" },
+    {
+      "name": "categoryColor",
+      "type": "json",
+      "from": "categoryColor",
+      "missingPolicy": "fatal",
+      "column": "category_color_json"
+    },
     {
       "name": "showInAllCategory",
       "type": "boolean",
       "from": "showInAllCategory",
-      "missingPolicy": "fatal"
+      "missingPolicy": "fatal",
+      "column": "show_in_all_category"
     },
-    { "name": "columns", "type": "json", "from": "columns", "missingPolicy": "optional-empty" }
+    {
+      "name": "columns",
+      "type": "json",
+      "from": "columns",
+      "missingPolicy": "optional-empty",
+      "column": "columns_json"
+    }
   ],
   "map": null
 }

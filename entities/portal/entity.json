@@ -8,6 +8,7 @@
     "root": "Ardenfall.RecordSystem.PortalRecord",
     "options": { "table": "world", "subtable": "portals" }
   },
+  "canonicalTable": "portals",
   "placement": { "kind": "point", "from": "transform" },
   "fields": [
     { "name": "id", "type": "id", "from": "recordId", "missingPolicy": "fatal" },
@@ -15,29 +16,29 @@
       "name": "recordRef",
       "type": "ref:record",
       "from": "recordRef",
-      "storage": "projected",
-      "destination": "portals"
+      "column": "record_ref_json"
     },
     { "name": "name", "type": "string", "from": "friendlyName", "missingPolicy": "diagnostic" },
-    { "name": "isAccessible", "type": "boolean", "from": "isAccessable", "missingPolicy": "fatal" },
     {
       "name": "position",
       "type": "json",
       "from": "position",
-      "storage": "projected",
-      "destination": "map_points"
+      "column": "source_position_json",
+      "projects": "map_points"
     },
     {
       "name": "mapId",
       "type": "string",
       "from": "transform.mapID",
-      "missingPolicy": "diagnostic"
+      "missingPolicy": "diagnostic",
+      "column": "map_id"
     },
     {
       "name": "connectedPortalRef",
       "type": "ref:record",
       "from": "connectedPortal",
-      "missingPolicy": "diagnostic"
+      "missingPolicy": "diagnostic",
+      "column": "connected_portal_ref_json"
     }
   ],
   "map": {

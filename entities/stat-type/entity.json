@@ -8,39 +8,68 @@
     "root": "Resources.FindObjectsOfTypeAll<StatType>",
     "walker": "StatTypeExtractor"
   },
+  "canonicalTable": "stat_types",
   "presentationContext": { "renderContext": "stat-type-presentation-v1" },
   "site": {
     "route": "/stats"
   },
   "fields": [
     { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
-    { "name": "isAttribute", "type": "boolean", "from": "isAttribute", "missingPolicy": "fatal" },
-    { "name": "statName", "type": "string", "from": "statName", "missingPolicy": "fatal" },
+    {
+      "name": "isAttribute",
+      "type": "boolean",
+      "from": "isAttribute",
+      "missingPolicy": "fatal",
+      "column": "is_attribute"
+    },
+    {
+      "name": "statName",
+      "type": "string",
+      "from": "statName",
+      "missingPolicy": "fatal",
+      "column": "stat_name"
+    },
     {
       "name": "iconRef",
       "type": "ref:asset",
       "from": "iconRef",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "icon_ref_json"
     },
-    { "name": "iconColor", "type": "json", "from": "iconColor", "missingPolicy": "optional-empty" },
+    {
+      "name": "iconColor",
+      "type": "json",
+      "from": "iconColor",
+      "missingPolicy": "optional-empty",
+      "column": "icon_color_json"
+    },
     {
       "name": "statDescription",
       "type": "string",
       "from": "statDescription",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "stat_description"
     },
     {
       "name": "longStatDescription",
       "type": "string",
       "from": "longStatDescription",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "long_stat_description"
     },
-    { "name": "affects", "type": "json", "from": "affects", "missingPolicy": "optional-empty" },
+    {
+      "name": "affects",
+      "type": "json",
+      "from": "affects",
+      "missingPolicy": "optional-empty",
+      "column": "affects_json"
+    },
     {
       "name": "skillAffects",
       "type": "json",
       "from": "skillAffects",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "skill_affects_json"
     }
   ],
   "map": null

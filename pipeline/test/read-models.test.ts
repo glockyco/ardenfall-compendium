@@ -887,7 +887,6 @@ describe("emitMapReadModels", () => {
           id: "11111111.fixture-town",
           fields: {
             id: "11111111.fixture-town",
-            gameLocationId: "town",
             name: "Harbor Town",
             enabled: true,
             mapId: "ardenfall",
@@ -896,7 +895,6 @@ describe("emitMapReadModels", () => {
             mapPosition: { x: 12, y: 3, z: -8 },
             allowFastTravel: true,
             fastTravelPosition: { x: 14, y: 4, z: -10 },
-            displayOnEnterVolume: true,
             volumes: [{ index: 0, center: { x: 10, y: 2, z: -20 }, size: { x: 6, y: 4, z: 8 } }],
           },
         },
@@ -949,7 +947,6 @@ describe("emitMapReadModels", () => {
           id: "22222222.fixture-debug-cave",
           fields: {
             id: "22222222.fixture-debug-cave",
-            gameLocationId: "debug-cave",
             name: "Debug Cave",
             enabled: true,
             mapId: null,
@@ -958,7 +955,6 @@ describe("emitMapReadModels", () => {
             mapPosition: { x: -5, y: 1, z: 9 },
             allowFastTravel: false,
             fastTravelPosition: null,
-            displayOnEnterVolume: false,
             volumes: [],
           },
         },
@@ -986,7 +982,6 @@ describe("emitMapReadModels", () => {
           id: "11111111.fixture-town",
           fields: {
             id: "11111111.fixture-town",
-            gameLocationId: "town",
             name: "Harbor Town",
             enabled: true,
             mapId: "ardenfall",
@@ -995,7 +990,6 @@ describe("emitMapReadModels", () => {
             mapPosition: { x: 12, y: 3, z: -8 },
             allowFastTravel: true,
             fastTravelPosition: null,
-            displayOnEnterVolume: false,
             volumes: [],
           },
         },
@@ -1016,7 +1010,6 @@ describe("emitMapReadModels", () => {
               id: "398213e43a41b4c47bffe4ef1998e782",
             },
             name: "Harbor Gate",
-            isAccessible: true,
             mapId: "ardenfall",
             position: { x: 20, y: 5, z: -30 },
             connectedPortalRef: {

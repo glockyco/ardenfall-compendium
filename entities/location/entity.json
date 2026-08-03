@@ -11,46 +11,51 @@
     "root": "MapLocationManager.GetLocations",
     "walker": "LocationWalker"
   },
+  "canonicalTable": "locations",
   "placement": { "kind": "point+volume", "from": "fields" },
   "fields": [
     { "name": "id", "type": "id", "from": "guid", "missingPolicy": "fatal" },
-    {
-      "name": "gameLocationId",
-      "type": "string",
-      "from": "locationID",
-      "missingPolicy": "fatal",
-      "label": "Game location ID"
-    },
     { "name": "name", "type": "string", "from": "locationName", "missingPolicy": "fatal" },
     { "name": "enabled", "type": "boolean", "from": "enabled", "missingPolicy": "fatal" },
-    { "name": "mapId", "type": "string", "from": "map.id", "missingPolicy": "diagnostic" },
+    {
+      "name": "mapId",
+      "type": "string",
+      "from": "map.id",
+      "missingPolicy": "diagnostic",
+      "column": "map_id"
+    },
     {
       "name": "mapRef",
       "type": "ref:asset",
       "from": "mapRef",
-      "storage": "projected",
-      "destination": "locations"
+      "column": "map_ref_json"
     },
-    { "name": "showOnMap", "type": "boolean", "from": "showOnMap", "missingPolicy": "fatal" },
+    {
+      "name": "showOnMap",
+      "type": "boolean",
+      "from": "showOnMap",
+      "missingPolicy": "fatal",
+      "column": "show_on_map"
+    },
     {
       "name": "iconRef",
       "type": "ref:asset",
       "from": "iconRef",
-      "storage": "projected",
-      "destination": "locations"
+      "column": "icon_ref_json"
     },
     {
       "name": "mapPosition",
       "type": "json",
       "from": "mapPosition",
-      "storage": "projected",
-      "destination": "map_points"
+      "column": "source_map_position_json",
+      "projects": "map_points"
     },
     {
       "name": "showOnMapDebugOnly",
       "type": "boolean",
       "from": "showOnMapDebugOnly",
       "missingPolicy": "fatal",
+      "column": "show_on_map_debug_only",
       "label": "Debug-only map marker"
     },
     {
@@ -58,28 +63,22 @@
       "type": "boolean",
       "from": "allowFastTravel",
       "missingPolicy": "fatal",
-      "label": "Allows fast travel"
+      "label": "Allows fast travel",
+      "column": "allow_fast_travel"
     },
     {
       "name": "fastTravelPosition",
       "type": "json",
       "from": "fastTravelPosition",
-      "storage": "projected",
-      "destination": "locations"
+      "column": "source_fast_travel_json"
     },
     {
       "name": "volumes",
       "type": "json",
       "from": "volumes",
-      "storage": "projected",
-      "destination": "location_volumes"
-    },
-    {
-      "name": "displayOnEnterVolume",
-      "type": "boolean",
-      "from": "displayOnEnterVolume",
-      "missingPolicy": "fatal",
-      "label": "Displays on enter"
+      "storage": "unstored",
+      "reason": "Expanded into location_volumes rows.",
+      "projects": "location_volumes"
     }
   ],
   "map": {

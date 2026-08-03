@@ -12,7 +12,6 @@ public sealed record PortalRecordSourceRow(
     string? Subtable,
     string? Id,
     string? FriendlyName,
-    bool IsAccessible,
     string? MapId,
     PortalVector3Snapshot? Position,
     SnapshotRef? ConnectedPortalRef,
@@ -23,12 +22,11 @@ public sealed record PortalRecordSourceRow(
         string? subtable,
         string? id,
         string? friendlyName,
-        bool isAccessible,
         string? mapId,
         PortalVector3Snapshot? position,
         SnapshotRef? connectedPortalRef = null,
         bool connectedPortalResolved = false) =>
-        new(table, subtable, id, friendlyName, isAccessible, mapId, position, connectedPortalRef, connectedPortalResolved);
+        new(table, subtable, id, friendlyName, mapId, position, connectedPortalRef, connectedPortalResolved);
 }
 
 public interface IPortalRecordSource
@@ -69,7 +67,6 @@ public sealed class MasterRecordTablePortalRecordSource : IPortalRecordSource
             Subtable: id.subtable,
             Id: id.id,
             FriendlyName: record.friendlyName,
-            IsAccessible: record.isAccessable,
             MapId: transform?.mapID,
             Position: transform == null ? null : FromVector3(transform.position),
             ConnectedPortalRef: connected,

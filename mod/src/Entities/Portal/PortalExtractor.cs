@@ -101,7 +101,6 @@ public sealed class PortalExtractor : WalkerBase<PortalSnapshotRow>
                         Id: rowId,
                         RecordRef: SnapshotRef.Record(record.Table!, record.Subtable!, record.Id!, "PortalRecord"),
                         Name: name,
-                        IsAccessible: record.IsAccessible,
                         MapId: NullIfEmpty(record.MapId),
                         Position: record.Position!,
                         ConnectedPortalRef: record.ConnectedPortalRef),

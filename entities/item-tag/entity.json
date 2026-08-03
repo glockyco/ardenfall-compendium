@@ -8,13 +8,20 @@
     "root": "BuiltLookupTable.GetAssetsOfType<ItemTag>",
     "walker": "ItemTagExtractor"
   },
+  "canonicalTable": "item_tags",
   "presentationContext": { "renderContext": "item-tag-presentation-v1" },
   "site": {
     "route": "/tags"
   },
   "fields": [
     { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
-    { "name": "tagName", "type": "string", "from": "tagName", "missingPolicy": "fatal" },
+    {
+      "name": "tagName",
+      "type": "string",
+      "from": "tagName",
+      "missingPolicy": "fatal",
+      "column": "tag_name"
+    },
     {
       "name": "description",
       "type": "string",

@@ -44,16 +44,6 @@ public sealed class LocationExtractor : WalkerBase<LocationSnapshotRow>
                         Message = $"LocationAsset '{asset.AssetName}' has no GUID in BuiltLookupTable",
                     });
                 }
-                if (string.IsNullOrWhiteSpace(asset.GameLocationId))
-                {
-                    return ExtractorIdentity.Invalid(new Diagnostic
-                    {
-                        Severity = "fatal",
-                        Code = "locationIdMissing",
-                        Field = "gameLocationId",
-                        Message = $"LocationAsset '{asset.Guid}' has no locationID",
-                    });
-                }
                 return ExtractorIdentity.Valid(asset.Guid);
             },
             (asset, id) =>
@@ -118,7 +108,6 @@ public sealed class LocationExtractor : WalkerBase<LocationSnapshotRow>
                     Id = id,
                     Fields = new LocationSnapshot(
                         Id: id,
-                        GameLocationId: asset.GameLocationId!,
                         Name: name,
                         Enabled: asset.Enabled,
                         MapRef: asset.MapRef,
@@ -129,7 +118,6 @@ public sealed class LocationExtractor : WalkerBase<LocationSnapshotRow>
                         MapPosition: asset.MapPosition,
                         AllowFastTravel: asset.AllowFastTravel,
                         FastTravelPosition: asset.FastTravelPosition,
-                        DisplayOnEnterVolume: asset.DisplayOnEnterVolume,
                         Volumes: volumes),
                     Diagnostics = rowDiagnostics,
                 };

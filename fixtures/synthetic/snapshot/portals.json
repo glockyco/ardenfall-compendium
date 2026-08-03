@@ -14,7 +14,6 @@
           "recordType": "PortalRecord"
         },
         "name": "Harbor Gate",
-        "isAccessible": true,
         "mapId": "ardenfall",
         "position": { "x": 20, "y": 5, "z": -30 },
         "connectedPortalRef": {
@@ -38,7 +37,6 @@
           "recordType": "PortalRecord"
         },
         "name": "Cliff Stair",
-        "isAccessible": true,
         "mapId": "ardenfall",
         "position": { "x": 26, "y": 5, "z": -18 },
         "connectedPortalRef": {
@@ -62,7 +60,6 @@
           "recordType": "PortalRecord"
         },
         "name": null,
-        "isAccessible": true,
         "mapId": "ardenfall",
         "position": { "x": 12, "y": 5, "z": -44 },
         "connectedPortalRef": null

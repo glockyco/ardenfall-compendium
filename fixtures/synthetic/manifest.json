@@ -81,7 +81,7 @@
   "hashes": {
     "snapshot/spells.json": "5ecc4fcb99e2da4f337ea180d9814f5edd1dff6f11952cd8a7fbf5292d910cba",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
-    "snapshot/manifest.json": "2845e71a3392ecfd2a8a70d3e6e13234b26672d88734eefe607bf46d116cb714",
+    "snapshot/manifest.json": "8e4704ce7a316ebe0ff93459984203e4e9804296fc6486179ba58b9b5146aebd",
     "snapshot/items.json": "f85e557abf2e9c6a9be4ffdf5062576db83769328d302eac55bc408244719cde",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
@@ -90,8 +90,8 @@
     "snapshot/stat-types.json": "8914e1e2e2329287e831c3b1ce3c8b22043a74baafa7bd9fe3f1f7a431fc4e11",
     "snapshot/item-categories.json": "9ddf37b041ec004007851244de1d4d6c0be4b9ad9e3973c7ec12f193f93f5724",
     "snapshot/item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
-    "snapshot/locations.json": "333dc28688c556536ad084613d35577ce58915a6b136bfd2763cb9a58731d241",
-    "snapshot/portals.json": "bee477a22b636e4428377f89af0c6d4ab7eaa2123fb074a652a863fce6bb0f8e",
+    "snapshot/locations.json": "856982c52ff602e34a3caccd13bfcfc8b4a74bc3f44c2e7e3b0f5dba3e3b7f82",
+    "snapshot/portals.json": "07957c081f6d8b0a12f8ef4587fc11349f9d77dca447cdb46d780aba60591ece",
     "snapshot/characters.json": "f9639f2bcd54d32a7e3cfc1df81a2b1aa538650f3adc3d939037645f3bf093c7"
   }
 }

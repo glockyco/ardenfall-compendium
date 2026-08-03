@@ -8,6 +8,7 @@
     "root": "Resources.FindObjectsOfTypeAll<CharacterData>",
     "walker": "CharacterExtractor"
   },
+  "canonicalTable": "characters",
   "presentationContext": { "renderContext": "character-presentation-v1" },
   "site": {
     "route": "/characters",
@@ -24,13 +25,15 @@
       "name": "name",
       "type": "string",
       "from": "charName.Get()?.name",
-      "missingPolicy": "diagnostic"
+      "missingPolicy": "diagnostic",
+      "column": "character_name"
     },
     {
       "name": "dropRefs",
       "type": "ref:asset[]",
       "from": "itemLists + additionalItems",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "drop_refs_json"
     }
   ],
   "map": null

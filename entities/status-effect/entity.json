@@ -8,6 +8,7 @@
     "root": "BuiltLookupTable.GetAssetsOfType<StatusEffectData>",
     "walker": "StatusEffectExtractor"
   },
+  "canonicalTable": "status_effects",
   "presentationContext": { "renderContext": "status-effect-presentation-v1" },
   "site": {
     "route": "/status-effects"
@@ -18,25 +19,29 @@
       "name": "statusEffectName",
       "type": "string",
       "from": "statusEffectName",
-      "missingPolicy": "diagnostic"
+      "missingPolicy": "diagnostic",
+      "column": "status_effect_name"
     },
     {
       "name": "tooltipSource",
       "type": "string",
       "from": "tooltip.GetTooltip(1f, 1f, false, effect)",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "tooltip_source"
     },
     {
       "name": "iconRef",
       "type": "ref:asset",
       "from": "statusEffectIcon",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "icon_ref_json"
     },
     {
       "name": "isHostile",
       "type": "boolean",
       "from": "isHostile",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "is_hostile"
     }
   ],
   "map": null

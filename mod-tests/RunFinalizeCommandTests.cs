@@ -195,7 +195,6 @@ public sealed class RunFinalizeCommandTests
                 Id = "11111111.fixture-town",
                 Fields = new LocationSnapshot(
                     Id: "11111111.fixture-town",
-                    GameLocationId: "town",
                     Name: "Harbor Town",
                     Enabled: true,
                     MapRef: null,
@@ -206,7 +205,6 @@ public sealed class RunFinalizeCommandTests
                     MapPosition: new LocationVector3Snapshot(12f, 3f, -8f),
                     AllowFastTravel: false,
                     FastTravelPosition: null,
-                    DisplayOnEnterVolume: true,
                     Volumes: new List<LocationVolumeSnapshot>()),
                 Diagnostics = new List<Diagnostic>
                 {
@@ -558,7 +556,6 @@ public sealed class RunFinalizeCommandTests
                 Id = "11111111.fixture-town",
                 Fields = new LocationSnapshot(
                     Id: "11111111.fixture-town",
-                    GameLocationId: "town",
                     Name: "Harbor Town",
                     Enabled: true,
                     MapRef: null,
@@ -569,7 +566,6 @@ public sealed class RunFinalizeCommandTests
                     MapPosition: new LocationVector3Snapshot(12f, 3f, -8f),
                     AllowFastTravel: true,
                     FastTravelPosition: new LocationVector3Snapshot(14f, 4f, -10f),
-                    DisplayOnEnterVolume: true,
                     Volumes: new List<LocationVolumeSnapshot>())
             }
         });
@@ -623,7 +619,6 @@ public sealed class RunFinalizeCommandTests
                     Id: "world;portals;portal-a",
                     RecordRef: SnapshotRef.Record("world", "portals", "portal-a", "PortalRecord"),
                     Name: "Harbor Gate",
-                    IsAccessible: true,
                     MapId: "ardenfall",
                     Position: new PortalVector3Snapshot(12f, 3f, -8f),
                     ConnectedPortalRef: SnapshotRef.Record("world", "portals", "portal-b", "PortalRecord"))

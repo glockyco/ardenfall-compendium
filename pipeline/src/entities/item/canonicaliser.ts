@@ -24,7 +24,8 @@ export function canonicaliseItems(
   variants: VariantDescriptor[],
   envelope: SnapshotEnvelope,
 ): void {
-  const rootCols = entity.fields.map((f) => f.name);
+  const rootFields = entity.fields.filter((f) => f.storage !== "unstored");
+  const rootCols = rootFields.map((f) => f.column ?? f.name);
   const rootInsert = db.prepare(
     `INSERT INTO "${entity.id}s" (${[...rootCols, "variant"].map((c) => `"${c}"`).join(", ")}) ` +
       `VALUES (${[...rootCols, "variant"].map(() => "?").join(", ")})`,
@@ -35,7 +36,8 @@ export function canonicaliseItems(
 
   const variantInserters = new Map<string, ReturnType<Database["prepare"]>>();
   for (const v of variants) {
-    const cols = ["id", ...v.fields.map((f) => f.name)];
+    const storedFields = v.fields.filter((f) => f.storage !== "unstored");
+    const cols = ["id", ...storedFields.map((f) => f.column ?? f.name)];
     variantInserters.set(
       v.variantId,
       db.prepare(
@@ -51,7 +53,7 @@ export function canonicaliseItems(
         throw new Error(`row '${row.id}' has unknown variant '${row.variant ?? "<none>"}'`);
       }
       const rootValues = [
-        ...rootCols.map((c) => coerceForSqlite(row.fields[c])),
+        ...rootFields.map((f) => coerceForSqlite(row.fields[f.name])),
         variant.variantId,
       ];
       rootInsert.run(...rootValues);
@@ -59,8 +61,9 @@ export function canonicaliseItems(
       for (const ancestor of ancestry(variant, variants)) {
         const inserter = variantInserters.get(ancestor.variantId);
         if (!inserter) throw new Error(`no inserter for variant ${ancestor.variantId}`);
-        const cols = ["id", ...ancestor.fields.map((f) => f.name)];
-        const values = [row.id, ...ancestor.fields.map((f) => coerceForSqlite(row.fields[f.name]))];
+        const storedFields = ancestor.fields.filter((f) => f.storage !== "unstored");
+        const cols = ["id", ...storedFields.map((f) => f.column ?? f.name)];
+        const values = [row.id, ...storedFields.map((f) => coerceForSqlite(row.fields[f.name]))];
         if (cols.length !== values.length) throw new Error("column/value mismatch");
         inserter.run(...values);
       }

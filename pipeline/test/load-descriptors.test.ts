@@ -174,7 +174,6 @@ describe("loadDescriptors", () => {
     });
     expect(location.fields.map((field) => field.name)).toEqual([
       "id",
-      "gameLocationId",
       "name",
       "enabled",
       "mapId",
@@ -186,7 +185,6 @@ describe("loadDescriptors", () => {
       "allowFastTravel",
       "fastTravelPosition",
       "volumes",
-      "displayOnEnterVolume",
     ]);
   });
 
@@ -241,6 +239,7 @@ describe("loadDescriptors", () => {
               root: "BuiltLookupTable.GetAssetsOfType<StatType>",
               walker: "StatTypeWalker",
             },
+            canonicalTable: "stat_types",
             presentationContext: { renderContext: "stat-type-presentation-v1" },
             fields: [
               { name: "id", type: "id", from: "guid", missingPolicy: "fatal" },
@@ -395,6 +394,7 @@ describe("loadDescriptors", () => {
             kind: "definition",
             label: { singular: "Thing", plural: "Things" },
             extraction: { source: "lookupAsset", root: "Thing.Root" },
+            canonicalTable: "things",
             fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
             site: { route: "/things", overview: { columns: ["id"] } },
             map: null,
@@ -415,6 +415,7 @@ describe("loadDescriptors", () => {
             id: "item",
             kind: "definition",
             label: { singular: "Item", plural: "Items" },
+            canonicalTable: "items",
             extraction: {
               source: "lookupAsset",
               root: "BuiltLookupTable.GetAssetsOfType<ItemData>",

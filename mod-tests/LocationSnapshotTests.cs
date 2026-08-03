@@ -20,7 +20,6 @@ public sealed class LocationSnapshotTests
                     Id = "11111111.fixture-town",
                     Fields = new LocationSnapshot(
                         Id: "11111111.fixture-town",
-                        GameLocationId: "town",
                         Name: "Harbor Town",
                         Enabled: true,
                         MapRef: null,
@@ -31,7 +30,6 @@ public sealed class LocationSnapshotTests
                         MapPosition: new LocationVector3Snapshot(12f, 3f, -8f),
                         AllowFastTravel: true,
                         FastTravelPosition: new LocationVector3Snapshot(14f, 4f, -10f),
-                        DisplayOnEnterVolume: true,
                         Volumes: new List<LocationVolumeSnapshot>
                         {
                             new(0, new LocationVector3Snapshot(10f, 2f, -20f), new LocationVector3Snapshot(6f, 4f, 8f)),

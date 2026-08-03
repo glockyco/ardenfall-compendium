@@ -18,7 +18,6 @@ public sealed class PortalExtractorTests
                 subtable: "portals",
                 id: "portal-a",
                 friendlyName: "Harbor Gate",
-                isAccessible: true,
                 mapId: "ardenfall",
                 position: new PortalVector3Snapshot(12f, 3f, -8f),
                 connectedPortalRef: SnapshotRef.Record("world", "portals", "portal-b", "PortalRecord"),
@@ -31,7 +30,6 @@ public sealed class PortalExtractorTests
         Assert.Equal("world;portals;portal-a", row.Id);
         Assert.Equal("world;portals;portal-a", row.Fields.Id);
         Assert.Equal("Harbor Gate", row.Fields.Name);
-        Assert.True(row.Fields.IsAccessible);
         Assert.Equal("ardenfall", row.Fields.MapId);
         Assert.Equal(12f, row.Fields.Position.X);
         Assert.Equal(3f, row.Fields.Position.Y);
@@ -54,7 +52,6 @@ public sealed class PortalExtractorTests
                 subtable: "portals",
                 id: "",
                 friendlyName: "Broken Portal",
-                isAccessible: true,
                 mapId: "ardenfall",
                 position: new PortalVector3Snapshot(0f, 0f, 0f)),
         });
@@ -76,7 +73,6 @@ public sealed class PortalExtractorTests
                 subtable: "portals",
                 id: "portal-a",
                 friendlyName: "Broken Portal",
-                isAccessible: false,
                 mapId: null,
                 position: new PortalVector3Snapshot(0f, 0f, 0f),
                 connectedPortalRef: SnapshotRef.Record("world", "portals", "missing", "PortalRecord"),
@@ -103,7 +99,6 @@ public sealed class PortalExtractorTests
                 subtable: "portals",
                 id: "portal-a",
                 friendlyName: friendlyName,
-                isAccessible: true,
                 mapId: "overworld",
                 position: new PortalVector3Snapshot(0f, 0f, 0f),
                 connectedPortalRef: null,
@@ -131,7 +126,6 @@ public sealed class PortalExtractorTests
                 subtable: "portals",
                 id: "portal-a",
                 friendlyName: "Harbor Gate",
-                isAccessible: true,
                 mapId: "overworld",
                 position: new PortalVector3Snapshot(0f, 0f, 0f),
                 connectedPortalRef: null,

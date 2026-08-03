@@ -13,7 +13,6 @@ public sealed record LocationAssetRecord(
     string AssetName,
     bool Enabled,
     string? LocationName,
-    string? GameLocationId,
     SnapshotRef? MapRef,
     string? MapId,
     bool ShowOnMap,
@@ -22,7 +21,6 @@ public sealed record LocationAssetRecord(
     LocationVector3Snapshot MapPosition,
     bool AllowFastTravel,
     LocationVector3Snapshot? FastTravelPosition,
-    bool DisplayOnEnterVolume,
     IReadOnlyList<LocationVolumeSnapshot?>? Volumes);
 
 public interface ILocationAssetSource
@@ -79,7 +77,6 @@ public sealed class BuiltLookupTableLocationAssetSource : ILocationAssetSource
             AssetName: assetName(asset),
             Enabled: asset.enabled,
             LocationName: asset.locationName,
-            GameLocationId: asset.locationID,
             MapRef: ResolveAsset(asset.map, lookupGuid, assetName, "LocationAsset.map"),
             MapId: asset.map == null ? null : asset.map.id,
             ShowOnMap: asset.showOnMap,
@@ -88,7 +85,6 @@ public sealed class BuiltLookupTableLocationAssetSource : ILocationAssetSource
             MapPosition: FromVector3(asset.mapPosition),
             AllowFastTravel: asset.allowFastTravel,
             FastTravelPosition: asset.allowFastTravel ? FromVector3(asset.fastTravelPosition) : null,
-            DisplayOnEnterVolume: asset.displayOnEnterVolume,
             Volumes: asset.volumes == null
                 ? null
                 : asset.volumes
