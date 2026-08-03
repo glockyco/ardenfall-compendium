@@ -71,7 +71,7 @@ describe("getMapView", () => {
            '{"ring":[[10,6],[14,6],[14,10],[10,10],[10,6]]}', 0, 2);
         INSERT INTO entity_nodes VALUES
           ('location', '11111111.fixture-town', 'Harbor Town',
-           '/map?map=ardenfall&sel=abc12345', 'harbor-town--abc12345', 'abc12345', 0);
+           '/locations/harbor-town--abc12345', 'harbor-town--abc12345', 'abc12345', 1);
       `);
     });
     const originalCwd = process.cwd();
@@ -108,6 +108,8 @@ describe("getMapView", () => {
           tooltip: "Harbor Town",
           debugOnly: false,
           nodeShortId: "abc12345",
+          routePath: "/locations/harbor-town--abc12345",
+          hasPage: true,
           leadsTo: null,
         },
       ]);
@@ -118,6 +120,11 @@ describe("getMapView", () => {
         [10, 10],
         [10, 6],
       ]);
+      expect(view.volumes[0]).toMatchObject({
+        nodeShortId: "abc12345",
+        routePath: "/locations/harbor-town--abc12345",
+        hasPage: true,
+      });
       expect(view.maps).toEqual([
         {
           mapId: "ardenfall",
@@ -142,7 +149,7 @@ describe("getMapView", () => {
         INSERT INTO map_points VALUES
           ('npc:record-1', 'npc', 'record-1', 'Ada', 'overworld', 4, 5, 2, 0, 0);
         INSERT INTO entity_nodes VALUES
-          ('npc', 'record-1', 'Ada', '/map?map=overworld&sel=npc11111',
+          ('npc', 'record-1', 'Ada', '/placed-characters/ada--npc11111',
            'ada--npc11111', 'npc11111', 0);
       `);
     });
@@ -171,6 +178,8 @@ describe("getMapView", () => {
         name: "Ada",
         tooltip: "Ada",
         nodeShortId: "npc11111",
+        routePath: "/placed-characters/ada--npc11111",
+        hasPage: false,
       });
       expect(point?.name).not.toContain("record-1");
     } finally {

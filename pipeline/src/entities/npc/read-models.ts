@@ -68,8 +68,8 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
   const presentationInsert = db.prepare(
     `INSERT INTO npc_presentation_rows (
       id, name, render_context, map_id, map_x, map_y, elevation,
-      location_ids_json, map_query
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      location_ids_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   const nodeTx = db.transaction(() => {
@@ -80,9 +80,6 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
         throw new Error(`NPC '${row.id}' has no canonical placement`);
       }
       const slug = deriveEntityNodeSlug(label, row.id);
-      const query = placement.map_id
-        ? `map=${encodeURIComponent(placement.map_id)}&sel=${slug.shortId}`
-        : `sel=${slug.shortId}`;
       const locationIds = [
         ...new Set(
           (refsByNpc.get(row.id) ?? [])
@@ -102,7 +99,6 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
         placement.map_y,
         placement.elevation,
         JSON.stringify(locationIds),
-        query,
       );
       writeNode({
         entityType: "npc",

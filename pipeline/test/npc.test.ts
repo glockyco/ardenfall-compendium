@@ -199,12 +199,11 @@ describe("NPC pipeline", () => {
             map_y: number;
             elevation: number;
             location_ids_json: string;
-            map_query: string;
           },
           [string]
         >(
           `SELECT id, name, render_context, map_id, map_x, map_y, elevation,
-                  location_ids_json, map_query
+                  location_ids_json
            FROM npc_presentation_rows WHERE id = ?`,
         )
         .get("instances;npcs;4b1c9e07a2d3418fb6ce5710dd93a284"),
@@ -217,7 +216,6 @@ describe("NPC pipeline", () => {
       map_y: 3,
       elevation: 2,
       location_ids_json: '["town"]',
-      map_query: "map=ardenfall&sel=4b1c9e07",
     });
     expect(node?.route_path).toBe("/placed-characters/grainery-owner--4b1c9e07");
     db.exec(`CREATE TABLE map_points (

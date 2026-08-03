@@ -27,6 +27,8 @@ export interface MapPointRow {
   tooltip: string;
   debugOnly: boolean;
   nodeShortId: string | null;
+  routePath: string | null;
+  hasPage: boolean;
   /** Outgoing `leads_to` destination, for portals that connect somewhere. */
   leadsTo: { label: string; shortId: string } | null;
 }
@@ -40,6 +42,9 @@ export interface MapVolumeRow {
   ring: [number, number][];
   elevationMin: number | null;
   elevationMax: number | null;
+  nodeShortId: string | null;
+  routePath: string | null;
+  hasPage: boolean;
   name: string;
 }
 

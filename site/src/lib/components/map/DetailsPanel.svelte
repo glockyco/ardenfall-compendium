@@ -29,7 +29,17 @@
 {#if point}
   <aside bind:this={panel} class="border-border mt-4 rounded-lg border p-4">
     <div class="flex items-center justify-between">
-      <h2 bind:this={heading} tabindex="-1" class="font-semibold">{point.name}</h2>
+      <h2 bind:this={heading} tabindex="-1" class="font-semibold">
+        {#if point.hasPage && point.routePath}
+          <a
+            class="underline underline-offset-2"
+            href={point.routePath}
+            aria-label={`Open ${point.name} detail page`}>{point.name}</a
+          >
+        {:else}
+          {point.name}
+        {/if}
+      </h2>
       <button
         class="min-h-11 min-w-11 px-2"
         aria-label="Close details"
@@ -52,6 +62,7 @@
         <dd>
           <button
             class="hover:text-foreground text-left underline underline-offset-2"
+            aria-label={`Show ${leadsTo.label} on map`}
             onclick={() => store.goToPoint(leadsTo.shortId)}
           >
             {leadsTo.label}

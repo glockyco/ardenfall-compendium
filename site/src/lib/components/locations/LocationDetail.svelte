@@ -12,10 +12,16 @@
       <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">Map</dt>
       <dd class="mt-1">{presentation.mapLabel}</dd>
     </div>
-    <div>
-      <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">Fast travel</dt>
-      <dd class="mt-1">{presentation.allowFastTravel ? "Allowed" : "Not allowed"}</dd>
-    </div>
+    {#if presentation.mapHref}
+      <div>
+        <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">Map link</dt>
+        <dd class="mt-1">
+          <a class="underline underline-offset-2" href={presentation.mapHref}
+            >Show this location on the map</a
+          >
+        </dd>
+      </div>
+    {/if}
     <div>
       <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">Extent</dt>
       <dd class="mt-1">
@@ -35,6 +41,10 @@
           No elevation range is available.
         {/if}
       </dd>
+    </div>
+    <div>
+      <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">Fast travel</dt>
+      <dd class="mt-1">{presentation.allowFastTravel ? "Allowed" : "Not allowed"}</dd>
     </div>
   </dl>
   <p class="text-muted-foreground mt-4 text-sm">

@@ -28,6 +28,8 @@ const point = (id: string, over: Partial<MapPointRow> = {}): MapPointRow => ({
   tooltip: id,
   debugOnly: false,
   nodeShortId: id,
+  routePath: null,
+  hasPage: false,
   leadsTo: null,
   ...over,
 });
@@ -47,6 +49,9 @@ const volume: MapVolumeRow = {
   ],
   elevationMin: 0,
   elevationMax: 2,
+  nodeShortId: null,
+  routePath: null,
+  hasPage: false,
   name: "town",
 };
 

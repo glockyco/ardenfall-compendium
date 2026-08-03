@@ -1,5 +1,6 @@
 import { all, get } from "../db";
 import { disambiguateLabels } from "../disambiguate-labels";
+import { getMapHref } from "../map-href";
 import { isColorArray, isGeometry, isStringArray, parseGeneratedJson } from "../json";
 import { getEntityNodeBySlug } from "./item";
 import type {
@@ -39,6 +40,8 @@ interface MapPointRecord {
   elevation: number;
   show_on_map_debug_only: number;
   short_id: string | null;
+  route_path: string | null;
+  has_page: number | null;
 }
 
 interface LocationVolumeRecord {
@@ -59,6 +62,9 @@ interface MapVolumeRecord {
   geometry_json: string;
   elevation_min: number | null;
   elevation_max: number | null;
+  short_id: string | null;
+  route_path: string | null;
+  has_page: number | null;
 }
 
 interface LocationOverviewRecord {
@@ -98,6 +104,7 @@ export interface LocationPresentationRow {
   routePath: string;
   mapLabel: string;
   allowFastTravel: boolean;
+  mapHref: string | null;
   extent: LocationExtent | null;
   elevation: LocationElevation | null;
 }
@@ -172,7 +179,7 @@ function readPoints(layer: MapLayerConfig): MapPointRow[] {
   for (const table of layer.sourceTables.filter((t) => t === "map_points")) {
     const records = all<MapPointRecord>(
       `SELECT p.id, p.entity_id, p.instance_id, p.name, p.map_id, p.map_x, p.map_y, p.elevation,
-              p.show_on_map_debug_only, n.short_id
+              p.show_on_map_debug_only, n.short_id, n.route_path, n.has_page
        FROM ${table} p
        LEFT JOIN entity_nodes n
          ON n.entity_type = p.entity_id AND n.entity_id = p.instance_id
@@ -193,6 +200,8 @@ function readPoints(layer: MapLayerConfig): MapPointRow[] {
         tooltip: r.name,
         debugOnly: r.show_on_map_debug_only === 1,
         nodeShortId: r.short_id,
+        routePath: r.route_path,
+        hasPage: r.has_page === 1,
         leadsTo: destinations.get(r.instance_id) ?? null,
       });
     }
@@ -230,8 +239,12 @@ function readVolumes(layer: MapLayerConfig): MapVolumeRow[] {
   const rows: MapVolumeRow[] = [];
   for (const table of layer.sourceTables.filter((t) => t === "map_volumes")) {
     const records = all<MapVolumeRecord>(
-      `SELECT id, entity_id, instance_id, name, map_id, geometry_json, elevation_min, elevation_max
-       FROM ${table} WHERE entity_id = ? ORDER BY name`,
+      `SELECT v.id, v.entity_id, v.instance_id, v.name, v.map_id, v.geometry_json, v.elevation_min, v.elevation_max,
+              n.short_id, n.route_path, n.has_page
+       FROM ${table} v
+       LEFT JOIN entity_nodes n
+         ON n.entity_type = v.entity_id AND n.entity_id = v.instance_id
+       WHERE v.entity_id = ? ORDER BY v.name`,
       [layer.entityType],
     );
     for (const r of records) {
@@ -251,6 +264,9 @@ function readVolumes(layer: MapLayerConfig): MapVolumeRow[] {
         ring,
         elevationMin: r.elevation_min,
         elevationMax: r.elevation_max,
+        nodeShortId: r.short_id,
+        routePath: r.route_path,
+        hasPage: r.has_page === 1,
         name: r.name,
       });
     }
@@ -385,6 +401,7 @@ export const getLocationPresentation = (slug: string): LocationPresentationRow |
     routePath: row.route_path,
     mapLabel: displayMapLabel(row.map_id),
     allowFastTravel: row.allow_fast_travel === 1,
+    mapHref: getMapHref("location", row.id),
     extent:
       minX === null || minY === null || maxX === null || maxY === null
         ? null

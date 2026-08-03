@@ -24,6 +24,16 @@
       <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">Elevation</dt>
       <dd class="mt-1">{number(presentation.elevation)}</dd>
     </div>
+    {#if presentation.mapHref}
+      <div>
+        <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">Map link</dt>
+        <dd class="mt-1">
+          <a class="underline underline-offset-2" href={presentation.mapHref}
+            >Show this portal on the map</a
+          >
+        </dd>
+      </div>
+    {/if}
   </dl>
 
   <section class="mt-6" aria-labelledby="portal-connection">

@@ -20,15 +20,16 @@
       <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">Elevation</dt>
       <dd class="mt-1">{number(presentation.elevation)}</dd>
     </div>
-    <div>
-      <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">Map link</dt>
-      <dd class="mt-1">
-        <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- the map query comes from the static read model -->
-        <a class="underline underline-offset-2" href={`/map?${presentation.mapQuery}`}
-          >Show this character on the map</a
-        >
-      </dd>
-    </div>
+    {#if presentation.mapHref}
+      <div>
+        <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">Map link</dt>
+        <dd class="mt-1">
+          <a class="underline underline-offset-2" href={presentation.mapHref}
+            >Show this character on the map</a
+          >
+        </dd>
+      </div>
+    {/if}
   </dl>
 
   <section class="mt-6" aria-labelledby="placed-character-locations">

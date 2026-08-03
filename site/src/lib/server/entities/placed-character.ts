@@ -2,6 +2,7 @@ import { disambiguateLabels } from "../disambiguate-labels";
 import { all, get } from "../db";
 import { isStringArray, parseGeneratedJson, validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
+import { getMapHref } from "../map-href";
 
 interface NpcOverviewRecord {
   id: string;
@@ -19,7 +20,6 @@ interface NpcPresentationRecord {
   map_y: number;
   elevation: number;
   location_ids_json: string;
-  map_query: string;
   route_path: string;
 }
 
@@ -51,7 +51,7 @@ export interface PlacedCharacterPresentationRow {
   mapX: number;
   mapY: number;
   elevation: number;
-  mapQuery: string;
+  mapHref: string | null;
   locations: PlacedCharacterLocationLink[];
 }
 
@@ -86,7 +86,7 @@ export const getPlacedCharacterPresentation = (
   if (!node) return undefined;
   const row = get<NpcPresentationRecord>(
     `SELECT p.id, p.name, p.render_context, p.map_id, p.map_x, p.map_y, p.elevation,
-            p.location_ids_json, p.map_query, n.route_path
+            p.location_ids_json, n.route_path
      FROM npc_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'npc'
@@ -131,7 +131,7 @@ export const getPlacedCharacterPresentation = (
     mapX: row.map_x,
     mapY: row.map_y,
     elevation: row.elevation,
-    mapQuery: row.map_query,
+    mapHref: getMapHref("npc", row.id),
     locations,
   };
 };

@@ -1,6 +1,7 @@
 import { disambiguateLabels } from "../disambiguate-labels";
 import { all, get } from "../db";
 import { validateRenderContext } from "../json";
+import { getMapHref } from "../map-href";
 import { getEntityNodeBySlug } from "./item";
 
 interface PortalOverviewRecord {
@@ -50,6 +51,7 @@ export interface PortalPresentationRow {
   mapX: number | null;
   mapY: number | null;
   elevation: number | null;
+  mapHref: string | null;
   connectedPortal: ConnectedPortalLink | null;
 }
 
@@ -123,6 +125,7 @@ export const getPortalPresentation = (slug: string): PortalPresentationRow | und
     mapX: row.map_x,
     mapY: row.map_y,
     elevation: row.elevation,
+    mapHref: getMapHref("portal", row.id),
     connectedPortal,
   };
 };

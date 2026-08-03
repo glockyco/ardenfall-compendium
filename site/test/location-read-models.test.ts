@@ -22,6 +22,15 @@ const seed = () => {
       map_min_x REAL, map_min_y REAL, map_max_x REAL, map_max_y REAL,
       elevation_min REAL, elevation_max REAL, geometry_json TEXT
     );
+    CREATE TABLE map_points (
+      id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
+      map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,
+      show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
+    );
+    CREATE TABLE map_volumes (
+      id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
+      map_id TEXT, geometry_json TEXT NOT NULL, elevation_min REAL, elevation_max REAL
+    );
     CREATE TABLE entity_nodes (
       entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, label TEXT NOT NULL,
       route_path TEXT NOT NULL, canonical_slug TEXT NOT NULL, short_id TEXT NOT NULL,
@@ -38,6 +47,8 @@ const seed = () => {
     INSERT INTO location_volumes VALUES
       ('location-shisivi:volume:0', 'location-shisivi', 0, 'axis-aligned-box', '{}', '{}',
        -4, 2, 8, 14, -1, 5, '{}');
+    INSERT INTO map_points VALUES
+      ('location-shisivi:point', 'location', 'location-shisivi', 'overworld', 1, 2, 3, 0, 1);
     INSERT INTO entity_nodes VALUES
       ('location', 'location-shisivi', 'Shisivi Wood', '/locations/shisivi-wood--11111111',
        'shisivi-wood--11111111', '11111111', 1),
@@ -106,6 +117,7 @@ describe("location read-model accessors", () => {
         routePath: "/locations/shisivi-wood--11111111",
         mapLabel: "Overworld",
         allowFastTravel: true,
+        mapHref: "/map?map=overworld&sel=11111111",
         extent: { width: 12, height: 12 },
         elevation: { min: -1, max: 5 },
       });

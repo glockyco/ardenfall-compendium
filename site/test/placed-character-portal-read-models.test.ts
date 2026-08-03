@@ -32,7 +32,7 @@ describe("placed-character and portal site read models", () => {
         CREATE TABLE npc_presentation_rows (
           id TEXT PRIMARY KEY, name TEXT NOT NULL, render_context TEXT NOT NULL,
           map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,
-          location_ids_json TEXT NOT NULL, map_query TEXT NOT NULL
+          location_ids_json TEXT NOT NULL
         );
         CREATE TABLE entity_nodes (
           entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, label TEXT NOT NULL,
@@ -45,9 +45,9 @@ describe("placed-character and portal site read models", () => {
           edges_json TEXT NOT NULL
         );
         INSERT INTO npc_presentation_rows VALUES
-          ('npc-ada', 'Ada', 'placed-character-presentation-v1', 'overworld', 1, 2, 3, '[]', 'map=overworld&sel=ada--11111111'),
-          ('npc-unnamed-a', 'Unnamed character', 'placed-character-presentation-v1', 'overworld', 4, 5, 6, '[]', 'map=overworld&sel=unnamed-character--22222222'),
-          ('npc-unnamed-b', 'Unnamed character', 'placed-character-presentation-v1', NULL, 7, 8, 9, '[]', 'sel=unnamed-character--33333333');
+          ('npc-ada', 'Ada', 'placed-character-presentation-v1', 'overworld', 1, 2, 3, '[]'),
+          ('npc-unnamed-a', 'Unnamed character', 'placed-character-presentation-v1', 'overworld', 4, 5, 6, '[]'),
+          ('npc-unnamed-b', 'Unnamed character', 'placed-character-presentation-v1', NULL, 7, 8, 9, '[]');
         INSERT INTO entity_nodes VALUES
           ('npc', 'npc-ada', 'Ada', '/placed-characters/ada--11111111', 'ada--11111111', '11111111', 1),
           ('npc', 'npc-unnamed-a', 'Unnamed character', '/placed-characters/unnamed-character--22222222', 'unnamed-character--22222222', '22222222', 1),
@@ -72,20 +72,31 @@ describe("placed-character and portal site read models", () => {
         CREATE TABLE npc_presentation_rows (
           id TEXT PRIMARY KEY, name TEXT NOT NULL, render_context TEXT NOT NULL,
           map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,
-          location_ids_json TEXT NOT NULL, map_query TEXT NOT NULL
+          location_ids_json TEXT NOT NULL
         );
         CREATE TABLE entity_nodes (
           entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, label TEXT NOT NULL,
           route_path TEXT NOT NULL, canonical_slug TEXT NOT NULL, short_id TEXT NOT NULL,
           has_page INTEGER NOT NULL, PRIMARY KEY (entity_type, entity_id)
         );
+        CREATE TABLE map_points (
+          id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
+          map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,
+          show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
+        );
+        CREATE TABLE map_volumes (
+          id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
+          map_id TEXT, geometry_json TEXT NOT NULL, elevation_min REAL, elevation_max REAL
+        );
         INSERT INTO npc_presentation_rows VALUES
-          ('npc-ada', 'Ada', 'placed-character-presentation-v1', 'overworld', 1, 2, 3, '["location-woods"]', 'map=overworld&sel=ada--11111111'),
-          ('npc-unnamed', 'Unnamed character', 'placed-character-presentation-v1', NULL, 4, 5, 6, '[]', 'sel=unnamed-character--22222222');
+          ('npc-ada', 'Ada', 'placed-character-presentation-v1', 'overworld', 1, 2, 3, '["location-woods"]'),
+          ('npc-unnamed', 'Unnamed character', 'placed-character-presentation-v1', NULL, 4, 5, 6, '[]');
         INSERT INTO entity_nodes VALUES
           ('npc', 'npc-ada', 'Ada', '/placed-characters/ada--11111111', 'ada--11111111', '11111111', 1),
           ('npc', 'npc-unnamed', 'Unnamed character', '/placed-characters/unnamed-character--22222222', 'unnamed-character--22222222', '22222222', 1),
           ('location', 'location-woods', 'Shisivi Wood', '/locations/shisivi-wood--33333333', 'shisivi-wood--33333333', '33333333', 1);
+        INSERT INTO map_points VALUES
+          ('npc-ada:point', 'npc', 'npc-ada', 'overworld', 1, 2, 3, 0, 1);
       `,
       (readModels) => {
         expect(readModels.getPlacedCharacterPresentation("ada--11111111")).toMatchObject({
@@ -94,11 +105,13 @@ describe("placed-character and portal site read models", () => {
           mapX: 1,
           mapY: 2,
           locations: [{ label: "Shisivi Wood", routePath: "/locations/shisivi-wood--33333333" }],
+          mapHref: "/map?map=overworld&sel=11111111",
         });
         expect(
           readModels.getPlacedCharacterPresentation("unnamed-character--22222222"),
         ).toMatchObject({
           name: "Unnamed character",
+          mapHref: null,
           locations: [],
         });
       },
@@ -119,12 +132,23 @@ describe("placed-character and portal site read models", () => {
           route_path TEXT NOT NULL, canonical_slug TEXT NOT NULL, short_id TEXT NOT NULL,
           has_page INTEGER NOT NULL, PRIMARY KEY (entity_type, entity_id)
         );
+        CREATE TABLE map_points (
+          id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
+          map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,
+          show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
+        );
+        CREATE TABLE map_volumes (
+          id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
+          map_id TEXT, geometry_json TEXT NOT NULL, elevation_min REAL, elevation_max REAL
+        );
         INSERT INTO portal_presentation_rows VALUES
           ('portal-a', 'Gate A', 'portal-presentation-v1', 'overworld', 10, 20, 30, 'portal-b', 'Gate B'),
           ('portal-b', 'Gate B', 'portal-presentation-v1', 'underground', 40, 50, 60, NULL, NULL);
         INSERT INTO entity_nodes VALUES
           ('portal', 'portal-a', 'Gate A', '/portals/gate-a--11111111', 'gate-a--11111111', '11111111', 1),
           ('portal', 'portal-b', 'Gate B', '/portals/gate-b--22222222', 'gate-b--22222222', '22222222', 1);
+        INSERT INTO map_points VALUES
+          ('portal-a:point', 'portal', 'portal-a', 'overworld', 10, 20, 30, 0, 1);
       `,
       (readModels) => {
         expect(readModels.listPortals()).toHaveLength(2);
@@ -134,6 +158,11 @@ describe("placed-character and portal site read models", () => {
             label: "Gate B",
             routePath: "/portals/gate-b--22222222",
           },
+          mapHref: "/map?map=overworld&sel=11111111",
+        });
+        expect(readModels.getPortalPresentation("gate-b--22222222")).toMatchObject({
+          name: "Gate B",
+          mapHref: null,
         });
       },
     );
