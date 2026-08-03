@@ -20,3 +20,8 @@ custom_domain = true
 [assets]
 directory = ".svelte-kit/cloudflare"
 binding = "ASSETS"
+# Every content route prerenders, and the build database is never deployed, so the Worker cannot
+# render a page it has no data for. Without this, an unmatched path such as a stale link or a
+# crawler guess reaches the Worker and returns 500 instead of 404. This makes Cloudflare serve the
+# prerendered 404 asset directly.
+not_found_handling = "404-page"

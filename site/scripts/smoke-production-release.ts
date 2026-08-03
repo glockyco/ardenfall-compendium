@@ -87,6 +87,25 @@ if (probe.displayIconHash) {
     throw new Error(`probe asset content-type mismatch: ${contentType}`);
 }
 
+// An address that matches no page must answer 404. Every content route prerenders and the build
+// database is never deployed, so a path that reaches the Worker cannot be rendered and returned 500
+// before `not_found_handling` was set. A crawler or a stale link meets this path, not a reader
+// following a link, which is why nothing noticed for months.
+for (const missing of [
+  `/items/does-not-exist`,
+  `/factions/does-not-exist--00000000`,
+  `/no-such-section`,
+]) {
+  const res = await fetch(`${origin}${missing}`, { headers: { "cache-control": "no-cache" } });
+  if (res.status !== 404) {
+    throw new Error(`${missing} returned ${res.status}, expected 404`);
+  }
+  const body = await res.text();
+  if (!body.includes("Page not found")) {
+    throw new Error(`${missing} returned 404 without the compendium's own page`);
+  }
+}
+
 process.stdout.write(`production smoke passed for ${manifest.artifactId}\n`);
 
 async function fetchText(url: string): Promise<string> {
