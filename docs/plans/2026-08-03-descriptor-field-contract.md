@@ -1,7 +1,7 @@
 ---
 title: Descriptor Field Contract
 type: spec
-status: draft
+status: implemented
 created: 2026-08-03
 parent: 2026-04-29-ardenfall-compendium-roadmap
 superseded_by:
@@ -64,3 +64,15 @@ This is the piece that makes the whole thing honest. Without it, declaring `volu
 ## Why this before the remaining survey items
 
 Two mod-side findings are still open, splitting asset-source contracts from their Unity implementations and removing the silent Unity catch fallbacks. Both are real and neither is load-bearing. This one guards the contract that every entity depends on, and every future entity widens the exposure, so it gets cheaper to do now than later.
+
+## What this did not close
+
+While measuring the field drift, a larger version of the same gap turned up and is deliberately left for its own change.
+
+**Only `item` generates its DDL from its descriptor.** The other eight entities have hand-written SQL constants, `LOCATION_DDL`, `PORTAL_DDL`, `CHARACTER_DDL` and the rest. So for eight of nine entities the canonical table's real shape is a SQL string that sits beside the descriptor and agrees with it by convention.
+
+Today they do agree, and the naming relationship is a canonicaliser's choice rather than a rule: `mapRef` becomes `map_ref_json`, `name` becomes `character_name`. Nothing checks any of it, so a descriptor and its table can drift apart in either direction without a build noticing.
+
+Generating all DDL from descriptors is the obvious response and probably the wrong one. The hand-written tables legitimately carry JSON-serialised columns, renamed columns, and derived columns that no descriptor should have to express, and forcing them through generation would turn the descriptor into a schema DSL. The likelier answer is to keep the SQL hand-written and assert the relationship: every declared `column` field maps to a named column, and the mapping is declared rather than inferred.
+
+That is a real slice with a genuine design question in it, and folding it into this one would have meant deciding it in passing.

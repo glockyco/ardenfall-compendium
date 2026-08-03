@@ -12,6 +12,9 @@
 ## draft
 
 - **Tile Capture** [spec] `2026-08-02-tile-capture` ← 2026-04-29-ardenfall-compendium-roadmap
+
+## implemented
+
 - **Descriptor Field Contract** [spec] `2026-08-03-descriptor-field-contract` ← 2026-04-29-ardenfall-compendium-roadmap
 
 _30 archived — see `docs/plans/archive/`._
