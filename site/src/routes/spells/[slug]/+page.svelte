@@ -1,6 +1,7 @@
 <script lang="ts">
   import BackLink from "$lib/components/navigation/BackLink.svelte";
   import RichText from "$lib/components/content/RichText.svelte";
+  import SpellEffectList from "$lib/components/spells/SpellEffectList.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
 
@@ -77,6 +78,8 @@
       <p class="text-muted-foreground mt-6 text-sm">Illegal spell</p>
     {/if}
   </div>
+
+  <SpellEffectList effects={spell.effects} />
 
   {#each data.relationships as section (section.id)}
     <RelationshipSection {section} />

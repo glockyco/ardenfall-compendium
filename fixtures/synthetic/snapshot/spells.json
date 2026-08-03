@@ -15,7 +15,19 @@
         "manaCost": 12,
         "tooltipSource": "Reduces Target's Vision on Touch",
         "isIllegal": false,
-        "iconRef": null
+        "iconRef": null,
+        "spellEffects": [
+          {
+            "kind": "apply-status-to-self",
+            "statusEffectRef": {
+              "kind": "lookupAsset",
+              "guid": "91a00002.fixture-status-effect-burning"
+            },
+            "sampleLevel": 1.25,
+            "sampleLifetimeSeconds": 6,
+            "appliesToSelf": true
+          }
+        ]
       }
     },
     {
@@ -27,7 +39,29 @@
         "manaCost": 8,
         "tooltipSource": "Increases Experience gained by <color=#86FF86>0%</color> for 1 Seconds",
         "isIllegal": false,
-        "iconRef": null
+        "iconRef": null,
+        "spellEffects": [
+          {
+            "kind": "apply-status-to-target",
+            "statusEffectRef": {
+              "kind": "lookupAsset",
+              "guid": "91a00001.fixture-status-effect-bleeding"
+            },
+            "sampleLevel": 2,
+            "sampleLifetimeSeconds": 4,
+            "appliesToSelf": false
+          },
+          {
+            "kind": "apply-status-to-target",
+            "statusEffectRef": {
+              "kind": "lookupAsset",
+              "guid": "91a00002.fixture-status-effect-burning"
+            },
+            "sampleLevel": 3,
+            "sampleLifetimeSeconds": 5,
+            "appliesToSelf": false
+          }
+        ]
       }
     },
     {
@@ -43,7 +77,14 @@
         "manaCost": 25,
         "tooltipSource": null,
         "isIllegal": true,
-        "iconRef": null
+        "iconRef": null,
+        "spellEffects": [
+          {
+            "kind": "area-of-effect",
+            "damage": 7,
+            "damageType": "Fire"
+          }
+        ]
       }
     },
     {
@@ -55,7 +96,8 @@
         "manaCost": 5,
         "tooltipSource": "Deals 5 Fire Damage to Target",
         "isIllegal": false,
-        "iconRef": null
+        "iconRef": null,
+        "spellEffects": []
       },
       "diagnostics": [
         {

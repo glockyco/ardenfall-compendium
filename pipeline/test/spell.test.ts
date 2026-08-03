@@ -93,6 +93,126 @@ describe("spell pipeline", () => {
     });
   });
 
+  it("canonicalises effects with ordinal keys and preserves status fields", () => {
+    const db = new Database(":memory:");
+    db.exec(SPELL_DDL);
+    const statusRef = {
+      kind: "lookupAsset",
+      guid: "91a00002.fixture-status-effect-burning",
+    } as const;
+    canonicaliseSpells(db, {
+      entityId: "spell",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: spellId,
+          fields: {
+            id: spellId,
+            spellName: "Fire Shield",
+            spellEffects: [
+              {
+                kind: "apply-status-to-self",
+                statusEffectRef: statusRef,
+                sampleLevel: 1.25,
+                sampleLifetimeSeconds: 6,
+                appliesToSelf: true,
+              },
+              { kind: "projectile", damage: 7, damageType: "Fire" },
+            ],
+          },
+        },
+      ],
+    });
+    expect(
+      db
+        .query<
+          {
+            id: string;
+            spell_id: string;
+            effect_ordinal: number;
+            kind: string;
+            level: number | null;
+            lifetime: number | null;
+            applies_to_self: number | null;
+            damage: number | null;
+          },
+          []
+        >(
+          `SELECT id, spell_id, effect_ordinal, kind, level, lifetime, applies_to_self, damage
+           FROM spell_effects ORDER BY effect_ordinal`,
+        )
+        .all(),
+    ).toEqual([
+      {
+        id: `${spellId}:effect:0`,
+        spell_id: spellId,
+        effect_ordinal: 0,
+        kind: "apply-status-to-self",
+        level: 1.25,
+        lifetime: 6,
+        applies_to_self: 1,
+        damage: null,
+      },
+      {
+        id: `${spellId}:effect:1`,
+        spell_id: spellId,
+        effect_ordinal: 1,
+        kind: "projectile",
+        level: null,
+        lifetime: null,
+        applies_to_self: null,
+        damage: 7,
+      },
+    ]);
+  });
+
+  it("emits spell applies edges with spell effect evidence", () => {
+    const db = new Database(":memory:");
+    db.exec(SPELL_DDL);
+    db.exec(`CREATE TABLE status_effects (id TEXT PRIMARY KEY, status_effect_name TEXT);`);
+    db.prepare(`INSERT INTO status_effects (id, status_effect_name) VALUES (?, ?)`).run(
+      "91a00002.fixture-status-effect-burning",
+      "Burning",
+    );
+    canonicaliseSpells(db, {
+      entityId: "spell",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: spellId,
+          fields: {
+            id: spellId,
+            spellName: "Fire Shield",
+            spellEffects: [
+              {
+                kind: "apply-status-to-self",
+                statusEffectRef: {
+                  kind: "lookupAsset",
+                  guid: "91a00002.fixture-status-effect-burning",
+                },
+                sampleLevel: 1.25,
+                sampleLifetimeSeconds: 6,
+                appliesToSelf: true,
+              },
+            ],
+          },
+        },
+      ],
+    });
+    const diagnostics = emitSpellReadModels(db);
+    expect(diagnostics).toEqual([]);
+    const edge = db
+      .query<{ evidence_json: string; predicate: string }, []>(
+        `SELECT evidence_json, predicate FROM entity_edges WHERE source_type = 'spell' AND predicate = 'applies'`,
+      )
+      .get();
+    expect(edge?.predicate).toBe("applies");
+    expect(JSON.parse(edge?.evidence_json ?? "{}")).toEqual({
+      source: "spells.spellEffects",
+      level: 1.25,
+    });
+  });
+
   it("canonicalises a nameless spell with a null spell name", () => {
     const db = new Database(":memory:");
     seedNamelessSpell(db);
@@ -262,4 +382,16 @@ it("diagnoses a missing stat type with a page without writing an edge", () => {
   expect(diagnostics[0]?.code).toBe("spellSkillUnresolved");
   expect(diagnostics[0]?.severity).toBe("diagnostic");
   expect(db.query(`SELECT COUNT(*) AS count FROM entity_edges`).get()).toEqual({ count: 0 });
+});
+
+it("writes an empty effects list for a spell with no effects", () => {
+  const db = new Database(":memory:");
+  seedNamelessSpell(db);
+  emitSpellReadModels(db);
+  const row = db
+    .query<{ effects_json: string }, [string]>(
+      `SELECT effects_json FROM spell_presentation_rows WHERE id = ?`,
+    )
+    .get(namelessSpellId);
+  expect(row).toEqual({ effects_json: "[]" });
 });

@@ -12,5 +12,6 @@
 ## draft
 
 - **Tile Capture** [spec] `2026-08-02-tile-capture` ← 2026-04-29-ardenfall-compendium-roadmap
+- **Spell Effects** [spec] `2026-08-03-spell-effects` ← 2026-04-29-ardenfall-compendium-roadmap
 
 _34 archived — see `docs/plans/archive/`._

@@ -56,6 +56,14 @@
       "from": "icon",
       "missingPolicy": "optional-empty",
       "column": "icon_ref_json"
+    },
+    {
+      "name": "spellEffects",
+      "type": "json",
+      "from": "spells",
+      "storage": "unstored",
+      "reason": "Expanded into spell_effects rows. The reader-facing emitter skips SoundsSpellEffect, SubTooltipSpellEffect and TargetAIValueSpellEffect because they carry audio, tooltip plumbing and AI weighting.",
+      "projects": "spell_effects"
     }
   ],
   "map": null

@@ -364,6 +364,16 @@ export interface LocationSnapshotFields {
   volumes: LocationSnapshotVolume[];
 }
 
+export interface SpellSnapshotEffect {
+  kind: string;
+  statusEffectRef?: SnapshotRef | null;
+  sampleLevel?: number | null;
+  sampleLifetimeSeconds?: number | null;
+  appliesToSelf?: boolean | null;
+  damage?: number | null;
+  damageType?: string | null;
+}
+
 export interface SpellSnapshotFields {
   id: string;
   spellName: string | null;
@@ -372,6 +382,7 @@ export interface SpellSnapshotFields {
   isIllegal?: boolean | null;
   tooltipSource?: string | null;
   iconRef?: SnapshotRef | null;
+  spellEffects?: SpellSnapshotEffect[];
 }
 
 export interface FactionSnapshotRelationship {

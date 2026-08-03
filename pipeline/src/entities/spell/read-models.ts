@@ -22,7 +22,8 @@ CREATE TABLE spell_presentation_rows (
   mana_cost      REAL,
   is_illegal     INTEGER NOT NULL DEFAULT 0,
   tooltip_source TEXT,
-  tooltip_rich_text_json TEXT
+  tooltip_rich_text_json TEXT,
+  effects_json   TEXT NOT NULL
 );
 `;
 
@@ -39,6 +40,30 @@ interface PageStatType {
   entity_id: string;
   label: string;
   grouping: "attribute" | "skill";
+}
+
+interface SpellEffectRow {
+  spell_id: string;
+  effect_ordinal: number;
+  kind: string;
+  status_effect_ref_json: string | null;
+  level: number | null;
+  lifetime: number | null;
+  applies_to_self: number | null;
+  damage: number | null;
+  damage_type: string | null;
+}
+
+interface SpellEffectPresentation {
+  kind: string;
+  statusEffectId: string | null;
+  statusEffectLabel: string | null;
+  statusEffectRoutePath: string | null;
+  sampleLevel: number | null;
+  sampleLifetimeSeconds: number | null;
+  appliesToSelf: boolean | null;
+  damage: number | null;
+  damageType: string | null;
 }
 
 interface NamedAssetReference {
@@ -61,8 +86,8 @@ export function emitSpellReadModels(
   const presentationInsert = db.prepare(
     `INSERT INTO spell_presentation_rows (
        id, name, render_context, skill, skill_id, mana_cost, is_illegal,
-       tooltip_source, tooltip_rich_text_json
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       tooltip_source, tooltip_rich_text_json, effects_json
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const edgeInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_edges (
@@ -96,6 +121,33 @@ export function emitSpellReadModels(
        ORDER BY COALESCE(spell_name, 'Unnamed spell'), id`,
     )
     .all();
+  const statusEffects = new Map<string, { label: string | null }>();
+  const hasStatusEffectsTable = db
+    .query<{ name: string }, []>(
+      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'status_effects'`,
+    )
+    .get();
+  if (hasStatusEffectsTable) {
+    for (const status of db
+      .query<{ id: string; status_effect_name: string | null }, []>(
+        `SELECT id, status_effect_name FROM status_effects`,
+      )
+      .all()) {
+      statusEffects.set(status.id, { label: status.status_effect_name });
+    }
+  }
+  const effectsBySpell = new Map<string, SpellEffectRow[]>();
+  for (const effect of db
+    .query<SpellEffectRow, []>(
+      `SELECT spell_id, effect_ordinal, kind, status_effect_ref_json,
+              level, lifetime, applies_to_self, damage, damage_type
+       FROM spell_effects ORDER BY spell_id, effect_ordinal`,
+    )
+    .all()) {
+    const effects = effectsBySpell.get(effect.spell_id) ?? [];
+    effects.push(effect);
+    effectsBySpell.set(effect.spell_id, effects);
+  }
 
   const diagnostics: PipelineDiagnostic[] = [];
   const tx = db.transaction(() => {
@@ -120,17 +172,6 @@ export function emitSpellReadModels(
         row.mana_cost,
         row.is_illegal ?? 0,
       );
-      presentationInsert.run(
-        row.id,
-        presentationName,
-        "spell-presentation-v1",
-        skill?.label ?? null,
-        skill?.id ?? null,
-        row.mana_cost,
-        row.is_illegal ?? 0,
-        row.tooltip_source,
-        tooltip === null ? null : JSON.stringify(tooltip),
-      );
       const slug = deriveEntityNodeSlug(presentationName, row.id);
       // The canonical table preserves a missing display name.
       // Presentation supplies a placeholder so the page node remains routable.
@@ -154,6 +195,76 @@ export function emitSpellReadModels(
           field: diagnostic.field,
         });
       }
+
+      const effectFacts: SpellEffectPresentation[] = (effectsBySpell.get(row.id) ?? []).map(
+        (effect) => {
+          const statusEffectCandidate = resolveStatusEffectId(effect.status_effect_ref_json);
+          let statusEffectId: string | null = null;
+          let statusEffectLabel: string | null = null;
+          let statusEffectRoutePath: string | null = null;
+          if (effect.status_effect_ref_json !== null) {
+            if (statusEffectCandidate === null || !statusEffects.has(statusEffectCandidate)) {
+              diagnostics.push({
+                severity: "diagnostic",
+                source: "spell-effect-read-model",
+                code: "spellEffectStatusUnresolved",
+                message: `Spell '${row.id}' has an unresolvable status effect reference.`,
+                entityType: "spell",
+                entityId: row.id,
+                field: "spells.spellEffects.statusEffectRef",
+                evidence: { statusEffectRef: effect.status_effect_ref_json },
+              });
+            } else {
+              statusEffectLabel = statusEffects.get(statusEffectCandidate)?.label ?? null;
+              statusEffectId = statusEffectCandidate;
+              const slug = deriveEntityNodeSlug(
+                statusEffectLabel ?? "Unnamed status effect",
+                statusEffectId,
+              );
+              statusEffectRoutePath = `/status-effects/${slug.canonicalSlug}`;
+              edgeInsert.run(
+                `${row.id}:applies:status-effect:${statusEffectId}`,
+                "spell",
+                row.id,
+                "status-effect",
+                statusEffectId,
+                "applies",
+                "Applies",
+                1,
+                JSON.stringify({
+                  source: "spells.spellEffects",
+                  level: effect.level,
+                }),
+                null,
+              );
+            }
+          }
+          return {
+            kind: effect.kind,
+            statusEffectId,
+            statusEffectLabel,
+            statusEffectRoutePath,
+            sampleLevel: effect.level,
+            sampleLifetimeSeconds: effect.lifetime,
+            appliesToSelf: effect.applies_to_self === null ? null : effect.applies_to_self === 1,
+            damage: effect.damage,
+            damageType: effect.damage_type,
+          };
+        },
+      );
+
+      presentationInsert.run(
+        row.id,
+        presentationName,
+        "spell-presentation-v1",
+        skill?.label ?? null,
+        skill?.id ?? null,
+        row.mana_cost,
+        row.is_illegal ?? 0,
+        row.tooltip_source,
+        tooltip === null ? null : JSON.stringify(tooltip),
+        JSON.stringify(effectFacts),
+      );
 
       if (skill) {
         edgeInsert.run(
@@ -214,6 +325,23 @@ function namedAssetReference(value: unknown): NamedAssetReference | null {
     return null;
   }
   return { entity: ref.entity, name: ref.name };
+}
+
+function resolveStatusEffectId(value: string | null): string | null {
+  if (value === null) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+  const ref = parsed as { kind?: unknown; guid?: unknown; entity?: unknown; name?: unknown };
+  if (ref.kind === "lookupAsset" && typeof ref.guid === "string") return ref.guid;
+  if (ref.kind === "namedAsset" && ref.entity === "status-effect" && typeof ref.name === "string") {
+    return `named;status-effect;${ref.name}`;
+  }
+  return null;
 }
 
 function unresolvedSkillDiagnostic(row: SpellRow, reason: string): PipelineDiagnostic {

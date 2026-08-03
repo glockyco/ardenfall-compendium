@@ -1,6 +1,6 @@
 import { disambiguateLabels } from "../disambiguate-labels";
 import { all, get } from "../db";
-import { isRichTextDocument, parseGeneratedJson, validateRenderContext } from "../json";
+import { isRecord, isRichTextDocument, parseGeneratedJson, validateRenderContext } from "../json";
 import type { RichTextDocument } from "./item";
 import { getEntityNodeBySlug } from "./item";
 
@@ -14,6 +14,40 @@ interface SpellOverviewRecord {
   short_id: string;
 }
 
+interface SpellEffectRecord {
+  kind: string;
+  statusEffectId: string | null;
+  statusEffectLabel: string | null;
+  statusEffectRoutePath: string | null;
+  sampleLevel: number | null;
+  sampleLifetimeSeconds: number | null;
+  appliesToSelf: boolean | null;
+  damage: number | null;
+  damageType: string | null;
+}
+
+const isNullableNumber = (value: unknown): value is number | null =>
+  value === null || (typeof value === "number" && Number.isFinite(value));
+const isNullableBoolean = (value: unknown): value is boolean | null =>
+  value === null || typeof value === "boolean";
+const isNullableString = (value: unknown): value is string | null =>
+  value === null || typeof value === "string";
+const isSpellEffectArray = (value: unknown): value is SpellEffectRecord[] =>
+  Array.isArray(value) &&
+  value.every(
+    (effect) =>
+      isRecord(effect) &&
+      typeof effect.kind === "string" &&
+      isNullableString(effect.statusEffectId) &&
+      isNullableString(effect.statusEffectLabel) &&
+      isNullableString(effect.statusEffectRoutePath) &&
+      isNullableNumber(effect.sampleLevel) &&
+      isNullableNumber(effect.sampleLifetimeSeconds) &&
+      isNullableBoolean(effect.appliesToSelf) &&
+      isNullableNumber(effect.damage) &&
+      isNullableString(effect.damageType),
+  );
+
 interface SpellPresentationRecord {
   id: string;
   name: string;
@@ -22,6 +56,7 @@ interface SpellPresentationRecord {
   mana_cost: number | null;
   is_illegal: number;
   tooltip_rich_text_json: string | null;
+  effects_json: string;
   /** Joined from the governing skill's node with a page, null when the spell has none. */
   skill_route_path: string | null;
   route_path: string;
@@ -36,6 +71,18 @@ export interface SpellOverviewRow {
   routePath: string;
 }
 
+export interface SpellPresentationEffect {
+  kind: string;
+  statusEffectId: string | null;
+  statusEffectLabel: string | null;
+  statusEffectRoutePath: string | null;
+  sampleLevel: number | null;
+  sampleLifetimeSeconds: number | null;
+  appliesToSelf: boolean | null;
+  damage: number | null;
+  damageType: string | null;
+}
+
 export interface SpellPresentationRow {
   id: string;
   name: string;
@@ -46,6 +93,7 @@ export interface SpellPresentationRow {
   isIllegal: boolean;
   description: RichTextDocument | null;
   descriptionText: string | null;
+  effects: SpellPresentationEffect[];
   routePath: string;
 }
 
@@ -78,6 +126,7 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
   const row = get<SpellPresentationRecord>(
     `SELECT p.id, p.name, p.render_context, p.skill, p.mana_cost, p.is_illegal,
             p.tooltip_rich_text_json,
+            p.effects_json,
             sn.route_path AS skill_route_path,
             n.route_path
      FROM spell_presentation_rows p
@@ -93,6 +142,9 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
     [node.entityId],
   );
   if (!row) return undefined;
+  const effects = disambiguateSpellEffectLabels(
+    parseGeneratedJson(row.effects_json, "spell", "effects_json", row.id, isSpellEffectArray),
+  );
   const description = row.tooltip_rich_text_json
     ? parseGeneratedJson(
         row.tooltip_rich_text_json,
@@ -117,10 +169,30 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
     isIllegal: row.is_illegal === 1,
     description,
     descriptionText: description ? richTextPlainText(description) : null,
+    effects,
     routePath: row.route_path,
   };
 };
 
+function disambiguateSpellEffectLabels(effects: SpellEffectRecord[]): SpellEffectRecord[] {
+  const labelled = effects.flatMap((effect, index) =>
+    effect.statusEffectLabel === null
+      ? []
+      : [{ ...effect, effectIndex: index, statusEffectLabel: effect.statusEffectLabel }],
+  );
+  const disambiguated = disambiguateLabels(
+    labelled,
+    "statusEffectLabel",
+    (effect) => effect.statusEffectRoutePath?.split("--").pop() ?? effect.statusEffectId ?? "",
+  );
+  const labels = new Map(
+    disambiguated.map((effect) => [effect.effectIndex, effect.statusEffectLabel]),
+  );
+  return effects.map((effect, index) => ({
+    ...effect,
+    statusEffectLabel: labels.get(index) ?? effect.statusEffectLabel,
+  }));
+}
 function richTextPlainText(document: RichTextDocument): string {
   const visit = (node: RichTextDocument["nodes"][number]): string => {
     if (node.type === "text") return node.text;

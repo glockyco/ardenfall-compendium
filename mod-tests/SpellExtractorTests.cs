@@ -121,6 +121,93 @@ public sealed class SpellExtractorTests
     }
 
     [Fact]
+    public void EmitsSelfStatusEffectWithSampleValues()
+    {
+        var extractor = new SpellExtractor(new FakeSpellAssetSource(new[]
+        {
+            Build("spell-self", "Self", effects: new[]
+            {
+                new SpellEffectAsset("apply-status-to-self", SampleLevel: 2f, SampleLifetimeSeconds: 3f, AppliesToSelf: true),
+            }),
+        }));
+
+        var effect = Assert.Single(Assert.Single(extractor.Walk()).Fields.SpellEffects);
+
+        var status = Assert.IsType<StatusSpellEffectSnapshot>(effect);
+        Assert.Equal("apply-status-to-self", status.Kind);
+        Assert.Equal(2f, status.SampleLevel);
+        Assert.Equal(3f, status.SampleLifetimeSeconds);
+        Assert.True(status.AppliesToSelf);
+    }
+
+    [Fact]
+    public void EmitsEveryTargetStatusEffectInTheList()
+    {
+        var extractor = new SpellExtractor(new FakeSpellAssetSource(new[]
+        {
+            Build("spell-target", "Target", effects: new[]
+            {
+                new SpellEffectAsset("apply-status-to-target", SampleLevel: 1f, SampleLifetimeSeconds: 2f),
+                new SpellEffectAsset("apply-status-to-target", SampleLevel: 3f, SampleLifetimeSeconds: 4f),
+            }),
+        }));
+
+        var effects = Assert.Single(extractor.Walk()).Fields.SpellEffects;
+
+        Assert.Equal(2, effects.Count);
+        Assert.All(effects, effect => Assert.False(Assert.IsType<StatusSpellEffectSnapshot>(effect).AppliesToSelf));
+    }
+
+    [Fact]
+    public void EmitsDirectMechanicsEffect()
+    {
+        var extractor = new SpellExtractor(new FakeSpellAssetSource(new[]
+        {
+            Build("spell-projectile", "Projectile", effects: new[]
+            {
+                new SpellEffectAsset("projectile"),
+            }),
+        }));
+
+        var effect = Assert.Single(Assert.Single(extractor.Walk()).Fields.SpellEffects);
+
+        Assert.Equal("projectile", effect.Kind);
+        Assert.IsType<DirectSpellEffectSnapshot>(effect);
+    }
+
+    [Fact]
+    public void SkipsNonReaderEffectClass()
+    {
+        var extractor = new SpellExtractor(new FakeSpellAssetSource(new[]
+        {
+            Build("spell-sound", "Sound", effects: new[]
+            {
+                new SpellEffectAsset("", IsSkipped: true),
+            }),
+        }));
+
+        Assert.Empty(Assert.Single(extractor.Walk()).Fields.SpellEffects);
+        Assert.Empty(extractor.Diagnostics);
+    }
+
+    [Fact]
+    public void UnknownEffectClassProducesDiagnostic()
+    {
+        var extractor = new SpellExtractor(new FakeSpellAssetSource(new[]
+        {
+            Build("spell-unknown", "Unknown", effects: new[]
+            {
+                new SpellEffectAsset("", GameClassName: "Ardenfall.FutureSpellEffect"),
+            }),
+        }));
+
+        Assert.Empty(Assert.Single(extractor.Walk()).Fields.SpellEffects);
+        var diagnostic = Assert.Single(extractor.Diagnostics, d => d.Code == "spellEffectUnknownClass");
+        Assert.Contains("named;spell;spell-unknown", diagnostic.Message);
+        Assert.Contains("Ardenfall.FutureSpellEffect", diagnostic.Message);
+    }
+
+    [Fact]
     public void LoadedSpellSourceOrdersAndDeduplicatesAuthoredAssets()
     {
         var first = RuntimeSpell("one", "Zed");
@@ -154,7 +241,8 @@ public sealed class SpellExtractorTests
     private static SpellAsset Build(
         string assetName,
         string spellName,
-        string? tooltipSource = null) => new(
+        string? tooltipSource = null,
+        IReadOnlyList<SpellEffectAsset>? effects = null) => new(
         Guid: null,
         AssetName: assetName,
         SpellName: spellName,
@@ -162,7 +250,8 @@ public sealed class SpellExtractorTests
         ManaCost: 0f,
         IsIllegal: false,
         IconRef: null,
-        TooltipSource: tooltipSource);
+        TooltipSource: tooltipSource,
+        SpellEffects: effects);
 
     private static SpellData RuntimeSpell(string id, string name)
     {

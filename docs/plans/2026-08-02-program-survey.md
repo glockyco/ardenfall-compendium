@@ -133,9 +133,13 @@ The site is now files only: `adapter-static` emits no Worker, `wrangler.toml` ca
 
 ## Where the next slice starts
 
-**Spell effects.** A spell page names its governing skill and its mana cost, then prints a prose tooltip. It never says what the spell does, because seven fields reach the `spells` table and the effect graph is not among them. `SpellData` holds `spells`, `subSpells` and `spellEffectReference`, and the game's `SpellEffect` scriptable objects carry the mechanics. At least six of their classes hold a `StatusEffectData`, so this is also the only place 116 of 172 status effects can gain an inbound link. The 56 that have one today all come from items.
+**Spell effects.** A spell page names its governing skill and its mana cost, then prints a prose tooltip. It never says what the spell does, because seven fields reach the `spells` table and the effect graph is not among them.
 
-The work is bounded: 56 spells, 5 sub-spells, and a small set of effect classes to type. It needs no world traversal and no new identity mechanism, since spells already resolve as named assets.
+Measured in the running game: `SpellData.spells` holds **81 effect objects across 56 spells, in 17 classes**. `SelfStatusEffectSpellEffect` accounts for 20 and `SoundsSpellEffect` for 18, so the spread is wide but the head is short. There are also 5 sub-spells.
+
+The value is content on spell pages first and connectivity second. 27 references reach 25 distinct status effects, and **13 pages gain a first one**, taking status effects with no inbound link from 116 to 103. The larger prize is 56 pages that could not say what their spell does.
+
+The work is bounded and needs no world traversal, since spells already resolve as named assets. Roughly half the effects are reader-facing mechanics. `SoundsSpellEffect` at 18, `TargetAIValueSpellEffect` at 4 and `SubTooltipSpellEffect` at 1 are presentation or AI tuning and describe nothing a reader wants.
 
 Two other candidates rank below it. `NPCRecord`, 314 instances, would place characters in the world and give locations their first inbound links, but it needs the scene-placement mechanism that no slice has built. The 728 items with no named source need the 683-cell container walk, which is the largest remaining piece of extraction work.
 

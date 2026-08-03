@@ -530,7 +530,7 @@ Any map-supporting entity slice that ships public detail pages must reuse Slice 
 
 **Not started:** the `SpellEffect` and `SubSpellData.effects` graph. Seven fields reach the `spells` table, and `spells`, `subSpells` and `spellEffectReference` are not among them, so a spell page states its governing skill, its mana cost and a prose tooltip and never says what the spell does. The game holds the answer in `SpellEffect` scriptable objects, and at least six of their classes carry a `StatusEffectData`, including `SelfStatusEffectSpellEffect` and `StatusEffectTooltipSpellEffect`.
 
-This is also where 116 of 172 status effects would gain their first inbound link. 56 have one today, all from items.
+Spell effects reach 25 distinct status effects through 27 references, and 13 of those pages gain a first link, taking the unlinked count from 116 to 103. The slice is worth as much for the spell pages themselves.
 
 **Note:** the original roadmap had spells at Slice 4. Investment-priorities §1 reorders this; spells run after the items + maps + map-supporting-entities tracks.
 

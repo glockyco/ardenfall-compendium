@@ -18,6 +18,7 @@
     "LocationAsset fixture rows for map points, debug-only filtering, and axis-aligned volumes",
     "PortalRecord fixture row for record-backed map point placement",
     "Spell fixture rows for skill-linked, no-skill, and illegal spell coverage",
+    "Spell effect fixture rows for self application, two target status effects, direct mechanics, and no effects",
     "Character fixture rows for drops, empty drops, unresolved drop references, and starting factions",
     "Faction fixture rows for titled and untitled factions and both relationship shapes"
   ],
@@ -85,9 +86,9 @@
   "scrubbing": "synthetic; no scrubbing required",
   "minimization": "synthetic; minimal field coverage by design",
   "hashes": {
-    "snapshot/spells.json": "5ecc4fcb99e2da4f337ea180d9814f5edd1dff6f11952cd8a7fbf5292d910cba",
+    "snapshot/spells.json": "4008d7c3dd28d2237b1f5de8cf3580152e11b4509bbe87ae56856307ffdc6f6f",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
-    "snapshot/manifest.json": "f9b260e5f8e8c1752913cb6246d4593df1e1e80fa233aa25f9d0c70a5c75cd14",
+    "snapshot/manifest.json": "5146e245c30c52c0244c5fcea673455e4e2a2ce888589ce46a8ed18b585e8c51",
     "snapshot/items.json": "f85e557abf2e9c6a9be4ffdf5062576db83769328d302eac55bc408244719cde",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
