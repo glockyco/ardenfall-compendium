@@ -5,6 +5,7 @@ import {
   listItemTags,
   listItemsByTag,
   listOverviewColumns,
+  listRelationshipSections,
   type ItemOverviewRow,
 } from "$lib/server/read-models";
 import type { EntryGenerator, PageServerLoad } from "./$types";
@@ -32,5 +33,6 @@ export const load: PageServerLoad = ({ params }) => {
     presentation,
     columns,
     items: listItemsByTag(presentation.id),
+    relationships: listRelationshipSections("item-tag", presentation.id),
   };
 };

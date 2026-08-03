@@ -1,7 +1,7 @@
 import { error } from "@sveltejs/kit";
 import {
   getStatusEffectPresentation,
-  listItemsApplyingStatusEffect,
+  listRelationshipSections,
   listStatusEffects,
 } from "$lib/server/read-models";
 import type { EntryGenerator, PageServerLoad } from "./$types";
@@ -17,13 +17,6 @@ export const load: PageServerLoad = ({ params }) => {
   if (!presentation) throw error(404, "Status effect not found");
   return {
     presentation,
-    relationships: [
-      {
-        id: "items-applying-status-effect",
-        title: "Applied by items",
-        predicate: "applies",
-        edges: listItemsApplyingStatusEffect(presentation.id),
-      },
-    ],
+    relationships: listRelationshipSections("status-effect", presentation.id),
   };
 };

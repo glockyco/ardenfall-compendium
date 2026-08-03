@@ -76,18 +76,6 @@ describe("item-category read-model accessors", () => {
         is_public INTEGER NOT NULL,
         PRIMARY KEY (entity_type, entity_id)
       );
-      CREATE TABLE entity_edges (
-        edge_id TEXT PRIMARY KEY,
-        source_type TEXT NOT NULL,
-        source_id TEXT NOT NULL,
-        target_type TEXT NOT NULL,
-        target_id TEXT NOT NULL,
-        predicate TEXT NOT NULL,
-        label TEXT NOT NULL,
-        weight REAL NOT NULL,
-        evidence_json TEXT NOT NULL,
-        anchor TEXT
-      );
       INSERT INTO item_category_overview_rows VALUES
         ('named;item-category;itemcat_weapons', 'Weapons', '${iconHash}', '${defaultIconHash}', '${categoryColor}', 1);
       INSERT INTO item_category_presentation_rows VALUES
@@ -104,11 +92,6 @@ describe("item-category read-model accessors", () => {
         ('item-category', 'named;item-category;itemcat_weapons', 'Weapons', '/categories/weapons--abc12345', 'weapons--abc12345', 'abc12345', 1),
         ('item', '4ed20218.fixture-iron-sword', 'Iron Sword', '/items/4ed20218.fixture-iron-sword', 'iron-sword--4ed20218', '4ed20218', 1),
         ('item', 'fixture-training-dagger', 'Training Dagger', '/items/fixture-training-dagger', 'training-dagger--fbfb0000', 'fbfb0000', 1);
-      INSERT INTO entity_edges VALUES
-        ('4ed20218.fixture-iron-sword:categorised_as:item-category:named;item-category;itemcat_weapons',
-         'item', '4ed20218.fixture-iron-sword', 'item-category',
-         'named;item-category;itemcat_weapons', 'categorised_as', 'Category', 1,
-         '{"source":"items.categoryRef"}', NULL);
     `);
 
     try {
@@ -138,19 +121,6 @@ describe("item-category read-model accessors", () => {
         itemCount: 1,
         routePath: "/categories/weapons--abc12345",
       });
-      expect(readModels.listCategoriesForItem("4ed20218.fixture-iron-sword")).toEqual([
-        {
-          targetType: "item-category",
-          targetId: "named;item-category;itemcat_weapons",
-          targetLabel: "Weapons",
-          targetRoutePath: "/categories/weapons--abc12345",
-          predicate: "categorised_as",
-          label: "Category",
-          weight: 1,
-          anchor: null,
-        },
-      ]);
-      expect(readModels.listCategoriesForItem("fixture-training-dagger")).toEqual([]);
     } finally {
       process.chdir(originalCwd);
       rmSync(root, { recursive: true, force: true });

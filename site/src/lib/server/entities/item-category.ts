@@ -1,6 +1,5 @@
 import { all, assetSrc, get } from "../db";
 import { getEntityNodeBySlug } from "./item";
-import type { RelationshipEdge } from "./item";
 
 interface ItemCategoryOverviewRecord {
   id: string;
@@ -68,39 +67,6 @@ export const listItemCategories = (): ItemCategoryOverviewRow[] =>
     routePath: row.route_path,
   }));
 
-export const listCategoriesForItem = (itemId: string): RelationshipEdge[] =>
-  all<{
-    target_id: string;
-    label: string;
-    route_path: string;
-    predicate: string;
-    edge_label: string;
-    weight: number;
-    anchor: string | null;
-  }>(
-    `SELECT e.target_id, n.label, n.route_path, e.predicate,
-            e.label AS edge_label, e.weight, e.anchor
-     FROM entity_edges e
-     JOIN entity_nodes n
-       ON n.entity_type = e.target_type
-      AND n.entity_id = e.target_id
-      AND n.is_public = 1
-     WHERE e.source_type = 'item'
-       AND e.source_id = ?
-       AND e.target_type = 'item-category'
-       AND e.predicate = 'categorised_as'
-     ORDER BY n.label, e.target_id`,
-    [itemId],
-  ).map((row) => ({
-    targetType: "item-category",
-    targetId: row.target_id,
-    targetLabel: row.label,
-    targetRoutePath: row.route_path,
-    predicate: row.predicate,
-    label: row.edge_label,
-    weight: row.weight,
-    anchor: row.anchor,
-  }));
 export const getItemCategoryPresentation = (
   slug: string,
 ): ItemCategoryPresentationRow | undefined => {

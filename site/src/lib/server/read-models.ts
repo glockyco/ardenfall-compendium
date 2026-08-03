@@ -57,11 +57,10 @@ export type {
   ItemPresentationRow,
   ItemPresentationStateFact,
   ItemPresentationStatRow,
-  RelationshipEdge,
-  RelationshipSection,
   RichTextDocument,
   RichTextNode,
 } from "./entities/item";
+export type { RelationshipEdge, RelationshipSection } from "./entities/relationship";
 export {
   getEntityNodeByShortId,
   getEntityNodeBySlug,
@@ -74,22 +73,18 @@ export {
   listItemsByTag,
   listItemsByVariant,
   listItemsOverview,
-  listRelationshipSections,
   listTermIds,
 } from "./entities/item";
+export { listRelationshipSections } from "./entities/relationship";
 
 export type {
   StatusEffectOverviewRow,
   StatusEffectPresentationRow,
 } from "./entities/status-effect";
-export {
-  getStatusEffectPresentation,
-  listItemsApplyingStatusEffect,
-  listStatusEffects,
-} from "./entities/status-effect";
+export { getStatusEffectPresentation, listStatusEffects } from "./entities/status-effect";
 
 export type { SpellOverviewRow, SpellPresentationRow } from "./entities/spell";
-export { getSpellPresentation, listItemsCarryingSpell, listSpells } from "./entities/spell";
+export { getSpellPresentation, listSpells } from "./entities/spell";
 
 export type {
   StatTypeOverviewRow,
@@ -102,14 +97,10 @@ export type {
   ItemCategoryOverviewRow,
   ItemCategoryPresentationRow,
 } from "./entities/item-category";
-export {
-  getItemCategoryPresentation,
-  listCategoriesForItem,
-  listItemCategories,
-} from "./entities/item-category";
+export { getItemCategoryPresentation, listItemCategories } from "./entities/item-category";
 
 export type { ItemTagOverviewRow, ItemTagPresentationRow } from "./entities/item-tag";
-export { getItemTagPresentation, listItemTags, listTagsForItem } from "./entities/item-tag";
+export { getItemTagPresentation, listItemTags } from "./entities/item-tag";
 
 export type {
   MapBounds,

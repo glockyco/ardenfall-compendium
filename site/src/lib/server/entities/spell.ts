@@ -1,5 +1,5 @@
 import { all, get } from "../db";
-import type { RelationshipEdge, RichTextDocument } from "./item";
+import type { RichTextDocument } from "./item";
 import { getEntityNodeBySlug } from "./item";
 
 interface SpellOverviewRecord {
@@ -64,39 +64,6 @@ export const listSpells = (): SpellOverviewRow[] =>
     routePath: row.route_path,
   }));
 
-export const listItemsCarryingSpell = (spellId: string): RelationshipEdge[] =>
-  all<{
-    source_id: string;
-    label: string;
-    route_path: string;
-    predicate: string;
-    edge_label: string;
-    weight: number;
-    anchor: string | null;
-  }>(
-    `SELECT e.source_id, n.label, n.route_path, e.predicate,
-            e.label AS edge_label, e.weight, e.anchor
-     FROM entity_edges e
-     JOIN entity_nodes n
-       ON n.entity_type = e.source_type
-      AND n.entity_id = e.source_id
-      AND n.is_public = 1
-     WHERE e.source_type = 'item'
-       AND e.target_type = 'spell'
-       AND e.target_id = ?
-       AND e.predicate = 'casts'
-     ORDER BY n.label, e.source_id`,
-    [spellId],
-  ).map((row) => ({
-    targetType: "item",
-    targetId: row.source_id,
-    targetLabel: row.label,
-    targetRoutePath: row.route_path,
-    predicate: row.predicate,
-    label: row.edge_label,
-    weight: row.weight,
-    anchor: row.anchor,
-  }));
 export const getSpellPresentation = (slug: string): SpellPresentationRow | undefined => {
   const node = getEntityNodeBySlug("spell", slug);
   if (!node) return undefined;

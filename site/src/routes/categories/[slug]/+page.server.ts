@@ -6,6 +6,7 @@ import {
   listItemOverviewCategories,
   listItemsByCategory,
   listOverviewColumns,
+  listRelationshipSections,
   type ItemOverviewRow,
 } from "$lib/server/read-models";
 import type { EntryGenerator, PageServerLoad } from "./$types";
@@ -37,5 +38,6 @@ export const load: PageServerLoad = ({ params }) => {
     columns,
     variantRoutePath: variant?.href ?? null,
     items: listItemsByCategory(presentation.id),
+    relationships: listRelationshipSections("item-category", presentation.id),
   };
 };

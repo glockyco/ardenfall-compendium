@@ -41,6 +41,15 @@ const seed = () => {
       is_public INTEGER NOT NULL,
       PRIMARY KEY (entity_type, entity_id)
     );
+    CREATE TABLE entity_relationship_sections (
+      section_id TEXT NOT NULL,
+      source_type TEXT NOT NULL,
+      source_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      predicate TEXT NOT NULL,
+      sort_order INTEGER NOT NULL,
+      edges_json TEXT NOT NULL
+    );
     INSERT INTO item_presentation_rows VALUES (
       'item-sword', 'Sword', 'weapon', 'Melee weapon', 'item-presentation-v1', NULL, NULL,
       '', '${richText}', '', '${richText}',
@@ -57,6 +66,9 @@ const seed = () => {
        '/status-effects/attack-speed--abc12345', 'attack-speed--abc12345', 'abc12345', 1),
       ('spell', 'named;spell;spell_fire-shield', 'Fire Shield',
        '/spells/fire-shield--abc12345', 'fire-shield--abc12345', 'abc12345', 1);
+    INSERT INTO entity_relationship_sections VALUES
+      ('item-sword:variant_of', 'item', 'item-sword', 'Variant', 'variant_of', 0,
+       '[{"targetType":"item","targetId":"item-base","targetLabel":"Base Sword","targetRoutePath":"/items/base-sword--22222222","predicate":"variant_of","label":"Variant","weight":1,"anchor":null}]');
   `);
   db.close();
   return root;
@@ -107,6 +119,37 @@ describe("item effect read-model accessors", () => {
           source: "items.spellRef",
         },
       ]);
+    } finally {
+      process.chdir(originalCwd);
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+  it("lists populated relationship sections and returns no sections for an empty entity", async () => {
+    const originalCwd = process.cwd();
+    const root = seed();
+    try {
+      process.chdir(root);
+      const readModels = await import("../src/lib/server/read-models");
+      expect(readModels.listRelationshipSections("item", "item-sword")).toEqual([
+        {
+          id: "item-sword:variant_of",
+          title: "Variant",
+          predicate: "variant_of",
+          edges: [
+            {
+              targetType: "item",
+              targetId: "item-base",
+              targetLabel: "Base Sword",
+              targetRoutePath: "/items/base-sword--22222222",
+              predicate: "variant_of",
+              label: "Variant",
+              weight: 1,
+              anchor: null,
+            },
+          ],
+        },
+      ]);
+      expect(readModels.listRelationshipSections("item", "item-without-relationships")).toEqual([]);
     } finally {
       process.chdir(originalCwd);
       rmSync(root, { recursive: true, force: true });

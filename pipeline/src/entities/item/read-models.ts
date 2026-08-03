@@ -11,6 +11,7 @@ import {
   ENTITY_GRAPH_DDL,
   insertPipelineDiagnostics,
 } from "../../relationships/relationship-graph.ts";
+import { emitRelationshipSections } from "../../relationships/relationship-sections.ts";
 import type { RichTextNode } from "../../rich-text/rich-text-v1.ts";
 import { deriveShortId, deriveSlug } from "../../slug/derive-slug.ts";
 
@@ -258,9 +259,6 @@ export function emitItemReadModels(
   const edgeInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_edges (edge_id, source_type, source_id, target_type, target_id, predicate, label, weight, evidence_json, anchor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
-  const sectionInsert = db.prepare(
-    `INSERT OR REPLACE INTO entity_relationship_sections (section_id, source_type, source_id, title, predicate, edges_json, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-  );
   const richTextDiagnostics: Parameters<typeof insertPipelineDiagnostics>[1] = [];
   const emitTaxonomyEdges = (
     itemId: string,
@@ -488,16 +486,6 @@ export function emitItemReadModels(
         variantLabel,
         "item-variant",
       );
-      const variantEdge = {
-        targetType: "item-variant",
-        targetId: variantId,
-        targetLabel: variantLabel,
-        targetRoutePath: `${variantRoute}/${variantId}`,
-        predicate: "variant_of",
-        label: "Variant",
-        weight: 1,
-        anchor: "item-header",
-      };
       edgeInsert.run(
         `${snapshotRow.id}:variant_of:item-variant:${variantId}`,
         "item",
@@ -510,17 +498,7 @@ export function emitItemReadModels(
         JSON.stringify({ source: "items.variant" }),
         "item-header",
       );
-      sectionInsert.run(
-        `${snapshotRow.id}:variant_of`,
-        "item",
-        snapshotRow.id,
-        "Variant",
-        "variant_of",
-        JSON.stringify([variantEdge]),
-        10,
-      );
 
-      const termEdges = [];
       for (const term of collectTermLinks(description.nodes)) {
         const termLabel = masterTooltip?.tooltipCodes[term.termId] ?? term.label;
         writeNode({
@@ -544,31 +522,11 @@ export function emitItemReadModels(
           JSON.stringify({ source: "presentation.descriptionSource" }),
           "description",
         );
-        termEdges.push({
-          targetType: "term",
-          targetId: term.termId,
-          targetLabel: termLabel,
-          targetRoutePath: `/terms/${term.termId}`,
-          predicate: "references_term",
-          label: termLabel,
-          weight: 0.5,
-          anchor: "description",
-        });
-      }
-      if (termEdges.length > 0) {
-        sectionInsert.run(
-          `${snapshotRow.id}:references_term`,
-          "item",
-          snapshotRow.id,
-          "Referenced terms",
-          "references_term",
-          JSON.stringify(termEdges),
-          90,
-        );
       }
     }
   });
   tx();
+  emitRelationshipSections(db);
   insertPipelineDiagnostics(db, richTextDiagnostics, "item-presentation-read-model");
 }
 

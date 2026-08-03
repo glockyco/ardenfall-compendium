@@ -39,18 +39,6 @@ const seed = () => {
       is_public INTEGER NOT NULL,
       PRIMARY KEY (entity_type, entity_id)
     );
-    CREATE TABLE entity_edges (
-      edge_id TEXT PRIMARY KEY,
-      source_type TEXT NOT NULL,
-      source_id TEXT NOT NULL,
-      target_type TEXT NOT NULL,
-      target_id TEXT NOT NULL,
-      predicate TEXT NOT NULL,
-      label TEXT NOT NULL,
-      weight REAL NOT NULL,
-      evidence_json TEXT NOT NULL,
-      anchor TEXT
-    );
     INSERT INTO status_effect_overview_rows VALUES
       ('guid-bleed-resistance', 'Bleed Resistance', 0),
       ('guid-hostile-curse', 'Unnamed status effect', 1);
@@ -67,10 +55,6 @@ const seed = () => {
        '/items/iron-sword--11111111', 'iron-sword--11111111', '11111111', 1),
       ('item', 'item-bow', 'Hunter Bow',
        '/items/hunter-bow--22222222', 'hunter-bow--22222222', '22222222', 1);
-    INSERT INTO entity_edges VALUES
-      ('item-sword:applies:status-effect:guid-bleed-resistance', 'item', 'item-sword',
-       'status-effect', 'guid-bleed-resistance', 'applies', 'Applies', 1,
-       '{"source":"items.statusEffectRef"}', NULL);
   `);
   db.close();
   return root;
@@ -112,24 +96,6 @@ describe("status-effect read-model accessors", () => {
           routePath: "/status-effects/hostile-curse--def67890",
         },
       ]);
-    });
-  });
-
-  it("returns items applying an effect and an empty result for an unused effect", async () => {
-    await withSeed((readModels) => {
-      expect(readModels.listItemsApplyingStatusEffect("guid-bleed-resistance")).toEqual([
-        {
-          targetType: "item",
-          targetId: "item-sword",
-          targetLabel: "Iron Sword",
-          targetRoutePath: "/items/iron-sword--11111111",
-          predicate: "applies",
-          label: "Applies",
-          weight: 1,
-          anchor: null,
-        },
-      ]);
-      expect(readModels.listItemsApplyingStatusEffect("guid-hostile-curse")).toEqual([]);
     });
   });
 

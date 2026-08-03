@@ -1,5 +1,9 @@
 import { error } from "@sveltejs/kit";
-import { getSpellPresentation, listItemsCarryingSpell, listSpells } from "$lib/server/read-models";
+import {
+  getSpellPresentation,
+  listRelationshipSections,
+  listSpells,
+} from "$lib/server/read-models";
 import type { EntryGenerator, PageServerLoad } from "./$types";
 
 const slugFromRoutePath = (routePath: string) => routePath.slice(routePath.lastIndexOf("/") + 1);
@@ -13,13 +17,6 @@ export const load: PageServerLoad = ({ params }) => {
   if (!presentation) throw error(404, "Spell not found");
   return {
     presentation,
-    relationships: [
-      {
-        id: "items-casting-spell",
-        title: "Carried by items",
-        predicate: "casts",
-        edges: listItemsCarryingSpell(presentation.id),
-      },
-    ],
+    relationships: listRelationshipSections("spell", presentation.id),
   };
 };

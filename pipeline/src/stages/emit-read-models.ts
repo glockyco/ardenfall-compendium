@@ -25,6 +25,7 @@ export {
   emitItemTagReadModels,
 } from "../entities/item-tag/read-models.ts";
 export { MAP_READ_MODEL_DDL, emitMapReadModels } from "../map/read-models.ts";
+export { emitRelationshipSections } from "../relationships/relationship-sections.ts";
 export { emitPortalReadModels } from "../entities/portal/read-models.ts";
 import { entityRegistry } from "../entities/registry";
 import { emitMapReadModels } from "../map/read-models.ts";
@@ -32,6 +33,7 @@ import {
   auditEntityGraph,
   insertPipelineDiagnostics,
 } from "../relationships/relationship-graph.ts";
+import { emitRelationshipSections } from "../relationships/relationship-sections.ts";
 
 export function emitReadModels(
   db: Database,
@@ -96,6 +98,7 @@ export function emitReadModels(
     );
   }
 
+  emitRelationshipSections(db);
   const graphDiagnostics = auditEntityGraph(db);
   insertPipelineDiagnostics(
     db,
