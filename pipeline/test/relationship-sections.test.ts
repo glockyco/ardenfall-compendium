@@ -9,7 +9,7 @@ function seedGraph(): Database {
   db.exec(ENTITY_GRAPH_DDL);
   db.exec(`
     INSERT INTO entity_nodes
-      (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+      (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
     VALUES
       ('item', 'item-a', 'Item A', '/items/item-a', 'item-a', 'item-a', 1),
       ('status-effect', 'effect-a', 'Effect A', '/status-effects/effect-a', 'effect-a', 'effect-a', 1),
@@ -96,7 +96,7 @@ describe("relationship section projection", () => {
     const db = seedGraph();
     db.run(
       `INSERT INTO entity_nodes
-        (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+        (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       ["item-variant", "melee", "Melee weapon", "/objects/variant/melee", "melee", "melee", 1],
     );
@@ -135,11 +135,11 @@ describe("relationship section projection", () => {
     for (const id of ["char-a", "char-b"]) {
       db.run(
         `INSERT INTO entity_nodes
-          (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+          (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
         ["character", id, "Unnamed character", `/characters/${id}`, id, id, 1],
       );
-      addEdge(db, `drop-${id}`, "character", id, "item", "item-a", "drops");
+      addEdge(db, `drop-${id}`, "character", id, "item", "item-a", "can_drop");
     }
 
     emitRelationshipSections(db);
@@ -159,11 +159,11 @@ describe("relationship section projection", () => {
     const db = seedGraph();
     db.run(
       `INSERT INTO entity_nodes
-        (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+        (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       ["character", "char-a", "Jack", "/characters/char-a", "char-a", "char-a", 1],
     );
-    addEdge(db, "drop-a", "character", "char-a", "item", "item-a", "drops");
+    addEdge(db, "drop-a", "character", "char-a", "item", "item-a", "can_drop");
 
     emitRelationshipSections(db);
 

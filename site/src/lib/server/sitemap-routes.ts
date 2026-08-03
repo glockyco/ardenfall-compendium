@@ -6,7 +6,7 @@
  * reads the route tree and fails when someone adds a static page and forgets this list.
  */
 
-export interface PublicEntityRoute {
+export interface EntityPageRoute {
   route_path: string;
 }
 
@@ -25,5 +25,5 @@ export const listingRoutePaths = [
   "/search",
 ] as const;
 
-export const sitemapRoutePaths = (publicRoutes: readonly PublicEntityRoute[]): string[] =>
-  [...new Set<string>([...listingRoutePaths, ...publicRoutes.map((row) => row.route_path)])].sort();
+export const sitemapRoutePaths = (pageRoutes: readonly EntityPageRoute[]): string[] =>
+  [...new Set<string>([...listingRoutePaths, ...pageRoutes.map((row) => row.route_path)])].sort();

@@ -43,7 +43,7 @@ export const listItemTags = (): ItemTagOverviewRow[] =>
      JOIN entity_nodes n
        ON n.entity_type = 'item-tag'
       AND n.entity_id = o.id
-      AND n.is_public = 1
+      AND n.has_page = 1
      ORDER BY o.name`,
   ).map((row) => ({
     id: row.id,
@@ -63,7 +63,7 @@ export const getItemTagPresentation = (slug: string): ItemTagPresentationRow | u
      JOIN entity_nodes n
        ON n.entity_type = 'item-tag'
       AND n.entity_id = p.id
-      AND n.is_public = 1
+      AND n.has_page = 1
      WHERE p.id = ?`,
     [node.entityId],
   );

@@ -215,7 +215,7 @@ describe("loadDescriptors", () => {
       icon: "portal",
       color: [190, 150, 255],
       radius: 5,
-      tooltip: ["name"],
+      tooltip: ["friendlyName"],
       legendLabel: "Portals",
       zOrder: 90,
     });
@@ -403,7 +403,7 @@ describe("loadDescriptors", () => {
         variants: { thing: [] },
       }),
     ).toThrow(
-      /descriptor 'thing' has no pipeline canonicalizer[\s\S]*descriptor 'thing' has no read-model emitter for public route '\/things'/,
+      /descriptor 'thing' has no pipeline canonicalizer[\s\S]*descriptor 'thing' has no read-model emitter for route '\/things'/,
     );
   });
 

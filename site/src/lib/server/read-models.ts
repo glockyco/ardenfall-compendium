@@ -5,7 +5,6 @@ export interface SiteEntity {
   singular_label: string;
   plural_label: string;
   route_path: string;
-  canonical_table: string;
 }
 
 export interface SiteOverviewColumn {

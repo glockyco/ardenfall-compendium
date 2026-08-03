@@ -18,7 +18,13 @@
       "from": "recordRef",
       "column": "record_ref_json"
     },
-    { "name": "name", "type": "string", "from": "friendlyName", "missingPolicy": "diagnostic" },
+    {
+      "name": "friendlyName",
+      "type": "string",
+      "from": "friendlyName",
+      "column": "friendly_name",
+      "missingPolicy": "diagnostic"
+    },
     {
       "name": "position",
       "type": "json",
@@ -47,7 +53,7 @@
     "icon": "portal",
     "color": [190, 150, 255],
     "radius": 5,
-    "tooltip": ["name"],
+    "tooltip": ["friendlyName"],
     "legendLabel": "Portals",
     "zOrder": 90
   }

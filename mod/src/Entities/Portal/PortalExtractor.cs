@@ -82,13 +82,13 @@ public sealed class PortalExtractor : WalkerBase<PortalSnapshotRow>
                         Message = $"PortalRecord '{rowId}' has no resolved connected portal",
                     });
                 }
-                var name = NullIfEmpty(record.FriendlyName);
-                if (name == null)
+                var friendlyName = NullIfEmpty(record.FriendlyName);
+                if (friendlyName == null)
                 {
                     rowDiagnostics.Add(new Diagnostic
                     {
                         Severity = "diagnostic",
-                        Code = "portalNameMissing",
+                        Code = "portalFriendlyNameMissing",
                         Field = "friendlyName",
                         Message = $"PortalRecord '{rowId}' has no friendlyName",
                     });
@@ -100,7 +100,7 @@ public sealed class PortalExtractor : WalkerBase<PortalSnapshotRow>
                     Fields = new PortalSnapshot(
                         Id: rowId,
                         RecordRef: SnapshotRef.Record(record.Table!, record.Subtable!, record.Id!, "PortalRecord"),
-                        Name: name,
+                        FriendlyName: friendlyName,
                         MapId: NullIfEmpty(record.MapId),
                         Position: record.Position!,
                         ConnectedPortalRef: record.ConnectedPortalRef),

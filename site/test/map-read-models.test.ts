@@ -45,7 +45,7 @@ const baseSchema = `
   CREATE TABLE entity_nodes (
     entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, label TEXT NOT NULL,
     route_path TEXT NOT NULL, canonical_slug TEXT NOT NULL, short_id TEXT NOT NULL,
-    is_public INTEGER NOT NULL, PRIMARY KEY (entity_type, entity_id)
+    has_page INTEGER NOT NULL, PRIMARY KEY (entity_type, entity_id)
   );
   CREATE TABLE entity_edges (
     edge_id TEXT PRIMARY KEY, source_type TEXT NOT NULL, source_id TEXT NOT NULL,

@@ -39,7 +39,7 @@ export const listCharacters = (): CharacterOverviewRow[] => {
      JOIN entity_nodes n
        ON n.entity_type = 'character'
       AND n.entity_id = o.id
-      AND n.is_public = 1
+      AND n.has_page = 1
      ORDER BY o.name, o.id`,
   ).map((row) => ({
     id: row.id,
@@ -68,7 +68,7 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
      JOIN entity_nodes n
        ON n.entity_type = 'character'
       AND n.entity_id = p.id
-      AND n.is_public = 1
+      AND n.has_page = 1
      WHERE p.id = ?`,
     [node.entityId],
   );

@@ -3,8 +3,7 @@ CREATE TABLE site_entities (
   entity_id        TEXT PRIMARY KEY,
   singular_label   TEXT NOT NULL,
   plural_label     TEXT NOT NULL,
-  route_path       TEXT NOT NULL,
-  canonical_table  TEXT NOT NULL
+  route_path       TEXT NOT NULL
 );
 CREATE TABLE site_entity_fields (
   entity_id        TEXT NOT NULL,
@@ -34,7 +33,7 @@ CREATE TABLE item_variants (
   canonical_table      TEXT NOT NULL,
   parent_variant_id    TEXT,
   position             INTEGER NOT NULL,
-  is_public_route      INTEGER NOT NULL DEFAULT 0
+  has_page             INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE site_read_models (
   read_model_id    TEXT PRIMARY KEY,

@@ -67,7 +67,7 @@ const releasePath = (): string => join(process.cwd(), "static", "_release.json")
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
 
-function isPublicReleaseManifest(value: unknown): value is PublicReleaseManifest {
+function isReleaseManifest(value: unknown): value is PublicReleaseManifest {
   if (typeof value !== "object" || value === null) return false;
   const { artifactKind, createdAt, source, git } = value as Record<string, unknown>;
   if (!isNonEmptyString(artifactKind)) return false;
@@ -126,7 +126,7 @@ function loadRelease(): { release: ReleaseProvenance | null; releaseError: strin
     };
   }
 
-  if (!isPublicReleaseManifest(parsed)) {
+  if (!isReleaseManifest(parsed)) {
     return {
       release: null,
       releaseError:

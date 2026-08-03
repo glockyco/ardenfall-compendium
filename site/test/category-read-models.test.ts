@@ -77,7 +77,7 @@ describe("item-category read-model accessors", () => {
         route_path TEXT NOT NULL,
         canonical_slug TEXT NOT NULL,
         short_id TEXT NOT NULL,
-        is_public INTEGER NOT NULL,
+        has_page INTEGER NOT NULL,
         PRIMARY KEY (entity_type, entity_id)
       );
       INSERT INTO item_category_overview_rows VALUES

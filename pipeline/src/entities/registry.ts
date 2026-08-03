@@ -95,7 +95,7 @@ export function emitLocationReadModels(db: Database): void {
         routePath: `/locations/${slug.canonicalSlug}`,
         canonicalSlug: slug.canonicalSlug,
         shortId: slug.shortId,
-        isPublic: true,
+        hasPage: true,
       });
     }
   });
@@ -131,7 +131,7 @@ const locationProjection: MapProjection = {
 };
 
 const portalProjection: MapProjection = {
-  // `portals.name` is nullable because the game genuinely ships portals with an
+  // `portals.friendly_name` is nullable because the game genuinely ships portals with an
   // empty `friendlyName`. The extractor records that as a diagnostic rather than
   // inventing a value. A map label cannot be null, so presentation supplies a
   // visibly placeholder one here instead of letting an id masquerade as a name.
@@ -140,12 +140,12 @@ const portalProjection: MapProjection = {
         id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
         show_on_map_debug_only, allow_fast_travel
       )
-      SELECT 'portal:' || p.id, 'portal', p.id, COALESCE(p.name, 'Unnamed portal'),
+      SELECT 'portal:' || p.id, 'portal', p.id, COALESCE(p.friendly_name, 'Unnamed portal'),
              pl.map_id, pl.map_x, pl.map_y, pl.elevation,
              0, 0
       FROM portals p
       JOIN placements pl ON pl.entity_id = 'portal' AND pl.instance_id = p.id
-      ORDER BY COALESCE(p.name, 'Unnamed portal'), p.id;
+      ORDER BY COALESCE(p.friendly_name, 'Unnamed portal'), p.id;
     `,
 };
 
@@ -262,7 +262,7 @@ export function validateDescriptorCoverage(desc: LoadDescriptorsOutput): void {
     }
     if (entity.site && !module?.readModel) {
       errors.push(
-        `descriptor '${entityId}' has no read-model emitter for public route '${entity.site.route}'`,
+        `descriptor '${entityId}' has no read-model emitter for route '${entity.site.route}'`,
       );
     }
     if (entity.map && !module?.mapProjection) {

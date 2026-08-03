@@ -35,7 +35,7 @@ interface SpellRow {
   tooltip_source: string | null;
 }
 
-interface PublicStatType {
+interface PageStatType {
   entity_id: string;
   label: string;
   grouping: "attribute" | "skill";
@@ -71,7 +71,7 @@ export function emitSpellReadModels(
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const writeNode = prepareEntityNodeWriter(db);
-  const publicStats = new Map<string, PublicStatType>();
+  const pageStats = new Map<string, PageStatType>();
   const hasStatTypeOverviewTable = db
     .query<{ name: string }, []>(
       `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'stat_type_overview_rows'`,
@@ -79,14 +79,14 @@ export function emitSpellReadModels(
     .get();
   if (hasStatTypeOverviewTable) {
     for (const row of db
-      .query<PublicStatType, []>(
+      .query<PageStatType, []>(
         `SELECT n.entity_id, n.label, o.grouping
          FROM entity_nodes n
          JOIN stat_type_overview_rows o ON o.id = n.entity_id
-         WHERE n.entity_type = 'stat-type' AND n.is_public = 1`,
+         WHERE n.entity_type = 'stat-type' AND n.has_page = 1`,
       )
       .all()) {
-      publicStats.set(row.entity_id, row);
+      pageStats.set(row.entity_id, row);
     }
   }
   const rows = db
@@ -101,7 +101,7 @@ export function emitSpellReadModels(
   const tx = db.transaction(() => {
     for (const row of rows) {
       const presentationName = row.spell_name ?? "Unnamed spell";
-      const skill = resolveSkill(row, publicStats, diagnostics);
+      const skill = resolveSkill(row, pageStats, diagnostics);
       const tooltip =
         row.tooltip_source === null
           ? null
@@ -133,7 +133,7 @@ export function emitSpellReadModels(
       );
       const slug = deriveEntityNodeSlug(presentationName, row.id);
       // The canonical table preserves a missing display name.
-      // Presentation supplies a placeholder so the public node remains routable.
+      // Presentation supplies a placeholder so the page node remains routable.
       writeNode({
         entityType: "spell",
         entityId: row.id,
@@ -177,7 +177,7 @@ export function emitSpellReadModels(
 
 function resolveSkill(
   row: SpellRow,
-  publicStats: Map<string, PublicStatType>,
+  pageStats: Map<string, PageStatType>,
   diagnostics: PipelineDiagnostic[],
 ): { id: string; label: string; grouping: "attribute" | "skill" } | null {
   if (row.stat_type_ref_json === null) return null;
@@ -197,10 +197,10 @@ function resolveSkill(
   }
 
   const targetId = `named;${ref.entity};${ref.name}`;
-  const stat = publicStats.get(targetId);
+  const stat = pageStats.get(targetId);
   if (stat === undefined) {
     diagnostics.push(
-      unresolvedSkillDiagnostic(row, `target '${targetId}' is not a public stat type`),
+      unresolvedSkillDiagnostic(row, `target '${targetId}' is a stat type without a page`),
     );
     return null;
   }

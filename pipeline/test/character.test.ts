@@ -15,7 +15,7 @@ function seedDatabase(): Database {
   db.exec(CHARACTER_DDL);
   db.run(
     `INSERT INTO entity_nodes
-        (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+        (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
        VALUES ('item', ?, 'Iron Sword', '/items/iron-sword--4ed20218', 'iron-sword--4ed20218', '4ed20218', 1)`,
     [itemId],
   );
@@ -23,7 +23,7 @@ function seedDatabase(): Database {
 }
 
 describe("character pipeline", () => {
-  it("canonicalises character rows and emits a resolvable drops edge", () => {
+  it("canonicalises character rows and emits a resolvable can_drop edge", () => {
     const db = seedDatabase();
     canonicaliseCharacters(db, {
       entityId: "character",
@@ -54,11 +54,11 @@ describe("character pipeline", () => {
         .all(),
     ).toEqual([
       {
-        edge_id: `${characterId}:drops:item:${itemId}`,
+        edge_id: `${characterId}:can_drop:item:${itemId}`,
         source_type: "character",
         target_type: "item",
         target_id: itemId,
-        predicate: "drops",
+        predicate: "can_drop",
         label: "Can drop",
         evidence_json: JSON.stringify({ source: "characters.itemLists" }),
       },
@@ -121,13 +121,13 @@ describe("character pipeline", () => {
         source_type: "character",
         source_id: characterId,
         title: "Can drop",
-        predicate: "drops",
+        predicate: "can_drop",
       },
       {
         source_type: "item",
         source_id: itemId,
         title: "Dropped by",
-        predicate: "drops",
+        predicate: "can_drop",
       },
     ]);
   });

@@ -30,7 +30,7 @@ export interface VariantDescriptor {
   unityType: string;
   canonicalTable: string;
   parentVariantId?: string;
-  isPublicRoute?: boolean;
+  hasPage?: boolean;
   position?: number;
   fields: FieldSpec[];
 }
@@ -391,7 +391,7 @@ export interface StatusEffectSnapshotFields {
 export interface PortalSnapshotFields {
   id: string;
   recordRef: SnapshotRef;
-  name: string | null;
+  friendlyName: string | null;
   mapId: string | null;
   position: SnapshotVector3;
   connectedPortalRef?: SnapshotRef | null;

@@ -13,7 +13,7 @@
           "id": "398213e43a41b4c47bffe4ef1998e782",
           "recordType": "PortalRecord"
         },
-        "name": "Harbor Gate",
+        "friendlyName": "Harbor Gate",
         "mapId": "ardenfall",
         "position": { "x": 20, "y": 5, "z": -30 },
         "connectedPortalRef": {
@@ -36,7 +36,7 @@
           "id": "8f17d2c4a6b8490e9d31c7f2e5a4b608",
           "recordType": "PortalRecord"
         },
-        "name": "Cliff Stair",
+        "friendlyName": "Cliff Stair",
         "mapId": "ardenfall",
         "position": { "x": 26, "y": 5, "z": -18 },
         "connectedPortalRef": {
@@ -59,7 +59,7 @@
           "id": "c4b70e19a5d84f2287ce6013bb95f7da",
           "recordType": "PortalRecord"
         },
-        "name": null,
+        "friendlyName": null,
         "mapId": "ardenfall",
         "position": { "x": 12, "y": 5, "z": -44 },
         "connectedPortalRef": null
@@ -67,7 +67,7 @@
       "diagnostics": [
         {
           "severity": "diagnostic",
-          "code": "portalNameMissing",
+          "code": "portalFriendlyNameMissing",
           "field": "friendlyName",
           "message": "PortalRecord 'instances;portals;c4b70e19a5d84f2287ce6013bb95f7da' has no friendlyName"
         },

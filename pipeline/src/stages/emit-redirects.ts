@@ -26,7 +26,7 @@ export function emitRedirects(input: EmitRedirectsInput): EmitRedirectsOutput {
          FROM entity_redirects r
          JOIN entity_nodes n
            ON n.entity_type = r.target_type AND n.entity_id = r.target_id
-         WHERE r.source_type = 'item-route' AND n.is_public = 1
+         WHERE r.source_type = 'item-route' AND n.has_page = 1
          ORDER BY r.source_id`,
       )
       .all();

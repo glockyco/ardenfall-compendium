@@ -618,7 +618,7 @@ public sealed class RunFinalizeCommandTests
                 Fields = new PortalSnapshot(
                     Id: "world;portals;portal-a",
                     RecordRef: SnapshotRef.Record("world", "portals", "portal-a", "PortalRecord"),
-                    Name: "Harbor Gate",
+                    FriendlyName: "Harbor Gate",
                     MapId: "ardenfall",
                     Position: new PortalVector3Snapshot(12f, 3f, -8f),
                     ConnectedPortalRef: SnapshotRef.Record("world", "portals", "portal-b", "PortalRecord"))
@@ -647,7 +647,10 @@ public sealed class RunFinalizeCommandTests
         Assert.True(File.Exists(portalsPath));
         var envelope = JsonConvert.DeserializeObject<PortalSnapshotEnvelope>(File.ReadAllText(portalsPath), JsonSettings.Default)!;
         Assert.Single(envelope.Rows);
-        Assert.Equal("Harbor Gate", envelope.Rows[0].Fields.Name);
+        Assert.Equal("Harbor Gate", envelope.Rows[0].Fields.FriendlyName);
+        var parsed = JObject.Parse(File.ReadAllText(portalsPath));
+        Assert.Equal("Harbor Gate", parsed["rows"]?[0]?["fields"]?["friendlyName"]?.Value<string>());
+        Assert.Null(parsed["rows"]?[0]?["fields"]?["name"]);
         Assert.Contains("portals", result.Artifacts.Keys);
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(portalsPath)), manifest.Hashes["portals.json"]);

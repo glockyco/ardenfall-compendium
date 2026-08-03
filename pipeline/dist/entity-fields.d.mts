@@ -27,7 +27,7 @@ import type { PortalSnapshotFields as SourcePortalSnapshotFields } from "../src/
 export declare const portalFieldNames: readonly [
   "id",
   "recordRef",
-  "name",
+  "friendlyName",
   "position",
   "mapId",
   "connectedPortalRef"

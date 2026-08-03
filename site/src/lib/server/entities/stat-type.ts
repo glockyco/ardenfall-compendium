@@ -60,7 +60,7 @@ export const listStatTypes = (): StatTypeOverviewRow[] =>
      JOIN entity_nodes n
        ON n.entity_type = 'stat-type'
       AND n.entity_id = o.id
-      AND n.is_public = 1
+      AND n.has_page = 1
      ORDER BY o.grouping, o.name`,
   ).map((row) => ({
     id: row.id,
@@ -82,7 +82,7 @@ export const getStatTypePresentation = (slug: string): StatTypePresentationRow |
      JOIN entity_nodes n
        ON n.entity_type = 'stat-type'
       AND n.entity_id = p.id
-      AND n.is_public = 1
+      AND n.has_page = 1
      WHERE p.id = ?`,
     [node.entityId],
   );

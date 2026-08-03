@@ -19,7 +19,7 @@ interface ConnectedPortalRow {
  *
  * Must run after the map read models, which create the graph tables. This
  * emitter creates portal nodes from canonical rows before it projects edges.
- * An edge can target a non-public node because `is_public` means that an entity
+ * An edge can target a node without a page because `has_page` means that an entity
  * has a page.
  *
  * Emits nodes and edges. `entity_relationship_sections` is the grouping
@@ -30,13 +30,13 @@ export function emitPortalReadModels(db: Database): PipelineDiagnostic[] {
   const diagnostics: PipelineDiagnostic[] = [];
   const writeNode = prepareEntityNodeWriter(db);
   const nodeRows = db
-    .query<{ id: string; name: string | null; map_id: string | null }, []>(
-      `SELECT id, name, map_id FROM portals ORDER BY COALESCE(name, 'Unnamed portal'), id`,
+    .query<{ id: string; friendly_name: string | null; map_id: string | null }, []>(
+      `SELECT id, friendly_name, map_id FROM portals ORDER BY COALESCE(friendly_name, 'Unnamed portal'), id`,
     )
     .all();
   const nodeTx = db.transaction(() => {
     for (const row of nodeRows) {
-      const label = row.name ?? "Unnamed portal";
+      const label = row.friendly_name ?? "Unnamed portal";
       const slug = deriveEntityNodeSlug(label, row.id);
       const query = row.map_id
         ? `map=${encodeURIComponent(row.map_id)}&sel=${slug.shortId}`
@@ -48,7 +48,7 @@ export function emitPortalReadModels(db: Database): PipelineDiagnostic[] {
         routePath: `/map?${query}`,
         canonicalSlug: slug.canonicalSlug,
         shortId: slug.shortId,
-        isPublic: false,
+        hasPage: false,
       });
     }
   });

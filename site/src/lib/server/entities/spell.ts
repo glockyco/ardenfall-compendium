@@ -21,7 +21,7 @@ interface SpellPresentationRecord {
   mana_cost: number | null;
   is_illegal: number;
   tooltip_rich_text_json: string | null;
-  /** Joined from the governing skill's public node, null when the spell has none. */
+  /** Joined from the governing skill's node with a page, null when the spell has none. */
   skill_route_path: string | null;
   route_path: string;
 }
@@ -55,7 +55,7 @@ export const listSpells = (): SpellOverviewRow[] => {
      JOIN entity_nodes n
        ON n.entity_type = 'spell'
       AND n.entity_id = o.id
-      AND n.is_public = 1
+      AND n.has_page = 1
      ORDER BY o.name`,
   ).map((row) => ({
     id: row.id,
@@ -91,11 +91,11 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
      LEFT JOIN entity_nodes sn
        ON sn.entity_type = 'stat-type'
       AND sn.entity_id = p.skill_id
-      AND sn.is_public = 1
+      AND sn.has_page = 1
      JOIN entity_nodes n
        ON n.entity_type = 'spell'
       AND n.entity_id = p.id
-      AND n.is_public = 1
+      AND n.has_page = 1
      WHERE p.id = ?`,
     [node.entityId],
   );

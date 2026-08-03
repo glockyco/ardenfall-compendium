@@ -116,7 +116,7 @@ export type RichTextNode =
       targetId?: string;
       targetLabel?: string;
       targetRoutePath?: string;
-      targetIsPublic?: boolean;
+      targetHasPage?: boolean;
     };
 
 export interface ItemPresentationStatRow {
@@ -195,7 +195,7 @@ export interface EntityNodeRow {
   routePath: string;
   canonicalSlug: string;
   shortId: string;
-  isPublic: boolean;
+  hasPage: boolean;
 }
 
 const toItemPresentationRow = (row: ItemPresentationRecord): ItemPresentationRow => {
@@ -388,7 +388,7 @@ export const getItemPresentation = (id: string): ItemPresentationRow | undefined
                 JOIN entity_nodes n
                   ON n.entity_type = json_extract(effect.value, '$.targetType')
                  AND n.entity_id = json_extract(effect.value, '$.targetId')
-                 AND n.is_public = 1
+                 AND n.has_page = 1
               )
             ), '{}') AS effect_target_routes_json
        FROM item_presentation_rows p
@@ -400,7 +400,7 @@ export const getItemPresentation = (id: string): ItemPresentationRow | undefined
 
 export const listTermIds = (): string[] =>
   all<{ entity_id: string }>(
-    "SELECT entity_id FROM entity_nodes WHERE entity_type = 'term' AND is_public = 1 ORDER BY entity_id",
+    "SELECT entity_id FROM entity_nodes WHERE entity_type = 'term' AND has_page = 1 ORDER BY entity_id",
   ).map((row) => row.entity_id);
 
 export const getTerm = (id: string): EntityNode | undefined => {
@@ -410,7 +410,7 @@ export const getTerm = (id: string): EntityNode | undefined => {
     label: string;
     route_path: string;
   }>(
-    "SELECT entity_type, entity_id, label, route_path FROM entity_nodes WHERE entity_type = 'term' AND entity_id = ? AND is_public = 1",
+    "SELECT entity_type, entity_id, label, route_path FROM entity_nodes WHERE entity_type = 'term' AND entity_id = ? AND has_page = 1",
     [id],
   );
   if (!row) return undefined;
@@ -428,9 +428,9 @@ export const getEntityNodeBySlug = (
 ): EntityNodeRow | undefined =>
   get<EntityNodeRow>(
     `SELECT entity_type AS entityType, entity_id AS entityId, label, route_path AS routePath,
-            canonical_slug AS canonicalSlug, short_id AS shortId, is_public AS isPublic
+            canonical_slug AS canonicalSlug, short_id AS shortId, has_page AS hasPage
      FROM entity_nodes
-     WHERE entity_type = ? AND canonical_slug = ? AND is_public = 1`,
+     WHERE entity_type = ? AND canonical_slug = ? AND has_page = 1`,
     [entityType, canonicalSlug],
   );
 
@@ -440,8 +440,8 @@ export const getEntityNodeByShortId = (
 ): EntityNodeRow | undefined =>
   get<EntityNodeRow>(
     `SELECT entity_type AS entityType, entity_id AS entityId, label, route_path AS routePath,
-            canonical_slug AS canonicalSlug, short_id AS shortId, is_public AS isPublic
+            canonical_slug AS canonicalSlug, short_id AS shortId, has_page AS hasPage
      FROM entity_nodes
-     WHERE entity_type = ? AND short_id = ? AND is_public = 1`,
+     WHERE entity_type = ? AND short_id = ? AND has_page = 1`,
     [entityType, shortId],
   );

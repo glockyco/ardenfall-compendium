@@ -68,14 +68,14 @@ export interface EntityNodeInput {
   routePath: string;
   canonicalSlug?: string;
   shortId?: string;
-  isPublic?: boolean;
+  hasPage?: boolean;
 }
 
 export type EntityNodeWriter = (node: EntityNodeInput) => void;
 
 export function prepareEntityNodeWriter(db: Database): EntityNodeWriter {
   const insert = db.prepare(
-    `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(entity_type, entity_id) DO NOTHING`,
+    `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(entity_type, entity_id) DO NOTHING`,
   );
 
   return (node) => {
@@ -96,7 +96,7 @@ export function prepareEntityNodeWriter(db: Database): EntityNodeWriter {
       node.routePath,
       slug.canonicalSlug,
       slug.shortId,
-      (node.isPublic ?? true) ? 1 : 0,
+      (node.hasPage ?? true) ? 1 : 0,
     );
   };
 }
@@ -199,13 +199,13 @@ export function emitItemReadModels(
       }[]
     ).map((row) => [row.id, row] as const),
   );
-  const publicCategoryIds = new Set(
+  const pageCategoryIds = new Set(
     db
       .query<{ id: string }, []>("SELECT id FROM item_categories")
       .all()
       .map((row) => row.id),
   );
-  const publicTagIds = new Set(
+  const pageTagIds = new Set(
     db
       .query<{ id: string }, []>("SELECT id FROM item_tags")
       .all()
@@ -266,7 +266,7 @@ export function emitItemReadModels(
     tagIds: string[],
   ) => {
     for (const tagId of tagIds) {
-      if (!publicTagIds.has(tagId)) {
+      if (!pageTagIds.has(tagId)) {
         richTextDiagnostics.push({
           severity: "diagnostic",
           source: "relationship-graph",
@@ -293,7 +293,7 @@ export function emitItemReadModels(
       );
     }
     if (categoryRef === null || categoryRef === undefined) return;
-    const categoryId = resolveNamedAssetId(categoryRef, publicCategoryIds);
+    const categoryId = resolveNamedAssetId(categoryRef, pageCategoryIds);
     if (categoryId === null) {
       richTextDiagnostics.push({
         severity: "diagnostic",
@@ -340,7 +340,7 @@ export function emitItemReadModels(
           targetId: termId,
           targetLabel: masterTooltip?.tooltipCodes[termId] ?? label,
           targetRoutePath: `/terms/${termId}`,
-          targetIsPublic: true,
+          targetHasPage: true,
         }),
       });
       const effectsSource = translateRichTextV1(presentation.effectsSource, {
@@ -357,7 +357,7 @@ export function emitItemReadModels(
           targetId: termId,
           targetLabel: masterTooltip?.tooltipCodes[termId] ?? label,
           targetRoutePath: `/terms/${termId}`,
-          targetIsPublic: true,
+          targetHasPage: true,
         }),
       });
       const itemLabel = item?.name ?? presentation.displayName;
@@ -544,7 +544,7 @@ function resolveSpellId(
   return resolveNamedAssetId(targetRef, spellIds);
 }
 
-export function resolveNamedAssetId(value: unknown, publicIds: ReadonlySet<string>): string | null {
+export function resolveNamedAssetId(value: unknown, pageIds: ReadonlySet<string>): string | null {
   let parsed = value;
   if (typeof parsed === "string") {
     try {
@@ -559,7 +559,7 @@ export function resolveNamedAssetId(value: unknown, publicIds: ReadonlySet<strin
     return null;
   }
   const targetId = `named;${ref.entity};${ref.name}`;
-  return publicIds.has(targetId) ? targetId : null;
+  return pageIds.has(targetId) ? targetId : null;
 }
 function collectTermLinks(nodes: RichTextNode[]): { termId: string; label: string }[] {
   const terms: { termId: string; label: string }[] = [];

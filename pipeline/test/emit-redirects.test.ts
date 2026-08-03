@@ -15,7 +15,7 @@ describe("emitRedirects", () => {
       const db = new Database(dbPath);
       db.exec(ENTITY_GRAPH_DDL);
       db.run(
-        `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+        `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
          VALUES ('item', 'item-a', 'Iron Sword', '/items/item-a', 'iron-sword--4ed20218', '4ed20218', 1)`,
       );
       db.run(

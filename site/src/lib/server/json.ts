@@ -80,7 +80,7 @@ const isRichTextNode = (value: unknown): boolean => {
       (value.targetId === undefined || typeof value.targetId === "string") &&
       (value.targetLabel === undefined || typeof value.targetLabel === "string") &&
       (value.targetRoutePath === undefined || typeof value.targetRoutePath === "string") &&
-      (value.targetIsPublic === undefined || typeof value.targetIsPublic === "boolean")
+      (value.targetHasPage === undefined || typeof value.targetHasPage === "boolean")
     );
   }
   if (value.type === "color") {

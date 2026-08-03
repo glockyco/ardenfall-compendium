@@ -29,7 +29,7 @@ public sealed class PortalExtractorTests
 
         Assert.Equal("world;portals;portal-a", row.Id);
         Assert.Equal("world;portals;portal-a", row.Fields.Id);
-        Assert.Equal("Harbor Gate", row.Fields.Name);
+        Assert.Equal("Harbor Gate", row.Fields.FriendlyName);
         Assert.Equal("ardenfall", row.Fields.MapId);
         Assert.Equal(12f, row.Fields.Position.X);
         Assert.Equal(3f, row.Fields.Position.Y);
@@ -108,12 +108,12 @@ public sealed class PortalExtractorTests
 
         var row = Assert.Single(extractor.Walk());
 
-        // The row id must not stand in for a name: an id-shaped label is
+        // The row id must not stand in for a friendlyName: an id-shaped label is
         // indistinguishable from an authored one downstream, which is how an
         // unnamed portal previously shipped a public route labelled with its id.
-        Assert.Null(row.Fields.Name);
-        Assert.DoesNotContain(row.Diagnostics, d => d.Code == "portalNameMissing" && d.Severity != "diagnostic");
-        Assert.Contains(row.Diagnostics, d => d.Code == "portalNameMissing" && d.Field == "friendlyName");
+        Assert.Null(row.Fields.FriendlyName);
+        Assert.DoesNotContain(row.Diagnostics, d => d.Code == "portalFriendlyNameMissing" && d.Severity != "diagnostic");
+        Assert.Contains(row.Diagnostics, d => d.Code == "portalFriendlyNameMissing" && d.Field == "friendlyName");
     }
 
     [Fact]
@@ -135,8 +135,8 @@ public sealed class PortalExtractorTests
 
         var row = Assert.Single(extractor.Walk());
 
-        Assert.Equal("Harbor Gate", row.Fields.Name);
-        Assert.DoesNotContain(row.Diagnostics, d => d.Code == "portalNameMissing");
+        Assert.Equal("Harbor Gate", row.Fields.FriendlyName);
+        Assert.DoesNotContain(row.Diagnostics, d => d.Code == "portalFriendlyNameMissing");
     }
 
     private sealed class FakePortalRecordSource : IPortalRecordSource

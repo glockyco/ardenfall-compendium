@@ -16,7 +16,7 @@
     },
     "canonicalTable": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
     "parentVariantId": { "type": "string" },
-    "isPublicRoute": { "type": "boolean", "default": false },
+    "hasPage": { "type": "boolean", "default": false },
     "position": { "type": "integer", "minimum": 0 },
     "fields": {
       "type": "array",

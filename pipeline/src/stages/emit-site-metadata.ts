@@ -40,7 +40,7 @@ function mapSourceTables(_entityId: string, renderKind: string): string[] {
 
 export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): void {
   const insertEntity = db.prepare(
-    `INSERT INTO site_entities (entity_id, singular_label, plural_label, route_path, canonical_table) VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO site_entities (entity_id, singular_label, plural_label, route_path) VALUES (?, ?, ?, ?)`,
   );
   const insertField = db.prepare(
     `INSERT INTO site_entity_fields (entity_id, field_id, source_table, source_column, label, value_kind, null_policy) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -49,7 +49,7 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
     `INSERT INTO site_overview_columns (entity_id, column_id, field_id, position, renderer, sortable) VALUES (?, ?, ?, ?, ?, ?)`,
   );
   const insertVariant = db.prepare(
-    `INSERT INTO item_variants (variant_id, label, unity_type, canonical_table, parent_variant_id, position, is_public_route) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO item_variants (variant_id, label, unity_type, canonical_table, parent_variant_id, position, has_page) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
   const insertReadModel = db.prepare(
     `INSERT INTO site_read_models (read_model_id, physical_name, entity_id, purpose) VALUES (?, ?, ?, ?)`,
@@ -86,13 +86,7 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
         );
       }
       if (!entity.site) continue;
-      insertEntity.run(
-        entityId,
-        entity.label.singular,
-        entity.label.plural,
-        entity.site.route,
-        `${entityId}s`,
-      );
+      insertEntity.run(entityId, entity.label.singular, entity.label.plural, entity.site.route);
       for (const f of entity.fields) {
         insertField.run(
           entityId,
@@ -158,7 +152,7 @@ export function emitSiteMetadata(db: Database, desc: LoadDescriptorsOutput): voi
           v.canonicalTable,
           v.parentVariantId ?? null,
           v.position ?? 0,
-          v.isPublicRoute ? 1 : 0,
+          v.hasPage ? 1 : 0,
         );
       }
     }

@@ -154,7 +154,7 @@ describe("translateRichTextV1", () => {
         targetId: termId,
         targetLabel: label,
         targetRoutePath: "/terms/stamina",
-        targetIsPublic: true,
+        targetHasPage: true,
       }),
     });
 
@@ -167,7 +167,7 @@ describe("translateRichTextV1", () => {
         targetId: "stamina",
         targetLabel: "Stamina",
         targetRoutePath: "/terms/stamina",
-        targetIsPublic: true,
+        targetHasPage: true,
       },
     ]);
   });

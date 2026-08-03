@@ -53,12 +53,12 @@ function seedNamelessSpell(db: Database): void {
   });
 }
 
-function seedPublicStat(db: Database, grouping: "attribute" | "skill" = "skill"): void {
+function seedPageStat(db: Database, grouping: "attribute" | "skill" = "skill"): void {
   db.exec(ENTITY_GRAPH_DDL);
   db.exec(`CREATE TABLE stat_type_overview_rows (id TEXT PRIMARY KEY, grouping TEXT NOT NULL);`);
   db.prepare(
     `INSERT INTO entity_nodes (
-       entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public
+       entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page
      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     "stat-type",
@@ -133,7 +133,7 @@ describe("spell pipeline", () => {
       canonical_slug: "unnamed-spell--spell-brawler-fists",
     });
   });
-  it("emits a public node with a named-asset route and short id", () => {
+  it("emits a page node with a named-asset route and short id", () => {
     const db = new Database(":memory:");
     seedSpell(db);
     emitSpellReadModels(db);
@@ -151,10 +151,10 @@ describe("spell pipeline", () => {
     });
   });
 
-  it("emits a scales_with edge to a public stat type", () => {
+  it("emits a scales_with edge to a stat type with a page", () => {
     const db = new Database(":memory:");
     seedSpell(db);
-    seedPublicStat(db);
+    seedPageStat(db);
 
     expect(emitSpellReadModels(db)).toEqual([]);
     const edge = db
@@ -173,7 +173,7 @@ describe("spell pipeline", () => {
   it("labels an attribute scaling edge as an attribute", () => {
     const db = new Database(":memory:");
     seedSpell(db);
-    seedPublicStat(db, "attribute");
+    seedPageStat(db, "attribute");
 
     expect(emitSpellReadModels(db)).toEqual([]);
     const edge = db
@@ -253,7 +253,7 @@ it("keeps plain and absent tooltips distinguishable", () => {
   });
 });
 
-it("diagnoses a missing public stat type without writing an edge", () => {
+it("diagnoses a missing stat type with a page without writing an edge", () => {
   const db = new Database(":memory:");
   seedSpell(db);
 

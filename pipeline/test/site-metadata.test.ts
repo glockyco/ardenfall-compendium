@@ -218,6 +218,6 @@ describe("emitSiteMetadata", () => {
     // resolves a route and a label from that row, and it fails loudly without one.
     expect(
       db.query("SELECT * FROM site_entities WHERE entity_id = 'location'").get(),
-    ).toMatchObject({ entity_id: "location", canonical_table: "locations" });
+    ).toMatchObject({ entity_id: "location", route_path: "/locations" });
   });
 });

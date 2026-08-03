@@ -24,7 +24,7 @@ interface NodeRow {
   label: string;
   short_id: string;
   route_path: string;
-  is_public: number;
+  has_page: number;
 }
 
 interface RelationshipEdge {
@@ -50,7 +50,7 @@ interface RelationshipSection {
 
 /**
  * Rebuilds the detail-page relationship projection from the graph edges.
- * Edges to private or missing nodes are intentionally omitted from sections.
+ * Edges to nodes without pages or missing nodes are intentionally omitted from sections.
  */
 /**
  * Makes every label in one section distinguishable.
@@ -81,7 +81,7 @@ export function emitRelationshipSections(
   const nodes = new Map<string, NodeRow>();
   for (const node of db
     .query<NodeRow, []>(
-      "SELECT entity_type, entity_id, label, short_id, route_path, is_public FROM entity_nodes",
+      "SELECT entity_type, entity_id, label, short_id, route_path, has_page FROM entity_nodes",
     )
     .all()) {
     nodes.set(nodeKey(node.entity_type, node.entity_id), node);
@@ -104,7 +104,7 @@ export function emitRelationshipSections(
     }
     const sourceNode = nodes.get(nodeKey(edge.source_type, edge.source_id));
     const targetNode = nodes.get(nodeKey(edge.target_type, edge.target_id));
-    if (sourceNode?.is_public !== 1 || targetNode?.is_public !== 1) continue;
+    if (sourceNode?.has_page !== 1 || targetNode?.has_page !== 1) continue;
 
     if (descriptor.forwardTitle !== null) {
       appendSection(

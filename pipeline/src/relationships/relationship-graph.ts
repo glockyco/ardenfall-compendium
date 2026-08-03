@@ -4,11 +4,11 @@ import { relationshipRegistry } from "./registry.ts";
 /**
  * Pipeline diagnostic source taxonomy for Slice 4.5:
  * - `rich-text`: rich-text parser/linker diagnostics while translating game-authored strings.
- * - `relationship-graph`: entity node, edge, slug, and public-link invariant audits.
+ * - `relationship-graph`: entity node, edge, slug, and page-link invariant audits.
  * - `master-tooltip`: master-tooltip vocabulary extraction or schema diagnostics.
  * - `composer`: tooltip composer parity, binding, and deterministic rendering diagnostics.
  * - `entity-extraction`: per-entity snapshot extraction diagnostics from mod or pipeline loaders.
- * - `slug-collision`: route slug/short-id collision diagnostics before public route emission.
+ * - `slug-collision`: route slug/short-id collision diagnostics before route emission.
  * - `effect-binding`: unresolved tooltip variable/effect payload binding diagnostics.
  */
 
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS entity_nodes (
   route_path TEXT NOT NULL,
   canonical_slug TEXT NOT NULL,
   short_id TEXT NOT NULL,
-  is_public INTEGER NOT NULL DEFAULT 1,
+  has_page INTEGER NOT NULL DEFAULT 1,
   PRIMARY KEY (entity_type, entity_id)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_entity_nodes_slug
@@ -145,7 +145,7 @@ export function auditEntityGraph(db: Database): PipelineDiagnostic[] {
        WHERE e.predicate IN (${sectionPredicates.map(() => "?").join(", ")})
          AND EXISTS (
            SELECT 1 FROM entity_nodes n
-           WHERE n.entity_type = e.target_type AND n.entity_id = e.target_id AND n.is_public = 0
+           WHERE n.entity_type = e.target_type AND n.entity_id = e.target_id AND n.has_page = 0
          )`,
     )
     .all(...sectionPredicates)) {

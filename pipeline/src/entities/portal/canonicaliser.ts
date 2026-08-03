@@ -14,7 +14,7 @@ export function portalField<K extends PortalFieldName & keyof PortalSnapshotFiel
 export function canonicalisePortals(db: Database, envelope: SnapshotEnvelope): void {
   const portalInsert = db.prepare(
     `INSERT INTO portals (
-      id, record_ref_json, name, map_id, source_position_json, connected_portal_ref_json
+      id, record_ref_json, friendly_name, map_id, source_position_json, connected_portal_ref_json
     ) VALUES (?, ?, ?, ?, ?, ?)`,
   );
   const placementInsert = db.prepare(
@@ -32,7 +32,7 @@ export function canonicalisePortals(db: Database, envelope: SnapshotEnvelope): v
       portalInsert.run(
         row.id,
         JSON.stringify(recordRef),
-        portalField(fields, "name") ?? null,
+        portalField(fields, "friendlyName") ?? null,
         portalField(fields, "mapId") ?? null,
         JSON.stringify(position),
         portalField(fields, "connectedPortalRef")

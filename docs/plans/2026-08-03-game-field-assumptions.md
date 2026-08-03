@@ -90,8 +90,20 @@ Recorded so nobody audits them twice.
 
 **Predicates.** `categorised_as` matches `Ardenfall/Inventory.cs:667-677`. `casts` matches `Ardenfall/SlateSpellItem.cs:55-61`. `tagged` matches `Ardenfall/Item/ItemData.cs:35-38`. `leads_to` matches `Ardenfall/RecordSystem/PortalRecord.cs:8-30`, and its reciprocal pair is genuinely two directed edges because `Ardenfall/MapLocationManager.cs:72-113` maps both directions.
 
+## Names that misled, and were renamed
+
+A name that needs a paragraph of explanation is a defect, not a documentation gap. Each of these was renamed rather than described.
+
+**`is_public` became `has_page`.** It never meant public. The proof it misled is that two consumers wanting a stable identity had to be told not to test it, and a fail-fast check had to be split because one flag answered two questions.
+
+**The `drops` predicate became `can_drop`.** `Ardenfall/Item/ItemGroup.cs:35-67` picks all items in a group or a weighted random count, so presence is possible and not certain. The rendered titles already read `Can drop` and `Dropped by`, so only the predicate overstated. 2,126 edges. A per-item probability is still a real calculation across pick groups and level-ranged weights that we do not perform, so no rate is published.
+
+**`portals.name` became `friendly_name`.** A column named `name` promises a display name, and 29 of 32 values are authoring identifiers. The new name states its provenance and promises nothing.
+
+**`item_variants.is_public_route` became `has_page`**, so one word covers one concept across the schema.
+
+**`site_entities.canonical_table` was deleted.** It was fabricated as the entity id plus `s`, which named no table: `item-categorys`, `stat-types`, `status-effects` against real tables `item_categories`, `stat_types` and `status_effects`. Nothing read it, and the descriptor already declares the real value, so a correct column would have duplicated the source of truth.
+
 ## Recorded, not defects
 
-**`drops` publishes possibility, not probability.** `Ardenfall/Item/ItemGroup.cs:35-67` picks all or picks a weighted count, so an item's presence is possible rather than certain. The rendered section reads `Can drop` and `Dropped by`, which states possibility correctly. A per-item probability is a real calculation across pick groups and level-ranged weights that we do not perform, so no rate is published. 2,126 edges.
-
-**`variant_of` projects the runtime item class.** `Ardenfall/Item/ItemData.cs:100-109` returns the concrete implementation type, so the relation reflects an implementation fact rather than an authored variant relationship. 1,273 edges. The name overstates slightly, and renaming a shipped public predicate costs more than the imprecision does.
+**`variant_of` is accurate.** `Ardenfall/Item/ItemData.cs:100-109` returns the concrete runtime class, and a variant is this project's own term for exactly that, defined in `schemas/variant.schema.json` and carried through `item_variants`, `variantId` and the `/items/variant` routes. The game class is recorded explicitly as `unityType`, so the provenance is stated rather than implied. 1,273 edges.

@@ -29,7 +29,7 @@ describe("sitemap routes", () => {
     expect(declared.sort()).toEqual(staticPageRoutes());
   });
 
-  it("adds listing pages and excludes non-public entity rows", () => {
+  it("adds listing pages and entity page routes", () => {
     const routes = sitemapRoutePaths([
       { route_path: "/items/iron-sword" },
       { route_path: "/terms/strength" },

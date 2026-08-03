@@ -32,7 +32,7 @@ export type TermResolution = {
   targetId: string;
   targetLabel: string;
   targetRoutePath: string;
-  targetIsPublic: boolean;
+  targetHasPage: boolean;
 };
 
 export type RichTextOptions = {

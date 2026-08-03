@@ -39,7 +39,7 @@ describe("stat read-model accessors", () => {
         route_path TEXT NOT NULL,
         canonical_slug TEXT NOT NULL,
         short_id TEXT NOT NULL,
-        is_public INTEGER NOT NULL,
+        has_page INTEGER NOT NULL,
         PRIMARY KEY (entity_type, entity_id)
       );
       INSERT INTO stat_type_overview_rows VALUES
@@ -118,7 +118,7 @@ describe("stat read-model accessors", () => {
         route_path TEXT NOT NULL,
         canonical_slug TEXT NOT NULL,
         short_id TEXT NOT NULL,
-        is_public INTEGER NOT NULL,
+        has_page INTEGER NOT NULL,
         PRIMARY KEY (entity_type, entity_id)
       );
       INSERT INTO stat_type_overview_rows VALUES

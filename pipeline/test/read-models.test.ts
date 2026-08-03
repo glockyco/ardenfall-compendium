@@ -854,7 +854,7 @@ describe("prepareEntityNodeWriter", () => {
     expect(
       db
         .query(
-          "SELECT entity_type, entity_id, canonical_slug, short_id, is_public FROM entity_nodes ORDER BY entity_type",
+          "SELECT entity_type, entity_id, canonical_slug, short_id, has_page FROM entity_nodes ORDER BY entity_type",
         )
         .all(),
     ).toEqual([
@@ -863,14 +863,14 @@ describe("prepareEntityNodeWriter", () => {
         entity_id: "valuable-remedy",
         canonical_slug: "valuable-remedy",
         short_id: "valuable-remedy",
-        is_public: 1,
+        has_page: 1,
       },
       {
         entity_type: "stat-type",
         entity_id: "4ed202185a05d98439595e3fcab021c8.11400000",
         canonical_slug: "heavy-armor-skill--4ed20218",
         short_id: "4ed20218",
-        is_public: 1,
+        has_page: 1,
       },
     ]);
   });
@@ -1010,7 +1010,7 @@ describe("emitMapReadModels", () => {
               subtable: "portals",
               id: "398213e43a41b4c47bffe4ef1998e782",
             },
-            name: "Harbor Gate",
+            friendlyName: "Harbor Gate",
             mapId: "ardenfall",
             position: { x: 20, y: 5, z: -30 },
             connectedPortalRef: {
@@ -1046,13 +1046,13 @@ describe("emitMapReadModels", () => {
     });
     const node = db
       .query(
-        `SELECT route_path, short_id, is_public FROM entity_nodes
+        `SELECT route_path, short_id, has_page FROM entity_nodes
          WHERE entity_type = 'portal' AND entity_id = 'instances;portals;398213e43a41b4c47bffe4ef1998e782'`,
       )
-      .get() as { route_path: string; short_id: string; is_public: number };
+      .get() as { route_path: string; short_id: string; has_page: number };
     expect(node.short_id).toBe("398213e4");
     expect(node.route_path).toBe("/map?map=ardenfall&sel=398213e4");
-    expect(node.is_public).toBe(0);
+    expect(node.has_page).toBe(0);
   });
 
   it("fails fast when a requested entity has no map projection", () => {

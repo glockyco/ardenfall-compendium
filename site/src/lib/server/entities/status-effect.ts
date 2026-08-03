@@ -49,7 +49,7 @@ export const listStatusEffects = (): StatusEffectOverviewRow[] => {
      JOIN entity_nodes n
        ON n.entity_type = 'status-effect'
       AND n.entity_id = o.id
-      AND n.is_public = 1
+      AND n.has_page = 1
      ORDER BY o.name, o.id`,
   ).map((row) => {
     const description = row.tooltip_rich_text_json
@@ -94,7 +94,7 @@ export const getStatusEffectPresentation = (
      JOIN entity_nodes n
        ON n.entity_type = 'status-effect'
       AND n.entity_id = p.id
-      AND n.is_public = 1
+      AND n.has_page = 1
      WHERE p.id = ?`,
     [node.entityId],
   );

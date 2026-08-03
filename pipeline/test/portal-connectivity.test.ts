@@ -21,13 +21,13 @@ const recordRef = (id: string) =>
  */
 function seed(
   db: Database,
-  portals: { key: string; name: string | null; connectsTo?: string }[],
+  portals: { key: string; friendlyName: string | null; connectsTo?: string }[],
 ): Database {
   db.exec(ENTITY_GRAPH_DDL);
   db.exec(LOCATION_DDL);
   db.exec(PORTAL_DDL);
   const portalInsert = db.prepare(
-    `INSERT INTO portals (id, record_ref_json, name, map_id, source_position_json, connected_portal_ref_json)
+    `INSERT INTO portals (id, record_ref_json, friendly_name, map_id, source_position_json, connected_portal_ref_json)
      VALUES (?, ?, ?, ?, ?, ?)`,
   );
   const placementInsert = db.prepare(
@@ -39,7 +39,7 @@ function seed(
     portalInsert.run(
       id,
       recordRef(p.key),
-      p.name,
+      p.friendlyName,
       "ardenfall",
       '{"x":0,"y":0,"z":0}',
       p.connectsTo ? recordRef(p.connectsTo) : null,
@@ -54,27 +54,27 @@ describe("portal connectivity", () => {
     const db = seed(new Database(":memory:"), [
       {
         key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        name: "Harbor Gate",
+        friendlyName: "Harbor Gate",
         connectsTo: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       },
       {
         key: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        name: "Cliff Stair",
+        friendlyName: "Cliff Stair",
         connectsTo: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       },
-      { key: "cccccccccccccccccccccccccccccccc", name: "Sealed Door" },
+      { key: "cccccccccccccccccccccccccccccccc", friendlyName: "Sealed Door" },
     ]);
     emitMapReadModels(db, ["portal"], "/map");
 
     expect(emitPortalReadModels(db)).toEqual([]);
     expect(
       db
-        .query<{ count: number; publicCount: number }, []>(
-          `SELECT COUNT(*) AS count, COALESCE(SUM(is_public), 0) AS publicCount
+        .query<{ count: number; hasPageCount: number }, []>(
+          `SELECT COUNT(*) AS count, COALESCE(SUM(has_page), 0) AS hasPageCount
            FROM entity_nodes WHERE entity_type = 'portal'`,
         )
         .get(),
-    ).toEqual({ count: 3, publicCount: 0 });
+    ).toEqual({ count: 3, hasPageCount: 0 });
 
     const edges = db
       .query<{ source_id: string; target_id: string; label: string }, []>(
@@ -105,10 +105,10 @@ describe("portal connectivity", () => {
     const db = seed(new Database(":memory:"), [
       {
         key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        name: "Harbor Gate",
+        friendlyName: "Harbor Gate",
         connectsTo: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       },
-      { key: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", name: "Cliff Stair" },
+      { key: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", friendlyName: "Cliff Stair" },
     ]);
     emitMapReadModels(db, ["portal"], "/map");
     emitPortalReadModels(db);
@@ -120,13 +120,13 @@ describe("portal connectivity", () => {
     expect(db.query(`SELECT COUNT(*) AS c FROM entity_relationship_sections`).get()).toEqual({
       c: 0,
     });
-    // The edge still resolves to a non-public portal node carrying the label the map needs.
+    // The edge still resolves to a portal node without a page, carrying the label the map needs.
     const destination = db
       .query<{ label: string; short_id: string }, []>(
         `SELECT n.label, n.short_id
          FROM entity_edges e
          JOIN entity_nodes n ON n.entity_type = e.target_type AND n.entity_id = e.target_id
-         WHERE e.predicate = 'leads_to' AND n.is_public = 0`,
+         WHERE e.predicate = 'leads_to' AND n.has_page = 0`,
       )
       .get()!;
     expect(destination.label).toBe("Cliff Stair");
@@ -137,7 +137,7 @@ describe("portal connectivity", () => {
     const db = seed(new Database(":memory:"), [
       {
         key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        name: "Harbor Gate",
+        friendlyName: "Harbor Gate",
         connectsTo: "99999999999999999999999999999999",
       },
     ]);
@@ -157,14 +157,14 @@ describe("portal connectivity", () => {
 
   it("labels a portal the game never named without inventing an identifier", () => {
     const db = seed(new Database(":memory:"), [
-      { key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", name: null },
+      { key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", friendlyName: null },
     ]);
     emitMapReadModels(db, ["portal"], "/map");
     emitPortalReadModels(db);
 
     // The canonical row keeps the absence; only presentation fills it in, so a
     // row id can never masquerade as an authored name.
-    expect(db.query(`SELECT name FROM portals`).get()).toEqual({ name: null });
+    expect(db.query(`SELECT friendly_name FROM portals`).get()).toEqual({ friendly_name: null });
     const node = db
       .query<{ label: string; canonical_slug: string }, []>(
         `SELECT label, canonical_slug FROM entity_nodes WHERE entity_type = 'portal'`,

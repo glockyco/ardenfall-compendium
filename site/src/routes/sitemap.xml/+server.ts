@@ -1,5 +1,5 @@
 import { all } from "$lib/server/db";
-import { sitemapRoutePaths, type PublicEntityRoute } from "$lib/server/sitemap-routes";
+import { sitemapRoutePaths, type EntityPageRoute } from "$lib/server/sitemap-routes";
 import type { RequestHandler } from "./$types";
 
 export const prerender = true;
@@ -15,8 +15,8 @@ const escapeXml = (value: string): string =>
 const siteOrigin = "https://ardenfall.compendiums.org";
 
 export const GET: RequestHandler = () => {
-  const routes = all<PublicEntityRoute>(
-    "SELECT route_path FROM entity_nodes WHERE is_public = 1 ORDER BY route_path",
+  const routes = all<EntityPageRoute>(
+    "SELECT route_path FROM entity_nodes WHERE has_page = 1 ORDER BY route_path",
   );
   const urls = sitemapRoutePaths(routes)
     .map((routePath) => `  <url><loc>${escapeXml(new URL(routePath, siteOrigin).href)}</loc></url>`)

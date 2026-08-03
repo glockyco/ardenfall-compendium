@@ -25,7 +25,7 @@ const seed = () => {
     CREATE TABLE entity_nodes (
       entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, label TEXT NOT NULL,
       route_path TEXT NOT NULL, canonical_slug TEXT NOT NULL, short_id TEXT NOT NULL,
-      is_public INTEGER NOT NULL, PRIMARY KEY (entity_type, entity_id)
+      has_page INTEGER NOT NULL, PRIMARY KEY (entity_type, entity_id)
     );
     INSERT INTO locations VALUES
       ('location-shisivi', 'Shisivi Wood', 1, 'overworld', '{}', 0, 0, NULL, '{}', 1, NULL),

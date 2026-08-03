@@ -40,10 +40,10 @@ export function emitCharacterReadModels(
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const writeNode = prepareEntityNodeWriter(db);
-  const publicItems = new Set(
+  const pageItems = new Set(
     db
       .query<{ entity_id: string }, []>(
-        `SELECT entity_id FROM entity_nodes WHERE entity_type = 'item' AND is_public = 1`,
+        `SELECT entity_id FROM entity_nodes WHERE entity_type = 'item' AND has_page = 1`,
       )
       .all()
       .map((row) => row.entity_id),
@@ -84,20 +84,20 @@ export function emitCharacterReadModels(
         continue;
       }
       for (const value of refs) {
-        const targetId = resolveItemId(value, publicItems);
+        const targetId = resolveItemId(value, pageItems);
         if (targetId === null) {
           diagnostics.push(
-            unresolvedDropDiagnostic(row, "reference does not identify a public item"),
+            unresolvedDropDiagnostic(row, "reference does not identify an item with a page"),
           );
           continue;
         }
         edgeInsert.run(
-          `${row.id}:drops:item:${targetId}`,
+          `${row.id}:can_drop:item:${targetId}`,
           "character",
           row.id,
           "item",
           targetId,
-          "drops",
+          "can_drop",
           "Can drop",
           1,
           JSON.stringify({ source: "characters.itemLists" }),
@@ -110,7 +110,7 @@ export function emitCharacterReadModels(
   return diagnostics;
 }
 
-function resolveItemId(value: unknown, publicItems: ReadonlySet<string>): string | null {
+function resolveItemId(value: unknown, pageItems: ReadonlySet<string>): string | null {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
   const ref = value as Partial<SnapshotRef>;
   let targetId: string | null = null;
@@ -118,7 +118,7 @@ function resolveItemId(value: unknown, publicItems: ReadonlySet<string>): string
   if (ref.kind === "namedAsset" && ref.entity === "item" && typeof ref.name === "string") {
     targetId = `named;item;${ref.name}`;
   }
-  return targetId !== null && publicItems.has(targetId) ? targetId : null;
+  return targetId !== null && pageItems.has(targetId) ? targetId : null;
 }
 
 function unresolvedDropDiagnostic(row: CharacterRow, reason: string): PipelineDiagnostic {

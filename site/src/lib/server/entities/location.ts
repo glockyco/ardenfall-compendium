@@ -315,21 +315,21 @@ export const listLocations = (): LocationOverviewRow[] =>
      JOIN entity_nodes n
        ON n.entity_type = 'location'
       AND n.entity_id = l.id
-      AND n.is_public = 1
+      AND n.has_page = 1
      WHERE l.enabled = 1
      ORDER BY l.name, l.id`,
   ).map((row) => ({ id: row.id, name: row.name, routePath: row.route_path }));
 
 export const getLocationPresentation = (slug: string): LocationPresentationRow | undefined => {
   const node = getEntityNodeBySlug("location", slug);
-  if (!node || !node.isPublic) return undefined;
+  if (!node || !node.hasPage) return undefined;
   const row = get<LocationPresentationRecord>(
     `SELECT l.id, l.name, l.map_id, l.allow_fast_travel, n.route_path
      FROM locations l
      JOIN entity_nodes n
        ON n.entity_type = 'location'
       AND n.entity_id = l.id
-      AND n.is_public = 1
+      AND n.has_page = 1
      WHERE l.id = ? AND l.enabled = 1`,
     [node.entityId],
   );

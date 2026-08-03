@@ -28,31 +28,31 @@ function seed(db: Database): void {
 }
 
 describe("location entity nodes", () => {
-  it("emits a public location page node for every enabled location", () => {
+  it("emits a location page node for every enabled location", () => {
     const db = new Database(":memory:");
     seed(db);
     emitLocationReadModels(db);
     emitMapReadModels(db, ["location"], "/map");
 
     const nodes = db
-      .query<{ entity_id: string; route_path: string; is_public: number; short_id: string }, []>(
-        `SELECT entity_id, route_path, is_public, short_id
+      .query<{ entity_id: string; route_path: string; has_page: number; short_id: string }, []>(
+        `SELECT entity_id, route_path, has_page, short_id
          FROM entity_nodes WHERE entity_type = 'location' ORDER BY entity_id`,
       )
       .all();
 
     expect(nodes).toHaveLength(3);
     const town = nodes.find((n) => n.entity_id === "11111111.fixture-town")!;
-    expect(town.is_public).toBe(1);
+    expect(town.has_page).toBe(1);
     expect(town.route_path).toBe("/locations/harbor-town--11111111");
 
     const cave = nodes.find((n) => n.entity_id === "22222222.fixture-debug-cave")!;
     expect(cave.route_path).toBe("/locations/debug-cave--22222222");
-    expect(cave.is_public).toBe(1);
+    expect(cave.has_page).toBe(1);
 
     const hidden = nodes.find((n) => n.entity_id === "33333333.fixture-hidden-grove")!;
     expect(hidden.route_path).toBe("/locations/hidden-grove--33333333");
-    expect(hidden.is_public).toBe(1);
+    expect(hidden.has_page).toBe(1);
   });
 
   it("does not collide short_ids across locations", () => {

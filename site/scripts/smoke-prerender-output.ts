@@ -227,7 +227,7 @@ function readStatProbe(): StatProbeRow {
          JOIN entity_nodes n
            ON n.entity_type = 'stat-type'
           AND n.entity_id = o.id
-          AND n.is_public = 1
+          AND n.has_page = 1
          WHERE o.icon_hash IS NOT NULL
          ORDER BY o.grouping, o.name
          LIMIT 1`,
@@ -265,7 +265,7 @@ function readItemCategoryProbe(): ItemCategoryProbeRow {
          JOIN entity_nodes n
            ON n.entity_type = 'item-category'
           AND n.entity_id = o.id
-          AND n.is_public = 1
+          AND n.has_page = 1
          WHERE COALESCE(o.icon_hash, o.default_item_icon_hash) IS NOT NULL
            AND o.item_count > 0
          ORDER BY o.name
@@ -301,7 +301,7 @@ function readItemTagProbe(): ItemTagProbeRow {
          JOIN entity_nodes n
            ON n.entity_type = 'item-tag'
           AND n.entity_id = o.id
-          AND n.is_public = 1
+          AND n.has_page = 1
          WHERE o.item_count > 0
          ORDER BY o.name
          LIMIT 1`,
