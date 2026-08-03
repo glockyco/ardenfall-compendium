@@ -11,7 +11,11 @@ public sealed class BuiltLookupTableItemTagAssetSource : IItemTagAssetSource
         var lookup = BuiltLookupTable.Instance;
         foreach (var asset in BuiltLookupTable.GetAssetsOfType<ArdenfallTag>())
         {
-            if (asset == null) continue;
+            if (asset == null)
+            {
+                yield return null!;
+                continue;
+            }
             yield return new ItemTagAsset(
                 Guid: lookup?.GetGuid(asset),
                 AssetName: asset.name ?? "",

@@ -47,7 +47,12 @@ public sealed class LoadedStatTypeAssetSource : IStatTypeAssetSource, IIconAsset
         var assets = new List<Ardenfall.StatType>();
         foreach (var asset in _loadedStatTypes())
         {
-            if (_isUnityNull(asset) || !_isAuthoredAsset(asset) || !seen.Add(asset)) continue;
+            if (_isUnityNull(asset))
+            {
+                yield return null!;
+                continue;
+            }
+            if (!_isAuthoredAsset(asset) || !seen.Add(asset)) continue;
             assets.Add(asset);
         }
 

@@ -40,7 +40,12 @@ public sealed class BuiltLookupTableLocationAssetSource : ILocationAssetSource
     {
         foreach (var asset in _lookupLocations())
         {
-            if (_isUnityNull(asset) || !asset.enabled) continue;
+            if (_isUnityNull(asset))
+            {
+                yield return null!;
+                continue;
+            }
+            if (!asset.enabled) continue;
             yield return ToRecord(asset, _lookupGuid, _assetName);
         }
     }

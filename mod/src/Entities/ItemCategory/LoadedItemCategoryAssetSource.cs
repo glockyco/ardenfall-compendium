@@ -52,7 +52,12 @@ public sealed class LoadedItemCategoryAssetSource : IItemCategoryAssetSource, II
         var assets = new List<ArdenfallCategory>();
         foreach (var asset in _loadedCategories())
         {
-            if (_isUnityNull(asset) || !_isAuthoredAsset(asset) || !seen.Add(asset)) continue;
+            if (_isUnityNull(asset))
+            {
+                yield return null!;
+                continue;
+            }
+            if (!_isAuthoredAsset(asset) || !seen.Add(asset)) continue;
             assets.Add(asset);
         }
 

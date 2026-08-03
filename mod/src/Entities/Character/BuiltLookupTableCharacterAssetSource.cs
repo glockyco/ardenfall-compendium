@@ -24,7 +24,11 @@ public sealed class BuiltLookupTableCharacterAssetSource : ICharacterAssetSource
         _ = CharacterNameField;
         foreach (var asset in BuiltLookupTable.GetAssetsOfType<CharacterData>())
         {
-            if (asset == null) continue;
+            if (asset == null)
+            {
+                yield return null!;
+                continue;
+            }
 
             var parameter = CharacterNameField.GetValue(asset) as CharacterRandomNameParameter;
             var storedName = parameter?.Get()?.name;

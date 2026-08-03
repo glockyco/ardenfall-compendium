@@ -25,7 +25,11 @@ public sealed class MasterRecordTablePortalRecordSource : IPortalRecordSource
     {
         foreach (var record in _lookupPortals())
         {
-            if (record == null) continue;
+            if (record == null)
+            {
+                yield return null!;
+                continue;
+            }
             yield return ToRow(record);
         }
     }

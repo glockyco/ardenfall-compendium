@@ -12,7 +12,11 @@ public sealed class BuiltLookupTableStatusEffectAssetSource : IStatusEffectAsset
         var lookup = BuiltLookupTable.Instance;
         foreach (var asset in BuiltLookupTable.GetAssetsOfType<Ardenfall.StatusEffectData>())
         {
-            if (asset == null) continue;
+            if (asset == null)
+            {
+                yield return null!;
+                continue;
+            }
             var guid = lookup?.GetGuid(asset);
             yield return new StatusEffectAsset(
                 Guid: guid,

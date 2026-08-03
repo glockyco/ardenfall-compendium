@@ -42,7 +42,12 @@ public sealed class LoadedSpellAssetSource : ISpellAssetSource
         var assets = new List<Ardenfall.SpellData>();
         foreach (var asset in _loadedSpells())
         {
-            if (_isUnityNull(asset) || !_isAuthoredAsset(asset) || !seen.Add(asset)) continue;
+            if (_isUnityNull(asset))
+            {
+                yield return null!;
+                continue;
+            }
+            if (!_isAuthoredAsset(asset) || !seen.Add(asset)) continue;
             assets.Add(asset);
         }
 

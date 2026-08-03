@@ -41,7 +41,11 @@ public sealed class BuiltLookupTableFactionAssetSource : IFactionAssetSource
     {
         foreach (var asset in _lookupFactions())
         {
-            if (_isUnityNull(asset)) continue;
+            if (_isUnityNull(asset))
+            {
+                yield return null!;
+                continue;
+            }
             yield return ToRecord(asset, _lookupGuid, _assetName);
         }
     }
