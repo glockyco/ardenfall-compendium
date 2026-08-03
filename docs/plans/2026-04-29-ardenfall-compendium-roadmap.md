@@ -473,7 +473,11 @@ Ordered by measured reader value against cost. The survey at [`2026-08-02-progra
 
 So the next connective work is no longer a field, it is an entity:
 
-5. **Loot provenance.** `ItemListAsset` with its counted and leveled wrappers. This was ranked last on cost grounds when the list was written, and the survey inverted that: it is the only remaining route to making 1,273 item pages reachable, and it answers the question a reader most often has. Still the largest modelling job here, because the structure is a weighted nested graph rather than a flat table.
+5. **Item obtainability.** Not loot alone. [`2026-08-02-item-obtainability`](2026-08-02-item-obtainability.md) audits every route by which a player can get an item, and there are nine. Loot tables are one.
+
+   The authored half is fully enumerable today and needs no world traversal: 348 loot lists, 314 placed NPC records whose inventories double as their death drops, merchant stock, 13 quests whose Odin graphs turn out to be traversable at runtime, and 48 potion recipes whose ingredients are matched by tag rather than by item. That is the slice.
+
+   The placed half is containers and spawners, which are not record-backed and exist only as scene objects in a world of 683 streamed cells. Completing them needs a world walk, which tile capture also needs, so the two should be planned together rather than each paying for traversal separately.
 6. **Spells to status effects.** The 116 unreachable status effects are referenced from the Odin-serialised effect graph on `SpellData`. A slice rather than a field.
 7. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference, but the extractor does not currently emit it, so it needs mod work first.
 

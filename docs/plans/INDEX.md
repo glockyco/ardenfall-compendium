@@ -4,6 +4,7 @@
 
 - **Ardenfall Compendium — Implementation Roadmap** [overview] `2026-04-29-ardenfall-compendium-roadmap`
 - **Ardenfall Compendium — Data Architecture (Entities, Placement, Extraction)** [spec] `2026-06-04-compendium-data-architecture` ← 2026-04-29-ardenfall-compendium-roadmap
+- **Item Obtainability** [audit] `2026-08-02-item-obtainability` ← 2026-04-29-ardenfall-compendium-roadmap
 - **Program Survey** [audit] `2026-08-02-program-survey` ← 2026-04-29-ardenfall-compendium-roadmap
 - **Repository Health Audit — Open Findings** [audit] `2026-08-02-repo-health-audit` ← 2026-04-29-ardenfall-compendium-roadmap
 
