@@ -70,7 +70,7 @@ describe("character read-model accessors", () => {
         {
           id: "character-nameless",
           name: null,
-          displayName: "Unnamed character · character-nameless",
+          displayName: "Unnamed character · 33333333",
           routePath: "/characters/unnamed-character--33333333",
         },
         {
@@ -106,7 +106,7 @@ describe("character read-model accessors", () => {
     await withSeed((readModels) => {
       expect(readModels.getCharacterPresentation("unnamed-character--33333333")).toMatchObject({
         name: null,
-        displayName: "Unnamed character · character-nameless",
+        displayName: "Unnamed character · 33333333",
       });
     });
   });
