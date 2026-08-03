@@ -29,7 +29,12 @@ if (!isArtifactManifest(parsedManifest)) {
   throw new Error("invalid artifact manifest");
 }
 const manifest = parsedManifest;
-const releaseRes = await fetch(`${origin}/_release.json`, {
+// A `cache-control` request header is not enough here. Cloudflare serves static assets from
+// its edge and answered a stale `_release.json` after a deploy that had in fact succeeded,
+// so the smoke failed on a good release. A unique query string defeats the edge cache. It
+// still fails honestly when a deploy did not land, because a fresh URL then returns the old
+// file too.
+const releaseRes = await fetch(`${origin}/_release.json?smoke=${Date.now()}`, {
   headers: { "cache-control": "no-cache" },
 });
 if (!releaseRes.ok) throw new Error(`/_release.json returned ${releaseRes.status}`);
