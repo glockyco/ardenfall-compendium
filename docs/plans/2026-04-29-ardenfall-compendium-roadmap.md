@@ -523,10 +523,14 @@ Any map-supporting entity slice that ships public detail pages must reuse Slice 
 
 ### Slice 11 — Spells
 
-**Status:** done
+**Status:** pages done, effect graph not started
 **Spec coverage:** amendment §18; investment-priorities §1 (spells after items/maps).
 
-**Delivers:** `SpellData` extraction and canonicalisation: typed `spells` root table; generated tooltips through the shared `rich_text_v1` contract when feasible; references to `StatType`; type-tagged validated JSON for `SpellEffect` / `SubSpellData.effects`; public spell nodes/routes in the shared relationship graph; resolution of Slice 4 slate-spell item references without introducing a spell-specific HTML or link pipeline.
+**Delivered:** a typed `spells` root table, generated tooltips through the shared `rich_text_v1` contract, a `scales_with` reference to `StatType`, public spell nodes and routes in the relationship graph, and resolution of the slate-spell item references, all without a spell-specific HTML or link pipeline. 56 spell pages ship.
+
+**Not started:** the `SpellEffect` and `SubSpellData.effects` graph. Seven fields reach the `spells` table, and `spells`, `subSpells` and `spellEffectReference` are not among them, so a spell page states its governing skill, its mana cost and a prose tooltip and never says what the spell does. The game holds the answer in `SpellEffect` scriptable objects, and at least six of their classes carry a `StatusEffectData`, including `SelfStatusEffectSpellEffect` and `StatusEffectTooltipSpellEffect`.
+
+This is also where 116 of 172 status effects would gain their first inbound link. 56 have one today, all from items.
 
 **Note:** the original roadmap had spells at Slice 4. Investment-priorities §1 reorders this; spells run after the items + maps + map-supporting-entities tracks.
 

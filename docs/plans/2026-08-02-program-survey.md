@@ -131,6 +131,14 @@ The site is now files only: `adapter-static` emits no Worker, `wrangler.toml` ca
 
 **A test asserted the wrong layer for months.** `smoke:error-route` read `+error.svelte` and checked it contained certain strings. That component renders only when a Worker runs, and an unmatched address never reached it, so the test passed while production was broken. It now checks the 404 asset exists, carries the real page rather than the adapter's placeholder, and that the setting which makes Cloudflare serve it is present. The production smoke fetches three missing addresses and requires 404 with that content.
 
+## Where the next slice starts
+
+**Spell effects.** A spell page names its governing skill and its mana cost, then prints a prose tooltip. It never says what the spell does, because seven fields reach the `spells` table and the effect graph is not among them. `SpellData` holds `spells`, `subSpells` and `spellEffectReference`, and the game's `SpellEffect` scriptable objects carry the mechanics. At least six of their classes hold a `StatusEffectData`, so this is also the only place 116 of 172 status effects can gain an inbound link. The 56 that have one today all come from items.
+
+The work is bounded: 56 spells, 5 sub-spells, and a small set of effect classes to type. It needs no world traversal and no new identity mechanism, since spells already resolve as named assets.
+
+Two other candidates rank below it. `NPCRecord`, 314 instances, would place characters in the world and give locations their first inbound links, but it needs the scene-placement mechanism that no slice has built. The 728 items with no named source need the 683-cell container walk, which is the largest remaining piece of extraction work.
+
 ## Not covered by any plan
 
 Three concerns no planning doc mentions. Each is measured, and none blocks a deploy.
