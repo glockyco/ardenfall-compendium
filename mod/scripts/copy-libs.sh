@@ -17,6 +17,9 @@ required_managed_dlls=(
   Sirenix.OdinInspector.Attributes.dll
   Sirenix.Serialization.dll
   Sirenix.Serialization.Config.dll
+  FlowCanvas.dll
+  NodeCanvas.dll
+  ParadoxNotion.dll
 )
 
 missing=0

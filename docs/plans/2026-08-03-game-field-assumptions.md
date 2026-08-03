@@ -110,6 +110,30 @@ A name that needs a paragraph of explanation is a defect, not a documentation ga
 
 **`site_entities.canonical_table` was deleted.** It was fabricated as the entity id plus `s`, which named no table: `item-categorys`, `stat-types`, `status-effects` against real tables `item_categories`, `stat_types` and `status_effects`. Nothing read it, and the descriptor already declares the real value, so a correct column would have duplicated the source of truth.
 
+### A field named for graphs holds the wrong kind of graph
+
+`Ardenfall/CharacterData.cs` declares `characterGraphs`, a list of `CharacterGraphContainer`. The name and the container type both read as though a character owns the dialogue they speak, and a first implementation of the dialogue slice took exactly that reading.
+
+The reading is wrong. A live probe measured 196 containers across 113 characters, of which **195 hold a plain `ObjectFlowGraph`** and exactly **one** holds a `DialogFlowGraph`. The field holds character behaviour. Extracting from it produced a single greeting for the whole game.
+
+Authored dialogue hangs off `CharacterQuestObject.dialogGraph.flowGraph`, where 82 of 88 quest character objects carry a real `DialogFlowGraph`. That is what the shipped slice reads, and the same probe shape now yields 484 lines.
+
+The cost was a full slice built and reverted. What would have prevented it is cheap: count the concrete runtime types behind a field before believing its declared type.
+
+### Two node kinds expose the same text through different accessors
+
+`GreetingFlowNode` and `TopicFlowNode` both hold a private `statement` field, and a walk naturally treats them as one shape. They are not.
+
+`GreetingFlowNode.EditorGetStatement()` is public and pure. `TopicFlowNode` has no such method. Its only public path is the explicit `ITopicNode.GetTopicStatements()`, which consults live graph state through `IsNodeChoiceEntered` and `ApplyModifiers`, and at line 88 prefixes the result with `[Debug]` or swaps in a failed-check alternative. No asset-time walk can satisfy it, and its output is not the authored text.
+
+The extractor therefore calls the public accessor for greetings and reads the authored `statement` field directly for topics, which is also the text a reader wants: source prose before any runtime rewrite.
+
+An earlier probe missed this and called `EditorGetStatement` on both. Topics silently returned nothing, so the probe reported 292 authored lines when the real figure was 484. A missing method on one branch of a walk reads exactly like an absence of data.
+
+### `Statement.id` and `TopicFlowNode.topicTag` are never authored
+
+Confirmed against the live game and unchanged. `Statement.id` is blank on all 1,131 greeting and topic lines, because `TopicFlowNode` assigns it at runtime from the graph name and node id. `topicTag` is blank on all 488 topics. Neither is extracted.
+
 ## Recorded, not defects
 
 **`variant_of` is accurate.** `Ardenfall/Item/ItemData.cs:100-109` returns the concrete runtime class, and a variant is this project's own term for exactly that, defined in `schemas/variant.schema.json` and carried through `item_variants`, `variantId` and the `/items/variant` routes. The game class is recorded explicitly as `unityType`, so the provenance is stated rather than implied. 1,273 edges.

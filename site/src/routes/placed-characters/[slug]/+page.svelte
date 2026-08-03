@@ -2,6 +2,7 @@
   import BackLink from "$lib/components/navigation/BackLink.svelte";
   import PlacedCharacterDetail from "$lib/components/placed-characters/PlacedCharacterDetail.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
+  import DialogueSection from "$lib/components/content/DialogueSection.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -25,6 +26,7 @@
 <h1 class="mt-2 text-2xl font-bold">{character.name}</h1>
 
 <PlacedCharacterDetail presentation={character} />
+<DialogueSection groups={character.dialogue} heading="Dialogue" />
 
 <div class="mt-6 grid gap-6">
   {#each data.relationships as section (section.id)}

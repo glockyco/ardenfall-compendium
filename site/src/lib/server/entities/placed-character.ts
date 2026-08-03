@@ -1,3 +1,4 @@
+import { getCharacterDialogue, type DialogueGroup } from "./dialogue";
 import { disambiguateLabels } from "../disambiguate-labels";
 import { all, get } from "../db";
 import { isStringArray, parseGeneratedJson, validateRenderContext } from "../json";
@@ -53,6 +54,7 @@ export interface PlacedCharacterPresentationRow {
   elevation: number;
   mapHref: string | null;
   locations: PlacedCharacterLocationLink[];
+  dialogue: DialogueGroup[];
 }
 
 const displayMapLabel = (mapId: string | null): string => {
@@ -133,5 +135,6 @@ export const getPlacedCharacterPresentation = (
     elevation: row.elevation,
     mapHref: getMapHref("npc", row.id),
     locations,
+    dialogue: getCharacterDialogue(row.id),
   };
 };

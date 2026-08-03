@@ -78,6 +78,7 @@ function envelope(): SnapshotEnvelope<QuestSnapshotFields> {
               objectName: "Giver",
               category: "Giver",
               characterRef,
+              dialogue: [],
             },
           ],
           journalEntries: [{ objectGameId: 9, objectName: "Journal", journalEntry: "Entry" }],

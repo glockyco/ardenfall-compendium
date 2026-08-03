@@ -124,6 +124,21 @@ function seedDatabase(): Database {
   return db;
 }
 
+/** Flattens a stored rich-text document back to its words, so a test can assert on prose. */
+function plainText(json: string): string {
+  const parsed: unknown = JSON.parse(json);
+  if (typeof parsed !== "object" || parsed === null || !("nodes" in parsed)) return "";
+  const { nodes } = parsed;
+  if (!Array.isArray(nodes)) return "";
+  return nodes
+    .map((node: unknown) =>
+      typeof node === "object" && node !== null && "text" in node && typeof node.text === "string"
+        ? node.text
+        : "",
+    )
+    .join("");
+}
+
 describe("quest read models", () => {
   it("emits a page, ordered presentation, and all quest edge kinds", () => {
     const db = seedDatabase();
@@ -223,6 +238,84 @@ describe("quest read models", () => {
     expect(
       db
         .query(`SELECT COUNT(*) AS count FROM entity_edges WHERE predicate = 'features_character'`)
+        .get(),
+    ).toEqual({ count: 0 });
+    db.close();
+  });
+
+  it("orders dialogue with greetings first, then importance, then walk order", () => {
+    const db = seedDatabase();
+    const insert = db.prepare(
+      `INSERT INTO quest_character_dialogue (
+         id, quest_id, object_ordinal, line_ordinal, kind, text, importance
+       ) VALUES (?, ?, 0, ?, ?, ?, ?)`,
+    );
+    // Deliberately inserted out of presentation order, and with an importance tie
+    // that only walk order can break.
+    insert.run("d0", questId, 0, "topic", "Low topic", 1);
+    insert.run("d1", questId, 1, "topic", "Tied later", 5);
+    insert.run("d2", questId, 2, "greeting", "Spoken first", 0);
+    insert.run("d3", questId, 3, "topic", "Tied earlier", 5);
+
+    emitQuestReadModels(db);
+
+    expect(
+      db
+        .query<{ kind: string; text_json: string }, []>(
+          `SELECT kind, text_json FROM quest_character_dialogue_rows ORDER BY ordinal`,
+        )
+        .all()
+        .map((row) => ({ kind: row.kind, text: plainText(row.text_json) })),
+    ).toEqual([
+      { kind: "greeting", text: "Spoken first" },
+      { kind: "topic", text: "Tied later" },
+      { kind: "topic", text: "Tied earlier" },
+      { kind: "topic", text: "Low topic" },
+    ]);
+    db.close();
+  });
+
+  it("emits one dialogue edge per character even when a quest names them twice", () => {
+    const db = seedDatabase();
+    // A second quest object naming the same character: real quests do this.
+    db.prepare(
+      `INSERT INTO quest_characters (
+         id, quest_id, object_ordinal, object_game_id, object_name, category, character_ref_json
+       ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    ).run("character-2", questId, 1, 8, "Giver again", null, JSON.stringify(recordRef));
+    const insert = db.prepare(
+      `INSERT INTO quest_character_dialogue (
+         id, quest_id, object_ordinal, line_ordinal, kind, text, importance
+       ) VALUES (?, ?, ?, 0, 'greeting', ?, 0)`,
+    );
+    insert.run("d0", questId, 0, "From the first object");
+    insert.run("d1", questId, 1, "From the second object");
+
+    emitQuestReadModels(db);
+
+    expect(
+      db
+        .query(`SELECT COUNT(*) AS count FROM entity_edges WHERE predicate = 'speaks_about_quest'`)
+        .get(),
+    ).toEqual({ count: 1 });
+    // Both objects still contribute their lines.
+    expect(db.query(`SELECT COUNT(*) AS count FROM quest_character_dialogue_rows`).get()).toEqual({
+      count: 2,
+    });
+    db.close();
+  });
+
+  it("writes no dialogue row and no edge for a character without lines", () => {
+    const db = seedDatabase();
+
+    emitQuestReadModels(db);
+
+    expect(db.query(`SELECT COUNT(*) AS count FROM quest_character_dialogue_rows`).get()).toEqual({
+      count: 0,
+    });
+    expect(
+      db
+        .query(`SELECT COUNT(*) AS count FROM entity_edges WHERE predicate = 'speaks_about_quest'`)
         .get(),
     ).toEqual({ count: 0 });
     db.close();

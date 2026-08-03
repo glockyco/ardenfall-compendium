@@ -16,13 +16,13 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
     schemaVersion: 1,
     rows: [
       {
-        id: "instances;npcs;4b1c9e07a2d3418fb6ce5710dd93a284",
+        id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
         fields: {
-          id: "instances;npcs;4b1c9e07a2d3418fb6ce5710dd93a284",
+          id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
           recordRef: {
             kind: "record",
             table: "world",
-            subtable: "npcs",
+            subtable: "characters",
             id: "00000000000000000000000000000001",
           },
           friendlyName: "Grainery Owner",
@@ -32,13 +32,13 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
         },
       },
       {
-        id: "instances;npcs;9f3a2c58e71d4b6a83cf10924eab7d55",
+        id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
         fields: {
-          id: "instances;npcs;9f3a2c58e71d4b6a83cf10924eab7d55",
+          id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
           recordRef: {
             kind: "record",
             table: "world",
-            subtable: "npcs",
+            subtable: "characters",
             id: "00000000000000000000000000000002",
           },
           friendlyName: "Fishermen",
@@ -48,13 +48,13 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
         },
       },
       {
-        id: "instances;npcs;c7e08b41d9a24f37b15ce6208af391dc",
+        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
         fields: {
-          id: "instances;npcs;c7e08b41d9a24f37b15ce6208af391dc",
+          id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
           recordRef: {
             kind: "record",
             table: "world",
-            subtable: "npcs",
+            subtable: "characters",
             id: "00000000000000000000000000000003",
           },
           friendlyName: "Grain Thief",
@@ -64,13 +64,13 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
         },
       },
       {
-        id: "instances;npcs;2d6f47b30c8e41a59fbd73e15c0a869b",
+        id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
         fields: {
-          id: "instances;npcs;2d6f47b30c8e41a59fbd73e15c0a869b",
+          id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
           recordRef: {
             kind: "record",
             table: "world",
-            subtable: "npcs",
+            subtable: "characters",
             id: "00000000000000000000000000000004",
           },
           friendlyName: null,
@@ -130,9 +130,9 @@ describe("NPC pipeline", () => {
     expect(db.query("SELECT COUNT(*) AS count FROM npcs").get()).toEqual({ count: 4 });
     expect(db.query("SELECT COUNT(*) AS count FROM npc_location_refs").get()).toEqual({ count: 3 });
     expect(db.query("SELECT id FROM npc_location_refs ORDER BY id").all()).toEqual([
-      { id: "instances;npcs;4b1c9e07a2d3418fb6ce5710dd93a284:location:0" },
-      { id: "instances;npcs;9f3a2c58e71d4b6a83cf10924eab7d55:location:0" },
-      { id: "instances;npcs;9f3a2c58e71d4b6a83cf10924eab7d55:location:1" },
+      { id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284:location:0" },
+      { id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55:location:0" },
+      { id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55:location:1" },
     ]);
     db.close();
   });
@@ -155,7 +155,7 @@ describe("NPC pipeline", () => {
       >(
         "SELECT has_page, label, route_path, short_id FROM entity_nodes WHERE entity_type = ? AND entity_id = ?",
       )
-      .get("npc", "instances;npcs;4b1c9e07a2d3418fb6ce5710dd93a284");
+      .get("npc", "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284");
     expect(node).toEqual({
       has_page: 1,
       label: "Grainery Owner",
@@ -166,7 +166,7 @@ describe("NPC pipeline", () => {
       .query<{ has_page: number; label: string | null; route_path: string }, [string, string]>(
         "SELECT has_page, label, route_path FROM entity_nodes WHERE entity_type = ? AND entity_id = ?",
       )
-      .get("npc", "instances;npcs;2d6f47b30c8e41a59fbd73e15c0a869b");
+      .get("npc", "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b");
     expect(namelessNode).toEqual({
       has_page: 1,
       label: "Unnamed character",
@@ -206,9 +206,9 @@ describe("NPC pipeline", () => {
                   location_ids_json
            FROM npc_presentation_rows WHERE id = ?`,
         )
-        .get("instances;npcs;4b1c9e07a2d3418fb6ce5710dd93a284"),
+        .get("instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284"),
     ).toEqual({
-      id: "instances;npcs;4b1c9e07a2d3418fb6ce5710dd93a284",
+      id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
       name: "Grainery Owner",
       render_context: "placed-character-presentation-v1",
       map_id: "ardenfall",
@@ -239,24 +239,24 @@ describe("NPC pipeline", () => {
     ).toEqual([
       {
         source_type: "npc",
-        source_id: "instances;npcs;4b1c9e07a2d3418fb6ce5710dd93a284",
+        source_id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
         target_type: "location",
         target_id: "town",
-        edge_id: "instances;npcs;4b1c9e07a2d3418fb6ce5710dd93a284:found_at:location:town",
+        edge_id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284:found_at:location:town",
       },
       {
         source_type: "npc",
-        source_id: "instances;npcs;9f3a2c58e71d4b6a83cf10924eab7d55",
+        source_id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
         target_type: "location",
         target_id: "cave",
-        edge_id: "instances;npcs;9f3a2c58e71d4b6a83cf10924eab7d55:found_at:location:cave",
+        edge_id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55:found_at:location:cave",
       },
       {
         source_type: "npc",
-        source_id: "instances;npcs;9f3a2c58e71d4b6a83cf10924eab7d55",
+        source_id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
         target_type: "location",
         target_id: "town",
-        edge_id: "instances;npcs;9f3a2c58e71d4b6a83cf10924eab7d55:found_at:location:town",
+        edge_id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55:found_at:location:town",
       },
     ]);
     const evidence = db
@@ -272,7 +272,7 @@ describe("NPC pipeline", () => {
         containmentTest: "LocationAsset.IsInside",
         containmentSource: "game's own test",
       });
-      expect(entry.npcRecordId).toMatch(/^instances;npcs;[0-9a-f]{32}$/);
+      expect(entry.npcRecordId).toMatch(/^instances;characters;[0-9a-f]{32}$/);
     }
     db.close();
   });

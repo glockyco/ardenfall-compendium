@@ -1,3 +1,4 @@
+import { getQuestDialogue, type DialogueGroup } from "./dialogue";
 import { disambiguateLabels } from "../disambiguate-labels";
 import { all, get } from "../db";
 import { isFiniteNumber, isRecord, parseGeneratedJson, validateRenderContext } from "../json";
@@ -87,6 +88,7 @@ export interface QuestPresentationRow {
   phases: QuestPhase[];
   rewards: QuestReward[];
   routePath: string;
+  dialogue: DialogueGroup[];
 }
 
 const isNullableString = (value: unknown): value is string | null =>
@@ -206,5 +208,6 @@ export const getQuestPresentation = (slug: string): QuestPresentationRow | undef
       isQuestRewardArray,
     ),
     routePath: row.route_path,
+    dialogue: getQuestDialogue(row.id),
   };
 };

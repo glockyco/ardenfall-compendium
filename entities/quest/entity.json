@@ -2,17 +2,29 @@
   "$schema": "../../schemas/entity.schema.json",
   "id": "quest",
   "kind": "definition",
-  "label": { "singular": "Quest", "plural": "Quests" },
+  "label": {
+    "singular": "Quest",
+    "plural": "Quests"
+  },
   "extraction": {
     "source": "namedAsset",
     "root": "Resources.FindObjectsOfTypeAll<QuestData>",
     "walker": "QuestExtractor"
   },
   "canonicalTable": "quests",
-  "presentationContext": { "renderContext": "quest-presentation-v1" },
-  "site": { "route": "/quests" },
+  "presentationContext": {
+    "renderContext": "quest-presentation-v1"
+  },
+  "site": {
+    "route": "/quests"
+  },
   "fields": [
-    { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
+    {
+      "name": "id",
+      "type": "id",
+      "from": "id",
+      "missingPolicy": "fatal"
+    },
     {
       "name": "questGameId",
       "type": "string",
@@ -91,8 +103,8 @@
       "from": "objects.CharacterQuestObject",
       "missingPolicy": "optional-empty",
       "storage": "unstored",
-      "reason": "Expanded into quest_characters rows.",
-      "projects": "quest_characters"
+      "reason": "Expanded into quest_characters rows, and their attached dialogue into quest_character_dialogue rows.",
+      "projects": ["quest_characters", "quest_character_dialogue"]
     },
     {
       "name": "journalEntries",

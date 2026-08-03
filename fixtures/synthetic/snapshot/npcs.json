@@ -3,18 +3,22 @@
   "schemaVersion": 1,
   "rows": [
     {
-      "id": "instances;npcs;4b1c9e07a2d3418fb6ce5710dd93a284",
+      "id": "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
       "fields": {
-        "id": "instances;npcs;4b1c9e07a2d3418fb6ce5710dd93a284",
+        "id": "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
         "recordRef": {
           "kind": "record",
           "table": "instances",
-          "subtable": "npcs",
+          "subtable": "characters",
           "id": "4b1c9e07a2d3418fb6ce5710dd93a284",
           "recordType": "NPCRecord"
         },
         "friendlyName": "Grainery Owner",
-        "spawnPoint": { "x": 10, "y": 2, "z": -20 },
+        "spawnPoint": {
+          "x": 10,
+          "y": 2,
+          "z": -20
+        },
         "mapId": "ardenfall",
         "containingLocationRefs": [
           {
@@ -26,18 +30,22 @@
       }
     },
     {
-      "id": "instances;npcs;9f3a2c58e71d4b6a83cf10924eab7d55",
+      "id": "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
       "fields": {
-        "id": "instances;npcs;9f3a2c58e71d4b6a83cf10924eab7d55",
+        "id": "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
         "recordRef": {
           "kind": "record",
           "table": "instances",
-          "subtable": "npcs",
+          "subtable": "characters",
           "id": "9f3a2c58e71d4b6a83cf10924eab7d55",
           "recordType": "NPCRecord"
         },
         "friendlyName": "Fishermen",
-        "spawnPoint": { "x": 12, "y": 2, "z": -22 },
+        "spawnPoint": {
+          "x": 12,
+          "y": 2,
+          "z": -22
+        },
         "mapId": "ardenfall",
         "containingLocationRefs": [
           {
@@ -54,35 +62,43 @@
       }
     },
     {
-      "id": "instances;npcs;c7e08b41d9a24f37b15ce6208af391dc",
+      "id": "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
       "fields": {
-        "id": "instances;npcs;c7e08b41d9a24f37b15ce6208af391dc",
+        "id": "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
         "recordRef": {
           "kind": "record",
           "table": "instances",
-          "subtable": "npcs",
+          "subtable": "characters",
           "id": "c7e08b41d9a24f37b15ce6208af391dc",
           "recordType": "NPCRecord"
         },
         "friendlyName": "Grain Thief",
-        "spawnPoint": { "x": 40, "y": 2, "z": -50 },
+        "spawnPoint": {
+          "x": 40,
+          "y": 2,
+          "z": -50
+        },
         "mapId": "ardenfall",
         "containingLocationRefs": []
       }
     },
     {
-      "id": "instances;npcs;2d6f47b30c8e41a59fbd73e15c0a869b",
+      "id": "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
       "fields": {
-        "id": "instances;npcs;2d6f47b30c8e41a59fbd73e15c0a869b",
+        "id": "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
         "recordRef": {
           "kind": "record",
           "table": "instances",
-          "subtable": "npcs",
+          "subtable": "characters",
           "id": "2d6f47b30c8e41a59fbd73e15c0a869b",
           "recordType": "NPCRecord"
         },
         "friendlyName": null,
-        "spawnPoint": { "x": 50, "y": 2, "z": -60 },
+        "spawnPoint": {
+          "x": 50,
+          "y": 2,
+          "z": -60
+        },
         "mapId": "ardenfall",
         "containingLocationRefs": []
       },
@@ -91,7 +107,7 @@
           "severity": "diagnostic",
           "code": "npcFriendlyNameMissing",
           "field": "friendlyName",
-          "message": "NPCRecord 'instances;npcs;2d6f47b30c8e41a59fbd73e15c0a869b' has no friendlyName"
+          "message": "NPCRecord 'instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b' has no friendlyName"
         }
       ]
     }

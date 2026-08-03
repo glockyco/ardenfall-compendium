@@ -29,6 +29,18 @@ describe("placed-character and portal site read models", () => {
     await withDatabase(
       "ardenfall-site-placed-character-models-",
       `
+        CREATE TABLE quest_character_dialogue_rows (
+          id TEXT PRIMARY KEY,
+          quest_id TEXT NOT NULL,
+          quest_label TEXT NOT NULL,
+          quest_route TEXT,
+          character_id TEXT NOT NULL,
+          character_label TEXT NOT NULL,
+          character_route TEXT,
+          ordinal INTEGER NOT NULL,
+          kind TEXT NOT NULL,
+          text_json TEXT NOT NULL
+        );
         CREATE TABLE npc_presentation_rows (
           id TEXT PRIMARY KEY, name TEXT NOT NULL, render_context TEXT NOT NULL,
           map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,
@@ -69,6 +81,18 @@ describe("placed-character and portal site read models", () => {
     await withDatabase(
       "ardenfall-site-placed-character-detail-",
       `
+        CREATE TABLE quest_character_dialogue_rows (
+          id TEXT PRIMARY KEY,
+          quest_id TEXT NOT NULL,
+          quest_label TEXT NOT NULL,
+          quest_route TEXT,
+          character_id TEXT NOT NULL,
+          character_label TEXT NOT NULL,
+          character_route TEXT,
+          ordinal INTEGER NOT NULL,
+          kind TEXT NOT NULL,
+          text_json TEXT NOT NULL
+        );
         CREATE TABLE npc_presentation_rows (
           id TEXT PRIMARY KEY, name TEXT NOT NULL, render_context TEXT NOT NULL,
           map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,

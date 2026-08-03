@@ -54,7 +54,7 @@ export interface FieldSpec {
   missingPolicy?: "fatal" | "diagnostic" | "optional-empty";
   storage?: "column" | "unstored";
   column?: string;
-  projects?: string;
+  projects?: string | string[];
   reason?: string;
   label?: string;
   description?: string;
@@ -406,11 +406,19 @@ export interface QuestPhaseSnapshot {
   objectives: QuestObjectiveSnapshot[];
 }
 
+export interface QuestCharacterDialogueSnapshot {
+  lineOrdinal: number;
+  kind: string;
+  text: string;
+  importance: number;
+}
+
 export interface QuestCharacterSnapshot {
   objectGameId: number;
   objectName: string | null;
   category: string | null;
   characterRef: SnapshotRef;
+  dialogue: QuestCharacterDialogueSnapshot[];
 }
 
 export interface QuestJournalSnapshot {

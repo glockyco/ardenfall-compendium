@@ -71,6 +71,14 @@ export const relationshipRegistry = {
     inverseTitle: "Appears in quests",
     sortOrder: 110,
   },
+  speaks_about_quest: {
+    // Both pages already render the dialogue itself, with links in both directions.
+    // The edge exists for graph connectivity; a bare list beside the real thing
+    // would be a second section under the same heading.
+    forwardTitle: null,
+    inverseTitle: null,
+    sortOrder: 115,
+  },
   rewards_faction_reputation: {
     forwardTitle: "Faction reputation",
     inverseTitle: "Reputation from quests",

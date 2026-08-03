@@ -157,6 +157,78 @@ public sealed class QuestExtractorTests
         Assert.Equal("diagnostic", diagnostic.Severity);
     }
 
+    [Fact]
+    public void EmitsAuthoredDialogueInWalkOrder()
+    {
+        var source = new FakeQuestAssetSource(new[]
+        {
+            BuildQuest(characters: new[]
+            {
+                CharacterWithDialogue(new[]
+                {
+                    new QuestCharacterDialogueAsset(0, "greeting", "You reek of booze!", 3),
+                    new QuestCharacterDialogueAsset(2, "topic", "Who do you guard this port for?", 10),
+                }),
+            }),
+        });
+        var extractor = new QuestExtractor(source);
+
+        var row = Assert.Single(extractor.Walk());
+        var dialogue = Assert.Single(row.Fields.Characters).Dialogue;
+
+        Assert.Equal(new[] { 0, 2 }, dialogue.Select(line => line.LineOrdinal));
+        Assert.Equal(new[] { "greeting", "topic" }, dialogue.Select(line => line.Kind));
+        Assert.Equal("You reek of booze!", dialogue[0].Text);
+        Assert.Equal(10, dialogue[1].Importance);
+        Assert.Empty(extractor.Diagnostics);
+    }
+
+    [Fact]
+    public void CharacterObjectWithoutDialogueEmitsEmptyListAndNoDiagnostic()
+    {
+        var source = new FakeQuestAssetSource(new[]
+        {
+            BuildQuest(characters: new[] { CharacterWithDialogue(null, graphWalked: false) }),
+        });
+        var extractor = new QuestExtractor(source);
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Empty(Assert.Single(row.Fields.Characters).Dialogue);
+        Assert.Empty(extractor.Diagnostics);
+    }
+
+    [Fact]
+    public void WalkedDialogueGraphYieldingNoLinesEmitsDiagnostic()
+    {
+        var source = new FakeQuestAssetSource(new[]
+        {
+            BuildQuest(characters: new[]
+            {
+                CharacterWithDialogue(new QuestCharacterDialogueAsset[0], graphWalked: true),
+            }),
+        });
+        var extractor = new QuestExtractor(source);
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Empty(Assert.Single(row.Fields.Characters).Dialogue);
+        var diagnostic = Assert.Single(extractor.Diagnostics, item => item.Code == "questCharacterDialogueGraphEmpty");
+        Assert.Equal("diagnostic", diagnostic.Severity);
+        Assert.Equal("characters.dialogue", diagnostic.Field);
+    }
+
+    private static QuestCharacterAsset CharacterWithDialogue(
+        IReadOnlyList<QuestCharacterDialogueAsset>? dialogue,
+        bool graphWalked = true) =>
+        new(
+            3,
+            "Quest giver",
+            "Character",
+            SnapshotRef.Record("instances", "characters", "0123456789abcdef0123456789abcdef", "CharacterRecord"),
+            Dialogue: dialogue,
+            DialogueGraphWalked: graphWalked);
+
     private static QuestAsset BuildQuest(
         IReadOnlyList<QuestPhaseAsset>? phases = null,
         IReadOnlyList<QuestCharacterAsset>? characters = null,

@@ -536,10 +536,12 @@ Spell effects reach 25 distinct status effects through 27 references, and 13 of 
 
 ### Slice 12 — Quests and graph-heavy data
 
-**Status:** planned
+**Status:** delivered
 **Spec coverage:** amendment §18; investment-priorities §1.
 
-**Delivers:** 38 `QuestData` pages with `namedAsset` identity, typed root and child tables for phases, objectives, characters, journal entries, and rewards, plus public relationship-graph links to characters, factions, and items. Odin flow graphs and coordinate-only location objects remain out of scope.
+**Delivered:** 38 `QuestData` pages with `namedAsset` identity, typed root and child tables for phases, objectives, characters, journal entries, and rewards, plus public relationship-graph links to characters, factions, and items. Coordinate-only location objects remain out of scope.
+
+Dialogue came in with the same slice, because the flow graphs turned out to hang off quest character objects rather than characters. 484 authored lines, 292 greetings and 192 topics, reach 26 quest pages and 58 character pages, each page linking to the other. Scene-side dialogue on `SimpleDialogInteractable` stays out of scope: it measures 0 at rest and needs the 683-cell streamed traversal.
 
 ### Slice 13 — Versioning, diff, and snapshot archive
 

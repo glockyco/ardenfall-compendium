@@ -23,11 +23,18 @@ public sealed record QuestPhaseSnapshot(
     [property: JsonProperty("completedJournalEntry")] string? CompletedJournalEntry,
     [property: JsonProperty("objectives")] IReadOnlyList<QuestObjectiveSnapshot> Objectives);
 
+public sealed record QuestCharacterDialogueSnapshot(
+    [property: JsonProperty("lineOrdinal")] int LineOrdinal,
+    [property: JsonProperty("kind")] string Kind,
+    [property: JsonProperty("text")] string Text,
+    [property: JsonProperty("importance")] int Importance);
+
 public sealed record QuestCharacterSnapshot(
     [property: JsonProperty("objectGameId")] int ObjectGameId,
     [property: JsonProperty("objectName")] string? ObjectName,
     [property: JsonProperty("category")] string? Category,
-    [property: JsonProperty("characterRef")] SnapshotRef CharacterRef);
+    [property: JsonProperty("characterRef")] SnapshotRef CharacterRef,
+    [property: JsonProperty("dialogue")] IReadOnlyList<QuestCharacterDialogueSnapshot> Dialogue);
 
 public sealed record QuestJournalSnapshot(
     [property: JsonProperty("objectGameId")] int ObjectGameId,

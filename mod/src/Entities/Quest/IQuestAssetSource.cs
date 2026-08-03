@@ -3,12 +3,20 @@ using ArdenfallCompendium.Dtos;
 
 namespace ArdenfallCompendium.Entities.Quest;
 
+public sealed record QuestCharacterDialogueAsset(
+    int LineOrdinal,
+    string Kind,
+    string Text,
+    int Importance);
+
 public sealed record QuestCharacterAsset(
     int ObjectGameId,
     string? ObjectName,
     string? Category,
     SnapshotRef? CharacterRef,
-    bool CharacterRefResolved = true);
+    bool CharacterRefResolved = true,
+    IReadOnlyList<QuestCharacterDialogueAsset>? Dialogue = null,
+    bool DialogueGraphWalked = false);
 
 public sealed record QuestJournalAsset(
     int ObjectGameId,

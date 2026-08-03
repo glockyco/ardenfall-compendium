@@ -89,7 +89,7 @@ The item audit also records merchant stock, NPC inventory, enemy inventory, ques
 
 ### Odin graphs and streamed scenes
 
-Odin graph data is present after the game loads it. Reflection over serialized fields alone does not prove that this data is absent [obtainability]. `QuestData` holds phases, objectives, events, rewards, journal text, graph objects, and character or location quest objects. `AddItemListNode` and `ItemsQuestReward` hold item grants [scene]. `DialogFlowGraph` assets attach to characters and quests. Dialog graph references can name NPCs, players, custom targets, quest objects, and `CharacterRecord` targets [scene].
+Odin graph data is present after the game loads it. Reflection over serialized fields alone does not prove that this data is absent [obtainability]. `QuestData` holds phases, objectives, events, rewards, journal text, graph objects, and character or location quest objects. `AddItemListNode` and `ItemsQuestReward` hold item grants [scene]. `DialogFlowGraph` assets attach to quest character objects and to scene interactables, not to `CharacterData` [probe]. Dialog graph references can name NPCs, players, custom targets, quest objects, and `CharacterRecord` targets [scene].
 
 Dialogue and quest extraction must preserve authored branches and conditions. It must not simulate dialogue choices, quest progress, loot rolls, or AI behavior. Runtime substitutions, player names, weather, and blackboard values are not authored facts [scene].
 
@@ -167,7 +167,9 @@ The accessor rules remain part of the field cost. `CharacterRecord.StoredCharact
 
 Reader value follows connectivity, not candidate size.
 
-1. **Dialogue graphs rank first.** They can name characters and placed characters, which account for 526 pages with no inbound link [survey]. They can also connect quests through attached quest data. Their cost is medium to high because authored branches and conditions must remain intact [scene].
+1. **Dialogue is extracted, and it came from a different owner than this audit assumed.** Dialogue does not hang off characters. `CharacterData.characterGraphs` holds character behaviour: a live probe measured 195 of its 196 containers as plain `ObjectFlowGraph` and exactly one `DialogFlowGraph`. The authored dialogue hangs off `CharacterQuestObject.dialogGraph.flowGraph`, on 82 of 88 quest character objects. The shipped export carries **484 lines, 292 greetings and 192 topics, across 26 quests and 58 speakers**, with 78 `speaks_about_quest` edges [probe].
+
+   The scene-side half is not extracted. `SimpleDialogInteractable.dialogs` measures 0 at rest because those components live in streamed cells, so that half now sits behind the same 683-cell traversal ranked fourth below. Free-standing dialogue on characters who appear in no quest stays unreachable with it.
 2. **Quest definitions rank second.** A live probe counts **38** quests, not the 13 the earlier documents record. 13 is the number registered in `BuiltLookupTable`, so identity is `namedAsset` rather than `lookupAsset`. All 88 character quest objects resolve to placed-character record ids, which is the link the first item also chases [probe].
 3. **Authored item provenance ranks third.** The 728 item pages without an inbound link need loot lists, recipes, merchants, or quests. `ItemListAsset` has 348 measured candidates, and its nested groups can connect many currently isolated items [survey, obtainability].
 4. **World scene enumeration ranks fourth.** It can add found-in and obtainability links for containers, spawners, and pickups, but it requires a traversal of 683 streamed cells and explicit persistence handling [obtainability, tile].

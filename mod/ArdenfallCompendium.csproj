@@ -22,6 +22,9 @@
     <Reference Include="UnityEngine.UI">               <HintPath>libs\UnityEngine.UI.dll</HintPath>               <Private>false</Private> </Reference>
     <Reference Include="Sirenix.OdinInspector.Attributes"><HintPath>libs\Sirenix.OdinInspector.Attributes.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Sirenix.Serialization">       <HintPath>libs\Sirenix.Serialization.dll</HintPath>       <Private>false</Private> </Reference>
+    <Reference Include="FlowCanvas">                  <HintPath>libs\FlowCanvas.dll</HintPath>                  <Private>false</Private> </Reference>
+    <Reference Include="NodeCanvas">                  <HintPath>libs\NodeCanvas.dll</HintPath>                  <Private>false</Private> </Reference>
+    <Reference Include="ParadoxNotion">               <HintPath>libs\ParadoxNotion.dll</HintPath>               <Private>false</Private> </Reference>
     <Reference Include="HotRepl.Core">                <HintPath>libs\HotRepl.Core.dll</HintPath>                <Private>false</Private> </Reference>
   </ItemGroup>
 </Project>

@@ -3,6 +3,7 @@
   import EntityDetailHeader from "$lib/components/EntityDetailHeader.svelte";
   import QuestPhaseList from "$lib/components/quests/QuestPhaseList.svelte";
   import QuestRewardList from "$lib/components/quests/QuestRewardList.svelte";
+  import DialogueSection from "$lib/components/content/DialogueSection.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
 
@@ -88,6 +89,7 @@
 
   <QuestPhaseList phases={quest.phases} />
   <QuestRewardList rewards={quest.rewards} />
+  <DialogueSection groups={quest.dialogue} heading="Dialogue" />
 
   {#each data.relationships as section (section.id)}
     <RelationshipSection {section} />

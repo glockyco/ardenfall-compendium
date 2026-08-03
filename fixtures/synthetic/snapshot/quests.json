@@ -74,9 +74,62 @@
               "kind": "record",
               "table": "instances",
               "subtable": "characters",
-              "id": "11111111111111111111111111111111",
+              "id": "4b1c9e07a2d3418fb6ce5710dd93a284",
               "recordType": "CharacterRecord"
-            }
+            },
+            "dialogue": [
+              {
+                "lineOrdinal": 0,
+                "kind": "topic",
+                "text": "Who do you guard this port for?",
+                "importance": 5
+              },
+              {
+                "lineOrdinal": 1,
+                "kind": "greeting",
+                "text": "You reek of booze, <color=#ff0000>friend</color>.",
+                "importance": 0
+              },
+              {
+                "lineOrdinal": 2,
+                "kind": "topic",
+                "text": "How long has the port been closed?",
+                "importance": 5
+              }
+            ]
+          },
+          {
+            "objectGameId": 8,
+            "objectName": null,
+            "category": null,
+            "characterRef": {
+              "kind": "record",
+              "table": "instances",
+              "subtable": "characters",
+              "id": "4b1c9e07a2d3418fb6ce5710dd93a284",
+              "recordType": "CharacterRecord"
+            },
+            "dialogue": [
+              {
+                "lineOrdinal": 0,
+                "kind": "greeting",
+                "text": "Back again?",
+                "importance": 2
+              }
+            ]
+          },
+          {
+            "objectGameId": 9,
+            "objectName": "Silent watcher",
+            "category": "Character",
+            "characterRef": {
+              "kind": "record",
+              "table": "instances",
+              "subtable": "characters",
+              "id": "9f3a2c58e71d4b6a83cf10924eab7d55",
+              "recordType": "CharacterRecord"
+            },
+            "dialogue": []
           }
         ],
         "journalEntries": [

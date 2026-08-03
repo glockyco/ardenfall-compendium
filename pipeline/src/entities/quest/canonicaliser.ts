@@ -114,6 +114,11 @@ export function canonicaliseQuests(db: Database, envelope: SnapshotEnvelope): vo
        id, quest_id, object_ordinal, object_game_id, object_name, category, character_ref_json
      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
+  const dialogueInsert = db.prepare(
+    `INSERT INTO quest_character_dialogue (
+       id, quest_id, object_ordinal, line_ordinal, kind, text, importance
+     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  );
   const journalInsert = db.prepare(
     `INSERT INTO quest_journal_entries (
        id, quest_id, object_ordinal, object_game_id, object_name, journal_entry
@@ -192,6 +197,20 @@ export function canonicaliseQuests(db: Database, envelope: SnapshotEnvelope): vo
           character.category ?? null,
           JSON.stringify(character.characterRef),
         );
+
+        // The mod emits graph walk order. Sorting is the read model's job, so the
+        // canonical row keeps line_ordinal exactly as the walk produced it.
+        for (const line of character.dialogue ?? []) {
+          dialogueInsert.run(
+            `${row.id}:character:${objectOrdinal}:dialogue:${line.lineOrdinal}`,
+            row.id,
+            objectOrdinal,
+            line.lineOrdinal,
+            line.kind,
+            line.text,
+            line.importance,
+          );
+        }
       }
 
       // Journal objects use objectGameId because it is their intrinsic key.

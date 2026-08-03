@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
@@ -88,11 +89,29 @@ public sealed class QuestExtractor : WalkerBase<QuestSnapshotRow>
                             Message = $"QuestData '{id}' character object {character.ObjectGameId} has an unresolved character record reference",
                         });
                     }
+                    var dialogue = character.Dialogue ?? new List<QuestCharacterDialogueAsset>();
+                    if (character.DialogueGraphWalked && dialogue.Count == 0)
+                    {
+                        Diagnostics.Add(new Diagnostic
+                        {
+                            Severity = "diagnostic",
+                            Code = "questCharacterDialogueGraphEmpty",
+                            Field = "characters.dialogue",
+                            Message = $"QuestData '{id}' character object {character.ObjectGameId} owns a dialogue graph that yielded no authored greeting or topic",
+                        });
+                    }
                     characters.Add(new QuestCharacterSnapshot(
                         character.ObjectGameId,
                         character.ObjectName,
                         character.Category,
-                        characterRef));
+                        characterRef,
+                        dialogue
+                            .Select(line => new QuestCharacterDialogueSnapshot(
+                                line.LineOrdinal,
+                                line.Kind,
+                                line.Text,
+                                line.Importance))
+                            .ToList()));
                 }
 
                 return new QuestSnapshotRow
