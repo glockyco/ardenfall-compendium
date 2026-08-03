@@ -489,7 +489,9 @@ So the next connective work is no longer a field, it is an entity:
 6. **Spells to status effects.** The 116 unreachable status effects are referenced from the Odin-serialised effect graph on `SpellData`. A slice rather than a field.
 7. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference, but the extractor does not currently emit it, so it needs mod work first.
 
-**Search.** Delivered. Pagefind runs after the prerender and indexes all 1,794 pages, so every page is findable by name even when nothing links to it. The index ships from `build:prepared`, which means no deployable build can omit it, and a smoke fails on an absent or empty index. The sitemap and meta descriptions still matter for crawlers.
+**Search.** Delivered for every entity that has a page. Pagefind runs after the prerender and indexes all 1,794 built pages, so a reader finds a page by name even when nothing links to it. The index ships from `build:prepared`, which means no deployable build can omit it, and a smoke fails on an absent or empty index.
+
+**Search cannot reach an entity without a page.** Locations and portals have no page of their own. Their `route_path` is a query into `/map`, so their names appear only in the map's client payload and in no HTML. Pagefind indexes HTML, so those 67 entities are invisible to search and to crawlers. The sitemap lists all 67 as if they were documents, which makes 67 of its entries point at no page, and it omits all ten listing pages including the home page. Two of eight detail routes still ship no meta description, and one of them is `items`, the largest section.
 
 **A current release.** Nothing has been published since 2026-06-05, four entities ago. The path is proven, the blocker was only that old artifacts predate the count contract.
 
