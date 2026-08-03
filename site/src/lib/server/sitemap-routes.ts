@@ -10,7 +10,7 @@ export interface EntityPageRoute {
   route_path: string;
 }
 
-/** Static pages the sitemap publishes beside every public entity page. */
+/** Static pages the sitemap publishes beside every entity page. */
 export const listingRoutePaths = [
   "/",
   "/items",
@@ -21,6 +21,8 @@ export const listingRoutePaths = [
   "/tags",
   "/characters",
   "/locations",
+  "/placed-characters",
+  "/portals",
   "/factions",
   "/map",
   "/search",

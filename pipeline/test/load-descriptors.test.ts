@@ -24,6 +24,7 @@ describe("loadDescriptors", () => {
       "item-category",
       "item-tag",
       "location",
+      "npc",
       "portal",
       "spell",
       "stat-type",

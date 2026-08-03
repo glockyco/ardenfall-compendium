@@ -1,0 +1,91 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "npc",
+  "kind": "instance",
+  "label": {
+    "singular": "Placed character",
+    "plural": "Placed characters"
+  },
+  "extraction": {
+    "source": "record",
+    "root": "Ardenfall.RecordSystem.NPCRecord",
+    "options": {
+      "table": "instances",
+      "subtable": "characters"
+    }
+  },
+  "canonicalTable": "npcs",
+  "presentationContext": { "renderContext": "placed-character-presentation-v1" },
+  "site": {
+    "route": "/placed-characters",
+    "overview": { "columns": ["friendlyName"], "search": ["friendlyName"] },
+    "detail": {
+      "sections": [
+        {
+          "id": "overview",
+          "kind": "fieldList",
+          "title": "Overview",
+          "fields": ["friendlyName", "mapId", "spawnPoint", "containingLocationRefs"]
+        }
+      ]
+    }
+  },
+  "placement": {
+    "kind": "point",
+    "from": "spawnPoint"
+  },
+  "fields": [
+    {
+      "name": "id",
+      "type": "id",
+      "from": "recordId",
+      "missingPolicy": "fatal"
+    },
+    {
+      "name": "recordRef",
+      "type": "ref:record",
+      "from": "recordRef",
+      "column": "record_ref_json"
+    },
+    {
+      "name": "friendlyName",
+      "type": "string",
+      "from": "friendlyName",
+      "missingPolicy": "diagnostic",
+      "column": "friendly_name"
+    },
+    {
+      "name": "spawnPoint",
+      "type": "json",
+      "from": "spawnPoint.position",
+      "column": "source_spawn_point_json",
+      "projects": "map_points"
+    },
+    {
+      "name": "mapId",
+      "type": "string",
+      "from": "spawnPoint.map.id",
+      "missingPolicy": "diagnostic",
+      "column": "map_id"
+    },
+    {
+      "name": "containingLocationRefs",
+      "type": "ref:asset[]",
+      "from": "containingLocations",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Expanded into npc_location_refs rows. The mod runs LocationAsset.IsInside because containment is game logic, and a location holds several volumes that stored bounds cannot reproduce.",
+      "projects": "npc_location_refs"
+    }
+  ],
+  "map": {
+    "layer": "npcs",
+    "renderKind": "point",
+    "icon": "character",
+    "color": [255, 200, 120],
+    "radius": 4,
+    "tooltip": ["friendlyName"],
+    "legendLabel": "Placed characters",
+    "zOrder": 80
+  }
+}

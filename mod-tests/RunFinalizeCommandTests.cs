@@ -18,6 +18,7 @@ using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Entities.Portal;
 using ArdenfallCompendium.Entities.Character;
 using ArdenfallCompendium.Entities.Faction;
+using ArdenfallCompendium.Entities.Npc;
 using PublicItemTagSnapshot = ArdenfallCompendium.Entities.ItemTag.ItemTagSnapshot;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
@@ -35,6 +36,7 @@ public sealed class RunFinalizeCommandTests
     private static readonly FakeLocationExtractionCache EmptyLocations = new(System.Array.Empty<LocationSnapshotRow>());
     private static readonly FakePortalExtractionCache EmptyPortals = new(System.Array.Empty<PortalSnapshotRow>());
     private static readonly FakeFactionExtractionCache EmptyFactions = new(System.Array.Empty<FactionSnapshotRow>());
+    private static readonly FakeNpcExtractionCache EmptyNpcs = new();
     private static readonly FakeSpellExtractionCache EmptySpells = new();
     private static readonly FakeCharacterExtractionCache EmptyCharacters = new();
     private static readonly FakeStatusEffectExtractionCache EmptyStatusEffects = new();
@@ -63,6 +65,7 @@ public sealed class RunFinalizeCommandTests
             EmptyLocations,
             EmptyPortals,
             EmptyFactions,
+            EmptyNpcs,
             preflight: FailingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -98,6 +101,7 @@ public sealed class RunFinalizeCommandTests
             EmptyLocations,
             EmptyPortals,
             EmptyFactions,
+            EmptyNpcs,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -130,6 +134,7 @@ public sealed class RunFinalizeCommandTests
             EmptyLocations,
             EmptyPortals,
             EmptyFactions,
+            EmptyNpcs,
             preflight: PassingPreflight);
 
         await Assert.ThrowsAsync<System.InvalidOperationException>(() =>
@@ -163,7 +168,7 @@ public sealed class RunFinalizeCommandTests
             Diagnostics = new List<Diagnostic> { Diagnostic("fatal", "rowFatal") },
         });
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
-        var command = new RunFinalizeCommand(runs, cache, EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, cache, EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, preflight: PassingPreflight);
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
@@ -230,6 +235,7 @@ public sealed class RunFinalizeCommandTests
             locations,
             EmptyPortals,
             EmptyFactions,
+            EmptyNpcs,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -271,6 +277,7 @@ public sealed class RunFinalizeCommandTests
             EmptyLocations,
             EmptyPortals,
             EmptyFactions,
+            EmptyNpcs,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -308,7 +315,7 @@ public sealed class RunFinalizeCommandTests
             RowId = "item-a",
             DisplayIconColor = new AssetColorSnapshot(),
         });
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -337,7 +344,7 @@ public sealed class RunFinalizeCommandTests
             Fields = new Dictionary<string, object?>(),
         });
         var source = FakeMasterTooltipSource.Default;
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), EmptySpells, EmptyCharacters, EmptyStatusEffects, source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), EmptySpells, EmptyCharacters, EmptyStatusEffects, source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -405,6 +412,7 @@ public sealed class RunFinalizeCommandTests
             EmptyLocations,
             EmptyPortals,
             EmptyFactions,
+            EmptyNpcs,
             preflight: PassingPreflight);
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -474,6 +482,7 @@ public sealed class RunFinalizeCommandTests
             EmptyLocations,
             EmptyPortals,
             EmptyFactions,
+            EmptyNpcs,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -530,6 +539,7 @@ public sealed class RunFinalizeCommandTests
             EmptyLocations,
             EmptyPortals,
             EmptyFactions,
+            EmptyNpcs,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -592,6 +602,7 @@ public sealed class RunFinalizeCommandTests
             locations,
             EmptyPortals,
             EmptyFactions,
+            EmptyNpcs,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -648,6 +659,7 @@ public sealed class RunFinalizeCommandTests
             EmptyLocations,
             portals,
             EmptyFactions,
+            EmptyNpcs,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -712,6 +724,7 @@ public sealed class RunFinalizeCommandTests
             EmptyLocations,
             EmptyPortals,
             factions,
+            EmptyNpcs,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -940,6 +953,17 @@ public sealed class RunFinalizeCommandTests
         public IReadOnlyList<FactionSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
+    }
+
+    private sealed class FakeNpcExtractionCache : INpcExtractionCache
+    {
+        public void Evict(CompendiumRun run) { }
+
+        public IReadOnlyList<NpcSnapshotRow> GetOrExtract(CompendiumRun run) =>
+            System.Array.Empty<NpcSnapshotRow>();
+
+        public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) =>
+            System.Array.Empty<Diagnostic>();
     }
 
     private sealed class FakeMasterTooltipSource : IMasterTooltipSnapshotSource

@@ -2,16 +2,50 @@
   "$schema": "../../schemas/entity.schema.json",
   "id": "portal",
   "kind": "instance",
-  "label": { "singular": "Portal", "plural": "Portals" },
+  "label": {
+    "singular": "Portal",
+    "plural": "Portals"
+  },
   "extraction": {
     "source": "record",
     "root": "Ardenfall.RecordSystem.PortalRecord",
-    "options": { "table": "world", "subtable": "portals" }
+    "options": {
+      "table": "world",
+      "subtable": "portals"
+    }
   },
   "canonicalTable": "portals",
-  "placement": { "kind": "point", "from": "transform" },
+  "presentationContext": {
+    "renderContext": "portal-presentation-v1"
+  },
+  "site": {
+    "route": "/portals",
+    "overview": {
+      "columns": ["friendlyName"],
+      "search": ["friendlyName"]
+    },
+    "detail": {
+      "sections": [
+        {
+          "id": "overview",
+          "kind": "fieldList",
+          "title": "Overview",
+          "fields": ["friendlyName", "mapId", "position", "connectedPortalRef"]
+        }
+      ]
+    }
+  },
+  "placement": {
+    "kind": "point",
+    "from": "transform"
+  },
   "fields": [
-    { "name": "id", "type": "id", "from": "recordId", "missingPolicy": "fatal" },
+    {
+      "name": "id",
+      "type": "id",
+      "from": "recordId",
+      "missingPolicy": "fatal"
+    },
     {
       "name": "recordRef",
       "type": "ref:record",

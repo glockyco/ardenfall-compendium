@@ -51,6 +51,11 @@ export const relationshipRegistry = {
     inverseTitle: null,
     sortOrder: 90,
   },
+  found_at: {
+    forwardTitle: "Found at",
+    inverseTitle: "NPCs found here",
+    sortOrder: 100,
+  },
   leads_to: {
     forwardTitle: null,
     inverseTitle: null,

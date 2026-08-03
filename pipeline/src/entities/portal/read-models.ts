@@ -9,6 +9,15 @@ interface ConnectedPortalRow {
 }
 
 /**
+ * The release data marks an internal-looking name with `_`, `-`, or `.` plus
+ * a lowercase start or a digit. This rule catches 29 of 33 portal rows.
+ * It leaves `Ladder Door`, `Food Preserve`, and `Underground Preservium` alone.
+ */
+function looksLikeInternalPortalName(name: string): boolean {
+  return /[_\-.]/.test(name) && (/^[a-z]/.test(name) || /\d/.test(name));
+}
+
+/**
  * Projects the canonical `portals.connected_portal_ref_json` into `leads_to`
  * relationship edges so the map can express zone connectivity.
  *
@@ -19,36 +28,44 @@ interface ConnectedPortalRow {
  *
  * Must run after the map read models, which create the graph tables. This
  * emitter creates portal nodes from canonical rows before it projects edges.
- * An edge can target a node without a page because `has_page` means that an entity
- * has a page.
+ * Every portal node has a page route.
  *
- * Emits nodes and edges. `entity_relationship_sections` is the grouping
- * contract for a detail page, and a portal has no page. The map panel resolves
- * its destination by joining the edge to its target node.
+ * Emits nodes, presentation rows, and edges. The presentation row keeps the
+ * map coordinates and the resolved destination that a portal page displays.
  */
-export function emitPortalReadModels(db: Database): PipelineDiagnostic[] {
+export function emitPortalReadModels(db: Database, routeBase = "/portals"): PipelineDiagnostic[] {
   const diagnostics: PipelineDiagnostic[] = [];
   const writeNode = prepareEntityNodeWriter(db);
   const nodeRows = db
-    .query<{ id: string; friendly_name: string | null; map_id: string | null }, []>(
-      `SELECT id, friendly_name, map_id FROM portals ORDER BY COALESCE(friendly_name, 'Unnamed portal'), id`,
+    .query<{ id: string; friendly_name: string | null }, []>(
+      `SELECT id, friendly_name FROM portals ORDER BY COALESCE(friendly_name, 'Unnamed portal'), id`,
     )
     .all();
+  const labelById = new Map(nodeRows.map((row) => [row.id, row.friendly_name ?? "Unnamed portal"]));
   const nodeTx = db.transaction(() => {
     for (const row of nodeRows) {
       const label = row.friendly_name ?? "Unnamed portal";
+      if (row.friendly_name && looksLikeInternalPortalName(row.friendly_name)) {
+        diagnostics.push({
+          severity: "diagnostic",
+          source: "portal-presentation-read-model",
+          code: "portalNameLooksInternal",
+          message: `Portal '${row.id}' has an authored name that looks like an internal identifier: '${row.friendly_name}'.`,
+          entityType: "portal",
+          entityId: row.id,
+          field: "friendly_name",
+          evidence: { name: row.friendly_name },
+        });
+      }
       const slug = deriveEntityNodeSlug(label, row.id);
-      const query = row.map_id
-        ? `map=${encodeURIComponent(row.map_id)}&sel=${slug.shortId}`
-        : `sel=${slug.shortId}`;
       writeNode({
         entityType: "portal",
         entityId: row.id,
         label,
-        routePath: `/map?${query}`,
+        routePath: `${routeBase}/${slug.canonicalSlug}`,
         canonicalSlug: slug.canonicalSlug,
         shortId: slug.shortId,
-        hasPage: false,
+        hasPage: true,
       });
     }
   });
@@ -76,6 +93,7 @@ export function emitPortalReadModels(db: Database): PipelineDiagnostic[] {
     )
     .all();
 
+  const connectedPortalById = new Map<string, { id: string; name: string }>();
   const tx = db.transaction(() => {
     for (const row of rows) {
       const ref = JSON.parse(row.connected_portal_ref_json) as SnapshotRef;
@@ -108,6 +126,7 @@ export function emitPortalReadModels(db: Database): PipelineDiagnostic[] {
         });
         continue;
       }
+      connectedPortalById.set(row.id, { id: targetId, name: labelById.get(targetId)! });
       edgeInsert.run(
         `${row.id}:leads_to:portal:${targetId}`,
         "portal",
@@ -123,6 +142,48 @@ export function emitPortalReadModels(db: Database): PipelineDiagnostic[] {
     }
   });
   tx();
+
+  const presentationInsert = db.prepare(
+    `INSERT INTO portal_presentation_rows (
+       id, name, render_context, map_id, map_x, map_y, elevation,
+       connected_portal_id, connected_portal_name
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
+  const presentationRows = db
+    .query<
+      {
+        id: string;
+        map_id: string | null;
+        map_x: number | null;
+        map_y: number | null;
+        elevation: number | null;
+      },
+      []
+    >(
+      `SELECT p.id, pl.map_id, pl.map_x, pl.map_y, pl.elevation
+       FROM portals p
+       LEFT JOIN placements pl
+         ON pl.entity_id = 'portal' AND pl.instance_id = p.id
+       ORDER BY p.id`,
+    )
+    .all();
+  const presentationTx = db.transaction(() => {
+    for (const row of presentationRows) {
+      const connection = connectedPortalById.get(row.id);
+      presentationInsert.run(
+        row.id,
+        labelById.get(row.id)!,
+        "portal-presentation-v1",
+        row.map_id,
+        row.map_x,
+        row.map_y,
+        row.elevation,
+        connection?.id ?? null,
+        connection?.name ?? null,
+      );
+    }
+  });
+  presentationTx();
 
   return diagnostics;
 }

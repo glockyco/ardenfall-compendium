@@ -137,7 +137,46 @@ describe("portal connectivity", () => {
            FROM entity_nodes WHERE entity_type = 'portal'`,
         )
         .get(),
-    ).toEqual({ count: 3, hasPageCount: 0 });
+    ).toEqual({ count: 3, hasPageCount: 3 });
+    expect(
+      db
+        .query<{ route_path: string; has_page: number }, [string]>(
+          `SELECT route_path, has_page FROM entity_nodes
+           WHERE entity_type = 'portal' AND entity_id = ?`,
+        )
+        .get("instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+    ).toEqual({
+      route_path: "/portals/harbor-gate--aaaaaaaa",
+      has_page: 1,
+    });
+    expect(
+      db
+        .query<
+          {
+            name: string;
+            map_id: string | null;
+            map_x: number | null;
+            map_y: number | null;
+            elevation: number | null;
+            connected_portal_id: string | null;
+            connected_portal_name: string | null;
+          },
+          [string]
+        >(
+          `SELECT name, map_id, map_x, map_y, elevation,
+                  connected_portal_id, connected_portal_name
+           FROM portal_presentation_rows WHERE id = ?`,
+        )
+        .get("instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+    ).toEqual({
+      name: "Harbor Gate",
+      map_id: "ardenfall",
+      map_x: 0,
+      map_y: 0,
+      elevation: 0,
+      connected_portal_id: "instances;portals;bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      connected_portal_name: "Cliff Stair",
+    });
 
     const edges = db
       .query<{ source_id: string; target_id: string; label: string }, []>(
@@ -164,7 +203,7 @@ describe("portal connectivity", () => {
     expect(edges.some((e) => e.source_id.endsWith("cccccccccccccccccccccccccccccccc"))).toBe(false);
   });
 
-  it("writes no relationship section, because a portal has no detail page", () => {
+  it("writes no relationship section because the portal connection is an edge", () => {
     const db = seed(new Database(":memory:"), [
       {
         key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -177,19 +216,18 @@ describe("portal connectivity", () => {
     emitPortalReadModels(db);
 
     // `entity_relationship_sections` groups relationships for a detail page and
-    // denormalises the target's label into JSON. A portal is rendered in the map
-    // panel, which resolves its one destination by joining the edge to the target
-    // node, so a section here would be a second unread copy of the same fact.
+    // denormalises the target's label into JSON. A portal page reads its destination
+    // from the portal presentation row, so a section would be a second copy.
     expect(db.query(`SELECT COUNT(*) AS c FROM entity_relationship_sections`).get()).toEqual({
       c: 0,
     });
-    // The edge still resolves to a portal node without a page, carrying the label the map needs.
+    // The edge still resolves to a portal page node and the presentation row carries its label.
     const destination = db
       .query<{ label: string; short_id: string }, []>(
         `SELECT n.label, n.short_id
          FROM entity_edges e
          JOIN entity_nodes n ON n.entity_type = e.target_type AND n.entity_id = e.target_id
-         WHERE e.predicate = 'leads_to' AND n.has_page = 0`,
+         WHERE e.predicate = 'leads_to'`,
       )
       .get()!;
     expect(destination.label).toBe("Cliff Stair");
@@ -216,6 +254,24 @@ describe("portal connectivity", () => {
     // reference is reported once, not escalated into a fatal missing target.
     expect(db.query(`SELECT COUNT(*) AS c FROM entity_edges`).get()).toEqual({ c: 0 });
     expect(auditEntityGraph(db)).toEqual([]);
+  });
+
+  it("diagnoses authored names that look like internal identifiers", () => {
+    const db = seed(new Database(":memory:"), [
+      { key: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", friendlyName: "sc_tutcave_ext" },
+      { key: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", friendlyName: "Food Preserve" },
+    ]);
+    emitMapReadModels(db, ["portal"], "/map");
+
+    const diagnostics = emitPortalReadModels(db);
+
+    expect(
+      diagnostics.filter((diagnostic) => diagnostic.code === "portalNameLooksInternal"),
+    ).toHaveLength(1);
+    expect(diagnostics[0]).toMatchObject({
+      code: "portalNameLooksInternal",
+      entityId: "instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    });
   });
 
   it("labels a portal the game never named without inventing an identifier", () => {

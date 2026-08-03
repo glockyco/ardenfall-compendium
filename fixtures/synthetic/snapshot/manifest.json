@@ -41,11 +41,12 @@
     "location": 2,
     "portal": 3,
     "character": 3,
-    "faction": 2
+    "faction": 2,
+    "npc": 4
   },
   "diagnostics": {
     "fatal": 0,
-    "diagnostic": 5
+    "diagnostic": 6
   },
   "hashes": {
     "items.json": "f85e557abf2e9c6a9be4ffdf5062576db83769328d302eac55bc408244719cde",
@@ -57,8 +58,9 @@
     "item-categories.json": "9ddf37b041ec004007851244de1d4d6c0be4b9ad9e3973c7ec12f193f93f5724",
     "item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
     "locations.json": "856982c52ff602e34a3caccd13bfcfc8b4a74bc3f44c2e7e3b0f5dba3e3b7f82",
-    "portals.json": "07957c081f6d8b0a12f8ef4587fc11349f9d77dca447cdb46d780aba60591ece",
+    "portals.json": "370bf4c3647b38982b88910fc8775bd23316782002b49be46851509f5eb1fabe",
     "characters.json": "753f68ff20db93a360bffa0b1de7aa743dd94382767f9a76c47b4d1783f5d24a",
-    "factions.json": "92231e488c599f271c7ae02ac7db1950bc9b71431ba4871232582e52f46346dc"
+    "factions.json": "92231e488c599f271c7ae02ac7db1950bc9b71431ba4871232582e52f46346dc",
+    "npcs.json": "873e70942c1472c68b84c0429abd2910134147c425972a3b9abfefbaa9ddf1a1"
   }
 }

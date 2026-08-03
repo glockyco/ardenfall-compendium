@@ -20,7 +20,8 @@
     "Spell fixture rows for skill-linked, no-skill, and illegal spell coverage",
     "Spell effect fixture rows for self application, two target status effects, direct mechanics, and no effects",
     "Character fixture rows for drops, empty drops, unresolved drop references, and starting factions",
-    "Faction fixture rows for titled and untitled factions and both relationship shapes"
+    "Faction fixture rows for titled and untitled factions and both relationship shapes",
+    "NPC fixture rows for one location, two locations, no locations, and no character reference"
   ],
   "selection": [
     {
@@ -78,9 +79,14 @@
       "rationale": "one public map point with an area volume and one debug-only marker excluded from default map point read models"
     },
     {
-      "entity": "portal",
-      "ids": ["instances;portals;398213e43a41b4c47bffe4ef1998e782"],
-      "rationale": "record-backed instance entity with transform-derived map placement and connected portal reference"
+      "entity": "npc",
+      "ids": [
+        "world;npcs;00000000000000000000000000000001",
+        "world;npcs;00000000000000000000000000000002",
+        "world;npcs;00000000000000000000000000000003",
+        "world;npcs;00000000000000000000000000000004"
+      ],
+      "rationale": "one containing location, two containing locations, no containing locations, and missing character reference"
     }
   ],
   "scrubbing": "synthetic; no scrubbing required",
@@ -88,7 +94,7 @@
   "hashes": {
     "snapshot/spells.json": "4008d7c3dd28d2237b1f5de8cf3580152e11b4509bbe87ae56856307ffdc6f6f",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
-    "snapshot/manifest.json": "5146e245c30c52c0244c5fcea673455e4e2a2ce888589ce46a8ed18b585e8c51",
+    "snapshot/manifest.json": "8e477c2a5eb4796ceafd625b03e54aa3376f271bd09923528df0662138b52629",
     "snapshot/items.json": "f85e557abf2e9c6a9be4ffdf5062576db83769328d302eac55bc408244719cde",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
@@ -100,6 +106,7 @@
     "snapshot/locations.json": "856982c52ff602e34a3caccd13bfcfc8b4a74bc3f44c2e7e3b0f5dba3e3b7f82",
     "snapshot/portals.json": "370bf4c3647b38982b88910fc8775bd23316782002b49be46851509f5eb1fabe",
     "snapshot/characters.json": "753f68ff20db93a360bffa0b1de7aa743dd94382767f9a76c47b4d1783f5d24a",
+    "snapshot/npcs.json": "873e70942c1472c68b84c0429abd2910134147c425972a3b9abfefbaa9ddf1a1",
     "snapshot/factions.json": "92231e488c599f271c7ae02ac7db1950bc9b71431ba4871232582e52f46346dc"
   }
 }

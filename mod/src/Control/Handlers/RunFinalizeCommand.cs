@@ -20,6 +20,7 @@ using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Entities.Portal;
 using ArdenfallCompendium.Entities.Character;
 using ArdenfallCompendium.Entities.Faction;
+using ArdenfallCompendium.Entities.Npc;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
 using HotRepl.Control;
@@ -43,6 +44,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     private readonly IPortalExtractionCache _portals;
     private readonly ICharacterExtractionCache _characters;
     private readonly IFactionExtractionCache _factions;
+    private readonly INpcExtractionCache _npcs;
     private readonly IMasterTooltipSnapshotSource _masterTooltip;
     private readonly Func<PreflightReport> _preflight;
 
@@ -59,6 +61,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         ILocationExtractionCache locations,
         IPortalExtractionCache portals,
         IFactionExtractionCache factions,
+        INpcExtractionCache npcs,
         Func<PreflightReport>? preflight = null
     )
     {
@@ -76,6 +79,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         _locations = locations;
         _portals = portals;
         _factions = factions;
+        _npcs = npcs;
         _masterTooltip = masterTooltip;
         _preflight = preflight ?? PreflightRunner.Run;
     }
@@ -183,6 +187,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             var locationRows = _locations.GetOrExtract(run).ToList();
             var portalRows = _portals.GetOrExtract(run).ToList();
             var factionRows = _factions.GetOrExtract(run).ToList();
+            var npcRows = _npcs.GetOrExtract(run).ToList();
             RecordTiming(timings, "related.extract", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
@@ -223,6 +228,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             WriteJson(stagingDir, "portals.json", portalEnvelope, hashes);
             var factionEnvelope = new FactionSnapshotEnvelope { Rows = factionRows };
             WriteJson(stagingDir, "factions.json", factionEnvelope, hashes);
+            var npcEnvelope = new NpcSnapshotEnvelope { Rows = npcRows };
+            WriteJson(stagingDir, "npcs.json", npcEnvelope, hashes);
             RecordTiming(timings, "metadata.write", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
@@ -263,6 +270,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
             foreach (var diagnostic in _factions.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in _npcs.GetWalkerDiagnostics(run))
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
@@ -329,6 +340,13 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                     AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
                 }
             }
+            foreach (var row in npcRows)
+            {
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
+            }
 
             if (diagnostics.Count > 0)
             {
@@ -349,6 +367,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["location"] = locationRows.Count,
                 ["portal"] = portalRows.Count,
                 ["faction"] = factionRows.Count,
+                ["npc"] = npcRows.Count,
             };
             var manifest = ManifestBuilder.Build(
                 preflight,
