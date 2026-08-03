@@ -429,6 +429,15 @@ export interface PortalSnapshotFields {
   connectedPortalRef?: SnapshotRef | null;
 }
 
+export interface NPCSnapshotFields {
+  id: string;
+  recordRef: SnapshotRef;
+  characterRef: SnapshotRef | null;
+  spawnPoint: SnapshotVector3;
+  mapId: string | null;
+  containingLocationRefs: SnapshotRef[];
+}
+
 export interface SnapshotDiagnosticArtifactEntry extends SnapshotDiagnostic {
   rowId: string | null;
 }
@@ -511,6 +520,29 @@ export type SnapshotRef =
   | { kind: "record"; table: string; subtable: string; id: string; recordType?: string | null }
   | { kind: "runtimeObject"; extractionId: string; unityType?: string; stable: false }
   | { kind: "missing"; reason: string; source: string };
+
+/**
+ * Returns a stable key for a snapshot reference, built only from the fields that
+ * identify it. A display name is never part of the key, because names repeat.
+ *
+ * Use this to order a collection whose arrival order comes from the game. Record
+ * tables are dictionaries, so the game can yield one collection in a different
+ * order between runs, and an ordinal or a serialised array must not change with it.
+ */
+export function snapshotRefKey(ref: SnapshotRef): string {
+  switch (ref.kind) {
+    case "lookupAsset":
+      return `lookupAsset:${ref.guid}`;
+    case "namedAsset":
+      return `namedAsset:${ref.entity}:${ref.name}`;
+    case "record":
+      return `record:${ref.table}:${ref.subtable}:${ref.id}`;
+    case "runtimeObject":
+      return `runtimeObject:${ref.extractionId}`;
+    case "missing":
+      return `missing:${ref.source}:${ref.reason}`;
+  }
+}
 
 // Stages
 

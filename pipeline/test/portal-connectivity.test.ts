@@ -1,10 +1,29 @@
 import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
-import { PORTAL_DDL } from "../src/sql/portal-ddl.ts";
+import type { SnapshotEnvelope } from "../src/types.ts";
 import { LOCATION_DDL } from "../src/sql/location-ddl.ts";
+import { PORTAL_DDL } from "../src/sql/portal-ddl.ts";
 import { ENTITY_GRAPH_DDL, auditEntityGraph } from "../src/relationships/relationship-graph.ts";
 import { emitMapReadModels } from "../src/map/read-models.ts";
+import { canonicalisePortals } from "../src/entities/portal/canonicaliser.ts";
 import { emitPortalReadModels } from "../src/entities/portal/read-models.ts";
+
+function canonicalPortalRows(source: SnapshotEnvelope) {
+  const db = new Database(":memory:");
+  db.exec(`${PORTAL_DDL}
+    CREATE TABLE placements (
+      entity_id TEXT NOT NULL, instance_id TEXT NOT NULL, map_id TEXT,
+      map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,
+      source_ref_json TEXT NOT NULL, PRIMARY KEY (entity_id, instance_id)
+    );`);
+  canonicalisePortals(db, source);
+  const rows = {
+    portals: db.query(`SELECT * FROM portals`).all(),
+    placements: db.query(`SELECT * FROM placements`).all(),
+  };
+  db.close();
+  return rows;
+}
 
 const recordRef = (id: string) =>
   JSON.stringify({
@@ -50,6 +69,50 @@ function seed(
 }
 
 describe("portal connectivity", () => {
+  it("canonicalises portal rows independent of arrival order", () => {
+    const source: SnapshotEnvelope = {
+      entityId: "portal",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "instances;portals;bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          fields: {
+            id: "instances;portals;bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            recordRef: {
+              kind: "record",
+              table: "instances",
+              subtable: "portals",
+              id: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            },
+            friendlyName: "Cliff Stair",
+            mapId: "ardenfall",
+            position: { x: 1, y: 2, z: 3 },
+            connectedPortalRef: null,
+          },
+        },
+        {
+          id: "instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          fields: {
+            id: "instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            recordRef: {
+              kind: "record",
+              table: "instances",
+              subtable: "portals",
+              id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            },
+            friendlyName: "Harbor Gate",
+            mapId: "ardenfall",
+            position: { x: 4, y: 5, z: 6 },
+            connectedPortalRef: null,
+          },
+        },
+      ],
+    };
+    const reversed: SnapshotEnvelope = { ...source, rows: [...source.rows].reverse() };
+
+    expect(canonicalPortalRows(reversed)).toEqual(canonicalPortalRows(source));
+  });
+
   it("projects each connection as one directed leads_to edge", () => {
     const db = seed(new Database(":memory:"), [
       {

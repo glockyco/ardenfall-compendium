@@ -5,6 +5,7 @@ import { emitCharacterReadModels } from "../src/entities/character/read-models.t
 import { emitRelationshipSections } from "../src/relationships/relationship-sections.ts";
 import { ENTITY_GRAPH_DDL } from "../src/relationships/relationship-graph.ts";
 import { CHARACTER_DDL } from "../src/sql/character-ddl.ts";
+import type { SnapshotEnvelope, SnapshotRef } from "../src/types.ts";
 
 const itemId = "4ed20218.fixture-iron-sword";
 const characterId = "named;character;character_bandit";
@@ -20,6 +21,22 @@ function seedDatabase(): Database {
     [itemId],
   );
   return db;
+}
+
+function canonicalCharacterRows(envelope: SnapshotEnvelope) {
+  const db = seedDatabase();
+  canonicaliseCharacters(db, envelope);
+  const rows = {
+    characters: db.query(`SELECT id, character_name, drop_refs_json FROM characters`).all(),
+    factions: db
+      .query(
+        `SELECT id, character_id, target_faction_id, ref_json
+         FROM character_faction_refs`,
+      )
+      .all(),
+  };
+  db.close();
+  return rows;
 }
 
 describe("character pipeline", () => {
@@ -63,6 +80,42 @@ describe("character pipeline", () => {
         evidence_json: JSON.stringify({ source: "characters.itemLists" }),
       },
     ]);
+  });
+
+  it("canonicalises reference collections independent of arrival order", () => {
+    const dropRefs: SnapshotRef[] = [
+      { kind: "lookupAsset", guid: "item-b" },
+      { kind: "lookupAsset", guid: "item-a" },
+    ];
+    const startingFactions: SnapshotRef[] = [
+      { kind: "lookupAsset", guid: "faction-b" },
+      { kind: "lookupAsset", guid: "faction-a" },
+    ];
+    const forward: SnapshotEnvelope = {
+      entityId: "character",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: characterId,
+          fields: { id: characterId, name: "Bandit", dropRefs, startingFactions },
+        },
+      ],
+    };
+    const reversed: SnapshotEnvelope = {
+      ...forward,
+      rows: [
+        {
+          ...forward.rows[0]!,
+          fields: {
+            ...forward.rows[0]!.fields,
+            dropRefs: [...dropRefs].reverse(),
+            startingFactions: [...startingFactions].reverse(),
+          },
+        },
+      ],
+    };
+
+    expect(canonicalCharacterRows(reversed)).toEqual(canonicalCharacterRows(forward));
   });
 
   it("emits starts_in_faction edges for each starting faction", () => {

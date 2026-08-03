@@ -24,7 +24,8 @@ export function canonicalisePortals(db: Database, envelope: SnapshotEnvelope): v
   );
 
   const tx = db.transaction(() => {
-    for (const row of entityRows<PortalSnapshotFields>(envelope)) {
+    const rows = [...entityRows<PortalSnapshotFields>(envelope)].sort(compareRows);
+    for (const row of rows) {
       const fields = row.fields;
       const position = portalField(fields, "position");
       const recordRef = portalField(fields, "recordRef");
@@ -51,4 +52,8 @@ export function canonicalisePortals(db: Database, envelope: SnapshotEnvelope): v
     }
   });
   tx();
+}
+
+function compareRows(left: { id: string }, right: { id: string }): number {
+  return left.id < right.id ? -1 : left.id > right.id ? 1 : 0;
 }
