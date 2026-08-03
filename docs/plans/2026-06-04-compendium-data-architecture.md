@@ -231,7 +231,7 @@ A descriptor's field list is checked against reality rather than trusted. `valid
 
 A field declares whether it becomes a column or is projected into another table, so declaring a field that feeds `map_points` does not create a dead column beside it.
 
-The remaining gap is the other direction. Only `item` generates its DDL from its descriptor, so for the other eight the table's shape is hand-written SQL that agrees by convention. See [`2026-08-03-canonical-table-contract`](2026-08-03-canonical-table-contract.md).
+The other direction is enforced too. Every entity declares its `canonicalTable`, and each field declares whether it lands there and under which column, orthogonally from whether it also projects rows into another table. After the DDL runs and before canonicalisation, both directions are asserted: a declared column must exist, and a column must be explained by exactly one field. `item` alone generates its DDL, which is deliberate because generation is strictly stronger than assertion. Side tables such as `location_volumes` hold projections rather than entity rows, so their shape is the canonicaliser's business and nothing asserts it.
 
 - Definitions keep typed root + inheritance-layer + child tables (Decisions 7, 10). Unchanged.
 - The current instance table is `portals`, holding extrinsic fields. `definition_ref` is reserved for future instances with a separate definition asset. Portal placement lives in `placements`, and portal connectivity is emitted as `leads_to` graph edges from `connected_portal_ref_json`.

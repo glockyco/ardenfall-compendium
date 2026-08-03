@@ -1,11 +1,11 @@
 ---
 title: Canonical Table Contract
 type: spec
-status: draft
+status: implemented
 created: 2026-08-03
 parent: 2026-04-29-ardenfall-compendium-roadmap
 superseded_by:
-archived:
+archived: 2026-08-03
 ---
 
 # Canonical Table Contract
@@ -59,8 +59,14 @@ That second direction is the valuable half. It catches a column added to hand-wr
 - `gameLocationId`, `displayOnEnterVolume` and `isAccessible` are each resolved, either stored or no longer extracted, with the reason recorded.
 - No column changes and no page changes. A live export produces byte-identical diagnostics, 417 columns, and the same 1,794 pages.
 
-## Open
+## Resolved
 
-**Whether the assertion belongs beside the DDL or in the existing validation stage.** `validate-descriptor-fields` already checks the snapshot against descriptors. Checking the database against descriptors is the same idea aimed at the other side, and one stage asserting the descriptor is honoured everywhere may read better than two. Decide with the code in front of you.
+**The assertion lives inside `emit-sqlite`**, not a separate stage. That stage executes each entity's DDL and calls its canonicaliser in the same loop, so the table exists nowhere else. The check runs between the two, per entity, which also makes a failure name the entity for free.
 
-**Whether `item` should keep generating.** It is the only entity that does, and after this change the generated path and the asserted path both guarantee the same property by different means. Keeping both is defensible, since generation is strictly stronger where it applies, but it is worth stating deliberately rather than leaving as an accident of history.
+**`item` keeps generating**, with a comment saying so. Generation is strictly stronger than assertion where it applies, so the two coexisting is deliberate rather than historical.
+
+**Every entity declares `canonicalTable`, and it is required.** Variant descriptors already declared one, so entities lacking it was the inconsistency. Optional with a naming-convention fallback would have reintroduced the silent inference this change exists to remove.
+
+## Known limit
+
+The reverse check covers each entity's declared canonical table and not the side tables created by the same DDL constant, such as `location_volumes` and `placements`. Those hold projections rather than entity rows, so their columns are the canonicaliser's business rather than the field list's. Nothing currently asserts their shape.

@@ -11,6 +11,5 @@
 ## draft
 
 - **Tile Capture** [spec] `2026-08-02-tile-capture` ← 2026-04-29-ardenfall-compendium-roadmap
-- **Canonical Table Contract** [spec] `2026-08-03-canonical-table-contract` ← 2026-04-29-ardenfall-compendium-roadmap
 
-_32 archived — see `docs/plans/archive/`._
+_33 archived — see `docs/plans/archive/`._

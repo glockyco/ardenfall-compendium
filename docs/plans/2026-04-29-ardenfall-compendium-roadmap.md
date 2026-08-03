@@ -473,7 +473,7 @@ Ordered by measured reader value against cost. The survey at [`2026-08-02-progra
 
 So the next connective work is no longer a field, it is an entity:
 
-**Also open, and structural rather than content.** [`2026-08-03-canonical-table-contract`](2026-08-03-canonical-table-contract.md) closes the last place the descriptor is authoritative in principle and advisory in practice. Only `item` generates its DDL, so for the other eight the table shape is hand-written SQL agreeing by convention, and three declared fields are extracted into 129 rows and stored nowhere at all.
+**The descriptor is now enforced end to end.** [`2026-08-03-canonical-table-contract`](archive/2026-08-03-canonical-table-contract.md) closed the last gap. Every entity declares its canonical table, every field says whether it becomes a column and under what name, and both directions are asserted, so a rename in hand-written SQL that no descriptor mentions fails the build. Three fields that were extracted into 129 rows and stored nowhere are gone.
 
 **Before that**, relationships were unified. Four slices in one day each grew a bespoke site accessor beside a generic mechanism that already existed, which is the Ancient Kingdoms failure exactly. Relationships are now declared once by predicate, the pipeline projects sections from the edges it emits, and an unregistered predicate fails the build. Adding a relationship is one registry entry and no site change, which matters because obtainability adds five at once.
 
