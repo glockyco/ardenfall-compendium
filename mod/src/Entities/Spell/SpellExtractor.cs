@@ -21,7 +21,6 @@ public sealed class SpellExtractor : WalkerBase<SpellSnapshotRow>
 
     public override IEnumerable<SpellSnapshotRow> Walk()
     {
-        var seenNames = new HashSet<string>(System.StringComparer.Ordinal);
         return ExtractorLifecycle.Run(
             _source.EnumerateSpells(),
             Diagnostics,
@@ -33,7 +32,7 @@ public sealed class SpellExtractor : WalkerBase<SpellSnapshotRow>
                 Field = "id",
                 Message = "SpellData asset source yielded a null row",
             },
-            asset => CreateIdentity(asset, seenNames),
+            asset => CreateIdentity(asset),
             (asset, id) =>
             {
                 var spellName = NullIfEmpty(asset.SpellName);
@@ -119,7 +118,7 @@ public sealed class SpellExtractor : WalkerBase<SpellSnapshotRow>
         return snapshots;
     }
 
-    private static ExtractorIdentity CreateIdentity(SpellAsset asset, HashSet<string> seenNames)
+    private static ExtractorIdentity CreateIdentity(SpellAsset asset)
     {
         var assetName = asset.AssetName ?? "";
         if (!NamedAssetIdentity.TryCreate("spell", assetName, out var id))
@@ -130,16 +129,6 @@ public sealed class SpellExtractor : WalkerBase<SpellSnapshotRow>
                 Code = "namedAssetNameMissing",
                 Field = "id",
                 Message = $"SpellData asset has empty or whitespace name '{assetName}'",
-            });
-        }
-        if (!seenNames.Add(assetName))
-        {
-            return ExtractorIdentity.Invalid(new Diagnostic
-            {
-                Severity = "fatal",
-                Code = "namedAssetNameDuplicate",
-                Field = "id",
-                Message = $"SpellData asset name '{assetName}' is duplicated",
             });
         }
         return ExtractorIdentity.Valid(id);

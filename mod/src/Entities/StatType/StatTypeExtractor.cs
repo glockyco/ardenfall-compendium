@@ -27,7 +27,6 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
 
     public override IEnumerable<StatTypeSnapshotRow> Walk()
     {
-        var seenNames = new HashSet<string>(System.StringComparer.Ordinal);
         return ExtractorLifecycle.Run(
             _source.EnumerateStatTypes(),
             Diagnostics,
@@ -39,7 +38,7 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
                 Field = "id",
                 Message = "StatType asset source yielded a null row",
             },
-            asset => CreateIdentity(asset, seenNames),
+            asset => CreateIdentity(asset),
             (asset, id) =>
             {
                 var statName = NullIfEmpty(asset.StatName);
@@ -73,7 +72,7 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
             });
     }
 
-    private static ExtractorIdentity CreateIdentity(StatTypeAsset asset, HashSet<string> seenNames)
+    private static ExtractorIdentity CreateIdentity(StatTypeAsset asset)
     {
         var assetName = asset.AssetName ?? "";
         if (!NamedAssetIdentity.TryCreate("stat-type", assetName, out var id))
@@ -84,16 +83,6 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
                 Code = "namedAssetNameMissing",
                 Field = "id",
                 Message = $"StatType asset has empty or whitespace name '{assetName}'",
-            });
-        }
-        if (!seenNames.Add(assetName))
-        {
-            return ExtractorIdentity.Invalid(new Diagnostic
-            {
-                Severity = "fatal",
-                Code = "namedAssetNameDuplicate",
-                Field = "id",
-                Message = $"StatType asset name '{assetName}' is duplicated",
             });
         }
         return ExtractorIdentity.Valid(id);

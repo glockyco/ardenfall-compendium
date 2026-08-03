@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
+using Newtonsoft.Json;
 
 namespace ArdenfallCompendium.Entities;
 
@@ -24,6 +25,7 @@ public static class ExtractorLifecycle
         where TAsset : class
         where TRow : class
     {
+        var emitted = new Dictionary<string, TRow>();
         try
         {
             foreach (var asset in source)
@@ -41,8 +43,34 @@ public static class ExtractorLifecycle
                     continue;
                 }
 
-                var row = map(asset, identity.Id);
-                if (row != null) yield return row;
+                var rowId = identity.Id!;
+                var row = map(asset, rowId);
+                if (row == null) continue;
+
+                if (emitted.TryGetValue(rowId, out var first))
+                {
+                    // Serialise only on a repeat, so the common path pays nothing. JSON is the form
+                    // these rows reach the snapshot in, so it is the right thing to compare.
+                    if (JsonConvert.SerializeObject(first) != JsonConvert.SerializeObject(row))
+                    {
+                        throw new InvalidOperationException(
+                            $"Source yielded two different records for id '{rowId}'. "
+                            + "An id must identify one record, so the extractor cannot choose between them.");
+                    }
+
+                    diagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "sourceYieldedDuplicateRecord",
+                        Field = "id",
+                        Message =
+                            $"Source yielded id '{rowId}' more than once with identical data, so the repeat was dropped",
+                    });
+                    continue;
+                }
+
+                emitted.Add(rowId, row);
+                yield return row;
             }
         }
         finally

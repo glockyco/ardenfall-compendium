@@ -62,7 +62,7 @@ public sealed class StatTypeExtractorTests
     }
 
     [Fact]
-    public void DuplicateStatNameIsFatal()
+    public void IdenticalStatRepeatProducesDuplicateDiagnostic()
     {
         var source = new FakeStatTypeAssetSource(new[]
         {
@@ -72,10 +72,9 @@ public sealed class StatTypeExtractorTests
         var extractor = new StatTypeExtractor(source);
 
         Assert.Single(extractor.Walk().ToList());
-        var diagnostic = Assert.Single(extractor.Diagnostics, d => d.Code == "namedAssetNameDuplicate");
-        Assert.Equal("fatal", diagnostic.Severity);
-        Assert.Contains("StatType", diagnostic.Message);
-        Assert.Contains("'Same'", diagnostic.Message);
+        var diagnostic = Assert.Single(extractor.Diagnostics, d => d.Code == "sourceYieldedDuplicateRecord");
+        Assert.Equal("diagnostic", diagnostic.Severity);
+        Assert.Contains("named;stat-type;Same", diagnostic.Message);
     }
 
     [Fact]
@@ -138,14 +137,19 @@ public sealed class StatTypeExtractorTests
 
 
     [Fact]
-    public void LoadedSourceSkipsUnityNullStatAssets()
+    public void LoadedSourceReportsUnityNullStatAsset()
     {
         var stat = RuntimeStat("attr-strength", "Strength", isAttribute: true);
         var source = new LoadedStatTypeAssetSource(
             loadedStatTypes: () => new[] { stat },
             isUnityNull: _ => true);
+        var extractor = new StatTypeExtractor(source);
 
-        Assert.Empty(source.EnumerateStatTypes());
+        Assert.Empty(extractor.Walk().ToList());
+        var diagnostic = Assert.Single(extractor.Diagnostics);
+        Assert.Equal("statTypeAssetMissing", diagnostic.Code);
+        Assert.Equal("fatal", diagnostic.Severity);
+        Assert.Contains("StatType", diagnostic.Message);
     }
 
     private sealed class FakeStatTypeAssetSource : IStatTypeAssetSource

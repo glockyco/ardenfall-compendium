@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities;
@@ -22,7 +21,6 @@ public sealed class CharacterExtractor : WalkerBase<CharacterSnapshotRow>
 
     public override IEnumerable<CharacterSnapshotRow> Walk()
     {
-        var seenNames = new HashSet<string>(StringComparer.Ordinal);
         return ExtractorLifecycle.Run(
             _source.EnumerateCharacters(),
             Diagnostics,
@@ -34,7 +32,7 @@ public sealed class CharacterExtractor : WalkerBase<CharacterSnapshotRow>
                 Field = "id",
                 Message = "CharacterData asset source yielded a null row",
             },
-            asset => CreateIdentity(asset, seenNames),
+            asset => CreateIdentity(asset),
             (asset, id) =>
             {
                 var name = NullIfEmpty(asset.CharacterName);
@@ -76,7 +74,7 @@ public sealed class CharacterExtractor : WalkerBase<CharacterSnapshotRow>
         }
     }
 
-    private static ExtractorIdentity CreateIdentity(CharacterAsset asset, HashSet<string> seenNames)
+    private static ExtractorIdentity CreateIdentity(CharacterAsset asset)
     {
         var assetName = asset.AssetName ?? "";
         if (!NamedAssetIdentity.TryCreate("character", assetName, out var id))
@@ -87,16 +85,6 @@ public sealed class CharacterExtractor : WalkerBase<CharacterSnapshotRow>
                 Code = "namedAssetNameMissing",
                 Field = "id",
                 Message = $"CharacterData asset has empty or whitespace name '{assetName}'",
-            });
-        }
-        if (!seenNames.Add(assetName))
-        {
-            return ExtractorIdentity.Invalid(new Diagnostic
-            {
-                Severity = "fatal",
-                Code = "namedAssetNameDuplicate",
-                Field = "id",
-                Message = $"CharacterData asset name '{assetName}' is duplicated",
             });
         }
         return ExtractorIdentity.Valid(id);

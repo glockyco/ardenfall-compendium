@@ -83,7 +83,7 @@ public sealed class SpellExtractorTests
     }
 
     [Fact]
-    public void DuplicateAssetNameIsFatal()
+    public void DifferentSpellRecordsWithOneNameFailFast()
     {
         var source = new FakeSpellAssetSource(new[]
         {
@@ -92,11 +92,9 @@ public sealed class SpellExtractorTests
         });
         var extractor = new SpellExtractor(source);
 
-        Assert.Single(extractor.Walk().ToList());
-        var diagnostic = Assert.Single(extractor.Diagnostics, d => d.Code == "namedAssetNameDuplicate");
-        Assert.Equal("fatal", diagnostic.Severity);
-        Assert.Contains("SpellData", diagnostic.Message);
-        Assert.Contains("'spell_same'", diagnostic.Message);
+        var exception = Assert.Throws<System.InvalidOperationException>(() => extractor.Walk().ToList());
+        Assert.Contains("different records", exception.Message);
+        Assert.Contains("named;spell;spell_same", exception.Message);
     }
 
     [Theory]

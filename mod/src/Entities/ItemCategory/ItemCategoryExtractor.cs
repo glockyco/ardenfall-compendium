@@ -28,7 +28,6 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
 
     public override IEnumerable<ItemCategorySnapshotRow> Walk()
     {
-        var seenNames = new HashSet<string>(System.StringComparer.Ordinal);
         return ExtractorLifecycle.Run(
             _source.EnumerateItemCategories(),
             Diagnostics,
@@ -40,7 +39,7 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
                 Field = "id",
                 Message = "ItemCategory asset source yielded a null row",
             },
-            asset => CreateIdentity(asset, seenNames),
+            asset => CreateIdentity(asset),
             (asset, id) =>
             {
                 var iconRef = asset.IconRef;
@@ -106,7 +105,7 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
             });
     }
 
-    private static ExtractorIdentity CreateIdentity(ItemCategoryAsset asset, HashSet<string> seenNames)
+    private static ExtractorIdentity CreateIdentity(ItemCategoryAsset asset)
     {
         var assetName = asset.AssetName ?? "";
         if (!NamedAssetIdentity.TryCreate("item-category", assetName, out var id))
@@ -117,16 +116,6 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
                 Code = "namedAssetNameMissing",
                 Field = "id",
                 Message = $"ItemCategory asset has empty or whitespace name '{assetName}'",
-            });
-        }
-        if (!seenNames.Add(assetName))
-        {
-            return ExtractorIdentity.Invalid(new Diagnostic
-            {
-                Severity = "fatal",
-                Code = "namedAssetNameDuplicate",
-                Field = "id",
-                Message = $"ItemCategory asset name '{assetName}' is duplicated",
             });
         }
         return ExtractorIdentity.Valid(id);

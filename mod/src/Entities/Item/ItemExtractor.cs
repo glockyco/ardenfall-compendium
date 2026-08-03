@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities;
@@ -9,7 +8,6 @@ namespace ArdenfallCompendium.Entities.Item;
 public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
 {
     private readonly IItemAssetSource _source;
-    private readonly HashSet<string> _seenGuids = new(StringComparer.Ordinal);
 
     public ItemExtractor()
         : this(new BuiltLookupTableItemAssetSource())
@@ -51,16 +49,6 @@ public sealed class ItemExtractor : WalkerBase<ItemSnapshotRow>
                         Code = "lookupAssetGuidMissing",
                         Field = "id",
                         Message = $"ItemData asset '{asset.AssetName}' has no GUID in BuiltLookupTable",
-                    });
-                }
-                if (!_seenGuids.Add(asset.Guid))
-                {
-                    return ExtractorIdentity.Invalid(new Diagnostic
-                    {
-                        Severity = "fatal",
-                        Code = "lookupAssetGuidDuplicate",
-                        Field = "id",
-                        Message = $"ItemData asset GUID '{asset.Guid}' is duplicated",
                     });
                 }
                 return ExtractorIdentity.Valid(asset.Guid);

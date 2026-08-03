@@ -65,7 +65,7 @@ public sealed class ItemCategoryExtractorTests
     }
 
     [Fact]
-    public void DuplicateCategoryNameIsFatal()
+    public void IdenticalCategoryRepeatProducesDuplicateDiagnostic()
     {
         var source = new FakeItemCategoryAssetSource(new[]
         {
@@ -75,10 +75,9 @@ public sealed class ItemCategoryExtractorTests
         var extractor = new ItemCategoryExtractor(source);
 
         Assert.Single(extractor.Walk().ToList());
-        var diagnostic = Assert.Single(extractor.Diagnostics, d => d.Code == "namedAssetNameDuplicate");
-        Assert.Equal("fatal", diagnostic.Severity);
-        Assert.Contains("ItemCategory", diagnostic.Message);
-        Assert.Contains("'Same'", diagnostic.Message);
+        var diagnostic = Assert.Single(extractor.Diagnostics, d => d.Code == "sourceYieldedDuplicateRecord");
+        Assert.Equal("diagnostic", diagnostic.Severity);
+        Assert.Contains("named;item-category;Same", diagnostic.Message);
     }
 
     [Fact]

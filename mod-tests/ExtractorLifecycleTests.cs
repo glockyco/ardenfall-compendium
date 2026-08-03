@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using ArdenfallCompendium.Dtos;
@@ -12,7 +13,7 @@ public sealed class ExtractorLifecycleTests
     [Fact]
     public void NullSourceRowProducesFatalDiagnosticAndResolverIsDrainedOnce()
     {
-        var source = new[] { (TestAsset)null!, new TestAsset("one"), new TestAsset("two") };
+        var source = new[] { (TestAsset)null!, new TestAsset("one", "one"), new TestAsset("two", "two") };
         var diagnostics = new List<Diagnostic>();
         var refs = new RefResolver();
 
@@ -46,5 +47,59 @@ public sealed class ExtractorLifecycleTests
         Assert.Empty(refs.Diagnostics);
     }
 
-    private sealed record TestAsset(string Id);
+    [Fact]
+    public void IdenticalRecordRepeatProducesDiagnosticAndDropsRepeat()
+    {
+        var asset = new TestAsset("same", "payload");
+        var diagnostics = new List<Diagnostic>();
+        var refs = new RefResolver();
+
+        var rows = ExtractorLifecycle.Run(
+            new[] { asset, asset },
+            diagnostics,
+            refs,
+            () => new Diagnostic
+            {
+                Severity = "fatal",
+                Code = "testAssetMissing",
+                Field = "id",
+                Message = "test source yielded a null row",
+            },
+            sourceAsset => ExtractorIdentity.Valid(sourceAsset.Id),
+            (sourceAsset, id) => sourceAsset).ToList();
+
+        Assert.Single(rows);
+        var diagnostic = Assert.Single(diagnostics);
+        Assert.Equal("sourceYieldedDuplicateRecord", diagnostic.Code);
+        Assert.Contains("same", diagnostic.Message);
+    }
+
+    [Fact]
+    public void DifferentRecordsWithOneIdFailFast()
+    {
+        var diagnostics = new List<Diagnostic>();
+        var refs = new RefResolver();
+
+        var exception = Assert.Throws<InvalidOperationException>(() => ExtractorLifecycle.Run(
+            new[]
+            {
+                new TestAsset("same", "first"),
+                new TestAsset("same", "second"),
+            },
+            diagnostics,
+            refs,
+            () => new Diagnostic
+            {
+                Severity = "fatal",
+                Code = "testAssetMissing",
+                Field = "id",
+                Message = "test source yielded a null row",
+            },
+            sourceAsset => ExtractorIdentity.Valid(sourceAsset.Id),
+            (sourceAsset, id) => sourceAsset).ToList());
+
+        Assert.Contains("same", exception.Message);
+        Assert.Contains("different records", exception.Message);
+    }
+    private sealed record TestAsset(string Id, string Value);
 }
