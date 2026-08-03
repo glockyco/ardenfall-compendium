@@ -753,16 +753,18 @@ describe("site prerender architecture", () => {
     expect(siteLayout).not.toContain("prerender = false");
   });
 
-  it("keeps Cloudflare static assets ahead of Worker execution", () => {
-    expect(siteSvelteConfig).toContain("adapter({})");
+  it("deploys files only, with no Worker in front of them", () => {
+    // A Worker used to sit here and could only fail, because its bundle pulled in the server
+    // modules that read the build database. It answered 500 for any address that matched no file.
+    expect(siteSvelteConfig).toContain("@sveltejs/adapter-static");
     expect(siteWranglerConfig).toContain('directory = ".svelte-kit/cloudflare"');
-    expect(siteWranglerConfig).toContain('binding = "ASSETS"');
-    expect(siteWranglerConfig).not.toContain("run_worker_first = true");
+    expect(siteWranglerConfig).not.toMatch(/^main\s*=/m);
+    expect(siteWranglerConfig).not.toMatch(/^run_worker_first\s*=/m);
   });
 
-  it("documents why the Cloudflare Worker still uses nodejs_compat", () => {
-    expect(siteWranglerConfig).toContain("nodejs_compat");
-    expect(siteWranglerConfig).toContain("Required because adapter-cloudflare");
+  it("serves its own 404 page when an address matches no file", () => {
+    expect(siteWranglerConfig).toContain('not_found_handling = "404-page"');
+    expect(existsSync("site/src/routes/404/+page.svelte")).toBe(true);
   });
 
   it("has a prerender smoke script wired into the site package", () => {

@@ -121,6 +121,16 @@ Every one of those 25 is negative: 23 flagged as enemies, and 2 carrying a negat
 
 `autoAddFactions` is empty in every faction in this build, so nothing models it. Building against data that cannot be verified is how an unverifiable contract enters the pipeline.
 
+## The Worker that could only fail
+
+Every dynamic route answered 500 in production for an address matching no page. A crawler on a stale link, or anyone guessing a slug, met a server error rather than a 404.
+
+Each content route prerenders, and the build database is deliberately never deployed, so an unmatched path fell through to a Worker that cannot render anything. Worse, the Worker's bundle contained the server modules that open that database, so it failed on load and returned 500 even for a path matching no route at all.
+
+The site is now files only: `adapter-static` emits no Worker, `wrangler.toml` carries no `main`, and Cloudflare serves a prerendered `/404` page for a miss. Verified in production, where `/items/does-not-exist`, `/factions/does-not-exist--00000000` and `/no-such-section` all answer 404 with the compendium's own page.
+
+**A test asserted the wrong layer for months.** `smoke:error-route` read `+error.svelte` and checked it contained certain strings. That component renders only when a Worker runs, and an unmatched address never reached it, so the test passed while production was broken. It now checks the 404 asset exists, carries the real page rather than the adapter's placeholder, and that the setting which makes Cloudflare serve it is present. The production smoke fetches three missing addresses and requires 404 with that content.
+
 ## Not covered by any plan
 
 Three concerns no planning doc mentions. Each is measured, and none blocks a deploy.

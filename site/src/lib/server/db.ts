@@ -5,7 +5,14 @@ import { join } from "node:path";
 import { isColorObject, parseGeneratedJson } from "./json";
 
 const dbPath = () => join(process.cwd(), ".data", "data.sqlite");
-const require = createRequire(import.meta.url);
+// `createRequire` runs only when a query needs a driver. At module scope it throws inside a
+// Cloudflare Worker, and this module reaches the Worker bundle because it is a server module, so
+// every request failed to boot and answered 500 instead of 404.
+let nodeRequire: NodeRequire | null = null;
+const require = (id: string): unknown => {
+  nodeRequire ??= createRequire(import.meta.url);
+  return nodeRequire(id);
+};
 
 type SqlParams = readonly unknown[] | Record<string, unknown>;
 type SqliteStatement = {

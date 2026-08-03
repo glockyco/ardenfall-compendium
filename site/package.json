@@ -6,7 +6,7 @@
     "@deck.gl/layers": "^9.3.7",
     "@internationalized/date": "^3.12.3",
     "@lucide/svelte": "^1.28.0",
-    "@sveltejs/adapter-cloudflare": "^7.2.9",
+    "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.70.2",
     "@sveltejs/vite-plugin-svelte": "^7.2.0",
     "@tailwindcss/vite": "^4.3.3",

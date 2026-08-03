@@ -1,9 +1,5 @@
 name = "ardenfall-compendium-site"
-main = ".svelte-kit/cloudflare/_worker.js"
 compatibility_date = "2026-05-07"
-# Required because adapter-cloudflare still emits a Worker bundle that imports
-# Node builtins through SvelteKit's server environment chunk for fallback routes.
-compatibility_flags = ["nodejs_compat"]
 
 workers_dev = false
 
@@ -11,17 +7,13 @@ workers_dev = false
 pattern = "ardenfall.compendiums.org"
 custom_domain = true
 
-# adapter-cloudflare emits both the Worker entry and static asset bundle into
-# .svelte-kit/cloudflare. Leave run_worker_first unset so Cloudflare serves
-# matching prerendered HTML and WebP assets without invoking the Worker. The
-# build-time SQLite database stays in site/.data and is never served. Routes
-# should opt out of prerendering only when they genuinely need request-time
-# computation.
+# The site is files only. Every route prerenders, and the build database lives in site/.data and is
+# never deployed, so nothing can be rendered at request time. There is therefore no `main` and no
+# Worker: Cloudflare serves these assets directly.
+#
+# A Worker used to sit here and could only fail. Its bundle pulled in the server modules that read
+# the build database, so it threw on load and answered 500 for any address that matched no file,
+# instead of 404. `not_found_handling` now serves the prerendered 404.html for a miss.
 [assets]
 directory = ".svelte-kit/cloudflare"
-binding = "ASSETS"
-# Every content route prerenders, and the build database is never deployed, so the Worker cannot
-# render a page it has no data for. Without this, an unmatched path such as a stale link or a
-# crawler guess reaches the Worker and returns 500 instead of 404. This makes Cloudflare serve the
-# prerendered 404 asset directly.
 not_found_handling = "404-page"
