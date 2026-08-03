@@ -121,7 +121,8 @@ public static class ItemAdapterHelpers
     public static SnapshotRef? ResolveOptionalAsset(RefResolver? refs, Object? asset, string field, string rowId, string source)
     {
         if (ReferenceEquals(asset, null) || refs == null) return null;
-        return refs.ResolveAsset(asset, field, rowId, MissingPolicy.Diagnostic, source);
+        var diagnosticCode = "item" + char.ToUpperInvariant(field[0]) + field[1..] + "Missing";
+        return refs.ResolveAsset(asset, field, rowId, MissingPolicy.Diagnostic, source, diagnosticCode);
     }
 
     public static LeveledStatusEffectSnapshot? SnapshotLeveledStatusEffect(LeveledStatusEffect? effect, RefResolver? refs, string rowId)

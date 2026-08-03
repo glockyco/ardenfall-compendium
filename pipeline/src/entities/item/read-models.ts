@@ -76,7 +76,7 @@ export function resolveItemDisplayLabel(
 export interface EntityNodeInput {
   entityType: string;
   entityId: string;
-  label: string;
+  label: string | null;
   routePath: string;
   canonicalSlug?: string;
   shortId?: string;
@@ -99,7 +99,7 @@ export function prepareEntityNodeWriter(db: Database): EntityNodeWriter {
 
     const slug =
       explicitCanonicalSlug === undefined
-        ? deriveEntityNodeSlug(node.label, node.entityId)
+        ? deriveEntityNodeSlug(node.label ?? "", node.entityId)
         : { canonicalSlug: explicitCanonicalSlug, shortId: explicitShortId as string };
     insert.run(
       node.entityType,
@@ -396,7 +396,7 @@ export function emitItemReadModels(
             richTextDiagnostics.push({
               severity: "diagnostic",
               source: "item-presentation-read-model",
-              code: "unresolvedEffectTarget",
+              code: "itemStatusEffectUnresolved",
               message: `Effect '${effect.label}' does not resolve to a published status effect.`,
               entityType: "item",
               entityId: snapshotRow.id,
@@ -425,7 +425,7 @@ export function emitItemReadModels(
           richTextDiagnostics.push({
             severity: "diagnostic",
             source: "item-presentation-read-model",
-            code: "unresolvedEffectTarget",
+            code: "itemSpellUnresolved",
             message: `Effect '${effect.label}' does not resolve to a published spell.`,
             entityType: "item",
             entityId: snapshotRow.id,

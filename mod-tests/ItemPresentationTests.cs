@@ -349,8 +349,7 @@ public sealed class ItemPresentationTests
         Assert.Equal(4, effect.Level);
         Assert.Equal("statusEffectsJson", effect.Source);
         var diagnostic = Assert.Single(presentation.Diagnostics);
-        Assert.Equal("statusEffectsJson", diagnostic.Field);
-        Assert.Equal("unresolvedEffectTarget", diagnostic.Code);
+        Assert.Equal("itemStatusEffectUnresolved", diagnostic.Code);
     }
 
     [Fact]
@@ -402,7 +401,6 @@ public sealed class ItemPresentationTests
         Assert.Null(effect.TargetRef);
         Assert.Null(effect.TargetId);
         var diagnostic = Assert.Single(presentation.Diagnostics);
-        Assert.Equal("spellDataJson", diagnostic.Field);
-        Assert.Equal("unresolvedEffectTarget", diagnostic.Code);
+        Assert.Equal("itemSpellUnresolved", diagnostic.Code);
     }
 }

@@ -67,7 +67,13 @@ public static class ExtractItem
         var quickslotIconResolved = asset.quickslotIcon.Get();
         fields["quickslotIconRef"] = quickslotIconResolved == null
             ? null
-            : refs.ResolveAsset(quickslotIconResolved, "quickslotIconRef", id, MissingPolicy.Diagnostic, source: "ItemData.quickslotIcon");
+            : refs.ResolveAsset(
+                quickslotIconResolved,
+                "quickslotIconRef",
+                id,
+                MissingPolicy.Diagnostic,
+                source: "ItemData.quickslotIcon",
+                diagnosticCode: "itemQuickslotIconRefMissing");
         if (quickslotIconResolved != null)
         {
             provenance["quickslotIconRef"] = (fields["quickslotIconRef"] as SnapshotRef)?.Kind == "missing"
@@ -79,7 +85,13 @@ public static class ExtractItem
         fields["categoryName"] = CategoryNameForFallback(categoryResolved);
         fields["categoryRef"] = categoryResolved == null
             ? null
-            : refs.ResolveAsset(categoryResolved, "categoryRef", id, MissingPolicy.Diagnostic, source: "ItemData.category");
+            : refs.ResolveAsset(
+                categoryResolved,
+                "categoryRef",
+                id,
+                MissingPolicy.Diagnostic,
+                source: "ItemData.category",
+                diagnosticCode: "itemCategoryRefMissing");
         if (categoryResolved != null)
         {
             provenance["categoryRef"] = (fields["categoryRef"] as SnapshotRef)?.Kind == "missing"
@@ -96,7 +108,13 @@ public static class ExtractItem
         fields["isIllegal"] = isIllegalResolved;
         provenance["isIllegal"] = ProvenanceCapture.ForParameter<bool>("isIllegal.Get()", isIllegalIsSet, inherited: !isIllegalIsSet);
 
-        fields["iconRef"] = refs.ResolveAsset(asset.icon?.Get(), "iconRef", id, MissingPolicy.Diagnostic, source: "ItemData.icon");
+        fields["iconRef"] = refs.ResolveAsset(
+            asset.icon?.Get(),
+            "iconRef",
+            id,
+            MissingPolicy.Diagnostic,
+            source: "ItemData.icon",
+            diagnosticCode: "itemIconRefMissing");
         provenance["iconRef"] = (fields["iconRef"] as SnapshotRef)?.Kind == "missing"
             ? ProvenanceCapture.ForMissing("ItemData.icon", inherited: false)
             : ProvenanceCapture.ForLookupAsset("ItemData.icon", isSet: true, inherited: false);
@@ -133,7 +151,7 @@ public static class ExtractItem
         refs.Diagnostics.Add(new Diagnostic
         {
             Severity = "diagnostic",
-            Code = "lookupAssetGuidMissing",
+            Code = "itemTagRefMissing",
             Field = "tags",
             Message = $"missing ref 'tags' on {id}",
         });

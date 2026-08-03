@@ -277,7 +277,7 @@ public static class ItemPresentationBuilder
                 {
                     diagnostics.Add(new ItemPresentationDiagnosticSnapshot
                     {
-                        Code = "unresolvedEffectTarget",
+                        Code = "itemStatusEffectUnresolved",
                         Field = effect.Source,
                         Message = $"Effect '{effect.Label}' does not have a status-effect reference.",
                     });
@@ -291,7 +291,7 @@ public static class ItemPresentationBuilder
                 {
                     diagnostics.Add(new ItemPresentationDiagnosticSnapshot
                     {
-                        Code = "unresolvedEffectTarget",
+                        Code = "itemSpellUnresolved",
                         Field = effect.Source,
                         Message = $"Effect '{effect.Label}' does not have a spell reference.",
                     });
@@ -303,7 +303,7 @@ public static class ItemPresentationBuilder
             {
                 diagnostics.Add(new ItemPresentationDiagnosticSnapshot
                 {
-                    Code = "unresolvedEffectTarget",
+                    Code = "itemEffectTargetUnresolved",
                     Field = "presentation.effects",
                     Message = $"Effect '{effect.Label}' does not have a resolved {effect.TargetType} target.",
                 });

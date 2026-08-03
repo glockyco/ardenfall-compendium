@@ -112,6 +112,42 @@ public sealed class ItemAdapterBehaviorTests
     }
 
     [Fact]
+    public void OptionalStatusEffectRefNamesTheMissingField()
+    {
+        var statusEffect = (StatusEffectData)RuntimeHelpers.GetUninitializedObject(typeof(StatusEffectData));
+        var refs = new RefResolver(
+            isUnityNull: _ => false,
+            lookupGuid: _ => null);
+
+        var resolved = ItemAdapterHelpers.ResolveOptionalAsset(
+            refs,
+            statusEffect,
+            "statusEffectRef",
+            "item-row",
+            "ItemData.statusEffect");
+
+        Assert.Equal("itemStatusEffectRefMissing", resolved?.Reason);
+        Assert.Equal("itemStatusEffectRefMissing", Assert.Single(refs.Diagnostics).Code);
+    }
+
+    [Fact]
+    public void OptionalIconRefNamesNullAssetField()
+    {
+        var icon = (StatusEffectData)RuntimeHelpers.GetUninitializedObject(typeof(StatusEffectData));
+        var refs = new RefResolver(isUnityNull: _ => true);
+
+        var resolved = ItemAdapterHelpers.ResolveOptionalAsset(
+            refs,
+            icon,
+            "iconRef",
+            "item-row",
+            "ItemData.icon");
+
+        Assert.Equal("itemIconRefMissing", resolved?.Reason);
+        Assert.Equal("itemIconRefMissing", Assert.Single(refs.Diagnostics).Code);
+    }
+
+    [Fact]
     public void NullAssetRefKeepsNullAssetReason()
     {
         var refs = new RefResolver();
@@ -214,7 +250,7 @@ public sealed class ItemAdapterBehaviorTests
         var tagId = ExtractItem.ResolveTagRef(tag, refs, "item-guid", _ => null);
 
         Assert.Null(tagId);
-        Assert.Contains(refs.Diagnostics, d => d.Code == "lookupAssetGuidMissing" && d.Field == "tags");
+        Assert.Contains(refs.Diagnostics, d => d.Code == "itemTagRefMissing" && d.Field == "tags");
     }
 
     [Fact]
