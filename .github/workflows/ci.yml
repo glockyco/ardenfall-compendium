@@ -47,6 +47,8 @@ jobs:
       - run: bun run format:check
       - run: bun run lint
       - run: bun test tooling.test.ts artifact-staging.test.ts
+      - run: bun run check:fixtures
+        env: { CI: "true" }
       - run: git diff --check
 
   pipeline:
@@ -79,7 +81,7 @@ jobs:
         run: bun run artifact:fixture synthetic fixtures/synthetic/snapshot
       - run: bun run --cwd site check
       - run: bun test site/test
-      - run: bun run --cwd site build
+      - run: bun run --cwd site build:fixture
       - run: bun run --cwd site smoke:prerender
       - run: bun run --cwd site smoke:pagefind
       - run: bun run --cwd site smoke:map
@@ -94,7 +96,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
-        with: { dotnet-version: "8.0.x" }
+        with: { dotnet-version: "10.0.x" }
       - name: format-check
         run: dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes
       - name: test

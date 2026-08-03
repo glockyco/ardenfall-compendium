@@ -2,5 +2,9 @@
   "name": "@ardenfall/controller",
   "private": true,
   "version": "0.0.0",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@hotrepl/protocol": "^4.0.1",
+    "@hotrepl/sdk": "^4.0.1"
+  }
 }
