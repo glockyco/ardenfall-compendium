@@ -7,7 +7,7 @@ CREATE TABLE map_points (
   id                         TEXT PRIMARY KEY,
   entity_id                  TEXT NOT NULL,
   instance_id                TEXT NOT NULL,
-  name                       TEXT NOT NULL,
+  name                       TEXT,
   map_id                     TEXT,
   map_x                      REAL NOT NULL,
   map_y                      REAL NOT NULL,

@@ -5,6 +5,8 @@ import {
   listCharacters,
   listFactions,
   listLocations,
+  listPlacedCharacters,
+  listPortals,
   getEntity,
   getMapView,
   listItemCategories,
@@ -53,6 +55,8 @@ export interface SiteChrome {
   itemTagRoute: string;
   characterRoute: string;
   locationRoute: string;
+  placedCharacterRoute: string;
+  portalRoute: string;
   factionRoute: string;
 }
 
@@ -189,6 +193,8 @@ function buildLayoutData(): SiteChrome {
   const itemTag = entitySection("item-tag", listItemTags().length);
   const character = entitySection("character", listCharacters().length);
   const location = entitySection("location", listLocations().length);
+  const placedCharacter = entitySection("npc", listPlacedCharacters().length);
+  const portal = entitySection("portal", listPortals().length);
   const faction = entitySection("faction", listFactions().length);
   const map = mapSection();
 
@@ -202,6 +208,8 @@ function buildLayoutData(): SiteChrome {
       itemTag,
       character,
       location,
+      placedCharacter,
+      portal,
       faction,
       map,
     ],
@@ -215,6 +223,8 @@ function buildLayoutData(): SiteChrome {
     itemTagRoute: itemTag.href,
     characterRoute: character.href,
     locationRoute: location.href,
+    placedCharacterRoute: placedCharacter.href,
+    portalRoute: portal.href,
     factionRoute: faction.href,
   };
 }

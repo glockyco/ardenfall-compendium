@@ -125,6 +125,19 @@ export type {
 } from "./entities/location";
 export { getLocationPresentation, listLocations } from "./entities/location";
 
+export type {
+  PlacedCharacterLocationLink,
+  PlacedCharacterOverviewRow,
+  PlacedCharacterPresentationRow,
+} from "./entities/placed-character";
+export { getPlacedCharacterPresentation, listPlacedCharacters } from "./entities/placed-character";
+export type {
+  PortalOverviewRow,
+  PortalPresentationRow,
+  ConnectedPortalLink,
+} from "./entities/portal";
+export { getPortalPresentation, listPortals } from "./entities/portal";
+
 export type { FactionOverviewRow, FactionPresentationRow } from "./entities/faction";
 export { getFactionPresentation, listFactions } from "./entities/faction";
 export type {

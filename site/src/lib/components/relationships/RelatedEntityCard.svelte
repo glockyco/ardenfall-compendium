@@ -5,6 +5,8 @@
   let { edge }: { edge: RelationshipEdge } = $props();
 </script>
 
-<li class="border-border rounded-md border p-3 text-sm">
-  <EntityLink {edge} />
-</li>
+{#if edge.targetLabel !== null}
+  <li class="border-border rounded-md border p-3 text-sm">
+    <EntityLink {edge} />
+  </li>
+{/if}

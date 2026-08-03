@@ -217,8 +217,9 @@ export const isRelationshipEdgeArray: JsonGuard<RelationshipEdge[]> = (
       isRecord(edge) &&
       typeof edge.targetType === "string" &&
       typeof edge.targetId === "string" &&
-      typeof edge.targetLabel === "string" &&
-      typeof edge.targetRoutePath === "string" &&
+      isNullableString(edge.targetLabel) &&
+      isNullableString(edge.targetRoutePath) &&
+      (edge.targetHasPage === undefined || typeof edge.targetHasPage === "boolean") &&
       typeof edge.predicate === "string" &&
       typeof edge.label === "string" &&
       isFiniteNumber(edge.weight) &&

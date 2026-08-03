@@ -1,6 +1,7 @@
 <script lang="ts">
   import BackLink from "$lib/components/navigation/BackLink.svelte";
   import LocationDetail from "$lib/components/locations/LocationDetail.svelte";
+  import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -20,4 +21,10 @@
 <BackLink href={data.locationRoute} label="locations" />
 <h1 class="mt-2 text-2xl font-bold">{location.name}</h1>
 
-<LocationDetail presentation={location} />
+<div class="grid gap-6">
+  <LocationDetail presentation={location} />
+
+  {#each data.relationships as section (section.id)}
+    <RelationshipSection {section} />
+  {/each}
+</div>
