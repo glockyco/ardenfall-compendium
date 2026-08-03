@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BackLink from "$lib/components/navigation/BackLink.svelte";
   import ItemTagDetail from "$lib/components/tags/ItemTagDetail.svelte";
   import type { PageProps } from "./$types";
 
@@ -24,6 +25,6 @@
   <meta property="og:type" content="article" />
 </svelte:head>
 
-<a class="text-sm underline" href={data.itemTagRoute}>← back to tags</a>
+<BackLink href={data.itemTagRoute} label="tags" />
 <h1 class="mt-2 text-2xl font-bold">{tag.name}</h1>
 <ItemTagDetail presentation={tag} items={data.items} columns={data.columns} />

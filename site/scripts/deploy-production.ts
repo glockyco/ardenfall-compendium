@@ -16,6 +16,7 @@ await stageArtifact({
 });
 run("bun", ["run", "build:prepared"]);
 run("bun", ["run", "smoke:prerender"]);
+run("bun", ["run", "smoke:pagefind"]);
 // Keep this literal command visible for tooling guardrails: wrangler deploy
 run("wrangler", ["deploy"]);
 run("bun", ["run", "scripts/smoke-production-release.ts", manifestPath]);

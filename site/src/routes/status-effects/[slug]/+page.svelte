@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BackLink from "$lib/components/navigation/BackLink.svelte";
   import RichText from "$lib/components/content/RichText.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
@@ -28,7 +29,7 @@
   <meta property="og:type" content="article" />
 </svelte:head>
 
-<a class="text-sm underline" href={data.statusEffectRoute}>← back to status effects</a>
+<BackLink href={data.statusEffectRoute} label="status effects" />
 <h1 class="mt-2 text-2xl font-bold">{statusEffect.displayName}</h1>
 
 <div class="mt-4 grid gap-6">

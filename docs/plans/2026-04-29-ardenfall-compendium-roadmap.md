@@ -489,7 +489,7 @@ So the next connective work is no longer a field, it is an entity:
 6. **Spells to status effects.** The 116 unreachable status effects are referenced from the Odin-serialised effect graph on `SpellData`. A slice rather than a field.
 7. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference, but the extractor does not currently emit it, so it needs mod work first.
 
-**Search.** No site search exists and no FTS table ships. Pagefind runs after prerender and needs no extraction work. Until it exists, crawlers are the only discovery path, which is also why the missing sitemap and meta descriptions matter.
+**Search.** Delivered. Pagefind runs after the prerender and indexes all 1,794 pages, so every page is findable by name even when nothing links to it. The index ships from `build:prepared`, which means no deployable build can omit it, and a smoke fails on an absent or empty index. The sitemap and meta descriptions still matter for crawlers.
 
 **A current release.** Nothing has been published since 2026-06-05, four entities ago. The path is proven, the blocker was only that old artifacts predate the count contract.
 

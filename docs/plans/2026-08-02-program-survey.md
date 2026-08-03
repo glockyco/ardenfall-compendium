@@ -89,9 +89,19 @@ Worth doing now:
 - ~~Delete `pipeline/src/registry.ts`~~ - **done.** Removed with its test. The package no longer has two files called `registry.ts`, one of which was the real dispatch.
 - ~~`controller/src/validate-snapshot.ts` hardcodes `ENTITY_FILES`~~ - **done.** Deleted. The controller identifies envelopes by the id inside each file, as the pipeline always has, and cross-checks the discovered set against the manifest counts, which also catches an unexpected file. A tenth entity needs no controller change.
 - ~~Extract the extractor lifecycle in the mod~~ - **done.** One lifecycle across all nine extractors, 630 lines removed. The display-name policy is uniform: a diagnostic and a nullable column, never a fallback to the asset name, which had been putting internal identifiers like `itemcat_weapons` in front of readers. Measured first and confirmed after: no row in any affected entity is missing a name, and a live export produces byte-identical diagnostics.
+- ~~Add search~~ - **done.** Pagefind indexes all 1,794 prerendered pages in the build, so every page is findable by name even when nothing links to it. 1,816 index files, 1.27 MB, 5,556 deploy files against the 20,000 limit. Detail pages rank first for real names, which was measured before deciding whether listing pages needed exclusion. They did not.
 - **Stop swallowing Unity lookup failures.** Roughly a dozen sites catch and return `""` or `null` with no diagnostic, which makes a destroyed object indistinguishable from genuinely absent data.
 - ~~Validate JSON at the site boundary~~ - **done.** Every server parse of a generated column goes through one helper that names the entity, column and row on failure. Shapes consumed structurally are validated, pass-through blobs are container-checked only rather than given invented schemas.
 - ~~Close the descriptor type vocabulary~~ - **done.** The set is closed in three layers that each catch a different mistake: a schema enum for the author, a TypeScript union for the compiler, and a throw for a dispatcher meeting an unknown token. `minimumSkill` was declared `int`, fell through to TEXT, and is now INTEGER, so a sort no longer places 40 before 5.
+
+Building search exposed four reader-facing defects that browsing had hidden, all fixed:
+
+- **Raw entity ids reached readers.** The character list appended the full id when a name repeated, and every nameless character showed one, so 118 strings like `named;character;preset_enemy_bone-charmer-melee` were on one page. Both now use `entity_nodes.short_id`, which relationship sections already show, rather than a second convention.
+- **Result URLs carried `.html`.** Pagefind returns the prerendered filename. The site serves the same page without the extension, and that is the address a reader can share.
+- **Nine detail routes hand-wrote the same back link.** It repeated in every search extract. One `BackLink` component now carries the text and the index exclusion, so a new detail page cannot forget either.
+- **Every navigation link was 20 px tall.** WCAG 2.5.8 asks for 24 px. The header links and the back link now meet it.
+
+One defect is recorded and not fixed. One item is named `Recipe of {0}`, which is the game's own format string with an argument the runtime substitutes. The pipeline does not extract that binding, so the correct name is not derivable from the snapshot today.
 
 Leave alone: `RunFinalizeCommand` is genuinely multi-phase orchestration, the per-entity read model modules are small and readable, `EntityTable` is a real generic component, and every detail route already fails cleanly with a 404.
 
@@ -101,7 +111,7 @@ Two sibling projects were audited for their map and marker systems, and the numb
 
 Mature game wikis converge on **generated inverse relationship blocks**: "used by", "obtained from", "drops", "sources". OSRS, Warframe, PoEDB, and Stardew all do this, with authored prose reserved for interpretation. High-recall edges are generated from facts already in the read model, and the reverse index is built once.
 
-**Pagefind** is the strongest fit for search here. It runs after prerendering, chunks its index so a browser fetches a subset, and its own documentation reports a 2,496-page site indexing in 2.4 seconds. SQLite FTS5 in WASM is the architecturally purer option and costs materially more to implement.
+**Pagefind** is the strongest fit for search here, and it now ships. It runs after prerendering, chunks its index so a browser fetches a subset, and its own documentation reports a 2,496-page site indexing in 2.4 seconds. SQLite FTS5 in WASM is the architecturally purer option and costs materially more to implement.
 
 Warframe's guidance on retaining removed content does not transfer. It exists because a hand-authored wiki cannot be rebuilt, so an editor's prose depends on data rows that must not vanish underneath it. Every page here is regenerated from one snapshot with no authored layer, so an entity leaving the game correctly leaves the site.
 

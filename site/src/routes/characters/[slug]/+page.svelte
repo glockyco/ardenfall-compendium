@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BackLink from "$lib/components/navigation/BackLink.svelte";
   import CharacterDetail from "$lib/components/characters/CharacterDetail.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
@@ -23,7 +24,7 @@
   <meta property="og:type" content="article" />
 </svelte:head>
 
-<a class="text-sm underline" href={data.characterRoute}>← back to characters</a>
+<BackLink href={data.characterRoute} label="characters" />
 <h1 class="mt-2 text-2xl font-bold">{character.displayName}</h1>
 
 <CharacterDetail presentation={character} />

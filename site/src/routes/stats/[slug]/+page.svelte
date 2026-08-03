@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BackLink from "$lib/components/navigation/BackLink.svelte";
   import StatTypeDetail from "$lib/components/stats/StatTypeDetail.svelte";
   import type { PageProps } from "./$types";
 
@@ -26,6 +27,6 @@
   <meta property="og:type" content="article" />
 </svelte:head>
 
-<a class="text-sm underline" href={data.statTypeRoute}>← back to stats</a>
+<BackLink href={data.statTypeRoute} label="stats" />
 <h1 class="mt-2 text-2xl font-bold">{stat.name}</h1>
 <StatTypeDetail presentation={stat} />

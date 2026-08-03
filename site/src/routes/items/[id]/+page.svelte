@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BackLink from "$lib/components/navigation/BackLink.svelte";
   import ItemHeader from "$lib/components/items/ItemHeader.svelte";
   import { itemNameForDisplay } from "$lib/components/items/itemName";
   import ItemPresentationPanel from "$lib/components/items/ItemPresentationPanel.svelte";
@@ -13,7 +14,7 @@
   <title>{itemNameForDisplay(item.name)} | Ardenfall Compendium</title>
 </svelte:head>
 
-<a class="text-sm underline" href={data.itemRoute}>← back to items</a>
+<BackLink href={data.itemRoute} label="items" />
 <div class="mt-2">
   <ItemHeader {item} />
 </div>

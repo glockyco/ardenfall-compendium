@@ -6,7 +6,7 @@
 </script>
 
 {#if section.edges.length > 0}
-  <section class="border-border rounded-lg border p-4">
+  <section data-pagefind-ignore class="border-border rounded-lg border p-4">
     <h2 class="font-semibold">{section.title}</h2>
     <ul class="mt-3 grid gap-2 sm:grid-cols-2">
       {#each section.edges as edge (`${edge.predicate}:${edge.targetType}:${edge.targetId}`)}

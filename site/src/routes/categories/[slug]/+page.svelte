@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BackLink from "$lib/components/navigation/BackLink.svelte";
   import ItemCategoryDetail from "$lib/components/categories/ItemCategoryDetail.svelte";
   import type { PageProps } from "./$types";
 
@@ -22,7 +23,7 @@
   <meta property="og:type" content="article" />
 </svelte:head>
 
-<a class="text-sm underline" href={data.itemCategoryRoute}>← back to categories</a>
+<BackLink href={data.itemCategoryRoute} label="categories" />
 <h1 class="mt-2 text-2xl font-bold">{category.name}</h1>
 <ItemCategoryDetail
   presentation={category}

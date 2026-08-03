@@ -228,7 +228,7 @@ describe("snapshot provenance", () => {
 describe("site deployment tooling", () => {
   it("deploys by staging an explicit artifact before build", () => {
     expect(sitePackageJson.scripts["stage:artifact"]).toBe("bun run scripts/stage-artifact.ts");
-    expect(sitePackageJson.scripts["build:prepared"]).toBe("vite build");
+    expect(sitePackageJson.scripts["build:prepared"]).toBe("vite build && bun run build:pagefind");
     expect(sitePackageJson.scripts["build:fixture"]).toBe(
       "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
     );
@@ -237,13 +237,19 @@ describe("site deployment tooling", () => {
       "bun run scripts/deploy-production.ts",
     );
     expect(existsSync("site/scripts/stage-artifact.ts")).toBe(true);
+    // Every deployable build runs through build:prepared, so the search index cannot
+    // go missing while pages still ship.
+    expect(sitePackageJson.scripts["build:pagefind"]).toBe("bun run scripts/build-pagefind.ts");
+    expect(sitePackageJson.scripts["smoke:pagefind"]).toBe("bun run scripts/smoke-pagefind.ts");
+    expect(existsSync("site/scripts/build-pagefind.ts")).toBe(true);
+    expect(existsSync("site/scripts/smoke-pagefind.ts")).toBe(true);
     expect(sitePrerenderSmoke).toContain("WHERE o.icon_hash IS NOT NULL");
     expect(gitignore).toContain("site/_redirects");
   });
 
   it("stages site builds from explicit artifact directories", () => {
     expect(sitePackageJson.scripts["stage:artifact"]).toBe("bun run scripts/stage-artifact.ts");
-    expect(sitePackageJson.scripts["build:prepared"]).toBe("vite build");
+    expect(sitePackageJson.scripts["build:prepared"]).toBe("vite build && bun run build:pagefind");
     expect(sitePackageJson.scripts["build:fixture"]).toBe(
       "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
     );

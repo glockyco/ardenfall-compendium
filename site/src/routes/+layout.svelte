@@ -31,16 +31,29 @@
           <a
             href={section.href}
             aria-current={isCurrent(section.href) ? "page" : undefined}
-            class="hover:text-foreground decoration-primary aria-[current=page]:text-foreground underline-offset-8 aria-[current=page]:underline aria-[current=page]:decoration-2"
+            class="hover:text-foreground decoration-primary aria-[current=page]:text-foreground inline-flex min-h-6 items-center underline-offset-8 aria-[current=page]:underline aria-[current=page]:decoration-2"
           >
             {section.label}
           </a>
         {/each}
+        <a
+          href={resolve("/search")}
+          aria-current={isCurrent("/search") ? "page" : undefined}
+          class="hover:text-foreground decoration-primary aria-[current=page]:text-foreground inline-flex min-h-6 items-center underline-offset-8 aria-[current=page]:underline aria-[current=page]:decoration-2"
+        >
+          Search
+        </a>
       </nav>
     </div>
   </header>
 
-  <main id="main" tabindex="-1" class="container mx-auto w-full flex-1 p-4">
+  <!--
+    data-pagefind-body limits the search index to this region. The marker is additive,
+    so a repeated block that someone adds outside main stays out of the index by
+    default. The build also excludes nav, footer and [data-pagefind-ignore], which
+    covers blocks inside main that repeat on many pages.
+  -->
+  <main id="main" tabindex="-1" data-pagefind-body class="container mx-auto w-full flex-1 p-4">
     {@render children()}
   </main>
 

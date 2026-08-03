@@ -5,6 +5,7 @@ SvelteKit static-first site. Generated data is staged as `.data/data.sqlite` plu
 ## Hard rules
 
 - Default route architecture is SSR + prerender + no CSR. Generated compendium pages should be static HTML served by Cloudflare Workers Static Assets. Opt into CSR or request-time Worker rendering only with a documented route-level reason.
+- `/search` is the one route that needs CSR, because Pagefind reads its index in the browser. It still prerenders, so a reader without JavaScript gets the shell and a message that says search needs a script, not an input that looks broken. The index is built by `build:prepared`, so no deployable build can ship pages without it, and `smoke:pagefind` fails on an absent or empty index.
 - Game text carries TMP markup. A page must never render a raw game string. Read models keep the source column server-side and expose only the translated rich-text document, so pages render typed rich-text nodes.
 - Design tokens live in `src/app.css`. Component styling uses token-backed Tailwind utilities or CSS variables; do not hardcode colours, shadows, or one-off spacing systems. Tailwind v4 only generates a colour utility when the matching theme variable exists, and a bare `border` resolves to `currentColor`, so a class naming a token that is not defined silently renders nothing. Pair every `border` with an explicit colour.
 - Control boundaries use `border-input-border`, which meets the 3:1 that WCAG 1.4.11 requires. `border-border` is for decorative edges and does not.
