@@ -1,5 +1,8 @@
 <script lang="ts">
   import Search from "$lib/components/search/Search.svelte";
+  import type { PageProps } from "./$types";
+
+  let { data }: PageProps = $props();
 </script>
 
 <svelte:head>
@@ -7,4 +10,4 @@
   <meta name="description" content="Search pages in the Ardenfall Compendium." />
 </svelte:head>
 
-<Search />
+<Search sections={data.sections} />

@@ -18,15 +18,21 @@ Five parallel surveys of the whole project: code health, site quality, content c
 
 | entity | public pages | with an inbound edge |
 | --- | ---: | ---: |
-| item | 1273 | 0 |
+| item | 1273 | 545 |
+| character | 212 | 0 |
 | status-effect | 172 | 56 |
 | spell | 56 | 55 |
-| location | 34 | 0 |
-| item-tag | 28 | 0 |
-| portal | 33 | 29 |
-| stat-type | 21 | 20 |
+| location | 48 | 0 |
+| item-tag | 28 | 18 |
+| stat-type | 21 | 4 |
+| item-variant | 16 | 16 |
+| item-category | 7 | 7 |
 
-1,122 of 1,852 public nodes have no inbound edge, down from 1,591 of 1,640. The node count is not a page count: 67 of those nodes are locations and portals whose `route_path` is a query into `/map`, so the build produces 1,785 entity pages plus ten listing pages. Excluding the map-only nodes, 1,084 pages have no inbound edge. The graph carries 5,381 edges: `drops` 2126, `variant_of` 1273, `categorised_as` 1268, `casts` 286, `applies` 266, `tagged` 76, `scales_with` 56, `leads_to` 30. The node count grew because characters are now published.
+Portals are absent because they have no page. They hold 33 identities and a map route, and their names are authoring identifiers, so publishing them would put `sc_tutcave_ext` in front of a reader.
+
+1,132 of 1,833 public nodes have no inbound edge, down from 1,591 of 1,640. Every public node now has a page, so the two counts finally agree: the build produces 1,833 entity pages plus eleven listing pages. The graph carries 5,381 edges: `drops` 2126, `variant_of` 1273, `categorised_as` 1268, `casts` 286, `applies` 266, `tagged` 76, `scales_with` 56, `leads_to` 30.
+
+The orphan figure rose by ten because locations gained pages that nothing links to, which is the honest trade. A page nothing links to is findable by search, and an entity with no page was findable by nothing.
 
 Items now link to the status effects they apply, the spells they carry, their category, and their tags. Every one of the 552 item effect facts resolves and unresolved-target diagnostics are zero. Stat pages link the stats they affect.
 
@@ -89,7 +95,7 @@ Worth doing now:
 - ~~Delete `pipeline/src/registry.ts`~~ - **done.** Removed with its test. The package no longer has two files called `registry.ts`, one of which was the real dispatch.
 - ~~`controller/src/validate-snapshot.ts` hardcodes `ENTITY_FILES`~~ - **done.** Deleted. The controller identifies envelopes by the id inside each file, as the pipeline always has, and cross-checks the discovered set against the manifest counts, which also catches an unexpected file. A tenth entity needs no controller change.
 - ~~Extract the extractor lifecycle in the mod~~ - **done.** One lifecycle across all nine extractors, 630 lines removed. The display-name policy is uniform: a diagnostic and a nullable column, never a fallback to the asset name, which had been putting internal identifiers like `itemcat_weapons` in front of readers. Measured first and confirmed after: no row in any affected entity is missing a name, and a live export produces byte-identical diagnostics.
-- ~~Add search~~ - **done for every entity that has a page.** Pagefind indexes all 1,794 prerendered pages in the build, so every page is findable by name even when nothing links to it. 1,816 index files, 1.27 MB, 5,556 deploy files against the 20,000 limit. Detail pages rank first for real names, which was measured before deciding whether listing pages needed exclusion. They did not. What this exposed is that search cannot reach an entity with no page, and locations and portals have none.
+- ~~Add search~~ - **done.** Pagefind indexes all 1,843 prerendered pages in the build, so every page is findable by name even when nothing links to it. Detail pages rank first for real names, which was measured before deciding whether listing pages needed exclusion. They did not. Search reaches an entity only through a page, which is what made the 67 page-less locations and portals measurable and led to the location work.
 - **Give locations and portals a page.** 34 locations and 33 portals exist only as map selections. No HTML holds their names, so search cannot find them, a crawler cannot read them, and 67 sitemap entries point at no page. The data for a page already ships: name, map, extent, elevation, fast travel, and the 30 `leads_to` edges between connected portals.
 - **Fix the sitemap in the same pass.** It selects every public node, so it lists the 67 map-only entities as documents and omits all ten listing pages including the home page. A sitemap is a claim about what exists, and both halves of that claim are currently wrong.
 - **Add the two missing meta descriptions.** Six of eight detail routes ship one. The two without are `items`, which is 1,273 pages and the largest section, and `terms`.

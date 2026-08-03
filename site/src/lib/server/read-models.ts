@@ -32,6 +32,20 @@ export interface SiteEntityField {
 export const getEntity = (id: string): SiteEntity | undefined =>
   get<SiteEntity>("SELECT * FROM site_entities WHERE entity_id = ?", [id]);
 
+/**
+ * Which section each route belongs to, for labelling a search result.
+ *
+ * The pipeline already emits a route and a plural label for every entity with a page, so this
+ * reads that rather than keeping a second list that goes stale when a tenth entity arrives.
+ * The longest route comes first, so a nested route wins over the route it sits under.
+ */
+export const listRouteSections = (): { prefix: string; label: string }[] =>
+  all<{ route_path: string; plural_label: string }>(
+    "SELECT route_path, plural_label FROM site_entities",
+  )
+    .map((row) => ({ prefix: row.route_path, label: row.plural_label }))
+    .sort((a, b) => b.prefix.length - a.prefix.length || a.prefix.localeCompare(b.prefix));
+
 export const listOverviewColumns = (id: string): SiteOverviewColumn[] =>
   all<SiteOverviewColumn>(
     "SELECT * FROM site_overview_columns WHERE entity_id = ? ORDER BY position",

@@ -30,7 +30,7 @@ This repository is the static compendium for the game Ardenfall. The durable rul
 
 ## Non-negotiable invariants
 
-- The descriptor at `entities/<id>/entity.json` is the only cross-subsystem source of truth for entity shape. Do not duplicate it in TS, SQL, or C#.
+- The descriptor at `entities/<id>/entity.json` is the only cross-subsystem source of truth for entity shape. Do not duplicate it in TS, SQL, or C#. Its `site.route` also decides whether an entity gets a public page, so giving an entity a page starts there and not in a route file.
 - The descriptor filesystem under `entities/<id>/entity.json` is the entity registry for discovery. Do not maintain manual indexes, enums, or unions of descriptor ids.
 - Synthetic fixtures must preserve awkward shapes from live data, including nameless rows and absent references. Do not make fixtures tidier than the game data.
 - The site reads pipeline-emitted SQLite metadata only. It does not parse descriptors directly.

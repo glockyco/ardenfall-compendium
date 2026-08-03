@@ -32,18 +32,7 @@
     excerpt: string;
   }
 
-  const sections = [
-    { prefix: "/items", label: "Items" },
-    { prefix: "/terms", label: "Items" },
-    { prefix: "/spells", label: "Spells" },
-    { prefix: "/status-effects", label: "Status Effects" },
-    { prefix: "/stats", label: "Stats" },
-    { prefix: "/categories", label: "Categories" },
-    { prefix: "/tags", label: "Tags" },
-    { prefix: "/characters", label: "Characters" },
-    { prefix: "/locations", label: "Locations" },
-    { prefix: "/map", label: "Map" },
-  ];
+  let { sections = [] }: { sections?: { prefix: string; label: string }[] } = $props();
 
   let inputValue = $state("");
   let activeQuery = $state("");
