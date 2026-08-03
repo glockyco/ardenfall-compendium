@@ -14,7 +14,7 @@ function seedGraph(): Database {
       ('item', 'item-a', 'Item A', '/items/item-a', 'item-a', 'item-a', 1),
       ('status-effect', 'effect-a', 'Effect A', '/status-effects/effect-a', 'effect-a', 'effect-a', 1),
       ('item', 'item-private', 'Private item', '/items/item-private', 'item-private', 'item-private', 0),
-      ('status-effect', 'effect-private', 'Private effect', '/status-effects/effect-private', 'effect-private', 'effect-private', 0)
+      ('status-effect', 'effect-private', 'Private effect', NULL, 'effect-private', 'effect-private', 0)
   `);
   return db;
 }
@@ -73,16 +73,61 @@ describe("relationship section projection", () => {
     ).toEqual([{ source_type: "status-effect", source_id: "effect-a", title: "Applied by items" }]);
   });
 
-  it("omits edges whose source or target node is private", () => {
+  it("skips missing nodes and includes page-less targets as plain-text edges", () => {
     const db = seedGraph();
-    addEdge(db, "private-target", "item", "item-a", "status-effect", "effect-private", "applies");
-    addEdge(db, "private-source", "item", "item-private", "status-effect", "effect-a", "applies");
-
-    emitRelationshipSections(db);
-
-    expect(db.query("SELECT COUNT(*) AS count FROM entity_relationship_sections").get()).toEqual({
-      count: 0,
+    addEdge(db, "page-less-target", "item", "item-a", "status-effect", "effect-private", "both");
+    addEdge(db, "missing-target", "item", "item-a", "status-effect", "effect-missing", "both");
+    addEdge(db, "missing-source", "item", "item-missing", "status-effect", "effect-a", "both");
+    const diagnostics = emitRelationshipSections(db, {
+      both: { forwardTitle: "Forward", inverseTitle: "Inverse", sortOrder: 1 },
     });
+
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        severity: "diagnostic",
+        code: "relationshipEdgeNodeMissing",
+        message:
+          "Relationship edge 'missing-target' with predicate 'both' is missing target node 'status-effect:effect-missing'.",
+        field: "entity_edges.target_id",
+      }),
+      expect.objectContaining({
+        severity: "diagnostic",
+        code: "relationshipEdgeNodeMissing",
+        message:
+          "Relationship edge 'missing-source' with predicate 'both' is missing source node 'item:item-missing'.",
+        field: "entity_edges.source_id",
+      }),
+    ]);
+
+    expect(
+      db
+        .query<{ source_type: string; source_id: string; title: string }, []>(
+          "SELECT source_type, source_id, title FROM entity_relationship_sections",
+        )
+        .all(),
+    ).toEqual([{ source_type: "item", source_id: "item-a", title: "Forward" }]);
+    expect(
+      JSON.parse(
+        db
+          .query<{ edges_json: string }, []>(
+            "SELECT edges_json FROM entity_relationship_sections WHERE source_id = 'item-a'",
+          )
+          .get()?.edges_json ?? "null",
+      ),
+    ).toEqual([
+      {
+        targetType: "status-effect",
+        targetId: "effect-private",
+        targetLabel: "Private effect",
+        targetShortId: "effect-private",
+        targetRoutePath: null,
+        targetHasPage: false,
+        predicate: "both",
+        label: "Edge label",
+        weight: 1,
+        anchor: null,
+      },
+    ]);
   });
 
   it("fails with the predicate when an edge is not registered", () => {
@@ -109,7 +154,7 @@ describe("relationship section projection", () => {
         "SELECT section_id, title, edges_json FROM entity_relationship_sections",
       )
       .get();
-    expect(row?.section_id).toBe("item-a:variant_of");
+    expect(row?.section_id).toBe("item-a:variant_of:forward");
     expect(row?.title).toBe("Variant");
     expect(JSON.parse(row?.edges_json ?? "null")).toEqual([
       {
@@ -118,6 +163,7 @@ describe("relationship section projection", () => {
         targetLabel: "Melee weapon",
         targetShortId: "melee",
         targetRoutePath: "/objects/variant/melee",
+        targetHasPage: true,
         predicate: "variant_of",
         label: "Edge label",
         weight: 1,

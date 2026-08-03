@@ -74,11 +74,11 @@ export function emitReadModels(
     );
   }
 
-  emitRelationshipSections(db);
+  const relationshipSectionDiagnostics = emitRelationshipSections(db);
   const graphDiagnostics = auditEntityGraph(db);
   insertPipelineDiagnostics(
     db,
-    [...readModelDiagnostics, ...graphDiagnostics],
+    [...readModelDiagnostics, ...relationshipSectionDiagnostics, ...graphDiagnostics],
     "entity-graph-read-model",
   );
   const fatalGraphDiagnostics = graphDiagnostics.filter(

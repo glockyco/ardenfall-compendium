@@ -1,5 +1,6 @@
 import type { Database } from "bun:sqlite";
 
+import type { PipelineDiagnostic } from "./relationship-graph.ts";
 import type { RelationshipDescriptor } from "./registry.ts";
 import { relationshipRegistry } from "./registry.ts";
 
@@ -21,18 +22,19 @@ interface EdgeRow {
 interface NodeRow {
   entity_type: string;
   entity_id: string;
-  label: string;
+  label: string | null;
   short_id: string;
-  route_path: string;
+  route_path: string | null;
   has_page: number;
 }
 
 interface RelationshipEdge {
   targetType: string;
   targetId: string;
-  targetLabel: string;
+  targetLabel: string | null;
   targetShortId: string;
-  targetRoutePath: string;
+  targetRoutePath: string | null;
+  targetHasPage: boolean;
   predicate: string;
   label: string;
   weight: number;
@@ -44,31 +46,45 @@ interface RelationshipSection {
   sourceId: string;
   title: string;
   predicate: string;
+  /**
+   * Which way the underlying edge points, relative to this section's owner.
+   *
+   * A predicate with both titles produces two different lists on one page, and they hold
+   * different facts. `starts_opposed_to` proves it. Of 25 edges only 10 have a reciprocal
+   * partner, so who a faction opposes and who opposes it are not the same set. The key and
+   * the stored id must carry this. Without it the two lists merge under one title, and a
+   * mutual pair shows its peer twice.
+   */
+  direction: "forward" | "inverse";
   edges: RelationshipEdge[];
   sortOrder: number;
 }
 
 /**
  * Rebuilds the detail-page relationship projection from the graph edges.
- * Edges to nodes without pages or missing nodes are intentionally omitted from sections.
+ *
+ * A target without a page is included, so the site can state it in plain text. Nothing is
+ * hidden. This is a compendium, so a thing that exists in the game is listed, and a thing
+ * with no authored name is stated as an unnamed one rather than left out.
  */
 /**
  * Makes every label in one section distinguishable.
  *
- * A section is a list of links, so two entries reading the same thing are two links with
- * the same accessible name pointing somewhere different, which fails WCAG 2.4.4 and leaves
- * a sighted reader no way to choose either. It happens for real reasons: 59 characters have
- * no stored name, 18 status effects have none, and nine separate items are all called
- * Mysterious Fossil.
+ * A section lists related entries. A page-less target is rendered as plain text, while a
+ * page target is a link. Duplicate labels still need distinct accessible names.
  *
  * Only collisions within a single section are ambiguous. The same label appearing on two
  * different pages is fine, so this deliberately does not globally uniquify anything.
  */
-export function disambiguateLabels<T extends { label: string; shortId: string }>(edges: T[]): void {
+export function disambiguateLabels<T extends { label: string | null; shortId: string }>(
+  edges: T[],
+): void {
   const counts = new Map<string, number>();
-  for (const edge of edges) counts.set(edge.label, (counts.get(edge.label) ?? 0) + 1);
   for (const edge of edges) {
-    if ((counts.get(edge.label) ?? 0) > 1 && edge.shortId) {
+    if (edge.label !== null) counts.set(edge.label, (counts.get(edge.label) ?? 0) + 1);
+  }
+  for (const edge of edges) {
+    if (edge.label !== null && (counts.get(edge.label) ?? 0) > 1 && edge.shortId) {
       edge.label = `${edge.label} · ${edge.shortId}`;
     }
   }
@@ -77,7 +93,7 @@ export function disambiguateLabels<T extends { label: string; shortId: string }>
 export function emitRelationshipSections(
   db: Database,
   registry: Readonly<Record<string, RelationshipDescriptor>> = relationshipRegistry,
-): void {
+): PipelineDiagnostic[] {
   const nodes = new Map<string, NodeRow>();
   for (const node of db
     .query<NodeRow, []>(
@@ -88,6 +104,7 @@ export function emitRelationshipSections(
   }
 
   const sections = new Map<string, RelationshipSection>();
+  const diagnostics: PipelineDiagnostic[] = [];
   const edges = db
     .query<EdgeRow, []>(
       `SELECT edge_id, source_type, source_id, target_type, target_id,
@@ -104,9 +121,45 @@ export function emitRelationshipSections(
     }
     const sourceNode = nodes.get(nodeKey(edge.source_type, edge.source_id));
     const targetNode = nodes.get(nodeKey(edge.target_type, edge.target_id));
-    if (sourceNode?.has_page !== 1 || targetNode?.has_page !== 1) continue;
+    if (sourceNode === undefined || targetNode === undefined) {
+      if (sourceNode === undefined) {
+        diagnostics.push({
+          severity: "diagnostic",
+          source: "relationship-graph",
+          code: "relationshipEdgeNodeMissing",
+          message: `Relationship edge '${edge.edge_id}' with predicate '${edge.predicate}' is missing source node '${edge.source_type}:${edge.source_id}'.`,
+          entityType: edge.source_type,
+          entityId: edge.source_id,
+          field: "entity_edges.source_id",
+          evidence: {
+            edgeId: edge.edge_id,
+            predicate: edge.predicate,
+            missingNodeType: edge.source_type,
+            missingNodeId: edge.source_id,
+          },
+        });
+      }
+      if (targetNode === undefined) {
+        diagnostics.push({
+          severity: "diagnostic",
+          source: "relationship-graph",
+          code: "relationshipEdgeNodeMissing",
+          message: `Relationship edge '${edge.edge_id}' with predicate '${edge.predicate}' is missing target node '${edge.target_type}:${edge.target_id}'.`,
+          entityType: edge.source_type,
+          entityId: edge.source_id,
+          field: "entity_edges.target_id",
+          evidence: {
+            edgeId: edge.edge_id,
+            predicate: edge.predicate,
+            missingNodeType: edge.target_type,
+            missingNodeId: edge.target_id,
+          },
+        });
+      }
+      continue;
+    }
 
-    if (descriptor.forwardTitle !== null) {
+    if (descriptor.forwardTitle !== null && sourceNode.has_page === 1) {
       appendSection(
         sections,
         {
@@ -114,6 +167,7 @@ export function emitRelationshipSections(
           sourceId: edge.source_id,
           title: descriptor.forwardTitle,
           predicate: edge.predicate,
+          direction: "forward",
           edges: [],
           sortOrder: descriptor.sortOrder,
         },
@@ -123,6 +177,7 @@ export function emitRelationshipSections(
           targetLabel: targetNode.label,
           targetShortId: targetNode.short_id,
           targetRoutePath: targetNode.route_path,
+          targetHasPage: targetNode.has_page === 1,
           predicate: edge.predicate,
           label: edge.label,
           weight: edge.weight,
@@ -130,7 +185,7 @@ export function emitRelationshipSections(
         },
       );
     }
-    if (descriptor.inverseTitle !== null) {
+    if (descriptor.inverseTitle !== null && targetNode.has_page === 1) {
       appendSection(
         sections,
         {
@@ -138,6 +193,7 @@ export function emitRelationshipSections(
           sourceId: edge.target_id,
           title: descriptor.inverseTitle,
           predicate: edge.predicate,
+          direction: "inverse",
           edges: [],
           sortOrder: descriptor.sortOrder,
         },
@@ -147,6 +203,7 @@ export function emitRelationshipSections(
           targetLabel: sourceNode.label,
           targetShortId: sourceNode.short_id,
           targetRoutePath: sourceNode.route_path,
+          targetHasPage: sourceNode.has_page === 1,
           predicate: edge.predicate,
           label: edge.label,
           weight: edge.weight,
@@ -165,7 +222,7 @@ export function emitRelationshipSections(
   for (const section of sections.values()) {
     section.edges.sort(
       (left, right) =>
-        left.targetLabel.localeCompare(right.targetLabel) ||
+        (left.targetLabel ?? "").localeCompare(right.targetLabel ?? "") ||
         left.targetId.localeCompare(right.targetId),
     );
     const labels = section.edges.map((edge) => ({
@@ -177,7 +234,7 @@ export function emitRelationshipSections(
       edge.targetLabel = labels[index]?.label ?? edge.targetLabel;
     });
     insert.run(
-      `${section.sourceId}:${section.predicate}`,
+      `${section.sourceId}:${section.predicate}:${section.direction}`,
       section.sourceType,
       section.sourceId,
       section.title,
@@ -186,6 +243,7 @@ export function emitRelationshipSections(
       section.sortOrder,
     );
   }
+  return diagnostics;
 }
 
 function appendSection(
@@ -193,7 +251,7 @@ function appendSection(
   section: RelationshipSection,
   edge: RelationshipEdge,
 ): void {
-  const key = `${section.sourceType}\u0000${section.sourceId}\u0000${section.predicate}`;
+  const key = `${section.sourceType}\u0000${section.sourceId}\u0000${section.predicate}\u0000${section.direction}`;
   const existing = sections.get(key);
   if (existing) {
     existing.edges.push(edge);

@@ -16,8 +16,10 @@ export const ENTITY_GRAPH_DDL = `
 CREATE TABLE IF NOT EXISTS entity_nodes (
   entity_type TEXT NOT NULL,
   entity_id TEXT NOT NULL,
-  label TEXT NOT NULL,
-  route_path TEXT NOT NULL,
+  label TEXT,
+  -- A node without its own page has no route. Forcing a value here is what let map
+  -- selection URLs masquerade as pages, so the column states absence instead.
+  route_path TEXT,
   canonical_slug TEXT NOT NULL,
   short_id TEXT NOT NULL,
   has_page INTEGER NOT NULL DEFAULT 1,
