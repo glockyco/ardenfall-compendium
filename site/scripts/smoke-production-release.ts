@@ -29,14 +29,26 @@ if (!isArtifactManifest(parsedManifest)) {
   throw new Error("invalid artifact manifest");
 }
 const manifest = parsedManifest;
-// A `cache-control` request header is not enough here. Cloudflare serves static assets from
-// its edge and answered a stale `_release.json` after a deploy that had in fact succeeded,
-// so the smoke failed on a good release. A unique query string defeats the edge cache. It
-// still fails honestly when a deploy did not land, because a fresh URL then returns the old
-// file too.
-const releaseRes = await fetch(`${origin}/_release.json?smoke=${Date.now()}`, {
-  headers: { "cache-control": "no-cache" },
-});
+
+/**
+ * Fetches a deployed path, defeating the edge cache.
+ *
+ * A `cache-control` request header is not enough. Cloudflare serves these files from its
+ * edge and answered a stale `_release.json` and a stale page after a deploy that had in
+ * fact succeeded, so the smoke failed twice on a good release. A unique query string makes
+ * the edge treat each request as a distinct object.
+ *
+ * This does not weaken any check. When a deploy genuinely does not land, a fresh URL
+ * returns the old bytes too, so every assertion below still fails.
+ */
+function freshFetch(url: string): Promise<Response> {
+  const separator = url.includes("?") ? "&" : "?";
+  return fetch(`${url}${separator}smoke=${Date.now()}`, {
+    headers: { "cache-control": "no-cache" },
+  });
+}
+
+const releaseRes = await freshFetch(`${origin}/_release.json`);
 if (!releaseRes.ok) throw new Error(`/_release.json returned ${releaseRes.status}`);
 const parsedDeployed: unknown = await releaseRes.json();
 if (!isDeployedRelease(parsedDeployed)) {
@@ -83,9 +95,7 @@ if (detail.includes("_app/immutable/entry/app") || detail.includes("sqlite-wasm"
 }
 
 if (probe.displayIconHash) {
-  const assetRes = await fetch(`${origin}/assets/${probe.displayIconHash}.webp`, {
-    headers: { "cache-control": "no-cache" },
-  });
+  const assetRes = await freshFetch(`${origin}/assets/${probe.displayIconHash}.webp`);
   if (!assetRes.ok) throw new Error(`probe asset returned ${assetRes.status}`);
   const contentType = assetRes.headers.get("content-type") ?? "";
   if (!contentType.includes("image/webp"))
@@ -101,7 +111,7 @@ for (const missing of [
   `/factions/does-not-exist--00000000`,
   `/no-such-section`,
 ]) {
-  const res = await fetch(`${origin}${missing}`, { headers: { "cache-control": "no-cache" } });
+  const res = await freshFetch(`${origin}${missing}`);
   if (res.status !== 404) {
     throw new Error(`${missing} returned ${res.status}, expected 404`);
   }
@@ -114,7 +124,7 @@ for (const missing of [
 process.stdout.write(`production smoke passed for ${manifest.artifactId}\n`);
 
 async function fetchText(url: string): Promise<string> {
-  const res = await fetch(url, { headers: { "cache-control": "no-cache" } });
+  const res = await freshFetch(url);
   if (!res.ok) throw new Error(`${url} returned ${res.status}`);
   return await res.text();
 }
