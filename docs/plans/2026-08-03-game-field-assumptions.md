@@ -32,6 +32,12 @@ Five audits ran over gate flags, publicity rules, numeric units, display names a
 
 The extractor is correct. The game simply authored identifiers into a field whose name promises otherwise. Portals therefore get no page, which the location work applied.
 
+### Portal accessibility has no game consumer
+
+`Ardenfall/RecordSystem/PortalRecord.cs:12` declares `isAccessable` with a default of `true`. `PortalRecord.Copy()` at line 45 is its only reader. The method copies the value into a new record, and no game code uses it to decide whether a portal works or blocks passage.
+
+The live portal data measured 33 of 33 rows as `true`. The field carries no variation in the current game data, and its use does not define player access. We therefore deliberately do not extract `isAccessable` or rename it to `isAccessible` in the compendium.
+
 ### A cooldown is a duration shown without its unit
 
 `mod/src/Entities/Item/ItemPresentationBuilder.cs:14-18` builds a row labelled `Cooldown` and supplies no suffix, so `site/src/lib/components/items/ItemStatRow.svelte:13` renders a bare number. `Ardenfall/Item/ConsumableItem.cs:44-47` returns the value as a quick-use duration, and `Ardenfall/StatusEffectTooltip.cs:31-34` shows the game appending `Seconds` to a comparable value. 46 rows of `item_consumables` carry one.

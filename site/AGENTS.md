@@ -9,6 +9,10 @@ SvelteKit static-first site. Generated data is staged as `.data/data.sqlite` plu
 
 - Default route architecture is SSR + prerender + no CSR. Generated compendium pages should be static HTML served by Cloudflare Workers Static Assets. Opt into CSR or request-time Worker rendering only with a documented route-level reason.
 - `/search` is the one route that needs CSR, because Pagefind reads its index in the browser. It still prerenders, so a reader without JavaScript gets the shell and a message that says search needs a script, not an input that looks broken. The index is built by `build:prepared`, so no deployable build can ship pages without it, and `smoke:pagefind` fails on an absent or empty index.
+- The site renders the label it is given. A canonical column holds the raw fact and may be null, a read model holds the reader-facing label, and the site holds neither rule. A site accessor that applies its own unnamed fallback is a second implementation of a pipeline rule, and that drift is how `Name unavailable` appeared beside `Unnamed item`.
+- A label never contains an identifier. Short ids and entity ids were once appended to unnamed labels, which showed an identifier for 59 characters, 18 status effects, two factions and 277 item rows, and hid a missing name behind something that looked like data. The one exception is `disambiguateLabels`, which appends a short id only when two entries in one section would otherwise share an accessible name and fail WCAG 2.4.4. That is a collision fix, not a naming fallback, so a listing that can show duplicate labels must pass through it.
+- Nothing is hidden. Every row the database holds is listed, including a nameless one, because a compendium that omits what it cannot name misstates the game's contents.
+- A relationship target may have no page. Render it as a plain statement, never as a link, and read its page status per row rather than assuming it from the entity type.
 - Game text carries TMP markup. A page must never render a raw game string. Read models keep the source column server-side and expose only the translated rich-text document, so pages render typed rich-text nodes.
 - Design tokens live in `src/app.css`. Component styling uses token-backed Tailwind utilities or CSS variables; do not hardcode colours, shadows, or one-off spacing systems. Tailwind v4 only generates a colour utility when the matching theme variable exists, and a bare `border` resolves to `currentColor`, so a class naming a token that is not defined silently renders nothing. Pair every `border` with an explicit colour.
 - Control boundaries use `border-input-border`, which meets the 3:1 that WCAG 1.4.11 requires. `border-border` is for decorative edges and does not.
@@ -27,7 +31,7 @@ SvelteKit static-first site. Generated data is staged as `.data/data.sqlite` plu
 ## UI governance
 
 - Route files assemble resolved data and shared components. Repeated entity header, stat, effect, tooltip, or relationship markup belongs in shared component layers under `src/lib/`, not inline in `src/routes/`.
-- Before adding a shared UI component, check the component catalog when it exists; when adding one, record metadata, a canonical example, typed props, token-backed styling, and accessibility notes.
+- Before adding a shared UI component, look for one that already does the job. No component catalog exists yet, so read `src/lib/components/` directly. When you add one, give it typed props, token-backed styling and accessibility notes.
 - Keep Storybook and visual regression deferred until the component catalog plus static/dev gallery stops being the cheaper maintenance path.
 
 ## Deployment

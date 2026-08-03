@@ -434,7 +434,7 @@ A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.1
 | `TraitType` | 17 | 17 | **no** | `lookupAsset` |
 | `CharacterData` | 212 | 212 | yes | `lookupAsset` |
 | `PortalRecord` instances | 33 | n/a | yes, without a page | `record` |
-| `NPCRecord` instances | 314 | n/a | **no** | `record` |
+| `NPCRecord` instances | 314 | n/a | yes, without a page | `record` |
 
 **Spells are the same defect that made stat types ship empty, still live.** 56 `SpellData` assets exist and none is registered, so all 286 item references to them fail. The catalogue already publishes 280 items in a `Spells` category whose actual spell definition is unreachable. `namedAsset` solves it exactly as it solved stat types, and `RefResolver` currently hardcodes that mechanism for two types, which is the same hand-maintained-list smell the pipeline registry just removed.
 

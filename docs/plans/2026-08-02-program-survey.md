@@ -141,7 +141,9 @@ The value is content on spell pages first and connectivity second. 27 references
 
 The work is bounded and needs no world traversal, since spells already resolve as named assets. Roughly half the effects are reader-facing mechanics. `SoundsSpellEffect` at 18, `TargetAIValueSpellEffect` at 4 and `SubTooltipSpellEffect` at 1 are presentation or AI tuning and describe nothing a reader wants.
 
-Two other candidates rank below it. `NPCRecord`, 314 instances, would place characters in the world and give locations their first inbound links, but it needs the scene-placement mechanism that no slice has built. The 728 items with no named source need the 683-cell container walk, which is the largest remaining piece of extraction work.
+One other candidate ranks below it. The 728 items with no named source need the 683-cell container walk, which is the largest remaining piece of extraction work.
+
+`NPCRecord` has since shipped, and it needed no scene-placement mechanism after all, because the records carry their own spawn points. It also disproved its own premise. An NPC does not reference an authored character, it embeds a serialised copy with no id and no stored name, so the link it was meant to give characters does not exist. What it does give is 186 authored names and the location each one stands in.
 
 ## Not covered by any plan
 
