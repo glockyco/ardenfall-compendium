@@ -26,6 +26,7 @@ describe("loadDescriptors", () => {
       "location",
       "npc",
       "portal",
+      "quest",
       "spell",
       "stat-type",
       "status-effect",

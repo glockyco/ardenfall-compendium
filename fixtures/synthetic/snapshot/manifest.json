@@ -42,7 +42,8 @@
     "portal": 3,
     "character": 3,
     "faction": 2,
-    "npc": 4
+    "npc": 4,
+    "quest": 2
   },
   "diagnostics": {
     "fatal": 0,
@@ -61,6 +62,7 @@
     "portals.json": "370bf4c3647b38982b88910fc8775bd23316782002b49be46851509f5eb1fabe",
     "characters.json": "753f68ff20db93a360bffa0b1de7aa743dd94382767f9a76c47b4d1783f5d24a",
     "factions.json": "92231e488c599f271c7ae02ac7db1950bc9b71431ba4871232582e52f46346dc",
-    "npcs.json": "873e70942c1472c68b84c0429abd2910134147c425972a3b9abfefbaa9ddf1a1"
+    "npcs.json": "873e70942c1472c68b84c0429abd2910134147c425972a3b9abfefbaa9ddf1a1",
+    "quests.json": "b212ca9ddd9bddb0dba54a13d81b33c75bf10ecee268847c488e86e9d8988a2b"
   }
 }

@@ -98,6 +98,16 @@ export type {
 } from "./entities/status-effect";
 export { getStatusEffectPresentation, listStatusEffects } from "./entities/status-effect";
 
+export type {
+  QuestOverviewRow,
+  QuestPresentationRow,
+  QuestPhase,
+  QuestObjective,
+  QuestReward,
+  QuestRewardItem,
+} from "./entities/quest";
+export { getQuestPresentation, listQuests } from "./entities/quest";
+
 export type { SpellOverviewRow, SpellPresentationRow } from "./entities/spell";
 export { getSpellPresentation, listSpells } from "./entities/spell";
 

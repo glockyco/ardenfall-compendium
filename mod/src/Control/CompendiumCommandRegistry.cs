@@ -12,6 +12,7 @@ using ArdenfallCompendium.Entities.Portal;
 using ArdenfallCompendium.Entities.Character;
 using ArdenfallCompendium.Entities.Faction;
 using ArdenfallCompendium.Entities.Npc;
+using ArdenfallCompendium.Entities.Quest;
 using ArdenfallCompendium.Extraction;
 
 namespace ArdenfallCompendium.Control;
@@ -33,6 +34,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         var characters = new CharacterExtractionService(new BuiltLookupTableCharacterAssetSource());
         var factions = new FactionExtractionService(new BuiltLookupTableFactionAssetSource());
         var npcs = new NpcExtractionService(new MasterRecordTableNpcRecordSource());
+        var quests = new QuestExtractionService(new LoadedQuestAssetSource());
 
         Register(new Handlers.CompendiumInfoCommand());
         Register(new Handlers.CompendiumPreflightCommand());
@@ -41,7 +43,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         Register(new Handlers.RunStatusCommand(runs));
         Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs, items));
-        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals, factions: factions, npcs: npcs));
+        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals, factions: factions, npcs: npcs, quests: quests));
         Register(new Handlers.RunDiscardCommand(runs, new IExtractionCache[]
         {
             items,
@@ -55,6 +57,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
             characters,
             factions,
             npcs,
+            quests,
         }));
         Register(new Handlers.GameQuitCommand());
     }

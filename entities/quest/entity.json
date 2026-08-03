@@ -1,0 +1,117 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "quest",
+  "kind": "definition",
+  "label": { "singular": "Quest", "plural": "Quests" },
+  "extraction": {
+    "source": "namedAsset",
+    "root": "Resources.FindObjectsOfTypeAll<QuestData>",
+    "walker": "QuestExtractor"
+  },
+  "canonicalTable": "quests",
+  "presentationContext": { "renderContext": "quest-presentation-v1" },
+  "site": { "route": "/quests" },
+  "fields": [
+    { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
+    {
+      "name": "questGameId",
+      "type": "string",
+      "from": "questID",
+      "missingPolicy": "diagnostic",
+      "column": "quest_game_id"
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "from": "questName",
+      "missingPolicy": "diagnostic",
+      "column": "name"
+    },
+    {
+      "name": "subname",
+      "type": "string",
+      "from": "questSubname",
+      "missingPolicy": "optional-empty",
+      "column": "subname"
+    },
+    {
+      "name": "disabled",
+      "type": "boolean",
+      "from": "disabled",
+      "missingPolicy": "diagnostic",
+      "column": "disabled"
+    },
+    {
+      "name": "hiddenInQuestUi",
+      "type": "boolean",
+      "from": "hideInQuestUI",
+      "missingPolicy": "diagnostic",
+      "column": "hidden_in_quest_ui"
+    },
+    {
+      "name": "journalOnStart",
+      "type": "string",
+      "from": "simpleOnStartJournalEntry",
+      "missingPolicy": "optional-empty",
+      "column": "journal_on_start"
+    },
+    {
+      "name": "journalOnSucceed",
+      "type": "string",
+      "from": "simpleOnSucceedJournalEntry",
+      "missingPolicy": "optional-empty",
+      "column": "journal_on_succeed"
+    },
+    {
+      "name": "journalOnFailure",
+      "type": "string",
+      "from": "simpleOnFailureJournalEntry",
+      "missingPolicy": "optional-empty",
+      "column": "journal_on_failure"
+    },
+    {
+      "name": "requiredCharacterRefs",
+      "type": "json",
+      "from": "requiredCharacters",
+      "missingPolicy": "optional-empty",
+      "column": "required_character_refs_json"
+    },
+    {
+      "name": "phases",
+      "type": "json",
+      "from": "phases",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Expanded into quest_phases and quest_objectives rows.",
+      "projects": "quest_phases"
+    },
+    {
+      "name": "characters",
+      "type": "json",
+      "from": "objects.CharacterQuestObject",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Expanded into quest_characters rows.",
+      "projects": "quest_characters"
+    },
+    {
+      "name": "journalEntries",
+      "type": "json",
+      "from": "objects.JournalQuestObject",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Expanded into quest_journal_entries rows.",
+      "projects": "quest_journal_entries"
+    },
+    {
+      "name": "rewardSets",
+      "type": "json",
+      "from": "rewardSets",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Expanded into quest_rewards rows.",
+      "projects": "quest_rewards"
+    }
+  ],
+  "map": null
+}

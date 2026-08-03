@@ -1,0 +1,186 @@
+{
+  "entityId": "quest",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "named;quest;quest_supply-run",
+      "fields": {
+        "id": "named;quest;quest_supply-run",
+        "questGameId": "supply-run",
+        "name": "Supply Run",
+        "subname": "A short trip to the village",
+        "disabled": false,
+        "hiddenInQuestUi": false,
+        "journalOnStart": "The village needs supplies.",
+        "journalOnSucceed": "The supplies reached the village.",
+        "journalOnFailure": "The supply run failed.",
+        "requiredCharacterRefs": [
+          {
+            "kind": "record",
+            "table": "instances",
+            "subtable": "characters",
+            "id": "11111111111111111111111111111111",
+            "recordType": "CharacterRecord"
+          }
+        ],
+        "phases": [
+          {
+            "phaseGameId": 20,
+            "name": "Deliver the supplies",
+            "journalEntry": "Find the village storehouse.",
+            "completedJournalEntry": "The supplies are at the storehouse.",
+            "objectives": [
+              {
+                "objectiveGameId": 200,
+                "name": "Reach the storehouse",
+                "info": "Go to the village storehouse.",
+                "journalEntry": "The storehouse is north of the road.",
+                "successJournalEntry": "You reached the storehouse.",
+                "failureJournalEntry": "You did not reach the storehouse.",
+                "objectiveType": "Location",
+                "hidden": false,
+                "attachedObjectGameId": null,
+                "enableMapMarker": true
+              }
+            ]
+          },
+          {
+            "phaseGameId": 10,
+            "name": "Collect a reward",
+            "journalEntry": "Return to the quest giver.",
+            "completedJournalEntry": "The quest is complete.",
+            "objectives": [
+              {
+                "objectiveGameId": 100,
+                "name": "Return to the quest giver",
+                "info": "Speak to the quest giver.",
+                "journalEntry": "The quest giver waits by the gate.",
+                "successJournalEntry": "The quest giver thanks you.",
+                "failureJournalEntry": "The quest giver cannot speak with you.",
+                "objectiveType": "Character",
+                "hidden": false,
+                "attachedObjectGameId": 7,
+                "enableMapMarker": false
+              }
+            ]
+          }
+        ],
+        "characters": [
+          {
+            "objectGameId": 7,
+            "objectName": "Quest giver",
+            "category": "Giver",
+            "characterRef": {
+              "kind": "record",
+              "table": "instances",
+              "subtable": "characters",
+              "id": "11111111111111111111111111111111",
+              "recordType": "CharacterRecord"
+            }
+          }
+        ],
+        "journalEntries": [
+          {
+            "objectGameId": 9,
+            "objectName": "Supply journal",
+            "journalEntry": "The village needs food and tools."
+          }
+        ],
+        "rewardSets": [
+          {
+            "setGameId": 1,
+            "setName": "Completion rewards",
+            "setType": "Success",
+            "rewards": [
+              {
+                "kind": "gold",
+                "isPositive": true,
+                "amountLabel": "Custom",
+                "customAmount": 75,
+                "factionRef": null,
+                "itemRefs": [],
+                "itemListRefs": [],
+                "targetObjectGameId": null
+              },
+              {
+                "kind": "experience",
+                "isPositive": true,
+                "amountLabel": "Custom",
+                "customAmount": 125,
+                "factionRef": null,
+                "itemRefs": [],
+                "itemListRefs": [],
+                "targetObjectGameId": null
+              },
+              {
+                "kind": "faction-reputation",
+                "isPositive": true,
+                "amountLabel": "Small",
+                "customAmount": null,
+                "factionRef": {
+                  "kind": "lookupAsset",
+                  "guid": "a1000001.fixture-black-moth",
+                  "unityType": "Faction"
+                },
+                "itemRefs": [],
+                "itemListRefs": [],
+                "targetObjectGameId": null
+              },
+              {
+                "kind": "character-reputation",
+                "isPositive": true,
+                "amountLabel": "Medium",
+                "customAmount": null,
+                "factionRef": null,
+                "itemRefs": [],
+                "itemListRefs": [],
+                "targetObjectGameId": 7
+              },
+              {
+                "kind": "items",
+                "isPositive": true,
+                "amountLabel": null,
+                "customAmount": null,
+                "factionRef": null,
+                "itemRefs": [
+                  {
+                    "kind": "lookupAsset",
+                    "guid": "4ed20218.fixture-iron-sword",
+                    "unityType": "ItemData"
+                  }
+                ],
+                "itemListRefs": [
+                  {
+                    "kind": "lookupAsset",
+                    "guid": "6a71c0de.fixture-stamina-draught",
+                    "unityType": "ItemData"
+                  }
+                ],
+                "targetObjectGameId": null
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "named;quest;quest_disabled-test",
+      "fields": {
+        "id": "named;quest;quest_disabled-test",
+        "questGameId": "disabled-test",
+        "name": "Disabled Test Quest",
+        "subname": null,
+        "disabled": true,
+        "hiddenInQuestUi": true,
+        "journalOnStart": null,
+        "journalOnSucceed": null,
+        "journalOnFailure": null,
+        "requiredCharacterRefs": [],
+        "phases": [],
+        "characters": [],
+        "journalEntries": [],
+        "rewardSets": []
+      }
+    }
+  ]
+}

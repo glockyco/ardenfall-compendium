@@ -16,10 +16,12 @@ import { NPC_DDL } from "../sql/npc-ddl";
 import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
 import { SPELL_DDL } from "../sql/spell-ddl";
 import { STATUS_EFFECT_DDL } from "../sql/status-effect-ddl";
+import { QUEST_DDL } from "../sql/quest-ddl";
 import { canonicaliseItems } from "./item/canonicaliser";
 import { emitItemReadModels } from "./item/read-models";
 import { canonicaliseStatTypes } from "./stat-type/canonicaliser";
 import { emitStatTypeReadModels } from "./stat-type/read-models";
+import { canonicaliseQuests } from "./quest/canonicaliser";
 import { canonicaliseSpells } from "./spell/canonicaliser";
 import { emitSpellReadModels } from "./spell/read-models";
 import { canonicaliseStatusEffects } from "./status-effect/canonicaliser";
@@ -37,6 +39,7 @@ import { canonicalisePortals } from "./portal/canonicaliser";
 import { emitPortalReadModels } from "./portal/read-models";
 import { canonicaliseNpcs } from "./npc/canonicaliser";
 import { emitNpcReadModels } from "./npc/read-models";
+import { emitQuestReadModels } from "./quest/read-models";
 import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "./item/read-models";
 
 interface MapProjection {
@@ -259,6 +262,12 @@ export const entityRegistry: Record<string, EntityModule> = {
     readModelPhase: "after-map",
     readModel: ({ db }) => emitNpcReadModels(db),
     mapProjection: npcProjection,
+  },
+  quest: {
+    ddl: QUEST_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseQuests(db, envelope),
+    readModelPhase: "after-map",
+    readModel: ({ db, entity }) => emitQuestReadModels(db, entity.site?.route),
   },
 };
 

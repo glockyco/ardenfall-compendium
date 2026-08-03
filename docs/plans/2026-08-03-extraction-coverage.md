@@ -168,7 +168,7 @@ The accessor rules remain part of the field cost. `CharacterRecord.StoredCharact
 Reader value follows connectivity, not candidate size.
 
 1. **Dialogue graphs rank first.** They can name characters and placed characters, which account for 526 pages with no inbound link [survey]. They can also connect quests through attached quest data. Their cost is medium to high because authored branches and conditions must remain intact [scene].
-2. **Quest definitions rank second.** The measured set contains 13 quests. Rewards and quest objects can connect items, characters, locations, and journal content [obtainability, scene].
+2. **Quest definitions rank second.** A live probe counts **38** quests, not the 13 the earlier documents record. 13 is the number registered in `BuiltLookupTable`, so identity is `namedAsset` rather than `lookupAsset`. All 88 character quest objects resolve to placed-character record ids, which is the link the first item also chases [probe].
 3. **Authored item provenance ranks third.** The 728 item pages without an inbound link need loot lists, recipes, merchants, or quests. `ItemListAsset` has 348 measured candidates, and its nested groups can connect many currently isolated items [survey, obtainability].
 4. **World scene enumeration ranks fourth.** It can add found-in and obtainability links for containers, spawners, and pickups, but it requires a traversal of 683 streamed cells and explicit persistence handling [obtainability, tile].
 5. **`NPCTeleportPointRecord` and `VolumeRecord` remain conditional candidates.** They can create high-value movement, ownership, faction, and AI links, but their live counts are unknown [records].

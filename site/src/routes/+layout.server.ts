@@ -7,6 +7,7 @@ import {
   listLocations,
   listPlacedCharacters,
   listPortals,
+  listQuests,
   getEntity,
   getMapView,
   listItemCategories,
@@ -49,6 +50,7 @@ export interface SiteChrome {
   mapRoute: string;
   itemRoute: string;
   spellRoute: string;
+  questRoute: string;
   statusEffectRoute: string;
   statTypeRoute: string;
   itemCategoryRoute: string;
@@ -187,6 +189,7 @@ function mapSection(): NavSection {
 function buildLayoutData(): SiteChrome {
   const item = entitySection("item", listItemsOverview().length);
   const spell = entitySection("spell", listSpells().length);
+  const quest = entitySection("quest", listQuests().length);
   const statusEffect = entitySection("status-effect", listStatusEffects().length);
   const statType = entitySection("stat-type", listStatTypes().length);
   const itemCategory = entitySection("item-category", listItemCategories().length);
@@ -202,6 +205,7 @@ function buildLayoutData(): SiteChrome {
     sections: [
       item,
       spell,
+      quest,
       statusEffect,
       statType,
       itemCategory,
@@ -217,6 +221,7 @@ function buildLayoutData(): SiteChrome {
     mapRoute: map.href,
     itemRoute: item.href,
     spellRoute: spell.href,
+    questRoute: quest.href,
     statusEffectRoute: statusEffect.href,
     statTypeRoute: statType.href,
     itemCategoryRoute: itemCategory.href,

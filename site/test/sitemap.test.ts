@@ -92,6 +92,7 @@ describe("sitemap routes", () => {
 
     expect(routes).toContain("/");
     expect(routes).toContain("/locations");
+    expect(routes).toContain("/quests");
     expect(routes).toContain("/placed-characters");
     expect(routes).toContain("/portals");
     expect(routes).toContain("/items/iron-sword");

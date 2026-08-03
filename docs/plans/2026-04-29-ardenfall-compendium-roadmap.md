@@ -539,7 +539,7 @@ Spell effects reach 25 distinct status effects through 27 references, and 13 of 
 **Status:** planned
 **Spec coverage:** amendment §18; investment-priorities §1.
 
-**Delivers:** typed `quests` root table; child tables for stable phases/objectives/events/rewards where practical; validated type-tagged JSON for FlowCanvas/Odin graph internals until queries prove typed tables are warranted. Public quest links, aliases, redirects, disambiguation, and related-entity sections reuse the Slice 4 relationship-graph contract; internal quest logic graphs do not become a second public link graph.
+**Delivers:** 38 `QuestData` pages with `namedAsset` identity, typed root and child tables for phases, objectives, characters, journal entries, and rewards, plus public relationship-graph links to characters, factions, and items. Odin flow graphs and coordinate-only location objects remain out of scope.
 
 ### Slice 13 — Versioning, diff, and snapshot archive
 

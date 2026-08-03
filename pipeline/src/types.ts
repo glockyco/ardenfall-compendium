@@ -385,6 +385,75 @@ export interface SpellSnapshotFields {
   spellEffects?: SpellSnapshotEffect[];
 }
 
+export interface QuestObjectiveSnapshot {
+  objectiveGameId: number;
+  name: string | null;
+  info: string | null;
+  journalEntry: string | null;
+  successJournalEntry: string | null;
+  failureJournalEntry: string | null;
+  objectiveType: string;
+  hidden: boolean;
+  attachedObjectGameId: number | null;
+  enableMapMarker: boolean;
+}
+
+export interface QuestPhaseSnapshot {
+  phaseGameId: number;
+  name: string | null;
+  journalEntry: string | null;
+  completedJournalEntry: string | null;
+  objectives: QuestObjectiveSnapshot[];
+}
+
+export interface QuestCharacterSnapshot {
+  objectGameId: number;
+  objectName: string | null;
+  category: string | null;
+  characterRef: SnapshotRef;
+}
+
+export interface QuestJournalSnapshot {
+  objectGameId: number;
+  objectName: string | null;
+  journalEntry: string | null;
+}
+
+export interface QuestRewardSnapshot {
+  kind: string;
+  isPositive: boolean | null;
+  amountLabel: string | null;
+  customAmount: number | null;
+  factionRef: SnapshotRef | null;
+  itemRefs: SnapshotRef[];
+  itemListRefs: SnapshotRef[];
+  targetObjectGameId: number | null;
+}
+
+export interface QuestRewardSetSnapshot {
+  setGameId: number;
+  setName: string | null;
+  setType: string;
+  rewards: QuestRewardSnapshot[];
+}
+
+export interface QuestSnapshotFields {
+  id: string;
+  questGameId: string;
+  name: string | null;
+  subname: string | null;
+  disabled: boolean;
+  hiddenInQuestUi: boolean;
+  journalOnStart: string | null;
+  journalOnSucceed: string | null;
+  journalOnFailure: string | null;
+  requiredCharacterRefs: SnapshotRef[];
+  phases: QuestPhaseSnapshot[];
+  characters: QuestCharacterSnapshot[];
+  journalEntries: QuestJournalSnapshot[];
+  rewardSets: QuestRewardSetSnapshot[];
+}
+
 export interface FactionSnapshotRelationship {
   faction: SnapshotRef | null;
   relationship: number;

@@ -22,7 +22,7 @@ Items are 1,273 of the 1,455 public pages with no inbound edge, and nothing curr
 | NPC inventory | `CharacterData.itemLists` rolled at spawn | authored template, **314** placed records | complete | complete |
 | Enemy death | corpse carries the NPC's own inventory | as above | complete | complete |
 | Merchants | `CharacterData.merchantItemLists` plus additions | authored template, per-NPC stock | complete | complete for what a merchant *can* stock |
-| Quest rewards | `ItemsQuestReward` | authored, Odin graph | **13** quests | complete, needs a live probe |
+| Quest rewards | `ItemsQuestReward` | authored, typed list | **38** quests, 4 item rewards | probed, extractable without the graph |
 | Graph grants | `AddItemListNode`, `SpawnItemNode` | authored, Odin graph | live only | complete, needs a live probe |
 | Potion crafting | recipe with tag-based ingredients | authored asset | **48** recipes | complete |
 | Recipe learning | `PotionRecipeItem` unlocks a recipe | authored item | **2** | complete |

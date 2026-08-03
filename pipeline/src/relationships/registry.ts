@@ -66,6 +66,21 @@ export const relationshipRegistry = {
     inverseTitle: null,
     sortOrder: 0,
   },
+  features_character: {
+    forwardTitle: "Characters",
+    inverseTitle: "Appears in quests",
+    sortOrder: 110,
+  },
+  rewards_faction_reputation: {
+    forwardTitle: "Faction reputation",
+    inverseTitle: "Reputation from quests",
+    sortOrder: 120,
+  },
+  rewards_item: {
+    forwardTitle: "Item rewards",
+    inverseTitle: "Rewarded by quests",
+    sortOrder: 130,
+  },
 } satisfies Record<string, RelationshipDescriptor>;
 
 export type RelationshipPredicate = keyof typeof relationshipRegistry;
