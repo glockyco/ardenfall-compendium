@@ -18,7 +18,8 @@
     "LocationAsset fixture rows for map points, debug-only filtering, and axis-aligned volumes",
     "PortalRecord fixture row for record-backed map point placement",
     "Spell fixture rows for skill-linked, no-skill, and illegal spell coverage",
-    "Character fixture rows for drops, empty drops, and unresolved drop references"
+    "Character fixture rows for drops, empty drops, unresolved drop references, and starting factions",
+    "Faction fixture rows for titled and untitled factions and both relationship shapes"
   ],
   "selection": [
     {
@@ -63,7 +64,12 @@
         "named;character;character_villager",
         "named;character;character_phantom"
       ],
-      "rationale": "character with two drops, character with no drops, and unresolved drop reference"
+      "rationale": "character with two drops and two starting factions, character with no drops, and unresolved drop reference"
+    },
+    {
+      "entity": "faction",
+      "ids": ["a1000001.fixture-black-moth", "a1000002.fixture-mages-guild"],
+      "rationale": "one titled faction, one untitled faction, and enemy plus negative standing relationships"
     },
     {
       "entity": "location",
@@ -81,7 +87,7 @@
   "hashes": {
     "snapshot/spells.json": "5ecc4fcb99e2da4f337ea180d9814f5edd1dff6f11952cd8a7fbf5292d910cba",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
-    "snapshot/manifest.json": "8e4704ce7a316ebe0ff93459984203e4e9804296fc6486179ba58b9b5146aebd",
+    "snapshot/manifest.json": "f9b260e5f8e8c1752913cb6246d4593df1e1e80fa233aa25f9d0c70a5c75cd14",
     "snapshot/items.json": "f85e557abf2e9c6a9be4ffdf5062576db83769328d302eac55bc408244719cde",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
@@ -92,6 +98,7 @@
     "snapshot/item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
     "snapshot/locations.json": "856982c52ff602e34a3caccd13bfcfc8b4a74bc3f44c2e7e3b0f5dba3e3b7f82",
     "snapshot/portals.json": "370bf4c3647b38982b88910fc8775bd23316782002b49be46851509f5eb1fabe",
-    "snapshot/characters.json": "f9639f2bcd54d32a7e3cfc1df81a2b1aa538650f3adc3d939037645f3bf093c7"
+    "snapshot/characters.json": "753f68ff20db93a360bffa0b1de7aa743dd94382767f9a76c47b4d1783f5d24a",
+    "snapshot/factions.json": "92231e488c599f271c7ae02ac7db1950bc9b71431ba4871232582e52f46346dc"
   }
 }

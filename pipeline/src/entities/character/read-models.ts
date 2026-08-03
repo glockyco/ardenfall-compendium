@@ -22,6 +22,11 @@ interface CharacterRow {
   drop_refs_json: string;
 }
 
+interface CharacterFactionRefRow {
+  id: string;
+  character_id: string;
+  target_faction_id: string | null;
+}
 export function emitCharacterReadModels(
   db: Database,
   routeBase = "/characters",
@@ -48,6 +53,25 @@ export function emitCharacterReadModels(
       .all()
       .map((row) => row.entity_id),
   );
+  const factionPages = new Set(
+    db
+      .query<{ entity_id: string }, []>(
+        `SELECT entity_id FROM entity_nodes WHERE entity_type = 'faction' AND has_page = 1`,
+      )
+      .all()
+      .map((row) => row.entity_id),
+  );
+  const factionRefsByCharacter = new Map<string, CharacterFactionRefRow[]>();
+  for (const ref of db
+    .query<CharacterFactionRefRow, []>(
+      `SELECT id, character_id, target_faction_id
+       FROM character_faction_refs ORDER BY id`,
+    )
+    .all()) {
+    const refs = factionRefsByCharacter.get(ref.character_id) ?? [];
+    refs.push(ref);
+    factionRefsByCharacter.set(ref.character_id, refs);
+  }
   const rows = db
     .query<CharacterRow, []>(
       `SELECT id, character_name, drop_refs_json
@@ -104,10 +128,45 @@ export function emitCharacterReadModels(
           null,
         );
       }
+
+      for (const ref of factionRefsByCharacter.get(row.id) ?? []) {
+        const targetId = ref.target_faction_id;
+        if (targetId === null || !factionPages.has(targetId)) {
+          diagnostics.push(
+            unresolvedFactionDiagnostic(row, "reference does not identify a faction with a page"),
+          );
+          continue;
+        }
+        edgeInsert.run(
+          `${row.id}:starts_in_faction:faction:${targetId}`,
+          "character",
+          row.id,
+          "faction",
+          targetId,
+          "starts_in_faction",
+          "Starts in faction",
+          1,
+          JSON.stringify({ source: "characters.startingFactions" }),
+          null,
+        );
+      }
     }
   });
   tx();
   return diagnostics;
+}
+
+function unresolvedFactionDiagnostic(row: CharacterRow, reason: string): PipelineDiagnostic {
+  return {
+    severity: "diagnostic",
+    source: "relationship-graph",
+    code: "characterStartingFactionUnresolved",
+    message: `Character '${row.id}' has an unresolvable starting faction reference: ${reason}.`,
+    entityType: "character",
+    entityId: row.id,
+    field: "character_faction_refs.target_faction_id",
+    evidence: { reason },
+  };
 }
 
 function resolveItemId(value: unknown, pageItems: ReadonlySet<string>): string | null {

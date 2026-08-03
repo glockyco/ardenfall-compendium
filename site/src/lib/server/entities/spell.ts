@@ -1,3 +1,4 @@
+import { disambiguateLabels } from "../disambiguate-labels";
 import { all, get } from "../db";
 import { isRichTextDocument, parseGeneratedJson, validateRenderContext } from "../json";
 import type { RichTextDocument } from "./item";
@@ -66,16 +67,8 @@ export const listSpells = (): SpellOverviewRow[] => {
     routePath: row.route_path,
     shortId: row.short_id,
   }));
-  const counts = new Map<string, number>();
-  for (const row of rows) {
-    if (row.name) counts.set(row.name, (counts.get(row.name) ?? 0) + 1);
-  }
-  // Two spells can share a name. A reader needs to tell two links apart, so a repeated name
-  // gets the short id that relationship sections already show.
-  return rows.map(({ shortId, ...row }) =>
-    row.name && (counts.get(row.name) ?? 0) > 1
-      ? { ...row, name: `${row.name} \u00b7 ${shortId}` }
-      : row,
+  return disambiguateLabels(rows, "name", (row) => row.shortId).map(
+    ({ shortId: _shortId, ...row }) => row,
   );
 };
 

@@ -1,4 +1,5 @@
 import { all, get } from "../db";
+import { disambiguateLabels } from "../disambiguate-labels";
 import { isColorArray, isGeometry, isStringArray, parseGeneratedJson } from "../json";
 import { getEntityNodeBySlug } from "./item";
 import type {
@@ -64,6 +65,7 @@ interface LocationOverviewRecord {
   id: string;
   name: string;
   route_path: string;
+  short_id: string;
 }
 
 interface LocationPresentationRecord {
@@ -309,16 +311,25 @@ function computeMaps(points: MapPointRow[], volumes: MapVolumeRow[]): MapSummary
 }
 
 export const listLocations = (): LocationOverviewRow[] =>
-  all<LocationOverviewRecord>(
-    `SELECT l.id, l.name, n.route_path
-     FROM locations l
-     JOIN entity_nodes n
-       ON n.entity_type = 'location'
-      AND n.entity_id = l.id
-      AND n.has_page = 1
-     WHERE l.enabled = 1
-     ORDER BY l.name, l.id`,
-  ).map((row) => ({ id: row.id, name: row.name, routePath: row.route_path }));
+  disambiguateLabels(
+    all<LocationOverviewRecord>(
+      `SELECT l.id, l.name, n.route_path, n.short_id
+       FROM locations l
+       JOIN entity_nodes n
+         ON n.entity_type = 'location'
+        AND n.entity_id = l.id
+        AND n.has_page = 1
+       WHERE l.enabled = 1
+       ORDER BY l.name, l.id`,
+    ).map((row) => ({
+      id: row.id,
+      name: row.name,
+      routePath: row.route_path,
+      shortId: row.short_id,
+    })),
+    "name",
+    (row) => row.shortId,
+  ).map(({ shortId: _shortId, ...row }) => row);
 
 export const getLocationPresentation = (slug: string): LocationPresentationRow | undefined => {
   const node = getEntityNodeBySlug("location", slug);

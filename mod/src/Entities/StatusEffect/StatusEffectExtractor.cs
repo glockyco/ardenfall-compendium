@@ -60,14 +60,7 @@ public sealed class StatusEffectExtractor : WalkerBase<StatusEffectSnapshotRow>
                     });
                 }
 
-                var iconRef = ReferenceEquals(asset.Icon, null)
-                    ? null
-                    : Refs.ResolveAsset(
-                        asset.Icon,
-                        "iconRef",
-                        id,
-                        MissingPolicy.OptionalEmpty,
-                        "StatusEffectData.statusEffectIcon");
+                var iconRef = asset.IconRef;
                 return new StatusEffectSnapshotRow
                 {
                     Id = id,

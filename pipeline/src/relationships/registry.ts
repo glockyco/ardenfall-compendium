@@ -36,6 +36,16 @@ export const relationshipRegistry = {
     inverseTitle: "Dropped by",
     sortOrder: 60,
   },
+  starts_in_faction: {
+    forwardTitle: "Factions",
+    inverseTitle: "Starting members",
+    sortOrder: 70,
+  },
+  starts_opposed_to: {
+    forwardTitle: "Opposed at the start",
+    inverseTitle: "Opposed by at the start",
+    sortOrder: 80,
+  },
   references_term: {
     forwardTitle: "Referenced terms",
     inverseTitle: null,

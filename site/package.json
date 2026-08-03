@@ -37,6 +37,7 @@
     "smoke:prerender": "bun run scripts/smoke-prerender-output.ts",
     "smoke:pagefind": "bun run scripts/smoke-pagefind.ts",
     "smoke:map": "bun run scripts/smoke-map-route.ts",
+    "smoke:accessibility": "bun run scripts/smoke-accessibility.ts",
     "stage:artifact": "bun run scripts/stage-artifact.ts",
     "deploy:production": "bun run scripts/deploy-production.ts"
   },

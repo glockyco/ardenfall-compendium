@@ -124,6 +124,9 @@ export type {
   LocationPresentationRow,
 } from "./entities/location";
 export { getLocationPresentation, listLocations } from "./entities/location";
+
+export type { FactionOverviewRow, FactionPresentationRow } from "./entities/faction";
+export { getFactionPresentation, listFactions } from "./entities/faction";
 export type {
   MapBounds,
   MapLayerConfig,

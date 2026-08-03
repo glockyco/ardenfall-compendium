@@ -1,9 +1,15 @@
 using System.Collections.Generic;
-using Ardenfall.Item;
+using ArdenfallCompendium.Dtos;
 
 namespace ArdenfallCompendium.Entities.Item;
 
+public sealed record ItemAsset(
+    string? Guid,
+    string AssetName,
+    ItemSnapshotRow? Snapshot,
+    IReadOnlyList<Diagnostic>? Diagnostics = null);
+
 public interface IItemAssetSource
 {
-    IEnumerable<ItemData> EnumerateItems();
+    IEnumerable<ItemAsset> EnumerateItems();
 }

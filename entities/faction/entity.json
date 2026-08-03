@@ -1,0 +1,82 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "faction",
+  "kind": "definition",
+  "label": {
+    "singular": "Faction",
+    "plural": "Factions"
+  },
+  "extraction": {
+    "source": "lookupAsset",
+    "root": "BuiltLookupTable.GetAssetsOfType<Faction>",
+    "walker": "FactionWalker"
+  },
+  "canonicalTable": "factions",
+  "site": {
+    "route": "/factions"
+  },
+  "fields": [
+    { "name": "id", "type": "id", "from": "guid", "missingPolicy": "fatal" },
+    { "name": "name", "type": "string", "from": "title", "missingPolicy": "diagnostic" },
+    {
+      "name": "factionId",
+      "type": "string",
+      "from": "id",
+      "missingPolicy": "diagnostic",
+      "column": "faction_id"
+    },
+    {
+      "name": "description",
+      "type": "string",
+      "from": "description",
+      "missingPolicy": "optional-empty"
+    },
+    { "name": "iconRef", "type": "ref:asset", "from": "iconRef", "column": "icon_ref_json" },
+    {
+      "name": "alliable",
+      "type": "boolean",
+      "from": "alliable",
+      "missingPolicy": "fatal",
+      "label": "Can be allied with"
+    },
+    {
+      "name": "enableReputation",
+      "type": "boolean",
+      "from": "enableReputation",
+      "missingPolicy": "fatal",
+      "label": "Tracks reputation",
+      "column": "enable_reputation"
+    },
+    {
+      "name": "alwaysShowInUI",
+      "type": "boolean",
+      "from": "alwaysShowInUI",
+      "missingPolicy": "fatal",
+      "column": "always_show_in_ui"
+    },
+    {
+      "name": "canBeDisguised",
+      "type": "boolean",
+      "from": "canBeDisguised",
+      "missingPolicy": "fatal",
+      "label": "Can be disguised as",
+      "column": "can_be_disguised"
+    },
+    {
+      "name": "enableBounty",
+      "type": "boolean",
+      "from": "enableBounty",
+      "missingPolicy": "fatal",
+      "label": "Issues bounties",
+      "column": "enable_bounty"
+    },
+    {
+      "name": "interFactionRelationships",
+      "type": "json",
+      "from": "interFactionRelationships",
+      "storage": "unstored",
+      "reason": "Expanded into faction_relationships rows.",
+      "projects": "faction_relationships"
+    }
+  ]
+}

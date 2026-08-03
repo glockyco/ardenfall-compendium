@@ -11,7 +11,10 @@ import {
   ENTITY_GRAPH_DDL,
   insertPipelineDiagnostics,
 } from "../../relationships/relationship-graph.ts";
-import { emitRelationshipSections } from "../../relationships/relationship-sections.ts";
+import {
+  disambiguateLabels,
+  emitRelationshipSections,
+} from "../../relationships/relationship-sections.ts";
 import type { RichTextNode } from "../../rich-text/rich-text-v1.ts";
 import { deriveShortId, deriveSlug } from "../../slug/derive-slug.ts";
 
@@ -60,6 +63,15 @@ CREATE TABLE item_overview_categories (
   sort_order   INTEGER NOT NULL
 );
 `;
+
+export function resolveItemDisplayLabel(
+  itemName: string | null | undefined,
+  presentationName: string | null,
+): { label: string; missing: boolean } {
+  const value = itemName ?? presentationName;
+  const label = value?.trim() ? value : "Unnamed item";
+  return { label, missing: !value?.trim() };
+}
 
 export interface EntityNodeInput {
   entityType: string;
@@ -193,8 +205,8 @@ export function emitItemReadModels(
     (
       db.query('SELECT id, name, variant, "categoryRef" AS category_ref FROM items').all() as {
         id: string;
-        name: string;
-        variant: string;
+        name: string | null;
+        variant: string | null;
         category_ref: string | null;
       }[]
     ).map((row) => [row.id, row] as const),
@@ -360,12 +372,24 @@ export function emitItemReadModels(
           targetHasPage: true,
         }),
       });
-      const itemLabel = item?.name ?? presentation.displayName;
+      const displayLabel = resolveItemDisplayLabel(item?.name, presentation.displayName);
+      const itemLabel = displayLabel.label;
+      if (displayLabel.missing) {
+        richTextDiagnostics.push({
+          severity: "diagnostic",
+          source: "item-presentation-read-model",
+          code: "itemNameMissing",
+          message: `Item '${snapshotRow.id}' has no display name.`,
+          entityType: "item",
+          entityId: snapshotRow.id,
+          field: "presentation.displayName",
+        });
+      }
       const variantId = item?.variant ?? snapshotRow.variant;
       if (variantId === undefined) {
         throw new Error(`Item '${snapshotRow.id}' is missing a variant`);
       }
-      const effectFacts = presentation.effects.map((effect) => {
+      const rawEffectFacts = presentation.effects.map((effect) => {
         if (effect.targetType === "status-effect") {
           const targetId = resolveStatusEffectId(effect.targetRef, statusEffectIds);
           if (targetId === null) {
@@ -424,6 +448,16 @@ export function emitItemReadModels(
         );
         return { ...effect, targetId };
       });
+      const labelledEffectFacts = rawEffectFacts.map((effect) => ({
+        ...effect,
+        // A short id is a pure function of the target id, so it is derived rather than read
+        // from entity_nodes. Item read models run before spells and status effects publish
+        // their nodes, so a table read here would find nothing and silently skip the
+        // disambiguation that two identically named targets need.
+        shortId: effect.targetId === null ? "" : deriveShortId(effect.targetId),
+      }));
+      disambiguateLabels(labelledEffectFacts);
+      const effectFacts = labelledEffectFacts.map(({ shortId: _shortId, ...effect }) => effect);
       writeNode({
         entityType: "item",
         entityId: snapshotRow.id,

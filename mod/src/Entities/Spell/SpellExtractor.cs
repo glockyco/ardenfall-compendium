@@ -48,22 +48,8 @@ public sealed class SpellExtractor : WalkerBase<SpellSnapshotRow>
                     });
                 }
 
-                var statTypeRef = ReferenceEquals(asset.StatType, null)
-                    ? null
-                    : Refs.ResolveAsset(
-                        asset.StatType,
-                        "statTypeRef",
-                        id,
-                        MissingPolicy.OptionalEmpty,
-                        "SpellData.statType");
-                var iconRef = ReferenceEquals(asset.Icon, null)
-                    ? null
-                    : Refs.ResolveAsset(
-                        asset.Icon,
-                        "iconRef",
-                        id,
-                        MissingPolicy.OptionalEmpty,
-                        "SpellData.icon");
+                var statTypeRef = asset.StatTypeRef;
+                var iconRef = asset.IconRef;
                 return new SpellSnapshotRow
                 {
                     Id = id,

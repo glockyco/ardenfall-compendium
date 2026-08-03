@@ -19,6 +19,7 @@ describe("loadDescriptors", () => {
 
     expect(Object.keys(result.entities).sort()).toEqual([
       "character",
+      "faction",
       "item",
       "item-category",
       "item-tag",

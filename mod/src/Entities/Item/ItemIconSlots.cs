@@ -63,6 +63,11 @@ public static class ItemIconSlots
 
 public sealed record ItemIconAssetSlot(string EntityId, string RowId, string Slot, Sprite Sprite, string OutputSubdir);
 
+public interface IIconAssetPlanSink
+{
+    void AttachAssetPlan(ItemIconAssetPlan? assetPlan);
+}
+
 public sealed class ItemIconAssetPlan
 {
     public List<ItemIconAssetSlot> Slots { get; } = new();

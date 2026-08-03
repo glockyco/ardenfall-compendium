@@ -49,10 +49,10 @@ public sealed class SpellExtractorTests
                 Guid: "spell-guid",
                 AssetName: "spell_fire-shield",
                 SpellName: "Fire Shield",
-                StatType: null,
+                StatTypeRef: null,
                 ManaCost: 12.5f,
                 IsIllegal: true,
-                Icon: null),
+                IconRef: null),
         });
 
         var extractor = new SpellExtractor(source);
@@ -158,10 +158,10 @@ public sealed class SpellExtractorTests
         Guid: null,
         AssetName: assetName,
         SpellName: spellName,
-        StatType: null,
+        StatTypeRef: null,
         ManaCost: 0f,
         IsIllegal: false,
-        Icon: null,
+        IconRef: null,
         TooltipSource: tooltipSource);
 
     private static SpellData RuntimeSpell(string id, string name)

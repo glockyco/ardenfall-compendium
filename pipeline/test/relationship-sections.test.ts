@@ -152,7 +152,7 @@ describe("relationship section projection", () => {
     const labels = (JSON.parse(row?.edges_json ?? "[]") as { targetLabel: string }[]).map(
       (edge) => edge.targetLabel,
     );
-    expect(labels).toEqual(["Unnamed character \u00b7 char-a", "Unnamed character \u00b7 char-b"]);
+    expect(labels).toEqual(["Unnamed character · char-a", "Unnamed character · char-b"]);
   });
 
   it("leaves a unique label untouched", () => {

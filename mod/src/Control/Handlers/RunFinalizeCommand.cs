@@ -19,6 +19,7 @@ using ArdenfallCompendium.Entities.StatusEffect;
 using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Entities.Portal;
 using ArdenfallCompendium.Entities.Character;
+using ArdenfallCompendium.Entities.Faction;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
 using HotRepl.Control;
@@ -41,6 +42,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     private readonly ILocationExtractionCache _locations;
     private readonly IPortalExtractionCache _portals;
     private readonly ICharacterExtractionCache _characters;
+    private readonly IFactionExtractionCache _factions;
     private readonly IMasterTooltipSnapshotSource _masterTooltip;
     private readonly Func<PreflightReport> _preflight;
 
@@ -56,6 +58,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         IItemTagExtractionCache itemTags,
         ILocationExtractionCache locations,
         IPortalExtractionCache portals,
+        IFactionExtractionCache factions,
         Func<PreflightReport>? preflight = null
     )
     {
@@ -72,6 +75,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         _itemTags = itemTags;
         _locations = locations;
         _portals = portals;
+        _factions = factions;
         _masterTooltip = masterTooltip;
         _preflight = preflight ?? PreflightRunner.Run;
     }
@@ -178,6 +182,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             var itemTagRows = _itemTags.GetOrExtract(run).ToList();
             var locationRows = _locations.GetOrExtract(run).ToList();
             var portalRows = _portals.GetOrExtract(run).ToList();
+            var factionRows = _factions.GetOrExtract(run).ToList();
             RecordTiming(timings, "related.extract", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
@@ -216,6 +221,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             WriteJson(stagingDir, "locations.json", locationEnvelope, hashes);
             var portalEnvelope = new PortalSnapshotEnvelope { Rows = portalRows };
             WriteJson(stagingDir, "portals.json", portalEnvelope, hashes);
+            var factionEnvelope = new FactionSnapshotEnvelope { Rows = factionRows };
+            WriteJson(stagingDir, "factions.json", factionEnvelope, hashes);
             RecordTiming(timings, "metadata.write", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
@@ -252,6 +259,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
             foreach (var diagnostic in _portals.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in _factions.GetWalkerDiagnostics(run))
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
@@ -311,6 +322,13 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                     AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
                 }
             }
+            foreach (var row in factionRows)
+            {
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
+            }
 
             if (diagnostics.Count > 0)
             {
@@ -330,6 +348,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["item-tag"] = itemTagRows.Count,
                 ["location"] = locationRows.Count,
                 ["portal"] = portalRows.Count,
+                ["faction"] = factionRows.Count,
             };
             var manifest = ManifestBuilder.Build(
                 preflight,
@@ -361,8 +380,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             run.Counts["item-tag"] = itemTagRows.Count;
             run.Counts["location"] = locationRows.Count;
             run.Counts["portal"] = portalRows.Count;
+            run.Counts["faction"] = factionRows.Count;
             phaseStopwatch.Restart();
             _runs.Save(run);
+            _runs.ReleaseFinalized(run.RunId);
             _items.Evict(run);
             _statTypes.Evict(run);
             _spells.Evict(run);
@@ -372,7 +393,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             _itemTags.Evict(run);
             _locations.Evict(run);
             _portals.Evict(run);
-            _runs.ReleaseFinalized(run.RunId);
+            _factions.Evict(run);
             RecordTiming(timings, "run.save", phaseStopwatch, totalStopwatch);
 
             var manifestPath = Path.Combine(publishedDir, "manifest.json");
@@ -396,6 +417,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["item-tags"] = CompendiumCommandResults.FileArtifact("item-tags", Path.Combine(publishedDir, "item-tags.json"), "application/json", hashes["item-tags.json"]),
                 ["locations"] = CompendiumCommandResults.FileArtifact("locations", Path.Combine(publishedDir, "locations.json"), "application/json", hashes["locations.json"]),
                 ["portals"] = CompendiumCommandResults.FileArtifact("portals", Path.Combine(publishedDir, "portals.json"), "application/json", hashes["portals.json"]),
+                ["factions"] = CompendiumCommandResults.FileArtifact("factions", Path.Combine(publishedDir, "factions.json"), "application/json", hashes["factions.json"]),
                 ["finalize-timings"] = CompendiumCommandResults.FileArtifact("finalize-timings", Path.Combine(publishedDir, "finalize-timings.json"), "application/json", hashes["finalize-timings.json"]),
             };
             if (hashes.TryGetValue("diagnostics.json", out var diagnosticsHash))

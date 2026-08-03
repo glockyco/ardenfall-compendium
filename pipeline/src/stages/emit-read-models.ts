@@ -26,7 +26,7 @@ export {
 } from "../entities/item-tag/read-models.ts";
 export { MAP_READ_MODEL_DDL, emitMapReadModels } from "../map/read-models.ts";
 export { emitRelationshipSections } from "../relationships/relationship-sections.ts";
-export { emitPortalReadModels } from "../entities/portal/read-models.ts";
+export { emitFactionReadModels, FACTION_READ_MODEL_DDL } from "../entities/faction/read-models.ts";
 import { entityRegistry } from "../entities/registry";
 import { emitMapReadModels } from "../map/read-models.ts";
 import {

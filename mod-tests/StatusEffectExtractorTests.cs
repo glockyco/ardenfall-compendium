@@ -84,7 +84,7 @@ public sealed class StatusEffectExtractorTests
         AssetName: "status_effect_asset",
         StatusEffectName: name,
         TooltipSource: tooltipSource,
-        Icon: null,
+        IconRef: null,
         IsHostile: false);
 
 }

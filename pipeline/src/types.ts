@@ -163,7 +163,7 @@ export function entityRows<F>(envelope: SnapshotEnvelope): SnapshotRow<F>[] {
 export interface ItemPresentationSnapshot {
   schemaVersion: 1;
   renderContext: "item-presentation-v1";
-  displayName: string;
+  displayName: string | null;
   displayNameSourceMethod: string;
   itemType: string | null;
   itemTypeSourceMethod: string | null;
@@ -374,10 +374,31 @@ export interface SpellSnapshotFields {
   iconRef?: SnapshotRef | null;
 }
 
+export interface FactionSnapshotRelationship {
+  faction: SnapshotRef | null;
+  relationship: number;
+  isEnemy: boolean;
+}
+
+export interface FactionSnapshotFields {
+  id: string;
+  name: string | null;
+  factionId: string | null;
+  description: string;
+  iconRef?: SnapshotRef | null;
+  alliable: boolean;
+  enableReputation: boolean;
+  alwaysShowInUI: boolean;
+  canBeDisguised: boolean;
+  enableBounty: boolean;
+  interFactionRelationships: FactionSnapshotRelationship[];
+}
+
 export interface CharacterSnapshotFields {
   id: string;
   name: string | null;
   dropRefs: SnapshotRef[];
+  startingFactions?: SnapshotRef[];
 }
 
 export interface StatusEffectSnapshotFields {

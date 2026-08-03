@@ -10,6 +10,7 @@ using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Entities.Portal;
 using ArdenfallCompendium.Entities.Character;
+using ArdenfallCompendium.Entities.Faction;
 using ArdenfallCompendium.Extraction;
 
 namespace ArdenfallCompendium.Control;
@@ -29,6 +30,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         var locations = new LocationExtractionService(new BuiltLookupTableLocationAssetSource());
         var portals = new PortalExtractionService(new MasterRecordTablePortalRecordSource());
         var characters = new CharacterExtractionService(new BuiltLookupTableCharacterAssetSource());
+        var factions = new FactionExtractionService(new BuiltLookupTableFactionAssetSource());
 
         Register(new Handlers.CompendiumInfoCommand());
         Register(new Handlers.CompendiumPreflightCommand());
@@ -37,7 +39,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         Register(new Handlers.RunStatusCommand(runs));
         Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs, items));
-        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals));
+        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals, factions: factions));
         Register(new Handlers.RunDiscardCommand(runs, new IExtractionCache[]
         {
             items,
@@ -49,6 +51,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
             locations,
             portals,
             characters,
+            factions,
         }));
         Register(new Handlers.GameQuitCommand());
     }

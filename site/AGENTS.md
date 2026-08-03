@@ -4,6 +4,9 @@ SvelteKit static-first site. Generated data is staged as `.data/data.sqlite` plu
 
 ## Hard rules
 
+- The site targets WCAG 2.2 Level AA.
+- `smoke:accessibility` parses built HTML with hand-written checks. It uses no browser dependency, so CI stays deterministic and can state its limits. It checks duplicate link text, known target dimensions below 24 px, and live-region presence on pages with forms. It cannot inspect client-side updates, focus behavior, or final browser layout.
+
 - Default route architecture is SSR + prerender + no CSR. Generated compendium pages should be static HTML served by Cloudflare Workers Static Assets. Opt into CSR or request-time Worker rendering only with a documented route-level reason.
 - `/search` is the one route that needs CSR, because Pagefind reads its index in the browser. It still prerenders, so a reader without JavaScript gets the shell and a message that says search needs a script, not an input that looks broken. The index is built by `build:prepared`, so no deployable build can ship pages without it, and `smoke:pagefind` fails on an absent or empty index.
 - Game text carries TMP markup. A page must never render a raw game string. Read models keep the source column server-side and expose only the translated rich-text document, so pages render typed rich-text nodes.

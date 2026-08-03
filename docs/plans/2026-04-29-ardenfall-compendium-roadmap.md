@@ -429,7 +429,7 @@ A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.1
 | `ItemCategory` | 7 | **0** | yes | `namedAsset` |
 | `StatusEffectData` | 172 | 172 | yes | `lookupAsset` |
 | `SpellData` | 56 | **0** | yes | `namedAsset` |
-| `Faction` | 48 | 48 | **no** | `lookupAsset` |
+| `Faction` | 48 | 48 | yes | `lookupAsset` |
 | `PerkAsset` | 18 | 18 | **no** | `lookupAsset` |
 | `TraitType` | 17 | 17 | **no** | `lookupAsset` |
 | `CharacterData` | 212 | 212 | yes | `lookupAsset` |
@@ -490,9 +490,9 @@ So the next connective work is no longer a field, it is an entity:
 6. **Spells to status effects.** The 116 unreachable status effects are referenced from the Odin-serialised effect graph on `SpellData`. A slice rather than a field.
 7. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference, but the extractor does not currently emit it, so it needs mod work first.
 
-**Search.** Delivered. Pagefind runs after the prerender and indexes all 1,843 built pages, so a reader finds a page by name even when nothing links to it. The index ships from `build:prepared`, which means no deployable build can omit it, and a smoke fails on an absent or empty index.
+**Search.** Delivered. Pagefind runs after the prerender and indexes all 1,892 built pages, so a reader finds a page by name even when nothing links to it. The index ships from `build:prepared`, which means no deployable build can omit it, and a smoke fails on an absent or empty index.
 
-**Every public entity now has a page**, so search and the sitemap describe the same set. All 48 locations have one, portals keep an identity and a map route without a page because their names are authoring identifiers, and the sitemap URL set equals the built page set exactly at 1,844 each. Every detail route ships a meta description.
+**Every public entity now has a page**, so search and the sitemap describe the same set. Ten entities ship, the tenth being factions, which gave characters their first reader-facing connection. An accessibility smoke now runs in the gate against WCAG 2.2 Level AA, and the footer states the project's unofficial status on every page. All 48 locations have one, portals keep an identity and a map route without a page because their names are authoring identifiers, and the sitemap URL set equals the built page set exactly at 1,844 each. Every detail route ships a meta description.
 
 **A current release.** Nothing has been published since 2026-06-05, four entities ago. The path is proven, the blocker was only that old artifacts predate the count contract.
 

@@ -64,12 +64,12 @@ interface RelationshipSection {
  * Only collisions within a single section are ambiguous. The same label appearing on two
  * different pages is fine, so this deliberately does not globally uniquify anything.
  */
-function disambiguateLabels(edges: RelationshipEdge[]): void {
+export function disambiguateLabels<T extends { label: string; shortId: string }>(edges: T[]): void {
   const counts = new Map<string, number>();
-  for (const edge of edges) counts.set(edge.targetLabel, (counts.get(edge.targetLabel) ?? 0) + 1);
+  for (const edge of edges) counts.set(edge.label, (counts.get(edge.label) ?? 0) + 1);
   for (const edge of edges) {
-    if ((counts.get(edge.targetLabel) ?? 0) > 1) {
-      edge.targetLabel = `${edge.targetLabel} \u00b7 ${edge.targetShortId}`;
+    if ((counts.get(edge.label) ?? 0) > 1 && edge.shortId) {
+      edge.label = `${edge.label} · ${edge.shortId}`;
     }
   }
 }
@@ -168,7 +168,14 @@ export function emitRelationshipSections(
         left.targetLabel.localeCompare(right.targetLabel) ||
         left.targetId.localeCompare(right.targetId),
     );
-    disambiguateLabels(section.edges);
+    const labels = section.edges.map((edge) => ({
+      label: edge.targetLabel,
+      shortId: edge.targetShortId,
+    }));
+    disambiguateLabels(labels);
+    section.edges.forEach((edge, index) => {
+      edge.targetLabel = labels[index]?.label ?? edge.targetLabel;
+    });
     insert.run(
       `${section.sourceId}:${section.predicate}`,
       section.sourceType,

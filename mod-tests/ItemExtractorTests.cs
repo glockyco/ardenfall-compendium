@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using Ardenfall.Item;
 using ArdenfallCompendium.Entities.Item;
 using Xunit;
 
@@ -10,10 +8,10 @@ namespace ArdenfallCompendium.Tests;
 public sealed class ItemExtractorTests
 {
     [Fact]
-    public void DiagnosesNullAsset()
+    public void DiagnosesNullAssetWithoutUnity()
     {
-        var source = new FakeItemSource((ItemData)null!);
-        var extractor = new ItemExtractor(source, assetPlan: null, lookupGuid: _ => null);
+        var source = new FakeItemSource((ItemAsset)null!);
+        var extractor = new ItemExtractor(source);
 
         var rows = extractor.Walk().ToList();
 
@@ -22,20 +20,18 @@ public sealed class ItemExtractorTests
         Assert.Equal("fatal", diagnostic.Severity);
         Assert.Equal("itemAssetMissing", diagnostic.Code);
         Assert.Equal("id", diagnostic.Field);
-        Assert.Equal("Item asset source yielded a null ItemData row", diagnostic.Message);
+        Assert.Equal("Item asset source yielded a null row", diagnostic.Message);
     }
 
-    // Known coverage limitation: the lookup-returns-null branch cannot be reached outside
-    // Unity because an uninitialized ItemData is treated as null by Unity's overloaded operator.
     private sealed class FakeItemSource : IItemAssetSource
     {
-        private readonly IReadOnlyList<ItemData> _items;
+        private readonly IReadOnlyList<ItemAsset> _items;
 
-        public FakeItemSource(params ItemData[] items)
+        public FakeItemSource(params ItemAsset[] items)
         {
             _items = items;
         }
 
-        public IEnumerable<ItemData> EnumerateItems() => _items;
+        public IEnumerable<ItemAsset> EnumerateItems() => _items;
     }
 }

@@ -97,10 +97,9 @@ public sealed class StatTypeExtractorTests
     }
 
     [Fact]
-    public void CapturesStatIconAssetSlots()
+    public void PassesPlainIconReferenceThroughExtractor()
     {
-        var icon = (Sprite)RuntimeHelpers.GetUninitializedObject(typeof(Sprite));
-        var plan = new ItemIconAssetPlan();
+        var icon = SnapshotRef.Missing("engineResource", "StatType.icon");
         var source = new FakeStatTypeAssetSource(new[]
         {
             FakeStatTypeAssetSource.Build(
@@ -111,15 +110,11 @@ public sealed class StatTypeExtractorTests
                 longStatDescription: "Raw power.",
                 icon: icon),
         });
-        var extractor = new StatTypeExtractor(source, plan);
+        var extractor = new StatTypeExtractor(source);
 
-        _ = extractor.Walk().ToList();
+        var row = Assert.Single(extractor.Walk().ToList());
 
-        var slot = Assert.Single(plan.Slots);
-        Assert.Equal("stat-type", slot.EntityId);
-        Assert.Equal("named;stat-type;Strength", slot.RowId);
-        Assert.Equal("iconRef", slot.Slot);
-        Assert.Same(icon, slot.Sprite);
+        Assert.Equal(icon, row.Fields.IconRef);
     }
 
     [Fact]
@@ -172,12 +167,12 @@ public sealed class StatTypeExtractorTests
             string longStatDescription,
             IReadOnlyList<string>? affects = null,
             IReadOnlyList<string>? skillAffects = null,
-            Object? icon = null) => new(
+            SnapshotRef? icon = null) => new(
                 Guid: guid,
                 AssetName: name,
                 IsAttribute: isAttribute,
                 StatName: name,
-                Icon: icon,
+                IconRef: icon,
                 IconColor: new AssetColorSnapshot { R = 1f, G = 1f, B = 1f, A = 1f },
                 StatDescription: statDescription,
                 LongStatDescription: longStatDescription,

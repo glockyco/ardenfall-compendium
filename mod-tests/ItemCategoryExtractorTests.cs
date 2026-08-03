@@ -90,8 +90,8 @@ public sealed class ItemCategoryExtractorTests
                 Guid: "category-malformed",
                 AssetName: "Malformed",
                 CategoryName: "Malformed",
-                Icon: null,
-                DefaultItemIcon: null,
+                IconRef: null,
+                DefaultItemIconRef: null,
                 CategoryColor: new AssetColorSnapshot(),
                 ShowInAllCategory: true,
                 Columns: null),
@@ -107,11 +107,10 @@ public sealed class ItemCategoryExtractorTests
     }
 
     [Fact]
-    public void CapturesCategoryIconAssetSlots()
+    public void PassesPlainIconReferencesThroughExtractor()
     {
-        var icon = (Sprite)RuntimeHelpers.GetUninitializedObject(typeof(Sprite));
-        var defaultIcon = (Sprite)RuntimeHelpers.GetUninitializedObject(typeof(Sprite));
-        var plan = new ItemIconAssetPlan();
+        var icon = SnapshotRef.Missing("engineResource", "ItemCategory.icon");
+        var defaultIcon = SnapshotRef.Missing("engineResource", "ItemCategory.defaultItemIcon");
         var source = new FakeItemCategoryAssetSource(new[]
         {
             FakeItemCategoryAssetSource.Build(
@@ -121,20 +120,12 @@ public sealed class ItemCategoryExtractorTests
                 icon: icon,
                 defaultItemIcon: defaultIcon),
         });
-        var extractor = new ItemCategoryExtractor(source, plan);
+        var extractor = new ItemCategoryExtractor(source);
 
-        _ = extractor.Walk().ToList();
+        var row = Assert.Single(extractor.Walk().ToList());
 
-        Assert.Contains(plan.Slots, slot =>
-            slot.EntityId == "item-category" &&
-            slot.RowId == "named;item-category;Weapons" &&
-            slot.Slot == "iconRef" &&
-            ReferenceEquals(slot.Sprite, icon));
-        Assert.Contains(plan.Slots, slot =>
-            slot.EntityId == "item-category" &&
-            slot.RowId == "named;item-category;Weapons" &&
-            slot.Slot == "defaultItemIconRef" &&
-            ReferenceEquals(slot.Sprite, defaultIcon));
+        Assert.Equal(icon, row.Fields.IconRef);
+        Assert.Equal(defaultIcon, row.Fields.DefaultItemIconRef);
     }
 
     [Fact]
@@ -162,13 +153,13 @@ public sealed class ItemCategoryExtractorTests
             string name,
             bool showInAllCategory,
             IReadOnlyList<ItemCategoryColumnAsset>? columns = null,
-            Object? icon = null,
-            Object? defaultItemIcon = null) => new(
+            SnapshotRef? icon = null,
+            SnapshotRef? defaultItemIcon = null) => new(
                 Guid: guid,
                 AssetName: name,
                 CategoryName: name,
-                Icon: icon,
-                DefaultItemIcon: defaultItemIcon,
+                IconRef: icon,
+                DefaultItemIconRef: defaultItemIcon,
                 CategoryColor: new AssetColorSnapshot { R = 0.9f, G = 0.2f, B = 0.2f, A = 1f },
                 ShowInAllCategory: showInAllCategory,
                 Columns: columns ?? new List<ItemCategoryColumnAsset>());
@@ -180,7 +171,7 @@ public sealed class ItemCategoryExtractorTests
             bool itemName = false,
             bool itemValue = false) => new(
                 Label: label,
-                Icon: null,
+                IconRef: null,
                 PreferedWidth: preferedWidth,
                 FlexibleWidth: flexibleWidth,
                 IsItemName: itemName,

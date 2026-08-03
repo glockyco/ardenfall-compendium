@@ -34,6 +34,15 @@
       "from": "itemLists + additionalItems",
       "missingPolicy": "optional-empty",
       "column": "drop_refs_json"
+    },
+    {
+      "name": "startingFactions",
+      "type": "ref:asset[]",
+      "from": "startingFactions",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Expanded into character_faction_refs rows.",
+      "projects": "character_faction_refs"
     }
   ],
   "map": null

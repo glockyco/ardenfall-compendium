@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities.Character;
 using Xunit;
 
@@ -60,6 +61,20 @@ public sealed class CharacterExtractorTests
 
         Assert.Empty(row.Fields.DropRefs);
         Assert.Empty(extractor.Diagnostics);
+    }
+
+    [Fact]
+    public void CharacterCarriesStartingFactionRefs()
+    {
+        var startingFaction = SnapshotRef.LookupAsset("faction-guid", "Ardenfall.Faction", "Black Moth");
+        var extractor = new CharacterExtractor(new FakeSource(
+            new CharacterAsset("guard", "Guard", null, null, new[] { startingFaction })));
+
+        var row = Assert.Single(extractor.Walk());
+
+        var faction = Assert.Single(row.Fields.StartingFactions);
+        Assert.Equal("faction-guid", faction.Guid);
+        Assert.Equal("lookupAsset", faction.Kind);
     }
 
     [Fact]

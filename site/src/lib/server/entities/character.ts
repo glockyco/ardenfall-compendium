@@ -1,3 +1,4 @@
+import { disambiguateLabels } from "../disambiguate-labels";
 import { all, get } from "../db";
 import { validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
@@ -48,14 +49,8 @@ export const listCharacters = (): CharacterOverviewRow[] => {
     routePath: row.route_path,
     shortId: row.short_id,
   }));
-  const counts = new Map<string, number>();
-  for (const row of rows) counts.set(row.displayName, (counts.get(row.displayName) ?? 0) + 1);
-  // Many characters carry the same name. A reader needs to tell two links apart, so a
-  // repeated name gets the short id that relationship sections already show.
-  return rows.map(({ shortId, ...row }) =>
-    (counts.get(row.displayName) ?? 0) > 1
-      ? { ...row, displayName: `${row.displayName} \u00b7 ${shortId}` }
-      : row,
+  return disambiguateLabels(rows, "displayName", (row) => row.shortId).map(
+    ({ shortId: _shortId, ...row }) => row,
   );
 };
 
@@ -92,5 +87,5 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
 function characterName(name: string | null, shortId: string): string {
   const normalizedName = name?.trim().toLowerCase();
   if (name && normalizedName !== "unnamed character") return name;
-  return `Unnamed character \u00b7 ${shortId}`;
+  return `Unnamed character · ${shortId}`;
 }

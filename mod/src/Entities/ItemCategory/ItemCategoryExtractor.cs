@@ -23,6 +23,7 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
     {
         _source = source;
         _assetPlan = assetPlan;
+        if (source is IIconAssetPlanSink sink) sink.AttachAssetPlan(assetPlan);
     }
 
     public override IEnumerable<ItemCategorySnapshotRow> Walk()
@@ -42,18 +43,9 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
             asset => CreateIdentity(asset, seenNames),
             (asset, id) =>
             {
-                var iconRef = ResolveNullableAsset(asset.Icon, "iconRef", id, "ItemCategory.icon");
-                var defaultItemIconRef = ResolveNullableAsset(
-                    asset.DefaultItemIcon,
-                    "defaultItemIconRef",
-                    id,
-                    "ItemCategory.defaultItemIcon");
+                var iconRef = asset.IconRef;
+                var defaultItemIconRef = asset.DefaultItemIconRef;
 
-                if (_assetPlan != null)
-                {
-                    CaptureSlot(id, "iconRef", asset.Icon);
-                    CaptureSlot(id, "defaultItemIconRef", asset.DefaultItemIcon);
-                }
 
                 var categoryName = NullIfEmpty(asset.CategoryName);
                 if (categoryName == null)
@@ -140,20 +132,9 @@ public sealed class ItemCategoryExtractor : WalkerBase<ItemCategorySnapshotRow>
         return ExtractorIdentity.Valid(id);
     }
 
-    private SnapshotRef? ResolveNullableAsset(UnityObject? value, string field, string entityRowId, string source) =>
-        value == null ? null : Refs.ResolveAsset(value, field, entityRowId, MissingPolicy.Diagnostic, source);
-
-    private void CaptureSlot(string rowId, string slot, UnityObject? value)
-    {
-        if (_assetPlan != null && value is Sprite sprite)
-        {
-            _assetPlan.Slots.Add(new ItemIconAssetSlot("item-category", rowId, slot, sprite, "item-category"));
-        }
-    }
-
     private ItemCategoryColumnSnapshot ToSnapshot(ItemCategoryColumnAsset column, string categoryId) => new(
         Label: NullIfEmpty(column.Label),
-        IconRef: ResolveNullableAsset(column.Icon, "columns.iconRef", categoryId, "ItemCategory.columns.icon"),
+        IconRef: column.IconRef,
         PreferedWidth: column.PreferedWidth,
         FlexibleWidth: column.FlexibleWidth,
         IsItemName: column.IsItemName,

@@ -21,6 +21,7 @@ export const listingRoutePaths = [
   "/tags",
   "/characters",
   "/locations",
+  "/factions",
   "/map",
   "/search",
 ] as const;

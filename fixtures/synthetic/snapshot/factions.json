@@ -1,0 +1,58 @@
+{
+  "entityId": "faction",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "a1000001.fixture-black-moth",
+      "fields": {
+        "id": "a1000001.fixture-black-moth",
+        "name": "Black Moth",
+        "factionId": "blackmoth",
+        "description": "A hidden faction.",
+        "iconRef": null,
+        "alliable": true,
+        "enableReputation": true,
+        "alwaysShowInUI": true,
+        "canBeDisguised": false,
+        "enableBounty": true,
+        "interFactionRelationships": [
+          {
+            "faction": {
+              "kind": "lookupAsset",
+              "guid": "a1000002.fixture-mages-guild",
+              "unityType": "Faction"
+            },
+            "relationship": -100,
+            "isEnemy": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "a1000002.fixture-mages-guild",
+      "fields": {
+        "id": "a1000002.fixture-mages-guild",
+        "name": null,
+        "factionId": "magesguild",
+        "description": "",
+        "iconRef": null,
+        "alliable": false,
+        "enableReputation": false,
+        "alwaysShowInUI": false,
+        "canBeDisguised": true,
+        "enableBounty": false,
+        "interFactionRelationships": [
+          {
+            "faction": {
+              "kind": "lookupAsset",
+              "guid": "a1000001.fixture-black-moth",
+              "unityType": "Faction"
+            },
+            "relationship": -600,
+            "isEnemy": false
+          }
+        ]
+      }
+    }
+  ]
+}

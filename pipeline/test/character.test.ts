@@ -65,8 +65,20 @@ describe("character pipeline", () => {
     ]);
   });
 
-  it("diagnoses an unresolvable drop without emitting an edge", () => {
+  it("emits starts_in_faction edges for each starting faction", () => {
     const db = seedDatabase();
+    db.run(
+      `INSERT INTO entity_nodes
+         (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
+       VALUES ('faction', ?, 'Black Moth', '/factions/black-moth--a1000001', 'black-moth--a1000001', 'a1000001', 1)`,
+      ["a1000001.fixture-black-moth"],
+    );
+    db.run(
+      `INSERT INTO entity_nodes
+         (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
+       VALUES ('faction', ?, 'Mages Guild', '/factions/mages-guild--a1000002', 'mages-guild--a1000002', 'a1000002', 1)`,
+      ["a1000002.fixture-mages-guild"],
+    );
     canonicaliseCharacters(db, {
       entityId: "character",
       schemaVersion: 1,
@@ -76,59 +88,104 @@ describe("character pipeline", () => {
           fields: {
             id: characterId,
             name: "Bandit",
-            dropRefs: [{ kind: "lookupAsset", guid: "missing-item" }],
+            dropRefs: [],
+            startingFactions: [
+              { kind: "lookupAsset", guid: "a1000001.fixture-black-moth" },
+              { kind: "lookupAsset", guid: "a1000002.fixture-mages-guild" },
+            ],
           },
         },
       ],
     });
-    const diagnostics = emitCharacterReadModels(db);
-    expect(diagnostics).toEqual([
-      expect.objectContaining({
-        code: "characterDropUnresolved",
-        entityType: "character",
-        entityId: characterId,
-      }),
-    ]);
-    expect(db.query(`SELECT * FROM entity_edges`).all()).toEqual([]);
-  });
 
-  it("emits forward and inverse relationship sections", () => {
-    const db = seedDatabase();
-    canonicaliseCharacters(db, {
-      entityId: "character",
-      schemaVersion: 1,
-      rows: [
-        {
-          id: characterId,
-          fields: {
-            id: characterId,
-            name: "Bandit",
-            dropRefs: [{ kind: "lookupAsset", guid: itemId }],
-          },
-        },
-      ],
-    });
     expect(emitCharacterReadModels(db)).toEqual([]);
-    emitRelationshipSections(db);
     expect(
       db
         .query(
-          `SELECT source_type, source_id, title, predicate FROM entity_relationship_sections ORDER BY source_type`,
+          `SELECT source_id, target_id, predicate, label, evidence_json
+           FROM entity_edges WHERE predicate = 'starts_in_faction' ORDER BY target_id`,
         )
         .all(),
     ).toEqual([
       {
-        source_type: "character",
         source_id: characterId,
-        title: "Can drop",
-        predicate: "can_drop",
+        target_id: "a1000001.fixture-black-moth",
+        predicate: "starts_in_faction",
+        label: "Starts in faction",
+        evidence_json: JSON.stringify({ source: "characters.startingFactions" }),
       },
       {
-        source_type: "item",
-        source_id: itemId,
-        title: "Dropped by",
-        predicate: "can_drop",
+        source_id: characterId,
+        target_id: "a1000002.fixture-mages-guild",
+        predicate: "starts_in_faction",
+        label: "Starts in faction",
+        evidence_json: JSON.stringify({ source: "characters.startingFactions" }),
       },
     ]);
   });
+
+  const db = seedDatabase();
+  canonicaliseCharacters(db, {
+    entityId: "character",
+    schemaVersion: 1,
+    rows: [
+      {
+        id: characterId,
+        fields: {
+          id: characterId,
+          name: "Bandit",
+          dropRefs: [{ kind: "lookupAsset", guid: "missing-item" }],
+        },
+      },
+    ],
+  });
+  const diagnostics = emitCharacterReadModels(db);
+  expect(diagnostics).toEqual([
+    expect.objectContaining({
+      code: "characterDropUnresolved",
+      entityType: "character",
+      entityId: characterId,
+    }),
+  ]);
+  expect(db.query(`SELECT * FROM entity_edges`).all()).toEqual([]);
+});
+
+it("emits forward and inverse relationship sections", () => {
+  const db = seedDatabase();
+  canonicaliseCharacters(db, {
+    entityId: "character",
+    schemaVersion: 1,
+    rows: [
+      {
+        id: characterId,
+        fields: {
+          id: characterId,
+          name: "Bandit",
+          dropRefs: [{ kind: "lookupAsset", guid: itemId }],
+        },
+      },
+    ],
+  });
+  expect(emitCharacterReadModels(db)).toEqual([]);
+  emitRelationshipSections(db);
+  expect(
+    db
+      .query(
+        `SELECT source_type, source_id, title, predicate FROM entity_relationship_sections ORDER BY source_type`,
+      )
+      .all(),
+  ).toEqual([
+    {
+      source_type: "character",
+      source_id: characterId,
+      title: "Can drop",
+      predicate: "can_drop",
+    },
+    {
+      source_type: "item",
+      source_id: itemId,
+      title: "Dropped by",
+      predicate: "can_drop",
+    },
+  ]);
 });

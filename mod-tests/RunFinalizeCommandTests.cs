@@ -17,6 +17,7 @@ using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Entities.Portal;
 using ArdenfallCompendium.Entities.Character;
+using ArdenfallCompendium.Entities.Faction;
 using PublicItemTagSnapshot = ArdenfallCompendium.Entities.ItemTag.ItemTagSnapshot;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
@@ -33,6 +34,7 @@ public sealed class RunFinalizeCommandTests
     private static readonly FakeItemTagExtractionCache EmptyItemTags = new(System.Array.Empty<ItemTagSnapshotRow>());
     private static readonly FakeLocationExtractionCache EmptyLocations = new(System.Array.Empty<LocationSnapshotRow>());
     private static readonly FakePortalExtractionCache EmptyPortals = new(System.Array.Empty<PortalSnapshotRow>());
+    private static readonly FakeFactionExtractionCache EmptyFactions = new(System.Array.Empty<FactionSnapshotRow>());
     private static readonly FakeSpellExtractionCache EmptySpells = new();
     private static readonly FakeCharacterExtractionCache EmptyCharacters = new();
     private static readonly FakeStatusEffectExtractionCache EmptyStatusEffects = new();
@@ -60,6 +62,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             EmptyLocations,
             EmptyPortals,
+            EmptyFactions,
             preflight: FailingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -94,6 +97,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             EmptyLocations,
             EmptyPortals,
+            EmptyFactions,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -125,6 +129,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             EmptyLocations,
             EmptyPortals,
+            EmptyFactions,
             preflight: PassingPreflight);
 
         await Assert.ThrowsAsync<System.InvalidOperationException>(() =>
@@ -158,7 +163,7 @@ public sealed class RunFinalizeCommandTests
             Diagnostics = new List<Diagnostic> { Diagnostic("fatal", "rowFatal") },
         });
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
-        var command = new RunFinalizeCommand(runs, cache, EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, cache, EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, preflight: PassingPreflight);
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
@@ -224,6 +229,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             locations,
             EmptyPortals,
+            EmptyFactions,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -264,6 +270,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             EmptyLocations,
             EmptyPortals,
+            EmptyFactions,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -301,7 +308,7 @@ public sealed class RunFinalizeCommandTests
             RowId = "item-a",
             DisplayIconColor = new AssetColorSnapshot(),
         });
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -330,7 +337,7 @@ public sealed class RunFinalizeCommandTests
             Fields = new Dictionary<string, object?>(),
         });
         var source = FakeMasterTooltipSource.Default;
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), EmptySpells, EmptyCharacters, EmptyStatusEffects, source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), EmptySpells, EmptyCharacters, EmptyStatusEffects, source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -397,6 +404,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             EmptyLocations,
             EmptyPortals,
+            EmptyFactions,
             preflight: PassingPreflight);
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -465,6 +473,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             EmptyLocations,
             EmptyPortals,
+            EmptyFactions,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -520,6 +529,7 @@ public sealed class RunFinalizeCommandTests
             itemTags,
             EmptyLocations,
             EmptyPortals,
+            EmptyFactions,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -581,6 +591,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             locations,
             EmptyPortals,
+            EmptyFactions,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -636,6 +647,7 @@ public sealed class RunFinalizeCommandTests
             EmptyItemTags,
             EmptyLocations,
             portals,
+            EmptyFactions,
             preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
@@ -655,6 +667,67 @@ public sealed class RunFinalizeCommandTests
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(portalsPath)), manifest.Hashes["portals.json"]);
         Assert.Equal(1, manifest.Counts["portal"]);
+    }
+
+    [Fact]
+    public async Task WritesFactionsArtifactAndManifestCount()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-factions-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+        var factions = new FakeFactionExtractionCache(new[]
+        {
+            new FactionSnapshotRow
+            {
+                Id = "faction-guid",
+                Fields = new FactionSnapshot(
+                    Id: "faction-guid",
+                    Name: "Black Moth",
+                    FactionId: "blackmoth",
+                    Description: null,
+                    IconRef: null,
+                    Alliable: true,
+                    EnableReputation: true,
+                    AlwaysShowInUI: true,
+                    CanBeDisguised: false,
+                    EnableBounty: false,
+                    InterFactionRelationships: new List<FactionRelationshipSnapshot>())
+            }
+        });
+        var command = new RunFinalizeCommand(
+            runs,
+            new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
+            EmptySpells,
+            EmptyCharacters,
+            EmptyStatusEffects,
+            FakeMasterTooltipSource.Default,
+            EmptyStatTypes,
+            EmptyItemCategories,
+            EmptyItemTags,
+            EmptyLocations,
+            EmptyPortals,
+            factions,
+            preflight: PassingPreflight);
+
+        var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
+
+        Assert.Empty(result.Diagnostics);
+        var manifestPath = result.Output!.ManifestPath;
+        var publishedDir = Path.GetDirectoryName(manifestPath)!;
+        var factionsPath = Path.Combine(publishedDir, "factions.json");
+        Assert.True(File.Exists(factionsPath));
+        var envelope = JsonConvert.DeserializeObject<FactionSnapshotEnvelope>(File.ReadAllText(factionsPath), JsonSettings.Default)!;
+        Assert.Single(envelope.Rows);
+        Assert.Equal("Black Moth", envelope.Rows[0].Fields.Name);
+        Assert.Contains("factions", result.Artifacts.Keys);
+        var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
+        Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(factionsPath)), manifest.Hashes["factions.json"]);
+        Assert.Equal(1, manifest.Counts["faction"]);
     }
 
     private static Diagnostic Diagnostic(string severity, string code) => new()
@@ -851,6 +924,22 @@ public sealed class RunFinalizeCommandTests
         public IReadOnlyList<LocationSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => _diagnostics;
+    }
+
+    private sealed class FakeFactionExtractionCache : IFactionExtractionCache
+    {
+        private readonly IReadOnlyList<FactionSnapshotRow> _rows;
+
+        public FakeFactionExtractionCache(IReadOnlyList<FactionSnapshotRow> rows)
+        {
+            _rows = rows;
+        }
+
+        public void Evict(CompendiumRun run) { }
+
+        public IReadOnlyList<FactionSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
+
+        public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
     }
 
     private sealed class FakeMasterTooltipSource : IMasterTooltipSnapshotSource

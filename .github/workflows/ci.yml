@@ -83,6 +83,7 @@ jobs:
       - run: bun run --cwd site smoke:prerender
       - run: bun run --cwd site smoke:pagefind
       - run: bun run --cwd site smoke:map
+      - run: bun run --cwd site smoke:accessibility
       - run: bun run --cwd site smoke:error-route
       - run: bun run --cwd site smoke:item-icons
 

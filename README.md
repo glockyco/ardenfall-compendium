@@ -143,6 +143,8 @@ Start with the living roadmap, then the agent guides:
 
 Design specs and plans under `docs/plans/` are planning scaffolding that is archived once delivered; treat them as background, not as the source of truth. [`docs/plans/INDEX.md`](docs/plans/INDEX.md) lists what is currently active.
 
-## License
+## License and attribution
 
-MIT.
+The code in this repository is MIT licensed.
+
+The MIT licence covers this code only. It does not cover Ardenfall's game data, text, names or images, which belong to Spellcast Studios. This project is an unofficial reference, and Spellcast Studios does not make or endorse it. The published site states the same in its footer on every page.

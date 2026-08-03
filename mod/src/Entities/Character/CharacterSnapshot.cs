@@ -7,7 +7,8 @@ namespace ArdenfallCompendium.Entities.Character;
 public sealed record CharacterSnapshot(
     [property: JsonProperty("id")] string Id,
     [property: JsonProperty("name")] string? Name,
-    [property: JsonProperty("dropRefs")] List<SnapshotRef> DropRefs);
+    [property: JsonProperty("dropRefs")] List<SnapshotRef> DropRefs,
+    [property: JsonProperty("startingFactions")] List<SnapshotRef> StartingFactions);
 
 public sealed class CharacterSnapshotRow
 {

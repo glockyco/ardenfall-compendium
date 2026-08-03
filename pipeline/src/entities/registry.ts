@@ -9,6 +9,7 @@ import { ENTITY_GRAPH_DDL } from "../relationships/relationship-graph.ts";
 import { ITEM_CATEGORY_DDL } from "../sql/item-category-ddl";
 import { ITEM_TAG_DDL } from "../sql/item-tag-ddl";
 import { LOCATION_DDL } from "../sql/location-ddl";
+import { FACTION_DDL } from "../sql/faction-ddl";
 import { CHARACTER_DDL } from "../sql/character-ddl";
 import { PORTAL_DDL } from "../sql/portal-ddl";
 import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
@@ -26,8 +27,10 @@ import { canonicaliseItemCategories } from "./item-category/canonicaliser";
 import { emitItemCategoryReadModels } from "./item-category/read-models";
 import { canonicaliseItemTags } from "./item-tag/canonicaliser";
 import { emitItemTagReadModels } from "./item-tag/read-models";
-import { canonicaliseLocations } from "./location/canonicaliser";
+import { canonicaliseFactions } from "./faction/canonicaliser";
+import { emitFactionReadModels } from "./faction/read-models";
 import { canonicaliseCharacters } from "./character/canonicaliser";
+import { canonicaliseLocations } from "./location/canonicaliser";
 import { emitCharacterReadModels } from "./character/read-models";
 import { canonicalisePortals } from "./portal/canonicaliser";
 import { emitPortalReadModels } from "./portal/read-models";
@@ -217,6 +220,26 @@ export const entityRegistry: Record<string, EntityModule> = {
     ddl: ITEM_TAG_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseItemTags(db, envelope),
     readModel: ({ db, entity }) => emitItemTagReadModels(db, entity.site?.route),
+  },
+  faction: {
+    ddl: FACTION_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseFactions(db, envelope),
+    readModel: ({ db, entity }) => emitFactionReadModels(db, entity.site?.route),
+    site: {
+      overviewRenderer: () => "text",
+      readModels: [
+        {
+          readModelId: "faction_overview_rows",
+          physicalName: "faction_overview_rows",
+          purpose: "overview",
+        },
+        {
+          readModelId: "faction_presentation_rows",
+          physicalName: "faction_presentation_rows",
+          purpose: "detail",
+        },
+      ],
+    },
   },
   character: {
     ddl: CHARACTER_DDL,

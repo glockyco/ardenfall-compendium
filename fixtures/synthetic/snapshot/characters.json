@@ -14,6 +14,10 @@
             "guid": "6a71c0de.fixture-stamina-draught",
             "unityType": "ItemData"
           }
+        ],
+        "startingFactions": [
+          { "kind": "lookupAsset", "guid": "a1000001.fixture-black-moth", "unityType": "Faction" },
+          { "kind": "lookupAsset", "guid": "a1000002.fixture-mages-guild", "unityType": "Faction" }
         ]
       }
     },

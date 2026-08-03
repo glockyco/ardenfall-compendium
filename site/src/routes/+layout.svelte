@@ -83,6 +83,11 @@
       {:else}
         <p class="text-destructive">{data.releaseError}</p>
       {/if}
+      <p class="basis-full">
+        An unofficial reference for Ardenfall, a game by Spellcast Studios. Spellcast Studios does
+        not make or endorse this site. Game names, text and images belong to their owner, and this
+        site reads them from the game to describe it.
+      </p>
     </div>
   </footer>
 </div>

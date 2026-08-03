@@ -14,25 +14,21 @@ Five parallel surveys of the whole project: code health, site quality, content c
 
 **The finding that organises the rest: the architecture is strong and the last mile is broken.** Extraction, canonicalisation, and the descriptor registry all hold up under audit. Almost every serious defect is between the read model and the reader.
 
-## The graph barely connects
+## How well the graph connects
 
-| entity | public pages | with an inbound edge |
-| --- | ---: | ---: |
-| item | 1273 | 545 |
-| character | 212 | 0 |
-| status-effect | 172 | 56 |
-| spell | 56 | 55 |
-| location | 48 | 0 |
-| item-tag | 28 | 18 |
-| stat-type | 21 | 4 |
-| item-variant | 16 | 16 |
-| item-category | 7 | 7 |
+Measured from rendered HTML, which is what a reader actually meets. A page counts as connected when another **detail** page links to it. Listing pages are excluded, because they link everything by design, and so are the nav and the footer.
 
-Portals are absent because they have no page. They hold 33 identities and a map route, and their names are authoring identifiers, so publishing them would put `sc_tutcave_ext` in front of a reader.
+| | pages |
+| --- | ---: |
+| detail pages | 1,881 |
+| linked from another detail page | 1,658 |
+| linked from no other detail page | 223 |
 
-1,132 of 1,833 public nodes have no inbound edge, down from 1,591 of 1,640. Every public node now has a page, so the two counts finally agree: the build produces 1,833 entity pages plus eleven listing pages. The graph carries 5,381 edges: `drops` 2126, `variant_of` 1273, `categorised_as` 1268, `casts` 286, `applies` 266, `tagged` 76, `scales_with` 56, `leads_to` 30.
+Unconnected by section: status-effect 116, location 48, faction 25, character 15, item-tag 10, stat-type 8, spell 1. **No item is unconnected**, because every one of the 1,273 is named by a category, a tag, a variant or a character that can drop it.
 
-The orphan figure rose by ten because locations gained pages that nothing links to, which is the honest trade. A page nothing links to is findable by search, and an entity with no page was findable by nothing.
+**An earlier figure in this document counted something narrower and read worse.** It counted rows in `entity_edges` whose `target_id` matched, which misses three things: an inverse section such as a faction page listing its starting members, a link rendered from presentation data such as an item's Effects list, and the direction of an edge that is useful read backwards. That metric said 1,132 pages had no inbound edge. The rendered-link measurement above says 223, and it is the honest one.
+
+The graph carries 5,641 edges: `can_drop` 2126, `variant_of` 1273, `categorised_as` 1268, `casts` 286, `applies` 266, `starts_in_faction` 235, `tagged` 76, `scales_with` 56, `leads_to` 30, `starts_opposed_to` 25.
 
 Items now link to the status effects they apply, the spells they carry, their category, and their tags. Every one of the 552 item effect facts resolves and unresolved-target diagnostics are zero. Stat pages link the stats they affect.
 
@@ -101,8 +97,8 @@ Worth doing now:
 - ~~Give locations and portals a page~~ - **done for locations, and deliberately not for portals.** All 48 locations have a page, up from 34, because the publicity gate had been reading a flag that controls the player's in-game map marker. Portals keep an identity and a map route without a page, since 29 of their 32 names are authoring identifiers.
 - ~~Fix the sitemap in the same pass~~ - **done.** The URL set equals the built page set exactly, 1,844 each, and a test reads the route tree so a new static page cannot be added without updating the list.
 - ~~Add the two missing meta descriptions~~ - **done.** Every detail route ships one.
-- **Stop swallowing Unity lookup failures.** Ten sites under `mod/src/Entities/*/I*Source.cs` catch and return `""`, `null` or `false` with no diagnostic, which makes a destroyed object indistinguishable from genuinely absent data.
-- **Split the asset-source contracts from their Unity implementations.** All nine `I*AssetSource` interface files name `UnityEngine` or `Ardenfall` types, so the seam that exists to make extraction testable cannot be exercised without the engine. This is why every extractor test fakes at the extractor level instead of the source level.
+- ~~Stop swallowing Unity lookup failures~~ - **done.** 11 sites, not the ten first counted, now throw with the entity and field named. A live export still completes, so none of them fires in normal operation, which is the evidence that a destroyed object was never the common case.
+- ~~Split the asset-source contracts from their Unity implementations~~ - **done.** No `I*AssetSource` interface names a Unity or game type, and one extractor test now builds a fake source with no engine type present. Icon capture keeps its Unity path through a separate `IIconAssetPlanSink`, so the contract carries plain data and the implementation carries the engine.
 - ~~Validate JSON at the site boundary~~ - **done.** Every server parse of a generated column goes through one helper that names the entity, column and row on failure. Shapes consumed structurally are validated, pass-through blobs are container-checked only rather than given invented schemas.
 - ~~Close the descriptor type vocabulary~~ - **done.** The set is closed in three layers that each catch a different mistake: a schema enum for the author, a TypeScript union for the compiler, and a throw for a dispatcher meeting an unknown token. `minimumSkill` was declared `int`, fell through to TEXT, and is now INTEGER, so a sort no longer places 40 before 5.
 
@@ -115,15 +111,25 @@ Building search exposed four reader-facing defects that browsing had hidden, all
 
 One defect is recorded and not fixed. One item is named `Recipe of {0}`, which is the game's own format string with an argument the runtime substitutes. The pipeline does not extract that binding, so the correct name is not derivable from the snapshot today.
 
+## Factions, the tenth entity
+
+48 factions ship with pages. 46 carry an authored title such as `Black Moth` and `Mages Guild`, and the two without follow the same policy every other entity uses: a diagnostic and a null, with the short id appended for a reader.
+
+Two predicates came with them. `starts_in_faction` carries 235 edges from `CharacterData.startingFactions`, so 194 of 212 characters name their factions and 18 faction pages list their starting members. `starts_opposed_to` carries 25 edges from `interFactionRelationships`, which the game seeds as a **starting** stance that play then modifies.
+
+Every one of those 25 is negative: 23 flagged as enemies, and 2 carrying a negative standing without the flag, `Garkai → Player = -100` and `Butchers → Animal = -600`. None is positive, so the name holds today. The emitter fails rather than mislabels if a positive one ever appears, because the predicate could not describe it.
+
+`autoAddFactions` is empty in every faction in this build, so nothing models it. Building against data that cannot be verified is how an unverifiable contract enters the pipeline.
+
 ## Not covered by any plan
 
 Three concerns no planning doc mentions. Each is measured, and none blocks a deploy.
 
-**No attribution or status statement anywhere.** The repository is MIT licensed, which covers our code. The pages publish another party's game content, and neither the site nor the README says the project is unofficial or names the game's owner. Every comparable fan reference carries such a statement. This is the cheapest item here and the only one with a non-engineering risk.
+~~No attribution or status statement anywhere~~ - **done.** The footer states on every page that this is an unofficial reference for a game by Spellcast Studios, that Spellcast Studios does not make or endorse it, and that the game's names and text belong to their owner. The README separates the MIT licence, which covers our code, from the game data, which it does not.
 
 **The item index ships 488 KB of hydration payload.** `items.html` is 620 KB, of which 78 percent is the inline row data that drives client-side filtering, and 72 KB over the wire after gzip. It is the heaviest page by a factor of two, and the cost falls on the reader least able to pay it. Server-side filtering or pagination would remove it, at the cost of the instant filter interaction. Measure the interaction people actually use before choosing.
 
-**Accessibility has no standard recorded and a partial gate.** Svelte's compiler checks markup-level a11y and reports clean, but the criteria this project keeps breaking are not markup-level: duplicate link text under WCAG 2.4.4 was fixed twice, in relationship sections and again in three listings, and target size under 2.5.8 was fixed once across every navigation link. Nothing prevents a fourth instance. Naming the target level and adding one automated check would turn a recurring reactive fix into a gate.
+~~Accessibility has no standard recorded and a partial gate~~ - **done.** `site/AGENTS.md` names WCAG 2.2 Level AA, and `smoke:accessibility` runs in the gate and in CI over the built HTML. It checks duplicate link text within a nav or a section, target size against 24 px, and a status message on a page carrying a form, and it records that static HTML cannot see focus behaviour or final browser layout. It earned its place at once by failing on two defects that had already shipped: two spells both labelled `Firebolt` linked from one item's Effects list, and two locations both labelled `Coral Forest Back` on the locations index.
 
 Leave alone: `RunFinalizeCommand` is genuinely multi-phase orchestration, the per-entity read model modules are small and readable, `EntityTable` is a real generic component, and every detail route already fails cleanly with a 404.
 

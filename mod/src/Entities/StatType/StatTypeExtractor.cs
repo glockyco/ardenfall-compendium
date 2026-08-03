@@ -22,6 +22,7 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
     {
         _source = source;
         _assetPlan = assetPlan;
+        if (source is IIconAssetPlanSink sink) sink.AttachAssetPlan(assetPlan);
     }
 
     public override IEnumerable<StatTypeSnapshotRow> Walk()
@@ -53,17 +54,8 @@ public sealed class StatTypeExtractor : WalkerBase<StatTypeSnapshotRow>
                     });
                 }
 
-                var iconRef = Refs.ResolveAsset(
-                    asset.Icon!,
-                    "iconRef",
-                    id,
-                    MissingPolicy.Diagnostic,
-                    "StatType.icon");
+                var iconRef = asset.IconRef;
 
-                if (_assetPlan != null && asset.Icon is Sprite sprite)
-                {
-                    _assetPlan.Slots.Add(new ItemIconAssetSlot("stat-type", id, "iconRef", sprite, "stat-type"));
-                }
                 return new StatTypeSnapshotRow
                 {
                     Id = id,
