@@ -31,6 +31,11 @@ export const relationshipRegistry = {
     inverseTitle: "Carried by items",
     sortOrder: 50,
   },
+  drops: {
+    forwardTitle: "Can drop",
+    inverseTitle: "Dropped by",
+    sortOrder: 60,
+  },
   references_term: {
     forwardTitle: "Referenced terms",
     inverseTitle: null,

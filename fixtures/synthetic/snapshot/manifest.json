@@ -39,7 +39,8 @@
     "item-category": 1,
     "item-tag": 2,
     "location": 2,
-    "portal": 3
+    "portal": 3,
+    "character": 3
   },
   "diagnostics": {
     "fatal": 0,
@@ -55,6 +56,7 @@
     "item-categories.json": "9ddf37b041ec004007851244de1d4d6c0be4b9ad9e3973c7ec12f193f93f5724",
     "item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
     "locations.json": "333dc28688c556536ad084613d35577ce58915a6b136bfd2763cb9a58731d241",
-    "portals.json": "bee477a22b636e4428377f89af0c6d4ab7eaa2123fb074a652a863fce6bb0f8e"
+    "portals.json": "bee477a22b636e4428377f89af0c6d4ab7eaa2123fb074a652a863fce6bb0f8e",
+    "characters.json": "f9639f2bcd54d32a7e3cfc1df81a2b1aa538650f3adc3d939037645f3bf093c7"
   }
 }

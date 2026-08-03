@@ -16,6 +16,7 @@ using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Entities.Portal;
+using ArdenfallCompendium.Entities.Character;
 using PublicItemTagSnapshot = ArdenfallCompendium.Entities.ItemTag.ItemTagSnapshot;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
@@ -33,6 +34,7 @@ public sealed class RunFinalizeCommandTests
     private static readonly FakeLocationExtractionCache EmptyLocations = new(System.Array.Empty<LocationSnapshotRow>());
     private static readonly FakePortalExtractionCache EmptyPortals = new(System.Array.Empty<PortalSnapshotRow>());
     private static readonly FakeSpellExtractionCache EmptySpells = new();
+    private static readonly FakeCharacterExtractionCache EmptyCharacters = new();
     private static readonly FakeStatusEffectExtractionCache EmptyStatusEffects = new();
 
     [Fact]
@@ -50,6 +52,7 @@ public sealed class RunFinalizeCommandTests
             runs,
             new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
             EmptySpells,
+            EmptyCharacters,
             EmptyStatusEffects,
             FakeMasterTooltipSource.Default,
             EmptyStatTypes,
@@ -83,6 +86,7 @@ public sealed class RunFinalizeCommandTests
             runs,
             new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
             EmptySpells,
+            EmptyCharacters,
             EmptyStatusEffects,
             FakeMasterTooltipSource.Default,
             EmptyStatTypes,
@@ -113,6 +117,7 @@ public sealed class RunFinalizeCommandTests
             runs,
             new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
             EmptySpells,
+            EmptyCharacters,
             EmptyStatusEffects,
             new ThrowingMasterTooltipSource(),
             EmptyStatTypes,
@@ -153,7 +158,7 @@ public sealed class RunFinalizeCommandTests
             Diagnostics = new List<Diagnostic> { Diagnostic("fatal", "rowFatal") },
         });
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
-        var command = new RunFinalizeCommand(runs, cache, EmptySpells, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, cache, EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
@@ -213,6 +218,7 @@ public sealed class RunFinalizeCommandTests
             runs,
             new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
             EmptySpells,
+            EmptyCharacters,
             EmptyStatusEffects,
             FakeMasterTooltipSource.Default,
             EmptyStatTypes,
@@ -252,6 +258,7 @@ public sealed class RunFinalizeCommandTests
             runs,
             new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
             EmptySpells,
+            EmptyCharacters,
             EmptyStatusEffects,
             FakeMasterTooltipSource.Default,
             EmptyStatTypes,
@@ -296,7 +303,7 @@ public sealed class RunFinalizeCommandTests
             RowId = "item-a",
             DisplayIconColor = new AssetColorSnapshot(),
         });
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), EmptySpells, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -325,7 +332,7 @@ public sealed class RunFinalizeCommandTests
             Fields = new Dictionary<string, object?>(),
         });
         var source = FakeMasterTooltipSource.Default;
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), EmptySpells, EmptyStatusEffects, source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), EmptySpells, EmptyCharacters, EmptyStatusEffects, source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -384,6 +391,7 @@ public sealed class RunFinalizeCommandTests
             runs,
             new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
             EmptySpells,
+            EmptyCharacters,
             EmptyStatusEffects,
             FakeMasterTooltipSource.Default,
             statTypes,
@@ -451,6 +459,7 @@ public sealed class RunFinalizeCommandTests
             runs,
             new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
             EmptySpells,
+            EmptyCharacters,
             EmptyStatusEffects,
             FakeMasterTooltipSource.Default,
             EmptyStatTypes,
@@ -505,6 +514,7 @@ public sealed class RunFinalizeCommandTests
             runs,
             new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
             EmptySpells,
+            EmptyCharacters,
             EmptyStatusEffects,
             FakeMasterTooltipSource.Default,
             EmptyStatTypes,
@@ -567,6 +577,7 @@ public sealed class RunFinalizeCommandTests
             runs,
             new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
             EmptySpells,
+            EmptyCharacters,
             EmptyStatusEffects,
             FakeMasterTooltipSource.Default,
             EmptyStatTypes,
@@ -622,6 +633,7 @@ public sealed class RunFinalizeCommandTests
             runs,
             new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
             EmptySpells,
+            EmptyCharacters,
             EmptyStatusEffects,
             FakeMasterTooltipSource.Default,
             EmptyStatTypes,
@@ -744,6 +756,17 @@ public sealed class RunFinalizeCommandTests
             System.Array.Empty<SpellSnapshotRow>();
 
         public ItemIconAssetPlan GetAssetPlan(CompendiumRun run) => new();
+
+        public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) =>
+            System.Array.Empty<Diagnostic>();
+    }
+
+    private sealed class FakeCharacterExtractionCache : ICharacterExtractionCache
+    {
+        public void Evict(CompendiumRun run) { }
+
+        public IReadOnlyList<CharacterSnapshotRow> GetOrExtract(CompendiumRun run) =>
+            System.Array.Empty<CharacterSnapshotRow>();
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) =>
             System.Array.Empty<Diagnostic>();

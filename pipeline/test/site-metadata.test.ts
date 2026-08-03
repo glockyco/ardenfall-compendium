@@ -80,6 +80,8 @@ describe("emitSiteMetadata", () => {
       .query("SELECT read_model_id, entity_id FROM site_read_models ORDER BY read_model_id")
       .all();
     expect(readModels).toEqual([
+      { read_model_id: "character_overview_rows", entity_id: "character" },
+      { read_model_id: "character_presentation_rows", entity_id: "character" },
       { read_model_id: "item_overview_rows", entity_id: "item" },
       { read_model_id: "item_presentation_rows", entity_id: "item" },
     ]);

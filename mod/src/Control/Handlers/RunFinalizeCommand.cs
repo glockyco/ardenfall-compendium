@@ -18,6 +18,7 @@ using ArdenfallCompendium.Entities.Spell;
 using ArdenfallCompendium.Entities.StatusEffect;
 using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Entities.Portal;
+using ArdenfallCompendium.Entities.Character;
 using ArdenfallCompendium.Extraction;
 using ArdenfallCompendium.MasterTooltip;
 using HotRepl.Control;
@@ -39,6 +40,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     private readonly IItemTagExtractionCache _itemTags;
     private readonly ILocationExtractionCache _locations;
     private readonly IPortalExtractionCache _portals;
+    private readonly ICharacterExtractionCache _characters;
     private readonly IMasterTooltipSnapshotSource _masterTooltip;
     private readonly Func<PreflightReport> _preflight;
 
@@ -46,6 +48,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         CompendiumRunManager runs,
         IItemExtractionCache items,
         ISpellExtractionCache spells,
+        ICharacterExtractionCache characters,
         IStatusEffectExtractionCache statusEffects,
         IMasterTooltipSnapshotSource masterTooltip,
         IStatTypeExtractionCache statTypes,
@@ -63,6 +66,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         // inside tests that meant to pass a fake.
         _statTypes = statTypes;
         _spells = spells;
+        _characters = characters;
         _statusEffects = statusEffects;
         _itemCategories = itemCategories;
         _itemTags = itemTags;
@@ -167,6 +171,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             var statTypeAssetPlan = _statTypes.GetAssetPlan(run);
             var spellRows = _spells.GetOrExtract(run).ToList();
             var spellAssetPlan = _spells.GetAssetPlan(run);
+            var characterRows = _characters.GetOrExtract(run).ToList();
             var statusEffectRows = _statusEffects.GetOrExtract(run).ToList();
             var itemCategoryRows = _itemCategories.GetOrExtract(run).ToList();
             var itemCategoryAssetPlan = _itemCategories.GetAssetPlan(run);
@@ -199,6 +204,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             WriteJson(stagingDir, "stat-types.json", statTypeEnvelope, hashes);
             var spellEnvelope = new SpellSnapshotEnvelope { Rows = spellRows };
             WriteJson(stagingDir, "spells.json", spellEnvelope, hashes);
+            var characterEnvelope = new CharacterSnapshotEnvelope { Rows = characterRows };
+            WriteJson(stagingDir, "characters.json", characterEnvelope, hashes);
             var statusEffectEnvelope = new StatusEffectSnapshotEnvelope { Rows = statusEffectRows };
             WriteJson(stagingDir, "status-effects.json", statusEffectEnvelope, hashes);
             var itemCategoryEnvelope = new ItemCategorySnapshotEnvelope { Rows = itemCategoryRows };
@@ -221,6 +228,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
             foreach (var diagnostic in _spells.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in _characters.GetWalkerDiagnostics(run))
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
@@ -252,6 +263,13 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 }
             }
             foreach (var row in spellRows)
+            {
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
+            }
+            foreach (var row in characterRows)
             {
                 foreach (var diagnostic in row.Diagnostics)
                 {
@@ -306,6 +324,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["item"] = rows.Count,
                 ["stat-type"] = statTypeRows.Count,
                 ["spell"] = spellRows.Count,
+                ["character"] = characterRows.Count,
                 ["status-effect"] = statusEffectRows.Count,
                 ["item-category"] = itemCategoryRows.Count,
                 ["item-tag"] = itemTagRows.Count,
@@ -336,6 +355,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             run.Counts["item"] = rows.Count;
             run.Counts["stat-type"] = statTypeRows.Count;
             run.Counts["spell"] = spellRows.Count;
+            run.Counts["character"] = characterRows.Count;
             run.Counts["status-effect"] = statusEffectRows.Count;
             run.Counts["item-category"] = itemCategoryRows.Count;
             run.Counts["item-tag"] = itemTagRows.Count;
@@ -346,6 +366,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             _items.Evict(run);
             _statTypes.Evict(run);
             _spells.Evict(run);
+            _characters.Evict(run);
             _statusEffects.Evict(run);
             _itemCategories.Evict(run);
             _itemTags.Evict(run);

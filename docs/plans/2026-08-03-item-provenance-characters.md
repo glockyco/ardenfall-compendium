@@ -1,7 +1,7 @@
 ---
 title: Item Provenance, Characters
 type: spec
-status: draft
+status: active
 created: 2026-08-03
 parent: 2026-08-02-item-obtainability
 superseded_by:
@@ -72,6 +72,6 @@ It goes in the relationship registry at `pipeline/src/relationships/registry.ts`
 
 ## Open
 
-**Whether a character page is worth publishing yet.** It will show a name, a drop list, and a stock list, and nothing else, because factions, perks, traits and dialogue are not modelled. It may read as thin. The alternative is emitting the edges without public character pages, which makes item provenance work while the source stays unlinkable, and that is worse. Ship the pages, accept they are sparse, and let the later character work fill them.
+**Character pages are sparse and that is accepted.** A page shows a name and a drop list, because factions, perks, traits and dialogue are not modelled. The alternative was emitting edges without public pages, which makes item provenance work while the source it names stays unreachable, and that is worse. Ship them sparse and let the later character work fill them.
 
 **What reaches the other 769 items.** Characters cover 504. The remaining two thirds are presumably in containers, spawners and quest rewards, which means the placed half carries more weight than the ordering assumed. Measure the same way before committing to the next source rather than arguing about it.

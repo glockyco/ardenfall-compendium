@@ -22,6 +22,7 @@ interface NodeRow {
   entity_type: string;
   entity_id: string;
   label: string;
+  short_id: string;
   route_path: string;
   is_public: number;
 }
@@ -30,6 +31,7 @@ interface RelationshipEdge {
   targetType: string;
   targetId: string;
   targetLabel: string;
+  targetShortId: string;
   targetRoutePath: string;
   predicate: string;
   label: string;
@@ -50,6 +52,28 @@ interface RelationshipSection {
  * Rebuilds the detail-page relationship projection from the graph edges.
  * Edges to private or missing nodes are intentionally omitted from sections.
  */
+/**
+ * Makes every label in one section distinguishable.
+ *
+ * A section is a list of links, so two entries reading the same thing are two links with
+ * the same accessible name pointing somewhere different, which fails WCAG 2.4.4 and leaves
+ * a sighted reader no way to choose either. It happens for real reasons: 59 characters have
+ * no stored name, 18 status effects have none, and nine separate items are all called
+ * Mysterious Fossil.
+ *
+ * Only collisions within a single section are ambiguous. The same label appearing on two
+ * different pages is fine, so this deliberately does not globally uniquify anything.
+ */
+function disambiguateLabels(edges: RelationshipEdge[]): void {
+  const counts = new Map<string, number>();
+  for (const edge of edges) counts.set(edge.targetLabel, (counts.get(edge.targetLabel) ?? 0) + 1);
+  for (const edge of edges) {
+    if ((counts.get(edge.targetLabel) ?? 0) > 1) {
+      edge.targetLabel = `${edge.targetLabel} \u00b7 ${edge.targetShortId}`;
+    }
+  }
+}
+
 export function emitRelationshipSections(
   db: Database,
   registry: Readonly<Record<string, RelationshipDescriptor>> = relationshipRegistry,
@@ -57,7 +81,7 @@ export function emitRelationshipSections(
   const nodes = new Map<string, NodeRow>();
   for (const node of db
     .query<NodeRow, []>(
-      "SELECT entity_type, entity_id, label, route_path, is_public FROM entity_nodes",
+      "SELECT entity_type, entity_id, label, short_id, route_path, is_public FROM entity_nodes",
     )
     .all()) {
     nodes.set(nodeKey(node.entity_type, node.entity_id), node);
@@ -97,6 +121,7 @@ export function emitRelationshipSections(
           targetType: edge.target_type,
           targetId: edge.target_id,
           targetLabel: targetNode.label,
+          targetShortId: targetNode.short_id,
           targetRoutePath: targetNode.route_path,
           predicate: edge.predicate,
           label: edge.label,
@@ -120,6 +145,7 @@ export function emitRelationshipSections(
           targetType: edge.source_type,
           targetId: edge.source_id,
           targetLabel: sourceNode.label,
+          targetShortId: sourceNode.short_id,
           targetRoutePath: sourceNode.route_path,
           predicate: edge.predicate,
           label: edge.label,
@@ -142,6 +168,7 @@ export function emitRelationshipSections(
         left.targetLabel.localeCompare(right.targetLabel) ||
         left.targetId.localeCompare(right.targetId),
     );
+    disambiguateLabels(section.edges);
     insert.run(
       `${section.sourceId}:${section.predicate}`,
       section.sourceType,

@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
+  listCharacters,
   getEntity,
   getMapView,
   listItemCategories,
@@ -48,6 +49,7 @@ export interface SiteChrome {
   statTypeRoute: string;
   itemCategoryRoute: string;
   itemTagRoute: string;
+  characterRoute: string;
 }
 
 /** The subset of the deployed `/_release.json` the footer needs. */
@@ -181,10 +183,11 @@ function buildLayoutData(): SiteChrome {
   const statType = entitySection("stat-type", listStatTypes().length);
   const itemCategory = entitySection("item-category", listItemCategories().length);
   const itemTag = entitySection("item-tag", listItemTags().length);
+  const character = entitySection("character", listCharacters().length);
   const map = mapSection();
 
   return {
-    sections: [item, spell, statusEffect, statType, itemCategory, itemTag, map],
+    sections: [item, spell, statusEffect, statType, itemCategory, itemTag, character, map],
     ...loadRelease(),
     mapRoute: map.href,
     itemRoute: item.href,
@@ -193,6 +196,7 @@ function buildLayoutData(): SiteChrome {
     statTypeRoute: statType.href,
     itemCategoryRoute: itemCategory.href,
     itemTagRoute: itemTag.href,
+    characterRoute: character.href,
   };
 }
 

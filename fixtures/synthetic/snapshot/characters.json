@@ -1,0 +1,39 @@
+{
+  "entityId": "character",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "named;character;character_bandit",
+      "fields": {
+        "id": "named;character;character_bandit",
+        "name": "Bandit",
+        "dropRefs": [
+          { "kind": "lookupAsset", "guid": "4ed20218.fixture-iron-sword", "unityType": "ItemData" },
+          {
+            "kind": "lookupAsset",
+            "guid": "6a71c0de.fixture-stamina-draught",
+            "unityType": "ItemData"
+          }
+        ]
+      }
+    },
+    {
+      "id": "named;character;character_villager",
+      "fields": {
+        "id": "named;character;character_villager",
+        "name": "Villager",
+        "dropRefs": []
+      }
+    },
+    {
+      "id": "named;character;character_phantom",
+      "fields": {
+        "id": "named;character;character_phantom",
+        "name": "Phantom",
+        "dropRefs": [
+          { "kind": "lookupAsset", "guid": "missing-item-guid", "unityType": "ItemData" }
+        ]
+      }
+    }
+  ]
+}

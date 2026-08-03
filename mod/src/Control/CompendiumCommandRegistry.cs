@@ -9,6 +9,7 @@ using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Entities.Portal;
+using ArdenfallCompendium.Entities.Character;
 using ArdenfallCompendium.Extraction;
 
 namespace ArdenfallCompendium.Control;
@@ -27,6 +28,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         var itemTags = new ItemTagExtractionService(new BuiltLookupTableItemTagAssetSource());
         var locations = new LocationExtractionService(new BuiltLookupTableLocationAssetSource());
         var portals = new PortalExtractionService(new MasterRecordTablePortalRecordSource());
+        var characters = new CharacterExtractionService(new BuiltLookupTableCharacterAssetSource());
 
         Register(new Handlers.CompendiumInfoCommand());
         Register(new Handlers.CompendiumPreflightCommand());
@@ -35,7 +37,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         Register(new Handlers.RunStatusCommand(runs));
         Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs, items));
-        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals));
+        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals));
         Register(new Handlers.RunDiscardCommand(runs, new IExtractionCache[]
         {
             items,
@@ -46,6 +48,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
             itemTags,
             locations,
             portals,
+            characters,
         }));
         Register(new Handlers.GameQuitCommand());
     }

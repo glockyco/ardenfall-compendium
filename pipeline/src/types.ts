@@ -360,6 +360,12 @@ export interface SpellSnapshotFields {
   iconRef?: SnapshotRef | null;
 }
 
+export interface CharacterSnapshotFields {
+  id: string;
+  name: string | null;
+  dropRefs: SnapshotRef[];
+}
+
 export interface StatusEffectSnapshotFields {
   id: string;
   statusEffectName: string | null;

@@ -8,6 +8,7 @@ import { buildDDL } from "../sql/ddl";
 import { ITEM_CATEGORY_DDL } from "../sql/item-category-ddl";
 import { ITEM_TAG_DDL } from "../sql/item-tag-ddl";
 import { LOCATION_DDL } from "../sql/location-ddl";
+import { CHARACTER_DDL } from "../sql/character-ddl";
 import { PORTAL_DDL } from "../sql/portal-ddl";
 import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
 import { SPELL_DDL } from "../sql/spell-ddl";
@@ -25,6 +26,8 @@ import { emitItemCategoryReadModels } from "./item-category/read-models";
 import { canonicaliseItemTags } from "./item-tag/canonicaliser";
 import { emitItemTagReadModels } from "./item-tag/read-models";
 import { canonicaliseLocations } from "./location/canonicaliser";
+import { canonicaliseCharacters } from "./character/canonicaliser";
+import { emitCharacterReadModels } from "./character/read-models";
 import { canonicalisePortals } from "./portal/canonicaliser";
 import { emitPortalReadModels } from "./portal/read-models";
 
@@ -187,6 +190,26 @@ export const entityRegistry: Record<string, EntityModule> = {
     ddl: ITEM_TAG_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseItemTags(db, envelope),
     readModel: ({ db, entity }) => emitItemTagReadModels(db, entity.site?.route),
+  },
+  character: {
+    ddl: CHARACTER_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseCharacters(db, envelope),
+    readModel: ({ db, entity }) => emitCharacterReadModels(db, entity.site?.route),
+    site: {
+      overviewRenderer: () => "text",
+      readModels: [
+        {
+          readModelId: "character_overview_rows",
+          physicalName: "character_overview_rows",
+          purpose: "overview",
+        },
+        {
+          readModelId: "character_presentation_rows",
+          physicalName: "character_presentation_rows",
+          purpose: "detail",
+        },
+      ],
+    },
   },
   location: {
     ddl: LOCATION_DDL,

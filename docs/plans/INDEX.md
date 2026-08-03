@@ -7,10 +7,10 @@
 - **Item Obtainability** [audit] `2026-08-02-item-obtainability` ← 2026-04-29-ardenfall-compendium-roadmap
 - **Program Survey** [audit] `2026-08-02-program-survey` ← 2026-04-29-ardenfall-compendium-roadmap
 - **Repository Health Audit — Open Findings** [audit] `2026-08-02-repo-health-audit` ← 2026-04-29-ardenfall-compendium-roadmap
+- **Item Provenance, Characters** [spec] `2026-08-03-item-provenance-characters` ← 2026-08-02-item-obtainability
 
 ## draft
 
 - **Tile Capture** [spec] `2026-08-02-tile-capture` ← 2026-04-29-ardenfall-compendium-roadmap
-- **Item Provenance, Characters** [spec] `2026-08-03-item-provenance-characters` ← 2026-08-02-item-obtainability
 
 _30 archived — see `docs/plans/archive/`._

@@ -116,6 +116,7 @@ describe("relationship section projection", () => {
         targetType: "item-variant",
         targetId: "melee",
         targetLabel: "Melee weapon",
+        targetShortId: "melee",
         targetRoutePath: "/objects/variant/melee",
         predicate: "variant_of",
         label: "Edge label",
@@ -123,6 +124,57 @@ describe("relationship section projection", () => {
         anchor: null,
       },
     ]);
+  });
+
+  it("distinguishes identical labels inside one section", () => {
+    // 59 characters share the label "Unnamed character" and nine items are all called
+    // Mysterious Fossil, so a section can list several links reading the same thing and
+    // going somewhere different. Without this a reader cannot tell them apart and a screen
+    // reader announces identical link names.
+    const db = seedGraph();
+    for (const id of ["char-a", "char-b"]) {
+      db.run(
+        `INSERT INTO entity_nodes
+          (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        ["character", id, "Unnamed character", `/characters/${id}`, id, id, 1],
+      );
+      addEdge(db, `drop-${id}`, "character", id, "item", "item-a", "drops");
+    }
+
+    emitRelationshipSections(db);
+
+    const row = db
+      .query<{ edges_json: string }, []>(
+        "SELECT edges_json FROM entity_relationship_sections WHERE source_type = 'item'",
+      )
+      .get();
+    const labels = (JSON.parse(row?.edges_json ?? "[]") as { targetLabel: string }[]).map(
+      (edge) => edge.targetLabel,
+    );
+    expect(labels).toEqual(["Unnamed character \u00b7 char-a", "Unnamed character \u00b7 char-b"]);
+  });
+
+  it("leaves a unique label untouched", () => {
+    const db = seedGraph();
+    db.run(
+      `INSERT INTO entity_nodes
+        (entity_type, entity_id, label, route_path, canonical_slug, short_id, is_public)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      ["character", "char-a", "Jack", "/characters/char-a", "char-a", "char-a", 1],
+    );
+    addEdge(db, "drop-a", "character", "char-a", "item", "item-a", "drops");
+
+    emitRelationshipSections(db);
+
+    const row = db
+      .query<{ edges_json: string }, []>(
+        "SELECT edges_json FROM entity_relationship_sections WHERE source_type = 'item'",
+      )
+      .get();
+    expect((JSON.parse(row?.edges_json ?? "[]") as { targetLabel: string }[])[0]?.targetLabel).toBe(
+      "Jack",
+    );
   });
 
   it("requires every registry entry to declare all fields", () => {

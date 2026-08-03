@@ -77,6 +77,8 @@ export {
 } from "./entities/item";
 export { listRelationshipSections } from "./entities/relationship";
 
+export type { CharacterOverviewRow, CharacterPresentationRow } from "./entities/character";
+export { getCharacterPresentation, listCharacters } from "./entities/character";
 export type {
   StatusEffectOverviewRow,
   StatusEffectPresentationRow,

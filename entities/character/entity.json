@@ -1,0 +1,37 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "character",
+  "kind": "definition",
+  "label": { "singular": "Character", "plural": "Characters" },
+  "extraction": {
+    "source": "namedAsset",
+    "root": "Resources.FindObjectsOfTypeAll<CharacterData>",
+    "walker": "CharacterExtractor"
+  },
+  "presentationContext": { "renderContext": "character-presentation-v1" },
+  "site": {
+    "route": "/characters",
+    "overview": { "columns": ["name"], "search": ["name"] },
+    "detail": {
+      "sections": [
+        { "id": "overview", "kind": "fieldList", "title": "Overview", "fields": ["name"] }
+      ]
+    }
+  },
+  "fields": [
+    { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
+    {
+      "name": "name",
+      "type": "string",
+      "from": "charName.Get()?.name",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "dropRefs",
+      "type": "ref:asset[]",
+      "from": "itemLists + additionalItems",
+      "missingPolicy": "optional-empty"
+    }
+  ],
+  "map": null
+}
