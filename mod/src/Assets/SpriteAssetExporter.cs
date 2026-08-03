@@ -10,6 +10,19 @@ public sealed record SpriteAssetExport(string PngHash, string SourcePath);
 
 public sealed class SpriteAssetExporter
 {
+    /// <summary>
+    /// Cuts a sprite's rectangle out of a texture and returns it in image row order.
+    /// </summary>
+    ///
+    /// <remarks>
+    /// Unity puts the origin of a texture at the bottom left, so row 0 of
+    /// <c>GetRawTextureData</c> is the bottom row of the picture. PNG puts the origin at the
+    /// top left. The rows are therefore copied in reverse, which turns the picture the right
+    /// way up at no extra cost, because the copy already walks one row at a time.
+    ///
+    /// The <c>y</c> argument stays in Unity space, because it comes from
+    /// <c>Sprite.textureRect</c> and must index the buffer it was measured against.
+    /// </remarks>
     public static byte[] CropRgba(byte[] rgba, int textureWidth, int textureHeight, int x, int y, int width, int height)
     {
         if (textureWidth <= 0) throw new ArgumentOutOfRangeException(nameof(textureWidth));
@@ -23,7 +36,7 @@ public sealed class SpriteAssetExporter
         for (var row = 0; row < height; row++)
         {
             var sourceOffset = ((y + row) * textureWidth + x) * 4;
-            var targetOffset = row * width * 4;
+            var targetOffset = (height - 1 - row) * width * 4;
             Buffer.BlockCopy(rgba, sourceOffset, output, targetOffset, width * 4);
         }
         return output;

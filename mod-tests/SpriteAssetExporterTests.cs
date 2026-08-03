@@ -5,18 +5,38 @@ namespace ArdenfallCompendium.Tests;
 
 public sealed class SpriteAssetExporterTests
 {
+    // A 2x2 texture in Unity's layout. Row 0 is the bottom of the picture, so the first two
+    // pixels here are the bottom row and the last two are the top row.
+    private static readonly byte[] Texture =
+    [
+        255, 0, 0, 255,     0, 255, 0, 255,
+        0, 0, 255, 255,     255, 255, 0, 255,
+    ];
+
     [Fact]
     public void CropRgbaUsesRectPixelsInsteadOfWholeTexture()
     {
-        var rgba = new byte[]
-        {
-            255, 0, 0, 255,     0, 255, 0, 255,
-            0, 0, 255, 255,     255, 255, 0, 255,
-        };
+        var crop = SpriteAssetExporter.CropRgba(Texture, textureWidth: 2, textureHeight: 2, x: 1, y: 0, width: 1, height: 2);
 
-        var crop = SpriteAssetExporter.CropRgba(rgba, textureWidth: 2, textureHeight: 2, x: 1, y: 0, width: 1, height: 2);
+        // The right-hand column, top row first, because a PNG starts at the top left.
+        Assert.Equal(new byte[] { 255, 255, 0, 255, 0, 255, 0, 255 }, crop);
+    }
 
-        Assert.Equal(new byte[] { 0, 255, 0, 255, 255, 255, 0, 255 }, crop);
+    [Fact]
+    public void CropRgbaTurnsUnityRowsTheRightWayUp()
+    {
+        // Unity reads a texture from the bottom left and a PNG starts at the top left, so a
+        // crop that keeps the source row order publishes every picture upside down. This
+        // asserts the first output row is the last source row, which is what catches it.
+        var crop = SpriteAssetExporter.CropRgba(Texture, textureWidth: 2, textureHeight: 2, x: 0, y: 0, width: 2, height: 2);
+
+        Assert.Equal(
+            new byte[]
+            {
+                0, 0, 255, 255,     255, 255, 0, 255,
+                255, 0, 0, 255,     0, 255, 0, 255,
+            },
+            crop);
     }
 
     [Fact]
