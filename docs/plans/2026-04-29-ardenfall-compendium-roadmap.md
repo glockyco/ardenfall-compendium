@@ -432,7 +432,7 @@ A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.1
 | `Faction` | 48 | 48 | yes | `lookupAsset` |
 | `PerkAsset` | 18 | 18 | **no** | `lookupAsset` |
 | `TraitType` | 17 | 17 | **no** | `lookupAsset` |
-| `CharacterData` | 212 | 212 | yes | `lookupAsset` |
+| `CharacterData` | 212 | 212 | yes | `namedAsset` |
 | `PortalRecord` instances | 33 | n/a | yes, without a page | `record` |
 | `NPCRecord` instances | 314 | n/a | yes, without a page | `record` |
 
