@@ -1,22 +1,29 @@
 import { describe, expect, it } from "bun:test";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
-describe("ItemIcon tinting", () => {
-  it("renders displayIconColor through a bitmap-preserving multiply tint branch", () => {
-    const source = readFileSync("site/src/lib/components/items/ItemIcon.svelte", "utf8");
+const builtItemsPage = [
+  join(import.meta.dir, "../.svelte-kit/cloudflare/items/index.html"),
+  join(import.meta.dir, "../.svelte-kit/cloudflare/items.html"),
+].find(existsSync);
+if (!builtItemsPage) throw new Error("missing built item overview page");
 
-    expect(source).toContain("displayIconColor");
-    expect(source).toContain("function tint");
-    expect(source).toContain("style:background-color={tintHex}");
-    expect(source).toContain("style:mask-image={`url(${src})`}");
-    expect(source).toContain("style:-webkit-mask-image={`url(${src})`}");
-    expect(source).toContain('style:mix-blend-mode="multiply"');
+describe("ItemIcon rendering", () => {
+  it("renders a tinted bitmap icon in the built item overview", () => {
+    const output = readFileSync(builtItemsPage, "utf8");
+
+    expect(output).toContain('class="item-icon');
+    expect(output).toMatch(
+      /style="background-color: #[0-9a-f]{6}; mask-image: url\(\/assets\/[^"]+\.webp\);/,
+    );
+    expect(output).toMatch(
+      /<img[^>]+src="\/assets\/[^"]+\.webp"[^>]+style="mix-blend-mode: multiply;"\/>/,
+    );
   });
 
-  it("keeps an image branch for untinted icons", () => {
-    const source = readFileSync("site/src/lib/components/items/ItemIcon.svelte", "utf8");
+  it("renders bitmap image elements in the built item overview", () => {
+    const output = readFileSync(builtItemsPage, "utf8");
 
-    expect(source).toContain("{:else}");
-    expect(source).toContain("<img");
+    expect(output).toMatch(/<img[^>]+src="\/assets\/[^"]+\.webp"[^>]*>/);
   });
 });

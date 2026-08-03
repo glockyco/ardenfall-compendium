@@ -1,9 +1,42 @@
 import { describe, expect, it } from "bun:test";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { listingRoutePaths, sitemapRoutePaths } from "../src/lib/server/sitemap-routes";
 
 const routesRoot = join(import.meta.dir, "../src/routes");
+const builtOutputRoot = join(import.meta.dir, "../.svelte-kit/cloudflare");
+
+const builtPageRoutes = (): string[] => {
+  const routes = new Set<string>();
+
+  const visit = (directory: string, segments: string[]) => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        visit(join(directory, entry.name), [...segments, entry.name]);
+        continue;
+      }
+      if (!entry.isFile() || !entry.name.endsWith(".html")) continue;
+      const pageName = entry.name.slice(0, -".html".length);
+      const pageSegments = pageName === "index" ? segments : [...segments, pageName];
+      const route = pageSegments.length === 0 ? "/" : `/${pageSegments.join("/")}`;
+      if (route !== "/404") routes.add(route);
+    }
+  };
+
+  visit(builtOutputRoot, []);
+  return [...routes].sort();
+};
+
+const builtSitemapRoutes = (): string[] => {
+  const sitemap = readFileSync(join(builtOutputRoot, "sitemap.xml"), "utf8");
+  const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => {
+    const location = match[1];
+    if (!location) throw new Error("built sitemap contains an empty location");
+    return decodeURIComponent(new URL(location, "https://ardenfall.compendiums.org").pathname);
+  });
+  if (locations.length === 0) throw new Error("built sitemap contains no locations");
+  return locations.sort();
+};
 
 const staticPageRoutes = (): string[] => {
   const routes: string[] = [];
@@ -45,6 +78,10 @@ describe("sitemap routes", () => {
     for (const excluded of Object.keys(unpublishedRoutes)) {
       expect(routes).not.toContain(excluded);
     }
+  });
+
+  it("keeps the built sitemap in parity with built pages", () => {
+    expect(builtSitemapRoutes()).toEqual(builtPageRoutes());
   });
 
   it("adds listing pages and entity page routes", () => {

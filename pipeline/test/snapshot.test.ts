@@ -201,11 +201,12 @@ describe("loadSnapshot", () => {
         readFileSync("fixtures/synthetic/snapshot/master-tooltip.json", "utf8"),
       );
       const items = JSON.parse(readFileSync("fixtures/synthetic/snapshot/items.json", "utf8")) as {
-        rows: { presentation?: unknown }[];
+        rows: { id: string; presentation?: unknown }[];
       };
-      const firstItemRow = items.rows[0];
-      if (!firstItemRow) throw new Error("fixture item envelope has no rows");
-      delete firstItemRow.presentation;
+      const ironSwordId = "4ed20218.fixture-iron-sword";
+      const ironSwordRow = items.rows.find((row) => row.id === ironSwordId);
+      if (!ironSwordRow) throw new Error(`fixture item envelope has no row '${ironSwordId}'`);
+      delete ironSwordRow.presentation;
       writeFileSync(join(dir, "items.json"), `${JSON.stringify(items, null, 2)}\n`);
 
       const snap = await loadSnapshot.run({}, { ...ctx, snapshotDir: dir });

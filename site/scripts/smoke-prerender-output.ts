@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 import { Database } from "bun:sqlite";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { listingRoutePaths } from "../src/lib/server/sitemap-routes";
 
 interface ReleaseProbe {
   id: string;
@@ -57,6 +58,10 @@ if (!existsSync(outputReleasePath)) {
 if (!overviewPath) {
   throw new Error(`missing prerendered item overview under ${outputDir}`);
 }
+
+const expectedRoutes = readExpectedRoutes();
+const builtRoutes = readBuiltPageRoutes();
+assertRouteParity(expectedRoutes, builtRoutes);
 
 const manifestValue: unknown = JSON.parse(readFileSync(releasePath, "utf8"));
 const builtManifestValue: unknown = JSON.parse(readFileSync(outputReleasePath, "utf8"));
@@ -212,6 +217,59 @@ for (const snippet of [tagProbe.name, tagProbe.description]) {
 }
 if (!tagDetail.includes(tagProbe.item_name)) {
   throw new Error(`tag detail HTML missing item ${tagProbe.item_name}`);
+}
+
+function readExpectedRoutes(): string[] {
+  const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
+    readonly: true,
+    create: false,
+  });
+  try {
+    const rows = db
+      .query<{ route_path: string }, []>(
+        "SELECT route_path FROM entity_nodes WHERE has_page = 1 ORDER BY route_path",
+      )
+      .all();
+    return [...new Set([...listingRoutePaths, ...rows.map((row) => row.route_path)])].sort();
+  } finally {
+    db.close();
+  }
+}
+
+function readBuiltPageRoutes(): string[] {
+  const routes = new Set<string>();
+  const visit = (directory: string, segments: string[]) => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        visit(join(directory, entry.name), [...segments, entry.name]);
+        continue;
+      }
+      if (!entry.isFile() || !entry.name.endsWith(".html")) continue;
+      const pageName = entry.name.slice(0, -".html".length);
+      const pageSegments = pageName === "index" ? segments : [...segments, pageName];
+      const route = pageSegments.length === 0 ? "/" : `/${pageSegments.join("/")}`;
+      if (route !== "/404") routes.add(route);
+    }
+  };
+  visit(outputDir, []);
+  return [...routes].sort();
+}
+
+function assertRouteParity(expected: string[], built: string[]): void {
+  const builtSet = new Set(built);
+  const expectedSet = new Set(expected);
+  const missing = expected.filter((route) => !builtSet.has(route));
+  if (missing.length > 0) {
+    throw new Error(
+      `missing prerendered pages for staged routes (${missing.length}): ${missing.join(", ")}`,
+    );
+  }
+  const unexpected = built.filter((route) => !expectedSet.has(route));
+  if (unexpected.length > 0) {
+    throw new Error(
+      `prerendered page files are not explained by the staged database (${unexpected.length}): ${unexpected.join(", ")}`,
+    );
+  }
 }
 
 function readStatProbe(): StatProbeRow {
