@@ -20,15 +20,17 @@ Measured from rendered HTML, which is what a reader actually meets. A page count
 
 | | pages |
 | --- | ---: |
-| detail pages | 1,881 |
-| linked from another detail page | 1,658 |
-| linked from no other detail page | 223 |
+| detail pages | 2,228 |
+| linked from another detail page | 1,921 |
+| linked from no other detail page | 307 |
 
-Unconnected by section: status-effect 116, location 48, faction 25, character 15, item-tag 10, stat-type 8, spell 1. **No item is unconnected**, because every one of the 1,273 is named by a category, a tag, a variant or a character that can drop it.
+Unconnected by section: placed-character 121, status-effect 103, faction 25, location 20, character 15, item-tag 10, stat-type 8, portal 4, spell 1. **No item is unconnected**, because every one of the 1,273 is named by a category, a tag, a variant or a character that can drop it.
+
+Placed characters and portals account for the rise, because both gained pages and 347 pages arrived at once. The trade was worth it. Locations fell from 48 unconnected to 20, since a location page now names the characters found there, and 193 of the 314 placed characters are reachable from the location that contains them. The 121 that are not sit inside no location at all. Portals reach each other through `leads_to`, so only 4 of 33 are unconnected.
 
 **An earlier figure in this document counted something narrower and read worse.** It counted rows in `entity_edges` whose `target_id` matched, which misses three things: an inverse section such as a faction page listing its starting members, a link rendered from presentation data such as an item's Effects list, and the direction of an edge that is useful read backwards. That metric said 1,132 pages had no inbound edge. The rendered-link measurement above says 223, and it is the honest one.
 
-The graph carries 5,641 edges: `can_drop` 2126, `variant_of` 1273, `categorised_as` 1268, `casts` 286, `applies` 266, `starts_in_faction` 235, `tagged` 76, `scales_with` 56, `leads_to` 30, `starts_opposed_to` 25.
+The graph carries 5,912 edges: `can_drop` 2126, `variant_of` 1273, `categorised_as` 1268, `applies` 292, `casts` 286, `found_at` 245, `starts_in_faction` 235, `tagged` 76, `scales_with` 56, `leads_to` 30, `starts_opposed_to` 25.
 
 Items now link to the status effects they apply, the spells they carry, their category, and their tags. Every one of the 552 item effect facts resolves and unresolved-target diagnostics are zero. Stat pages link the stats they affect.
 
@@ -36,15 +38,18 @@ Items now link to the status effects they apply, the spells they carry, their ca
 
 | entity | orphaned | why |
 | --- | ---: | --- |
-| item | 1273 | nothing in the game points at an item except loot, recipes, merchants, and quests, none of which are modelled |
-| status-effect | 116 | referenced from the Odin-serialised effect graph on `SpellData` |
-| location | 34 | placed content, no authored referent yet |
+| item | 728 | nothing in the game points at these except loot, recipes, merchants, and quests, none of which are modelled |
+| npc | 314 | nothing authored points at a placed character, so only the location that contains it can reach one |
+| character | 212 | a character is only ever the source of an edge, so nothing points back at it |
+| status-effect | 103 | the remainder are reached from neither an item nor a spell |
+| faction | 26 | placed content, no authored referent yet |
+| location | 20 | contains no placed character |
 | stat-type | 17 | only the four magic skills are referenced, by spells |
 | item-tag | 10 | genuinely unused by any item |
 
-Items are 87% of what is left, and no cheap reference reaches them. The candidates that do are all new entities: `ItemListAsset` and its counted and leveled wrappers, `PotionRecipe`, `CharacterData` merchant inventories, and quest rewards. `PotionRecipe` is already partly extracted, but live it is one recipe pointing at four potions, so it is not worth a slice by itself.
+Items are 44% of what is left. Character drops reached 545 of them, so the remaining 728 need loot lists, recipes, merchant stock or quest rewards, and none of those is modelled. The candidates are `ItemListAsset` with its counted and leveled wrappers, `PotionRecipe`, `CharacterData` merchant inventories, and quest rewards. `PotionRecipe` is already partly extracted, but live it is one recipe pointing at four potions, so it is not worth a slice by itself.
 
-That reorders what comes next. **Loot provenance stops being the largest modelling job on the list and becomes the only remaining way to make the largest page type reachable at all.**
+**People are now the second problem, and it is a different one.** 526 pages across characters and placed characters have no inbound link, and no field on either points back at them. A character is only ever the source of an edge. Nothing in the data we extract names a character, so no amount of field-shaped extraction will reach them. Quests, dialogue and merchant stock are the only authored things that do.
 
 ## Currently shipping, reader-visible
 
