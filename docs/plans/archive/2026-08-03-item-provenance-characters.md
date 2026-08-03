@@ -1,11 +1,11 @@
 ---
 title: Item Provenance, Characters
 type: spec
-status: active
+status: implemented
 created: 2026-08-03
 parent: 2026-08-02-item-obtainability
 superseded_by:
-archived:
+archived: 2026-08-03
 ---
 
 # Item Provenance, Characters

@@ -412,7 +412,7 @@ Spell pages had shipped with a governing skill and a base mana cost and nothing 
 
 The first live export was *rejected*, `fatal: 1`, on a spell with an empty display name. The field had been specified fatal, which was wrong: identity comes from the asset name, so an absent label is a presentation gap. It is now a diagnostic, the canonical column is nullable, and presentation supplies a placeholder — the same resolution portals already had. One row of imperfect game data must not block an artifact.
 
-The navigation only ever offered Items and Map, while the layout resolved routes for stats, categories, and tags and discarded them. Three public prerendered sections were unreachable and spells would have been the fourth, so every section went into the header. There are seven now.
+The navigation only ever offered Items and Map, while the layout resolved routes for stats, categories, and tags and discarded them. Three public prerendered sections were unreachable and spells would have been the fourth, so every section went into the header. Characters made it eight.
 
 **Also settled:** adding this entity required exactly one `entityRegistry` entry, which is the first real test of the dispatch refactor. The mod's resolver gained the same treatment, collapsing three per-type branches into one registry, and every extraction source there is now a required argument rather than a default that quietly constructed live Unity services.
 
@@ -473,6 +473,8 @@ Ordered by measured reader value against cost. The survey at [`2026-08-02-progra
 
 So the next connective work is no longer a field, it is an entity:
 
+**Also open, and structural rather than content.** [`2026-08-03-canonical-table-contract`](2026-08-03-canonical-table-contract.md) closes the last place the descriptor is authoritative in principle and advisory in practice. Only `item` generates its DDL, so for the other eight the table shape is hand-written SQL agreeing by convention, and three declared fields are extracted into 129 rows and stored nowhere at all.
+
 **Before that**, relationships were unified. Four slices in one day each grew a bespoke site accessor beside a generic mechanism that already existed, which is the Ancient Kingdoms failure exactly. Relationships are now declared once by predicate, the pipeline projects sections from the edges it emits, and an unregistered predicate fails the build. Adding a relationship is one registry entry and no site change, which matters because obtainability adds five at once.
 
 5. **Item obtainability**, in progress. Not loot alone. [`2026-08-02-item-obtainability`](2026-08-02-item-obtainability.md) audits every route by which a player can get an item, and there are nine. Loot tables are one.
@@ -481,7 +483,7 @@ So the next connective work is no longer a field, it is an entity:
 
    The placed half is containers and spawners, which are not record-backed and exist only as scene objects in a world of 683 streamed cells. Completing them needs a world walk, which tile capture also needs, so the two should be planned together rather than each paying for traversal separately.
 
-   **Characters shipped first**, see [`2026-08-03-item-provenance-characters`](2026-08-03-item-provenance-characters.md). 212 pages, 2,126 `drops` edges, and 545 of 1,273 items now name a source. Merchant stock was specced and then cut on measurement, because the game implements it fully and no character in the demo has any configured.
+   **Characters shipped first**, see [`2026-08-03-item-provenance-characters`](archive/2026-08-03-item-provenance-characters.md). 212 pages, 2,126 `drops` edges, and 545 of 1,273 items now name a source. Merchant stock was specced and then cut on measurement, because the game implements it fully and no character in the demo has any configured.
 
    That leaves 728 items still unsourced. Quest rewards and recipes are the remaining authored sources and they are small, 13 quests and 48 recipes, so most of the remainder is almost certainly in containers. Measure before picking the next one.
 6. **Spells to status effects.** The 116 unreachable status effects are referenced from the Odin-serialised effect graph on `SpellData`. A slice rather than a field.

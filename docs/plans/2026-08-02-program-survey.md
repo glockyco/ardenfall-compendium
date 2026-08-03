@@ -85,8 +85,8 @@ Ruled out for now: quest graph edges and dialogue live in Odin-serialised `flowG
 
 Worth doing now:
 
-- **Delete the dead detail-section subsystem.** `emit-site-metadata.ts:122-142` populates `site_detail_sections` from descriptors, the site builds a `sectionRegistry`, and no route consumes any of it. About 86 lines across five site files plus shipped SQLite rows read by nobody. It looks like the supported extension point for detail pages and is not.
-- **Delete `pipeline/src/registry.ts`.** Zero production consumers, kept green by its own test, and a near-duplicate of `site/src/lib/registry-merge.ts`. Two files named `registry.ts` in one package, one of them the real dispatch.
+- ~~Delete the dead detail-section subsystem~~ - **done.** Pipeline emitters, DDL, site registry, renderers and the descriptor block all removed. Zero references remain.
+- ~~Delete `pipeline/src/registry.ts`~~ - **done.** Removed with its test. The package no longer has two files called `registry.ts`, one of which was the real dispatch.
 - ~~`controller/src/validate-snapshot.ts` hardcodes `ENTITY_FILES`~~ - **done.** Deleted. The controller identifies envelopes by the id inside each file, as the pipeline always has, and cross-checks the discovered set against the manifest counts, which also catches an unexpected file. A tenth entity needs no controller change.
 - ~~Extract the extractor lifecycle in the mod~~ - **done.** One lifecycle across all nine extractors, 630 lines removed. The display-name policy is uniform: a diagnostic and a nullable column, never a fallback to the asset name, which had been putting internal identifiers like `itemcat_weapons` in front of readers. Measured first and confirmed after: no row in any affected entity is missing a name, and a live export produces byte-identical diagnostics.
 - **Stop swallowing Unity lookup failures.** Roughly a dozen sites catch and return `""` or `null` with no diagnostic, which makes a destroyed object indistinguishable from genuinely absent data.

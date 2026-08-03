@@ -5,7 +5,7 @@ status: implemented
 created: 2026-08-03
 parent: 2026-04-29-ardenfall-compendium-roadmap
 superseded_by:
-archived:
+archived: 2026-08-03
 ---
 
 # Descriptor Field Contract

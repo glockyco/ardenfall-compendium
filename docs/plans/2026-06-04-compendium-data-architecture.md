@@ -197,9 +197,13 @@ The mod-side seam mirrors the location adapter pattern already in place (a pure 
 
 ## 7. Relationship graph generalization
 
-The shipped relationship graph contains exactly three predicates: `variant_of` for item variants, `scales_with` from a spell to its stat-type skill, and `leads_to` between connected portals. Portal connectivity is projected from canonical `connected_portal_ref_json` into directed graph edges. The relation is directed deliberately because the world contains one-way doors and chains. A reciprocal connection is stored as two edges.
+The shipped graph holds seven predicates: `variant_of`, `categorised_as` and `tagged` from an item to its taxonomy, `applies` and `casts` from an item to the status effects and spells it carries, `scales_with` from a spell to its stat-type skill, `leads_to` between connected portals, and `drops` from a character to an item. Portal connectivity is projected from canonical `connected_portal_ref_json` into directed edges, deliberately directed because the world contains one-way doors and chains, so a reciprocal connection is two edges.
 
-`entity_relationship_sections` is a detail-page grouping contract, not a second edge store. Entities without detail pages write edges only. Portals therefore emit `leads_to` edges but no relationship sections because a portal has no detail page and a section would duplicate the map relationship. Placement rows do not currently generate `located-at`, instance↔definition, or bounded transitive spatial edges.
+**Relationships are declared once, by predicate.** `pipeline/src/relationships/registry.ts` carries one entry per predicate holding the section title for each direction, or null where a direction is not shown. The pipeline projects `entity_relationship_sections` from the emitted edges using that registry, and an edge whose predicate is unregistered fails the build. No emitter writes a section by hand and no entity module has its own accessor, so adding a relationship is one registry entry and no site change.
+
+Two predicates deliberately declare no forward section. Item pages render spells and status effects inline in the effects list with links, so a section would print the same relationship twice.
+
+`entity_relationship_sections` is a detail-page grouping contract, not a second edge store. Entities without detail pages write edges only, which is why portals emit `leads_to` and no section. Labels are disambiguated within a section, because 59 characters share a placeholder name and nine items are all called the same thing, and identical link text pointing at different destinations fails WCAG 2.4.4.
 
 The entity-graph audit runs once, after all read-model emitters, so it covers the complete emitted graph.
 
@@ -215,11 +219,19 @@ Any such slice must retain the fail-fast `relationshipMissingTarget` audit and p
 
 ### Rich text and presentation
 
-Rich text translation applies to item descriptions and effects, spell tooltips, and status-effect tooltips. The pipeline passes each source through `translateRichTextV1` with the master tooltip vocabulary. Each applicable read model stores both the game-authored source column and the translated JSON column. Site readers publish only the translated JSON form, never the source string.
+Rich text translation applies to item descriptions and effects, spell tooltips, and status-effect tooltips. The site never parses a generated column unchecked, every server read goes through one boundary that fails naming the entity, column and row. The pipeline passes each source through `translateRichTextV1` with the master tooltip vocabulary. Each applicable read model stores both the game-authored source column and the translated JSON column. Site readers publish only the translated JSON form, never the source string.
 
 ### Semantics constraint
 
 A field's meaning is established at the game's call site, not inferred from its declaration or type. A label that asserts more than the game does is a defect even when the extracted value is correct. For example, `SpellData.statType` is consumed as the skill that scales a spell, so the public model calls it `skill` and emits `scales_with`, rather than publishing it as a spell school.
+
+### The descriptor is an enforced contract, not documentation
+
+A descriptor's field list is checked against reality rather than trusted. `validate-descriptor-fields` runs after loading and rejects a snapshot carrying a field no descriptor declares, naming the entity, the field and a sample row. Field types are a closed vocabulary, enforced by a schema enum at author time, a TypeScript union at compile time, and a throw when a dispatcher meets a token it was never taught. Canonicalisers for the entities with projected fields reach them through types generated from the descriptors, so a rename is a compile error rather than an `undefined`.
+
+A field declares whether it becomes a column or is projected into another table, so declaring a field that feeds `map_points` does not create a dead column beside it.
+
+The remaining gap is the other direction. Only `item` generates its DDL from its descriptor, so for the other eight the table's shape is hand-written SQL that agrees by convention. See [`2026-08-03-canonical-table-contract`](2026-08-03-canonical-table-contract.md).
 
 - Definitions keep typed root + inheritance-layer + child tables (Decisions 7, 10). Unchanged.
 - The current instance table is `portals`, holding extrinsic fields. `definition_ref` is reserved for future instances with a separate definition asset. Portal placement lives in `placements`, and portal connectivity is emitted as `leads_to` graph edges from `connected_portal_ref_json`.
