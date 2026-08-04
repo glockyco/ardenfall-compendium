@@ -18,6 +18,14 @@ import {
 import type { RichTextNode } from "../../rich-text/rich-text-v1.ts";
 import { deriveShortId, deriveSlug } from "../../slug/derive-slug.ts";
 
+const ITEM_EFFECT_SOURCES = new Set([
+  "spellDataJson",
+  "secondarySpellDataJson",
+  "statusEffectsJson",
+  "areaOfEffectJson",
+  "bleedStatusEffectJson",
+]);
+
 export const ITEM_READ_MODEL_DDL = `
 CREATE TABLE item_overview_rows (
   id                  TEXT NOT NULL PRIMARY KEY,
@@ -451,6 +459,22 @@ export function emitItemReadModels(
       const itemLabel = displayLabel.label;
       const variantId = metadata.variantId;
       const rawEffectFacts = presentation.effects.map((effect) => {
+        // An unrecognised source means we have no reader-facing word for the role, not that
+        // the relationship is false. The edge is still emitted, so a spell page keeps listing
+        // the items that cast it, and the diagnostic names the value that needs a phrase.
+        const effectSourceRecognised = ITEM_EFFECT_SOURCES.has(effect.source);
+        if (!effectSourceRecognised) {
+          richTextDiagnostics.push({
+            severity: "diagnostic",
+            source: "item-presentation-read-model",
+            code: "itemEffectSourceUnknown",
+            message: `Item '${snapshotRow.id}' has an unrecognised effect source '${effect.source}'.`,
+            entityType: "item",
+            entityId: snapshotRow.id,
+            field: "presentation.effects.source",
+            evidence: { source: effect.source },
+          });
+        }
         if (effect.targetType === "status-effect") {
           const targetId = resolveStatusEffectId(effect.targetRef, statusEffectIds);
           if (targetId === null) {
@@ -476,7 +500,7 @@ export function emitItemReadModels(
               "applies",
               "Applies",
               1,
-              JSON.stringify({ source: `items.${effect.source}`, level: effect.level ?? null }),
+              JSON.stringify({ source: effect.source, level: effect.level ?? null }),
               null,
             );
           }
@@ -507,7 +531,7 @@ export function emitItemReadModels(
             "casts",
             "Casts",
             1,
-            JSON.stringify({ source: "items.spellRef", level: effect.level ?? null }),
+            JSON.stringify({ source: effect.source, level: effect.level ?? null }),
             null,
           );
         }

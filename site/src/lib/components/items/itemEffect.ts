@@ -8,9 +8,12 @@
  * separates them, so forwarding those strings to a page once put "Equipped comparison
  * requires player inventory state." on 833 published pages.
  *
- * This is specific to status effects and callers must check the kind. Spell facts also
- * carry a null target, because item-to-spell references are not resolved yet, and
- * showing this sentence on one told readers a spell was an unpublished status effect.
+ * This is specific to status effects and callers must check the kind. A spell fact can
+ * carry a null target too, and showing this sentence on one told readers a spell was an
+ * unpublished status effect. Both kinds resolve in the current snapshot, all 552 facts of
+ * them, and neither `itemStatusEffectUnresolved` nor `itemSpellUnresolved` fires, so this
+ * sentence renders nowhere today. It stays because the pipeline diagnoses the case and
+ * tests cover it, which is the condition this repo sets for keeping a recovery path.
  */
 export const UNRESOLVED_EFFECT_TARGET =
   "This effect names a status effect that this snapshot does not publish as its own page.";
@@ -30,4 +33,22 @@ const effectKindLabels: Record<string, string> = {
 
 export function effectKindLabel(kind: string): string {
   return effectKindLabels[kind] ?? kind;
+}
+
+/**
+ * Reader-facing names for the effect roles the pipeline emits.
+ *
+ * These phrases follow the declaring item-data fields. They distinguish the two spells
+ * and the three ways a status effect reaches a reader without adding a game mechanic.
+ */
+const effectRoleLabels: Record<string, string> = {
+  spellDataJson: "Primary cast",
+  secondarySpellDataJson: "Secondary cast",
+  statusEffectsJson: "Applies when consumed",
+  areaOfEffectJson: "Applies where potion lands",
+  bleedStatusEffectJson: "Weapon-inflicted bleed",
+};
+
+export function effectRoleLabel(source: string | null | undefined, kind: string): string {
+  return (source && effectRoleLabels[source]) ?? effectKindLabel(kind);
 }

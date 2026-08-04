@@ -109,6 +109,24 @@ describe("emitItemReadModels", () => {
         secondaryIconColor: null,
       },
     ];
+    const throwingPotionRow = itemEnvelope.rows.find(
+      (row) => row.id === "8c0ffee0.fixture-throwing-potion",
+    );
+    if (!throwingPotionRow) throw new Error("fixture missing throwing potion row");
+    const unknownEffect = throwingPotionRow.presentation?.effects[0];
+    if (!unknownEffect) throw new Error("fixture missing throwing potion effect");
+    unknownEffect.source = "unknownEffectSource";
+    // The throwing potion's unknown-source effect also fails to resolve its target, so it
+    // cannot show whether an unknown role suppresses an edge. The stave's primary cast
+    // resolves, so it is the case that discriminates: the edge must survive a role we have
+    // no word for, because the item really does cast the spell either way.
+    const staveRow = itemEnvelope.rows.find((row) => row.id === "7ab10c55.fixture-slate-spell");
+    if (!staveRow) throw new Error("fixture missing slate spell row");
+    const stavePrimary = staveRow.presentation?.effects.find(
+      (effect) => effect.source === "spellDataJson",
+    );
+    if (!stavePrimary) throw new Error("fixture missing slate spell primary effect");
+    stavePrimary.source = "unknownSpellSource";
     if (itemEntity.site) itemEntity.site.route = "/objects";
     emitItemReadModels(db, desc, iconMetadata, itemEnvelope, snap.masterTooltip);
 
@@ -238,11 +256,11 @@ describe("emitItemReadModels", () => {
       }),
     ]);
     expect(JSON.parse(appliesEdges[0]!.evidence_json)).toEqual({
-      source: "items.statusEffectsJson",
+      source: "statusEffectsJson",
       level: 1,
     });
     expect(JSON.parse(appliesEdges[1]!.evidence_json)).toEqual({
-      source: "items.statusEffectsJson",
+      source: "statusEffectsJson",
       level: 2.5,
     });
     const slateFacts = db
@@ -254,7 +272,7 @@ describe("emitItemReadModels", () => {
       expect.objectContaining({
         targetId: "named;spell;spell_fire-shield",
         level: 1,
-        source: "spellDataJson",
+        source: "unknownSpellSource",
       }),
       expect.objectContaining({
         targetId: "named;spell;spell_arcane-surge",
@@ -292,11 +310,11 @@ describe("emitItemReadModels", () => {
       }),
     ]);
     expect(JSON.parse(castsEdges[0]!.evidence_json)).toEqual({
-      source: "items.spellRef",
+      source: "secondarySpellDataJson",
       level: 2,
     });
     expect(JSON.parse(castsEdges[1]!.evidence_json)).toEqual({
-      source: "items.spellRef",
+      source: "unknownSpellSource",
       level: 1,
     });
     const fireFacts = db
@@ -305,7 +323,7 @@ describe("emitItemReadModels", () => {
       )
       .get("8c0ffee0.fixture-throwing-potion");
     expect(JSON.parse(fireFacts!.effect_facts_json)[0]).toEqual(
-      expect.objectContaining({ targetId: null }),
+      expect.objectContaining({ targetId: null, source: "unknownEffectSource" }),
     );
     expect(JSON.parse(fireFacts!.effect_facts_json)[1]).toEqual(
       expect.objectContaining({ targetId: null, targetType: "spell" }),
@@ -323,11 +341,12 @@ describe("emitItemReadModels", () => {
         .query(
           `SELECT code, entity_id FROM pipeline_diagnostics
            WHERE entity_id = '8c0ffee0.fixture-throwing-potion'
-             AND code IN ('itemStatusEffectUnresolved', 'itemSpellUnresolved')
+             AND code IN ('itemEffectSourceUnknown', 'itemStatusEffectUnresolved', 'itemSpellUnresolved')
            ORDER BY code`,
         )
         .all(),
     ).toEqual([
+      { code: "itemEffectSourceUnknown", entity_id: "8c0ffee0.fixture-throwing-potion" },
       { code: "itemSpellUnresolved", entity_id: "8c0ffee0.fixture-throwing-potion" },
       { code: "itemStatusEffectUnresolved", entity_id: "8c0ffee0.fixture-throwing-potion" },
     ]);

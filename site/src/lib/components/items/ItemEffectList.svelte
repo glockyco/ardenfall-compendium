@@ -1,7 +1,7 @@
 <script lang="ts">
   import RichText from "$lib/components/content/RichText.svelte";
   import type { ItemPresentationEffect, RichTextDocument } from "$lib/server/read-models";
-  import { UNRESOLVED_EFFECT_TARGET, effectKindLabel } from "./itemEffect";
+  import { UNRESOLVED_EFFECT_TARGET, effectRoleLabel } from "./itemEffect";
 
   let {
     effects,
@@ -30,7 +30,7 @@
             {:else}
               <span class="font-medium">{effect.label}</span>
             {/if}
-            <span class="text-muted-foreground">{effectKindLabel(effect.kind)}</span>
+            <span class="text-muted-foreground">{effectRoleLabel(effect.source, effect.kind)}</span>
             {#if effect.kind === "status-effect" && effect.targetId === null}
               <span class="text-muted-foreground block text-xs">
                 {UNRESOLVED_EFFECT_TARGET}
