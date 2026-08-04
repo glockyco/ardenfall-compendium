@@ -25,6 +25,8 @@
 <BackLink href={data.potionRecipeRoute} label="potion recipes" />
 <EntityDetailHeader title={recipe.name} iconSrc={null} />
 <PotionRecipeDetail {recipe} />
-{#each data.relationships as section (section.id)}
-  <RelationshipSection {section} />
-{/each}
+<div class="mt-6 grid gap-6">
+  {#each data.relationships as section (section.id)}
+    <RelationshipSection {section} />
+  {/each}
+</div>

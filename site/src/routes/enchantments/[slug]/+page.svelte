@@ -28,6 +28,8 @@
 <BackLink href={data.enchantmentRoute} label="enchantments" />
 <EntityDetailHeader title={enchantment.name} iconSrc={null} />
 <EnchantmentDetail {enchantment} />
-{#each data.relationships as section (section.id)}
-  <RelationshipSection {section} />
-{/each}
+<div class="mt-6 grid gap-6">
+  {#each data.relationships as section (section.id)}
+    <RelationshipSection {section} />
+  {/each}
+</div>
