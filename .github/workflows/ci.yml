@@ -80,8 +80,11 @@ jobs:
       - name: build synthetic fixture artifact for static prerender
         run: bun run artifact:fixture synthetic fixtures/synthetic/snapshot
       - run: bun run --cwd site check
-      - run: bun test site/test
+      # Two suites read the built output: item-icon.test.ts opens the prerendered
+      # item overview page, and sitemap.test.ts compares the sitemap against the
+      # pages actually built. They must run after the build, not before it.
       - run: bun run --cwd site build:fixture
+      - run: bun test site/test
       - run: bun run --cwd site smoke:prerender
       - run: bun run --cwd site smoke:pagefind
       - run: bun run --cwd site smoke:map
@@ -99,8 +102,15 @@ jobs:
         with: { dotnet-version: "10.0.x" }
       - name: format-check
         run: dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes
-      - name: test
-        run: dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --nologo -v q
+      # The mod compiles against Assembly-CSharp.dll and the game's Unity, Odin and
+      # FlowCanvas assemblies. Those ship with the game, are not redistributable, and
+      # so cannot be committed or fetched here; mod/libs/ is gitignored for that
+      # reason. Building or testing the mod on a runner is therefore impossible, not
+      # merely unconfigured, and a step that tries fails on every push.
+      #
+      # `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --nologo -v q` is a
+      # required local gate before yielding mod changes, and AGENTS.md says so.
+      # Formatting is all a runner can honestly verify.
 
   fixtures:
     runs-on: ubuntu-latest
