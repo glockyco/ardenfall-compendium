@@ -82,6 +82,24 @@ Duplicate labels across the snapshot: 84 groups covering 260 item rows measured 
 
 `pipeline/src/entities/spell/read-models.ts:156` emits `"Scales with skill"`. `Ardenfall/StatType.cs:24-31` reads `isAttribute` to choose between a character's attributes and skills. All 56 current edges target a stat with `is_attribute = 0`, so the label is right today and wrong as soon as a spell scales off an attribute.
 
+### Two spells can share a display name without being a mis-join
+
+`Ardenfall/Item/SlateSpellItemData.cs` declares `spellData` and `secondarySpellData` as separate fields, and each has its own camera kick. A stave therefore can cast two spells. The Stave of Greater Accursed Ichor resolves `spell_accursed-ichor` and `spell_blood-explosion`, while the game gives both assets the display name `Accursed Ichor`.
+
+The canonical `item_slate_spells` row held two distinct `spellRef` values. Two identical-looking spell links therefore reflected the game rather than a name-based join error. The presentation fix was to show which role each link fills, not to merge the links. When two rows look like a duplicate, check whether the source holds two distinct references before assuming that a join collapsed them.
+
+### A pipeline can keep a distinction its consumer discards
+
+`effect_facts_json` carries a `source` field naming the game field that produced each fact. `Ardenfall/Item/SlateSpellItemData.cs` declares `spellData` and `secondarySpellData`, `Ardenfall/Item/ConsumableItemData.cs` declares `statusEffects`, `Ardenfall/Item/ThrowingPotionData.cs` declares `areaOfEffect`, and `Ardenfall/Item/BowItemData.cs`, `Ardenfall/Item/MeleeItemData.cs` and `Ardenfall/Item/ThrowingItemData.cs` declare `bleedStatusEffect`. Five source values reach the shipped release: `spellDataJson` **266**, `secondarySpellDataJson` **20**, `statusEffectsJson` **50**, `areaOfEffectJson` **195** and `bleedStatusEffectJson` **21**.
+
+`mod/src/Entities/Item/ItemPresentationBuilder.cs:162-169` preserves those five source values. `site/src/lib/components/items/ItemEffectList.svelte` rendered only `effectKindLabel(effect.kind)`, so the five roles collapsed into the two coarse labels `Spell` and `Status effect`. The `casts` and `applies` edges also recorded a single generic source in `evidence_json`, including `items.spellRef` for both spell links, so the graph lost the role distinction that the presentation row retained. Extraction was right and presentation was lossy. This is the opposite of a source extraction failure and is worth naming as its own shape.
+
+### Open observation: named-asset disambiguators expose authoring identifiers
+
+`mod/src/Walker/NamedAssetIdentity.cs:3-15` builds identities from an entity type and the asset name. `pipeline/src/slug/derive-slug.ts:10-29` derives the disambiguator from that asset name, while lookup and record identities derive an eight-character hexadecimal id. In the shipped release, **108** character labels and **4** spell labels expose internal authoring identifiers such as `spell-blood-explosion` and `preset-enemy-looter-spell-far`. Every other entity type uses an eight-character hexadecimal id.
+
+This is inconsistent. For characters, the asset name is currently the only text distinguishing **212** identically titled pages. Whether character definitions should have public pages remains an open maintainer decision, and this disambiguator behaviour is part of that question. The evidence is recorded here without choosing a route or naming policy.
+
 ## What the fixes measured
 
 Verified against a live export rather than the fixture.
