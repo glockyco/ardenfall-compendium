@@ -172,6 +172,57 @@ describe("potion recipes and enchantments", () => {
       enchantment: "Applied by enchantments",
     });
   });
+
+  it("omits a product it cannot resolve rather than publishing an empty slot", () => {
+    const db = new Database(":memory:");
+    db.exec(POTION_RECIPE_DDL);
+    db.exec(ENTITY_GRAPH_DDL);
+    seedNode(db, "item", "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000", "Drink", "/items/item-a");
+    canonicalisePotionRecipes(db, {
+      entityId: "potion-recipe",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "638932f242126f24a801724271ae6714.11400000",
+          fields: {
+            id: "638932f242126f24a801724271ae6714.11400000",
+            recipeName: "Recipe A",
+            lockedByDefault: false,
+            enableSkillRequirement: false,
+            skillRequirement: 0,
+            levelModifier: 0,
+            successModifier: 0,
+            ingredients: [],
+            // The live game holds a recipe with an empty product slot. Publishing it as a
+            // row of nulls is what broke a production deploy.
+            producedRefs: [
+              {
+                ref: { kind: "lookupAsset", guid: "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000" },
+                form: "drinkable",
+              },
+              { ref: { kind: "missing", reason: "recipeProductMissing" }, form: "drinkable" },
+            ],
+          },
+        },
+      ],
+    });
+
+    const diagnostics = emitPotionRecipeReadModels(db, "/potion-recipes");
+
+    const products = JSON.parse(
+      db
+        .query<{ products_json: string }, []>(
+          "SELECT products_json FROM potion_recipe_presentation_rows",
+        )
+        .get()!.products_json,
+    ) as { itemId: string | null }[];
+    expect(products).toHaveLength(1);
+    expect(products[0]?.itemId).toBe("c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000");
+    expect(diagnostics).toEqual([
+      expect.objectContaining({ code: "potionRecipeReferenceUnresolved" }),
+    ]);
+    db.close();
+  });
 });
 
 function seedNode(

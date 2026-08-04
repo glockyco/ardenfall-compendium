@@ -131,7 +131,7 @@ export function emitEnchantmentReadModels(
         const ref = parseRef(item.item_ref_json);
         const targetId = resolveRef(ref, "item");
         const target = targetId === null ? undefined : nodes.get(`item:${targetId}`);
-        if (targetId === null || !target)
+        if (targetId === null || !target) {
           diagnostics.push(
             unresolvedDiagnostic(
               row.id,
@@ -140,23 +140,24 @@ export function emitEnchantmentReadModels(
               "enchantment_items.item_ref_json",
             ),
           );
-        else
-          edgeInsert.run(
-            `${row.id}:enchants:item:${targetId}`,
-            "enchantment",
-            row.id,
-            "item",
-            targetId,
-            "enchants",
-            "Can enchant",
-            1,
-            JSON.stringify({ source: "enchantment_items", ordinal: item.item_ordinal }),
-            null,
-          );
+          continue;
+        }
+        edgeInsert.run(
+          `${row.id}:enchants:item:${targetId}`,
+          "enchantment",
+          row.id,
+          "item",
+          targetId,
+          "enchants",
+          "Can enchant",
+          1,
+          JSON.stringify({ source: "enchantment_items", ordinal: item.item_ordinal }),
+          null,
+        );
         appliesToItemRefs.push({
           itemId: targetId,
-          itemLabel: target?.label ?? null,
-          itemRoutePath: target?.route_path ?? null,
+          itemLabel: target.label,
+          itemRoutePath: target.route_path,
         });
       }
       const effects: EffectPresentation[] = [];

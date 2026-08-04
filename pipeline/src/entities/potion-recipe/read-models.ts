@@ -158,28 +158,28 @@ export function emitPotionRecipeReadModels(
               "potion_recipe_ingredients.tag_ref_json",
             ),
           );
-        } else {
-          edgeInsert.run(
-            `${row.id}:requires_tag:item-tag:${targetId}`,
-            "potion-recipe",
-            row.id,
-            "item-tag",
-            targetId,
-            "requires_tag",
-            "Ingredients",
-            ingredient.count,
-            JSON.stringify({
-              source: "potion_recipe_ingredients",
-              ordinal: ingredient.ingredient_ordinal,
-              count: ingredient.count,
-            }),
-            null,
-          );
+          continue;
         }
+        edgeInsert.run(
+          `${row.id}:requires_tag:item-tag:${targetId}`,
+          "potion-recipe",
+          row.id,
+          "item-tag",
+          targetId,
+          "requires_tag",
+          "Ingredients",
+          ingredient.count,
+          JSON.stringify({
+            source: "potion_recipe_ingredients",
+            ordinal: ingredient.ingredient_ordinal,
+            count: ingredient.count,
+          }),
+          null,
+        );
         ingredients.push({
           tagId: targetId,
-          tagLabel: target?.label ?? null,
-          tagRoutePath: target?.route_path ?? null,
+          tagLabel: target.label,
+          tagRoutePath: target.route_path,
           count: ingredient.count,
         });
       }
@@ -188,7 +188,7 @@ export function emitPotionRecipeReadModels(
         const ref = parseRef(product.item_ref_json);
         const targetId = resolveRef(ref, "item");
         const target = targetId === null ? undefined : nodes.get(`item:${targetId}`);
-        if (targetId === null || !target)
+        if (targetId === null || !target) {
           diagnostics.push(
             unresolvedDiagnostic(
               row.id,
@@ -197,27 +197,28 @@ export function emitPotionRecipeReadModels(
               "potion_recipe_products.item_ref_json",
             ),
           );
-        else
-          edgeInsert.run(
-            `${row.id}:brews_into:item:${targetId}`,
-            "potion-recipe",
-            row.id,
-            "item",
-            targetId,
-            "brews_into",
-            "Produces",
-            1,
-            JSON.stringify({
-              source: "potion_recipe_products",
-              ordinal: product.product_ordinal,
-              form: product.form,
-            }),
-            null,
-          );
+          continue;
+        }
+        edgeInsert.run(
+          `${row.id}:brews_into:item:${targetId}`,
+          "potion-recipe",
+          row.id,
+          "item",
+          targetId,
+          "brews_into",
+          "Produces",
+          1,
+          JSON.stringify({
+            source: "potion_recipe_products",
+            ordinal: product.product_ordinal,
+            form: product.form,
+          }),
+          null,
+        );
         producedRefs.push({
           itemId: targetId,
-          itemLabel: target?.label ?? null,
-          itemRoutePath: target?.route_path ?? null,
+          itemLabel: target.label,
+          itemRoutePath: target.route_path,
           form: product.form === "throwing" ? "throwing" : "drinkable",
         });
       }

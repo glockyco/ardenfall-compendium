@@ -13,20 +13,43 @@
         "levelModifier": 1.25,
         "successModifier": 0.75,
         "ingredients": [
-          { "tagRef": { "kind": "lookupAsset", "guid": "7a600002.fixture-tag-rare" }, "count": 2 },
           {
-            "tagRef": { "kind": "lookupAsset", "guid": "7a600001.fixture-tag-valuable-remedy" },
+            "tagRef": {
+              "kind": "lookupAsset",
+              "guid": "7a600002.fixture-tag-rare"
+            },
+            "count": 2
+          },
+          {
+            "tagRef": {
+              "kind": "lookupAsset",
+              "guid": "7a600001.fixture-tag-valuable-remedy"
+            },
             "count": 1
           }
         ],
         "producedRefs": [
           {
-            "ref": { "kind": "lookupAsset", "guid": "6a71c0de.fixture-stamina-draught" },
+            "ref": {
+              "kind": "lookupAsset",
+              "guid": "6a71c0de.fixture-stamina-draught"
+            },
             "form": "drinkable"
           },
           {
-            "ref": { "kind": "lookupAsset", "guid": "8c0ffee0.fixture-throwing-potion" },
+            "ref": {
+              "kind": "lookupAsset",
+              "guid": "8c0ffee0.fixture-throwing-potion"
+            },
             "form": "throwing"
+          },
+          {
+            "ref": {
+              "kind": "missing",
+              "reason": "recipeProductMissing",
+              "source": "PotionRecipe.drinkablePotions"
+            },
+            "form": "drinkable"
           }
         ]
       }
