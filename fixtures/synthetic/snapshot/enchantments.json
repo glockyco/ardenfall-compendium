@@ -1,0 +1,39 @@
+{
+  "entityId": "enchantment",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "a6000001.fixture-enchantment-burning",
+      "fields": {
+        "id": "a6000001.fixture-enchantment-burning",
+        "enchantmentName": "Burning Edge",
+        "moneyValue": 42.5,
+        "hideEffectTooltips": false,
+        "appliesToItemRefs": [{ "kind": "lookupAsset", "guid": "4ed20218.fixture-iron-sword" }],
+        "effects": [
+          {
+            "ordinal": 0,
+            "kind": "StatusEffectEnchantmentEffect",
+            "statusEffectRef": {
+              "kind": "lookupAsset",
+              "guid": "91a00002.fixture-status-effect-burning"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "a6000002.fixture-enchantment-particle",
+      "fields": {
+        "id": "a6000002.fixture-enchantment-particle",
+        "enchantmentName": "Silent Particle",
+        "moneyValue": 12,
+        "hideEffectTooltips": true,
+        "appliesToItemRefs": [],
+        "effects": [
+          { "ordinal": 0, "kind": "MeleeParticleEchantmentEffect", "statusEffectRef": null }
+        ]
+      }
+    }
+  ]
+}

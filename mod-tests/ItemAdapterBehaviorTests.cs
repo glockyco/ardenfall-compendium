@@ -180,23 +180,6 @@ public sealed class ItemAdapterBehaviorTests
     }
 
     [Fact]
-    public void PotionRecipeSnapshotDoesNotReadRecipeNameWhenInvalid()
-    {
-        var recipe = (PotionRecipe)RuntimeHelpers.GetUninitializedObject(typeof(PotionRecipe));
-        recipe.drinkablePotions = new List<ThrowingPotionData>();
-        recipe.throwingPotions = new List<ThrowingPotionData>();
-        recipe.recipe = new List<RecipeItem>();
-
-        var dto = ItemAdapterHelpers.SnapshotPotionRecipe(recipe, refs: null, rowId: "fixture");
-        Assert.NotNull(dto);
-
-        Assert.False(dto.IsValid);
-        Assert.False(dto.HasDrinkingPotions);
-        Assert.False(dto.HasThrowingPotions);
-        Assert.Null(dto.RecipeName);
-    }
-
-    [Fact]
     public void LeveledSpellSnapshotUsesBehaviorDerivedSecondaryLevel()
     {
         var spell = (SpellData)RuntimeHelpers.GetUninitializedObject(typeof(SpellData));

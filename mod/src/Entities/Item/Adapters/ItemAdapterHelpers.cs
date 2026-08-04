@@ -32,24 +32,6 @@ public sealed record NoteSectionSnapshot(
     [property: JsonProperty("imageRef")] SnapshotRef? ImageRef,
     [property: JsonProperty("separator")] bool Separator);
 
-public sealed record RecipeIngredientSnapshot(
-    [property: JsonProperty("tagRef")] SnapshotRef? TagRef,
-    [property: JsonProperty("count")] int Count);
-
-public sealed record PotionRecipeSnapshot(
-    [property: JsonProperty("recipeName")] string? RecipeName,
-    [property: JsonProperty("isValid")] bool IsValid,
-    [property: JsonProperty("hasDrinkingPotions")] bool HasDrinkingPotions,
-    [property: JsonProperty("hasThrowingPotions")] bool HasThrowingPotions,
-    [property: JsonProperty("lockedByDefault")] bool LockedByDefault,
-    [property: JsonProperty("enableSkillRequirement")] bool EnableSkillRequirement,
-    [property: JsonProperty("skillRequirement")] int SkillRequirement,
-    [property: JsonProperty("levelModifier")] float LevelModifier,
-    [property: JsonProperty("successModifier")] float SuccessModifier,
-    [property: JsonProperty("ingredients")] List<RecipeIngredientSnapshot> Ingredients,
-    [property: JsonProperty("drinkablePotionRefs")] List<SnapshotRef?> DrinkablePotionRefs,
-    [property: JsonProperty("throwingPotionRefs")] List<SnapshotRef?> ThrowingPotionRefs);
-
 public sealed record ColorSnapshot(
     [property: JsonProperty("r")] float R,
     [property: JsonProperty("g")] float G,
@@ -152,49 +134,6 @@ public static class ItemAdapterHelpers
         return snapshots;
     }
 
-    public static PotionRecipeSnapshot? SnapshotPotionRecipe(PotionRecipe? recipe, RefResolver? refs, string rowId)
-    {
-        if (ReferenceEquals(recipe, null)) return null;
-
-        var hasDrinkingPotions = recipe.HasDrinkingPotions;
-        var hasThrowingPotions = recipe.HasThrowingPotions;
-        var hasPotionNameSource = HasPotionNameSource(recipe);
-        var isValid = recipe.IsValid && hasPotionNameSource;
-        var recipeName = isValid ? recipe.RecipeName : null;
-
-        return new PotionRecipeSnapshot(
-            recipeName,
-            isValid,
-            hasDrinkingPotions,
-            hasThrowingPotions,
-            recipe.lockedByDefault,
-            recipe.enableSkillRequirement,
-            recipe.skillRequirement,
-            recipe.levelModifier,
-            recipe.successModifier,
-            SnapshotRecipeIngredients(recipe.recipe, refs, rowId),
-            SnapshotRefs(recipe.drinkablePotions, refs, "drinkablePotionRefs", rowId, "PotionRecipe.drinkablePotions"),
-            SnapshotRefs(recipe.throwingPotions, refs, "throwingPotionRefs", rowId, "PotionRecipe.throwingPotions"));
-    }
-
-    public static List<RecipeIngredientSnapshot> SnapshotRecipeIngredients(List<RecipeItem>? ingredients, RefResolver? refs, string rowId)
-    {
-        var snapshots = new List<RecipeIngredientSnapshot>();
-        if (ingredients == null) return snapshots;
-        foreach (var ingredient in ingredients)
-        {
-            if (ingredient == null) continue;
-            snapshots.Add(new RecipeIngredientSnapshot(
-                ResolveOptionalAsset(refs, ingredient.tag, "ingredientTagRef", rowId, "RecipeItem.tag"),
-                ingredient.count));
-        }
-        return snapshots;
-    }
-
-    private static bool HasPotionNameSource(PotionRecipe recipe) =>
-        (recipe.drinkablePotions != null && recipe.drinkablePotions.Count > 0 && !ReferenceEquals(recipe.drinkablePotions[0], null)) ||
-        (recipe.throwingPotions != null && recipe.throwingPotions.Count > 0 && !ReferenceEquals(recipe.throwingPotions[0], null));
-
     public static List<NoteSectionSnapshot> SnapshotNoteSections(NoteItem.NoteContents? contents, RefResolver? refs, string rowId)
     {
         var snapshots = new List<NoteSectionSnapshot>();
@@ -274,17 +213,6 @@ public static class ItemAdapterHelpers
                 }
             }
             snapshots.Add(new SubSpellSnapshot(subSpell.name, effectNames));
-        }
-        return snapshots;
-    }
-    public static List<SnapshotRef?> SnapshotRefs<T>(List<T>? assets, RefResolver? refs, string field, string rowId, string source)
-        where T : Object
-    {
-        var snapshots = new List<SnapshotRef?>();
-        if (assets == null) return snapshots;
-        foreach (var asset in assets)
-        {
-            snapshots.Add(ResolveOptionalAsset(refs, asset, field, rowId, source));
         }
         return snapshots;
     }

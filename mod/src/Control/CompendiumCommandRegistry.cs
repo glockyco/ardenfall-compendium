@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using HotRepl.Control;
 using ArdenfallCompendium.Entities.Item;
+using ArdenfallCompendium.Entities.Enchantment;
+using ArdenfallCompendium.Entities.PotionRecipe;
 using ArdenfallCompendium.Entities.StatType;
 using ArdenfallCompendium.Entities.Spell;
 using ArdenfallCompendium.Entities.StatusEffect;
@@ -26,6 +28,8 @@ public sealed class CompendiumCommandRegistry : IDisposable
         var items = new ItemExtractionService(new BuiltLookupTableItemAssetSource());
         var statTypes = new StatTypeExtractionService(new LoadedStatTypeAssetSource());
         var spells = new SpellExtractionService(new LoadedSpellAssetSource());
+        var potionRecipes = new PotionRecipeExtractionService(new LoadedPotionRecipeAssetSource());
+        var enchantments = new EnchantmentExtractionService(new LoadedEnchantmentAssetSource());
         var statusEffects = new StatusEffectExtractionService(new BuiltLookupTableStatusEffectAssetSource());
         var itemCategories = new ItemCategoryExtractionService(new LoadedItemCategoryAssetSource());
         var itemTags = new ItemTagExtractionService(new BuiltLookupTableItemTagAssetSource());
@@ -43,13 +47,14 @@ public sealed class CompendiumCommandRegistry : IDisposable
         Register(new Handlers.RunStatusCommand(runs));
         Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs, items));
-        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals, factions: factions, npcs: npcs, quests: quests));
+        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, potionRecipes: potionRecipes, enchantments: enchantments, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals, factions: factions, npcs: npcs, quests: quests));
         Register(new Handlers.RunDiscardCommand(runs, new IExtractionCache[]
         {
             items,
             statTypes,
             spells,
-            statusEffects,
+            potionRecipes,
+            enchantments,
             itemCategories,
             itemTags,
             locations,

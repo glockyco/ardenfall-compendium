@@ -22,7 +22,9 @@
     "Character fixture rows for drops, empty drops, unresolved drop references, and starting factions",
     "Faction fixture rows for titled and untitled factions and both relationship shapes",
     "NPC fixture rows for one location, two locations, no locations, and no character reference",
-    "Quest fixture rows for stable child ordinals, all reward kinds, counted item rewards, character links, and disabled retention"
+    "Quest fixture rows for stable child ordinals, all reward kinds, counted item rewards, character links, and disabled retention",
+    "Potion recipe rows for ordered tag ingredients, drinkable and throwing products, and no ingredients",
+    "Enchantment rows for status effect and non-status effect kinds, plus an enchantment with no applicable items"
   ],
   "selection": [
     {
@@ -90,9 +92,14 @@
       "rationale": "one containing location, two containing locations, no containing locations, and missing character reference"
     },
     {
-      "entity": "quest",
-      "ids": ["named;quest;quest_supply-run", "named;quest;quest_disabled-test"],
-      "rationale": "two phases with objectives and all reward kinds, including single and multi-count item rewards, plus a disabled quest with no rewards"
+      "entity": "potion-recipe",
+      "ids": ["a5000001.fixture-recipe-mixed", "a5000002.fixture-recipe-empty"],
+      "rationale": "ordered tag ingredients with drinkable and throwing products, plus a recipe with no ingredients"
+    },
+    {
+      "entity": "enchantment",
+      "ids": ["a6000001.fixture-enchantment-burning", "a6000002.fixture-enchantment-particle"],
+      "rationale": "status effect and non-status effect kinds, plus an enchantment applying to no items"
     }
   ],
   "scrubbing": "synthetic; no scrubbing required",
@@ -100,7 +107,9 @@
   "hashes": {
     "snapshot/spells.json": "4008d7c3dd28d2237b1f5de8cf3580152e11b4509bbe87ae56856307ffdc6f6f",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
-    "snapshot/manifest.json": "6431b607ed96030d25f14af37462823eccaec6184bd701617f43e124406e92cc",
+    "snapshot/manifest.json": "5ffba6253f7d4adca2a7732f9ae3276a3c81d6623f3fa716e6f68226ab044c79",
+    "snapshot/potion-recipes.json": "cff273ca07a0c85fa0fb42cd56ed414ae00f8a71068506f3baced9bae06e5d7e",
+    "snapshot/enchantments.json": "ec4d185fc9ce27d58ae6a0018e67cd069ccaf0e8ab03475b5e48f534e2eb8597",
     "snapshot/items.json": "f85e557abf2e9c6a9be4ffdf5062576db83769328d302eac55bc408244719cde",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",

@@ -1,0 +1,49 @@
+{
+  "entityId": "potion-recipe",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "a5000001.fixture-recipe-mixed",
+      "fields": {
+        "id": "a5000001.fixture-recipe-mixed",
+        "recipeName": "Mixed Draught",
+        "lockedByDefault": true,
+        "enableSkillRequirement": true,
+        "skillRequirement": 4,
+        "levelModifier": 1.25,
+        "successModifier": 0.75,
+        "ingredients": [
+          { "tagRef": { "kind": "lookupAsset", "guid": "7a600002.fixture-tag-rare" }, "count": 2 },
+          {
+            "tagRef": { "kind": "lookupAsset", "guid": "7a600001.fixture-tag-valuable-remedy" },
+            "count": 1
+          }
+        ],
+        "producedRefs": [
+          {
+            "ref": { "kind": "lookupAsset", "guid": "6a71c0de.fixture-stamina-draught" },
+            "form": "drinkable"
+          },
+          {
+            "ref": { "kind": "lookupAsset", "guid": "8c0ffee0.fixture-throwing-potion" },
+            "form": "throwing"
+          }
+        ]
+      }
+    },
+    {
+      "id": "a5000002.fixture-recipe-empty",
+      "fields": {
+        "id": "a5000002.fixture-recipe-empty",
+        "recipeName": "Empty Recipe",
+        "lockedByDefault": false,
+        "enableSkillRequirement": false,
+        "skillRequirement": 0,
+        "levelModifier": 0,
+        "successModifier": 0,
+        "ingredients": [],
+        "producedRefs": []
+      }
+    }
+  ]
+}

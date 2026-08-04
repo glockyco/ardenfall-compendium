@@ -3,7 +3,7 @@
   "variantId": "potion-recipe",
   "label": "Potion recipe",
   "unityType": "Ardenfall.Item.PotionRecipeItemData",
-  "canonicalTable": "item_potion_recipes",
+  "canonicalTable": "item_potion_recipe_refs",
   "parentVariantId": "basic",
   "position": 50,
   "fields": [
@@ -11,79 +11,8 @@
       "name": "recipeRef",
       "type": "ref:asset",
       "from": "recipe.Get()",
-      "missingPolicy": "optional-empty"
-    },
-    {
-      "name": "recipeName",
-      "type": "string",
-      "from": "recipe.Get().RecipeName",
-      "missingPolicy": "optional-empty"
-    },
-    {
-      "name": "isValid",
-      "type": "boolean",
-      "from": "recipe.Get().IsValid",
-      "missingPolicy": "diagnostic"
-    },
-    {
-      "name": "hasDrinkingPotions",
-      "type": "boolean",
-      "from": "recipe.Get().HasDrinkingPotions",
-      "missingPolicy": "diagnostic"
-    },
-    {
-      "name": "hasThrowingPotions",
-      "type": "boolean",
-      "from": "recipe.Get().HasThrowingPotions",
-      "missingPolicy": "diagnostic"
-    },
-    {
-      "name": "lockedByDefault",
-      "type": "boolean",
-      "from": "recipe.Get().lockedByDefault",
-      "missingPolicy": "diagnostic"
-    },
-    {
-      "name": "enableSkillRequirement",
-      "type": "boolean",
-      "from": "recipe.Get().enableSkillRequirement",
-      "missingPolicy": "diagnostic"
-    },
-    {
-      "name": "skillRequirement",
-      "type": "integer",
-      "from": "recipe.Get().skillRequirement",
-      "missingPolicy": "diagnostic"
-    },
-    {
-      "name": "levelModifier",
-      "type": "number",
-      "from": "recipe.Get().levelModifier",
-      "missingPolicy": "diagnostic"
-    },
-    {
-      "name": "successModifier",
-      "type": "number",
-      "from": "recipe.Get().successModifier",
-      "missingPolicy": "diagnostic"
-    },
-    {
-      "name": "ingredientsJson",
-      "type": "json",
-      "from": "recipe.Get().recipe",
-      "missingPolicy": "optional-empty"
-    },
-    {
-      "name": "drinkablePotionRefsJson",
-      "type": "json",
-      "from": "recipe.Get().drinkablePotions",
-      "missingPolicy": "optional-empty"
-    },
-    {
-      "name": "throwingPotionRefsJson",
-      "type": "json",
-      "from": "recipe.Get().throwingPotions",
-      "missingPolicy": "optional-empty"
+      "missingPolicy": "optional-empty",
+      "column": "recipe_ref_json"
     }
   ]
 }

@@ -1,0 +1,76 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "potion-recipe",
+  "kind": "definition",
+  "label": { "singular": "Potion recipe", "plural": "Potion recipes" },
+  "extraction": {
+    "source": "lookupAsset",
+    "root": "Resources.FindObjectsOfTypeAll<Ardenfall.Item.PotionRecipe>",
+    "walker": "PotionRecipeExtractor"
+  },
+  "canonicalTable": "potion_recipes",
+  "presentationContext": { "renderContext": "potion-recipe-presentation-v1" },
+  "site": { "route": "/potion-recipes" },
+  "fields": [
+    { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
+    {
+      "name": "recipeName",
+      "type": "string",
+      "from": "RecipeName",
+      "missingPolicy": "diagnostic",
+      "column": "recipe_name"
+    },
+    {
+      "name": "lockedByDefault",
+      "type": "boolean",
+      "from": "lockedByDefault",
+      "missingPolicy": "diagnostic",
+      "column": "locked_by_default"
+    },
+    {
+      "name": "enableSkillRequirement",
+      "type": "boolean",
+      "from": "enableSkillRequirement",
+      "missingPolicy": "diagnostic",
+      "column": "enable_skill_requirement"
+    },
+    {
+      "name": "skillRequirement",
+      "type": "integer",
+      "from": "skillRequirement",
+      "missingPolicy": "diagnostic",
+      "column": "skill_requirement"
+    },
+    {
+      "name": "levelModifier",
+      "type": "number",
+      "from": "levelModifier",
+      "missingPolicy": "diagnostic",
+      "column": "level_modifier"
+    },
+    {
+      "name": "successModifier",
+      "type": "number",
+      "from": "successModifier",
+      "missingPolicy": "diagnostic",
+      "column": "success_modifier"
+    },
+    {
+      "name": "ingredients",
+      "type": "json",
+      "from": "recipe",
+      "storage": "unstored",
+      "reason": "Expanded into potion_recipe_ingredients rows.",
+      "projects": "potion_recipe_ingredients"
+    },
+    {
+      "name": "producedRefs",
+      "type": "json",
+      "from": "drinkablePotions and throwingPotions",
+      "storage": "unstored",
+      "reason": "Expanded into potion_recipe_products rows with a product form.",
+      "projects": "potion_recipe_products"
+    }
+  ],
+  "map": null
+}

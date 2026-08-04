@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Ardenfall;
 using Ardenfall.Item;
 using ArdenfallCompendium.Dtos;
+using ArdenfallPotionRecipe = Ardenfall.Item.PotionRecipe;
 using ArdenfallCompendium.Walker;
 
 namespace ArdenfallCompendium.Entities.Item.Adapters;
@@ -193,7 +194,7 @@ public static class ExtractItem
         return (asset.GetItemName(), "GetItemName()");
     }
 
-    private static bool HasPotionNameSource(PotionRecipe recipe) =>
+    private static bool HasPotionNameSource(ArdenfallPotionRecipe recipe) =>
         (recipe.drinkablePotions != null && recipe.drinkablePotions.Count > 0 && !ReferenceEquals(recipe.drinkablePotions[0], null)) ||
         (recipe.throwingPotions != null && recipe.throwingPotions.Count > 0 && !ReferenceEquals(recipe.throwingPotions[0], null));
 }

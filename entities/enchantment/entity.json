@@ -1,0 +1,55 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "enchantment",
+  "kind": "definition",
+  "label": { "singular": "Enchantment", "plural": "Enchantments" },
+  "extraction": {
+    "source": "lookupAsset",
+    "root": "Resources.FindObjectsOfTypeAll<Ardenfall.Item.EnchantmentData>",
+    "walker": "EnchantmentExtractor"
+  },
+  "canonicalTable": "enchantments",
+  "presentationContext": { "renderContext": "enchantment-presentation-v1" },
+  "site": { "route": "/enchantments" },
+  "fields": [
+    { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
+    {
+      "name": "enchantmentName",
+      "type": "string",
+      "from": "enchantmentName",
+      "missingPolicy": "diagnostic",
+      "column": "enchantment_name"
+    },
+    {
+      "name": "moneyValue",
+      "type": "number",
+      "from": "moneyValue",
+      "missingPolicy": "diagnostic",
+      "column": "money_value"
+    },
+    {
+      "name": "hideEffectTooltips",
+      "type": "boolean",
+      "from": "hideEffectTooltips",
+      "missingPolicy": "diagnostic",
+      "column": "hide_effect_tooltips"
+    },
+    {
+      "name": "appliesToItemRefs",
+      "type": "json",
+      "from": "baseItemDataFilterWhitelist",
+      "storage": "unstored",
+      "reason": "Expanded into enchantment_items rows.",
+      "projects": "enchantment_items"
+    },
+    {
+      "name": "effects",
+      "type": "json",
+      "from": "effects",
+      "storage": "unstored",
+      "reason": "Expanded into enchantment_effects rows. Only status effect references are extracted. Other concrete effect kinds are retained by kind with unextracted payloads.",
+      "projects": "enchantment_effects"
+    }
+  ],
+  "map": null
+}

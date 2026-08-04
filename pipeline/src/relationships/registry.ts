@@ -39,6 +39,7 @@ export const relationshipRegistry = {
     inverseTitle: {
       item: "Applied by items",
       spell: "Applied by spells",
+      enchantment: "Applied by enchantments",
     },
     sortOrder: 40,
   },
@@ -98,6 +99,21 @@ export const relationshipRegistry = {
     forwardTitle: "Item rewards",
     inverseTitle: "Rewarded by quests",
     sortOrder: 130,
+  },
+  brews_into: {
+    forwardTitle: "Produces",
+    inverseTitle: "Brewed by",
+    sortOrder: 135,
+  },
+  requires_tag: {
+    forwardTitle: "Ingredients",
+    inverseTitle: "Used in recipes",
+    sortOrder: 136,
+  },
+  enchants: {
+    forwardTitle: "Can enchant",
+    inverseTitle: "Enchantments",
+    sortOrder: 137,
   },
 } satisfies Record<string, RelationshipDescriptor>;
 

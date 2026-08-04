@@ -14,6 +14,8 @@ import {
   listItemTags,
   listItemsOverview,
   listSpells,
+  listPotionRecipes,
+  listEnchantments,
   listStatTypes,
   listStatusEffects,
 } from "$lib/server/read-models";
@@ -52,6 +54,8 @@ export interface SiteChrome {
   mapRoute: string;
   itemRoute: string;
   spellRoute: string;
+  potionRecipeRoute: string;
+  enchantmentRoute: string;
   questRoute: string;
   statusEffectRoute: string;
   statTypeRoute: string;
@@ -193,6 +197,8 @@ function mapSection(): NavSection {
 function buildLayoutData(): SiteChrome {
   const item = entitySection("item", listItemsOverview().length);
   const spell = entitySection("spell", listSpells().length);
+  const potionRecipe = entitySection("potion-recipe", listPotionRecipes().length);
+  const enchantment = entitySection("enchantment", listEnchantments().length);
   const quest = entitySection("quest", listQuests().length);
   const statusEffect = entitySection("status-effect", listStatusEffects().length);
   const statType = entitySection("stat-type", listStatTypes().length);
@@ -209,6 +215,8 @@ function buildLayoutData(): SiteChrome {
     sections: [
       item,
       spell,
+      potionRecipe,
+      enchantment,
       quest,
       statusEffect,
       statType,
@@ -225,6 +233,8 @@ function buildLayoutData(): SiteChrome {
     mapRoute: map.href,
     itemRoute: item.href,
     spellRoute: spell.href,
+    potionRecipeRoute: potionRecipe.href,
+    enchantmentRoute: enchantment.href,
     questRoute: quest.href,
     statusEffectRoute: statusEffect.href,
     statTypeRoute: statType.href,

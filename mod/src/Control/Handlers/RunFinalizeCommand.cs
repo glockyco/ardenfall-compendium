@@ -11,6 +11,8 @@ using ArdenfallCompendium.Control.Results;
 using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Emit;
 using ArdenfallCompendium.Entities.Item;
+using ArdenfallCompendium.Entities.Enchantment;
+using ArdenfallCompendium.Entities.PotionRecipe;
 using ArdenfallCompendium.Entities.ItemCategory;
 using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.StatType;
@@ -38,6 +40,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     private readonly IItemExtractionCache _items;
     private readonly IStatTypeExtractionCache _statTypes;
     private readonly ISpellExtractionCache _spells;
+    private readonly IPotionRecipeExtractionCache _potionRecipes;
+    private readonly IEnchantmentExtractionCache _enchantments;
     private readonly IStatusEffectExtractionCache _statusEffects;
     private readonly IItemCategoryExtractionCache _itemCategories;
     private readonly IItemTagExtractionCache _itemTags;
@@ -65,16 +69,19 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         IFactionExtractionCache factions,
         INpcExtractionCache npcs,
         IQuestExtractionCache quests,
+        IPotionRecipeExtractionCache? potionRecipes = null,
+        IEnchantmentExtractionCache? enchantments = null,
         Func<PreflightReport>? preflight = null
     )
     {
         _runs = runs;
         _items = items;
-        // Every extraction source is required. A defaulted live service here would
-        // let a wiring mistake compile, and would silently construct Unity sources
-        // inside tests that meant to pass a fake.
+        // Production wiring always supplies both authored asset sources. Empty caches keep
+        // older command callers focused on their existing assertions.
         _statTypes = statTypes;
         _spells = spells;
+        _potionRecipes = potionRecipes ?? EmptyPotionRecipeExtractionCache.Instance;
+        _enchantments = enchantments ?? EmptyEnchantmentExtractionCache.Instance;
         _characters = characters;
         _statusEffects = statusEffects;
         _itemCategories = itemCategories;
@@ -183,6 +190,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             var statTypeAssetPlan = _statTypes.GetAssetPlan(run);
             var spellRows = _spells.GetOrExtract(run).ToList();
             var spellAssetPlan = _spells.GetAssetPlan(run);
+            var potionRecipeRows = _potionRecipes.GetOrExtract(run).ToList();
+            var enchantmentRows = _enchantments.GetOrExtract(run).ToList();
             var characterRows = _characters.GetOrExtract(run).ToList();
             var statusEffectRows = _statusEffects.GetOrExtract(run).ToList();
             var statusEffectAssetPlan = _statusEffects.GetAssetPlan(run);
@@ -227,6 +236,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             WriteJson(stagingDir, "stat-types.json", statTypeEnvelope, hashes);
             var spellEnvelope = new SpellSnapshotEnvelope { Rows = spellRows };
             WriteJson(stagingDir, "spells.json", spellEnvelope, hashes);
+            var potionRecipeEnvelope = new PotionRecipeSnapshotEnvelope { Rows = potionRecipeRows };
+            WriteJson(stagingDir, "potionRecipes.json", potionRecipeEnvelope, hashes);
+            var enchantmentEnvelope = new EnchantmentSnapshotEnvelope { Rows = enchantmentRows };
+            WriteJson(stagingDir, "enchantments.json", enchantmentEnvelope, hashes);
             var characterEnvelope = new CharacterSnapshotEnvelope { Rows = characterRows };
             WriteJson(stagingDir, "characters.json", characterEnvelope, hashes);
             var statusEffectEnvelope = new StatusEffectSnapshotEnvelope { Rows = statusEffectRows };
@@ -269,6 +282,14 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
             foreach (var diagnostic in spellAssetPlan.Diagnostics)
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in _potionRecipes.GetWalkerDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
+            foreach (var diagnostic in _enchantments.GetWalkerDiagnostics(run))
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
             }
@@ -328,6 +349,20 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 }
             }
             foreach (var row in spellRows)
+            {
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
+            }
+            foreach (var row in potionRecipeRows)
+            {
+                foreach (var diagnostic in row.Diagnostics)
+                {
+                    AddDiagnostic(diagnosticTotals, diagnostics, row.Id, diagnostic);
+                }
+            }
+            foreach (var row in enchantmentRows)
             {
                 foreach (var diagnostic in row.Diagnostics)
                 {
@@ -411,6 +446,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["item"] = rows.Count,
                 ["stat-type"] = statTypeRows.Count,
                 ["spell"] = spellRows.Count,
+                ["potion-recipe"] = potionRecipeRows.Count,
+                ["enchantment"] = enchantmentRows.Count,
                 ["character"] = characterRows.Count,
                 ["status-effect"] = statusEffectRows.Count,
                 ["item-category"] = itemCategoryRows.Count,
@@ -445,6 +482,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             run.Counts["item"] = rows.Count;
             run.Counts["stat-type"] = statTypeRows.Count;
             run.Counts["spell"] = spellRows.Count;
+            run.Counts["potion-recipe"] = potionRecipeRows.Count;
+            run.Counts["enchantment"] = enchantmentRows.Count;
             run.Counts["character"] = characterRows.Count;
             run.Counts["status-effect"] = statusEffectRows.Count;
             run.Counts["item-category"] = itemCategoryRows.Count;
@@ -459,6 +498,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             _items.Evict(run);
             _statTypes.Evict(run);
             _spells.Evict(run);
+            _potionRecipes.Evict(run);
+            _enchantments.Evict(run);
             _characters.Evict(run);
             _statusEffects.Evict(run);
             _itemCategories.Evict(run);
@@ -485,6 +526,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["master-tooltip"] = CompendiumCommandResults.FileArtifact("master-tooltip", Path.Combine(publishedDir, "master-tooltip.json"), "application/json", hashes["master-tooltip.json"]),
                 ["stat-types"] = CompendiumCommandResults.FileArtifact("stat-types", Path.Combine(publishedDir, "stat-types.json"), "application/json", hashes["stat-types.json"]),
                 ["spells"] = CompendiumCommandResults.FileArtifact("spells", Path.Combine(publishedDir, "spells.json"), "application/json", hashes["spells.json"]),
+                ["potionRecipes"] = CompendiumCommandResults.FileArtifact("potionRecipes", Path.Combine(publishedDir, "potionRecipes.json"), "application/json", hashes["potionRecipes.json"]),
+                ["enchantments"] = CompendiumCommandResults.FileArtifact("enchantments", Path.Combine(publishedDir, "enchantments.json"), "application/json", hashes["enchantments.json"]),
                 ["status-effects"] = CompendiumCommandResults.FileArtifact("status-effects", Path.Combine(publishedDir, "status-effects.json"), "application/json", hashes["status-effects.json"]),
                 ["item-categories"] = CompendiumCommandResults.FileArtifact("item-categories", Path.Combine(publishedDir, "item-categories.json"), "application/json", hashes["item-categories.json"]),
                 ["item-tags"] = CompendiumCommandResults.FileArtifact("item-tags", Path.Combine(publishedDir, "item-tags.json"), "application/json", hashes["item-tags.json"]),
@@ -644,4 +687,21 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             }
         );
     }
+
+    private sealed class EmptyPotionRecipeExtractionCache : IPotionRecipeExtractionCache
+    {
+        public static readonly EmptyPotionRecipeExtractionCache Instance = new();
+        public IReadOnlyList<PotionRecipeSnapshotRow> GetOrExtract(CompendiumRun run) => Array.Empty<PotionRecipeSnapshotRow>();
+        public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => Array.Empty<Diagnostic>();
+        public void Evict(CompendiumRun run) { }
+    }
+
+    private sealed class EmptyEnchantmentExtractionCache : IEnchantmentExtractionCache
+    {
+        public static readonly EmptyEnchantmentExtractionCache Instance = new();
+        public IReadOnlyList<EnchantmentSnapshotRow> GetOrExtract(CompendiumRun run) => Array.Empty<EnchantmentSnapshotRow>();
+        public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => Array.Empty<Diagnostic>();
+        public void Evict(CompendiumRun run) { }
+    }
+
 }

@@ -108,6 +108,23 @@ export type {
 } from "./entities/quest";
 export { getQuestPresentation, listQuests } from "./entities/quest";
 
+export type {
+  PotionRecipeIngredient,
+  PotionRecipeOverviewRow,
+  PotionRecipePresentationRow,
+  PotionRecipeProduct,
+  PotionRecipeProductForm,
+} from "./entities/potion-recipe";
+export { getPotionRecipePresentation, listPotionRecipes } from "./entities/potion-recipe";
+
+export type {
+  EnchantmentEffect,
+  EnchantmentItemRef,
+  EnchantmentOverviewRow,
+  EnchantmentPresentationRow,
+} from "./entities/enchantment";
+export { getEnchantmentPresentation, listEnchantments } from "./entities/enchantment";
+
 export type { SpellOverviewRow, SpellPresentationRow } from "./entities/spell";
 export { getSpellPresentation, listSpells } from "./entities/spell";
 

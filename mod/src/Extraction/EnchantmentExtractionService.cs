@@ -1,0 +1,40 @@
+using System.Collections.Generic;
+using ArdenfallCompendium.Control;
+using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities.Enchantment;
+
+namespace ArdenfallCompendium.Extraction;
+
+public sealed class EnchantmentExtractionService : IEnchantmentExtractionCache
+{
+    private readonly IEnchantmentAssetSource _source;
+    private readonly Dictionary<string, ExtractionState> _byRun = new();
+
+    public EnchantmentExtractionService(IEnchantmentAssetSource source)
+    {
+        _source = source;
+    }
+
+    public IReadOnlyList<EnchantmentSnapshotRow> GetOrExtract(CompendiumRun run) => GetState(run).Rows;
+
+    public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => GetState(run).WalkerDiagnostics;
+
+    public void Evict(CompendiumRun run) => _byRun.Remove(run.RunId);
+
+    private ExtractionState GetState(CompendiumRun run)
+    {
+        if (_byRun.TryGetValue(run.RunId, out var state)) return state;
+
+        var extractor = new EnchantmentExtractor(_source);
+        var rows = new List<EnchantmentSnapshotRow>();
+        foreach (var row in extractor.Walk()) rows.Add(row);
+
+        state = new ExtractionState(rows, extractor.Diagnostics.AsReadOnly());
+        _byRun[run.RunId] = state;
+        return state;
+    }
+
+    private sealed record ExtractionState(
+        IReadOnlyList<EnchantmentSnapshotRow> Rows,
+        IReadOnlyList<Diagnostic> WalkerDiagnostics);
+}

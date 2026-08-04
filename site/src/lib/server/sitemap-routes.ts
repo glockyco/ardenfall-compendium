@@ -15,6 +15,8 @@ export const listingRoutePaths = [
   "/",
   "/items",
   "/spells",
+  "/potion-recipes",
+  "/enchantments",
   "/quests",
   "/status-effects",
   "/stats",

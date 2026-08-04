@@ -301,6 +301,7 @@ describe("relationship section projection", () => {
       inverseTitle: {
         item: "Applied by items",
         spell: "Applied by spells",
+        enchantment: "Applied by enchantments",
       },
       sortOrder: 40,
     });

@@ -374,6 +374,16 @@ export interface SpellSnapshotEffect {
   damageType?: string | null;
 }
 
+export interface PotionRecipeIngredientSnapshot {
+  tagRef: SnapshotRef;
+  count: number;
+}
+
+export interface PotionRecipeProductSnapshot {
+  ref: SnapshotRef;
+  form: "drinkable" | "throwing";
+}
+
 export interface SpellSnapshotFields {
   id: string;
   spellName: string | null;
@@ -383,6 +393,33 @@ export interface SpellSnapshotFields {
   tooltipSource?: string | null;
   iconRef?: SnapshotRef | null;
   spellEffects?: SpellSnapshotEffect[];
+}
+
+export interface PotionRecipeSnapshotFields {
+  id: string;
+  recipeName: string | null;
+  lockedByDefault: boolean | null;
+  enableSkillRequirement: boolean | null;
+  skillRequirement: number | null;
+  levelModifier: number | null;
+  successModifier: number | null;
+  ingredients: PotionRecipeIngredientSnapshot[];
+  producedRefs: PotionRecipeProductSnapshot[];
+}
+
+export interface EnchantmentEffectSnapshot {
+  ordinal: number;
+  kind: string;
+  statusEffectRef: SnapshotRef | null;
+}
+
+export interface EnchantmentSnapshotFields {
+  id: string;
+  enchantmentName: string | null;
+  moneyValue: number | null;
+  hideEffectTooltips: boolean | null;
+  appliesToItemRefs: SnapshotRef[];
+  effects: EnchantmentEffectSnapshot[];
 }
 
 export interface QuestObjectiveSnapshot {

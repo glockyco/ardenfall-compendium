@@ -1,0 +1,247 @@
+import type { Database } from "bun:sqlite";
+import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
+import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
+import type { SnapshotRef } from "../../types.ts";
+
+export const ENCHANTMENT_READ_MODEL_DDL = `
+CREATE TABLE enchantment_overview_rows (
+  id                    TEXT PRIMARY KEY,
+  name                  TEXT NOT NULL,
+  money_value           REAL,
+  hide_effect_tooltips  INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE enchantment_presentation_rows (
+  id                    TEXT PRIMARY KEY,
+  name                  TEXT NOT NULL,
+  render_context        TEXT NOT NULL,
+  money_value           REAL NOT NULL,
+  hide_effect_tooltips  INTEGER NOT NULL,
+  items_json            TEXT NOT NULL,
+  effects_json          TEXT NOT NULL
+);
+`;
+
+interface EnchantmentRow {
+  id: string;
+  enchantment_name: string | null;
+  money_value: number | null;
+  hide_effect_tooltips: number | null;
+}
+interface ItemRow {
+  enchantment_id: string;
+  item_ordinal: number;
+  item_ref_json: string;
+}
+interface EffectRow {
+  enchantment_id: string;
+  effect_ordinal: number;
+  kind: string;
+  status_effect_ref_json: string | null;
+}
+interface NodeRow {
+  label: string | null;
+  route_path: string | null;
+  has_page: number;
+}
+interface ItemPresentation {
+  itemId: string | null;
+  itemLabel: string | null;
+  itemRoutePath: string | null;
+}
+interface EffectPresentation {
+  ordinal: number;
+  kind: string;
+  statusEffectId: string | null;
+  statusEffectLabel: string | null;
+  statusEffectRoutePath: string | null;
+}
+
+export function emitEnchantmentReadModels(
+  db: Database,
+  routeBase = "/enchantments",
+): PipelineDiagnostic[] {
+  db.exec(ENCHANTMENT_READ_MODEL_DDL);
+  db.exec(ENTITY_GRAPH_DDL);
+  const overviewInsert = db.prepare(
+    `INSERT INTO enchantment_overview_rows (id, name, money_value, hide_effect_tooltips) VALUES (?, ?, ?, ?)`,
+  );
+  const presentationInsert = db.prepare(
+    `INSERT INTO enchantment_presentation_rows (
+       id, name, render_context, money_value, hide_effect_tooltips,
+       items_json, effects_json
+     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  );
+  const edgeInsert = db.prepare(
+    `INSERT OR IGNORE INTO entity_edges (
+       edge_id, source_type, source_id, target_type, target_id, predicate,
+       label, weight, evidence_json, anchor
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
+  const writeNode = prepareEntityNodeWriter(db);
+  const enchantments = db
+    .query<EnchantmentRow, []>(
+      `SELECT id, enchantment_name, money_value, hide_effect_tooltips
+     FROM enchantments ORDER BY COALESCE(NULLIF(TRIM(enchantment_name), ''), 'Unnamed enchantment'), id`,
+    )
+    .all();
+  const itemsByEnchantment = new Map<string, ItemRow[]>();
+  for (const row of db
+    .query<ItemRow, []>(
+      `SELECT enchantment_id, item_ordinal, item_ref_json FROM enchantment_items ORDER BY enchantment_id, item_ordinal`,
+    )
+    .all()) {
+    const rows = itemsByEnchantment.get(row.enchantment_id) ?? [];
+    rows.push(row);
+    itemsByEnchantment.set(row.enchantment_id, rows);
+  }
+  const effectsByEnchantment = new Map<string, EffectRow[]>();
+  for (const row of db
+    .query<EffectRow, []>(
+      `SELECT enchantment_id, effect_ordinal, kind, status_effect_ref_json FROM enchantment_effects ORDER BY enchantment_id, effect_ordinal`,
+    )
+    .all()) {
+    const rows = effectsByEnchantment.get(row.enchantment_id) ?? [];
+    rows.push(row);
+    effectsByEnchantment.set(row.enchantment_id, rows);
+  }
+  const nodes = new Map<string, NodeRow>();
+  for (const node of db
+    .query<NodeRow & { entity_type: string; entity_id: string }, []>(
+      `SELECT entity_type, entity_id, display_label AS label, route_path, has_page FROM entity_nodes`,
+    )
+    .all())
+    nodes.set(`${node.entity_type}:${node.entity_id}`, node);
+  const diagnostics: PipelineDiagnostic[] = [];
+  const tx = db.transaction(() => {
+    for (const row of enchantments) {
+      const name = row.enchantment_name?.trim() || "Unnamed enchantment";
+      overviewInsert.run(row.id, name, row.money_value, row.hide_effect_tooltips ?? 0);
+      const slug = deriveEntityNodeSlug(name, row.id);
+      writeNode({
+        entityType: "enchantment",
+        entityId: row.id,
+        label: name,
+        routePath: `${routeBase}/${slug.canonicalSlug}`,
+        canonicalSlug: slug.canonicalSlug,
+        shortId: slug.shortId,
+      });
+      const appliesToItemRefs: ItemPresentation[] = [];
+      for (const item of itemsByEnchantment.get(row.id) ?? []) {
+        const ref = parseRef(item.item_ref_json);
+        const targetId = resolveRef(ref, "item");
+        const target = targetId === null ? undefined : nodes.get(`item:${targetId}`);
+        if (targetId === null || !target)
+          diagnostics.push(
+            unresolvedDiagnostic(
+              row.id,
+              "item",
+              item.item_ref_json,
+              "enchantment_items.item_ref_json",
+            ),
+          );
+        else
+          edgeInsert.run(
+            `${row.id}:enchants:item:${targetId}`,
+            "enchantment",
+            row.id,
+            "item",
+            targetId,
+            "enchants",
+            "Can enchant",
+            1,
+            JSON.stringify({ source: "enchantment_items", ordinal: item.item_ordinal }),
+            null,
+          );
+        appliesToItemRefs.push({
+          itemId: targetId,
+          itemLabel: target?.label ?? null,
+          itemRoutePath: target?.route_path ?? null,
+        });
+      }
+      const effects: EffectPresentation[] = [];
+      for (const effect of effectsByEnchantment.get(row.id) ?? []) {
+        const ref = parseRef(effect.status_effect_ref_json);
+        const targetId = resolveRef(ref, "status-effect");
+        const target = targetId === null ? undefined : nodes.get(`status-effect:${targetId}`);
+        if (effect.status_effect_ref_json !== null && (targetId === null || !target))
+          diagnostics.push(
+            unresolvedDiagnostic(
+              row.id,
+              "status-effect",
+              effect.status_effect_ref_json,
+              "enchantment_effects.status_effect_ref_json",
+            ),
+          );
+        else if (targetId !== null && target)
+          edgeInsert.run(
+            `${row.id}:applies:status-effect:${targetId}`,
+            "enchantment",
+            row.id,
+            "status-effect",
+            targetId,
+            "applies",
+            "Applies",
+            1,
+            JSON.stringify({
+              source: "enchantment_effects",
+              ordinal: effect.effect_ordinal,
+              kind: effect.kind,
+            }),
+            null,
+          );
+        effects.push({
+          ordinal: effect.effect_ordinal,
+          kind: effect.kind,
+          statusEffectId: targetId,
+          statusEffectLabel: target?.label ?? null,
+          statusEffectRoutePath: target?.route_path ?? null,
+        });
+      }
+      presentationInsert.run(
+        row.id,
+        name,
+        "enchantment-presentation-v1",
+        row.money_value ?? 0,
+        row.hide_effect_tooltips ?? 0,
+        JSON.stringify(appliesToItemRefs),
+        JSON.stringify(effects),
+      );
+    }
+  });
+  tx();
+  return diagnostics;
+}
+
+function parseRef(value: string | null): SnapshotRef | null {
+  if (value === null) return null;
+  try {
+    const ref = JSON.parse(value) as SnapshotRef;
+    return typeof ref === "object" && ref !== null && typeof ref.kind === "string" ? ref : null;
+  } catch {
+    return null;
+  }
+}
+function resolveRef(ref: SnapshotRef | null, entity: string): string | null {
+  if (!ref) return null;
+  if (ref.kind === "lookupAsset") return ref.guid;
+  if (ref.kind === "namedAsset" && ref.entity === entity) return `named;${entity};${ref.name}`;
+  return null;
+}
+function unresolvedDiagnostic(
+  enchantmentId: string,
+  targetType: string,
+  value: string,
+  field: string,
+): PipelineDiagnostic {
+  return {
+    severity: "diagnostic",
+    source: "enchantment-read-model",
+    code: "enchantmentReferenceUnresolved",
+    message: `Enchantment '${enchantmentId}' has an unresolvable ${targetType} reference.`,
+    entityType: "enchantment",
+    entityId: enchantmentId,
+    field,
+    evidence: { reference: value },
+  };
+}

@@ -15,6 +15,8 @@ import { PORTAL_DDL } from "../sql/portal-ddl";
 import { NPC_DDL } from "../sql/npc-ddl";
 import { STAT_TYPE_DDL } from "../sql/stat-type-ddl";
 import { SPELL_DDL } from "../sql/spell-ddl";
+import { POTION_RECIPE_DDL } from "../sql/potion-recipe-ddl";
+import { ENCHANTMENT_DDL } from "../sql/enchantment-ddl";
 import { STATUS_EFFECT_DDL } from "../sql/status-effect-ddl";
 import { QUEST_DDL } from "../sql/quest-ddl";
 import { canonicaliseItems } from "./item/canonicaliser";
@@ -24,6 +26,10 @@ import { emitStatTypeReadModels } from "./stat-type/read-models";
 import { canonicaliseQuests } from "./quest/canonicaliser";
 import { canonicaliseSpells } from "./spell/canonicaliser";
 import { emitSpellReadModels } from "./spell/read-models";
+import { canonicalisePotionRecipes } from "./potion-recipe/canonicaliser";
+import { emitPotionRecipeReadModels } from "./potion-recipe/read-models";
+import { canonicaliseEnchantments } from "./enchantment/canonicaliser";
+import { emitEnchantmentReadModels } from "./enchantment/read-models";
 import { canonicaliseStatusEffects } from "./status-effect/canonicaliser";
 import { emitStatusEffectReadModels } from "./status-effect/read-models";
 import { canonicaliseItemCategories } from "./item-category/canonicaliser";
@@ -205,12 +211,6 @@ export const entityRegistry: Record<string, EntityModule> = {
     readModel: ({ db, snapshot, entity }) =>
       emitStatTypeReadModels(db, snapshot.masterTooltip, entity.site?.route),
   },
-  spell: {
-    ddl: SPELL_DDL,
-    canonicalise: ({ db, envelope }) => canonicaliseSpells(db, envelope),
-    readModel: ({ db, entity, snapshot }) =>
-      emitSpellReadModels(db, entity.site?.route, snapshot.masterTooltip),
-  },
   "status-effect": {
     ddl: STATUS_EFFECT_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseStatusEffects(db, envelope),
@@ -226,6 +226,22 @@ export const entityRegistry: Record<string, EntityModule> = {
     ddl: ITEM_TAG_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseItemTags(db, envelope),
     readModel: ({ db, entity }) => emitItemTagReadModels(db, entity.site?.route),
+  },
+  spell: {
+    ddl: SPELL_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseSpells(db, envelope),
+    readModel: ({ db, entity, snapshot }) =>
+      emitSpellReadModels(db, entity.site?.route, snapshot.masterTooltip),
+  },
+  "potion-recipe": {
+    ddl: POTION_RECIPE_DDL,
+    canonicalise: ({ db, envelope }) => canonicalisePotionRecipes(db, envelope),
+    readModel: ({ db, entity }) => emitPotionRecipeReadModels(db, entity.site?.route),
+  },
+  enchantment: {
+    ddl: ENCHANTMENT_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseEnchantments(db, envelope),
+    readModel: ({ db, entity }) => emitEnchantmentReadModels(db, entity.site?.route),
   },
   faction: {
     ddl: FACTION_DDL,
