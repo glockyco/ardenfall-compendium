@@ -10,7 +10,7 @@ archived:
 
 # Item Obtainability, 2026-08-02
 
-Every way a player can obtain an item in Ardenfall, established from the decompiled source and confirmed with live probes against Ardenfall Demo `0.0.10.91`, with a structural check against the non-public playtest build recorded below. This exists because the roadmap was about to model `ItemListAsset` alone and call item provenance solved. Loot tables are one source among nine.
+Every way a player can obtain an item in Ardenfall, established from the decompiled source and confirmed with live probes against Ardenfall Demo `0.0.10.91`, with a structural check against the non-public playtest build recorded below. Item provenance spans authored assets, authored graph grants, and streamed scene objects, so the audit measures each owner before treating it as a source.
 
 The 2026-08-03 release has 2,266 public pages, with 1,379 lacking an inbound edge. Items account for 726 of those unlinked pages, so this audit still decides the next provenance slice.
 
@@ -18,25 +18,29 @@ The 2026-08-03 release has 2,266 public pages, with 1,379 lacking an inbound edg
 
 | source | mechanism | identity | enumerable | verdict |
 | --- | --- | --- | --- | --- |
-| Loot tables | `ItemListAsset`, weighted nested groups | authored asset | **348** | complete |
+| Loot tables | `ItemListAsset`, weighted nested groups | authored asset | **348 loaded assets**, reaching 811 distinct items | The 530 reached from `CharacterData.itemLists` are exactly the 530 already published as `can_drop` edges. The other 278 items sit behind 182 lists with no at-rest asset references and require the 683-cell world walk. |
 | NPC inventory | `CharacterData.itemLists` rolled at spawn | authored template, **314** placed records | complete | complete |
 | Enemy death | corpse carries the NPC's own inventory | as above | complete | complete |
-| Merchants | `CharacterData.merchantItemLists` plus additions | authored template, per-NPC stock | complete | complete for what a merchant *can* stock |
+| Merchants | `CharacterData.merchantItemLists` plus additions | authored template, per-NPC stock | **0 entries at rest** | No merchant inventory is configured in the measured release. |
 | Quest rewards | `ItemsQuestReward` | authored, typed list | **38** quests, 4 item rewards | probed, extractable without the graph |
 | Graph grants | `AddItemListNode`, `SpawnItemNode` | authored, Odin graph | live only | complete, needs a live probe |
-| Potion crafting | recipe with tag-based ingredients | authored asset | **48** recipes | complete |
-| Recipe learning | `PotionRecipeItem` unlocks a recipe | authored item | **2** | complete |
+| Potion crafting | standalone `PotionRecipe` asset with tag-based ingredients | authored asset | **48 recipes**, reaches 127 unlinked items | Missing entity, extractable without the world walk |
+| Recipe learning | `PotionRecipeItemData` variant | authored item, **2** items | **2** item rows in a dead table | The variant remains. Its payload is replaced by a reference to the standalone recipe entity. |
 | Containers and spawners | per-placed-instance lists and items | **scene only, not record-backed** | partial | the coverage hole |
 
 Live counts: 1,273 `ItemData`, 193 `ThrowingPotionData`, 64 `EnchantmentData`, 3 `SimpleItemListAsset`, 0 `MerchantCategory`.
 
-## Four findings that change the design
+## Findings that change the design
 
-**Enemy drops are not a loot roll.** `CharacterBase.cs:574-580` generates a character's inventory once at spawn from `CharacterData.itemLists`, and `DeadBodyContainer.cs:321-333` transfers that same live `Inventory` to the corpse. There is no death-time drop table and no separate roll. So "dropped by" is derivable from the same authored lists that furnish the living NPC, which makes enemy provenance far cheaper than expected. The one exception is `DeadBodyContainer.CreateBodyFromData`, used for pre-placed corpses, which generates with `randomizeLootable`.
+**Character inventories are already covered.** `CharacterBase.cs:574-580` generates a character's inventory once at spawn from `CharacterData.itemLists`, and `DeadBodyContainer.cs:321-333` transfers that same live `Inventory` to the corpse. A live probe measured 530 items through this owner, exactly matching the 530 items already published by `can_drop` edges. There is no new item reachability in this path. The one exception is `DeadBodyContainer.CreateBodyFromData`, used for pre-placed corpses, which generates with `randomizeLootable`.
 
-**Quest graphs are traversable at runtime.** A previous audit concluded that `QuestData.flowGraph` and `objects` are `[NonSerialized] [OdinSerialize]` and therefore invisible. They are invisible to *reflection over serialized fields*, but Odin has deserialized them into real objects by the time the mod runs. `QuestInstance.cs:508-511` reads `questData.flowGraph.graph` directly and `QuestManager.cs:86-90` prewarms the graph assets. A live probe can walk them. Quest item sources are extractable.
+**Merchant and catalog owners are empty at rest.** A live probe measured zero entries in `CharacterData.merchantItemLists`, `CharacterItemGroup`, and `CharacterModule.itemLists`. It measured zero loaded instances of `MasterPotionListAsset` and `MasterSpellListAsset`. These declarations are not reachable authored owners in the release and must not be ranked as populated item sources.
 
-**Recipe ingredients are tags, not items.** `RecipeItem.cs:5-25` matches on `item.tags.Get().Contains(tag)`, so a recipe requires a tag and a count rather than a named item. An ingredient page can therefore list every recipe it can contribute to, derived from the tags it carries. This also gives item tags a purpose beyond browsing, and they currently have almost no inbound edges.
+**Recipes are standalone assets.** `PotionRecipe` has 48 loaded assets. `RecipeItem.cs:5-25` matches each ingredient by `ItemTag` and count, so ingredients are tags rather than named items. The two `PotionRecipeItemData` items remain recipe-scroll variants, but their two rows in `item_potion_recipes` are a dead table because no TypeScript in `pipeline/src` or `site/src` reads it. The standalone recipe entity replaces that variant payload and reaches 127 currently unlinked items without a world walk.
+
+**The 348 figure is an asset count, not an opportunity count.** All 348 `ItemListAsset` candidates are loaded at rest and reach 811 distinct items. The 530 reachable through `CharacterData.itemLists` are exactly the 530 already published by `can_drop`. The remaining 278 unlinked items sit behind 182 lists with no at-rest asset references. Those lists are scene-owned and require the 683-cell streamed traversal. Authored item provenance and world scene enumeration are one slice, not two separately rankable slices.
+
+**Enchantment data is a second cheap authored entity.** The game has 64 `EnchantmentData` assets, which reach 19 currently unlinked items. Together with the 48 standalone recipes, this adds 158 currently unreachable item pages a first inbound link and 112 pages of their own without a world walk.
 
 **Containers are the only real coverage hole.** `Container` does not implement `IInstanceRecordSceneObject`, unlike `Door`, which is why portals were extractable as record-backed instances and chests are not. Containers exist only as scene objects in a world that streams by cell. A probe in the starting area sees 57 containers, 185 item spawners and 178 free pickups, and the world is 25x23 overworld cells plus 12x9 interior. Enumerating them all means traversing 683 cells, which is a world walk rather than a lookup.
 
@@ -82,6 +86,6 @@ Reputation and faction affect merchant *prices* through `TradeDiscount` and a re
 
 Provenance is one relationship with several sources rather than several unrelated features. An item page should answer "where does this come from" with a single list whose rows name a source and how reliable it is.
 
-The authored half is fully enumerable today and covers loot, NPCs, enemies, merchants, quests and crafting. That is the slice worth building, and it does not need the world walked.
+The authored sources with data at rest include loot, NPCs, enemies, quests, graph grants, and standalone recipes and enchantments. The merchant and master-list owners measured empty or absent at rest and add no populated source. ItemList provenance beyond the already published character path and the placed half of provenance require a cell traversal.
 
-The placed half is containers and spawners. It needs a cell traversal to be complete, and it shares that requirement with tile capture, which also has to visit every cell. Those two should be planned together rather than each paying for world traversal separately.
+The placed half is containers, spawners, and the 278 items behind 182 unreferenced item lists. It needs a cell traversal to be complete, and it shares that requirement with tile capture, which also has to visit every cell. Those two should be planned together rather than each paying for world traversal separately.

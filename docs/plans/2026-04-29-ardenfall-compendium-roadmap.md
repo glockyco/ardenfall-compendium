@@ -152,7 +152,6 @@ Planned canonical tables:
 - `item_lockpicks`
 - `item_consumables`
 - `item_notes`
-- `item_potion_recipes`
 - `item_repair_kits`
 - `item_arrows`
 - `item_bows`
@@ -442,7 +441,7 @@ A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.1
 
 **Quests are first-class.** `Questing/QuestData` is a real ScriptableObject with authored identity, journal text, phases, objectives, and rewards, with runtime progress held separately in `QuestInstance`. Authored quest content is extractable, and only the progress state is out of scope.
 
-**Loot provenance is the largest single gap in reader value.** `ItemListAsset`, `ItemGroup`, and the counted and leveled wrappers describe what drops and what is stocked. Nothing extracts them, so the compendium cannot answer where an item comes from, which is among the most valuable questions a game wiki answers.
+**Loot provenance is a major remaining gap in reader value.** `ItemListAsset`, `ItemGroup`, and the counted and leveled wrappers describe what drops and what is stocked. The character path is already represented by `can_drop` edges, while the remaining 278 items behind 182 lists have no at-rest asset references and share a 683-cell world walk with scene enumeration.
 
 **Not entities, deliberately.** `ItemFilter` is a reusable internal predicate, not a taxonomy. Reputation and bounty are runtime state on `FactionInstance`, while only `Faction` itself is authored. `CharacterRace`, `CharacterModule`, and the race-list selector are mostly rendering and AI configuration. `VolumeRecord` is a gameplay ownership volume, unrelated to the location polygons already on the map.
 
@@ -470,7 +469,7 @@ Ordered by measured reader value against cost. The survey at [`2026-08-02-progra
 3. ~~Stat types to stat types~~ - **done.** Labels that match a published stat are links.
 4. ~~Items to categories and tags~~ - **done.** 1,268 `categorised_as` and 76 `tagged` edges. Item pages name both, and the tag and category pages were left alone because their existing tables already say it.
 
-**That exhausts the field-shaped edges**, and the remaining orphans are not spread evenly. The 2026-08-03 release leaves 726 of 2,266 public pages without an inbound link. Item provenance remains incomplete because loot tables, recipes, merchants, and quests are the remaining sources. `PotionRecipe` is partly extracted already but amounts to one recipe and four potions live.
+**That exhausts the field-shaped edges**, and the remaining orphans are not spread evenly. The 2026-08-03 release leaves 726 of 2,266 public pages without an inbound link. The cheap authored additions are the standalone `PotionRecipe` and `EnchantmentData` entities. Their 48 and 64 assets reach 127 and 19 unlinked items. The remaining authored item-list provenance and scene-owned sources share the 683-cell world walk.
 
 So the next connective work is no longer a field, it is an entity:
 
@@ -478,15 +477,17 @@ So the next connective work is no longer a field, it is an entity:
 
 **Before that**, relationships were unified. Four slices in one day each grew a bespoke site accessor beside a generic mechanism that already existed, which is the Ancient Kingdoms failure exactly. Relationships are now declared once by predicate, the pipeline projects sections from the edges it emits, and an unregistered predicate fails the build. Adding a relationship is one registry entry and no site change, which matters because obtainability adds five at once.
 
-5. **Item obtainability**, in progress. Not loot alone. [`2026-08-02-item-obtainability`](2026-08-02-item-obtainability.md) audits every route by which a player can get an item, and there are nine. Loot tables are one.
+5. **Item obtainability and authored item connectivity**, in progress. Not loot alone. [`2026-08-02-item-obtainability`](2026-08-02-item-obtainability.md) measures every route by which a player can get or understand an item.
 
-   The authored half is fully enumerable today and needs no world traversal: 348 loot lists, 314 placed NPC records whose inventories double as their death drops, the 38 quests shipped in the 2026-08-03 release whose Odin graphs turn out to be traversable at runtime, and 48 potion recipes whose ingredients are matched by tag rather than by item. That is the slice.
+   The cheap authored addition is two standalone entities. `PotionRecipe` has **48** assets and reaches **127** currently unlinked items. `EnchantmentData` has **64** assets and reaches **19** currently unlinked items. Together they give **158** currently unreachable item pages a first inbound link and add **112** pages of their own without a world walk.
 
-   The placed half is containers and spawners, which are not record-backed and exist only as scene objects in a world of 683 streamed cells. Completing them needs a world walk, which tile capture also needs, so the two should be planned together rather than each paying for traversal separately.
+   `ItemListAsset` provenance and world scene enumeration are one slice, not two rankable slices. All **348** lists are loaded at rest and reach **811** distinct items. The **530** reachable from `CharacterData.itemLists` are exactly the 530 already published as `can_drop` edges. The remaining **278** unlinked items sit behind **182** lists with no at-rest asset references. Completing that path requires the same **683-cell** streamed traversal as containers and spawners, which tile capture also needs.
 
-   **Characters shipped first**, see [`2026-08-03-item-provenance-characters`](archive/2026-08-03-item-provenance-characters.md). 212 pages, 2,126 `can_drop` edges, and 545 of 1,273 items now name a source. Merchant stock was specced and then cut on measurement, because the game implements it fully and no character in the demo has any configured.
+   The measured owner set does not include populated merchant or master-list sources. `CharacterData.merchantItemLists`, `CharacterItemGroup`, and `CharacterModule.itemLists` have zero entries at rest. `MasterPotionListAsset` and `MasterSpellListAsset` have zero loaded instances at rest.
 
-   The 2026-08-03 release leaves 726 item pages without an inbound link. Quest rewards and recipes are the remaining authored sources and they are small, 38 quests and 48 recipes, so most of the remainder is almost certainly in containers. Measure before picking the next one.
+   **Characters shipped first**, see [`2026-08-03-item-provenance-characters`](archive/2026-08-03-item-provenance-characters.md). 212 pages, 2,126 `can_drop` edges, and 545 of 1,273 items now name a source. A live probe measured zero configured merchant owners at rest, so merchant stock is not part of this scope.
+
+   The 2026-08-03 release leaves 726 item pages without an inbound link. Recipes and enchantments provide the cheap authored connectivity. The remaining ItemList and scene-owned provenance requires the shared world walk.
 6. ~~Spells to status effects~~ - **done.** The 2026-08-03 release projects 26 spell-sourced `applies` edges to 25 status effects.
 7. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference, but the extractor does not currently emit it, so it needs mod work first.
 
@@ -498,7 +499,7 @@ So the next connective work is no longer a field, it is an entity:
 
 **Then the map.** Tile capture makes 400 extracted markers legible. It is specced and sized, and it deliberately follows the connective work.
 
-**Then new content**, in this order once things link: characters and NPCs, loot provenance through `ItemListAsset`, traits and perks and factions, recipes, quests. Each adds nodes, so each is worth more after the graph and search exist than before.
+**Then new content**, in this order once things link: characters and NPCs, standalone recipes and enchantments, authored item-list provenance with the shared world walk, traits and perks and factions, quests. Each adds nodes, so each is worth more after the graph and search exist than before.
 
 ### Tile capture
 

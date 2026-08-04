@@ -26,6 +26,12 @@ Five audits ran over gate flags, publicity rules, numeric units, display names a
 
 ## Findings
 
+### A standalone recipe was anchored to an incidental item owner
+
+`Ardenfall/Item/PotionRecipe.cs:8` defines `PotionRecipe` as a standalone `ScriptableObject`. A live probe measured **48** `PotionRecipe` assets, but the compendium reached recipes only through the two items that happen to be `PotionRecipeItemData`, whose `recipe` field is declared in `Ardenfall/Item/PotionRecipeItemData.cs:10`. The `item_potion_recipes` table therefore shipped **2 rows**, and nothing in `pipeline/src` or `site/src` read those rows.
+
+Anchoring an entity to an incidental owner silently loses the rest of the assets. Before deciding that an entity is a property of another entity, count its standalone assets and verify the owner path against that count.
+
 ### Portal names are authoring identifiers
 
 `entities/portal/entity.json:20` reads the game's `friendlyName`. `Ardenfall/RecordSystem/PortalRecord.cs:7` declares it and returns it directly, and no player-facing UI reads it. 29 of 32 named portals hold values such as `garkai_sheru-tombs_outside_1`, `sc_tutcave_ext` and `akaga.lighthouse.entrance`. Only `Underground Preservium`, `Ladder Door` and `Food Preserve` read as prose.

@@ -75,7 +75,7 @@ The accessors add cost even in this cheap group. `CharacterRecord.StoredCharacte
 
 | Candidate | Measured count | Source path or identity | Coverage state |
 | --- | ---: | --- | --- |
-| `ItemListAsset` and counted or leveled wrappers | 348 [obtainability] | `BuiltLookupTable` call sites [assets] | Not extracted. Nested weighted lists can create item provenance edges. |
+| `ItemListAsset` and counted or leveled wrappers | 348 loaded assets reaching 811 distinct items [obtainability] | `BuiltLookupTable` call sites [assets] | The 530 reached from `CharacterData.itemLists` are exactly the 530 already published by `can_drop` edges. The other 278 items sit behind 182 lists with no at-rest asset references and require the 683-cell world walk. |
 | `EnchantmentData` | 64 [snapshot] | `BuiltLookupTable` call site [assets] | Not extracted. It can connect equipment to enchantments and effects. |
 | `PotionRecipe` | 48 [snapshot] | `BuiltLookupTable` call site [assets] | Not extracted. Recipe pages can connect tags, ingredients, and produced potions. |
 | `PerkAsset` | 18 [snapshot] | `BuiltLookupTable` [assets] | Not extracted. It can connect characters to perks. |
@@ -84,7 +84,22 @@ The accessors add cost even in this cheap group. `CharacterRecord.StoredCharacte
 | `MerchantCategory` | 0 live rows [snapshot] | Authored category type [assets] | No current data exists to extract. Character merchant lists remain unmodelled. |
 | `FastTravelSetAsset`, `CharClass`, `NameSet`, `RaceGroup`, `DamageType`, `SpellContainer` | Unknown [assets] | No enumeration call site found [assets] | Do not claim coverage or counts without a live probe. |
 
-The item audit also records merchant stock, NPC inventory, enemy inventory, quest rewards, graph grants, recipe learning, and potion crafting as unmodelled provenance paths [obtainability]. Their authored fields are accessible at different costs. The current `CharacterData` pages do not publish merchant inventories.
+At-rest owner measurements prevent several declarations from being mistaken for populated provenance sources:
+
+| Declared owner | Live result | Meaning |
+| --- | --- | --- |
+| `CharacterData.itemLists` | 530 reachable items | These are exactly the 530 items already published by `can_drop` edges. This owner adds no new item reachability. |
+| `CharacterData.merchantItemLists` | 0 entries | No merchant inventory is configured at rest. |
+| `MasterPotionListAsset` | 0 loaded instances | This catalog is absent at rest. |
+| `MasterSpellListAsset` | 0 loaded instances | This catalog is absent at rest. |
+| `CharacterItemGroup` | 0 entries | No authored owner entries exist at rest. |
+| `CharacterModule.itemLists` | 0 entries | No authored owner entries exist at rest. |
+
+The 348 `ItemListAsset` figure is a count of loaded assets, not a count of new provenance opportunities. Its 530-item character path is already published, and its remaining 278 items are behind 182 lists with no at-rest asset references. Those lists are scene-owned and require the same 683-cell streamed traversal as world scene enumeration. Authored item provenance and the world walk are one slice, not two rankable slices.
+
+The cheap authored additions are the standalone asset types. `PotionRecipe` has 48 assets and reaches 127 currently unlinked items. `EnchantmentData` has 64 assets and reaches 19 currently unlinked items. Together they give 158 currently unreachable item pages a first inbound link and add 112 pages of their own without a world walk.
+
+The item audit records merchant stock, NPC inventory, enemy inventory, quest rewards, graph grants, recipe learning, and potion crafting as potential provenance paths [obtainability]. Their authored fields are accessible at different costs, and the merchant owner is empty at rest. The current `CharacterData` pages do not publish merchant inventories.
 
 ### Odin graphs and streamed scenes
 
@@ -105,11 +120,11 @@ These exclusions record negative findings so that later audits do not repeat the
 - `LocationRecord` has no type-specific fields or reader-facing use. `LocationAsset` already supplies location entities [records].
 - `SORecord` wraps arbitrary Unity assets. It has no stable public shape [records].
 - `PortalRecord.isAccessable` is read only by `Copy()`. All 33 current portal rows are `true`, and the field does not control traversal [fields, snapshot].
-- `MasterSpellListAsset`, `MasterPotionListAsset`, `ArdenfallMasterData`, and similar catalogs are private configuration. Keep them private unless a field creates a public edge [assets].
+- `MasterSpellListAsset`, `MasterPotionListAsset`, `ArdenfallMasterData`, and similar catalogs are private configuration. A live probe measured zero loaded instances for the two master list asset types at rest. Keep them private unless a field creates a public edge [assets].
 - The decompiled namespace contains 146 ScriptableObject or SerializedScriptableObject classes. Most are technical infrastructure, so the compendium excludes them as a group [assets].
 - `ItemFilter` is a reusable internal predicate, not a taxonomy [survey].
 - Reputation and bounty are runtime state on `FactionInstance`. Only authored `Faction` data belongs in this model [survey].
-- `CharacterRace`, `CharacterModule`, and the race-list selector are mainly rendering and AI configuration. They are not reader-facing entity families [survey].
+- `CharacterRace`, `CharacterModule`, and the race-list selector are mainly rendering and AI configuration. A live probe measured zero entries in `CharacterModule.itemLists` at rest, so it is not a populated authored owner. They are not reader-facing entity families [survey].
 - No gameplay class for harvest, gathering, resource nodes, or breakable resources appeared in the source search. Foliage classes only render trees and grass [scene].
 - Enchanting mutates an existing equipment item. It does not create an item. Repair changes durability in place. `ItemConverter` has no call site [obtainability].
 - No cooking, smithing, disassembly, salvage, or upgrade system exists in the checked game builds [obtainability].
@@ -168,10 +183,10 @@ Reader value follows connectivity, not candidate size.
 
 1. **Dialogue is extracted, and it came from a different owner than this audit assumed.** Dialogue does not hang off characters. `CharacterData.characterGraphs` holds character behaviour: a live probe measured 195 of its 196 containers as plain `ObjectFlowGraph` and exactly one `DialogFlowGraph`. The authored dialogue hangs off `CharacterQuestObject.dialogGraph.flowGraph`, on 82 of 88 quest character objects. The shipped export carries **484 lines, 292 greetings and 192 topics, across 26 quests and 58 speakers**, with 78 `speaks_about_quest` edges [probe].
 
-   The scene-side half is not extracted. `SimpleDialogInteractable.dialogs` measures 0 at rest because those components live in streamed cells, so that half now sits behind the same 683-cell traversal ranked fourth below. Free-standing dialogue on characters who appear in no quest stays unreachable with it.
+   The scene-side half is not extracted. `SimpleDialogInteractable.dialogs` measures 0 at rest because those components live in streamed cells, so that half now sits behind the shared 683-cell traversal described below. Free-standing dialogue on characters who appear in no quest stays unreachable with it.
 2. **Quest definitions rank second.** A live probe counts **38** quests, and the release ships them as named assets with graph-backed read models. All 88 character quest objects resolve to placed-character record ids, which is the link the first item also chases [probe].
-3. **Authored item provenance ranks third.** The 726 item pages without an inbound link need loot lists, recipes, merchants, or quests. `ItemListAsset` has 348 measured candidates, and its nested groups can connect many currently isolated items [survey, obtainability].
-4. **World scene enumeration ranks fourth.** It can add found-in and obtainability links for containers, spawners, and pickups, but it requires a traversal of 683 streamed cells and explicit persistence handling [obtainability, tile].
+3. **Authored item provenance and world scene enumeration are one slice.** The 348 `ItemListAsset` figure counts loaded assets reaching 811 distinct items, not new opportunities. The 530 items reached from `CharacterData.itemLists` are exactly the 530 already published by `can_drop` edges. The other 278 items sit behind 182 lists with no at-rest asset references and require the same 683-cell streamed traversal as containers, spawners, and pickups.
+4. **Standalone potion recipes and enchantments are the cheap authored addition.** The 48 `PotionRecipe` assets reach 127 currently unlinked items, and the 64 `EnchantmentData` assets reach 19. Together they give 158 currently unreachable item pages a first inbound link and add 112 pages of their own without a world walk.
 5. **`NPCTeleportPointRecord` and `VolumeRecord` remain conditional candidates.** They can create high-value movement, ownership, faction, and AI links, but their live counts are unknown [records].
 
-The reports use different ranking lenses. The authored-asset audit ranks `ItemListAsset` first for item provenance. The scene-graph audit ranks quests first because they connect several entity families. This audit ranks by the pages and links that readers currently cannot reach. The records and program surveys also disagree on `VolumeRecord`, as recorded above.
+The reports use different ranking lenses. The authored-asset audit identifies standalone potion recipes and enchantments as the cheap next addition, while `ItemListAsset` provenance and world scene enumeration share one 683-cell traversal. The scene-graph audit ranks quests first because they connect several entity families. This audit ranks by the pages and links that readers currently cannot reach. The records and program surveys also disagree on `VolumeRecord`, as recorded above.
