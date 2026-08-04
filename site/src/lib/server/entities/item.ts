@@ -19,7 +19,6 @@ interface ItemOverviewRecord {
   value: number | null;
   variant: string | null;
   variant_label: string;
-  short_id: string;
   display_icon_hash: string | null;
   display_icon_color: string | null;
   route_path: string;
@@ -43,7 +42,7 @@ interface ItemOverviewFilterRecord {
 interface ItemPresentationRecord {
   id: string;
   name: string | null;
-  variant: string | null;
+  display_name: string;
   item_type: string | null;
   render_context: string;
   display_icon_hash: string | null;
@@ -58,6 +57,7 @@ interface ItemPresentationRecord {
   requirements_json: string;
   durability_json: string | null;
   state_facts_json: string;
+  variant: string | null;
   value: number | null;
   weight: number | null;
 }
@@ -69,7 +69,6 @@ export interface ItemOverviewRow {
   value: number | null;
   variant: string | null;
   variantLabel: string;
-  shortId: string;
   displayIconSrc: string | null;
   displayIconColor: string | null;
   routePath: string;
@@ -220,7 +219,7 @@ const toItemPresentationRow = (row: ItemPresentationRecord): ItemPresentationRow
 
   return {
     id: row.id,
-    name: row.name,
+    name: row.display_name,
     variant: row.variant,
     itemType: row.item_type,
     renderContext: validateRenderContext(
@@ -283,7 +282,6 @@ const toItemOverviewRow = (row: ItemOverviewRecord): ItemOverviewRow => ({
   value: row.value,
   variant: row.variant,
   variantLabel: row.variant_label,
-  shortId: row.short_id,
   displayIconSrc: assetSrc(row.display_icon_hash),
   displayIconColor: row.display_icon_color,
   routePath: row.route_path,
@@ -291,8 +289,8 @@ const toItemOverviewRow = (row: ItemOverviewRecord): ItemOverviewRow => ({
 
 export const listItemsOverview = (): ItemOverviewRow[] =>
   all<ItemOverviewRecord>(
-    `SELECT o.id, o.name, o.weight, o.value, o.variant, v.label AS variant_label,
-            n.short_id, o.display_icon_hash, o.display_icon_color, n.route_path
+    `SELECT o.id, n.display_label AS name, o.weight, o.value, o.variant, v.label AS variant_label,
+            o.display_icon_hash, o.display_icon_color, n.route_path
        FROM item_overview_rows o
        JOIN item_variants v ON v.variant_id = o.variant
        JOIN entity_nodes n
@@ -303,8 +301,8 @@ export const listItemsOverview = (): ItemOverviewRow[] =>
 
 export const listItemsByVariant = (variant: string): ItemOverviewRow[] =>
   all<ItemOverviewRecord>(
-    `SELECT o.id, o.name, o.weight, o.value, o.variant, v.label AS variant_label,
-            n.short_id, o.display_icon_hash, o.display_icon_color, n.route_path
+    `SELECT o.id, n.display_label AS name, o.weight, o.value, o.variant, v.label AS variant_label,
+            o.display_icon_hash, o.display_icon_color, n.route_path
        FROM item_overview_rows o
        JOIN item_variants v ON v.variant_id = o.variant
        JOIN entity_nodes n
@@ -317,8 +315,8 @@ export const listItemsByVariant = (variant: string): ItemOverviewRow[] =>
 
 export const listItemsByCategory = (categoryId: string): ItemOverviewRow[] =>
   all<ItemOverviewRecord>(
-    `SELECT o.id, o.name, o.weight, o.value, o.variant, v.label AS variant_label,
-            n.short_id, o.display_icon_hash, o.display_icon_color, n.route_path
+    `SELECT o.id, n.display_label AS name, o.weight, o.value, o.variant, v.label AS variant_label,
+            o.display_icon_hash, o.display_icon_color, n.route_path
        FROM item_overview_rows o
        JOIN item_variants v ON v.variant_id = o.variant
        JOIN entity_nodes n
@@ -335,8 +333,8 @@ export const listItemsByCategory = (categoryId: string): ItemOverviewRow[] =>
 
 export const listItemsByTag = (tagId: string): ItemOverviewRow[] =>
   all<ItemOverviewRecord>(
-    `SELECT o.id, o.name, o.weight, o.value, o.variant, v.label AS variant_label,
-            n.short_id, o.display_icon_hash, o.display_icon_color, n.route_path
+    `SELECT o.id, n.display_label AS name, o.weight, o.value, o.variant, v.label AS variant_label,
+            o.display_icon_hash, o.display_icon_color, n.route_path
        FROM item_overview_rows o
        JOIN item_variants v ON v.variant_id = o.variant
        JOIN entity_nodes n
@@ -379,7 +377,7 @@ export const listItemIds = (): string[] =>
 
 export const getItemPresentation = (id: string): ItemPresentationRow | undefined => {
   const row = get<ItemPresentationRecord>(
-    `SELECT p.*,
+    `SELECT p.*, n.display_label AS display_name,
             COALESCE((
               SELECT json_group_object(target_id, route_path)
               FROM (
@@ -392,6 +390,8 @@ export const getItemPresentation = (id: string): ItemPresentationRow | undefined
               )
             ), '{}') AS effect_target_routes_json
        FROM item_presentation_rows p
+       JOIN entity_nodes n
+         ON n.entity_type = 'item' AND n.entity_id = p.id AND n.has_page = 1
        WHERE p.id = ?`,
     [id],
   );

@@ -85,7 +85,7 @@ CREATE TABLE quest_rewards (
   amount_label          TEXT,
   custom_amount          INTEGER,
   faction_ref_json      TEXT,
-  item_refs_json        TEXT,
+  items_json            TEXT,
   item_list_refs_json   TEXT,
   target_object_game_id INTEGER,
   UNIQUE(quest_id, set_ordinal, reward_ordinal)

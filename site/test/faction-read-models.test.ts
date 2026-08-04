@@ -30,6 +30,7 @@ const seed = () => {
       entity_type TEXT NOT NULL,
       entity_id TEXT NOT NULL,
       label TEXT NOT NULL,
+      display_label TEXT NOT NULL,
       route_path TEXT NOT NULL,
       canonical_slug TEXT NOT NULL,
       short_id TEXT NOT NULL,
@@ -44,10 +45,10 @@ const seed = () => {
       ('faction-nameless', NULL, 'faction-presentation-v1', '', NULL, 0, 1, 1, 0, 1),
       ('faction-black-moth-a', 'Black Moth', 'faction-presentation-v1', 'A hidden order.', 'faction-icon-hash', 1, 1, 0, 1, 0),
       ('faction-black-moth-b', 'Black Moth', 'faction-presentation-v1', 'A second order.', NULL, 1, 0, 1, 0, 0);
-    INSERT INTO entity_nodes VALUES
-      ('faction', 'faction-nameless', 'Unnamed faction', '/factions/unnamed-faction--aaaa1111', 'unnamed-faction--aaaa1111', 'aaaa1111', 1),
-      ('faction', 'faction-black-moth-a', 'Black Moth', '/factions/black-moth--bbbb2222', 'black-moth--bbbb2222', 'bbbb2222', 1),
-      ('faction', 'faction-black-moth-b', 'Black Moth', '/factions/black-moth--cccc3333', 'black-moth--cccc3333', 'cccc3333', 1);
+    INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+      ('faction', 'faction-nameless', 'Unnamed faction', 'Unnamed faction', '/factions/unnamed-faction--aaaa1111', 'unnamed-faction--aaaa1111', 'aaaa1111', 1),
+      ('faction', 'faction-black-moth-a', 'Black Moth', 'Black Moth · bbbb2222', '/factions/black-moth--bbbb2222', 'black-moth--bbbb2222', 'bbbb2222', 1),
+      ('faction', 'faction-black-moth-b', 'Black Moth', 'Black Moth · cccc3333', '/factions/black-moth--cccc3333', 'black-moth--cccc3333', 'cccc3333', 1);
   `);
   db.close();
   return root;
@@ -117,7 +118,7 @@ describe("faction read-model accessors", () => {
         id: "faction-black-moth-a",
         name: "Black Moth",
         renderContext: "faction-presentation-v1",
-        displayName: "Black Moth",
+        displayName: "Black Moth · bbbb2222",
         description: "A hidden order.",
         alliable: true,
         enableReputation: true,

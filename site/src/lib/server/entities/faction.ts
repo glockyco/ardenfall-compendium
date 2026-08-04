@@ -1,4 +1,3 @@
-import { disambiguateLabels } from "../disambiguate-labels";
 import { all, assetSrc, get } from "../db";
 import { validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
@@ -8,7 +7,7 @@ interface FactionOverviewRecord {
   name: string | null;
   description: string;
   route_path: string;
-  short_id: string;
+  display_label: string;
 }
 
 interface FactionPresentationRecord {
@@ -23,6 +22,7 @@ interface FactionPresentationRecord {
   enable_bounty: number;
   display_icon_hash: string | null;
   route_path: string;
+  display_label: string;
 }
 
 export interface FactionOverviewRow {
@@ -50,7 +50,7 @@ export interface FactionPresentationRow {
 
 export const listFactions = (): FactionOverviewRow[] => {
   const rows = all<FactionOverviewRecord>(
-    `SELECT o.id, o.name, o.description, n.route_path, n.short_id
+    `SELECT o.id, o.name, o.description, n.route_path, n.display_label
      FROM faction_overview_rows o
      JOIN entity_nodes n
        ON n.entity_type = 'faction'
@@ -60,14 +60,11 @@ export const listFactions = (): FactionOverviewRow[] => {
   ).map((row) => ({
     id: row.id,
     name: row.name,
-    displayName: factionName(row.name),
+    displayName: row.display_label,
     description: row.description,
     routePath: row.route_path,
-    shortId: row.short_id,
   }));
-  return disambiguateLabels(rows, "displayName", (row) => row.shortId).map(
-    ({ shortId: _shortId, ...row }) => row,
-  );
+  return rows;
 };
 
 export const getFactionPresentation = (slug: string): FactionPresentationRow | undefined => {
@@ -76,7 +73,7 @@ export const getFactionPresentation = (slug: string): FactionPresentationRow | u
   const row = get<FactionPresentationRecord>(
     `SELECT p.id, p.name, p.render_context, p.description, p.alliable,
             p.enable_reputation, p.always_show_in_ui, p.can_be_disguised, p.enable_bounty,
-            p.display_icon_hash, n.route_path
+            p.display_icon_hash, n.route_path, n.display_label
      FROM faction_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'faction'
@@ -95,7 +92,7 @@ export const getFactionPresentation = (slug: string): FactionPresentationRow | u
       row.id,
       "faction-presentation-v1",
     ),
-    displayName: factionName(row.name),
+    displayName: row.display_label,
     description: row.description,
     alliable: row.alliable === 1,
     enableReputation: row.enable_reputation === 1,
@@ -106,9 +103,3 @@ export const getFactionPresentation = (slug: string): FactionPresentationRow | u
     routePath: row.route_path,
   };
 };
-
-function factionName(name: string | null): string {
-  const trimmedName = name?.trim();
-  if (!trimmedName || trimmedName.toLowerCase() === "unnamed faction") return "Unnamed faction";
-  return trimmedName;
-}

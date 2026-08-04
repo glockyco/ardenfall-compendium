@@ -35,11 +35,12 @@
         </a>
         {#if quest.disabled || quest.hiddenInQuestUi}
           <p class="text-muted-foreground mt-3 text-sm">
-            {#if quest.disabled}Disabled in game.{/if}
-            {#if quest.disabled && quest.hiddenInQuestUi}
-
-            {/if}
-            {#if quest.hiddenInQuestUi}Hidden in the in-game quest log.{/if}
+            {[
+              quest.disabled ? "Disabled in game." : null,
+              quest.hiddenInQuestUi ? "Hidden in the in-game quest log." : null,
+            ]
+              .filter((note) => note !== null)
+              .join(" ")}
           </p>
         {/if}
       </li>

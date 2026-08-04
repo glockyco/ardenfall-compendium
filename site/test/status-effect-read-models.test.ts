@@ -34,6 +34,7 @@ const seed = () => {
       entity_type TEXT NOT NULL,
       entity_id TEXT NOT NULL,
       label TEXT NOT NULL,
+      display_label TEXT NOT NULL,
       route_path TEXT NOT NULL,
       canonical_slug TEXT NOT NULL,
       short_id TEXT NOT NULL,
@@ -47,15 +48,11 @@ const seed = () => {
       ('guid-bleed-resistance', 'Bleed Resistance', 'status-effect-presentation-v1', 0,
        'Adds 1% Bleed Damage Resistance to Target over 1 Seconds', '${richText}', 'status-icon-hash'),
       ('guid-hostile-curse', 'Unnamed status effect', 'status-effect-presentation-v1', 1, NULL, NULL, NULL);
-    INSERT INTO entity_nodes VALUES
-      ('status-effect', 'guid-bleed-resistance', 'Bleed Resistance',
-       '/status-effects/bleed-resistance--abc12345', 'bleed-resistance--abc12345', 'abc12345', 1),
-      ('status-effect', 'guid-hostile-curse', 'Hostile Curse',
-       '/status-effects/hostile-curse--def67890', 'hostile-curse--def67890', 'def67890', 1),
-      ('item', 'item-sword', 'Iron Sword',
-       '/items/iron-sword--11111111', 'iron-sword--11111111', '11111111', 1),
-      ('item', 'item-bow', 'Hunter Bow',
-       '/items/hunter-bow--22222222', 'hunter-bow--22222222', '22222222', 1);
+    INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+      ('status-effect', 'guid-bleed-resistance', 'Bleed Resistance', 'Bleed Resistance', '/status-effects/bleed-resistance--abc12345', 'bleed-resistance--abc12345', 'abc12345', 1),
+      ('status-effect', 'guid-hostile-curse', 'Unnamed status effect', 'Unnamed status effect', '/status-effects/hostile-curse--def67890', 'hostile-curse--def67890', 'def67890', 1),
+      ('item', 'item-sword', 'Iron Sword', 'Iron Sword', '/items/iron-sword--11111111', 'iron-sword--11111111', '11111111', 1),
+      ('item', 'item-bow', 'Hunter Bow', 'Hunter Bow', '/items/hunter-bow--22222222', 'hunter-bow--22222222', '22222222', 1);
   `);
   db.close();
   return root;

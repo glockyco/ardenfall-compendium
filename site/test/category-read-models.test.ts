@@ -74,6 +74,7 @@ describe("item-category read-model accessors", () => {
         entity_type TEXT NOT NULL,
         entity_id TEXT NOT NULL,
         label TEXT NOT NULL,
+        display_label TEXT NOT NULL,
         route_path TEXT NOT NULL,
         canonical_slug TEXT NOT NULL,
         short_id TEXT NOT NULL,
@@ -93,10 +94,10 @@ describe("item-category read-model accessors", () => {
       INSERT INTO items VALUES
         ('4ed20218.fixture-iron-sword', '{"kind":"namedAsset","entity":"item-category","name":"itemcat_weapons"}', 'Weapons'),
         ('fixture-training-dagger', '{"kind":"missing","reason":"lookupAssetGuidMissing"}', 'Weapons');
-      INSERT INTO entity_nodes VALUES
-        ('item-category', 'named;item-category;itemcat_weapons', 'Weapons', '/categories/weapons--abc12345', 'weapons--abc12345', 'abc12345', 1),
-        ('item', '4ed20218.fixture-iron-sword', 'Iron Sword', '/items/4ed20218.fixture-iron-sword', 'iron-sword--4ed20218', '4ed20218', 1),
-        ('item', 'fixture-training-dagger', 'Training Dagger', '/items/fixture-training-dagger', 'training-dagger--fbfb0000', 'fbfb0000', 1);
+      INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+        ('item-category', 'named;item-category;itemcat_weapons', 'Weapons', 'Weapons', '/categories/weapons--abc12345', 'weapons--abc12345', 'abc12345', 1),
+        ('item', '4ed20218.fixture-iron-sword', 'Iron Sword', 'Iron Sword', '/items/4ed20218.fixture-iron-sword', 'iron-sword--4ed20218', '4ed20218', 1),
+        ('item', 'fixture-training-dagger', 'Training Dagger', 'Training Dagger', '/items/fixture-training-dagger', 'training-dagger--fbfb0000', 'fbfb0000', 1);
     `);
 
     try {
@@ -134,7 +135,6 @@ describe("item-category read-model accessors", () => {
           value: 25,
           variant: "melee-weapon",
           variantLabel: "Melee Weapon",
-          shortId: "4ed20218",
           displayIconSrc: `/assets/${iconHash}.webp`,
           displayIconColor: categoryColor,
           routePath: "/items/4ed20218.fixture-iron-sword",

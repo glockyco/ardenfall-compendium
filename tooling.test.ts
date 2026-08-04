@@ -230,7 +230,9 @@ describe("site deployment tooling", () => {
     expect(sitePackageJson.scripts["build:fixture"]).toBe(
       "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
     );
-    expect(sitePackageJson.scripts.build).toBe("bun run build:fixture");
+    // The default build verb must not stage fixture data, because wrangler uploads
+    // whatever sits in the build directory.
+    expect(sitePackageJson.scripts.build).toBe("bun run build:prepared");
     expect(sitePackageJson.scripts["deploy:production"]).toBe(
       "bun run scripts/deploy-production.ts",
     );
@@ -251,7 +253,9 @@ describe("site deployment tooling", () => {
     expect(sitePackageJson.scripts["build:fixture"]).toBe(
       "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
     );
-    expect(sitePackageJson.scripts.build).toBe("bun run build:fixture");
+    // The default build verb must not stage fixture data, because wrangler uploads
+    // whatever sits in the build directory.
+    expect(sitePackageJson.scripts.build).toBe("bun run build:prepared");
     expect(sitePackageJson.scripts["deploy:production"]).toBe(
       "bun run scripts/deploy-production.ts",
     );

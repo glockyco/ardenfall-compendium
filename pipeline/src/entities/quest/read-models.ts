@@ -21,19 +21,15 @@ CREATE TABLE quest_presentation_rows (
 );
 -- Dialogue belongs to a (quest, character) pair, so neither page owns it. One row
 -- set serves both: the quest page selects by quest_id, the character page by
--- character_id. Presentation order is already baked into ordinal, so no consumer
--- re-sorts and the two pages can never disagree about sequence.
+-- character_id. Line order is baked in per quest, and the character page chooses
+-- the order of the quest groups.
 CREATE TABLE quest_character_dialogue_rows (
-  id              TEXT PRIMARY KEY,
-  quest_id        TEXT NOT NULL,
-  quest_label     TEXT NOT NULL,
-  quest_route     TEXT,
-  character_id    TEXT NOT NULL,
-  character_label TEXT NOT NULL,
-  character_route TEXT,
-  ordinal         INTEGER NOT NULL,
-  kind            TEXT NOT NULL,
-  text_json       TEXT NOT NULL
+  id            TEXT PRIMARY KEY,
+  quest_id      TEXT NOT NULL,
+  character_id  TEXT NOT NULL,
+  quest_ordinal INTEGER NOT NULL,
+  kind          TEXT NOT NULL,
+  text_json     TEXT NOT NULL
 );
 `;
 
@@ -89,12 +85,12 @@ interface QuestRewardRow {
   set_name: string | null;
   set_type: string;
   reward_ordinal: number;
-  kind: "gold" | "experience" | "faction-reputation" | "character-reputation" | "items" | string;
+  kind: string;
   is_positive: number | null;
   amount_label: string | null;
   custom_amount: number | null;
   faction_ref_json: string | null;
-  item_refs_json: string | null;
+  items_json: string | null;
   item_list_refs_json: string | null;
   target_object_game_id: number | null;
 }
@@ -103,10 +99,6 @@ interface EntityNode {
   label: string | null;
   route_path: string | null;
   has_page: number;
-}
-
-interface CharacterTarget {
-  node: EntityNode;
 }
 
 interface QuestCharacterDialogueRow {
@@ -144,7 +136,26 @@ interface RewardPresentation {
   amount: string | null;
   targetLabel: string | null;
   targetRoutePath: string | null;
-  items: { label: string; routePath: string | null }[];
+  items: { label: string; routePath: string | null; count: number }[];
+}
+
+interface RewardSetPresentation {
+  setOrdinal: number;
+  setType: "on-success" | "on-failure" | "manual";
+  rewards: RewardPresentation[];
+}
+
+interface QuestRewardItemRef {
+  ref: SnapshotRef;
+  count: number;
+}
+
+interface PendingRewardEdge {
+  targetType: string;
+  targetId: string;
+  predicate: string;
+  label: string;
+  occurrences: Record<string, unknown>[];
 }
 
 export function emitQuestReadModels(db: Database, routeBase = "/quests"): PipelineDiagnostic[] {
@@ -159,9 +170,8 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
   );
   const dialogueRowInsert = db.prepare(
     `INSERT INTO quest_character_dialogue_rows (
-       id, quest_id, quest_label, quest_route, character_id, character_label,
-       character_route, ordinal, kind, text_json
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       id, quest_id, character_id, quest_ordinal, kind, text_json
+     ) VALUES (?, ?, ?, ?, ?, ?)`,
   );
   const edgeInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_edges (
@@ -210,7 +220,7 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
   const rewards = db
     .query<QuestRewardRow, []>(
       `SELECT quest_id, set_ordinal, set_game_id, set_name, set_type, reward_ordinal, kind,
-              is_positive, amount_label, custom_amount, faction_ref_json, item_refs_json,
+              is_positive, amount_label, custom_amount, faction_ref_json, items_json,
               item_list_refs_json, target_object_game_id
        FROM quest_rewards ORDER BY quest_id, set_ordinal, reward_ordinal`,
     )
@@ -309,7 +319,7 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
         }),
       );
 
-      const questCharacters = new Map<number, CharacterTarget>();
+      const questCharacters = new Map<number, EntityNode>();
       let dialogueOrdinal = 0;
       for (const character of charactersByQuest.get(quest.id) ?? []) {
         const targetId = resolveCharacterId(character.character_ref_json);
@@ -325,7 +335,7 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
           );
           continue;
         }
-        questCharacters.set(character.object_game_id, { node });
+        questCharacters.set(character.object_game_id, node);
         if (node.has_page !== 1) continue;
 
         const lines = dialogueByQuestObject.get(`${quest.id}:${character.object_ordinal}`) ?? [];
@@ -334,11 +344,7 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
           dialogueRowInsert.run(
             `${quest.id}:dialogue:${character.object_ordinal}:${line.line_ordinal}`,
             quest.id,
-            label,
-            questRoute,
             targetId,
-            node.label ?? "Unnamed character",
-            node.route_path,
             dialogueOrdinal++,
             line.kind,
             JSON.stringify(text),
@@ -393,27 +399,60 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
         );
       }
 
-      const rewardPresentation: RewardPresentation[] = [];
+      const rewardSets = new Map<number, RewardSetPresentation>();
+      const rewardEdges = new Map<string, PendingRewardEdge>();
       for (const reward of rewardsByQuest.get(quest.id) ?? []) {
+        const setType = normalizeRewardSetType(reward.set_type);
+        let rewardSet = rewardSets.get(reward.set_ordinal);
+        if (rewardSet === undefined) {
+          rewardSet = {
+            setOrdinal: reward.set_ordinal,
+            setType,
+            rewards: [],
+          };
+          rewardSets.set(reward.set_ordinal, rewardSet);
+        } else if (rewardSet.setType !== setType) {
+          throw new Error(`quest reward set '${reward.set_ordinal}' has inconsistent types`);
+        }
         const target = rewardTarget(
           reward,
           questCharacters,
           nodesByType,
           diagnostics,
           quest.id,
-          edgeInsert,
+          rewardEdges,
         );
         const items =
           reward.kind === "items"
-            ? resolveItemRewards(reward, nodesByType.get("item"), diagnostics, quest.id, edgeInsert)
+            ? resolveItemRewards(
+                reward,
+                nodesByType.get("item"),
+                diagnostics,
+                quest.id,
+                rewardEdges,
+              )
             : [];
-        rewardPresentation.push({
+        rewardSet.rewards.push({
           kind: normalizeRewardKind(reward.kind),
           amount: readerAmount(reward),
           targetLabel: target?.label ?? null,
           targetRoutePath: target?.routePath ?? null,
           items,
         });
+      }
+      for (const [edgeId, edge] of rewardEdges) {
+        edgeInsert.run(
+          edgeId,
+          "quest",
+          quest.id,
+          edge.targetType,
+          edge.targetId,
+          edge.predicate,
+          edge.label,
+          1,
+          JSON.stringify(edge.occurrences),
+          null,
+        );
       }
 
       presentationInsert.run(
@@ -427,12 +466,19 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
         quest.journal_on_succeed,
         quest.journal_on_failure,
         JSON.stringify(phasePresentation),
-        JSON.stringify(rewardPresentation),
+        JSON.stringify([...rewardSets.values()]),
       );
     }
   });
   tx();
   return diagnostics;
+}
+
+function normalizeRewardSetType(setType: string): RewardSetPresentation["setType"] {
+  if (setType === "OnSuccess") return "on-success";
+  if (setType === "OnFailure") return "on-failure";
+  if (setType === "Manual") return "manual";
+  throw new Error(`quest reward set has unsupported type '${setType}'`);
 }
 
 function normalizeRewardKind(kind: string): RewardPresentation["kind"] {
@@ -494,14 +540,16 @@ function unresolvedCharacterDiagnostic(
 
 function rewardTarget(
   reward: QuestRewardRow,
-  questCharacters: Map<number, CharacterTarget>,
+  questCharacters: Map<number, EntityNode>,
   nodesByType: Map<string, Map<string, EntityNode>>,
   diagnostics: PipelineDiagnostic[],
   questId: string,
-  edgeInsert: ReturnType<Database["prepare"]>,
+  rewardEdges: Map<string, PendingRewardEdge>,
 ): { label: string | null; routePath: string | null } | null {
   if (reward.kind === "faction-reputation") {
-    const targetId = resolveNamedOrLookupId(reward.faction_ref_json, "faction");
+    const factionRef =
+      reward.faction_ref_json === null ? null : parseReference(reward.faction_ref_json);
+    const targetId = resolveNamedOrLookupId(factionRef, "faction");
     const node = targetId === null ? undefined : nodesByType.get("faction")?.get(targetId);
     if (targetId === null || node === undefined) {
       diagnostics.push(
@@ -516,24 +564,22 @@ function rewardTarget(
       return null;
     }
     if (node.has_page === 1) {
-      edgeInsert.run(
-        `${questId}:rewards_faction_reputation:faction:${targetId}:${reward.set_ordinal}:${reward.reward_ordinal}`,
-        "quest",
-        questId,
-        "faction",
+      const edgeId = `${questId}:rewards_faction_reputation:faction:${targetId}`;
+      const pending = rewardEdges.get(edgeId) ?? {
+        targetType: "faction",
         targetId,
-        "rewards_faction_reputation",
-        "Faction reputation",
-        1,
-        JSON.stringify({
-          source: "quests.rewardSets.questRewards",
-          setOrdinal: reward.set_ordinal,
-          setGameId: reward.set_game_id,
-          rewardOrdinal: reward.reward_ordinal,
-          factionRef: parseReference(reward.faction_ref_json ?? "null"),
-        }),
-        null,
-      );
+        predicate: "rewards_faction_reputation",
+        label: "Faction reputation",
+        occurrences: [],
+      };
+      pending.occurrences.push({
+        source: "quests.rewardSets.questRewards",
+        setOrdinal: reward.set_ordinal,
+        setGameId: reward.set_game_id,
+        rewardOrdinal: reward.reward_ordinal,
+        factionRef,
+      });
+      rewardEdges.set(edgeId, pending);
     }
     return {
       label: node.label,
@@ -558,8 +604,8 @@ function rewardTarget(
       return null;
     }
     return {
-      label: target.node.label,
-      routePath: target.node.has_page === 1 ? target.node.route_path : null,
+      label: target.label,
+      routePath: target.has_page === 1 ? target.route_path : null,
     };
   }
   return null;
@@ -570,10 +616,22 @@ function resolveItemRewards(
   itemNodes: Map<string, EntityNode> | undefined,
   diagnostics: PipelineDiagnostic[],
   questId: string,
-  edgeInsert: ReturnType<Database["prepare"]>,
-): { label: string; routePath: string | null }[] {
-  const refs = parseReferenceArray(reward.item_refs_json);
-  const itemListRefs = parseReferenceArray(reward.item_list_refs_json);
+  rewardEdges: Map<string, PendingRewardEdge>,
+): { label: string; routePath: string | null; count: number }[] {
+  const itemRefs = parseReferenceArray(
+    reward.items_json,
+    diagnostics,
+    questId,
+    reward,
+    "items_json",
+  );
+  const itemListRefs = parseReferenceArray(
+    reward.item_list_refs_json,
+    diagnostics,
+    questId,
+    reward,
+    "item_list_refs_json",
+  );
   if (itemListRefs.length > 0) {
     diagnostics.push({
       severity: "diagnostic",
@@ -591,60 +649,104 @@ function resolveItemRewards(
       },
     });
   }
-  return refs.map((ref, itemOrdinal) => {
-    const targetId = resolveNamedOrLookupId(JSON.stringify(ref), "item");
+
+  const items: { label: string; routePath: string | null; count: number }[] = [];
+  for (const [itemOrdinal, rawItem] of itemRefs.entries()) {
+    if (
+      typeof rawItem !== "object" ||
+      rawItem === null ||
+      !("ref" in rawItem) ||
+      !("count" in rawItem) ||
+      typeof rawItem.ref !== "object" ||
+      rawItem.ref === null ||
+      typeof rawItem.count !== "number" ||
+      !Number.isInteger(rawItem.count)
+    ) {
+      diagnostics.push(malformedItemRefsDiagnostic(questId, reward, "items_json"));
+      continue;
+    }
+    const item = rawItem as QuestRewardItemRef;
+    const targetId = resolveNamedOrLookupId(item.ref, "item");
     const node = targetId === null ? undefined : itemNodes?.get(targetId);
     if (targetId === null || node === undefined) {
       diagnostics.push(
-        unresolvedRewardDiagnostic(
-          questId,
-          reward,
-          "questItemUnresolved",
-          "item_refs_json",
-          targetId,
-        ),
+        unresolvedRewardDiagnostic(questId, reward, "questItemUnresolved", "items_json", targetId),
       );
+      continue;
     }
-    if (node?.has_page === 1) {
-      edgeInsert.run(
-        `${questId}:rewards_item:item:${targetId}:${reward.set_ordinal}:${reward.reward_ordinal}:${itemOrdinal}`,
-        "quest",
-        questId,
-        "item",
+    if (node.has_page === 1) {
+      const edgeId = `${questId}:rewards_item:item:${targetId}`;
+      const pending = rewardEdges.get(edgeId) ?? {
+        targetType: "item",
         targetId,
-        "rewards_item",
-        "Item rewards",
-        1,
-        JSON.stringify({
-          source: "quests.rewardSets.questRewards",
-          setOrdinal: reward.set_ordinal,
-          setGameId: reward.set_game_id,
-          rewardOrdinal: reward.reward_ordinal,
-          itemRef: ref,
-        }),
-        null,
-      );
+        predicate: "rewards_item",
+        label: "Item rewards",
+        occurrences: [],
+      };
+      pending.occurrences.push({
+        source: "quests.rewardSets.questRewards",
+        setOrdinal: reward.set_ordinal,
+        setGameId: reward.set_game_id,
+        rewardOrdinal: reward.reward_ordinal,
+        itemOrdinal,
+        itemRef: item.ref,
+        count: item.count,
+      });
+      rewardEdges.set(edgeId, pending);
     }
-    return {
-      label: node?.label ?? "Unnamed item",
-      routePath: node?.has_page === 1 ? node.route_path : null,
-    };
-  });
+    items.push({
+      label: node.label ?? "Unnamed item",
+      routePath: node.has_page === 1 ? node.route_path : null,
+      count: item.count,
+    });
+  }
+  return items;
 }
 
-function parseReferenceArray(value: string | null): SnapshotRef[] {
+function parseReferenceArray(
+  value: string | null,
+  diagnostics: PipelineDiagnostic[],
+  questId: string,
+  reward: QuestRewardRow,
+  field: "items_json" | "item_list_refs_json",
+): unknown[] {
   if (value === null) return [];
   try {
     const parsed = JSON.parse(value) as unknown;
-    return Array.isArray(parsed) ? (parsed as SnapshotRef[]) : [];
+    if (Array.isArray(parsed)) return parsed;
   } catch {
-    return [];
+    // Fall through to the shared malformed-reference diagnostic.
   }
+  diagnostics.push(malformedItemRefsDiagnostic(questId, reward, field));
+  return [];
 }
 
-function resolveNamedOrLookupId(value: string | null, entity: string): string | null {
+function malformedItemRefsDiagnostic(
+  questId: string,
+  reward: QuestRewardRow,
+  field: "items_json" | "item_list_refs_json",
+): PipelineDiagnostic {
+  return {
+    severity: "diagnostic",
+    source: "relationship-graph",
+    code: "questItemRefsMalformed",
+    message: `Quest '${questId}' has a malformed item reference array.`,
+    entityType: "quest",
+    entityId: questId,
+    field: `quest_rewards.${field}`,
+    evidence: {
+      setOrdinal: reward.set_ordinal,
+      setGameId: reward.set_game_id,
+      rewardOrdinal: reward.reward_ordinal,
+    },
+  };
+}
+
+function resolveNamedOrLookupId(value: string | null, entity: string): string | null;
+function resolveNamedOrLookupId(value: SnapshotRef | null, entity: string): string | null;
+function resolveNamedOrLookupId(value: string | SnapshotRef | null, entity: string): string | null {
   if (value === null) return null;
-  const ref = parseReference(value);
+  const ref = typeof value === "string" ? parseReference(value) : value;
   if (ref.kind === "lookupAsset" && typeof ref.guid === "string") return ref.guid;
   if (ref.kind === "namedAsset" && ref.entity === entity && typeof ref.name === "string") {
     return `named;${entity};${ref.name}`;
@@ -684,20 +786,21 @@ function unresolvedRewardDiagnostic(
 
 function readerAmount(reward: QuestRewardRow): string | null {
   if (reward.kind === "gold") {
-    return reward.custom_amount === null ? null : `${reward.custom_amount} gold`;
+    return reward.custom_amount === null ? null : `${reward.custom_amount}`;
   }
   if (reward.kind === "experience") {
     const amount = reward.amount_label?.replace(/[^a-zA-Z]/g, "").toLowerCase();
     if (amount === "custom") {
-      return reward.custom_amount === null ? null : `${reward.custom_amount} experience`;
+      return reward.custom_amount === null ? null : `${reward.custom_amount}`;
     }
     if (amount === "low" || amount === "medium" || amount === "high") {
-      return `${amount[0]?.toUpperCase()}${amount.slice(1)} experience`;
+      return `${amount[0]?.toUpperCase()}${amount.slice(1)}`;
     }
     return null;
   }
   if (reward.kind !== "faction-reputation" && reward.kind !== "character-reputation") return null;
   const amount = reward.amount_label?.replace(/[^a-zA-Z]/g, "").toLowerCase();
+  // Magnitudes are game facts from .decompiled/0.0.10.91-63c576261184/csharp/Ardenfall/Nodes/RelationshipModAmountContainer.cs:31-40.
   const value =
     amount === "verylow"
       ? 5
@@ -711,6 +814,6 @@ function readerAmount(reward: QuestRewardRow): string | null {
               ? reward.custom_amount
               : null;
   if (value === null || value === undefined) return null;
-  const signed = reward.is_positive === 0 ? `-${value}` : `+${value}`;
-  return `${signed} reputation`;
+  if (amount === "custom") return `${value > 0 ? "+" : ""}${value}`;
+  return `${reward.is_positive === 0 ? "-" : "+"}${value}`;
 }

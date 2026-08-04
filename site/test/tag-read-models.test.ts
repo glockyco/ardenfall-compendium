@@ -69,6 +69,7 @@ describe("item-tag read-model accessors", () => {
         entity_type TEXT NOT NULL,
         entity_id TEXT NOT NULL,
         label TEXT NOT NULL,
+        display_label TEXT NOT NULL,
         route_path TEXT NOT NULL,
         canonical_slug TEXT NOT NULL,
         short_id TEXT NOT NULL,
@@ -88,10 +89,10 @@ describe("item-tag read-model accessors", () => {
         ('6a71c0de.fixture-stamina-draught', 'Stamina Draught', 'consumable', 'Consumable', 'item-presentation-v1', NULL, NULL, '', '${richText}', '', '${richText}', '[]', '[]', '[]', NULL, '[]', 9, 0.25, '[]');
       INSERT INTO item_tag_refs VALUES
         ('6a71c0de.fixture-stamina-draught', '7a600001.fixture-tag-valuable-remedy');
-      INSERT INTO entity_nodes VALUES
-        ('item-tag', '7a600001.fixture-tag-valuable-remedy', 'Valuable remedy', '/tags/valuable-remedy--abc12345', 'valuable-remedy--abc12345', 'abc12345', 1),
-        ('item-tag', '7a600002.fixture-tag-rare', 'Rare', '/tags/rare--def67890', 'rare--def67890', 'def67890', 1),
-        ('item', '6a71c0de.fixture-stamina-draught', 'Stamina Draught', '/items/6a71c0de.fixture-stamina-draught', 'stamina-draught--6a71c0de', '6a71c0de', 1);
+      INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+        ('item-tag', '7a600001.fixture-tag-valuable-remedy', 'Valuable remedy', 'Valuable remedy', '/tags/valuable-remedy--abc12345', 'valuable-remedy--abc12345', 'abc12345', 1),
+        ('item-tag', '7a600002.fixture-tag-rare', 'Rare', 'Rare', '/tags/rare--def67890', 'rare--def67890', 'def67890', 1),
+        ('item', '6a71c0de.fixture-stamina-draught', 'Stamina Draught', 'Stamina Draught', '/items/6a71c0de.fixture-stamina-draught', 'stamina-draught--6a71c0de', '6a71c0de', 1);
     `);
 
     try {
@@ -130,7 +131,6 @@ describe("item-tag read-model accessors", () => {
           value: 9,
           variant: "consumable",
           variantLabel: "Consumable",
-          shortId: "6a71c0de",
           displayIconSrc: null,
           displayIconColor: null,
           routePath: "/items/6a71c0de.fixture-stamina-draught",

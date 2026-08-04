@@ -1,7 +1,6 @@
 export interface ItemNameRow {
   name: string | null;
   variantLabel: string;
-  shortId: string;
 }
 
 export function isPlaceholderItemName(name: string | null): boolean {

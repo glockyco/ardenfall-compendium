@@ -1,12 +1,11 @@
 import { getQuestDialogue, type DialogueGroup } from "./dialogue";
-import { disambiguateLabels } from "../disambiguate-labels";
 import { all, get } from "../db";
 import { isFiniteNumber, isRecord, parseGeneratedJson, validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
 
 interface QuestOverviewRecord {
   id: string;
-  name: string | null;
+  name: string;
   subname: string | null;
   disabled: number;
   hidden_in_quest_ui: number;
@@ -16,7 +15,7 @@ interface QuestOverviewRecord {
 
 interface QuestPresentationRecord {
   id: string;
-  name: string | null;
+  name: string;
   subname: string | null;
   render_context: string;
   disabled: number;
@@ -62,6 +61,7 @@ export interface QuestPhase {
 export interface QuestRewardItem {
   label: string;
   routePath: string | null;
+  count: number;
 }
 
 export type QuestRewardKind =
@@ -75,6 +75,14 @@ export interface QuestReward {
   items: QuestRewardItem[];
 }
 
+export type QuestRewardSetType = "on-success" | "on-failure" | "manual";
+
+export interface QuestRewardSet {
+  setOrdinal: number;
+  setType: QuestRewardSetType;
+  rewards: QuestReward[];
+}
+
 export interface QuestPresentationRow {
   id: string;
   name: string;
@@ -86,7 +94,7 @@ export interface QuestPresentationRow {
   journalOnSucceed: string | null;
   journalOnFailure: string | null;
   phases: QuestPhase[];
-  rewards: QuestReward[];
+  rewards: QuestRewardSet[];
   routePath: string;
   dialogue: DialogueGroup[];
 }
@@ -100,6 +108,12 @@ const questRewardKinds: Record<QuestRewardKind, true> = {
   "faction-reputation": true,
   "character-reputation": true,
   items: true,
+};
+
+const questRewardSetTypes: Record<QuestRewardSetType, true> = {
+  "on-success": true,
+  "on-failure": true,
+  manual: true,
 };
 
 const isQuestObjective = (value: unknown): value is QuestObjective =>
@@ -128,7 +142,11 @@ const isQuestPhaseArray = (value: unknown): value is QuestPhase[] =>
   Array.isArray(value) && value.every(isQuestPhase);
 
 const isQuestRewardItem = (value: unknown): value is QuestRewardItem =>
-  isRecord(value) && typeof value.label === "string" && isNullableString(value.routePath);
+  isRecord(value) &&
+  typeof value.label === "string" &&
+  isNullableString(value.routePath) &&
+  isFiniteNumber(value.count) &&
+  Number.isInteger(value.count);
 
 const isQuestReward = (value: unknown): value is QuestReward =>
   isRecord(value) &&
@@ -140,39 +158,43 @@ const isQuestReward = (value: unknown): value is QuestReward =>
   Array.isArray(value.items) &&
   value.items.every(isQuestRewardItem);
 
-const isQuestRewardArray = (value: unknown): value is QuestReward[] =>
-  Array.isArray(value) && value.every(isQuestReward);
+const isQuestRewardSet = (value: unknown): value is QuestRewardSet =>
+  isRecord(value) &&
+  isFiniteNumber(value.setOrdinal) &&
+  Number.isInteger(value.setOrdinal) &&
+  typeof value.setType === "string" &&
+  questRewardSetTypes[value.setType as QuestRewardSetType] === true &&
+  Array.isArray(value.rewards) &&
+  value.rewards.every(isQuestReward);
 
-const presentationName = (name: string | null): string => name?.trim() || "Unnamed quest";
+const isQuestRewardSetArray = (value: unknown): value is QuestRewardSet[] =>
+  Array.isArray(value) && value.every(isQuestRewardSet);
 
 export const listQuests = (): QuestOverviewRow[] => {
   const rows = all<QuestOverviewRecord>(
-    `SELECT p.id, p.name, p.subname, p.disabled, p.hidden_in_quest_ui, n.route_path, n.short_id
+    `SELECT p.id, n.display_label AS name, p.subname, p.disabled, p.hidden_in_quest_ui, n.route_path
      FROM quest_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'quest'
       AND n.entity_id = p.id
       AND n.has_page = 1
-     ORDER BY COALESCE(NULLIF(TRIM(p.name), ''), 'Unnamed quest'), p.id`,
+     ORDER BY n.display_label, p.id`,
   ).map((row) => ({
     id: row.id,
-    name: presentationName(row.name),
+    name: row.name,
     subname: row.subname,
     disabled: row.disabled === 1,
     hiddenInQuestUi: row.hidden_in_quest_ui === 1,
     routePath: row.route_path,
-    shortId: row.short_id,
   }));
-  return disambiguateLabels(rows, "name", (row) => row.shortId).map(
-    ({ shortId: _shortId, ...row }) => row,
-  );
+  return rows;
 };
 
 export const getQuestPresentation = (slug: string): QuestPresentationRow | undefined => {
   const node = getEntityNodeBySlug("quest", slug);
   if (!node) return undefined;
   const row = get<QuestPresentationRecord>(
-    `SELECT p.id, p.name, p.subname, p.render_context, p.disabled, p.hidden_in_quest_ui,
+    `SELECT p.id, n.display_label AS name, p.subname, p.render_context, p.disabled, p.hidden_in_quest_ui,
             p.journal_on_start, p.journal_on_succeed, p.journal_on_failure,
             p.phases_json, p.rewards_json, n.route_path
      FROM quest_presentation_rows p
@@ -186,7 +208,7 @@ export const getQuestPresentation = (slug: string): QuestPresentationRow | undef
   if (!row) return undefined;
   return {
     id: row.id,
-    name: presentationName(row.name),
+    name: row.name,
     subname: row.subname,
     renderContext: validateRenderContext(
       row.render_context,
@@ -205,7 +227,7 @@ export const getQuestPresentation = (slug: string): QuestPresentationRow | undef
       "quest",
       "rewards_json",
       row.id,
-      isQuestRewardArray,
+      isQuestRewardSetArray,
     ),
     routePath: row.route_path,
     dialogue: getQuestDialogue(row.id),

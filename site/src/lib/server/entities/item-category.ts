@@ -50,7 +50,7 @@ export interface ItemCategoryPresentationRow {
 
 export const listItemCategories = (): ItemCategoryOverviewRow[] =>
   all<ItemCategoryOverviewRecord>(
-    `SELECT o.id, o.name, o.icon_hash, o.default_item_icon_hash,
+    `SELECT o.id, n.display_label AS name, o.icon_hash, o.default_item_icon_hash,
             o.category_color_json, o.item_count, n.route_path
      FROM item_category_overview_rows o
      JOIN entity_nodes n
@@ -74,7 +74,7 @@ export const getItemCategoryPresentation = (
   const node = getEntityNodeBySlug("item-category", slug);
   if (!node) return undefined;
   const row = get<ItemCategoryPresentationRecord>(
-    `SELECT id, name, render_context, icon_hash, default_item_icon_hash,
+    `SELECT id, n.display_label AS name, render_context, icon_hash, default_item_icon_hash,
             category_color_json, show_in_all_category, columns_json, item_count,
             n.route_path
      FROM item_category_presentation_rows p

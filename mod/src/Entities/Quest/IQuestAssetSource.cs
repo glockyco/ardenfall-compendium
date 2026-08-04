@@ -42,13 +42,17 @@ public sealed record QuestPhaseAsset(
     string? CompletedJournalEntry,
     IReadOnlyList<QuestObjectiveAsset> Objectives);
 
+public sealed record QuestRewardItemAsset(
+    SnapshotRef Ref,
+    int? Count);
+
 public sealed record QuestRewardAsset(
     string Kind,
     bool? IsPositive = null,
     string? AmountLabel = null,
     int? CustomAmount = null,
     SnapshotRef? FactionRef = null,
-    IReadOnlyList<SnapshotRef>? ItemRefs = null,
+    IReadOnlyList<QuestRewardItemAsset>? Items = null,
     IReadOnlyList<SnapshotRef>? ItemListRefs = null,
     int? TargetObjectGameId = null);
 

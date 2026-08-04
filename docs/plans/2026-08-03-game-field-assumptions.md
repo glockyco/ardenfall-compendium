@@ -44,9 +44,9 @@ The live portal data measured 33 of 33 rows as `true`. The field carries no vari
 
 ### An `applies` edge claims a source it does not have
 
-All 266 `applies` edges carry `evidence_json` of `{"source":"items.statusEffectRef"}`. `mod/src/Entities/Item/ItemPresentationBuilder.cs:157-184` collects the effects from three places, and the game applies them by three mechanisms: on use for a consumable (`Ardenfall/Item/ConsumableItem.cs:110-118`), on hit for a weapon (`Ardenfall/Item/MeleeItem.cs:425-427`, `BowItem.cs:406-408`, `ThrowingItem.cs:290-292`), and on a target for a thrown potion (`Ardenfall/Item/ThrowingPotion.cs:271-275`).
+The release carries 266 item-sourced `applies` edges and 26 spell-sourced edges, 292 in total. The item edges collect effects from three places, and the game applies them by three mechanisms: on use for a consumable (`Ardenfall/Item/ConsumableItem.cs:110-118`), on hit for a weapon (`Ardenfall/Item/MeleeItem.cs:425-427`, `BowItem.cs:406-408`, `ThrowingItem.cs:290-292`), and on a target for a thrown potion (`Ardenfall/Item/ThrowingPotion.cs:271-275`).
 
-One evidence string covering three mechanisms is worse than a vague one, because it reads as precise and is wrong.
+The release evidence names the source field for each item fact. One evidence string covering three mechanisms would be worse than a vague one, because it would read as precise and be wrong.
 
 ### An item name can fall back to an internal row id
 
@@ -71,7 +71,7 @@ Verified against a live export rather than the fixture.
 | defect | before | after |
 | --- | ---: | ---: |
 | Cooldown rows with no unit | 252 | 0 |
-| `applies` edges claiming one false source | 266 | 0 |
+| `applies` edges | 266 item-sourced | 292 total: 266 item-sourced and 26 spell-sourced |
 | Duplicate link text on `/items` | 273 links | 0 |
 | Duplicate link text on `/status-effects` and `/spells` | 23 rows | 0 |
 | Reader-visible brace templates | present | 0 |

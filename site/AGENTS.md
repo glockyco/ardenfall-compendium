@@ -32,6 +32,6 @@
 ## Deployment
 
 - Deploy production with `bun run --cwd site deploy:production ../pipeline/artifacts/releases/<snapshot-id>`.
-- Make `bun run --cwd site build` emit ordinary route HTML under `.svelte-kit/cloudflare`, including `/items` and `/items/[id]`. Do not emit empty SPA shells.
+- Make `bun run --cwd site build:fixture` emit ordinary route HTML under `.svelte-kit/cloudflare`, including `/items` and `/items/[id]`. Do not emit empty SPA shells. Plain `build` assumes an artifact is already staged and does not stage one.
 - Authenticate Wrangler with `bunx wrangler login` from `site/`, or provide another valid local context. Do not run a bare global `wrangler` command.
 - Keep CI on fixture builds. Do not make CI deploy or require Cloudflare secrets.

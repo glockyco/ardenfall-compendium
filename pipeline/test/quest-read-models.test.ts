@@ -61,7 +61,7 @@ function seedDatabase(): Database {
     `INSERT INTO quest_rewards (
        id, quest_id, set_ordinal, set_game_id, set_name, set_type, reward_ordinal,
        kind, is_positive, amount_label, custom_amount, faction_ref_json,
-       item_refs_json, item_list_refs_json, target_object_game_id
+       items_json, item_list_refs_json, target_object_game_id
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     "faction-reward",
@@ -69,7 +69,7 @@ function seedDatabase(): Database {
     0,
     1,
     "Rewards",
-    "Success",
+    "OnSuccess",
     0,
     "faction-reputation",
     1,
@@ -84,7 +84,7 @@ function seedDatabase(): Database {
     `INSERT INTO quest_rewards (
        id, quest_id, set_ordinal, set_game_id, set_name, set_type, reward_ordinal,
        kind, is_positive, amount_label, custom_amount, faction_ref_json,
-       item_refs_json, item_list_refs_json, target_object_game_id
+       items_json, item_list_refs_json, target_object_game_id
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     "item-reward",
@@ -92,14 +92,14 @@ function seedDatabase(): Database {
     0,
     1,
     "Rewards",
-    "Success",
+    "OnSuccess",
     1,
     "items",
     null,
     null,
     null,
     null,
-    JSON.stringify([{ kind: "namedAsset", entity: "item", name: "item_sword" }]),
+    JSON.stringify([{ ref: { kind: "namedAsset", entity: "item", name: "item_sword" }, count: 1 }]),
     "[]",
     null,
   );
@@ -181,24 +181,195 @@ describe("quest read models", () => {
     ]);
     expect(JSON.parse(presentation?.rewards_json ?? "null")).toEqual([
       {
-        kind: "faction-reputation",
-        amount: "+17 reputation",
-        targetLabel: "Guard",
-        targetRoutePath: "/factions/guard--faction-guard",
-        items: [],
-      },
-      {
-        kind: "items",
-        amount: null,
-        targetLabel: null,
-        targetRoutePath: null,
-        items: [{ label: "Sword", routePath: "/items/sword--item-sword" }],
+        setOrdinal: 0,
+        setType: "on-success",
+        rewards: [
+          {
+            kind: "faction-reputation",
+            amount: "+17",
+            targetLabel: "Guard",
+            targetRoutePath: "/factions/guard--faction-guard",
+            items: [],
+          },
+          {
+            kind: "items",
+            amount: null,
+            targetLabel: null,
+            targetRoutePath: null,
+            items: [{ label: "Sword", routePath: "/items/sword--item-sword", count: 1 }],
+          },
+        ],
       },
     ]);
     expect(db.query(`SELECT predicate FROM entity_edges ORDER BY predicate`).all()).toEqual([
       { predicate: "features_character" },
       { predicate: "rewards_faction_reputation" },
       { predicate: "rewards_item" },
+    ]);
+    db.close();
+  });
+
+  it("keeps success and failure reward sets separate", () => {
+    const db = seedDatabase();
+    db.prepare(
+      `INSERT INTO quest_rewards (
+         id, quest_id, set_ordinal, set_game_id, set_name, set_type, reward_ordinal,
+         kind, is_positive, amount_label, custom_amount, faction_ref_json,
+         items_json, item_list_refs_json, target_object_game_id
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      "failure-reward",
+      questId,
+      1,
+      2,
+      "Failure",
+      "OnFailure",
+      0,
+      "gold",
+      null,
+      null,
+      25,
+      null,
+      null,
+      "[]",
+      null,
+    );
+
+    expect(emitQuestReadModels(db)).toEqual([]);
+    expect(
+      JSON.parse(
+        db
+          .query<{ rewards_json: string }, [string]>(
+            `SELECT rewards_json FROM quest_presentation_rows WHERE id = ?`,
+          )
+          .get(questId)?.rewards_json ?? "null",
+      ),
+    ).toEqual([
+      expect.objectContaining({ setOrdinal: 0, setType: "on-success" }),
+      expect.objectContaining({
+        setOrdinal: 1,
+        setType: "on-failure",
+        rewards: [expect.objectContaining({ kind: "gold", amount: "25" })],
+      }),
+    ]);
+    db.close();
+  });
+
+  it("renders a custom negative reputation amount with one sign", () => {
+    const db = seedDatabase();
+    db.run(`UPDATE quest_rewards SET is_positive = 0, custom_amount = -50 WHERE id = ?`, [
+      "faction-reward",
+    ]);
+
+    expect(emitQuestReadModels(db)).toEqual([]);
+    const rewards = JSON.parse(
+      db
+        .query<{ rewards_json: string }, [string]>(
+          `SELECT rewards_json FROM quest_presentation_rows WHERE id = ?`,
+        )
+        .get(questId)?.rewards_json ?? "null",
+    );
+    expect(rewards[0].rewards[0].amount).toBe("-50");
+    expect(rewards[0].rewards[0].amount).not.toContain("--");
+    db.close();
+  });
+
+  it("ignores is_positive for a positive custom reputation amount", () => {
+    const db = seedDatabase();
+    db.run(`UPDATE quest_rewards SET is_positive = 0, custom_amount = 200 WHERE id = ?`, [
+      "faction-reward",
+    ]);
+
+    expect(emitQuestReadModels(db)).toEqual([]);
+    const rewards = JSON.parse(
+      db
+        .query<{ rewards_json: string }, [string]>(
+          `SELECT rewards_json FROM quest_presentation_rows WHERE id = ?`,
+        )
+        .get(questId)?.rewards_json ?? "null",
+    );
+    expect(rewards[0].rewards[0].amount).toBe("+200");
+    db.close();
+  });
+
+  it("collapses repeated faction reward edges and preserves occurrences", () => {
+    const db = seedDatabase();
+    db.prepare(
+      `INSERT INTO quest_rewards (
+         id, quest_id, set_ordinal, set_game_id, set_name, set_type, reward_ordinal,
+         kind, is_positive, amount_label, custom_amount, faction_ref_json,
+         items_json, item_list_refs_json, target_object_game_id
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      "faction-reward-failure",
+      questId,
+      1,
+      2,
+      "Failure",
+      "OnFailure",
+      0,
+      "faction-reputation",
+      0,
+      "High",
+      null,
+      JSON.stringify({ kind: "namedAsset", entity: "faction", name: "faction_guard" }),
+      null,
+      "[]",
+      null,
+    );
+
+    expect(emitQuestReadModels(db)).toEqual([]);
+    expect(
+      db
+        .query(
+          `SELECT COUNT(*) AS count FROM entity_edges WHERE predicate = 'rewards_faction_reputation'`,
+        )
+        .get(),
+    ).toEqual({ count: 1 });
+    const evidence = db
+      .query<{ evidence_json: string }, [string]>(
+        `SELECT evidence_json FROM entity_edges WHERE edge_id = ?`,
+      )
+      .get(`${questId}:rewards_faction_reputation:faction:${factionId}`);
+    expect(JSON.parse(evidence?.evidence_json ?? "null")).toHaveLength(2);
+    db.close();
+  });
+
+  it("omits unresolved items from presentation while diagnosing them", () => {
+    const db = seedDatabase();
+    db.run(`UPDATE quest_rewards SET items_json = ? WHERE id = ?`, [
+      JSON.stringify([
+        { ref: { kind: "namedAsset", entity: "item", name: "missing_item" }, count: 1 },
+      ]),
+      "item-reward",
+    ]);
+
+    const diagnostics = emitQuestReadModels(db);
+    expect(diagnostics).toEqual([
+      expect.objectContaining({ code: "questItemUnresolved", entityId: questId }),
+    ]);
+    const rewards = JSON.parse(
+      db
+        .query<{ rewards_json: string }, [string]>(
+          `SELECT rewards_json FROM quest_presentation_rows WHERE id = ?`,
+        )
+        .get(questId)?.rewards_json ?? "null",
+    );
+    expect(rewards[0].rewards[1].items).toEqual([]);
+    db.close();
+  });
+
+  it("diagnoses a malformed item reference array", () => {
+    const db = seedDatabase();
+    db.run(`UPDATE quest_rewards SET items_json = ? WHERE id = ?`, ["{}", "item-reward"]);
+
+    const diagnostics = emitQuestReadModels(db);
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        code: "questItemRefsMalformed",
+        entityType: "quest",
+        entityId: questId,
+      }),
     ]);
     db.close();
   });
@@ -262,7 +433,7 @@ describe("quest read models", () => {
     expect(
       db
         .query<{ kind: string; text_json: string }, []>(
-          `SELECT kind, text_json FROM quest_character_dialogue_rows ORDER BY ordinal`,
+          `SELECT kind, text_json FROM quest_character_dialogue_rows ORDER BY quest_ordinal`,
         )
         .all()
         .map((row) => ({ kind: row.kind, text: plainText(row.text_json) })),

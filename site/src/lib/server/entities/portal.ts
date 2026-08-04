@@ -1,4 +1,3 @@
-import { disambiguateLabels } from "../disambiguate-labels";
 import { all, get } from "../db";
 import { validateRenderContext } from "../json";
 import { getMapHref } from "../map-href";
@@ -8,7 +7,6 @@ interface PortalOverviewRecord {
   id: string;
   name: string;
   route_path: string;
-  short_id: string;
 }
 
 interface PortalPresentationRecord {
@@ -62,7 +60,7 @@ const displayMapLabel = (mapId: string | null): string => {
 
 export const listPortals = (): PortalOverviewRow[] => {
   const rows = all<PortalOverviewRecord>(
-    `SELECT p.id, p.name, n.route_path, n.short_id
+    `SELECT p.id, n.display_label AS name, n.route_path
      FROM portal_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'portal'
@@ -72,19 +70,16 @@ export const listPortals = (): PortalOverviewRow[] => {
     id: row.id,
     name: row.name,
     routePath: row.route_path,
-    shortId: row.short_id,
   }));
-  return disambiguateLabels(rows, "name", (row) => row.shortId).map(
-    ({ shortId: _shortId, ...row }) => row,
-  );
+  return rows;
 };
 
 export const getPortalPresentation = (slug: string): PortalPresentationRow | undefined => {
   const node = getEntityNodeBySlug("portal", slug);
   if (!node) return undefined;
   const row = get<PortalPresentationRecord>(
-    `SELECT p.id, p.name, p.render_context, p.map_id, p.map_x, p.map_y, p.elevation,
-            p.connected_portal_id, n.route_path
+    `SELECT p.id, n.display_label AS name, p.render_context, p.map_id, p.map_x, p.map_y,
+            p.elevation, p.connected_portal_id, n.route_path
      FROM portal_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'portal'
@@ -97,7 +92,7 @@ export const getPortalPresentation = (slug: string): PortalPresentationRow | und
   let connectedPortal: ConnectedPortalLink | null = null;
   if (row.connected_portal_id !== null) {
     const target = get<ConnectedPortalRecord>(
-      `SELECT entity_id AS id, label, route_path
+      `SELECT entity_id AS id, display_label AS label, route_path
        FROM entity_nodes
        WHERE entity_type = 'portal' AND entity_id = ? AND has_page = 1`,
       [row.connected_portal_id],

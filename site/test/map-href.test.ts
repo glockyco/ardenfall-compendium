@@ -31,7 +31,7 @@ const withDatabase = async (
       instance_id TEXT NOT NULL,
       map_id TEXT
     );
-    INSERT INTO entity_nodes VALUES
+    INSERT INTO entity_nodes (entity_type, entity_id, short_id, has_page) VALUES
       ('location', 'location-point', 'locpoint', 1),
       ('location', 'location-volume', 'locvolume', 1),
       ('portal', 'portal-point', 'portalpoint', 1),

@@ -35,6 +35,7 @@ const seed = () => {
       entity_type TEXT NOT NULL,
       entity_id TEXT NOT NULL,
       label TEXT NOT NULL,
+      display_label TEXT NOT NULL,
       route_path TEXT NOT NULL,
       canonical_slug TEXT NOT NULL,
       short_id TEXT NOT NULL,
@@ -61,11 +62,10 @@ const seed = () => {
       ]',
       '[]', '[]', NULL, '[]', 10, 1.5
     );
-    INSERT INTO entity_nodes VALUES
-      ('status-effect', 'status-speed', 'Attack Speed',
-       '/status-effects/attack-speed--abc12345', 'attack-speed--abc12345', 'abc12345', 1),
-      ('spell', 'named;spell;spell_fire-shield', 'Fire Shield',
-       '/spells/fire-shield--abc12345', 'fire-shield--abc12345', 'abc12345', 1);
+    INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+      ('status-effect', 'status-speed', 'Attack Speed', 'Attack Speed', '/status-effects/attack-speed--abc12345', 'attack-speed--abc12345', 'abc12345', 1),
+      ('spell', 'named;spell;spell_fire-shield', 'Fire Shield', 'Fire Shield', '/spells/fire-shield--abc12345', 'fire-shield--abc12345', 'abc12345', 1),
+      ('item', 'item-sword', 'Sword', 'Sword', '/items/item-sword', 'item-sword', 'item-sword', 1);
     INSERT INTO entity_relationship_sections VALUES
       ('item-sword:variant_of', 'item', 'item-sword', 'Variant', 'variant_of', 0,
        '[{"targetType":"item","targetId":"item-base","targetLabel":"Base Sword","targetRoutePath":"/items/base-sword--22222222","predicate":"variant_of","label":"Variant","weight":1,"anchor":null}]');

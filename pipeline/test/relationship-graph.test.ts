@@ -7,8 +7,17 @@ describe("relationship graph", () => {
     const db = new Database(":memory:");
     db.exec(ENTITY_GRAPH_DDL);
     db.run(
-      "INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      ["item", "source", "Source", "/items/source--abc12345", "source--abc12345", "abc12345", 1],
+      "INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        "item",
+        "source",
+        "Source",
+        "Source",
+        "/items/source--abc12345",
+        "source--abc12345",
+        "abc12345",
+        1,
+      ],
     );
     db.run(
       "INSERT INTO entity_edges (edge_id, source_type, source_id, target_type, target_id, predicate, label, weight, evidence_json, anchor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -24,13 +33,13 @@ describe("relationship graph", () => {
     const db = new Database(":memory:");
     db.exec(ENTITY_GRAPH_DDL);
     db.run(
-      `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
-       VALUES ('item', 'a', 'A', '/items/a--abc12345', 'a--abc12345', 'abc12345', 1)`,
+      `INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES ('item', 'a', 'A', 'A', '/items/a--abc12345', 'a--abc12345', 'abc12345', 1)`,
     );
     expect(() =>
       db.run(
-        `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
-         VALUES ('item', 'b', 'B', '/items/a--abc12345', 'a--abc12345', 'def67890', 1)`,
+        `INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+         VALUES ('item', 'b', 'B', 'B', '/items/a--abc12345', 'a--abc12345', 'def67890', 1)`,
       ),
     ).toThrow(/UNIQUE/);
   });
@@ -39,13 +48,13 @@ describe("relationship graph", () => {
     const db = new Database(":memory:");
     db.exec(ENTITY_GRAPH_DDL);
     db.run(
-      `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
-       VALUES ('item', 'a', 'A', '/items/foo--abc12345', 'foo--abc12345', 'abc12345', 1)`,
+      `INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES ('item', 'a', 'A', 'A', '/items/foo--abc12345', 'foo--abc12345', 'abc12345', 1)`,
     );
     expect(() =>
       db.run(
-        `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
-         VALUES ('item', 'b', 'B', '/items/bar--abc12345', 'bar--abc12345', 'abc12345', 1)`,
+        `INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+         VALUES ('item', 'b', 'B', 'B', '/items/bar--abc12345', 'bar--abc12345', 'abc12345', 1)`,
       ),
     ).toThrow(/UNIQUE/);
   });
@@ -55,12 +64,12 @@ describe("relationship graph", () => {
     db.exec(ENTITY_GRAPH_DDL);
     db.exec("DROP INDEX idx_entity_nodes_short_id;");
     db.run(
-      `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
-       VALUES ('item', 'a', 'A', '/items/a--abc12345', 'a--abc12345', 'abc12345', 1)`,
+      `INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES ('item', 'a', 'A', 'A', '/items/a--abc12345', 'a--abc12345', 'abc12345', 1)`,
     );
     db.run(
-      `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
-       VALUES ('item', 'b', 'B', '/items/b--abc12345', 'b--abc12345', 'abc12345', 1)`,
+      `INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES ('item', 'b', 'B', 'B', '/items/b--abc12345', 'b--abc12345', 'abc12345', 1)`,
     );
 
     const diagnostics = auditEntityGraph(db);

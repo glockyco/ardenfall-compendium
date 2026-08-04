@@ -79,11 +79,12 @@ function seedPageStat(db: Database, grouping: "attribute" | "skill" = "skill"): 
   db.exec(`CREATE TABLE stat_type_overview_rows (id TEXT PRIMARY KEY, grouping TEXT NOT NULL);`);
   db.prepare(
     `INSERT INTO entity_nodes (
-       entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page
-     ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     "stat-type",
     skillId,
+    "Destruction",
     "Destruction",
     "/stats/destruction--destruction",
     "destruction--destruction",

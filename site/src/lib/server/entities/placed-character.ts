@@ -1,5 +1,4 @@
 import { getCharacterDialogue, type DialogueGroup } from "./dialogue";
-import { disambiguateLabels } from "../disambiguate-labels";
 import { all, get } from "../db";
 import { isStringArray, parseGeneratedJson, validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
@@ -9,7 +8,6 @@ interface NpcOverviewRecord {
   id: string;
   name: string;
   route_path: string;
-  short_id: string;
 }
 
 interface NpcPresentationRecord {
@@ -64,7 +62,7 @@ const displayMapLabel = (mapId: string | null): string => {
 
 export const listPlacedCharacters = (): PlacedCharacterOverviewRow[] => {
   const rows = all<NpcOverviewRecord>(
-    `SELECT o.id, o.name, n.route_path, n.short_id
+    `SELECT o.id, n.display_label AS name, n.route_path
      FROM npc_presentation_rows o
      JOIN entity_nodes n
        ON n.entity_type = 'npc'
@@ -74,11 +72,8 @@ export const listPlacedCharacters = (): PlacedCharacterOverviewRow[] => {
     id: row.id,
     name: row.name,
     routePath: row.route_path,
-    shortId: row.short_id,
   }));
-  return disambiguateLabels(rows, "name", (row) => row.shortId).map(
-    ({ shortId: _shortId, ...row }) => row,
-  );
+  return rows;
 };
 
 export const getPlacedCharacterPresentation = (
@@ -87,7 +82,7 @@ export const getPlacedCharacterPresentation = (
   const node = getEntityNodeBySlug("npc", slug);
   if (!node) return undefined;
   const row = get<NpcPresentationRecord>(
-    `SELECT p.id, p.name, p.render_context, p.map_id, p.map_x, p.map_y, p.elevation,
+    `SELECT p.id, n.display_label AS name, p.render_context, p.map_id, p.map_x, p.map_y, p.elevation,
             p.location_ids_json, n.route_path
      FROM npc_presentation_rows p
      JOIN entity_nodes n
@@ -107,7 +102,7 @@ export const getPlacedCharacterPresentation = (
   );
   const locations = locationIds.map((locationId) => {
     const location = get<LocationLinkRecord>(
-      `SELECT entity_id AS id, label, route_path
+      `SELECT entity_id AS id, display_label AS label, route_path
        FROM entity_nodes
        WHERE entity_type = 'location' AND entity_id = ? AND has_page = 1`,
       [locationId],

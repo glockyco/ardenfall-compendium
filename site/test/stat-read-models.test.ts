@@ -36,6 +36,7 @@ describe("stat read-model accessors", () => {
         entity_type TEXT NOT NULL,
         entity_id TEXT NOT NULL,
         label TEXT NOT NULL,
+        display_label TEXT NOT NULL,
         route_path TEXT NOT NULL,
         canonical_slug TEXT NOT NULL,
         short_id TEXT NOT NULL,
@@ -47,9 +48,9 @@ describe("stat read-model accessors", () => {
         ('57a70002.fixture-heavy-armor', 'Heavy Armor', 'skill', NULL, NULL);
       INSERT INTO stat_type_presentation_rows VALUES
         ('57a70001.fixture-strength', 'Strength', 'attribute', 'stat-type-presentation-v1', '${iconHash}', '{"r":1,"g":0.5,"b":0.25,"a":1}', 'Raw power.', 'Raw power. Affects melee damage.', '[{"label":"Heavy Armor","routePath":"/stats/heavy-armor--def67890"},{"label":"melee-damage","routePath":null}]', '[{"label":"Heavy Armor","routePath":"/stats/heavy-armor--def67890"}]');
-      INSERT INTO entity_nodes VALUES
-        ('stat-type', '57a70001.fixture-strength', 'Strength', '/stats/strength--abc12345', 'strength--abc12345', 'abc12345', 1),
-        ('stat-type', '57a70002.fixture-heavy-armor', 'Heavy Armor', '/stats/heavy-armor--def67890', 'heavy-armor--def67890', 'def67890', 1);
+      INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+        ('stat-type', '57a70001.fixture-strength', 'Strength', 'Strength', '/stats/strength--abc12345', 'strength--abc12345', 'abc12345', 1),
+        ('stat-type', '57a70002.fixture-heavy-armor', 'Heavy Armor', 'Heavy Armor', '/stats/heavy-armor--def67890', 'heavy-armor--def67890', 'def67890', 1);
     `);
     db.close();
 
@@ -115,6 +116,7 @@ describe("stat read-model accessors", () => {
         entity_type TEXT NOT NULL,
         entity_id TEXT NOT NULL,
         label TEXT NOT NULL,
+        display_label TEXT NOT NULL,
         route_path TEXT NOT NULL,
         canonical_slug TEXT NOT NULL,
         short_id TEXT NOT NULL,
@@ -123,8 +125,8 @@ describe("stat read-model accessors", () => {
       );
       INSERT INTO stat_type_overview_rows VALUES
         ('57a70001.fixture-strength', 'Strength', 'attribute', NULL, '{"r":"bad"}');
-      INSERT INTO entity_nodes VALUES
-        ('stat-type', '57a70001.fixture-strength', 'Strength', '/stats/strength--abc12345', 'strength--abc12345', 'abc12345', 1);
+      INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+        ('stat-type', '57a70001.fixture-strength', 'Strength', 'Strength', '/stats/strength--abc12345', 'strength--abc12345', 'abc12345', 1);
     `);
     db.close();
 

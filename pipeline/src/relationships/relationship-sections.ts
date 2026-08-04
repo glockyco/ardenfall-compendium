@@ -1,11 +1,15 @@
 import type { Database } from "bun:sqlite";
 
 import type { PipelineDiagnostic } from "./relationship-graph.ts";
-import type { RelationshipDescriptor } from "./registry.ts";
+import type { RelationshipDescriptor, RelationshipTitle } from "./registry.ts";
 import { relationshipRegistry } from "./registry.ts";
 
 export { relationshipRegistry } from "./registry.ts";
-export type { RelationshipDescriptor, RelationshipPredicate } from "./registry.ts";
+export type {
+  RelationshipDescriptor,
+  RelationshipPredicate,
+  RelationshipTitle,
+} from "./registry.ts";
 
 interface EdgeRow {
   edge_id: string;
@@ -22,7 +26,8 @@ interface EdgeRow {
 interface NodeRow {
   entity_type: string;
   entity_id: string;
-  label: string | null;
+  /** Already disambiguated across the whole entity type, so no consumer re-derives it. */
+  display_label: string | null;
   short_id: string;
   route_path: string | null;
   has_page: number;
@@ -52,12 +57,13 @@ interface RelationshipSection {
    * A predicate with both titles produces two different lists on one page, and they hold
    * different facts. `starts_opposed_to` proves it. Of 25 edges only 10 have a reciprocal
    * partner, so who a faction opposes and who opposes it are not the same set. The key and
-   * the stored id must carry this. Without it the two lists merge under one title, and a
-   * mutual pair shows its peer twice.
+   * stored id must carry direction and source entity type. Without that the two lists merge
+   * under one title, and a mutual pair shows its peer twice.
    */
   direction: "forward" | "inverse";
   edges: RelationshipEdge[];
   sortOrder: number;
+  sourceEntityType: string;
 }
 
 /**
@@ -97,7 +103,7 @@ export function emitRelationshipSections(
   const nodes = new Map<string, NodeRow>();
   for (const node of db
     .query<NodeRow, []>(
-      "SELECT entity_type, entity_id, label, short_id, route_path, has_page FROM entity_nodes",
+      "SELECT entity_type, entity_id, display_label, short_id, route_path, has_page FROM entity_nodes",
     )
     .all()) {
     nodes.set(nodeKey(node.entity_type, node.entity_id), node);
@@ -159,22 +165,29 @@ export function emitRelationshipSections(
       continue;
     }
 
-    if (descriptor.forwardTitle !== null && sourceNode.has_page === 1) {
+    const forwardTitle = resolveTitle(
+      descriptor.forwardTitle,
+      edge.source_type,
+      edge.predicate,
+      "forward",
+    );
+    if (forwardTitle !== null && sourceNode.has_page === 1) {
       appendSection(
         sections,
         {
           sourceType: edge.source_type,
           sourceId: edge.source_id,
-          title: descriptor.forwardTitle,
+          title: forwardTitle,
           predicate: edge.predicate,
           direction: "forward",
           edges: [],
-          sortOrder: descriptor.sortOrder,
+          sortOrder: sectionSortOrder(descriptor, edge.predicate),
+          sourceEntityType: edge.source_type,
         },
         {
           targetType: edge.target_type,
           targetId: edge.target_id,
-          targetLabel: targetNode.label,
+          targetLabel: targetNode.display_label,
           targetShortId: targetNode.short_id,
           targetRoutePath: targetNode.route_path,
           targetHasPage: targetNode.has_page === 1,
@@ -185,22 +198,29 @@ export function emitRelationshipSections(
         },
       );
     }
-    if (descriptor.inverseTitle !== null && targetNode.has_page === 1) {
+    const inverseTitle = resolveTitle(
+      descriptor.inverseTitle,
+      edge.source_type,
+      edge.predicate,
+      "inverse",
+    );
+    if (inverseTitle !== null && targetNode.has_page === 1) {
       appendSection(
         sections,
         {
           sourceType: edge.target_type,
           sourceId: edge.target_id,
-          title: descriptor.inverseTitle,
+          title: inverseTitle,
           predicate: edge.predicate,
           direction: "inverse",
           edges: [],
-          sortOrder: descriptor.sortOrder,
+          sortOrder: sectionSortOrder(descriptor, edge.predicate),
+          sourceEntityType: edge.source_type,
         },
         {
           targetType: edge.source_type,
           targetId: edge.source_id,
-          targetLabel: sourceNode.label,
+          targetLabel: sourceNode.display_label,
           targetShortId: sourceNode.short_id,
           targetRoutePath: sourceNode.route_path,
           targetHasPage: sourceNode.has_page === 1,
@@ -225,16 +245,8 @@ export function emitRelationshipSections(
         (left.targetLabel ?? "").localeCompare(right.targetLabel ?? "") ||
         left.targetId.localeCompare(right.targetId),
     );
-    const labels = section.edges.map((edge) => ({
-      label: edge.targetLabel,
-      shortId: edge.targetShortId,
-    }));
-    disambiguateLabels(labels);
-    section.edges.forEach((edge, index) => {
-      edge.targetLabel = labels[index]?.label ?? edge.targetLabel;
-    });
     insert.run(
-      `${section.sourceId}:${section.predicate}:${section.direction}`,
+      `${section.sourceId}:${section.predicate}:${section.direction}:${section.sourceEntityType}`,
       section.sourceType,
       section.sourceId,
       section.title,
@@ -251,7 +263,7 @@ function appendSection(
   section: RelationshipSection,
   edge: RelationshipEdge,
 ): void {
-  const key = `${section.sourceType}\u0000${section.sourceId}\u0000${section.predicate}\u0000${section.direction}`;
+  const key = `${section.sourceType}\u0000${section.sourceId}\u0000${section.predicate}\u0000${section.direction}\u0000${section.sourceEntityType}`;
   const existing = sections.get(key);
   if (existing) {
     existing.edges.push(edge);
@@ -259,6 +271,29 @@ function appendSection(
   }
   section.edges.push(edge);
   sections.set(key, section);
+}
+
+function sectionSortOrder(descriptor: RelationshipDescriptor, predicate: string): number {
+  if (descriptor.sortOrder === undefined) {
+    throw new Error(`relationship predicate '${predicate}' has titles but no sort order`);
+  }
+  return descriptor.sortOrder;
+}
+
+function resolveTitle(
+  title: RelationshipTitle | null,
+  sourceEntityType: string,
+  predicate: string,
+  direction: "forward" | "inverse",
+): string | null {
+  if (title === null || typeof title === "string") return title;
+  const resolved = title[sourceEntityType];
+  if (resolved === undefined) {
+    throw new Error(
+      `relationship predicate '${predicate}' has no ${direction} title for source entity type '${sourceEntityType}'`,
+    );
+  }
+  return resolved;
 }
 
 function nodeKey(entityType: string, entityId: string): string {

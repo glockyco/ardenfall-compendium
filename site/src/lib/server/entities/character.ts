@@ -1,4 +1,3 @@
-import { disambiguateLabels } from "../disambiguate-labels";
 import { all, get } from "../db";
 import { parseGeneratedJson, validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
@@ -7,7 +6,7 @@ interface CharacterOverviewRecord {
   id: string;
   name: string | null;
   route_path: string;
-  short_id: string;
+  display_label: string;
 }
 
 interface CharacterPresentationRecord {
@@ -16,6 +15,7 @@ interface CharacterPresentationRecord {
   render_context: string;
   drop_refs_json: string;
   route_path: string;
+  display_label: string;
 }
 
 export interface CharacterDrop {
@@ -53,7 +53,7 @@ export interface CharacterPresentationRow {
 
 export const listCharacters = (): CharacterOverviewRow[] => {
   const rows = all<CharacterOverviewRecord>(
-    `SELECT o.id, o.name, n.route_path, n.short_id
+    `SELECT o.id, o.name, n.route_path, n.display_label
      FROM character_overview_rows o
      JOIN entity_nodes n
        ON n.entity_type = 'character'
@@ -63,20 +63,18 @@ export const listCharacters = (): CharacterOverviewRow[] => {
   ).map((row) => ({
     id: row.id,
     name: row.name,
-    displayName: characterName(row.name),
+    displayName: row.display_label,
     routePath: row.route_path,
-    shortId: row.short_id,
   }));
-  return disambiguateLabels(rows, "displayName", (row) => row.shortId).map(
-    ({ shortId: _shortId, ...row }) => row,
-  );
+  return rows;
 };
 
 export const getCharacterPresentation = (slug: string): CharacterPresentationRow | undefined => {
   const node = getEntityNodeBySlug("character", slug);
   if (!node) return undefined;
   const row = get<CharacterPresentationRecord>(
-    `SELECT p.id, p.name, p.render_context, p.drop_refs_json, n.route_path
+    `SELECT p.id, p.name, p.render_context, p.drop_refs_json, n.route_path,
+            n.display_label
      FROM character_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'character'
@@ -95,7 +93,7 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
       row.id,
       "character-presentation-v1",
     ),
-    displayName: characterName(row.name),
+    displayName: row.display_label,
     drops: parseGeneratedJson(
       row.drop_refs_json,
       "character",
@@ -106,9 +104,3 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
     routePath: row.route_path,
   };
 };
-
-function characterName(name: string | null): string {
-  const normalizedName = name?.trim().toLowerCase();
-  if (name && normalizedName && normalizedName !== "unnamed character") return name;
-  return "Unnamed character";
-}

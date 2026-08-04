@@ -31,19 +31,4 @@
       </div>
     {/if}
   </dl>
-
-  <section class="mt-6" aria-labelledby="placed-character-locations">
-    <h2 id="placed-character-locations" class="font-semibold">Locations</h2>
-    {#if presentation.locations.length > 0}
-      <ul class="mt-2 list-disc space-y-1 pl-5">
-        {#each presentation.locations as location (location.id)}
-          <li>
-            <a class="underline underline-offset-2" href={location.routePath}>{location.label}</a>
-          </li>
-        {/each}
-      </ul>
-    {:else}
-      <p class="text-muted-foreground mt-2">No containing locations are recorded.</p>
-    {/if}
-  </section>
 </div>

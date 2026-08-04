@@ -10,6 +10,7 @@ import {
   insertPipelineDiagnostics,
 } from "../relationships/relationship-graph.ts";
 import { emitRelationshipSections } from "../relationships/relationship-sections.ts";
+import { emitEntityDisplayLabels } from "./emit-entity-display-labels.ts";
 
 export function emitReadModels(
   db: Database,
@@ -74,6 +75,7 @@ export function emitReadModels(
     );
   }
 
+  emitEntityDisplayLabels(db);
   const relationshipSectionDiagnostics = emitRelationshipSections(db);
   const graphDiagnostics = auditEntityGraph(db);
   insertPipelineDiagnostics(

@@ -427,13 +427,18 @@ export interface QuestJournalSnapshot {
   journalEntry: string | null;
 }
 
+export interface QuestRewardItemSnapshot {
+  ref: SnapshotRef;
+  count: number;
+}
+
 export interface QuestRewardSnapshot {
   kind: string;
   isPositive: boolean | null;
   amountLabel: string | null;
   customAmount: number | null;
   factionRef: SnapshotRef | null;
-  itemRefs: SnapshotRef[];
+  items: QuestRewardItemSnapshot[];
   itemListRefs: SnapshotRef[];
   targetObjectGameId: number | null;
 }

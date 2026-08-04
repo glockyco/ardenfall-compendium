@@ -26,7 +26,7 @@
   "private": true,
   "scripts": {
     "dev": "vite dev",
-    "build": "bun run build:fixture",
+    "build": "bun run build:prepared",
     "build:prepared": "vite build && bun run build:pagefind",
     "build:fixture": "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
     "build:pagefind": "bun run scripts/build-pagefind.ts",

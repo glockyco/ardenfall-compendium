@@ -1,8 +1,21 @@
-export interface RelationshipDescriptor {
-  forwardTitle: string | null;
-  inverseTitle: string | null;
-  sortOrder: number;
-}
+export type RelationshipTitle = string | Readonly<Record<string, string>>;
+
+export type RelationshipDescriptor =
+  | {
+      forwardTitle: RelationshipTitle;
+      inverseTitle: RelationshipTitle | null;
+      sortOrder: number;
+    }
+  | {
+      forwardTitle: RelationshipTitle | null;
+      inverseTitle: RelationshipTitle;
+      sortOrder: number;
+    }
+  | {
+      forwardTitle: null;
+      inverseTitle: null;
+      sortOrder?: never;
+    };
 
 /** Every emitted edge predicate must be declared here. */
 export const relationshipRegistry = {
@@ -23,7 +36,10 @@ export const relationshipRegistry = {
   },
   applies: {
     forwardTitle: null,
-    inverseTitle: "Applied by items",
+    inverseTitle: {
+      item: "Applied by items",
+      spell: "Applied by spells",
+    },
     sortOrder: 40,
   },
   casts: {
@@ -59,12 +75,10 @@ export const relationshipRegistry = {
   leads_to: {
     forwardTitle: null,
     inverseTitle: null,
-    sortOrder: 0,
   },
   scales_with: {
     forwardTitle: null,
     inverseTitle: null,
-    sortOrder: 0,
   },
   features_character: {
     forwardTitle: "Characters",
@@ -72,12 +86,8 @@ export const relationshipRegistry = {
     sortOrder: 110,
   },
   speaks_about_quest: {
-    // Both pages already render the dialogue itself, with links in both directions.
-    // The edge exists for graph connectivity; a bare list beside the real thing
-    // would be a second section under the same heading.
     forwardTitle: null,
     inverseTitle: null,
-    sortOrder: 115,
   },
   rewards_faction_reputation: {
     forwardTitle: "Faction reputation",

@@ -143,7 +143,7 @@
           {
             "setGameId": 1,
             "setName": "Completion rewards",
-            "setType": "Success",
+            "setType": "OnSuccess",
             "rewards": [
               {
                 "kind": "gold",
@@ -151,7 +151,7 @@
                 "amountLabel": "Custom",
                 "customAmount": 75,
                 "factionRef": null,
-                "itemRefs": [],
+                "items": [],
                 "itemListRefs": [],
                 "targetObjectGameId": null
               },
@@ -161,7 +161,7 @@
                 "amountLabel": "Custom",
                 "customAmount": 125,
                 "factionRef": null,
-                "itemRefs": [],
+                "items": [],
                 "itemListRefs": [],
                 "targetObjectGameId": null
               },
@@ -175,7 +175,7 @@
                   "guid": "a1000001.fixture-black-moth",
                   "unityType": "Faction"
                 },
-                "itemRefs": [],
+                "items": [],
                 "itemListRefs": [],
                 "targetObjectGameId": null
               },
@@ -185,7 +185,7 @@
                 "amountLabel": "Medium",
                 "customAmount": null,
                 "factionRef": null,
-                "itemRefs": [],
+                "items": [],
                 "itemListRefs": [],
                 "targetObjectGameId": 7
               },
@@ -195,11 +195,22 @@
                 "amountLabel": null,
                 "customAmount": null,
                 "factionRef": null,
-                "itemRefs": [
+                "items": [
                   {
-                    "kind": "lookupAsset",
-                    "guid": "4ed20218.fixture-iron-sword",
-                    "unityType": "ItemData"
+                    "ref": {
+                      "kind": "lookupAsset",
+                      "guid": "4ed20218.fixture-iron-sword",
+                      "unityType": "ItemData"
+                    },
+                    "count": 5
+                  },
+                  {
+                    "ref": {
+                      "kind": "lookupAsset",
+                      "guid": "6a71c0de.fixture-stamina-draught",
+                      "unityType": "ItemData"
+                    },
+                    "count": 1
                   }
                 ],
                 "itemListRefs": [

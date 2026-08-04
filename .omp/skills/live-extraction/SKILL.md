@@ -15,7 +15,7 @@ Use this procedure when a configured game installation must produce a live snaps
 4. Run `bun run hotrepl:export` to drive HotRepl, write a snapshot, and run the pipeline.
 5. Read `controller/src/export-orchestrator.ts` when you need the controller step sequence.
 
-`hotrepl:deploy` rewrites the game's `hotrepl.bepinex.cfg` from `HOTREPL_BIND_HOST` and `HOTREPL_PORT`. The default port is `18590`.
+`hotrepl:deploy` rewrites the game's `hotrepl.bepinex.cfg` from `HOTREPL_BIND_HOST` and `HOTREPL_PORT`. The default port is `18590`. Any value other than `127.0.0.1` exposes unauthenticated remote code execution and requires the explicit `--allow-remote-repl` flag.
 
 If another HotRepl-instrumented game holds the default port, set `HOTREPL_PORT` and the matching `HOTREPL_URL` in `.env`. Do not hand-edit the generated config. Each deploy overwrites that file.
 

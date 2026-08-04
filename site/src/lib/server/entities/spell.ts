@@ -11,7 +11,7 @@ interface SpellOverviewRecord {
   mana_cost: number | null;
   is_illegal: number;
   route_path: string;
-  short_id: string;
+  display_label: string;
 }
 
 interface SpellEffectRecord {
@@ -61,6 +61,7 @@ interface SpellPresentationRecord {
   /** Joined from the governing skill's node with a page, null when the spell has none. */
   skill_route_path: string | null;
   route_path: string;
+  display_label: string;
 }
 
 export interface SpellOverviewRow {
@@ -101,7 +102,7 @@ export interface SpellPresentationRow {
 
 export const listSpells = (): SpellOverviewRow[] => {
   const rows = all<SpellOverviewRecord>(
-    `SELECT o.id, o.name, o.skill, o.mana_cost, o.is_illegal, n.route_path, n.short_id
+    `SELECT o.id, n.display_label AS name, o.skill, o.mana_cost, o.is_illegal, n.route_path
      FROM spell_overview_rows o
      JOIN entity_nodes n
        ON n.entity_type = 'spell'
@@ -115,11 +116,8 @@ export const listSpells = (): SpellOverviewRow[] => {
     manaCost: row.mana_cost,
     isIllegal: row.is_illegal === 1,
     routePath: row.route_path,
-    shortId: row.short_id,
   }));
-  return disambiguateLabels(rows, "name", (row) => row.shortId).map(
-    ({ shortId: _shortId, ...row }) => row,
-  );
+  return rows;
 };
 
 export const getSpellPresentation = (slug: string): SpellPresentationRow | undefined => {
@@ -131,7 +129,7 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
             p.effects_json,
             p.display_icon_hash,
             sn.route_path AS skill_route_path,
-            n.route_path
+            n.route_path, n.display_label
      FROM spell_presentation_rows p
      LEFT JOIN entity_nodes sn
        ON sn.entity_type = 'stat-type'
@@ -159,7 +157,7 @@ export const getSpellPresentation = (slug: string): SpellPresentationRow | undef
     : null;
   return {
     id: row.id,
-    name: row.name,
+    name: row.display_label,
     renderContext: validateRenderContext(
       row.render_context,
       "spell",

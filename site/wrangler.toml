@@ -3,6 +3,9 @@ compatibility_date = "2026-05-07"
 
 workers_dev = false
 
+[build]
+command = "bun run scripts/assert-release-metadata.ts"
+
 [[routes]]
 pattern = "ardenfall.compendiums.org"
 custom_domain = true

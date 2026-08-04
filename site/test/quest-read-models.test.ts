@@ -11,7 +11,7 @@ const seed = () => {
   db.exec(`
     CREATE TABLE quest_presentation_rows (
       id TEXT PRIMARY KEY,
-      name TEXT,
+      name TEXT NOT NULL,
       subname TEXT,
       render_context TEXT NOT NULL,
       disabled INTEGER NOT NULL,
@@ -25,12 +25,8 @@ const seed = () => {
     CREATE TABLE quest_character_dialogue_rows (
       id TEXT PRIMARY KEY,
       quest_id TEXT NOT NULL,
-      quest_label TEXT NOT NULL,
-      quest_route TEXT,
       character_id TEXT NOT NULL,
-      character_label TEXT NOT NULL,
-      character_route TEXT,
-      ordinal INTEGER NOT NULL,
+      quest_ordinal INTEGER NOT NULL,
       kind TEXT NOT NULL,
       text_json TEXT NOT NULL
     );
@@ -38,6 +34,7 @@ const seed = () => {
       entity_type TEXT NOT NULL,
       entity_id TEXT NOT NULL,
       label TEXT NOT NULL,
+      display_label TEXT,
       route_path TEXT NOT NULL,
       canonical_slug TEXT NOT NULL,
       short_id TEXT NOT NULL,
@@ -48,24 +45,22 @@ const seed = () => {
       ('named;quest;quest-ash', 'Ashes at Dawn', 'A first task', 'quest-presentation-v1', 1, 0,
        'Begin at dawn.', 'The ashes settle.', NULL,
        '[{"phaseGameId":10,"name":"Arrival","journalEntry":"Reach the gate.","completedJournalEntry":"The gate opens.","objectives":[{"objectiveGameId":20,"name":"Find the gate","info":"Follow the road.","journalEntry":"The road is quiet.","successJournalEntry":"You found it.","failureJournalEntry":null,"objectiveType":"Reach","hidden":false,"attachedObjectGameId":null,"enableMapMarker":true}]},{"phaseGameId":30,"name":"Return","journalEntry":null,"completedJournalEntry":null,"objectives":[]}]',
-       '[{"kind":"faction-reputation","amount":"+5 reputation","targetLabel":"Dawnkeepers","targetRoutePath":"/factions/dawnkeepers--22222222","items":[]},{"kind":"items","amount":null,"targetLabel":null,"targetRoutePath":null,"items":[{"label":"Ash Token","routePath":"/items/ash-token--33333333"}]}]'),
-      ('named;quest;quest-unnamed', '', NULL, 'quest-presentation-v1', 0, 1,
-       NULL, NULL, NULL, '[]', '[]');
+       '[{"setOrdinal":0,"setType":"on-success","rewards":[{"kind":"faction-reputation","amount":"+5","targetLabel":"Dawnkeepers","targetRoutePath":"/factions/dawnkeepers--22222222","items":[]},{"kind":"items","amount":null,"targetLabel":null,"targetRoutePath":null,"items":[{"label":"Ash Token","routePath":"/items/ash-token--33333333","count":1}]}]},{"setOrdinal":1,"setType":"on-failure","rewards":[{"kind":"gold","amount":"25","targetLabel":null,"targetRoutePath":null,"items":[]}]}]'),
+      ('named;quest;quest-unnamed', 'Unnamed quest', NULL, 'quest-presentation-v1', 0, 1,
+       NULL, NULL, NULL, '[]', '[{"setOrdinal":0,"setType":"on-success","rewards":[{"kind":"items","amount":null,"targetLabel":null,"targetRoutePath":null,"items":[{"label":"Ash Token","routePath":"/items/ash-token--33333333","count":5}]}]}]');
     INSERT INTO quest_character_dialogue_rows VALUES
-      ('r0', 'named;quest;quest-ash', 'Ashes at Dawn', '/quests/ashes-at-dawn--11111111',
-       'instances;characters;aaa', 'Harbour Guard', '/placed-characters/harbour-guard--aaa',
-       0, 'greeting', '{"schemaVersion":1,"sourceHash":"h","nodes":[{"type":"text","text":"You reek of booze."}],"diagnostics":[]}'),
-      ('r1', 'named;quest;quest-ash', 'Ashes at Dawn', '/quests/ashes-at-dawn--11111111',
-       'instances;characters;aaa', 'Harbour Guard', '/placed-characters/harbour-guard--aaa',
-       1, 'topic', '{"schemaVersion":1,"sourceHash":"h","nodes":[{"type":"text","text":"Who do you guard this port for?"}],"diagnostics":[]}'),
-      ('r2', 'named;quest;quest-ash', 'Ashes at Dawn', '/quests/ashes-at-dawn--11111111',
-       'instances;characters;bbb', 'Silent Watcher', NULL,
-       2, 'greeting', '{"schemaVersion":1,"sourceHash":"h","nodes":[{"type":"text","text":"..."}],"diagnostics":[]}');
+      ('r0', 'named;quest;quest-ash', 'instances;characters;aaa', 0, 'greeting', '{"schemaVersion":1,"sourceHash":"h","nodes":[{"type":"text","text":"You reek of booze."}],"diagnostics":[]}'),
+      ('r1', 'named;quest;quest-ash', 'instances;characters;aaa', 1, 'topic', '{"schemaVersion":1,"sourceHash":"h","nodes":[{"type":"text","text":"Who do you guard this port for?"}],"diagnostics":[]}'),
+      ('r2', 'named;quest;quest-ash', 'instances;characters;bbb', 2, 'greeting', '{"schemaVersion":1,"sourceHash":"h","nodes":[{"type":"text","text":"..."}],"diagnostics":[]}'),
+      ('r3', 'named;quest;quest-ember', 'instances;characters;aaa', 0, 'greeting', '{"schemaVersion":1,"sourceHash":"h","nodes":[{"type":"text","text":"The embers fade."}],"diagnostics":[]}');
     INSERT INTO entity_nodes VALUES
-      ('quest', 'named;quest;quest-ash', 'Ashes at Dawn', '/quests/ashes-at-dawn--11111111', 'ashes-at-dawn--11111111', '11111111', 1),
-      ('quest', 'named;quest;quest-unnamed', 'Unnamed quest', '/quests/unnamed-quest--44444444', 'unnamed-quest--44444444', '44444444', 1),
-      ('faction', 'named;faction;dawnkeepers', 'Dawnkeepers', '/factions/dawnkeepers--22222222', 'dawnkeepers--22222222', '22222222', 1),
-      ('item', 'named;item;ash-token', 'Ash Token', '/items/ash-token--33333333', 'ash-token--33333333', '33333333', 1);
+      ('quest', 'named;quest;quest-ash', 'Ashes at Dawn', 'Ashes at Dawn', '/quests/ashes-at-dawn--11111111', 'ashes-at-dawn--11111111', '11111111', 1),
+      ('quest', 'named;quest;quest-unnamed', 'Unnamed quest', 'Unnamed quest', '/quests/unnamed-quest--44444444', 'unnamed-quest--44444444', '44444444', 1),
+      ('faction', 'named;faction;dawnkeepers', 'Dawnkeepers', 'Dawnkeepers', '/factions/dawnkeepers--22222222', 'dawnkeepers--22222222', '22222222', 1),
+      ('item', 'named;item;ash-token', 'Ash Token', 'Ash Token', '/items/ash-token--33333333', 'ash-token--33333333', '33333333', 1),
+      ('quest', 'named;quest;quest-ember', 'Embers at Dusk', 'Embers at Dusk', '/quests/ashes-at-dawn--99999999', 'ashes-at-dawn--99999999', '99999999', 1),
+      ('npc', 'instances;characters;aaa', 'Harbour Guard', 'Harbour Guard', '/placed-characters/harbour-guard--aaa', 'harbour-guard--aaa', 'aaa', 1),
+      ('npc', 'instances;characters;bbb', 'Silent Watcher', 'Silent Watcher', '/placed-characters/silent-watcher--bbb', 'silent-watcher--bbb', 'bbb', 0);
   `);
   db.close();
   return root;
@@ -115,18 +110,37 @@ describe("quest read-model accessors", () => {
       ]);
       expect(quest?.rewards).toEqual([
         {
-          kind: "faction-reputation",
-          amount: "+5 reputation",
-          targetLabel: "Dawnkeepers",
-          targetRoutePath: "/factions/dawnkeepers--22222222",
-          items: [],
+          setOrdinal: 0,
+          setType: "on-success",
+          rewards: [
+            {
+              kind: "faction-reputation",
+              amount: "+5",
+              targetLabel: "Dawnkeepers",
+              targetRoutePath: "/factions/dawnkeepers--22222222",
+              items: [],
+            },
+            {
+              kind: "items",
+              amount: null,
+              targetLabel: null,
+              targetRoutePath: null,
+              items: [{ label: "Ash Token", routePath: "/items/ash-token--33333333", count: 1 }],
+            },
+          ],
         },
         {
-          kind: "items",
-          amount: null,
-          targetLabel: null,
-          targetRoutePath: null,
-          items: [{ label: "Ash Token", routePath: "/items/ash-token--33333333" }],
+          setOrdinal: 1,
+          setType: "on-failure",
+          rewards: [
+            {
+              kind: "gold",
+              amount: "25",
+              targetLabel: null,
+              targetRoutePath: null,
+              items: [],
+            },
+          ],
         },
       ]);
     } finally {
@@ -159,6 +173,60 @@ describe("quest read-model accessors", () => {
           // just without a link a reader could follow nowhere.
           routePath: null,
           lines: [{ kind: "greeting", text: expect.objectContaining({ schemaVersion: 1 }) }],
+        },
+      ]);
+    } finally {
+      process.chdir(originalCwd);
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("orders character dialogue by quest id and disambiguates repeated labels", async () => {
+    const root = seed();
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      const dialogue = await import("../src/lib/server/entities/dialogue");
+      expect(
+        dialogue.getCharacterDialogue("instances;characters;aaa").map((group) => ({
+          label: group.label,
+          routePath: group.routePath,
+        })),
+      ).toEqual([
+        {
+          label: "Ashes at Dawn",
+          routePath: "/quests/ashes-at-dawn--11111111",
+        },
+        {
+          label: "Embers at Dusk",
+          routePath: "/quests/ashes-at-dawn--99999999",
+        },
+      ]);
+    } finally {
+      process.chdir(originalCwd);
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("preserves a single reward set and item counts", async () => {
+    const root = seed();
+    const originalCwd = process.cwd();
+    try {
+      process.chdir(root);
+      const readModels = await import("../src/lib/server/read-models");
+      expect(readModels.getQuestPresentation("unnamed-quest--44444444")?.rewards).toEqual([
+        {
+          setOrdinal: 0,
+          setType: "on-success",
+          rewards: [
+            {
+              kind: "items",
+              amount: null,
+              targetLabel: null,
+              targetRoutePath: null,
+              items: [{ label: "Ash Token", routePath: "/items/ash-token--33333333", count: 5 }],
+            },
+          ],
         },
       ]);
     } finally {

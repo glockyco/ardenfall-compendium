@@ -55,7 +55,7 @@ export interface StatTypePresentationRow {
 
 export const listStatTypes = (): StatTypeOverviewRow[] =>
   all<StatTypeOverviewRecord>(
-    `SELECT o.id, o.name, o.grouping, o.icon_hash, o.icon_color, n.route_path
+    `SELECT o.id, n.display_label AS name, o.grouping, o.icon_hash, o.icon_color, n.route_path
      FROM stat_type_overview_rows o
      JOIN entity_nodes n
        ON n.entity_type = 'stat-type'
@@ -75,8 +75,8 @@ export const getStatTypePresentation = (slug: string): StatTypePresentationRow |
   const node = getEntityNodeBySlug("stat-type", slug);
   if (!node) return undefined;
   const row = get<StatTypePresentationRecord>(
-    `SELECT id, name, grouping, render_context, icon_hash, icon_color,
-            description, long_description, affects_json, skill_affects_json,
+    `SELECT p.id, n.display_label AS name, p.grouping, p.render_context, p.icon_hash, p.icon_color,
+            p.description, p.long_description, p.affects_json, p.skill_affects_json,
             n.route_path
      FROM stat_type_presentation_rows p
      JOIN entity_nodes n

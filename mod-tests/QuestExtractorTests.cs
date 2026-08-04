@@ -69,7 +69,12 @@ public sealed class QuestExtractorTests
                 TargetObjectGameId: 22),
             new QuestRewardAsset(
                 "items",
-                ItemRefs: new[] { SnapshotRef.LookupAsset("item-guid", "Ardenfall.ItemData", "item_test") },
+                Items: new[]
+                {
+                    new QuestRewardItemAsset(
+                        SnapshotRef.LookupAsset("item-guid", "Ardenfall.ItemData", "item_test"),
+                        5),
+                },
                 ItemListRefs: new[] { SnapshotRef.LookupAsset("list-guid", "Ardenfall.ItemListAsset", "list_test") }),
         };
         var source = new FakeQuestAssetSource(new[]
@@ -84,8 +89,70 @@ public sealed class QuestExtractorTests
             extractedRewards.Select(reward => reward.Kind));
         Assert.Equal(100, extractedRewards[0].CustomAmount);
         Assert.Equal("faction", extractedRewards[2].FactionRef?.Entity);
-        Assert.Single(extractedRewards[4].ItemRefs);
+        Assert.Single(extractedRewards[4].Items);
+        Assert.Equal(5, extractedRewards[4].Items[0].Count);
         Assert.Single(extractedRewards[4].ItemListRefs);
+    }
+
+    [Fact]
+    public void ExtractsMultiCountAndSingleCountRewardItems()
+    {
+        var source = new FakeQuestAssetSource(new[]
+        {
+            BuildQuest(rewardSets: new[]
+            {
+                new QuestRewardSetAsset(2, "Rewards", "OnSuccess", new[]
+                {
+                    new QuestRewardAsset(
+                        "items",
+                        Items: new[]
+                        {
+                            new QuestRewardItemAsset(SnapshotRef.NamedAsset("item", "iron_sword"), 5),
+                            new QuestRewardItemAsset(SnapshotRef.NamedAsset("item", "stamina_draught"), 1),
+                        }),
+                }),
+            }),
+        });
+
+        var reward = Assert.Single(Assert.Single(new QuestExtractor(source).Walk()).Fields.RewardSets).Rewards;
+        var items = Assert.Single(reward).Items;
+
+        Assert.Equal(new[] { 5, 1 }, items.Select(item => item.Count));
+    }
+
+    [Fact]
+    public void InvalidRewardItemCountEmitsDiagnosticAndSkipsItem()
+    {
+        var source = new FakeQuestAssetSource(new[]
+        {
+            BuildQuest(rewardSets: new[]
+            {
+                new QuestRewardSetAsset(2, "Rewards", "OnSuccess", new[]
+                {
+                    new QuestRewardAsset(
+                        "items",
+                        Items: new[]
+                        {
+                            new QuestRewardItemAsset(SnapshotRef.NamedAsset("item", "missing"), null),
+                            new QuestRewardItemAsset(SnapshotRef.NamedAsset("item", "zero"), 0),
+                            new QuestRewardItemAsset(SnapshotRef.NamedAsset("item", "valid"), 1),
+                        }),
+                }),
+            }),
+        });
+        var extractor = new QuestExtractor(source);
+
+        var reward = Assert.Single(Assert.Single(extractor.Walk()).Fields.RewardSets).Rewards;
+
+        Assert.Single(Assert.Single(reward).Items);
+        Assert.Equal("valid", Assert.Single(Assert.Single(reward).Items).Ref.Name);
+        var diagnostics = extractor.Diagnostics.Where(item => item.Code == "questRewardItemCountInvalid").ToList();
+        Assert.Equal(2, diagnostics.Count);
+        Assert.All(diagnostics, diagnostic =>
+        {
+            Assert.Equal("diagnostic", diagnostic.Severity);
+            Assert.Equal("rewardSets.rewards.items.count", diagnostic.Field);
+        });
     }
 
     [Fact]

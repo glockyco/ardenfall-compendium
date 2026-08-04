@@ -44,7 +44,7 @@ const baseSchema = `
   );
   CREATE TABLE entity_nodes (
     entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, label TEXT NOT NULL,
-    route_path TEXT NOT NULL, canonical_slug TEXT NOT NULL, short_id TEXT NOT NULL,
+    display_label TEXT, route_path TEXT NOT NULL, canonical_slug TEXT NOT NULL, short_id TEXT NOT NULL,
     has_page INTEGER NOT NULL, PRIMARY KEY (entity_type, entity_id)
   );
   CREATE TABLE entity_edges (
@@ -69,8 +69,8 @@ describe("getMapView", () => {
         INSERT INTO map_volumes VALUES
           ('vol-1', 'location', '11111111.fixture-town', 'Harbor Town', 'ardenfall',
            '{"ring":[[10,6],[14,6],[14,10],[10,10],[10,6]]}', 0, 2);
-        INSERT INTO entity_nodes VALUES
-          ('location', '11111111.fixture-town', 'Harbor Town',
+        INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+          ('location', '11111111.fixture-town', 'Harbor Town', 'Harbor Town',
            '/locations/harbor-town--abc12345', 'harbor-town--abc12345', 'abc12345', 1);
       `);
     });
@@ -148,8 +148,8 @@ describe("getMapView", () => {
            '[255,200,120]', 4, '["characterName"]', '[]', 'Placed characters', 80);
         INSERT INTO map_points VALUES
           ('npc:record-1', 'npc', 'record-1', 'Ada', 'overworld', 4, 5, 2, 0, 0);
-        INSERT INTO entity_nodes VALUES
-          ('npc', 'record-1', 'Ada', '/placed-characters/ada--npc11111',
+        INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+          ('npc', 'record-1', 'Ada', 'Ada', '/placed-characters/ada--npc11111',
            'ada--npc11111', 'npc11111', 0);
       `);
     });
@@ -200,10 +200,10 @@ describe("getMapView", () => {
           ('portal:a', 'portal', 'a', 'Harbor Gate', 'ardenfall', 1, 1, 0, 0, 0),
           ('portal:b', 'portal', 'b', 'Cliff Stair', 'interior', 2, 2, 0, 0, 0),
           ('portal:c', 'portal', 'c', 'Sealed Door', 'ardenfall', 3, 3, 0, 0, 0);
-        INSERT INTO entity_nodes VALUES
-          ('portal', 'a', 'Harbor Gate', '/map?map=ardenfall&sel=aaaa1111', 'harbor-gate--aaaa1111', 'aaaa1111', 0),
-          ('portal', 'b', 'Cliff Stair', '/map?map=interior&sel=bbbb2222', 'cliff-stair--bbbb2222', 'bbbb2222', 0),
-          ('portal', 'c', 'Sealed Door', '/map?map=ardenfall&sel=cccc3333', 'sealed-door--cccc3333', 'cccc3333', 0);
+        INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+          ('portal', 'a', 'Harbor Gate', 'Harbor Gate', '/map?map=ardenfall&sel=aaaa1111', 'harbor-gate--aaaa1111', 'aaaa1111', 0),
+          ('portal', 'b', 'Cliff Stair', 'Cliff Stair', '/map?map=interior&sel=bbbb2222', 'cliff-stair--bbbb2222', 'bbbb2222', 0),
+          ('portal', 'c', 'Sealed Door', 'Sealed Door', '/map?map=ardenfall&sel=cccc3333', 'sealed-door--cccc3333', 'cccc3333', 0);
         INSERT INTO entity_edges VALUES
           ('a:leads_to:portal:b', 'portal', 'a', 'portal', 'b', 'leads_to', 'Leads to', 1, '{}', NULL);
       `);

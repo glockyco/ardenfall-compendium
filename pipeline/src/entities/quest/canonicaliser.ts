@@ -6,6 +6,7 @@ import type {
   QuestPhaseSnapshot,
   QuestRewardSetSnapshot,
   QuestRewardSnapshot,
+  QuestRewardItemSnapshot,
   QuestSnapshotFields,
   SnapshotEnvelope,
   SnapshotRef,
@@ -63,6 +64,13 @@ function compareJournalEntries(left: QuestJournalSnapshot, right: QuestJournalSn
   return compareStrings(JSON.stringify(left), JSON.stringify(right));
 }
 
+function sortedRewardItems(items: QuestRewardItemSnapshot[]): QuestRewardItemSnapshot[] {
+  return [...items].sort((left, right) => {
+    const byRef = compareStrings(snapshotRefKey(left.ref), snapshotRefKey(right.ref));
+    return byRef !== 0 ? byRef : compareNumbers(left.count, right.count);
+  });
+}
+
 function rewardSortKey(reward: QuestRewardSnapshot): string {
   return [
     reward.kind,
@@ -71,7 +79,9 @@ function rewardSortKey(reward: QuestRewardSnapshot): string {
     reward.customAmount ?? "",
     reward.isPositive === null ? "" : reward.isPositive ? "1" : "0",
     snapshotRefKeys(reward.factionRef ? [reward.factionRef] : []),
-    snapshotRefKeys(reward.itemRefs),
+    sortedRewardItems(reward.items)
+      .map((item) => `${snapshotRefKey(item.ref)}:${item.count}`)
+      .join("\u0001"),
     snapshotRefKeys(reward.itemListRefs),
   ].join("\u0000");
 }
@@ -128,7 +138,7 @@ export function canonicaliseQuests(db: Database, envelope: SnapshotEnvelope): vo
     `INSERT INTO quest_rewards (
        id, quest_id, set_ordinal, set_game_id, set_name, set_type, reward_ordinal,
        kind, is_positive, amount_label, custom_amount, faction_ref_json,
-       item_refs_json, item_list_refs_json, target_object_game_id
+       items_json, item_list_refs_json, target_object_game_id
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
@@ -244,7 +254,7 @@ export function canonicaliseQuests(db: Database, envelope: SnapshotEnvelope): vo
             reward.amountLabel ?? null,
             reward.customAmount ?? null,
             jsonOrNull(reward.factionRef),
-            jsonOrNull(sortedRefs(reward.itemRefs)),
+            jsonOrNull(sortedRewardItems(reward.items)),
             jsonOrNull(sortedRefs(reward.itemListRefs)),
             reward.targetObjectGameId ?? null,
           );

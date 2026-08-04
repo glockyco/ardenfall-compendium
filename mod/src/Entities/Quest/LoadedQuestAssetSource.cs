@@ -227,23 +227,23 @@ public sealed class LoadedQuestAssetSource : IQuestAssetSource
             TargetObjectGameId: character.questObjectId),
         ItemsQuestReward items => new QuestRewardAsset(
             Kind: "items",
-            ItemRefs: ItemReferences(items.items, "ItemsQuestReward.items"),
+            Items: ItemReferences(items.items, "ItemsQuestReward.items"),
             ItemListRefs: ItemListReferences(items.itemLists, "ItemsQuestReward.itemLists")),
         _ => throw new InvalidOperationException(
             $"Quest reward type '{reward.GetType().FullName}' is not supported."),
     };
 
-    private IReadOnlyList<SnapshotRef> ItemReferences(
+    private IReadOnlyList<QuestRewardItemAsset> ItemReferences(
         IEnumerable<CountedItemData>? items,
         string source)
     {
-        var refs = new List<SnapshotRef>();
+        var refs = new List<QuestRewardItemAsset>();
         foreach (var counted in items ?? Array.Empty<CountedItemData>())
         {
             if (counted?.item != null)
             {
                 var snapshot = AssetReference(counted.item, source);
-                if (snapshot != null) refs.Add(snapshot);
+                if (snapshot != null) refs.Add(new QuestRewardItemAsset(snapshot, counted.count));
             }
         }
         return refs;

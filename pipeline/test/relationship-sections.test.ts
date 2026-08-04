@@ -9,12 +9,13 @@ function seedGraph(): Database {
   db.exec(ENTITY_GRAPH_DDL);
   db.exec(`
     INSERT INTO entity_nodes
-      (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
+      (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
     VALUES
-      ('item', 'item-a', 'Item A', '/items/item-a', 'item-a', 'item-a', 1),
-      ('status-effect', 'effect-a', 'Effect A', '/status-effects/effect-a', 'effect-a', 'effect-a', 1),
-      ('item', 'item-private', 'Private item', '/items/item-private', 'item-private', 'item-private', 0),
-      ('status-effect', 'effect-private', 'Private effect', NULL, 'effect-private', 'effect-private', 0)
+      ('item', 'item-a', 'Item A', 'Item A', '/items/item-a', 'item-a', 'item-a', 1),
+      ('status-effect', 'effect-a', 'Effect A', 'Effect A', '/status-effects/effect-a', 'effect-a', 'effect-a', 1),
+      ('item', 'item-private', 'Private item', 'Private item', '/items/item-private', 'item-private', 'item-private', 0),
+      ('spell', 'spell-a', 'Spell A', 'Spell A', '/spells/spell-a', 'spell-a', 'spell-a', 1),
+      ('status-effect', 'effect-private', 'Private effect', 'Private effect', NULL, 'effect-private', 'effect-private', 0)
   `);
   return db;
 }
@@ -62,7 +63,7 @@ describe("relationship section projection", () => {
     ]);
   });
 
-  it("writes only the inverse section for applies", () => {
+  it("writes only the inverse item section for applies", () => {
     const db = seedGraph();
     addEdge(db, "applies-edge", "item", "item-a", "status-effect", "effect-a", "applies");
 
@@ -70,7 +71,55 @@ describe("relationship section projection", () => {
 
     expect(
       db.query("SELECT source_type, source_id, title FROM entity_relationship_sections").all(),
-    ).toEqual([{ source_type: "status-effect", source_id: "effect-a", title: "Applied by items" }]);
+    ).toEqual([
+      {
+        source_type: "status-effect",
+        source_id: "effect-a",
+        title: "Applied by items",
+      },
+    ]);
+  });
+
+  it("writes an inverse spell section for applies", () => {
+    const db = seedGraph();
+    addEdge(db, "applies-edge", "spell", "spell-a", "status-effect", "effect-a", "applies");
+
+    emitRelationshipSections(db);
+
+    expect(
+      db.query("SELECT source_type, source_id, title FROM entity_relationship_sections").all(),
+    ).toEqual([
+      {
+        source_type: "status-effect",
+        source_id: "effect-a",
+        title: "Applied by spells",
+      },
+    ]);
+  });
+
+  it("separates mixed applies inverse edges by source type", () => {
+    const db = seedGraph();
+    addEdge(db, "applies-item", "item", "item-a", "status-effect", "effect-a", "applies");
+    addEdge(db, "applies-spell", "spell", "spell-a", "status-effect", "effect-a", "applies");
+
+    emitRelationshipSections(db);
+
+    expect(
+      db
+        .query<{ title: string; edges_json: string }, []>(
+          "SELECT title, edges_json FROM entity_relationship_sections ORDER BY title",
+        )
+        .all()
+        .map((row) => ({
+          title: row.title,
+          labels: (JSON.parse(row.edges_json) as { targetLabel: string }[]).map(
+            (edge) => edge.targetLabel,
+          ),
+        })),
+    ).toEqual([
+      { title: "Applied by items", labels: ["Item A"] },
+      { title: "Applied by spells", labels: ["Spell A"] },
+    ]);
   });
 
   it("skips missing nodes and includes page-less targets as plain-text edges", () => {
@@ -141,9 +190,18 @@ describe("relationship section projection", () => {
     const db = seedGraph();
     db.run(
       `INSERT INTO entity_nodes
-        (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      ["item-variant", "melee", "Melee weapon", "/objects/variant/melee", "melee", "melee", 1],
+        (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        "item-variant",
+        "melee",
+        "Melee weapon",
+        "Melee weapon",
+        "/objects/variant/melee",
+        "melee",
+        "melee",
+        1,
+      ],
     );
     addEdge(db, "variant-edge", "item", "item-a", "item-variant", "melee", "variant_of");
 
@@ -154,7 +212,7 @@ describe("relationship section projection", () => {
         "SELECT section_id, title, edges_json FROM entity_relationship_sections",
       )
       .get();
-    expect(row?.section_id).toBe("item-a:variant_of:forward");
+    expect(row?.section_id).toBe("item-a:variant_of:forward:item");
     expect(row?.title).toBe("Variant");
     expect(JSON.parse(row?.edges_json ?? "null")).toEqual([
       {
@@ -181,9 +239,18 @@ describe("relationship section projection", () => {
     for (const id of ["char-a", "char-b"]) {
       db.run(
         `INSERT INTO entity_nodes
-          (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        ["character", id, "Unnamed character", `/characters/${id}`, id, id, 1],
+          (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          "character",
+          id,
+          "Unnamed character",
+          `Unnamed character · ${id}`,
+          `/characters/${id}`,
+          id,
+          id,
+          1,
+        ],
       );
       addEdge(db, `drop-${id}`, "character", id, "item", "item-a", "can_drop");
     }
@@ -205,9 +272,9 @@ describe("relationship section projection", () => {
     const db = seedGraph();
     db.run(
       `INSERT INTO entity_nodes
-        (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      ["character", "char-a", "Jack", "/characters/char-a", "char-a", "char-a", 1],
+        (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      ["character", "char-a", "Jack", "Jack", "/characters/char-a", "char-a", "char-a", 1],
     );
     addEdge(db, "drop-a", "character", "char-a", "item", "item-a", "can_drop");
 
@@ -223,11 +290,23 @@ describe("relationship section projection", () => {
     );
   });
 
-  it("requires every registry entry to declare all fields", () => {
+  it("keeps rendered and graph-only registry shapes declarative", () => {
     expect(relationshipRegistry.variant_of).toEqual({
       forwardTitle: "Variant",
       inverseTitle: null,
       sortOrder: 10,
+    });
+    expect(relationshipRegistry.applies).toEqual({
+      forwardTitle: null,
+      inverseTitle: {
+        item: "Applied by items",
+        spell: "Applied by spells",
+      },
+      sortOrder: 40,
+    });
+    expect(relationshipRegistry.speaks_about_quest).toEqual({
+      forwardTitle: null,
+      inverseTitle: null,
     });
   });
 });

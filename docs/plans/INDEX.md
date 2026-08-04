@@ -9,10 +9,9 @@
 - **Repository Health Audit — Open Findings** [audit] `2026-08-02-repo-health-audit` ← 2026-04-29-ardenfall-compendium-roadmap
 - **Extraction Coverage** [audit] `2026-08-03-extraction-coverage` ← 2026-04-29-ardenfall-compendium-roadmap
 - **Game Field Assumptions Audit, 2026-08-03** [audit] `2026-08-03-game-field-assumptions` ← 2026-04-29-ardenfall-compendium-roadmap
-- **Quests** [spec] `2026-08-03-quests` ← 2026-04-29-ardenfall-compendium-roadmap
 
 ## draft
 
 - **Tile Capture** [spec] `2026-08-02-tile-capture` ← 2026-04-29-ardenfall-compendium-roadmap
 
-_36 archived — see `docs/plans/archive/`._
+_37 archived — see `docs/plans/archive/`._

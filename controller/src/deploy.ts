@@ -6,6 +6,7 @@ export interface DeployOptions {
   ardenfallModOutDir: string;
   pluginsDir: string;
   bindHost?: string;
+  allowRemoteRepl?: boolean;
   port?: number;
 }
 
@@ -66,9 +67,20 @@ async function requireFile(path: string): Promise<void> {
 }
 
 const DEFAULT_HOTREPL_PORT = 18590;
+const SAFE_HOTREPL_BIND_HOSTS = new Set(["127.0.0.1", "::1", "localhost"]);
+const REMOTE_REPL_WARNING =
+  "WARNING: HotRepl has no authentication, so this non-loopback bind grants arbitrary code execution as the desktop user to any host that can reach the port. HOTREPL_BIND_HOST=127.0.0.1 is the safe loopback value.";
 
 async function writeHotReplConfig(options: DeployOptions): Promise<void> {
-  if (!options.bindHost) return;
+  if (options.bindHost === undefined) return;
+  if (!SAFE_HOTREPL_BIND_HOSTS.has(options.bindHost)) {
+    if (!options.allowRemoteRepl) {
+      throw new Error(
+        "HotRepl has no authentication, so a non-loopback bind grants arbitrary code execution as the desktop user to any host that can reach the port. Set HOTREPL_BIND_HOST=127.0.0.1 for a loopback-only bind, or pass --allow-remote-repl for intentional remote access.",
+      );
+    }
+    process.stdout.write(`${REMOTE_REPL_WARNING}\n`);
+  }
   const configDir = join(dirname(options.pluginsDir), "config");
   await mkdir(configDir, { recursive: true });
   await writeFile(
@@ -82,12 +94,19 @@ BindHost = ${options.bindHost}
 
 function parseArgs(args: string[]): DeployOptions {
   const values = new Map<string, string>();
-  for (let i = 0; i < args.length; i += 2) {
+  let allowRemoteRepl = false;
+  for (let i = 0; i < args.length;) {
     const key = args[i];
+    if (key === "--allow-remote-repl") {
+      allowRemoteRepl = true;
+      i += 1;
+      continue;
+    }
     const value = args[i + 1];
     if (!key?.startsWith("--") || value === undefined)
       throw new Error(`Invalid argument near ${key ?? "<end>"}`);
     values.set(key, value);
+    i += 2;
   }
 
   const hotReplOutDir = values.get("--hotrepl-out");
@@ -98,7 +117,7 @@ function parseArgs(args: string[]): DeployOptions {
   if (!hotReplOutDir) throw new Error("--hotrepl-out is required");
   if (!ardenfallModOutDir) throw new Error("--mod-out is required");
   if (!pluginsDir) throw new Error("--plugins is required");
-  const options: DeployOptions = { hotReplOutDir, ardenfallModOutDir, pluginsDir };
+  const options: DeployOptions = { hotReplOutDir, ardenfallModOutDir, pluginsDir, allowRemoteRepl };
   if (bindHost !== undefined) options.bindHost = bindHost;
   if (rawPort !== undefined) {
     const port = Number(rawPort);

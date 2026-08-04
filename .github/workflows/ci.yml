@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   pull_request:
+permissions:
+  contents: read
 jobs:
   changes:
     runs-on: ubuntu-latest
@@ -12,8 +14,8 @@ jobs:
       fixtures: ${{ steps.filter.outputs.fixtures }}
       site: ${{ steps.filter.outputs.site }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3
         id: filter
         with:
           filters: |
@@ -40,8 +42,8 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with: { bun-version: 1.3.13 }
       - run: bun install --frozen-lockfile
       - run: bun run format:check
@@ -56,8 +58,8 @@ jobs:
     needs: changes
     if: github.event_name == 'push' || needs.changes.outputs.pipeline == 'true'
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with: { bun-version: 1.3.13 }
       - run: bun install --frozen-lockfile
       - run: bun run check:validators
@@ -71,8 +73,8 @@ jobs:
     needs: changes
     if: github.event_name == 'push' || needs.changes.outputs.pipeline == 'true' || needs.changes.outputs.site == 'true' || needs.changes.outputs.fixtures == 'true'
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with: { bun-version: 1.3.13 }
       - run: bun install --frozen-lockfile
       - run: bun run check:validators
@@ -97,8 +99,8 @@ jobs:
     needs: changes
     if: github.event_name == 'push' || needs.changes.outputs.mod == 'true'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with: { dotnet-version: "10.0.x" }
       - name: format-check
         run: dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes
@@ -117,8 +119,8 @@ jobs:
     needs: changes
     if: github.event_name == 'push' || needs.changes.outputs.fixtures == 'true'
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with: { bun-version: 1.3.13 }
       - run: bun install --frozen-lockfile
       - run: bun run check:validators

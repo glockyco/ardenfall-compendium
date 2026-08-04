@@ -12,26 +12,20 @@ describe("item display names", () => {
     const row = {
       name: "Recipe of {0}",
       variantLabel: "Melee Weapon",
-      shortId: "abc12345",
     };
     const label = itemNameForList(row, {});
     expect(label).toBe("Unnamed item — Melee Weapon");
-    expect(label).not.toContain(row.shortId);
   });
 
   it("uses the unnamed item label for a blank name", () => {
-    expect(
-      itemNameForList({ name: "  ", variantLabel: "Melee Weapon", shortId: "abc12345" }, {}),
-    ).toBe("Unnamed item — Melee Weapon");
+    expect(itemNameForList({ name: "  ", variantLabel: "Melee Weapon" }, {})).toBe(
+      "Unnamed item — Melee Weapon",
+    );
   });
 
   it("adds the authored variant label for repeated names without an identifier", () => {
     const duplicateNames = { Sword: 2 };
-    const label = itemNameForList(
-      { name: "Sword", variantLabel: "Melee Weapon", shortId: "abc12345" },
-      duplicateNames,
-    );
+    const label = itemNameForList({ name: "Sword", variantLabel: "Melee Weapon" }, duplicateNames);
     expect(label).toBe("Sword — Melee Weapon");
-    expect(label).not.toContain("abc12345");
   });
 });

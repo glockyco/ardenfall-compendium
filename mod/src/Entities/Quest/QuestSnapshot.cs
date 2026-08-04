@@ -41,13 +41,17 @@ public sealed record QuestJournalSnapshot(
     [property: JsonProperty("objectName")] string? ObjectName,
     [property: JsonProperty("journalEntry")] string? JournalEntry);
 
+public sealed record QuestRewardItemSnapshot(
+    [property: JsonProperty("ref")] SnapshotRef Ref,
+    [property: JsonProperty("count")] int Count);
+
 public sealed record QuestRewardSnapshot(
     [property: JsonProperty("kind")] string Kind,
     [property: JsonProperty("isPositive")] bool? IsPositive,
     [property: JsonProperty("amountLabel")] string? AmountLabel,
     [property: JsonProperty("customAmount")] int? CustomAmount,
     [property: JsonProperty("factionRef")] SnapshotRef? FactionRef,
-    [property: JsonProperty("itemRefs")] IReadOnlyList<SnapshotRef> ItemRefs,
+    [property: JsonProperty("items")] IReadOnlyList<QuestRewardItemSnapshot> Items,
     [property: JsonProperty("itemListRefs")] IReadOnlyList<SnapshotRef> ItemListRefs,
     [property: JsonProperty("targetObjectGameId")] int? TargetObjectGameId);
 

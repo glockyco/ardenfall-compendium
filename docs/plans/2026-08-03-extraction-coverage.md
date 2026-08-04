@@ -25,12 +25,12 @@ The audit uses these source labels:
 
 ## What the game holds and the compendium covers
 
-The compendium models twelve families in the [snapshot]. The identity mechanism names the source used for the public row id.
+The compendium models twelve families in the [snapshot]. The 2026-08-03 release ships 17 item variants. The identity mechanism names the source used for the public row id.
 
 | Family | Rows | Identity mechanism | What the row represents |
 | --- | ---: | --- | --- |
 | `item` | 1,273 [snapshot] | `lookupAsset` | An authored `ItemData` asset. |
-| `item-variant` | 16 [snapshot] | `variantId` | A descriptor-defined concrete item type. |
+| `item-variant` | 17 [snapshot] | `variantId` | A descriptor-defined concrete item type. |
 | `item-category` | 7 [snapshot] | `namedAsset` | An `ItemCategory` asset found by its stable name. |
 | `item-tag` | 28 [snapshot] | `lookupAsset` | An authored `ItemTag` asset. |
 | `stat-type` | 21 [snapshot] | `namedAsset` | A `StatType` asset found by its stable name. |
@@ -44,9 +44,9 @@ The compendium models twelve families in the [snapshot]. The identity mechanism 
 
 The roadmap table predates the `CharacterExtractor` identity change. It labels `CharacterData` as `lookupAsset`. The extractor uses `namedAsset`, which is authoritative [fields].
 
-The current snapshot also materializes 2,228 detail pages. A rendered-detail measurement finds 307 pages with no inbound link from another detail page [survey]. The unlinked pages include 121 placed-character pages, 103 status-effect pages, 25 faction pages, 20 location pages, 15 character pages, 10 item-tag pages, 8 stat-type pages, 4 portal pages, and 1 spell page [survey].
+The 2026-08-03 release materializes 2,266 detail pages. A rendered-detail measurement finds 1,379 pages with no inbound link from another detail page [survey]. The unlinked pages include 726 items, 252 NPCs, 212 characters, 103 status effects, 22 factions, 20 locations, 17 stat types, 12 quests, 10 item tags, 4 portals, and 1 spell [survey].
 
-The graph contains 5,912 edges across 11 predicates [survey]. The icon export covers 21 faction icons, 53 spell icons, and 154 status-effect icons. Every authored icon reference resolves [snapshot].
+The 2026-08-03 release also extracts 38 `QuestData` rows with graph-backed read models.
 
 ## What the game holds and the compendium does not cover
 
@@ -80,7 +80,6 @@ The accessors add cost even in this cheap group. `CharacterRecord.StoredCharacte
 | `PotionRecipe` | 48 [snapshot] | `BuiltLookupTable` call site [assets] | Not extracted. Recipe pages can connect tags, ingredients, and produced potions. |
 | `PerkAsset` | 18 [snapshot] | `BuiltLookupTable` [assets] | Not extracted. It can connect characters to perks. |
 | `TraitType` | 17 [snapshot] | `BuiltLookupTable` [assets] | Not extracted. It can connect characters to traits. |
-| `QuestData` | 13 [obtainability, tile] | Authored asset with Odin graph data | The definition is known. Its graph payload is in the expensive group below. |
 | `JournalEntryAsset` | Unknown [assets] | No enumeration call site found [assets] | Investigate only with a live probe. |
 | `MerchantCategory` | 0 live rows [snapshot] | Authored category type [assets] | No current data exists to extract. Character merchant lists remain unmodelled. |
 | `FastTravelSetAsset`, `CharClass`, `NameSet`, `RaceGroup`, `DamageType`, `SpellContainer` | Unknown [assets] | No enumeration call site found [assets] | Do not claim coverage or counts without a live probe. |
@@ -129,7 +128,7 @@ The current snapshot emits only the existing columns. It cannot show the distrib
 These fields can name other authored entities or references. The decompiled types prove the reference shape. A live probe must establish which rows contain values.
 
 - `CharacterData.traits`, `perks`, `characterClass`, `startingAttributes`, `majorSkills`, `damageTypeResistances`, `itemLists`, `additionalItems`, `modules`, `statusEffects`, and `abilities` can link characters to traits, perks, classes, stats, item lists, items, and status effects [fields].
-- `SpellData.spellEffectReference` and `subSpells` can link spells to status effects or other spells [fields]. The survey measured 81 effect objects across 56 spells, 17 effect classes, and 5 sub-spells. It also measured 27 status-effect references across 25 status effects. Thirteen status-effect pages gained their first link [survey].
+- `SpellData.spellEffectReference` and `subSpells` can link spells to status effects or other spells [fields]. The release projects 26 spell-sourced `applies` edges to 25 status effects, alongside the 266 item-sourced edges [snapshot].
 - `StatusEffectData.effects` and `modifyStatusEffects` can link one status effect to another [fields].
 - `Faction.autoAddFactions` can link factions to factions [fields].
 - `FactionItemTag.modifiers` can link item tags to factions [fields].
@@ -170,8 +169,8 @@ Reader value follows connectivity, not candidate size.
 1. **Dialogue is extracted, and it came from a different owner than this audit assumed.** Dialogue does not hang off characters. `CharacterData.characterGraphs` holds character behaviour: a live probe measured 195 of its 196 containers as plain `ObjectFlowGraph` and exactly one `DialogFlowGraph`. The authored dialogue hangs off `CharacterQuestObject.dialogGraph.flowGraph`, on 82 of 88 quest character objects. The shipped export carries **484 lines, 292 greetings and 192 topics, across 26 quests and 58 speakers**, with 78 `speaks_about_quest` edges [probe].
 
    The scene-side half is not extracted. `SimpleDialogInteractable.dialogs` measures 0 at rest because those components live in streamed cells, so that half now sits behind the same 683-cell traversal ranked fourth below. Free-standing dialogue on characters who appear in no quest stays unreachable with it.
-2. **Quest definitions rank second.** A live probe counts **38** quests, not the 13 the earlier documents record. 13 is the number registered in `BuiltLookupTable`, so identity is `namedAsset` rather than `lookupAsset`. All 88 character quest objects resolve to placed-character record ids, which is the link the first item also chases [probe].
-3. **Authored item provenance ranks third.** The 728 item pages without an inbound link need loot lists, recipes, merchants, or quests. `ItemListAsset` has 348 measured candidates, and its nested groups can connect many currently isolated items [survey, obtainability].
+2. **Quest definitions rank second.** A live probe counts **38** quests, and the release ships them as named assets with graph-backed read models. All 88 character quest objects resolve to placed-character record ids, which is the link the first item also chases [probe].
+3. **Authored item provenance ranks third.** The 726 item pages without an inbound link need loot lists, recipes, merchants, or quests. `ItemListAsset` has 348 measured candidates, and its nested groups can connect many currently isolated items [survey, obtainability].
 4. **World scene enumeration ranks fourth.** It can add found-in and obtainability links for containers, spawners, and pickups, but it requires a traversal of 683 streamed cells and explicit persistence handling [obtainability, tile].
 5. **`NPCTeleportPointRecord` and `VolumeRecord` remain conditional candidates.** They can create high-value movement, ownership, faction, and AI links, but their live counts are unknown [records].
 

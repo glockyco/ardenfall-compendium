@@ -28,7 +28,7 @@ interface DialogueRecord {
   group_route: string | null;
   kind: string;
   text_json: string;
-  ordinal: number;
+  quest_ordinal: number;
 }
 
 const isDialogueKind = (value: string): value is DialogueKind =>
@@ -70,11 +70,13 @@ const group = (rows: DialogueRecord[], rowId: string): DialogueGroup[] => {
 export const getQuestDialogue = (questId: string): DialogueGroup[] =>
   group(
     all<DialogueRecord>(
-      `SELECT character_id AS group_id, character_label AS group_label,
-              character_route AS group_route, kind, text_json, ordinal
-       FROM quest_character_dialogue_rows
-       WHERE quest_id = ?
-       ORDER BY ordinal`,
+      `SELECT d.character_id AS group_id, n.display_label AS group_label,
+              CASE WHEN n.has_page = 1 THEN n.route_path END AS group_route,
+              d.kind, d.text_json, d.quest_ordinal
+       FROM quest_character_dialogue_rows d
+       JOIN entity_nodes n ON n.entity_type = 'npc' AND n.entity_id = d.character_id
+       WHERE d.quest_id = ?
+       ORDER BY d.quest_ordinal`,
       [questId],
     ),
     questId,
@@ -84,11 +86,13 @@ export const getQuestDialogue = (questId: string): DialogueGroup[] =>
 export const getCharacterDialogue = (characterId: string): DialogueGroup[] =>
   group(
     all<DialogueRecord>(
-      `SELECT quest_id AS group_id, quest_label AS group_label,
-              quest_route AS group_route, kind, text_json, ordinal
-       FROM quest_character_dialogue_rows
-       WHERE character_id = ?
-       ORDER BY quest_label, ordinal`,
+      `SELECT d.quest_id AS group_id, n.display_label AS group_label,
+              CASE WHEN n.has_page = 1 THEN n.route_path END AS group_route,
+              d.kind, d.text_json, d.quest_ordinal
+       FROM quest_character_dialogue_rows d
+       JOIN entity_nodes n ON n.entity_type = 'quest' AND n.entity_id = d.quest_id
+       WHERE d.character_id = ?
+       ORDER BY n.display_label, d.quest_id, d.quest_ordinal`,
       [characterId],
     ),
     characterId,

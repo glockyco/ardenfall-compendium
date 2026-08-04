@@ -87,7 +87,7 @@ export type EntityNodeWriter = (node: EntityNodeInput) => void;
 
 export function prepareEntityNodeWriter(db: Database): EntityNodeWriter {
   const insert = db.prepare(
-    `INSERT INTO entity_nodes (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(entity_type, entity_id) DO NOTHING`,
+    `INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(entity_type, entity_id) DO NOTHING`,
   );
 
   return (node) => {
@@ -104,6 +104,7 @@ export function prepareEntityNodeWriter(db: Database): EntityNodeWriter {
     insert.run(
       node.entityType,
       node.entityId,
+      node.label,
       node.label,
       node.routePath,
       slug.canonicalSlug,

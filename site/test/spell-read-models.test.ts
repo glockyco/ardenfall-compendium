@@ -33,6 +33,7 @@ const seed = () => {
       entity_type TEXT NOT NULL,
       entity_id TEXT NOT NULL,
       label TEXT NOT NULL,
+      display_label TEXT NOT NULL,
       route_path TEXT NOT NULL,
       canonical_slug TEXT NOT NULL,
       short_id TEXT NOT NULL,
@@ -49,11 +50,11 @@ const seed = () => {
        '[{"kind":"apply-status-to-self","statusEffectId":"status-speed","statusEffectLabel":"Attack Speed","statusEffectRoutePath":"/status-effects/attack-speed--abc12345","sampleLevel":1,"sampleLifetimeSeconds":5,"appliesToSelf":true,"damage":null,"damageType":null},{"kind":"projectile","statusEffectId":null,"statusEffectLabel":null,"statusEffectRoutePath":null,"sampleLevel":null,"sampleLifetimeSeconds":null,"appliesToSelf":null,"damage":10,"damageType":"Fire"},{"kind":"area-of-effect","statusEffectId":null,"statusEffectLabel":null,"statusEffectRoutePath":null,"sampleLevel":null,"sampleLifetimeSeconds":null,"appliesToSelf":null,"damage":null,"damageType":null}]',
        'spell-icon-hash'),
       ('named;spell;spell_shadow-step', 'Shadow Step', 'spell-presentation-v1', NULL, NULL, 4, 1, NULL, NULL, '[]', NULL);
-    INSERT INTO entity_nodes VALUES
-      ('spell', 'named;spell;spell_fire-shield', 'Fire Shield', '/spells/fire-shield--abc12345', 'fire-shield--abc12345', 'abc12345', 1),
-      ('spell', 'named;spell;spell_shadow-step', 'Shadow Step', '/spells/shadow-step--def67890', 'shadow-step--def67890', 'def67890', 1),
-      ('stat-type', 'named;stat-type;destruction', 'Destruction', '/stats/destruction--fedcba98', 'destruction--fedcba98', 'fedcba98', 1),
-      ('item', 'item-sword', 'Iron Sword', '/items/iron-sword--11111111', 'iron-sword--11111111', '11111111', 1);
+    INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+      ('spell', 'named;spell;spell_fire-shield', 'Fire Shield', 'Fire Shield', '/spells/fire-shield--abc12345', 'fire-shield--abc12345', 'abc12345', 1),
+      ('spell', 'named;spell;spell_shadow-step', 'Shadow Step', 'Shadow Step', '/spells/shadow-step--def67890', 'shadow-step--def67890', 'def67890', 1),
+      ('stat-type', 'named;stat-type;destruction', 'Destruction', 'Destruction', '/stats/destruction--fedcba98', 'destruction--fedcba98', 'fedcba98', 1),
+      ('item', 'item-sword', 'Iron Sword', 'Iron Sword', '/items/iron-sword--11111111', 'iron-sword--11111111', '11111111', 1);
   `);
   db.close();
   return root;

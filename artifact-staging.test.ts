@@ -104,7 +104,7 @@ async function createValidArtifact(root: string) {
   `);
   db.close();
 
-  return buildArtifactManifest({
+  await buildArtifactManifest({
     artifactKind: "release",
     artifactId: "tamper-test",
     artifactDir: root,
@@ -129,6 +129,17 @@ async function createValidArtifact(root: string) {
     },
     redirectsOutput: { count: 0, filePath: join(root, "static", "_redirects") },
   });
+
+  // buildArtifactManifest reads real git state, so these tests would otherwise pass
+  // or fail on whether the developer's tree happens to be clean. They are about
+  // tamper detection, so pin provenance and let the dedicated provenance suite own it.
+  const manifestPath = join(root, "artifact-manifest.json");
+  const onDisk = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+    git: { dirty: boolean };
+  };
+  onDisk.git.dirty = false;
+  writeFileSync(manifestPath, `${JSON.stringify(onDisk, null, 2)}\n`);
+  return onDisk;
 }
 
 /** Minimal live-export snapshot, the only shape these staging tests need. */

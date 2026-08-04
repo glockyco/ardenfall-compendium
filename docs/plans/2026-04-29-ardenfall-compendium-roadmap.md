@@ -465,12 +465,12 @@ Ordered by measured reader value against cost. The survey at [`2026-08-02-progra
 
 **Edges.**
 
-1. ~~Items to status effects~~ - **done.** 266 `applies` edges.
+1. ~~Items to status effects~~ - **done.** The 2026-08-03 release carries 266 item-sourced `applies` edges. Spell effects add 26 more, bringing the total to 292.
 2. ~~Items to spells~~ - **done.** 286 `casts` edges. Both directions render, and every one of the 552 item effect facts now resolves.
 3. ~~Stat types to stat types~~ - **done.** Labels that match a published stat are links.
 4. ~~Items to categories and tags~~ - **done.** 1,268 `categorised_as` and 76 `tagged` edges. Item pages name both, and the tag and category pages were left alone because their existing tables already say it.
 
-**That exhausts the field-shaped edges**, and the remaining orphans are not spread evenly. Items are 1,273 of the 1,455, and nothing in the game points at an item except loot tables, recipes, merchants, and quests, none of which are modelled. `PotionRecipe` is partly extracted already but amounts to one recipe and four potions live.
+**That exhausts the field-shaped edges**, and the remaining orphans are not spread evenly. The 2026-08-03 release leaves 726 of 2,266 public pages without an inbound link. Item provenance remains incomplete because loot tables, recipes, merchants, and quests are the remaining sources. `PotionRecipe` is partly extracted already but amounts to one recipe and four potions live.
 
 So the next connective work is no longer a field, it is an entity:
 
@@ -480,21 +480,21 @@ So the next connective work is no longer a field, it is an entity:
 
 5. **Item obtainability**, in progress. Not loot alone. [`2026-08-02-item-obtainability`](2026-08-02-item-obtainability.md) audits every route by which a player can get an item, and there are nine. Loot tables are one.
 
-   The authored half is fully enumerable today and needs no world traversal: 348 loot lists, 314 placed NPC records whose inventories double as their death drops, merchant stock, 13 quests whose Odin graphs turn out to be traversable at runtime, and 48 potion recipes whose ingredients are matched by tag rather than by item. That is the slice.
+   The authored half is fully enumerable today and needs no world traversal: 348 loot lists, 314 placed NPC records whose inventories double as their death drops, the 38 quests shipped in the 2026-08-03 release whose Odin graphs turn out to be traversable at runtime, and 48 potion recipes whose ingredients are matched by tag rather than by item. That is the slice.
 
    The placed half is containers and spawners, which are not record-backed and exist only as scene objects in a world of 683 streamed cells. Completing them needs a world walk, which tile capture also needs, so the two should be planned together rather than each paying for traversal separately.
 
-   **Characters shipped first**, see [`2026-08-03-item-provenance-characters`](archive/2026-08-03-item-provenance-characters.md). 212 pages, 2,126 `drops` edges, and 545 of 1,273 items now name a source. Merchant stock was specced and then cut on measurement, because the game implements it fully and no character in the demo has any configured.
+   **Characters shipped first**, see [`2026-08-03-item-provenance-characters`](archive/2026-08-03-item-provenance-characters.md). 212 pages, 2,126 `can_drop` edges, and 545 of 1,273 items now name a source. Merchant stock was specced and then cut on measurement, because the game implements it fully and no character in the demo has any configured.
 
-   That leaves 728 items still unsourced. Quest rewards and recipes are the remaining authored sources and they are small, 13 quests and 48 recipes, so most of the remainder is almost certainly in containers. Measure before picking the next one.
-6. **Spells to status effects.** The 116 unreachable status effects are referenced from the Odin-serialised effect graph on `SpellData`. A slice rather than a field.
+   The 2026-08-03 release leaves 726 item pages without an inbound link. Quest rewards and recipes are the remaining authored sources and they are small, 38 quests and 48 recipes, so most of the remainder is almost certainly in containers. Measure before picking the next one.
+6. ~~Spells to status effects~~ - **done.** The 2026-08-03 release projects 26 spell-sourced `applies` edges to 25 status effects.
 7. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference, but the extractor does not currently emit it, so it needs mod work first.
 
-**Search.** Delivered. Pagefind runs after the prerender and indexes all 1,892 built pages, so a reader finds a page by name even when nothing links to it. The index ships from `build:prepared`, which means no deployable build can omit it, and a smoke fails on an absent or empty index.
+**Search.** Delivered. Pagefind runs after the prerender and indexes all 2,266 built pages in the 2026-08-03 release, so a reader finds a page by name even when nothing links to it. The index ships from `build:prepared`, which means no deployable build can omit it, and a smoke fails on an absent or empty index.
 
-**Every public entity now has a page**, so search and the sitemap describe the same set. Ten entities ship, the tenth being factions, which gave characters their first reader-facing connection. An accessibility smoke now runs in the gate against WCAG 2.2 Level AA, and the footer states the project's unofficial status on every page. All 48 locations have one, portals keep an identity and a map route without a page because their names are authoring identifiers, and the sitemap URL set equals the built page set exactly at 1,844 each. Every detail route ships a meta description.
+**Every public entity now has a page**, so search and the sitemap describe the same set. The 2026-08-03 release ships twelve public entity families, including factions and quests. An accessibility smoke now runs in the gate against WCAG 2.2 Level AA, and the footer states the project's unofficial status on every page. All 48 locations and 33 portals have pages, and the sitemap URL set equals the built page set exactly at 2,266 each. Every detail route ships a meta description.
 
-**A current release.** Nothing has been published since 2026-06-05, four entities ago. The path is proven, the blocker was only that old artifacts predate the count contract.
+**A current release.** The newest release is dated 2026-08-03. The path is proven, and the release carries the current page and graph counts.
 
 **Then the map.** Tile capture makes 400 extracted markers legible. It is specced and sized, and it deliberately follows the connective work.
 
@@ -523,14 +523,12 @@ Any map-supporting entity slice that ships public detail pages must reuse Slice 
 
 ### Slice 11 — Spells
 
-**Status:** pages done, effect graph not started
+**Status:** delivered
 **Spec coverage:** amendment §18; investment-priorities §1 (spells after items/maps).
 
-**Delivered:** a typed `spells` root table, generated tooltips through the shared `rich_text_v1` contract, a `scales_with` reference to `StatType`, public spell nodes and routes in the relationship graph, and resolution of the slate-spell item references, all without a spell-specific HTML or link pipeline. 56 spell pages ship.
+**Delivered:** a typed `spells` root table, the `spell_effects` graph, generated tooltips through the shared `rich_text_v1` contract, a `scales_with` reference to `StatType`, public spell nodes and routes in the relationship graph, and resolution of the slate-spell item references, all without a spell-specific HTML or link pipeline. The 2026-08-03 release ships 56 spell pages and 63 spell-effect rows.
 
-**Not started:** the `SpellEffect` and `SubSpellData.effects` graph. Seven fields reach the `spells` table, and `spells`, `subSpells` and `spellEffectReference` are not among them, so a spell page states its governing skill, its mana cost and a prose tooltip and never says what the spell does. The game holds the answer in `SpellEffect` scriptable objects, and at least six of their classes carry a `StatusEffectData`, including `SelfStatusEffectSpellEffect` and `StatusEffectTooltipSpellEffect`.
-
-Spell effects reach 25 distinct status effects through 27 references, and 13 of those pages gain a first link, taking the unlinked count from 116 to 103. The slice is worth as much for the spell pages themselves.
+The release projects 26 spell-sourced `applies` edges to 25 distinct status effects. Together with the 266 item-sourced edges, this brings the predicate total to 292. No remaining Slice 11 work is recorded here.
 
 **Note:** the original roadmap had spells at Slice 4. Investment-priorities §1 reorders this; spells run after the items + maps + map-supporting-entities tracks.
 

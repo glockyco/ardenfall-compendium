@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { buildEntityLayerSpecs, type LayerSpec } from "$lib/map/layer-spec";
+  import { mapAccessibleName, visibleMapMarkers } from "$lib/map/map-accessibility";
   import type { MapStore } from "$lib/map/map-store.svelte";
   import type { MapBounds } from "$lib/map/types";
   // Type-only imports are erased at build time, so they do not pull deck.gl into
@@ -16,6 +17,18 @@
   // deck handles live in closure scope, never module scope (HMR/leak safety).
   let deck: Deck<OrthographicView> | null = null;
   let makeLayers: ((specs: LayerSpec[]) => Layer[]) | null = null;
+
+  const activeMapLabel = $derived(
+    store.view.maps.find((map) => map.mapId === store.activeMapId)?.label ?? "Unknown map",
+  );
+  const visibleMarkers = $derived(
+    visibleMapMarkers(
+      store.view.points,
+      store.activeMapId,
+      store.ui.hiddenLayers,
+      store.ui.showDebug,
+    ),
+  );
 
   function visibleBounds(): MapBounds | null {
     const mapId = store.activeMapId;
@@ -95,6 +108,11 @@
     const points = store.view.points.filter((p) => p.mapId === mapId);
     const volumes = store.view.volumes.filter((v) => v.mapId === mapId);
     return store.view.layers.flatMap((layer) => buildEntityLayerSpecs(layer, points, volumes, ui));
+  }
+
+  function syncCanvasLabel(): void {
+    const canvas = container?.querySelector("canvas");
+    canvas?.setAttribute("aria-label", mapAccessibleName(activeMapLabel, visibleMarkers.length));
   }
 
   onMount(() => {
@@ -177,6 +195,7 @@
         // Expose the resolved GPU device type for the browser smoke assertion.
         onDeviceInitialized: (device) => {
           container.dataset.deckDevice = device.type;
+          syncCanvasLabel();
         },
         getTooltip: (info: PickingInfo) => {
           const object = info.object as { tooltip?: string; name?: string } | null;
@@ -204,7 +223,8 @@
 
   // Re-apply layers when visibility or active-map state changes.
   $effect(() => {
-    void [store.ui.hiddenLayers, store.ui.showDebug, store.ui.mapId];
+    void [store.ui.hiddenLayers, store.ui.showDebug, store.ui.mapId, visibleMarkers.length];
+    syncCanvasLabel();
     if (deck && makeLayers) {
       deck.setProps({
         layers: makeLayers(currentSpecs()),
@@ -219,7 +239,38 @@
   });
 </script>
 
-<div bind:this={container} class="absolute inset-0"></div>
+<div
+  bind:this={container}
+  class="absolute inset-0"
+  role="region"
+  aria-label={mapAccessibleName(activeMapLabel, visibleMarkers.length)}
+></div>
+<details
+  class="bg-card absolute top-4 right-4 z-10 max-h-[50%] max-w-sm overflow-auto rounded border p-3"
+>
+  <summary class="cursor-pointer font-semibold">
+    Text list of markers on {activeMapLabel} ({visibleMarkers.length})
+  </summary>
+  {#if visibleMarkers.length > 0}
+    <ul class="mt-2 space-y-1">
+      {#each visibleMarkers as marker (marker.id)}
+        <li>
+          {#if marker.routePath && marker.hasPage}
+            <a
+              class="underline underline-offset-2"
+              href={marker.routePath}
+              aria-label={`Open ${marker.name} detail page`}>{marker.name}</a
+            >
+          {:else}
+            <span>{marker.name}</span>
+          {/if}
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <p class="text-muted-foreground mt-2">No markers are currently shown on {activeMapLabel}.</p>
+  {/if}
+</details>
 {#if loading}
   <p role="status" class="text-muted-foreground pointer-events-none absolute top-4 left-4">
     Loading map…

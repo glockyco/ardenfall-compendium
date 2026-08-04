@@ -38,7 +38,7 @@ export interface ItemTagPresentationRow {
 
 export const listItemTags = (): ItemTagOverviewRow[] =>
   all<ItemTagOverviewRecord>(
-    `SELECT o.id, o.name, o.description, o.item_count, n.route_path
+    `SELECT o.id, n.display_label AS name, o.description, o.item_count, n.route_path
      FROM item_tag_overview_rows o
      JOIN entity_nodes n
        ON n.entity_type = 'item-tag'
@@ -57,7 +57,7 @@ export const getItemTagPresentation = (slug: string): ItemTagPresentationRow | u
   const node = getEntityNodeBySlug("item-tag", slug);
   if (!node) return undefined;
   const row = get<ItemTagPresentationRecord>(
-    `SELECT p.id, p.name, p.render_context, p.description, p.item_count,
+    `SELECT p.id, n.display_label AS name, p.render_context, p.description, p.item_count,
             n.route_path
      FROM item_tag_presentation_rows p
      JOIN entity_nodes n

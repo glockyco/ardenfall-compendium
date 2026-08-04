@@ -12,6 +12,13 @@ const characterRef = {
   recordType: "CharacterRecord",
 } as const;
 
+const itemRef = {
+  kind: "lookupAsset",
+  guid: "item-guid",
+  unityType: "Ardenfall.ItemData",
+  name: "Test item",
+} as const;
+
 function envelope(): SnapshotEnvelope<QuestSnapshotFields> {
   return {
     entityId: "quest",
@@ -89,12 +96,12 @@ function envelope(): SnapshotEnvelope<QuestSnapshotFields> {
               setType: "Success",
               rewards: [
                 {
-                  kind: "gold",
-                  isPositive: true,
-                  amountLabel: "Custom",
-                  customAmount: 50,
+                  kind: "items",
+                  isPositive: null,
+                  amountLabel: null,
+                  customAmount: null,
                   factionRef: null,
-                  itemRefs: [],
+                  items: [{ ref: itemRef, count: 5 }],
                   itemListRefs: [],
                   targetObjectGameId: null,
                 },
@@ -167,6 +174,11 @@ describe("Quest canonicaliser", () => {
       [0, 0, 100],
       [1, 0, 200],
     ]);
+  });
+
+  it("stores counted reward items as items_json", () => {
+    const rows = canonicalRows(envelope());
+    expect(rows.rewards[0]?.items_json).toBe(JSON.stringify([{ ref: itemRef, count: 5 }]));
   });
 
   it("produces byte-identical rows when collections arrive in another order", () => {

@@ -1,5 +1,4 @@
 import { all, get } from "../db";
-import { disambiguateLabels } from "../disambiguate-labels";
 import { getMapHref } from "../map-href";
 import { isColorArray, isGeometry, isStringArray, parseGeneratedJson } from "../json";
 import { getEntityNodeBySlug } from "./item";
@@ -71,7 +70,6 @@ interface LocationOverviewRecord {
   id: string;
   name: string;
   route_path: string;
-  short_id: string;
 }
 
 interface LocationPresentationRecord {
@@ -218,7 +216,7 @@ function readLeadsToDestinations(
   entityType: string,
 ): Map<string, { label: string; shortId: string }> {
   const records = all<{ source_id: string; label: string; short_id: string }>(
-    `SELECT e.source_id, n.label, n.short_id
+    `SELECT e.source_id, n.display_label AS label, n.short_id
      FROM entity_edges e
      JOIN entity_nodes n
        ON n.entity_type = e.target_type AND n.entity_id = e.target_id
@@ -327,31 +325,26 @@ function computeMaps(points: MapPointRow[], volumes: MapVolumeRow[]): MapSummary
 }
 
 export const listLocations = (): LocationOverviewRow[] =>
-  disambiguateLabels(
-    all<LocationOverviewRecord>(
-      `SELECT l.id, n.label AS name, n.route_path, n.short_id
+  all<LocationOverviewRecord>(
+    `SELECT l.id, n.display_label AS name, n.route_path
        FROM locations l
        JOIN entity_nodes n
          ON n.entity_type = 'location'
         AND n.entity_id = l.id
         AND n.has_page = 1
        WHERE l.enabled = 1
-       ORDER BY n.label, l.id`,
-    ).map((row) => ({
-      id: row.id,
-      name: row.name,
-      routePath: row.route_path,
-      shortId: row.short_id,
-    })),
-    "name",
-    (row) => row.shortId,
-  ).map(({ shortId: _shortId, ...row }) => row);
+       ORDER BY n.display_label, l.id`,
+  ).map((row) => ({
+    id: row.id,
+    name: row.name,
+    routePath: row.route_path,
+  }));
 
 export const getLocationPresentation = (slug: string): LocationPresentationRow | undefined => {
   const node = getEntityNodeBySlug("location", slug);
   if (!node || !node.hasPage) return undefined;
   const row = get<LocationPresentationRecord>(
-    `SELECT l.id, n.label AS name, l.map_id, l.allow_fast_travel, n.route_path
+    `SELECT l.id, n.display_label AS name, l.map_id, l.allow_fast_travel, n.route_path
      FROM locations l
      JOIN entity_nodes n
        ON n.entity_type = 'location'

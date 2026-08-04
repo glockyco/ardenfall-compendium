@@ -1,4 +1,3 @@
-import { disambiguateLabels } from "../disambiguate-labels";
 import { all, assetSrc, get } from "../db";
 import { isRichTextDocument, parseGeneratedJson, validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
@@ -9,7 +8,7 @@ interface StatusEffectOverviewRecord {
   name: string | null;
   is_hostile: number;
   route_path: string;
-  short_id: string;
+  display_label: string;
   tooltip_rich_text_json: string | null;
 }
 
@@ -21,6 +20,7 @@ interface StatusEffectPresentationRecord {
   tooltip_rich_text_json: string | null;
   display_icon_hash: string | null;
   route_path: string;
+  display_label: string;
 }
 export interface StatusEffectOverviewRow {
   id: string;
@@ -45,7 +45,7 @@ export interface StatusEffectPresentationRow {
 
 export const listStatusEffects = (): StatusEffectOverviewRow[] => {
   const rows = all<StatusEffectOverviewRecord>(
-    `SELECT o.id, o.name, o.is_hostile, p.tooltip_rich_text_json, n.route_path, n.short_id
+    `SELECT o.id, o.name, o.is_hostile, p.tooltip_rich_text_json, n.route_path, n.display_label
      FROM status_effect_overview_rows o
      LEFT JOIN status_effect_presentation_rows p
        ON p.id = o.id
@@ -69,14 +69,11 @@ export const listStatusEffects = (): StatusEffectOverviewRow[] => {
       name: row.name,
       isHostile: row.is_hostile === 1,
       descriptionSummary: description ? firstSentence(richTextPlainText(description)) : null,
-      displayName: statusEffectName(row.name, description),
+      displayName: row.display_label,
       routePath: row.route_path,
-      shortId: row.short_id,
     };
   });
-  return disambiguateLabels(rows, "displayName", (row) => row.shortId).map(
-    ({ shortId: _shortId, ...row }) => row,
-  );
+  return rows;
 };
 
 export const getStatusEffectPresentation = (
@@ -86,7 +83,7 @@ export const getStatusEffectPresentation = (
   if (!node) return undefined;
   const row = get<StatusEffectPresentationRecord>(
     `SELECT p.id, p.name, p.render_context, p.is_hostile, p.tooltip_rich_text_json,
-            p.display_icon_hash, n.route_path
+            p.display_icon_hash, n.route_path, n.display_label
      FROM status_effect_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'status-effect'
@@ -116,19 +113,12 @@ export const getStatusEffectPresentation = (
     ),
     description,
     descriptionText: description ? richTextPlainText(description) : null,
-    displayName: statusEffectName(row.name, description),
+    displayName: row.display_label,
     isHostile: row.is_hostile === 1,
     displayIconSrc: assetSrc(row.display_icon_hash),
     routePath: row.route_path,
   };
 };
-
-function statusEffectName(name: string | null, description: RichTextDocument | null): string {
-  const normalizedName = name?.trim().toLowerCase();
-  if (name && normalizedName && normalizedName !== "unnamed status effect") return name;
-  const summary = description ? firstSentence(richTextPlainText(description)) : null;
-  return summary ? `Unnamed status effect · ${summary}` : "Unnamed status effect";
-}
 
 function firstSentence(text: string): string | null {
   const sentence = text.match(/^.*?(?:[.!?](?:\s|$)|$)/)?.[0]?.trim() ?? "";

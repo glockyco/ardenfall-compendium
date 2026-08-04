@@ -23,6 +23,7 @@ const seed = () => {
       entity_type TEXT NOT NULL,
       entity_id TEXT NOT NULL,
       label TEXT NOT NULL,
+      display_label TEXT NOT NULL,
       route_path TEXT NOT NULL,
       canonical_slug TEXT NOT NULL,
       short_id TEXT NOT NULL,
@@ -42,12 +43,12 @@ const seed = () => {
       ('character-zed', 'Zed', 'character-presentation-v1', '[{"label":"Iron Sword","routePath":"/items/iron-sword--44444444"},{"label":"Unnamed item","routePath":null}]'),
       ('character-ada', 'Ada', 'character-presentation-v1', '[]'),
       ('character-nameless', NULL, 'character-presentation-v1', '[]');
-    INSERT INTO entity_nodes VALUES
-      ('character', 'character-zed', 'Zed',
+    INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+      ('character', 'character-zed', 'Zed', 'Zed',
        '/characters/zed--11111111', 'zed--11111111', '11111111', 1),
-      ('character', 'character-ada', 'Ada',
+      ('character', 'character-ada', 'Ada', 'Ada',
        '/characters/ada--22222222', 'ada--22222222', '22222222', 1),
-      ('character', 'character-nameless', 'Unnamed character',
+      ('character', 'character-nameless', 'Unnamed character', 'Unnamed character',
        '/characters/unnamed-character--33333333', 'unnamed-character--33333333', '33333333', 1);
     INSERT INTO entity_relationship_sections VALUES
       ('character-ada:found_at', 'character', 'character-ada',

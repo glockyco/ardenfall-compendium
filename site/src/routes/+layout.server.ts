@@ -34,6 +34,8 @@ export interface ReleaseProvenance {
   buildIdentifier: string;
   snapshotId: string;
   shortCommit: string;
+  /** True when the artifact was built from a dirty worktree. */
+  isDirty: boolean;
   /** ISO timestamp for a <time datetime>, null until the manifest carries one. */
   snapshotIso: string | null;
   /** Human date such as "15 May 2026", null until the manifest carries one. */
@@ -67,7 +69,7 @@ interface PublicReleaseManifest {
   artifactKind: string;
   createdAt?: string;
   source: { snapshotId: string; gameVersion: string; buildIdentifier: string };
-  git: { commit: string };
+  git: { commit: string; dirty: boolean };
 }
 
 const releasePath = (): string => join(process.cwd(), "static", "_release.json");
@@ -83,12 +85,13 @@ function isReleaseManifest(value: unknown): value is PublicReleaseManifest {
   if (typeof source !== "object" || source === null) return false;
   if (typeof git !== "object" || git === null) return false;
   const { snapshotId, gameVersion, buildIdentifier } = source as Record<string, unknown>;
-  const { commit } = git as Record<string, unknown>;
+  const { commit, dirty } = git as Record<string, unknown>;
   return (
     isNonEmptyString(snapshotId) &&
     isNonEmptyString(gameVersion) &&
     isNonEmptyString(buildIdentifier) &&
-    isNonEmptyString(commit)
+    isNonEmptyString(commit) &&
+    typeof dirty === "boolean"
   );
 }
 
@@ -148,6 +151,7 @@ function loadRelease(): { release: ReleaseProvenance | null; releaseError: strin
       buildIdentifier: parsed.source.buildIdentifier,
       snapshotId: parsed.source.snapshotId,
       shortCommit: parsed.git.commit.slice(0, 7),
+      isDirty: parsed.git.dirty,
       isFixture: parsed.artifactKind !== "release",
       ...formatSnapshotDate(parsed.createdAt),
     },

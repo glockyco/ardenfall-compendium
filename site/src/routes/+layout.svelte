@@ -80,6 +80,11 @@
             Fixture build. This data is synthetic and does not come from a real game export.
           </p>
         {/if}
+        {#if data.release.isDirty}
+          <p class="text-primary basis-full">
+            Dirty build. The source tree had uncommitted changes.
+          </p>
+        {/if}
       {:else}
         <p class="text-destructive">{data.releaseError}</p>
       {/if}

@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS entity_nodes (
   entity_type TEXT NOT NULL,
   entity_id TEXT NOT NULL,
   label TEXT,
+  display_label TEXT,
   -- A node without its own page has no route. Forcing a value here is what let map
   -- selection URLs masquerade as pages, so the column states absence instead.
   route_path TEXT,

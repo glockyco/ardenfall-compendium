@@ -12,7 +12,7 @@ archived:
 
 Every way a player can obtain an item in Ardenfall, established from the decompiled source and confirmed with live probes against Ardenfall Demo `0.0.10.91`, with a structural check against the non-public playtest build recorded below. This exists because the roadmap was about to model `ItemListAsset` alone and call item provenance solved. Loot tables are one source among nine.
 
-Items are 1,273 of the 1,455 public pages with no inbound edge, and nothing currently points at an item, so this is the audit that decides the next slice.
+The 2026-08-03 release has 2,266 public pages, with 1,379 lacking an inbound edge. Items account for 726 of those unlinked pages, so this audit still decides the next provenance slice.
 
 ## The sources
 

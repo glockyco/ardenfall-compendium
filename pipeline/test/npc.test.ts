@@ -142,9 +142,9 @@ describe("NPC pipeline", () => {
     db.exec(`${ENTITY_GRAPH_DDL}
       CREATE TABLE locations (id TEXT PRIMARY KEY, name TEXT);
       INSERT INTO locations VALUES ('town', 'Town'), ('cave', 'Cave');
-      INSERT INTO entity_nodes VALUES
-        ('location', 'town', 'Town', '/locations/town', 'town', 'town', 1),
-        ('location', 'cave', 'Cave', '/locations/cave', 'cave', 'cave', 1);
+      INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+        ('location', 'town', 'Town', 'Town', '/locations/town', 'town', 'town', 1),
+        ('location', 'cave', 'Cave', 'Cave', '/locations/cave', 'cave', 'cave', 1);
     `);
     const diagnostics = emitNpcReadModels(db);
     expect(diagnostics).toEqual([]);

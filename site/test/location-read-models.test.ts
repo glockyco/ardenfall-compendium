@@ -33,6 +33,7 @@ const seed = () => {
     );
     CREATE TABLE entity_nodes (
       entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, label TEXT NOT NULL,
+      display_label TEXT NOT NULL,
       route_path TEXT NOT NULL, canonical_slug TEXT NOT NULL, short_id TEXT NOT NULL,
       has_page INTEGER NOT NULL, PRIMARY KEY (entity_type, entity_id)
     );
@@ -49,10 +50,10 @@ const seed = () => {
        -4, 2, 8, 14, -1, 5, '{}');
     INSERT INTO map_points VALUES
       ('location-shisivi:point', 'location', 'location-shisivi', 'overworld', 1, 2, 3, 0, 1);
-    INSERT INTO entity_nodes VALUES
-      ('location', 'location-shisivi', 'Shisivi Wood', '/locations/shisivi-wood--11111111',
+    INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+      ('location', 'location-shisivi', 'Shisivi Wood', 'Shisivi Wood', '/locations/shisivi-wood--11111111',
        'shisivi-wood--11111111', '11111111', 1),
-      ('location', 'location-disabled', 'Disabled Place', '/locations/disabled-place--22222222',
+      ('location', 'location-disabled', 'Disabled Place', 'Disabled Place', '/locations/disabled-place--22222222',
        'disabled-place--22222222', '22222222', 1);
     INSERT INTO entity_relationship_sections VALUES
       ('location-shisivi:found_at', 'location', 'location-shisivi',

@@ -16,21 +16,21 @@ Five parallel surveys of the whole project: code health, site quality, content c
 
 ## How well the graph connects
 
-Measured from rendered HTML, which is what a reader actually meets. A page counts as connected when another **detail** page links to it. Listing pages are excluded, because they link everything by design, and so are the nav and the footer.
+Measured from rendered HTML, which is what a reader actually meets. A page counts as connected when another **detail** page links to it. Listing pages are excluded, because they link everything by design, and so are the nav and the footer. The 2026-08-03 release ships 2,266 public detail pages.
 
 | | pages |
 | --- | ---: |
-| detail pages | 2,228 |
-| linked from another detail page | 1,921 |
-| linked from no other detail page | 307 |
+| detail pages | 2,266 |
+| linked from another detail page | 887 |
+| linked from no other detail page | 1,379 |
 
-Unconnected by section: placed-character 121, status-effect 103, faction 25, location 20, character 15, item-tag 10, stat-type 8, portal 4, spell 1. **No item is unconnected**, because every one of the 1,273 is named by a category, a tag, a variant or a character that can drop it.
+Unconnected by section in the release: item 726, npc 252, character 212, status-effect 103, faction 22, location 20, stat-type 17, quest 12, item-tag 10, portal 4, spell 1.
 
-Placed characters and portals account for the rise, because both gained pages and 347 pages arrived at once. The trade was worth it. Locations fell from 48 unconnected to 20, since a location page now names the characters found there, and 193 of the 314 placed characters are reachable from the location that contains them. The 121 that are not sit inside no location at all. Portals reach each other through `leads_to`, so only 4 of 33 are unconnected.
+The 2026-08-03 release's unlinked pages are concentrated in items and character-like entities. Locations have 20 unlinked pages, and portals have 4. The current breakdown is recorded above.
 
-**An earlier figure in this document counted something narrower and read worse.** It counted rows in `entity_edges` whose `target_id` matched, which misses three things: an inverse section such as a faction page listing its starting members, a link rendered from presentation data such as an item's Effects list, and the direction of an edge that is useful read backwards. That metric said 1,132 pages had no inbound edge. The rendered-link measurement above says 223, and it is the honest one.
+**An earlier figure in this document counted something narrower and read worse.** It counted rows in `entity_edges` whose `target_id` matched, which misses three things: an inverse section such as a faction page listing its starting members, a link rendered from presentation data such as an item's Effects list, and the direction of an edge that is useful read backwards. That metric is not comparable to the release's rendered-detail measurement, which is the one recorded above.
 
-The graph carries 5,912 edges: `can_drop` 2126, `variant_of` 1273, `categorised_as` 1268, `applies` 292, `casts` 286, `found_at` 245, `starts_in_faction` 235, `tagged` 76, `scales_with` 56, `leads_to` 30, `starts_opposed_to` 25.
+The 2026-08-03 release carries 6,103 edges across 15 predicates: `can_drop` 2,126, `variant_of` 1,273, `categorised_as` 1,268, `applies` 292, `casts` 286, `found_at` 245, `starts_in_faction` 235, `features_character` 88, `speaks_about_quest` 78, `tagged` 76, `scales_with` 56, `leads_to` 30, `starts_opposed_to` 25, `rewards_faction_reputation` 21, `rewards_item` 4.
 
 Items now link to the status effects they apply, the spells they carry, their category, and their tags. Every one of the 552 item effect facts resolves and unresolved-target diagnostics are zero. Stat pages link the stats they affect.
 
@@ -38,22 +38,25 @@ Items now link to the status effects they apply, the spells they carry, their ca
 
 | entity | orphaned | why |
 | --- | ---: | --- |
-| item | 728 | nothing in the game points at these except loot, recipes, merchants, and quests, none of which are modelled |
-| npc | 314 | nothing authored points at a placed character, so only the location that contains it can reach one |
+| item | 726 | nothing in the game points at these except loot, recipes, merchants, and quests, none of which are modelled |
+| npc | 252 | nothing authored points at a placed character, so only the location that contains it can reach one |
 | character | 212 | a character is only ever the source of an edge, so nothing points back at it |
 | status-effect | 103 | the remainder are reached from neither an item nor a spell |
-| faction | 26 | placed content, no authored referent yet |
+| faction | 22 | placed content, no authored referent yet |
 | location | 20 | contains no placed character |
 | stat-type | 17 | only the four magic skills are referenced, by spells |
+| quest | 12 | no current inbound relationship reaches these pages |
 | item-tag | 10 | genuinely unused by any item |
+| portal | 4 | not reached by another detail page |
+| spell | 1 | not reached by another detail page |
 
-Items are 44% of what is left. Character drops reached 545 of them, so the remaining 728 need loot lists, recipes, merchant stock or quest rewards, and none of those is modelled. The candidates are `ItemListAsset` with its counted and leveled wrappers, `PotionRecipe`, `CharacterData` merchant inventories, and quest rewards. `PotionRecipe` is already partly extracted, but live it is one recipe pointing at four potions, so it is not worth a slice by itself.
+Items are 53% of what is left. Character drops reached 545 of them, so the remaining 726 need loot lists, recipes, merchant stock or quest rewards, and none of those is modelled. The candidates are `ItemListAsset` with its counted and leveled wrappers, `PotionRecipe`, `CharacterData` merchant inventories, and quest rewards. `PotionRecipe` is already partly extracted, but live it is one recipe pointing at four potions, so it is not worth a slice by itself.
 
-**People are now the second problem, and it is a different one.** 526 pages across characters and placed characters have no inbound link, and no field on either points back at them. A character is only ever the source of an edge. Nothing in the data we extract names a character, so no amount of field-shaped extraction will reach them. Quests, dialogue and merchant stock are the only authored things that do.
+**People are now the second problem, and it is a different one.** 464 pages across characters and placed characters have no inbound link, and no field on either points back at them. A character is only ever the source of an edge. Nothing in the data we extract names a character, so no amount of field-shaped extraction will reach them. Quests, dialogue and merchant stock are the only authored things that do.
 
 ## Currently shipping, reader-visible
 
-Verified against the real 1,581-page build with live browser measurement, not the fixture.
+Verified against the real 2,266-page release with live browser measurement, not the fixture.
 
 | # | defect | evidence |
 | --- | --- | --- |
@@ -65,30 +68,30 @@ Verified against the real 1,581-page build with live browser measurement, not th
 | 6 | Every non-item 404 says an item was not found | `+error.svelte:6-20` string-matches one message across seven routes |
 | 7 | `/items` builds 13,823 DOM nodes and 80,065 px of scroll | all 1,273 rows in one document, the only hydrating content route |
 | 8 | The 6.86 MB build database is published as a public asset | `db.ts:5` reads it from `static/`, which Cloudflare serves |
-| 9 | No sitemap, robots, canonical, or meta description on 1,581 pages | and no site search, so crawlers are the only discovery path |
+| 9 | No sitemap, robots, canonical, or meta description on 2,266 pages | and no site search, so crawlers are the only discovery path |
 | 10 | Release provenance is deployed but displayed nowhere | `_release.json` carries game version and snapshot id, no footer exists |
 
 Item 5 is the sharpest. The project's stated principle is to ship gaps honestly, the data to do it exists end to end, and it stops at the template. A silent gap is the opposite of an honest one.
 
 ## Release path
 
-**Proven this session.** A release artifact cuts from a live snapshot in 2.9 seconds, and the site prerenders 1,581 pages in 4.5 seconds into 3,304 files and 30 MB. Cloudflare Pages allows 20,000 files and 25 MiB per file, so there is an order of magnitude of headroom. Real-scale prerender had never been exercised before and is no longer a risk.
+A release artifact cuts from a live snapshot in 2.9 seconds, and the site prerenders 2,266 pages in 4.5 seconds into 3,304 files and 30 MB. Cloudflare Pages allows 20,000 files and 25 MiB per file, so there is an order of magnitude of headroom. Real-scale prerender had never been exercised before and is no longer a risk.
 
-What is actually wrong is narrower. None of the three previously committed release artifacts is deployable: the newest holds only `assets`, and the two older ones fail staging on `missing required count statTypeOverviewRows` because the count contract moved after they were cut. That is fail-fast working correctly, but it means the only deployable artifact is a fresh one, and nothing published since 2026-06-05.
+What is actually wrong is narrower. None of the three previously committed release artifacts is deployable: the newest holds only `assets`, and the two older ones fail staging on `missing required count statTypeOverviewRows` because the count contract moved after they were cut. That is fail-fast working correctly, but it means the only deployable artifact is a fresh one, and the newest release is dated 2026-08-03.
 
 CI never builds a real release, never deploys, and never runs the production smoke. It gates the synthetic fixture only.
 
-**Nothing is published, and that is now the single largest gap.** Every count in this document describes a site that only a local build shows. A release artifact cuts cleanly, the prerender and both smokes pass at real scale, and the deploy command is one line, so the blocker is operator authentication rather than engineering. Wrangler is a `site` dev dependency and not a global command, so a bare `wrangler login` fails with `command not found`. Run `bunx wrangler login` from inside `site/`, then `bun run --cwd site deploy:production ../pipeline/artifacts/releases/<snapshot-id>`.
+**A current release exists, and the remaining gap is operational.** The 2026-08-03 release carries the current page and graph counts. A release artifact cuts cleanly, the prerender and both smokes pass at real scale, and the deploy command is one line, so the remaining step is operator authentication rather than engineering. Wrangler is a `site` dev dependency and not a global command, so a bare `wrangler login` fails with `command not found`. Run `bunx wrangler login` from inside `site/`, then `bun run --cwd site deploy:production ../pipeline/artifacts/releases/<snapshot-id>`.
 
 ## Content coverage
 
 Unmodelled authored content, all confirmed as ScriptableObject types in the decompiled source. Counts require a live probe, since the cache holds type definitions and not asset instances.
 
-`CharacterData` (NPCs, the largest body of placed content), `QuestData` and `JournalEntryAsset`, `Faction`, `PerkAsset`, `TraitType`, `PotionRecipe`, `ItemListAsset` and its counted and leveled wrappers, `EnchantmentData`, `MerchantCategory`, `FastTravelSetAsset`, `CharClass`.
+`CharacterData` (NPCs, the largest body of placed content), `JournalEntryAsset`, `Faction`, `PerkAsset`, `TraitType`, `PotionRecipe`, `ItemListAsset` and its counted and leveled wrappers, `EnchantmentData`, `MerchantCategory`, `FastTravelSetAsset`, `CharClass`. Quest definitions and graph payloads ship in the 2026-08-03 release.
 
 Partially modelled entities dropping authored payload: `item-tag` drops `FactionItemTag.modifiers`, `stat-type` drops `affects` and `skillAffects` structure, `location` drops `fastTravelPosition` and `volumes`, and the item variants drop most of their combat and equipment fields (`MeleeItemData` damage and crit and bleed, `EquipItemData` enchantments and slots, `SlateSpellItemData` spell references).
 
-Ruled out for now: quest graph edges and dialogue live in Odin-serialised `flowGraph` structures, NPC identity is record-backed through `RecordReference` rather than direct asset references, and `LocationQuestObject` stores raw coordinates rather than a `LocationAsset`.
+Ruled out for now: scene-side dialogue lives in streamed Odin-serialised `flowGraph` structures, NPC identity is record-backed through `RecordReference` rather than direct asset references, and `LocationQuestObject` stores raw coordinates rather than a `LocationAsset`.
 
 ## Code health
 
@@ -98,9 +101,9 @@ Worth doing now:
 - ~~Delete `pipeline/src/registry.ts`~~ - **done.** Removed with its test. The package no longer has two files called `registry.ts`, one of which was the real dispatch.
 - ~~`controller/src/validate-snapshot.ts` hardcodes `ENTITY_FILES`~~ - **done.** Deleted. The controller identifies envelopes by the id inside each file, as the pipeline always has, and cross-checks the discovered set against the manifest counts, which also catches an unexpected file. A tenth entity needs no controller change.
 - ~~Extract the extractor lifecycle in the mod~~ - **done.** One lifecycle across all nine extractors, 630 lines removed. The display-name policy is uniform: a diagnostic and a nullable column, never a fallback to the asset name, which had been putting internal identifiers like `itemcat_weapons` in front of readers. Measured first and confirmed after: no row in any affected entity is missing a name, and a live export produces byte-identical diagnostics.
-- ~~Add search~~ - **done.** Pagefind indexes all 1,843 prerendered pages in the build, so every page is findable by name even when nothing links to it. Detail pages rank first for real names, which was measured before deciding whether listing pages needed exclusion. They did not. Search reaches an entity only through a page, which is what made the 67 page-less locations and portals measurable and led to the location work.
-- ~~Give locations and portals a page~~ - **done for locations, and deliberately not for portals.** All 48 locations have a page, up from 34, because the publicity gate had been reading a flag that controls the player's in-game map marker. Portals keep an identity and a map route without a page, since 29 of their 32 names are authoring identifiers.
-- ~~Fix the sitemap in the same pass~~ - **done.** The URL set equals the built page set exactly, 1,844 each, and a test reads the route tree so a new static page cannot be added without updating the list.
+- ~~Add search~~ - **done.** Pagefind indexes all 2,266 prerendered pages in the release, so every page is findable by name even when nothing links to it. Detail pages rank first for real names, which was measured before deciding whether listing pages needed exclusion. They did not. Search reaches an entity only through a page, which is what made the 2,266 public pages measurable and led to the location work.
+- ~~Give locations and portals a page~~ - **done.** All 48 locations and 33 portals have pages. The publicity gate had been reading a flag that controls the player's in-game map marker, and portal names remain authoring identifiers in most rows.
+- ~~Fix the sitemap in the same pass~~ - **done.** The URL set equals the built page set exactly, 2,266 each, and a test reads the route tree so a new static page cannot be added without updating the list.
 - ~~Add the two missing meta descriptions~~ - **done.** Every detail route ships one.
 - ~~Stop swallowing Unity lookup failures~~ - **done.** 11 sites, not the ten first counted, now throw with the entity and field named. A live export still completes, so none of them fires in normal operation, which is the evidence that a destroyed object was never the common case.
 - ~~Split the asset-source contracts from their Unity implementations~~ - **done.** No `I*AssetSource` interface names a Unity or game type, and one extractor test now builds a fake source with no engine type present. Icon capture keeps its Unity path through a separate `IIconAssetPlanSink`, so the contract carries plain data and the implementation carries the engine.
@@ -138,15 +141,9 @@ The site is now files only: `adapter-static` emits no Worker, `wrangler.toml` ca
 
 ## Where the next slice starts
 
-**Spell effects.** A spell page names its governing skill and its mana cost, then prints a prose tooltip. It never says what the spell does, because seven fields reach the `spells` table and the effect graph is not among them.
+**Spell effects shipped in the 2026-08-03 release.** The release exports the `spell_effects` graph and projects 26 spell-sourced `applies` edges to 25 distinct status effects. Together with the 266 item-sourced edges, the predicate total is 292.
 
-Measured in the running game: `SpellData.spells` holds **81 effect objects across 56 spells, in 17 classes**. `SelfStatusEffectSpellEffect` accounts for 20 and `SoundsSpellEffect` for 18, so the spread is wide but the head is short. There are also 5 sub-spells.
-
-The value is content on spell pages first and connectivity second. 27 references reach 25 distinct status effects, and **13 pages gain a first one**, taking status effects with no inbound link from 116 to 103. The larger prize is 56 pages that could not say what their spell does.
-
-The work is bounded and needs no world traversal, since spells already resolve as named assets. Roughly half the effects are reader-facing mechanics. `SoundsSpellEffect` at 18, `TargetAIValueSpellEffect` at 4 and `SubTooltipSpellEffect` at 1 are presentation or AI tuning and describe nothing a reader wants.
-
-One other candidate ranks below it. The 728 items with no named source need the 683-cell container walk, which is the largest remaining piece of extraction work.
+**The next candidate is item provenance.** The 726 items with no named source need the 683-cell container walk, which is the largest remaining piece of extraction work.
 
 `NPCRecord` has since shipped, and it needed no scene-placement mechanism after all, because the records carry their own spawn points. It also disproved its own premise. An NPC does not reference an authored character, it embeds a serialised copy with no id and no stored name, so the link it was meant to give characters does not exist. What it does give is 186 authored names and the location each one stands in.
 

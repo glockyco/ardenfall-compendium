@@ -149,6 +149,11 @@ export async function stageArtifact({
       `release staging requires live-game-export source, got ${manifest.source?.kind}`,
     );
   }
+  if (mode === "release" && manifest.git.dirty) {
+    throw new Error(
+      `cannot stage release artifact: recorded commit ${manifest.git.commit}, but the tree was dirty. Build from a clean tree and stage the new artifact again.`,
+    );
+  }
   if (manifest.diagnostics?.fatal !== 0) {
     throw new Error(`artifact has fatal diagnostics: ${manifest.diagnostics?.fatal}`);
   }

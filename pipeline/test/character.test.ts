@@ -16,8 +16,8 @@ function seedDatabase(): Database {
   db.exec(CHARACTER_DDL);
   db.run(
     `INSERT INTO entity_nodes
-        (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
-       VALUES ('item', ?, 'Iron Sword', '/items/iron-sword--4ed20218', 'iron-sword--4ed20218', '4ed20218', 1)`,
+        (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES ('item', ?, 'Iron Sword', 'Iron Sword', '/items/iron-sword--4ed20218', 'iron-sword--4ed20218', '4ed20218', 1)`,
     [itemId],
   );
   return db;
@@ -167,14 +167,14 @@ describe("character pipeline", () => {
     const db = seedDatabase();
     db.run(
       `INSERT INTO entity_nodes
-         (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
-       VALUES ('faction', ?, 'Black Moth', '/factions/black-moth--a1000001', 'black-moth--a1000001', 'a1000001', 1)`,
+         (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES ('faction', ?, 'Black Moth', 'Black Moth', '/factions/black-moth--a1000001', 'black-moth--a1000001', 'a1000001', 1)`,
       ["a1000001.fixture-black-moth"],
     );
     db.run(
       `INSERT INTO entity_nodes
-         (entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page)
-       VALUES ('faction', ?, 'Mages Guild', '/factions/mages-guild--a1000002', 'mages-guild--a1000002', 'a1000002', 1)`,
+         (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES ('faction', ?, 'Mages Guild', 'Mages Guild', '/factions/mages-guild--a1000002', 'mages-guild--a1000002', 'a1000002', 1)`,
       ["a1000002.fixture-mages-guild"],
     );
     canonicaliseCharacters(db, {

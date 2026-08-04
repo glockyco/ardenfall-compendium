@@ -131,7 +131,7 @@ public sealed class QuestExtractor : WalkerBase<QuestSnapshotRow>
                         Phases: BuildPhases(asset.Phases),
                         Characters: characters,
                         JournalEntries: BuildJournalEntries(asset.JournalEntries),
-                        RewardSets: BuildRewardSets(asset.RewardSets)),
+                        RewardSets: BuildRewardSets(asset.RewardSets, id)),
                 };
             });
     }
@@ -179,21 +179,39 @@ public sealed class QuestExtractor : WalkerBase<QuestSnapshotRow>
         return result;
     }
 
-    private static List<QuestRewardSetSnapshot> BuildRewardSets(IReadOnlyList<QuestRewardSetAsset> sets)
+    private List<QuestRewardSetSnapshot> BuildRewardSets(
+        IReadOnlyList<QuestRewardSetAsset> sets,
+        string questId)
     {
         var result = new List<QuestRewardSetSnapshot>();
         foreach (var set in sets)
         {
             var rewards = new List<QuestRewardSnapshot>();
-            foreach (var reward in set.Rewards)
+            foreach (var (reward, rewardOrdinal) in set.Rewards.Select((value, index) => (value, index)))
             {
+                var items = new List<QuestRewardItemSnapshot>();
+                foreach (var item in reward.Items ?? Array.Empty<QuestRewardItemAsset>())
+                {
+                    if (item.Count is not > 0)
+                    {
+                        Diagnostics.Add(new Diagnostic
+                        {
+                            Severity = "diagnostic",
+                            Code = "questRewardItemCountInvalid",
+                            Field = "rewardSets.rewards.items.count",
+                            Message = $"QuestData '{questId}' reward set {set.SetGameId} reward {rewardOrdinal} has invalid item count {item.Count?.ToString() ?? "missing"}",
+                        });
+                        continue;
+                    }
+                    items.Add(new QuestRewardItemSnapshot(item.Ref, item.Count.Value));
+                }
                 rewards.Add(new QuestRewardSnapshot(
                     reward.Kind,
                     reward.IsPositive,
                     reward.AmountLabel,
                     reward.CustomAmount,
                     reward.FactionRef,
-                    reward.ItemRefs ?? Array.Empty<SnapshotRef>(),
+                    items,
                     reward.ItemListRefs ?? Array.Empty<SnapshotRef>(),
                     reward.TargetObjectGameId));
             }
