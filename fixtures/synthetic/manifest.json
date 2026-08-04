@@ -23,7 +23,7 @@
     "Faction fixture rows for titled and untitled factions and both relationship shapes",
     "NPC fixture rows for one location, two locations, no locations, and no character reference",
     "Quest fixture rows for stable child ordinals, all reward kinds, counted item rewards, character links, and disabled retention",
-    "Potion recipe rows for ordered tag ingredients, drinkable and throwing products, and no ingredients",
+    "Potion recipe rows for ordered tag ingredients, drinkable and throwing products, status effect links, and an unresolved status effect",
     "Enchantment rows for status effect and non-status effect kinds, plus an enchantment with no applicable items"
   ],
   "selection": [
@@ -107,8 +107,8 @@
   "hashes": {
     "snapshot/spells.json": "4008d7c3dd28d2237b1f5de8cf3580152e11b4509bbe87ae56856307ffdc6f6f",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
-    "snapshot/manifest.json": "776dd0a72ef3612f677a0335fc723de47dad22e0e346e84a9fc7aaee73257993",
-    "snapshot/potion-recipes.json": "2be184a9e94cd68def9f81dceb671f61ca61f3b5e436ddc1bc7876325f649cd3",
+    "snapshot/manifest.json": "06438a675485255b50bb3b39940978bbb1949d2fca9a49e704894d4e687df119",
+    "snapshot/potion-recipes.json": "5234ba27367cab6a0edea83bd47ca41eaf181ea70689e1d4416676b3d09cf07f",
     "snapshot/enchantments.json": "ec4d185fc9ce27d58ae6a0018e67cd069ccaf0e8ab03475b5e48f534e2eb8597",
     "snapshot/items.json": "f85e557abf2e9c6a9be4ffdf5062576db83769328d302eac55bc408244719cde",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",

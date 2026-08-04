@@ -6,7 +6,10 @@
       "id": "a5000001.fixture-recipe-mixed",
       "fields": {
         "id": "a5000001.fixture-recipe-mixed",
-        "recipeName": "Mixed Draught",
+        "statusEffectRef": {
+          "kind": "lookupAsset",
+          "guid": "91a00001.fixture-status-effect-bleeding"
+        },
         "lockedByDefault": true,
         "enableSkillRequirement": true,
         "skillRequirement": 4,
@@ -58,7 +61,11 @@
       "id": "a5000002.fixture-recipe-empty",
       "fields": {
         "id": "a5000002.fixture-recipe-empty",
-        "recipeName": "Empty Recipe",
+        "statusEffectRef": {
+          "kind": "missing",
+          "reason": "potionRecipeStatusEffectMissing",
+          "source": "PotionRecipe.product"
+        },
         "lockedByDefault": false,
         "enableSkillRequirement": false,
         "skillRequirement": 0,
@@ -66,7 +73,15 @@
         "successModifier": 0,
         "ingredients": [],
         "producedRefs": []
-      }
+      },
+      "diagnostics": [
+        {
+          "severity": "diagnostic",
+          "code": "potionRecipeStatusEffectMissing",
+          "field": "statusEffectRef",
+          "message": "PotionRecipe 'a5000002.fixture-recipe-empty' has no status effect reference"
+        }
+      ]
     }
   ]
 }

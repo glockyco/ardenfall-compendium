@@ -14,11 +14,11 @@
   "fields": [
     { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
     {
-      "name": "recipeName",
-      "type": "string",
-      "from": "RecipeName",
+      "name": "statusEffectRef",
+      "type": "ref:asset",
+      "from": "drinkablePotions[0].areaOfEffect[0].StatusEffect or throwingPotions[0].areaOfEffect[0].StatusEffect",
       "missingPolicy": "diagnostic",
-      "column": "recipe_name"
+      "column": "status_effect_ref_json"
     },
     {
       "name": "lockedByDefault",

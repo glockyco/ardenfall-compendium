@@ -140,6 +140,13 @@ An earlier probe missed this and called `EditorGetStatement` on both. Topics sil
 
 Confirmed against the live game and unchanged. `Statement.id` is blank on all 1,131 greeting and topic lines, because `TopicFlowNode` assigns it at runtime from the graph name and node id. `topicTag` is blank on all 488 topics. Neither is extracted.
 
-## Recorded, not defects
+### `PotionRecipe.RecipeName` is a product effect, not a recipe identity
+
+`Ardenfall/Item/PotionRecipe.cs:29-39` exposes `RecipeName` as though it names the recipe, but the property returns `drinkablePotions[0].GetEffectName()` and falls back to `throwingPotions[0].GetEffectName()`. `Ardenfall/Item/ThrowingPotionData.cs:51-60` shows what that value means: the first product's status effect name followed by that product's magnitude rendered as a Roman numeral.
+
+The shipped release publishes **48** recipes, and **45** names end in `I`, which reads as a tier the game does not have. The numeral is a magnitude, not a rank. The three exceptions are `Blind XC`, `Restore Mana C` and `Restore Stamina LXX`, representing 90, 100 and 70. The products use a different vocabulary: Lesser, Standard and Greater. `Bleed Resistance I` brews all three, while `Antidote of Poison I` has one product named `Antidote of Poison` with no rank at all.
+
+Stripping the numeral makes **48 of 48** recipe names match a published status effect exactly. The value is therefore the first product's effect label, not the recipe's identity. A computed display property on a game type is written for one call site inside the game. Adopting it as an entity's identity inherits assumptions that were never about identity. Before publishing such output as a name, read what the computed property composes.
+
 
 **`variant_of` is accurate.** `Ardenfall/Item/ItemData.cs:100-109` returns the concrete runtime class, and a variant is this project's own term for exactly that, defined in `schemas/variant.schema.json` and carried through `item_variants`, `variantId` and the `/items/variant` routes. The game class is recorded explicitly as `unityType`, so the provenance is stated rather than implied. 1,273 edges.

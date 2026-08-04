@@ -397,7 +397,7 @@ export interface SpellSnapshotFields {
 
 export interface PotionRecipeSnapshotFields {
   id: string;
-  recipeName: string | null;
+  statusEffectRef: SnapshotRef;
   lockedByDefault: boolean | null;
   enableSkillRequirement: boolean | null;
   skillRequirement: number | null;

@@ -14,7 +14,7 @@ public sealed record PotionRecipeProductSnapshot(
 
 public sealed record PotionRecipeSnapshot(
     [property: JsonProperty("id")] string Id,
-    [property: JsonProperty("recipeName")] string? RecipeName,
+    [property: JsonProperty("statusEffectRef")] SnapshotRef StatusEffectRef,
     [property: JsonProperty("lockedByDefault")] bool LockedByDefault,
     [property: JsonProperty("enableSkillRequirement")] bool EnableSkillRequirement,
     [property: JsonProperty("skillRequirement")] int SkillRequirement,

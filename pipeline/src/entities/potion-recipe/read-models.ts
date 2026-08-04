@@ -27,7 +27,7 @@ CREATE TABLE potion_recipe_presentation_rows (
 
 interface RecipeRow {
   id: string;
-  recipe_name: string | null;
+  status_effect_ref_json: string;
   locked_by_default: number | null;
   enable_skill_requirement: number | null;
   skill_requirement: number | null;
@@ -89,10 +89,10 @@ export function emitPotionRecipeReadModels(
   const writeNode = prepareEntityNodeWriter(db);
   const recipes = db
     .query<RecipeRow, []>(
-      `SELECT id, recipe_name, locked_by_default, enable_skill_requirement,
+      `SELECT id, status_effect_ref_json, locked_by_default, enable_skill_requirement,
             skill_requirement, level_modifier, success_modifier
      FROM potion_recipes
-     ORDER BY COALESCE(NULLIF(TRIM(recipe_name), ''), 'Unnamed potion recipe'), id`,
+     ORDER BY id`,
     )
     .all();
   const ingredientsByRecipe = new Map<string, IngredientRow[]>();
@@ -124,10 +124,45 @@ export function emitPotionRecipeReadModels(
     )
     .all())
     nodes.set(`${node.entity_type}:${node.entity_id}`, node);
+  const statusEffectTarget = (row: RecipeRow): { id: string; node: NodeRow } | null => {
+    const ref = parseRef(row.status_effect_ref_json);
+    const id = resolveRef(ref, "status-effect");
+    const node = id === null ? undefined : nodes.get(`status-effect:${id}`);
+    return id === null || !node ? null : { id, node };
+  };
+  recipes.sort((left, right) => {
+    const leftName = statusEffectTarget(left)?.node.label?.trim() || "Unnamed potion recipe";
+    const rightName = statusEffectTarget(right)?.node.label?.trim() || "Unnamed potion recipe";
+    return leftName.localeCompare(rightName) || left.id.localeCompare(right.id);
+  });
   const diagnostics: PipelineDiagnostic[] = [];
   const tx = db.transaction(() => {
     for (const row of recipes) {
-      const name = row.recipe_name?.trim() || "Unnamed potion recipe";
+      const statusEffectTargetNode = statusEffectTarget(row);
+      const name = statusEffectTargetNode?.node.label?.trim() || "Unnamed potion recipe";
+      if (statusEffectTargetNode === null) {
+        diagnostics.push(
+          unresolvedDiagnostic(
+            row.id,
+            "status-effect",
+            row.status_effect_ref_json,
+            "potion_recipes.status_effect_ref_json",
+          ),
+        );
+      } else {
+        edgeInsert.run(
+          `${row.id}:grants_effect:status-effect:${statusEffectTargetNode.id}`,
+          "potion-recipe",
+          row.id,
+          "status-effect",
+          statusEffectTargetNode.id,
+          "grants_effect",
+          "Effect",
+          1,
+          JSON.stringify({ source: "potion_recipes.status_effect_ref_json" }),
+          null,
+        );
+      }
       overviewInsert.run(
         row.id,
         name,

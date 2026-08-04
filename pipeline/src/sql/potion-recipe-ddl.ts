@@ -1,7 +1,7 @@
 export const POTION_RECIPE_DDL = `
 CREATE TABLE potion_recipes (
   id                       TEXT PRIMARY KEY NOT NULL,
-  recipe_name              TEXT,
+  status_effect_ref_json    TEXT,
   locked_by_default        INTEGER,
   enable_skill_requirement INTEGER,
   skill_requirement        INTEGER,

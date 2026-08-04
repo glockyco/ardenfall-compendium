@@ -9,7 +9,7 @@ function refJson(ref: SnapshotRef): string {
 export function canonicalisePotionRecipes(db: Database, envelope: SnapshotEnvelope): void {
   const insert = db.prepare(
     `INSERT INTO potion_recipes (
-       id, recipe_name, locked_by_default, enable_skill_requirement,
+       id, status_effect_ref_json, locked_by_default, enable_skill_requirement,
        skill_requirement, level_modifier, success_modifier
      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
@@ -28,7 +28,7 @@ export function canonicalisePotionRecipes(db: Database, envelope: SnapshotEnvelo
       const fields = row.fields;
       insert.run(
         row.id,
-        fields.recipeName ?? null,
+        refJson(fields.statusEffectRef),
         fields.lockedByDefault === undefined || fields.lockedByDefault === null
           ? null
           : fields.lockedByDefault

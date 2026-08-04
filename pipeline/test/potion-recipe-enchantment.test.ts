@@ -18,6 +18,13 @@ describe("potion recipes and enchantments", () => {
     seedNode(db, "item-tag", "0718293a4b5c6d7e8f90a1b2c3d4e5f6.11400000", "Tag B", "/tags/tag-b");
     seedNode(db, "item", "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000", "Drink", "/items/item-a");
     seedNode(db, "item", "d4e5f60718293a4b5c6d7e8f90a1b2c3.11400000", "Throw", "/items/item-b");
+    seedNode(
+      db,
+      "status-effect",
+      "e5f60718293a4b5c6d7e8f90a1b2c3d4.11400000",
+      "Burning",
+      "/status-effects/burning",
+    );
     canonicalisePotionRecipes(db, {
       entityId: "potion-recipe",
       schemaVersion: 1,
@@ -26,7 +33,10 @@ describe("potion recipes and enchantments", () => {
           id: "638932f242126f24a801724271ae6714.11400000",
           fields: {
             id: "638932f242126f24a801724271ae6714.11400000",
-            recipeName: "Recipe A",
+            statusEffectRef: {
+              kind: "lookupAsset",
+              guid: "e5f60718293a4b5c6d7e8f90a1b2c3d4.11400000",
+            },
             lockedByDefault: false,
             enableSkillRequirement: false,
             skillRequirement: 0,
@@ -85,8 +95,12 @@ describe("potion recipes and enchantments", () => {
       .query("SELECT target_type, predicate FROM entity_edges ORDER BY target_type, predicate")
       .all();
     expect(edges).toContainEqual({ target_type: "item", predicate: "brews_into" });
+    expect(edges).toContainEqual({ target_type: "status-effect", predicate: "grants_effect" });
     expect(edges).toContainEqual({ target_type: "item-tag", predicate: "requires_tag" });
     expect(edges).not.toContainEqual({ target_type: "item", predicate: "requires_tag" });
+    expect(db.query("SELECT name FROM potion_recipe_overview_rows").get()).toEqual({
+      name: "Burning",
+    });
     const presentation = db
       .query<{ products_json: string; skill_requirement: number | null }, []>(
         "SELECT products_json, skill_requirement FROM potion_recipe_presentation_rows",
@@ -173,11 +187,10 @@ describe("potion recipes and enchantments", () => {
     });
   });
 
-  it("omits a product it cannot resolve rather than publishing an empty slot", () => {
+  it("uses a recipe placeholder and diagnostic when its status effect cannot resolve", () => {
     const db = new Database(":memory:");
     db.exec(POTION_RECIPE_DDL);
     db.exec(ENTITY_GRAPH_DDL);
-    seedNode(db, "item", "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000", "Drink", "/items/item-a");
     canonicalisePotionRecipes(db, {
       entityId: "potion-recipe",
       schemaVersion: 1,
@@ -186,7 +199,66 @@ describe("potion recipes and enchantments", () => {
           id: "638932f242126f24a801724271ae6714.11400000",
           fields: {
             id: "638932f242126f24a801724271ae6714.11400000",
-            recipeName: "Recipe A",
+            statusEffectRef: {
+              kind: "lookupAsset",
+              guid: "missing-status-effect",
+            },
+            lockedByDefault: false,
+            enableSkillRequirement: false,
+            skillRequirement: 0,
+            levelModifier: 0,
+            successModifier: 0,
+            ingredients: [],
+            producedRefs: [],
+          },
+        },
+      ],
+    });
+
+    const diagnostics = emitPotionRecipeReadModels(db, "/potion-recipes");
+
+    expect(db.query("SELECT name FROM potion_recipe_overview_rows").get()).toEqual({
+      name: "Unnamed potion recipe",
+    });
+    expect(
+      db.query("SELECT label FROM entity_nodes WHERE entity_type = 'potion-recipe'").get(),
+    ).toEqual({ label: "Unnamed potion recipe" });
+    expect(
+      db.query("SELECT predicate FROM entity_edges WHERE predicate = 'grants_effect'").all(),
+    ).toEqual([]);
+    expect(diagnostics).toEqual([
+      expect.objectContaining({
+        code: "potionRecipeReferenceUnresolved",
+        field: "potion_recipes.status_effect_ref_json",
+      }),
+    ]);
+    db.close();
+  });
+
+  it("omits a product it cannot resolve rather than publishing an empty slot", () => {
+    const db = new Database(":memory:");
+    db.exec(POTION_RECIPE_DDL);
+    db.exec(ENTITY_GRAPH_DDL);
+    seedNode(db, "item", "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000", "Drink", "/items/item-a");
+    seedNode(
+      db,
+      "status-effect",
+      "e5f60718293a4b5c6d7e8f90a1b2c3d4.11400000",
+      "Burning",
+      "/status-effects/burning",
+    );
+    canonicalisePotionRecipes(db, {
+      entityId: "potion-recipe",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "638932f242126f24a801724271ae6714.11400000",
+          fields: {
+            id: "638932f242126f24a801724271ae6714.11400000",
+            statusEffectRef: {
+              kind: "lookupAsset",
+              guid: "e5f60718293a4b5c6d7e8f90a1b2c3d4.11400000",
+            },
             lockedByDefault: false,
             enableSkillRequirement: false,
             skillRequirement: 0,

@@ -14,7 +14,7 @@ public sealed record PotionRecipeProductAsset(
 public sealed record PotionRecipeAsset(
     string? Guid,
     string AssetName,
-    string? RecipeName,
+    SnapshotRef StatusEffectRef,
     bool LockedByDefault,
     bool EnableSkillRequirement,
     int SkillRequirement,

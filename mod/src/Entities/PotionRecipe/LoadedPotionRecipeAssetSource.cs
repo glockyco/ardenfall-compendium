@@ -68,16 +68,15 @@ public sealed class LoadedPotionRecipeAssetSource : IPotionRecipeAssetSource
                     "throwing"));
             }
 
-            string? recipeName = null;
-            if ((asset.drinkablePotions?.Count ?? 0) > 0 || (asset.throwingPotions?.Count ?? 0) > 0)
-            {
-                recipeName = asset.RecipeName;
-            }
+            var statusEffectRef = ResolveRecipeStatusEffect(
+                asset,
+                _lookupGuid,
+                _assetName);
 
             yield return new PotionRecipeAsset(
                 Guid: _lookupGuid(asset),
                 AssetName: _assetName(asset),
-                RecipeName: recipeName,
+                StatusEffectRef: statusEffectRef,
                 LockedByDefault: asset.lockedByDefault,
                 EnableSkillRequirement: asset.enableSkillRequirement,
                 SkillRequirement: asset.skillRequirement,
@@ -86,6 +85,41 @@ public sealed class LoadedPotionRecipeAssetSource : IPotionRecipeAssetSource
                 Ingredients: ingredients,
                 ProducedRefs: producedRefs);
         }
+    }
+
+    private static SnapshotRef ResolveRecipeStatusEffect(
+        ArdenfallPotionRecipe recipe,
+        Func<UnityObject, string?> lookupGuid,
+        Func<UnityObject, string> assetName)
+    {
+        var firstPotion = recipe.drinkablePotions != null && recipe.drinkablePotions.Count > 0
+            ? recipe.drinkablePotions[0]
+            : recipe.throwingPotions != null && recipe.throwingPotions.Count > 0
+                ? recipe.throwingPotions[0]
+                : null;
+        if (firstPotion == null)
+        {
+            return SnapshotRef.Missing(
+                "potionRecipeStatusEffectMissing",
+                "PotionRecipe.product");
+        }
+
+        var areaOfEffect = firstPotion.areaOfEffect?.Get();
+        if (areaOfEffect == null || areaOfEffect.Length == 0 || areaOfEffect[0] == null)
+        {
+            return SnapshotRef.Missing(
+                "potionRecipeStatusEffectMissing",
+                "PotionRecipe.product.areaOfEffect[0]");
+        }
+
+        return ResolveAsset(
+            areaOfEffect[0].StatusEffect,
+            lookupGuid,
+            assetName,
+            "PotionRecipe.product.areaOfEffect[0].StatusEffect")
+            ?? SnapshotRef.Missing(
+                "potionRecipeStatusEffectMissing",
+                "PotionRecipe.product.areaOfEffect[0].StatusEffect");
     }
 
     private static SnapshotRef? ResolveAsset(

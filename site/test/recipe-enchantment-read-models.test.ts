@@ -11,14 +11,12 @@ const seed = () => {
   db.exec(`
     CREATE TABLE potion_recipe_overview_rows (
       id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
       locked_by_default INTEGER NOT NULL,
       enable_skill_requirement INTEGER NOT NULL,
       skill_requirement INTEGER NOT NULL
     );
     CREATE TABLE potion_recipe_presentation_rows (
       id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
       render_context TEXT NOT NULL,
       locked_by_default INTEGER NOT NULL,
       skill_requirement INTEGER,
@@ -53,15 +51,24 @@ const seed = () => {
       has_page INTEGER NOT NULL,
       PRIMARY KEY (entity_type, entity_id)
     );
+    CREATE TABLE entity_relationship_sections (
+      section_id TEXT NOT NULL,
+      source_type TEXT NOT NULL,
+      source_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      predicate TEXT NOT NULL,
+      sort_order INTEGER NOT NULL,
+      edges_json TEXT NOT NULL
+    );
     INSERT INTO potion_recipe_overview_rows VALUES
-      ('recipe-both', 'Raw recipe label', 1, 1, 5),
-      ('recipe-empty', 'Another raw label', 0, 0, 0);
+      ('recipe-both', 1, 1, 5),
+      ('recipe-empty', 0, 0, 0);
     INSERT INTO potion_recipe_presentation_rows VALUES
-      ('recipe-both', 'Raw recipe label', 'potion-recipe-presentation-v1', 1, 5, 1.1, 0.25,
+      ('recipe-both', 'potion-recipe-presentation-v1', 1, 5, 1.1, 0.25,
        '[{"tagId":"tag-poison","tagLabel":"Poisonous","tagRoutePath":"/tags/poisonous--tag00001","count":2}]',
        '[{"itemId":"item-drink","itemLabel":"Levitation I","itemRoutePath":"/items/levitation-i--item0001","form":"drinkable"},{"itemId":"item-throw","itemLabel":"Levitation Flask","itemRoutePath":null,"form":"throwing"}]');
     INSERT INTO potion_recipe_presentation_rows VALUES
-      ('recipe-empty', 'Another raw label', 'potion-recipe-presentation-v1', 0, NULL, 0, 0, '[]', '[]');
+      ('recipe-empty', 'potion-recipe-presentation-v1', 0, NULL, 0, 0, '[]', '[]');
     INSERT INTO enchantment_overview_rows VALUES
       ('enchant-status', 'Raw enchantment label', 20, 0),
       ('enchant-any', 'Any item raw label', 0, 0);
@@ -72,10 +79,13 @@ const seed = () => {
     INSERT INTO enchantment_presentation_rows VALUES
       ('enchant-any', 'Any item raw label', 'enchantment-presentation-v1', 0, 0, '[]', '[]');
     INSERT INTO entity_nodes VALUES
-      ('potion-recipe','recipe-both','Raw recipe label','Recipe with products','/potion-recipes/recipe-with-products--rec00001','recipe-with-products--rec00001','rec00001',1),
-      ('potion-recipe','recipe-empty','Another raw label','Recipe without ingredients','/potion-recipes/recipe-without-ingredients--rec00002','recipe-without-ingredients--rec00002','rec00002',1),
+      ('potion-recipe','recipe-both','Levitation','Levitation','/potion-recipes/levitation--rec00001','levitation--rec00001','rec00001',1),
+      ('potion-recipe','recipe-empty','Unnamed potion recipe','Unnamed potion recipe','/potion-recipes/unnamed-potion-recipe--rec00002','unnamed-potion-recipe--rec00002','rec00002',1),
       ('enchantment','enchant-status','Raw enchantment label','Status enchantment','/enchantments/status-enchantment--enc00001','status-enchantment--enc00001','enc00001',1),
       ('enchantment','enchant-any','Any item raw label','Unrestricted enchantment','/enchantments/unrestricted-enchantment--enc00002','unrestricted-enchantment--enc00002','enc00002',1);
+    INSERT INTO entity_relationship_sections VALUES
+      ('recipe-both:grants_effect', 'potion-recipe', 'recipe-both', 'Effect', 'grants_effect', 0,
+       '[{"targetType":"status-effect","targetId":"status-levitation","targetLabel":"Levitation","targetRoutePath":"/status-effects/levitation--effect00001","predicate":"grants_effect","label":"Effect","weight":1,"anchor":null}]');
   `);
   db.close();
   return root;
@@ -88,32 +98,50 @@ describe("recipe and enchantment read-model accessors", () => {
     try {
       process.chdir(root);
       const readModels = await import("../src/lib/server/read-models");
-      expect(readModels.listPotionRecipes()[0]?.name).toBe("Recipe with products");
-      expect(
-        readModels.getPotionRecipePresentation("recipe-with-products--rec00001"),
-      ).toMatchObject({
-        name: "Recipe with products",
+      expect(readModels.listPotionRecipes()[0]?.name).toBe("Levitation");
+      expect(readModels.getPotionRecipePresentation("levitation--rec00001")).toMatchObject({
+        name: "Levitation",
         skillRequirement: 5,
         producedRefs: [
           { itemId: "item-drink", form: "drinkable" },
           { itemId: "item-throw", form: "throwing" },
         ],
       });
+      expect(readModels.listRelationshipSections("potion-recipe", "recipe-both")).toEqual([
+        {
+          id: "recipe-both:grants_effect",
+          title: "Effect",
+          predicate: "grants_effect",
+          edges: [
+            {
+              targetType: "status-effect",
+              targetId: "status-levitation",
+              targetLabel: "Levitation",
+              targetRoutePath: "/status-effects/levitation--effect00001",
+              predicate: "grants_effect",
+              label: "Effect",
+              weight: 1,
+              anchor: null,
+            },
+          ],
+        },
+      ]);
     } finally {
       process.chdir(originalCwd);
       rmSync(root, { recursive: true, force: true });
     }
   });
 
-  it("states when a recipe has no ingredients and omits its disabled requirement", async () => {
+  it("renders an unresolved recipe with its placeholder name and no ingredients", async () => {
     const originalCwd = process.cwd();
     const root = seed();
     try {
       process.chdir(root);
       const readModels = await import("../src/lib/server/read-models");
       expect(
-        readModels.getPotionRecipePresentation("recipe-without-ingredients--rec00002"),
+        readModels.getPotionRecipePresentation("unnamed-potion-recipe--rec00002"),
       ).toMatchObject({
+        name: "Unnamed potion recipe",
         ingredients: [],
         skillRequirement: null,
       });

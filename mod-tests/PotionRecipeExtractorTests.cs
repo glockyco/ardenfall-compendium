@@ -16,7 +16,7 @@ public sealed class PotionRecipeExtractorTests
             new PotionRecipeAsset(
                 Guid: "recipe-guid",
                 AssetName: "recipe",
-                RecipeName: "Levitation I",
+                StatusEffectRef: SnapshotRef.LookupAsset("status-effect-guid"),
                 LockedByDefault: true,
                 EnableSkillRequirement: true,
                 SkillRequirement: 4,
@@ -33,7 +33,7 @@ public sealed class PotionRecipeExtractorTests
         var row = Assert.Single(new PotionRecipeExtractor(source).Walk());
 
         Assert.Equal("recipe-guid", row.Id);
-        Assert.Equal("Levitation I", row.Fields.RecipeName);
+        Assert.Equal("status-effect-guid", row.Fields.StatusEffectRef.Guid);
         Assert.Equal(2, row.Fields.ProducedRefs.Count);
         Assert.Equal("drinkable", row.Fields.ProducedRefs[0].Form);
         Assert.Equal("throwing", row.Fields.ProducedRefs[1].Form);
@@ -50,27 +50,26 @@ public sealed class PotionRecipeExtractorTests
         Assert.Empty(row.Fields.Ingredients);
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData(" \t")]
-    public void BlankRecipeNameProducesDiagnostic(string recipeName)
+    [Fact]
+    public void MissingStatusEffectReferenceProducesDiagnostic()
     {
-        var extractor = new PotionRecipeExtractor(new FakeSource(new[] { Build(recipeName: recipeName) }));
+        var extractor = new PotionRecipeExtractor(new FakeSource(new[] { Build(statusEffectRef: SnapshotRef.Missing("potionRecipeStatusEffectMissing", "PotionRecipe.product")) }));
 
         var row = Assert.Single(extractor.Walk());
 
-        Assert.Null(row.Fields.RecipeName);
+        Assert.Equal("missing", row.Fields.StatusEffectRef.Kind);
         var diagnostic = Assert.Single(extractor.Diagnostics);
-        Assert.Equal("potionRecipeNameMissing", diagnostic.Code);
-        Assert.Equal("recipeName", diagnostic.Field);
+        Assert.Equal("potionRecipeStatusEffectMissing", diagnostic.Code);
+        Assert.Equal("statusEffectRef", diagnostic.Field);
+        Assert.Contains("recipe-guid", diagnostic.Message);
     }
 
     private static PotionRecipeAsset Build(
-        string recipeName = "Recipe",
+        SnapshotRef? statusEffectRef = null,
         IReadOnlyList<PotionRecipeIngredientAsset>? ingredients = null) => new(
         Guid: "recipe-guid",
         AssetName: "recipe",
-        RecipeName: recipeName,
+        StatusEffectRef: statusEffectRef ?? SnapshotRef.LookupAsset("status-effect-guid"),
         LockedByDefault: false,
         EnableSkillRequirement: false,
         SkillRequirement: 0,

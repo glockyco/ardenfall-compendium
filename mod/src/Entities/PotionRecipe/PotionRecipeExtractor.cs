@@ -49,15 +49,14 @@ public sealed class PotionRecipeExtractor : WalkerBase<PotionRecipeSnapshotRow>
             },
             (asset, id) =>
             {
-                var recipeName = NullIfEmpty(asset.RecipeName);
-                if (recipeName == null)
+                if (asset.StatusEffectRef == null || asset.StatusEffectRef.Kind == "missing")
                 {
                     Diagnostics.Add(new Diagnostic
                     {
                         Severity = "diagnostic",
-                        Code = "potionRecipeNameMissing",
-                        Field = "recipeName",
-                        Message = $"PotionRecipe '{id}' has empty or whitespace RecipeName",
+                        Code = "potionRecipeStatusEffectMissing",
+                        Field = "statusEffectRef",
+                        Message = $"PotionRecipe '{id}' has no status effect reference",
                     });
                 }
 
@@ -78,7 +77,7 @@ public sealed class PotionRecipeExtractor : WalkerBase<PotionRecipeSnapshotRow>
                     Id = id,
                     Fields = new PotionRecipeSnapshot(
                         Id: id,
-                        RecipeName: recipeName,
+                        StatusEffectRef: asset.StatusEffectRef,
                         LockedByDefault: asset.LockedByDefault,
                         EnableSkillRequirement: asset.EnableSkillRequirement,
                         SkillRequirement: asset.SkillRequirement,
@@ -89,7 +88,4 @@ public sealed class PotionRecipeExtractor : WalkerBase<PotionRecipeSnapshotRow>
                 };
             });
     }
-
-    private static string? NullIfEmpty(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? null : value;
 }
