@@ -65,6 +65,16 @@ public static class ExtractItem
         fields["cannotBeOwned"] = cannotBeOwnedResolved;
         provenance["cannotBeOwned"] = ProvenanceCapture.ForParameter<bool>("cannotBeOwned.Get()", cannotBeOwnedIsSet, inherited: !cannotBeOwnedIsSet);
 
+        fields["parentRef"] = asset.parent == null
+            ? SnapshotRef.Missing("noParent", "ParameterizedObject.parent")
+            : refs.ResolveAsset(
+                asset.parent,
+                "parentRef",
+                id,
+                MissingPolicy.Diagnostic,
+                source: "ParameterizedObject.parent",
+                diagnosticCode: "itemParentRefMissing");
+
         var quickslotIconResolved = asset.quickslotIcon.Get();
         fields["quickslotIconRef"] = quickslotIconResolved == null
             ? null

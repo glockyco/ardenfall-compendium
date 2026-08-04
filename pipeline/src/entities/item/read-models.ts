@@ -47,7 +47,8 @@ CREATE TABLE item_presentation_rows (
   state_facts_json            TEXT NOT NULL,
   value                       INTEGER,
   weight                      REAL,
-  diagnostics_json            TEXT NOT NULL
+  diagnostics_json           TEXT NOT NULL,
+  name_is_placeholder        INTEGER NOT NULL
 );
 CREATE TABLE item_overview_filters (
   filter_id     TEXT NOT NULL PRIMARY KEY,
@@ -67,20 +68,40 @@ CREATE TABLE item_overview_categories (
 export function resolveItemDisplayLabel(
   itemName: string | null | undefined,
   presentationName: string | null,
-): { label: string; missing: boolean } {
-  const value = itemName ?? presentationName;
-  const label = value?.trim() ? value : "Unnamed item";
-  return { label, missing: !value?.trim() };
+  variantLabel: string,
+): { label: string; isPlaceholder: boolean } {
+  const value = (presentationName ?? itemName)?.trim() ?? "";
+  const isPlaceholder = isPlaceholderItemName(value);
+  return {
+    label: isPlaceholder ? `Unnamed item — ${variantLabel}` : value,
+    isPlaceholder,
+  };
+}
+
+export function isPlaceholderItemName(value: string | null | undefined): boolean {
+  const trimmed = value?.trim() ?? "";
+  return (
+    trimmed.length === 0 || /^(?:base|placeholder)/i.test(trimmed) || /\{[^{}]+\}/.test(trimmed)
+  );
 }
 
 export interface EntityNodeInput {
   entityType: string;
   entityId: string;
   label: string | null;
-  routePath: string;
+  routePath: string | null;
   canonicalSlug?: string;
   shortId?: string;
   hasPage?: boolean;
+}
+
+interface ItemMetadata {
+  variantId: string;
+  variantLabel: string;
+  label: string;
+  isPlaceholder: boolean;
+  hasPage: boolean;
+  parentRefJson: string | null;
 }
 
 export type EntityNodeWriter = (node: EntityNodeInput) => void;
@@ -129,6 +150,56 @@ export function emitItemReadModels(
       "emitItemReadModels: entity descriptor 'item' at entities/item/entity.json is missing site.route",
     );
   }
+  if (!itemEnvelope) {
+    throw new Error("emitItemReadModels: missing item envelope for item presentation rows");
+  }
+  const itemById = new Map(
+    (
+      db
+        .query(
+          'SELECT id, name, variant, "categoryRef" AS category_ref, parent_ref_json FROM items',
+        )
+        .all() as {
+        id: string;
+        name: string | null;
+        variant: string | null;
+        category_ref: string | null;
+        parent_ref_json: string | null;
+      }[]
+    ).map((row) => [row.id, row] as const),
+  );
+  const itemMetadata = new Map<string, ItemMetadata>();
+  for (const snapshotRow of itemEnvelope.rows) {
+    const item = itemById.get(snapshotRow.id);
+    const variantId = item?.variant ?? snapshotRow.variant;
+    if (!variantId) throw new Error(`Item '${snapshotRow.id}' is missing a variant`);
+    const variant = desc.variants.item?.find((candidate) => candidate.variantId === variantId);
+    const variantLabel = variant?.label ?? titleCase(variantId);
+    const presentationName = snapshotRow.presentation?.displayName ?? null;
+    const displayLabel = resolveItemDisplayLabel(item?.name, presentationName, variantLabel);
+    itemMetadata.set(snapshotRow.id, {
+      variantId,
+      variantLabel,
+      label: displayLabel.label,
+      isPlaceholder: displayLabel.isPlaceholder,
+      hasPage: !displayLabel.isPlaceholder,
+      parentRefJson: item?.parent_ref_json ?? null,
+    });
+  }
+  const prototypeDiagnostics: Parameters<typeof insertPipelineDiagnostics>[1] = [];
+  for (const [itemId, metadata] of itemMetadata) {
+    if (!metadata.isPlaceholder) continue;
+    prototypeDiagnostics.push({
+      severity: "diagnostic",
+      source: "item-presentation-read-model",
+      code: "itemNamePlaceholder",
+      message: `Item '${itemId}' has a prototype name and no public page: '${metadata.label}'.`,
+      entityType: "item",
+      entityId: itemId,
+      field: "presentation.displayName",
+      evidence: { label: metadata.label, variant: metadata.variantId },
+    });
+  }
   const colorByItem = new Map(
     itemIconMetadata
       .filter((entry) => entry.entityId === "item")
@@ -155,10 +226,13 @@ export function emitItemReadModels(
     variant: string | null;
     display_icon_hash: string | null;
   }[];
-  for (const row of overviewSource) {
+  const publishedOverviewSource = overviewSource.filter(
+    (row) => itemMetadata.get(row.id)?.hasPage === true,
+  );
+  for (const row of publishedOverviewSource) {
     overviewInsert.run(
       row.id,
-      row.name,
+      itemMetadata.get(row.id)?.label ?? row.name,
       row.weight,
       row.value,
       row.variant,
@@ -167,7 +241,7 @@ export function emitItemReadModels(
     );
   }
   const categories = new Map<string, { label: string; count: number }>();
-  for (const row of overviewSource) {
+  for (const row of publishedOverviewSource) {
     if (!row.variant) continue;
     const current = categories.get(row.variant) ?? {
       label: titleCase(row.variant),
@@ -191,9 +265,6 @@ export function emitItemReadModels(
     });
   filterInsert.run("variant", "Variant", "multi-select", JSON.stringify(categoryOptions));
 
-  if (!itemEnvelope) {
-    throw new Error("emitItemReadModels: missing item envelope for item presentation rows");
-  }
   const displayIconByItem = new Map<string, string | null>();
   for (const row of db
     .query(
@@ -202,16 +273,6 @@ export function emitItemReadModels(
     .all() as { entity_row_id: string; asset_hash: string }[]) {
     displayIconByItem.set(row.entity_row_id, row.asset_hash);
   }
-  const itemById = new Map(
-    (
-      db.query('SELECT id, name, variant, "categoryRef" AS category_ref FROM items').all() as {
-        id: string;
-        name: string | null;
-        variant: string | null;
-        category_ref: string | null;
-      }[]
-    ).map((row) => [row.id, row] as const),
-  );
   const pageCategoryIds = new Set(
     db
       .query<{ id: string }, []>("SELECT id FROM item_categories")
@@ -262,8 +323,8 @@ export function emitItemReadModels(
       id, name, variant, item_type, render_context, display_icon_hash, display_icon_color,
       description_source, description_rich_text_json, effects_source, effects_source_rich_text_json,
       effect_facts_json, stat_rows_json, requirements_json, durability_json, state_facts_json,
-      value, weight, diagnostics_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      value, weight, diagnostics_json, name_is_placeholder
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const writeNode = prepareEntityNodeWriter(db);
   const aliasInsert = db.prepare(
@@ -278,6 +339,7 @@ export function emitItemReadModels(
     categoryRef: string | null | undefined,
     tagIds: string[],
   ) => {
+    if (itemMetadata.get(itemId)?.isPlaceholder) return;
     for (const tagId of tagIds) {
       if (!pageTagIds.has(tagId)) {
         richTextDiagnostics.push({
@@ -336,6 +398,9 @@ export function emitItemReadModels(
   const tx = db.transaction(() => {
     for (const snapshotRow of itemEnvelope.rows) {
       const item = itemById.get(snapshotRow.id);
+      const metadata = itemMetadata.get(snapshotRow.id);
+      if (!metadata) throw new Error(`Item '${snapshotRow.id}' has no resolved metadata`);
+      const sourceHasPage = metadata.hasPage;
       emitTaxonomyEdges(snapshotRow.id, item?.category_ref, tagsByItem.get(snapshotRow.id) ?? []);
       const presentation = snapshotRow.presentation;
       if (!presentation) continue;
@@ -373,23 +438,13 @@ export function emitItemReadModels(
           targetHasPage: true,
         }),
       });
-      const displayLabel = resolveItemDisplayLabel(item?.name, presentation.displayName);
+      const displayLabel = resolveItemDisplayLabel(
+        item?.name,
+        presentation.displayName,
+        metadata.variantLabel,
+      );
       const itemLabel = displayLabel.label;
-      if (displayLabel.missing) {
-        richTextDiagnostics.push({
-          severity: "diagnostic",
-          source: "item-presentation-read-model",
-          code: "itemNameMissing",
-          message: `Item '${snapshotRow.id}' has no display name.`,
-          entityType: "item",
-          entityId: snapshotRow.id,
-          field: "presentation.displayName",
-        });
-      }
-      const variantId = item?.variant ?? snapshotRow.variant;
-      if (variantId === undefined) {
-        throw new Error(`Item '${snapshotRow.id}' is missing a variant`);
-      }
+      const variantId = metadata.variantId;
       const rawEffectFacts = presentation.effects.map((effect) => {
         if (effect.targetType === "status-effect") {
           const targetId = resolveStatusEffectId(effect.targetRef, statusEffectIds);
@@ -406,18 +461,20 @@ export function emitItemReadModels(
             });
             return { ...effect, targetId: null };
           }
-          edgeInsert.run(
-            `${snapshotRow.id}:applies:status-effect:${targetId}`,
-            "item",
-            snapshotRow.id,
-            "status-effect",
-            targetId,
-            "applies",
-            "Applies",
-            1,
-            JSON.stringify({ source: `items.${effect.source}`, level: effect.level ?? null }),
-            null,
-          );
+          if (sourceHasPage) {
+            edgeInsert.run(
+              `${snapshotRow.id}:applies:status-effect:${targetId}`,
+              "item",
+              snapshotRow.id,
+              "status-effect",
+              targetId,
+              "applies",
+              "Applies",
+              1,
+              JSON.stringify({ source: `items.${effect.source}`, level: effect.level ?? null }),
+              null,
+            );
+          }
           return { ...effect, targetId };
         }
         if (effect.targetType !== "spell") return effect;
@@ -435,18 +492,20 @@ export function emitItemReadModels(
           });
           return { ...effect, targetId: null };
         }
-        edgeInsert.run(
-          `${snapshotRow.id}:casts:spell:${targetId}`,
-          "item",
-          snapshotRow.id,
-          "spell",
-          targetId,
-          "casts",
-          "Casts",
-          1,
-          JSON.stringify({ source: "items.spellRef", level: effect.level ?? null }),
-          null,
-        );
+        if (sourceHasPage) {
+          edgeInsert.run(
+            `${snapshotRow.id}:casts:spell:${targetId}`,
+            "item",
+            snapshotRow.id,
+            "spell",
+            targetId,
+            "casts",
+            "Casts",
+            1,
+            JSON.stringify({ source: "items.spellRef", level: effect.level ?? null }),
+            null,
+          );
+        }
         return { ...effect, targetId };
       });
       const labelledEffectFacts = rawEffectFacts.map((effect) => ({
@@ -463,13 +522,14 @@ export function emitItemReadModels(
         entityType: "item",
         entityId: snapshotRow.id,
         label: itemLabel,
-        routePath: `${itemRoute}/${snapshotRow.id}`,
+        routePath: sourceHasPage ? `${itemRoute}/${snapshotRow.id}` : null,
+        hasPage: sourceHasPage,
       });
       aliasInsert.run(aliasKey(itemLabel), "item", snapshotRow.id, itemLabel, "item-presentation");
       presentationInsert.run(
         snapshotRow.id,
-        item?.name ?? presentation.displayName,
-        item?.variant ?? snapshotRow.variant ?? null,
+        itemLabel,
+        metadata.variantId,
         presentation.itemType,
         presentation.renderContext,
         displayIconByItem.get(snapshotRow.id) ?? null,
@@ -490,6 +550,7 @@ export function emitItemReadModels(
           ...description.diagnostics,
           ...effectsSource.diagnostics,
         ]),
+        metadata.isPlaceholder ? 1 : 0,
       );
 
       for (const diagnostic of [...description.diagnostics, ...effectsSource.diagnostics]) {
@@ -504,8 +565,7 @@ export function emitItemReadModels(
         });
       }
 
-      const variant = desc.variants.item?.find((candidate) => candidate.variantId === variantId);
-      const variantLabel = variant?.label ?? titleCase(variantId);
+      const variantLabel = metadata.variantLabel;
       writeNode({
         entityType: "item-variant",
         entityId: variantId,
@@ -521,20 +581,22 @@ export function emitItemReadModels(
         variantLabel,
         "item-variant",
       );
-      edgeInsert.run(
-        `${snapshotRow.id}:variant_of:item-variant:${variantId}`,
-        "item",
-        snapshotRow.id,
-        "item-variant",
-        variantId,
-        "variant_of",
-        "Variant",
-        1,
-        JSON.stringify({ source: "items.variant" }),
-        "item-header",
-      );
+      if (sourceHasPage) {
+        edgeInsert.run(
+          `${snapshotRow.id}:variant_of:item-variant:${variantId}`,
+          "item",
+          snapshotRow.id,
+          "item-variant",
+          variantId,
+          "variant_of",
+          "Variant",
+          1,
+          JSON.stringify({ source: "items.variant" }),
+          "item-header",
+        );
+      }
 
-      for (const term of collectTermLinks(description.nodes)) {
+      for (const term of sourceHasPage ? collectTermLinks(description.nodes) : []) {
         const termLabel = masterTooltip?.tooltipCodes[term.termId] ?? term.label;
         writeNode({
           entityType: "term",
@@ -545,24 +607,169 @@ export function emitItemReadModels(
           shortId: term.termId,
         });
         aliasInsert.run(aliasKey(termLabel), "term", term.termId, termLabel, "master-tooltip");
-        edgeInsert.run(
-          `${snapshotRow.id}:references_term:term:${term.termId}`,
-          "item",
-          snapshotRow.id,
-          "term",
-          term.termId,
-          "references_term",
-          termLabel,
-          0.5,
-          JSON.stringify({ source: "presentation.descriptionSource" }),
-          "description",
-        );
+        if (sourceHasPage) {
+          edgeInsert.run(
+            `${snapshotRow.id}:references_term:term:${term.termId}`,
+            "item",
+            snapshotRow.id,
+            "term",
+            term.termId,
+            "references_term",
+            termLabel,
+            0.5,
+            JSON.stringify({ source: "presentation.descriptionSource" }),
+            "description",
+          );
+        }
       }
     }
   });
   tx();
+
+  const parentByChild = new Map<string, string>();
+  for (const [itemId, metadata] of itemMetadata) {
+    const parentId = resolveItemRefJson(metadata.parentRefJson);
+    if (parentId === null) {
+      if (metadata.parentRefJson !== null && !isMissingParentRefJson(metadata.parentRefJson)) {
+        richTextDiagnostics.push({
+          severity: "diagnostic",
+          source: "item-presentation-read-model",
+          code: "itemParentReferenceUnresolved",
+          message: `Item '${itemId}' has an invalid parent reference.`,
+          entityType: "item",
+          entityId: itemId,
+          field: "items.parent_ref_json",
+          evidence: { parentRefJson: metadata.parentRefJson },
+        });
+      }
+      continue;
+    }
+    if (!itemMetadata.has(parentId)) {
+      richTextDiagnostics.push({
+        severity: "diagnostic",
+        source: "item-presentation-read-model",
+        code: "itemParentReferenceUnresolved",
+        message: `Item '${itemId}' has an unresolvable parent reference '${parentId}'.`,
+        entityType: "item",
+        entityId: itemId,
+        field: "items.parent_ref_json",
+        evidence: { parentId },
+      });
+      continue;
+    }
+    parentByChild.set(itemId, parentId);
+  }
+  const descendants = collectTransitiveDescendants(
+    parentByChild,
+    new Set([...itemMetadata].filter(([, metadata]) => !metadata.isPlaceholder).map(([id]) => id)),
+  );
+  for (const cycle of descendants.cycles) {
+    richTextDiagnostics.push({
+      severity: "diagnostic",
+      source: "item-presentation-read-model",
+      code: "itemParentCycle",
+      message: `Items '${cycle.join("', '")}' form a parent cycle.`,
+      entityType: "item",
+      entityId: cycle[0] ?? null,
+      field: "items.parent_ref_json",
+      evidence: { cycle },
+    });
+  }
+  for (const [itemId, parentId] of parentByChild) {
+    const child = itemMetadata.get(itemId);
+    const parent = itemMetadata.get(parentId);
+    if (!child || !parent || child.isPlaceholder || parent.isPlaceholder) continue;
+    edgeInsert.run(
+      `${itemId}:derives_from:item:${parentId}`,
+      "item",
+      itemId,
+      "item",
+      parentId,
+      "derives_from",
+      "Derives from",
+      1,
+      JSON.stringify({ source: "items.parent_ref_json" }),
+      null,
+    );
+  }
+  richTextDiagnostics.unshift(...prototypeDiagnostics);
   emitRelationshipSections(db);
   insertPipelineDiagnostics(db, richTextDiagnostics, "item-presentation-read-model");
+}
+
+function resolveItemRefJson(value: string | null): string | null {
+  if (value === null) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+  const ref = parsed as Partial<SnapshotRef>;
+  if (ref.kind === "lookupAsset" && typeof ref.guid === "string") return ref.guid;
+  if (ref.kind === "namedAsset" && ref.entity === "item" && typeof ref.name === "string") {
+    return `named;item;${ref.name}`;
+  }
+  return null;
+}
+
+function isMissingParentRefJson(value: string): boolean {
+  try {
+    const parsed = JSON.parse(value) as { kind?: unknown };
+    return typeof parsed === "object" && parsed !== null && parsed.kind === "missing";
+  } catch {
+    return false;
+  }
+}
+
+export interface DescendantResolution {
+  descendantsByAncestor: Map<string, string[]>;
+  cycles: string[][];
+}
+
+export function collectTransitiveDescendants(
+  parentByChild: ReadonlyMap<string, string>,
+  publishableIds: ReadonlySet<string>,
+): DescendantResolution {
+  const childrenByParent = new Map<string, string[]>();
+  for (const [child, parent] of parentByChild) {
+    const children = childrenByParent.get(parent) ?? [];
+    children.push(child);
+    childrenByParent.set(parent, children);
+  }
+  for (const children of childrenByParent.values()) children.sort();
+  const descendantsByAncestor = new Map<string, string[]>();
+  const cycleKeys = new Set<string>();
+  const cycles: string[][] = [];
+  const ancestors = new Set([...childrenByParent.keys(), ...parentByChild.keys()]);
+  for (const ancestor of ancestors) {
+    const descendants = new Set<string>();
+    const visiting = new Set<string>([ancestor]);
+    const visited = new Set<string>();
+    const walk = (parent: string): void => {
+      for (const child of childrenByParent.get(parent) ?? []) {
+        if (visiting.has(child)) {
+          const cycle = [...visiting, child].sort();
+          const key = cycle.join("|");
+          if (!cycleKeys.has(key)) {
+            cycleKeys.add(key);
+            cycles.push(cycle);
+          }
+          continue;
+        }
+        if (visited.has(child)) continue;
+        visited.add(child);
+        if (publishableIds.has(child)) descendants.add(child);
+        visiting.add(child);
+        walk(child);
+        visiting.delete(child);
+      }
+    };
+    walk(ancestor);
+    descendantsByAncestor.set(ancestor, [...descendants].sort());
+  }
+  return { descendantsByAncestor, cycles };
 }
 
 function resolveStatusEffectId(

@@ -2,7 +2,6 @@
   import { browser } from "$app/environment";
   import EntityTable from "$lib/components/EntityTable.svelte";
   import type { ItemOverviewFilter, ItemOverviewRow } from "$lib/server/read-models";
-  import { itemNameForList } from "./itemName";
 
   type Column = {
     id: string;
@@ -42,22 +41,7 @@
     }),
   );
 
-  const duplicateNames = $derived.by(() => {
-    // Null prototype so an item named "constructor" or "toString" counts as itself
-    // rather than colliding with an inherited member.
-    const counts: Record<string, number> = Object.create(null) as Record<string, number>;
-    for (const row of rows) {
-      if (row.name) counts[row.name] = (counts[row.name] ?? 0) + 1;
-    }
-    return counts;
-  });
-
-  const tableRows = $derived(
-    filteredRows.map((row) => ({
-      ...row,
-      name: itemNameForList(row, duplicateNames),
-    })),
-  );
+  const tableRows = $derived(filteredRows);
 
   const pageCount = $derived(Math.max(1, Math.ceil(tableRows.length / pageSize)));
   const visibleRows = $derived(tableRows.slice((page - 1) * pageSize, page * pageSize));

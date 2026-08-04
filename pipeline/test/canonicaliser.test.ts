@@ -31,13 +31,13 @@ describe("canonicaliseItems", () => {
       name: string;
       variant: string;
     }[];
-    expect(items.length).toBe(5);
+    expect(items.length).toBe(9);
     expect(items.find((r) => r.id === "4ed20218.fixture-iron-sword")?.variant).toBe("melee-weapon");
 
     const equipRows = db.query("SELECT id, equipSlot FROM item_equipment").all() as {
       id: string;
     }[];
-    expect(equipRows.length).toBe(4); // all equipment variants except the consumable fixture
+    expect(equipRows.length).toBe(8); // all equipment variants except the consumable fixture
 
     const meleeRows = db.query("SELECT id, damage FROM item_melee_weapons").all() as {
       id: string;

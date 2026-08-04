@@ -527,6 +527,7 @@ export interface FactionSnapshotFields {
 export interface CharacterSnapshotFields {
   id: string;
   name: string | null;
+  parentRef: SnapshotRef;
   dropRefs: SnapshotRef[];
   startingFactions?: SnapshotRef[];
 }

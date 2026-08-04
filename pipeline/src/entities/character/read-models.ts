@@ -20,6 +20,7 @@ CREATE TABLE character_presentation_rows (
 interface CharacterRow {
   id: string;
   character_name: string | null;
+  parent_ref_json: string | null;
   drop_refs_json: string;
 }
 
@@ -49,7 +50,10 @@ export function emitCharacterReadModels(
   const writeNode = prepareEntityNodeWriter(db);
   const itemNodes = new Map(
     db
-      .query<{ entity_id: string; label: string; route_path: string; has_page: number }, []>(
+      .query<
+        { entity_id: string; label: string | null; route_path: string | null; has_page: number },
+        []
+      >(
         `SELECT entity_id, label, route_path, has_page
          FROM entity_nodes WHERE entity_type = 'item'`,
       )
@@ -59,21 +63,14 @@ export function emitCharacterReadModels(
           [
             row.entity_id,
             {
-              label: row.label.trim() || "Unnamed item",
+              label: row.label?.trim() || "Unnamed item",
               routePath: row.has_page === 1 ? row.route_path : null,
+              hasPage: row.has_page === 1,
             },
           ] as const,
       ),
   );
   const itemIds = new Set(itemNodes.keys());
-  const pageItems = new Set(
-    db
-      .query<{ entity_id: string }, []>(
-        `SELECT entity_id FROM entity_nodes WHERE entity_type = 'item' AND has_page = 1`,
-      )
-      .all()
-      .map((row) => row.entity_id),
-  );
   const factionPages = new Set(
     db
       .query<{ entity_id: string }, []>(
@@ -95,7 +92,7 @@ export function emitCharacterReadModels(
   }
   const rows = db
     .query<CharacterRow, []>(
-      `SELECT id, character_name, drop_refs_json
+      `SELECT id, character_name, parent_ref_json, drop_refs_json
        FROM characters
        ORDER BY COALESCE(NULLIF(TRIM(character_name), ''), 'Unnamed character'), id`,
     )
@@ -154,11 +151,23 @@ export function emitCharacterReadModels(
         JSON.stringify(drops),
       );
       for (const value of refs) {
-        const targetId = resolveItemId(value, pageItems);
-        if (targetId === null) {
-          diagnostics.push(
-            unresolvedDropDiagnostic(row, "reference does not identify an item with a page"),
-          );
+        const targetId = resolveItemId(value, itemIds);
+        const target = targetId === null ? null : itemNodes.get(targetId);
+        if (targetId === null || !target) {
+          diagnostics.push(unresolvedDropDiagnostic(row, "reference does not identify an item"));
+          continue;
+        }
+        if (!target.hasPage) {
+          diagnostics.push({
+            severity: "diagnostic",
+            source: "relationship-graph",
+            code: "itemLootReferencesPrototype",
+            message: `Character '${row.id}' loot references prototype item '${targetId}'.`,
+            entityType: "character",
+            entityId: row.id,
+            field: "characters.drop_refs_json",
+            evidence: { itemId: targetId },
+          });
           continue;
         }
         edgeInsert.run(
@@ -199,7 +208,86 @@ export function emitCharacterReadModels(
     }
   });
   tx();
+
+  const characterNodes = new Map(
+    db
+      .query<{ entity_id: string; has_page: number }, []>(
+        `SELECT entity_id, has_page FROM entity_nodes WHERE entity_type = 'character'`,
+      )
+      .all()
+      .map((node) => [node.entity_id, node] as const),
+  );
+  for (const row of rows) {
+    const parentId = resolveCharacterRefJson(row.parent_ref_json);
+    if (parentId === null) {
+      if (row.parent_ref_json !== null && !isMissingParentRefJson(row.parent_ref_json)) {
+        diagnostics.push({
+          severity: "diagnostic",
+          source: "relationship-graph",
+          code: "characterParentReferenceUnresolved",
+          message: `Character '${row.id}' has an invalid parent reference.`,
+          entityType: "character",
+          entityId: row.id,
+          field: "characters.parent_ref_json",
+          evidence: { parentRefJson: row.parent_ref_json },
+        });
+      }
+      continue;
+    }
+    const parent = characterNodes.get(parentId);
+    if (!parent || parent.has_page !== 1) {
+      diagnostics.push({
+        severity: "diagnostic",
+        source: "relationship-graph",
+        code: "characterParentReferenceUnresolved",
+        message: `Character '${row.id}' has an unresolvable parent reference '${parentId}'.`,
+        entityType: "character",
+        entityId: row.id,
+        field: "characters.parent_ref_json",
+        evidence: { parentId },
+      });
+      continue;
+    }
+    edgeInsert.run(
+      `${row.id}:derives_from:character:${parentId}`,
+      "character",
+      row.id,
+      "character",
+      parentId,
+      "derives_from",
+      "Derives from",
+      1,
+      JSON.stringify({ source: "characters.parent_ref_json" }),
+      null,
+    );
+  }
   return diagnostics;
+}
+
+function resolveCharacterRefJson(value: string | null): string | null {
+  if (value === null) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+  const ref = parsed as Partial<SnapshotRef>;
+  if (ref.kind === "lookupAsset" && typeof ref.guid === "string") return ref.guid;
+  if (ref.kind === "namedAsset" && ref.entity === "character" && typeof ref.name === "string") {
+    return `named;character;${ref.name}`;
+  }
+  return null;
+}
+
+function isMissingParentRefJson(value: string): boolean {
+  try {
+    const parsed = JSON.parse(value) as { kind?: unknown };
+    return typeof parsed === "object" && parsed !== null && parsed.kind === "missing";
+  } catch {
+    return false;
+  }
 }
 
 function unresolvedFactionDiagnostic(row: CharacterRow, reason: string): PipelineDiagnostic {
@@ -215,7 +303,7 @@ function unresolvedFactionDiagnostic(row: CharacterRow, reason: string): Pipelin
   };
 }
 
-function resolveItemId(value: unknown, pageItems: ReadonlySet<string>): string | null {
+function resolveItemId(value: unknown, knownItems: ReadonlySet<string>): string | null {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
   const ref = value as Partial<SnapshotRef>;
   let targetId: string | null = null;
@@ -223,7 +311,7 @@ function resolveItemId(value: unknown, pageItems: ReadonlySet<string>): string |
   if (ref.kind === "namedAsset" && ref.entity === "item" && typeof ref.name === "string") {
     targetId = `named;item;${ref.name}`;
   }
-  return targetId !== null && pageItems.has(targetId) ? targetId : null;
+  return targetId !== null && knownItems.has(targetId) ? targetId : null;
 }
 
 function unresolvedDropDiagnostic(row: CharacterRow, reason: string): PipelineDiagnostic {

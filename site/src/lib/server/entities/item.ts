@@ -14,7 +14,7 @@ import {
 
 interface ItemOverviewRecord {
   id: string;
-  name: string | null;
+  name: string;
   weight: number | null;
   value: number | null;
   variant: string | null;
@@ -43,6 +43,7 @@ interface ItemPresentationRecord {
   id: string;
   name: string | null;
   display_name: string;
+  name_is_placeholder: number;
   item_type: string | null;
   render_context: string;
   display_icon_hash: string | null;
@@ -64,7 +65,7 @@ interface ItemPresentationRecord {
 
 export interface ItemOverviewRow {
   id: string;
-  name: string | null;
+  name: string;
   weight: number | null;
   value: number | null;
   variant: string | null;
@@ -76,9 +77,10 @@ export interface ItemOverviewRow {
 
 export interface ItemPresentationRow {
   id: string;
-  name: string | null;
+  name: string;
   variant: string | null;
   itemType: string | null;
+  nameIsPlaceholder: boolean;
   renderContext: "item-presentation-v1";
   displayIconSrc: string | null;
   displayIconColor: string | null;
@@ -221,6 +223,7 @@ const toItemPresentationRow = (row: ItemPresentationRecord): ItemPresentationRow
     id: row.id,
     name: row.display_name,
     variant: row.variant,
+    nameIsPlaceholder: row.name_is_placeholder === 1,
     itemType: row.item_type,
     renderContext: validateRenderContext(
       row.render_context,
@@ -373,7 +376,18 @@ export const listItemOverviewFilters = (): ItemOverviewFilter[] =>
   );
 
 export const listItemIds = (): string[] =>
-  all<{ id: string }>("SELECT id FROM item_presentation_rows ORDER BY id").map((row) => row.id);
+  all<{ id: string }>(
+    // This feeds the prerenderer's route entries, so it must name only items that
+    // have a page. A prototype carries a presentation row but no page, and asking
+    // the prerenderer to visit one fails the build with a 404.
+    `SELECT p.id
+       FROM item_presentation_rows p
+       JOIN entity_nodes n
+         ON n.entity_type = 'item'
+        AND n.entity_id = p.id
+        AND n.has_page = 1
+       ORDER BY p.id`,
+  ).map((row) => row.id);
 
 export const getItemPresentation = (id: string): ItemPresentationRow | undefined => {
   const row = get<ItemPresentationRecord>(

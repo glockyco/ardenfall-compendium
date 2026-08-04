@@ -114,7 +114,7 @@ describe("emitItemReadModels", () => {
 
     const overview = db
       .query(
-        "SELECT id, name, variant, display_icon_hash, display_icon_color FROM item_overview_rows ORDER BY name",
+        "SELECT id, name, variant, display_icon_hash, display_icon_color FROM item_overview_rows ORDER BY id",
       )
       .all() as {
       id: string;
@@ -123,13 +123,27 @@ describe("emitItemReadModels", () => {
       display_icon_hash: string | null;
       display_icon_color: string | null;
     }[];
-    expect(overview.map((r) => r.name)).toEqual([
-      "Fire Flask",
-      "Iron Sword",
-      "Leather Tunic",
-      "Spark Slate",
-      "Stamina Draught",
+    expect(overview.map(({ id, name }) => ({ id, name }))).toEqual([
+      { id: "4ed20218.fixture-iron-sword", name: "Iron Sword" },
+      { id: "5ea7beef.fixture-leather-tunic", name: "Leather Tunic" },
+      { id: "6a71c0de.fixture-stamina-draught", name: "Stamina Draught" },
+      { id: "7ab10c55.fixture-slate-spell", name: "Spark Slate" },
+      { id: "8c0ffee0.fixture-throwing-potion", name: "Fire Flask" },
+      { id: "a7000002.fixture-base-weapon-child", name: "Training Blade" },
+      { id: "a7000003.fixture-base-weapon-grandchild", name: "Grandchild Blade" },
     ]);
+    expect(db.query("SELECT id FROM items ORDER BY id").all()).toEqual([
+      { id: "4ed20218.fixture-iron-sword" },
+      { id: "5ea7beef.fixture-leather-tunic" },
+      { id: "6a71c0de.fixture-stamina-draught" },
+      { id: "7ab10c55.fixture-slate-spell" },
+      { id: "8c0ffee0.fixture-throwing-potion" },
+      { id: "a7000001.fixture-base-weapon" },
+      { id: "a7000002.fixture-base-weapon-child" },
+      { id: "a7000003.fixture-base-weapon-grandchild" },
+      { id: "a7000005.fixture-placeholder-leaf" },
+    ]);
+
     expect(overview.find((r) => r.id === "4ed20218.fixture-iron-sword")?.display_icon_hash).toBe(
       "a".repeat(64),
     );
@@ -472,12 +486,38 @@ describe("emitItemReadModels", () => {
         "SELECT category_id, label, href, item_count FROM item_overview_categories ORDER BY category_id",
       )
       .all() as { category_id: string; label: string; href: string; item_count: number }[];
-    expect(categories).toContainEqual({
-      category_id: "melee-weapon",
-      label: "Melee Weapon",
-      href: "/objects/variant/melee-weapon",
-      item_count: 1,
-    });
+    expect(categories).toEqual([
+      {
+        category_id: "armor",
+        label: "Armor",
+        href: "/objects/variant/armor",
+        item_count: 1,
+      },
+      {
+        category_id: "consumable",
+        label: "Consumable",
+        href: "/objects/variant/consumable",
+        item_count: 1,
+      },
+      {
+        category_id: "melee-weapon",
+        label: "Melee Weapon",
+        href: "/objects/variant/melee-weapon",
+        item_count: 3,
+      },
+      {
+        category_id: "slate-spell",
+        label: "Slate Spell",
+        href: "/objects/variant/slate-spell",
+        item_count: 1,
+      },
+      {
+        category_id: "throwing-potion",
+        label: "Throwing Potion",
+        href: "/objects/variant/throwing-potion",
+        item_count: 1,
+      },
+    ]);
 
     const variantFilter = db
       .query(
@@ -485,9 +525,13 @@ describe("emitItemReadModels", () => {
       )
       .get() as { filter_id: string; kind: string; options_json: string };
     expect(variantFilter.kind).toBe("multi-select");
-    expect(JSON.parse(variantFilter.options_json)).toContainEqual(
-      expect.objectContaining({ value: "melee-weapon", label: "Melee Weapon", count: 1 }),
-    );
+    expect(JSON.parse(variantFilter.options_json)).toEqual([
+      { value: "armor", label: "Armor", count: 1 },
+      { value: "consumable", label: "Consumable", count: 1 },
+      { value: "melee-weapon", label: "Melee Weapon", count: 3 },
+      { value: "slate-spell", label: "Slate Spell", count: 1 },
+      { value: "throwing-potion", label: "Throwing Potion", count: 1 },
+    ]);
   });
 });
 

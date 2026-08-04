@@ -43,11 +43,12 @@ describe("end-to-end pipeline", () => {
         ).c;
         expect(entityCount).toBeGreaterThan(0);
 
-        // Read models are populated for the synthetic five-item fixture.
+        // The overview lists only items a reader can open, so the two synthetic
+        // prototypes are absent from the nine canonical rows.
         const overviewCount = (
           db.query("SELECT COUNT(*) c FROM item_overview_rows").get() as { c: number }
         ).c;
-        expect(overviewCount).toBe(5);
+        expect(overviewCount).toBe(7);
         const assetRefCount = (db.query("SELECT COUNT(*) c FROM asset_refs").get() as { c: number })
           .c;
         expect(assetRefCount).toBe(7);
@@ -223,7 +224,7 @@ describe("end-to-end pipeline", () => {
         const overviewCount = (
           db.query("SELECT COUNT(*) c FROM item_overview_rows").get() as { c: number }
         ).c;
-        expect(overviewCount).toBe(5);
+        expect(overviewCount).toBe(7);
       } finally {
         db.close();
       }

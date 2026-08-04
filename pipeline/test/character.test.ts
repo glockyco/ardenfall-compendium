@@ -10,6 +10,10 @@ import type { SnapshotEnvelope, SnapshotRef } from "../src/types.ts";
 const itemId = "4ed20218.fixture-iron-sword";
 const characterId = "named;character;character_bandit";
 
+function missingParentRef(): SnapshotRef {
+  return { kind: "missing", reason: "noParent", source: "test" };
+}
+
 function seedDatabase(): Database {
   const db = new Database(":memory:");
   db.exec(ENTITY_GRAPH_DDL);
@@ -51,6 +55,7 @@ describe("character pipeline", () => {
           fields: {
             id: characterId,
             name: "Bandit",
+            parentRef: missingParentRef(),
             dropRefs: [{ kind: "lookupAsset", guid: itemId }],
           },
         },
@@ -96,7 +101,7 @@ describe("character pipeline", () => {
       rows: [
         {
           id: characterId,
-          fields: { id: characterId, name: null, dropRefs: [] },
+          fields: { id: characterId, name: null, parentRef: missingParentRef(), dropRefs: [] },
         },
       ],
     });
@@ -112,11 +117,10 @@ describe("character pipeline", () => {
 
   it("treats a whitespace-only character name as unnamed", () => {
     const db = seedDatabase();
-    db.run(`INSERT INTO characters (id, character_name, drop_refs_json) VALUES (?, ?, ?)`, [
-      characterId,
-      " \t ",
-      "[]",
-    ]);
+    db.run(
+      `INSERT INTO characters (id, character_name, parent_ref_json, drop_refs_json) VALUES (?, ?, ?, ?)`,
+      [characterId, " \t ", JSON.stringify(missingParentRef()), "[]"],
+    );
 
     expect(emitCharacterReadModels(db)).toEqual([]);
     expect(db.query(`SELECT name FROM character_overview_rows`).get()).toEqual({
@@ -142,7 +146,13 @@ describe("character pipeline", () => {
       rows: [
         {
           id: characterId,
-          fields: { id: characterId, name: "Bandit", dropRefs, startingFactions },
+          fields: {
+            id: characterId,
+            name: "Bandit",
+            parentRef: missingParentRef(),
+            dropRefs,
+            startingFactions,
+          },
         },
       ],
     };
@@ -186,6 +196,7 @@ describe("character pipeline", () => {
           fields: {
             id: characterId,
             name: "Bandit",
+            parentRef: missingParentRef(),
             dropRefs: [],
             startingFactions: [
               { kind: "lookupAsset", guid: "a1000001.fixture-black-moth" },
@@ -232,6 +243,7 @@ describe("character pipeline", () => {
         fields: {
           id: characterId,
           name: "Bandit",
+          parentRef: missingParentRef(),
           dropRefs: [{ kind: "lookupAsset", guid: "missing-item" }],
         },
       },
@@ -259,6 +271,7 @@ it("emits forward and inverse relationship sections", () => {
         fields: {
           id: characterId,
           name: "Bandit",
+          parentRef: missingParentRef(),
           dropRefs: [{ kind: "lookupAsset", guid: itemId }],
         },
       },

@@ -9,6 +9,40 @@ namespace ArdenfallCompendium.Tests;
 public sealed class CharacterExtractorTests
 {
     [Fact]
+    public void CharacterParentRefIsEmittedWithoutChangingExistingValues()
+    {
+        var parentRef = SnapshotRef.NamedAsset("character", "Base guard");
+        var extractor = new CharacterExtractor(new FakeSource(new CharacterAsset(
+            "guard",
+            "Guard",
+            null,
+            null,
+            ParentRef: parentRef)));
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Equal("Guard", row.Fields.Name);
+        var resolvedParent = Assert.IsType<SnapshotRef>(row.Fields.ParentRef);
+        Assert.Equal("namedAsset", resolvedParent.Kind);
+        Assert.Equal("character", resolvedParent.Entity);
+        Assert.Equal("Base guard", resolvedParent.Name);
+    }
+
+    [Fact]
+    public void CharacterWithoutParentEmitsMissingParentRef()
+    {
+        var extractor = new CharacterExtractor(new FakeSource(
+            new CharacterAsset("guard", "Guard", null, null)));
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Equal("Guard", row.Fields.Name);
+        Assert.Equal("missing", row.Fields.ParentRef.Kind);
+        Assert.Equal("noParent", row.Fields.ParentRef.Reason);
+        Assert.Equal("ParameterizedObject.parent", row.Fields.ParentRef.Source);
+    }
+
+    [Fact]
     public void FlatListYieldsEveryItem()
     {
         var list = List("sword", "potion");

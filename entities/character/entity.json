@@ -22,6 +22,13 @@
   "fields": [
     { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
     {
+      "name": "parentRef",
+      "type": "ref:asset",
+      "from": "parentRef",
+      "column": "parent_ref_json",
+      "missingPolicy": "optional-empty"
+    },
+    {
       "name": "name",
       "type": "string",
       "from": "charName.Get()?.name",

@@ -1,31 +1,47 @@
 import { describe, expect, it } from "bun:test";
-import { itemNameForDisplay, itemNameForList } from "../src/lib/components/items/itemName";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
-describe("item display names", () => {
-  it("uses the unnamed item label for game format strings", () => {
-    expect(itemNameForDisplay("Recipe of {0}")).toBe("Unnamed item");
-    expect(itemNameForDisplay("Potion of {lvl} {name}")).toBe("Unnamed item");
-    expect(itemNameForDisplay("BASE Helmet")).toBe("Unnamed item");
-  });
+const source = (relativePath: string) => readFileSync(join(import.meta.dir, relativePath), "utf8");
+const itemHeaderSource = source("../src/lib/components/items/ItemHeader.svelte");
+const characterDetailSource = source("../src/lib/components/characters/CharacterDetail.svelte");
+const characterRouteSource = source("../src/routes/characters/[slug]/+page.svelte");
+const enchantmentDetailSource = source(
+  "../src/lib/components/enchantments/EnchantmentDetail.svelte",
+);
+const enchantmentRouteSource = source("../src/routes/enchantments/[slug]/+page.svelte");
+const recipeDetailSource = source("../src/lib/components/potion-recipes/PotionRecipeDetail.svelte");
+const recipeRouteSource = source("../src/routes/potion-recipes/[slug]/+page.svelte");
 
-  it("keeps the authored variant label without exposing a short id", () => {
-    const row = {
-      name: "Recipe of {0}",
-      variantLabel: "Melee Weapon",
-    };
-    const label = itemNameForList(row, {});
-    expect(label).toBe("Unnamed item — Melee Weapon");
-  });
+const occurrences = (value: string, needle: string): number => value.split(needle).length - 1;
 
-  it("uses the unnamed item label for a blank name", () => {
-    expect(itemNameForList({ name: "  ", variantLabel: "Melee Weapon" }, {})).toBe(
-      "Unnamed item — Melee Weapon",
+describe("stored item labels", () => {
+  it("renders the stored placeholder label and its data-driven explanation", () => {
+    expect(itemHeaderSource).toContain('<h1 class="text-2xl font-bold">{item.name}</h1>');
+    expect(itemHeaderSource).toContain("{#if item.nameIsPlaceholder}");
+    expect(itemHeaderSource).toContain(
+      "The game builds this name while you play, so the compendium cannot show one.",
     );
+    expect(itemHeaderSource).not.toContain("itemNameForDisplay");
+    expect(itemHeaderSource).not.toContain("isPlaceholderItemName");
   });
 
-  it("adds the authored variant label for repeated names without an identifier", () => {
-    const duplicateNames = { Sword: 2 };
-    const label = itemNameForList({ name: "Sword", variantLabel: "Melee Weapon" }, duplicateNames);
-    expect(label).toBe("Sword — Melee Weapon");
+  it("removes the duplicated character and enchantment lists", () => {
+    expect(characterDetailSource).not.toContain(">Drops</h2>");
+    expect(occurrences(characterRouteSource, "<RelationshipSection {section} />")).toBe(1);
+    expect(enchantmentDetailSource).not.toContain(">Can enchant</h2>");
+    expect(occurrences(enchantmentRouteSource, "<RelationshipSection {section} />")).toBe(1);
+  });
+
+  it("keeps each recipe panel while the route owns relationship rendering", () => {
+    expect(occurrences(recipeDetailSource, ">Produces</h2>")).toBe(1);
+    expect(occurrences(recipeDetailSource, ">Ingredients</h2>")).toBe(1);
+    expect(occurrences(recipeRouteSource, "<RelationshipSection {section} />")).toBe(1);
+  });
+
+  it("has no remaining item naming helper", () => {
+    expect(existsSync(join(import.meta.dir, "../src/lib/components/items/itemName.ts"))).toBe(
+      false,
+    );
   });
 });

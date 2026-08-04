@@ -9,7 +9,17 @@
         "enchantmentName": "Burning Edge",
         "moneyValue": 42.5,
         "hideEffectTooltips": false,
-        "appliesToItemRefs": [{ "kind": "lookupAsset", "guid": "4ed20218.fixture-iron-sword" }],
+        "appliesToItemRefs": [
+          {
+            "kind": "lookupAsset",
+            "guid": "4ed20218.fixture-iron-sword"
+          },
+          {
+            "kind": "lookupAsset",
+            "guid": "a7000001.fixture-base-weapon",
+            "unityType": "ItemData"
+          }
+        ],
         "effects": [
           {
             "ordinal": 0,
@@ -31,7 +41,11 @@
         "hideEffectTooltips": true,
         "appliesToItemRefs": [],
         "effects": [
-          { "ordinal": 0, "kind": "MeleeParticleEchantmentEffect", "statusEffectRef": null }
+          {
+            "ordinal": 0,
+            "kind": "MeleeParticleEchantmentEffect",
+            "statusEffectRef": null
+          }
         ]
       }
     }

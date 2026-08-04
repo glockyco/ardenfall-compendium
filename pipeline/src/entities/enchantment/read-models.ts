@@ -1,7 +1,11 @@
 import type { Database } from "bun:sqlite";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
-import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
+import {
+  deriveEntityNodeSlug,
+  prepareEntityNodeWriter,
+  collectTransitiveDescendants,
+} from "../item/read-models.ts";
 import type { SnapshotRef } from "../../types.ts";
 
 export const ENCHANTMENT_READ_MODEL_DDL = `
@@ -112,6 +116,29 @@ export function emitEnchantmentReadModels(
     )
     .all())
     nodes.set(`${node.entity_type}:${node.entity_id}`, node);
+  const hasItemsTable = db
+    .query<{ name: string }, []>(
+      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'items'`,
+    )
+    .get();
+  const itemParentRows = hasItemsTable
+    ? db
+        .query<{ id: string; parent_ref_json: string | null }, []>(
+          `SELECT id, parent_ref_json FROM items`,
+        )
+        .all()
+    : [];
+  const parentByItem = new Map<string, string>();
+  for (const item of itemParentRows) {
+    const parentId = resolveItemRefJson(item.parent_ref_json);
+    if (parentId !== null) parentByItem.set(item.id, parentId);
+  }
+  const publishableItemIds = new Set(
+    [...nodes]
+      .filter(([key, node]) => key.startsWith("item:") && node.has_page === 1)
+      .map(([key]) => key.slice("item:".length)),
+  );
+  const descendantResolution = collectTransitiveDescendants(parentByItem, publishableItemIds);
   const diagnostics: PipelineDiagnostic[] = [];
   const tx = db.transaction(() => {
     for (const row of enchantments) {
@@ -127,6 +154,7 @@ export function emitEnchantmentReadModels(
         shortId: slug.shortId,
       });
       const appliesToItemRefs: ItemPresentation[] = [];
+      const emittedEnchantTargets = new Set<string>();
       for (const item of itemsByEnchantment.get(row.id) ?? []) {
         const ref = parseRef(item.item_ref_json);
         const targetId = resolveRef(ref, "item");
@@ -142,23 +170,50 @@ export function emitEnchantmentReadModels(
           );
           continue;
         }
-        edgeInsert.run(
-          `${row.id}:enchants:item:${targetId}`,
-          "enchantment",
-          row.id,
-          "item",
-          targetId,
-          "enchants",
-          "Can enchant",
-          1,
-          JSON.stringify({ source: "enchantment_items", ordinal: item.item_ordinal }),
-          null,
-        );
-        appliesToItemRefs.push({
-          itemId: targetId,
-          itemLabel: target.label,
-          itemRoutePath: target.route_path,
-        });
+        const targetIds =
+          target.has_page === 1
+            ? [targetId]
+            : (descendantResolution.descendantsByAncestor.get(targetId) ?? []);
+        if (target.has_page === 0 && targetIds.length === 0) {
+          diagnostics.push({
+            severity: "diagnostic",
+            source: "enchantment-read-model",
+            code: "enchantmentPrototypeHasNoPublishableDescendants",
+            message: `Enchantment '${row.id}' targets prototype item '${targetId}', which has no publishable descendants.`,
+            entityType: "enchantment",
+            entityId: row.id,
+            field: "enchantment_items.item_ref_json",
+            evidence: { targetId },
+          });
+          continue;
+        }
+        for (const resolvedTargetId of targetIds) {
+          const resolvedTarget = nodes.get(`item:${resolvedTargetId}`);
+          if (!resolvedTarget || resolvedTarget.has_page !== 1) continue;
+          if (emittedEnchantTargets.has(resolvedTargetId)) continue;
+          emittedEnchantTargets.add(resolvedTargetId);
+          edgeInsert.run(
+            `${row.id}:enchants:item:${resolvedTargetId}`,
+            "enchantment",
+            row.id,
+            "item",
+            resolvedTargetId,
+            "enchants",
+            "Can enchant",
+            1,
+            JSON.stringify({
+              source: "enchantment_items",
+              ordinal: item.item_ordinal,
+              whitelistedTarget: targetId,
+            }),
+            null,
+          );
+          appliesToItemRefs.push({
+            itemId: resolvedTargetId,
+            itemLabel: resolvedTarget.label,
+            itemRoutePath: resolvedTarget.route_path,
+          });
+        }
       }
       const effects: EffectPresentation[] = [];
       for (const effect of effectsByEnchantment.get(row.id) ?? []) {
@@ -212,6 +267,23 @@ export function emitEnchantmentReadModels(
   });
   tx();
   return diagnostics;
+}
+
+function resolveItemRefJson(value: string | null): string | null {
+  if (value === null) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) return null;
+  const ref = parsed as Partial<SnapshotRef>;
+  if (ref.kind === "lookupAsset" && typeof ref.guid === "string") return ref.guid;
+  if (ref.kind === "namedAsset" && ref.entity === "item" && typeof ref.name === "string") {
+    return `named;item;${ref.name}`;
+  }
+  return null;
 }
 
 function parseRef(value: string | null): SnapshotRef | null {

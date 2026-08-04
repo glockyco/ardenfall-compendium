@@ -8,17 +8,39 @@
         "id": "named;character;character_bandit",
         "name": "Bandit",
         "dropRefs": [
-          { "kind": "lookupAsset", "guid": "4ed20218.fixture-iron-sword", "unityType": "ItemData" },
+          {
+            "kind": "lookupAsset",
+            "guid": "4ed20218.fixture-iron-sword",
+            "unityType": "ItemData"
+          },
           {
             "kind": "lookupAsset",
             "guid": "6a71c0de.fixture-stamina-draught",
             "unityType": "ItemData"
+          },
+          {
+            "kind": "lookupAsset",
+            "guid": "a7000001.fixture-base-weapon",
+            "unityType": "ItemData"
           }
         ],
         "startingFactions": [
-          { "kind": "lookupAsset", "guid": "a1000001.fixture-black-moth", "unityType": "Faction" },
-          { "kind": "lookupAsset", "guid": "a1000002.fixture-mages-guild", "unityType": "Faction" }
-        ]
+          {
+            "kind": "lookupAsset",
+            "guid": "a1000001.fixture-black-moth",
+            "unityType": "Faction"
+          },
+          {
+            "kind": "lookupAsset",
+            "guid": "a1000002.fixture-mages-guild",
+            "unityType": "Faction"
+          }
+        ],
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
       }
     },
     {
@@ -26,7 +48,12 @@
       "fields": {
         "id": "named;character;character_villager",
         "name": "Villager",
-        "dropRefs": []
+        "dropRefs": [],
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
       }
     },
     {
@@ -35,8 +62,17 @@
         "id": "named;character;character_phantom",
         "name": "Phantom",
         "dropRefs": [
-          { "kind": "lookupAsset", "guid": "missing-item-guid", "unityType": "ItemData" }
-        ]
+          {
+            "kind": "lookupAsset",
+            "guid": "missing-item-guid",
+            "unityType": "ItemData"
+          }
+        ],
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
       }
     }
   ]

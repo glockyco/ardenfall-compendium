@@ -60,7 +60,8 @@ public sealed class CharacterExtractor : WalkerBase<CharacterSnapshotRow>
                         dropRefs,
                         asset.StartingFactions == null
                             ? null
-                            : new List<SnapshotRef>(asset.StartingFactions)),
+                            : new List<SnapshotRef>(asset.StartingFactions),
+                        asset.ParentRef ?? SnapshotRef.Missing("noParent", "ParameterizedObject.parent")),
                 };
             });
     }

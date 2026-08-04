@@ -37,7 +37,12 @@
         "categoryName": "Weapons",
         "isIllegal": false,
         "minimumSkill": 5,
-        "statType": "Strength"
+        "statType": "Strength",
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
       },
       "tags": [],
       "provenance": {
@@ -137,7 +142,12 @@
         "categoryRef": null,
         "isIllegal": false,
         "minimumSkill": 0,
-        "statType": "Endurance"
+        "statType": "Endurance",
+        "parentRef": {
+          "kind": "lookupAsset",
+          "guid": "4ed20218.fixture-iron-sword",
+          "unityType": "ItemData"
+        }
       },
       "tags": [],
       "provenance": {
@@ -253,7 +263,12 @@
               "maxLevel": 0
             }
           }
-        ]
+        ],
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
       },
       "tags": ["7a600001.fixture-tag-valuable-remedy", "7a600002.fixture-tag-rare"],
       "provenance": {
@@ -398,7 +413,12 @@
         "spawnWhenSheathed": false,
         "spellItemType": "Offensive",
         "durabilityMax": 60,
-        "manaCostMultiplier": 1.1
+        "manaCostMultiplier": 1.1,
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
       },
       "tags": [],
       "provenance": {
@@ -545,7 +565,12 @@
             "name": "spell_unpublished"
           }
         },
-        "isDrinkingPotion": false
+        "isDrinkingPotion": false,
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
       },
       "tags": ["7a600002.fixture-tag-rare"],
       "provenance": {
@@ -639,6 +664,458 @@
             "message": "Effect 'Burning' does not have a resolved status-effect target."
           }
         ]
+      }
+    },
+    {
+      "id": "a7000001.fixture-base-weapon",
+      "variant": "melee-weapon",
+      "fields": {
+        "id": "a7000001.fixture-base-weapon",
+        "name": "BASE weapon",
+        "weight": 3.5,
+        "value": 25,
+        "iconRef": {
+          "kind": "lookupAsset",
+          "guid": "fixture-icon-iron-sword",
+          "unityType": "UnityEngine.Texture2D"
+        },
+        "description": "A simple iron blade.",
+        "equipSlot": "Weapon",
+        "animationSpeedMultiplier": 1,
+        "twoHanded": false,
+        "damage": 7.5,
+        "criticalHitChance": 0.05,
+        "meleeDurabilityMax": 100,
+        "canBlock": true,
+        "stackable": false,
+        "hideInGui": false,
+        "questItem": false,
+        "notLootableChance": 0,
+        "cannotBeOwned": false,
+        "quickslotIconRef": null,
+        "categoryRef": {
+          "kind": "namedAsset",
+          "entity": "item-category",
+          "name": "itemcat_weapons"
+        },
+        "categoryName": "Weapons",
+        "isIllegal": false,
+        "minimumSkill": 5,
+        "statType": "Strength",
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "name": {
+          "kind": "parameter",
+          "source": "GetItemName()",
+          "isSet": true,
+          "inherited": false,
+          "parent": null
+        },
+        "weight": {
+          "kind": "parameter",
+          "source": "weight.Get()",
+          "isSet": true,
+          "inherited": false
+        },
+        "value": {
+          "kind": "parameter",
+          "source": "moneyValue.Get()",
+          "isSet": true,
+          "inherited": false
+        }
+      },
+      "diagnostics": [],
+      "presentation": {
+        "schemaVersion": 1,
+        "renderContext": "item-presentation-v1",
+        "displayName": "BASE weapon",
+        "displayNameSourceMethod": "fields.name",
+        "itemType": "Melee weapon",
+        "itemTypeSourceMethod": "variant:melee-weapon",
+        "descriptionSource": "A simple iron blade.",
+        "effectsSource": "",
+        "effects": [],
+        "statRows": [
+          {
+            "id": "damage",
+            "label": "Base damage",
+            "value": 7.5,
+            "valueText": "7.5",
+            "suffix": null,
+            "size": "large",
+            "indent": 0,
+            "comparison": null,
+            "source": "MeleeItem.GetItemStatInfos()"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "minimum-skill",
+            "label": "Strength",
+            "valueText": "5",
+            "source": "EquipItemData.minimumSkill/statType"
+          }
+        ],
+        "durability": {
+          "kind": "max-durability",
+          "max": 100,
+          "source": "meleeDurabilityMax"
+        },
+        "stateFacts": [
+          {
+            "kind": "canonical-state",
+            "label": "Canonical compendium state",
+            "description": "Base item, no player or inventory context."
+          }
+        ],
+        "value": 25,
+        "weight": 3.5,
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "a7000002.fixture-base-weapon-child",
+      "variant": "melee-weapon",
+      "fields": {
+        "id": "a7000002.fixture-base-weapon-child",
+        "name": "Training Blade",
+        "weight": 3.5,
+        "value": 25,
+        "iconRef": {
+          "kind": "lookupAsset",
+          "guid": "fixture-icon-iron-sword",
+          "unityType": "UnityEngine.Texture2D"
+        },
+        "description": "A simple iron blade.",
+        "equipSlot": "Weapon",
+        "animationSpeedMultiplier": 1,
+        "twoHanded": false,
+        "damage": 7.5,
+        "criticalHitChance": 0.05,
+        "meleeDurabilityMax": 100,
+        "canBlock": true,
+        "stackable": false,
+        "hideInGui": false,
+        "questItem": false,
+        "notLootableChance": 0,
+        "cannotBeOwned": false,
+        "quickslotIconRef": null,
+        "categoryRef": {
+          "kind": "namedAsset",
+          "entity": "item-category",
+          "name": "itemcat_weapons"
+        },
+        "categoryName": "Weapons",
+        "isIllegal": false,
+        "minimumSkill": 5,
+        "statType": "Strength",
+        "parentRef": {
+          "kind": "lookupAsset",
+          "guid": "a7000001.fixture-base-weapon",
+          "unityType": "ItemData"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "name": {
+          "kind": "parameter",
+          "source": "GetItemName()",
+          "isSet": true,
+          "inherited": false,
+          "parent": null
+        },
+        "weight": {
+          "kind": "parameter",
+          "source": "weight.Get()",
+          "isSet": true,
+          "inherited": false
+        },
+        "value": {
+          "kind": "parameter",
+          "source": "moneyValue.Get()",
+          "isSet": true,
+          "inherited": false
+        }
+      },
+      "diagnostics": [],
+      "presentation": {
+        "schemaVersion": 1,
+        "renderContext": "item-presentation-v1",
+        "displayName": "Training Blade",
+        "displayNameSourceMethod": "fields.name",
+        "itemType": "Melee weapon",
+        "itemTypeSourceMethod": "variant:melee-weapon",
+        "descriptionSource": "A simple iron blade.",
+        "effectsSource": "",
+        "effects": [],
+        "statRows": [
+          {
+            "id": "damage",
+            "label": "Base damage",
+            "value": 7.5,
+            "valueText": "7.5",
+            "suffix": null,
+            "size": "large",
+            "indent": 0,
+            "comparison": null,
+            "source": "MeleeItem.GetItemStatInfos()"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "minimum-skill",
+            "label": "Strength",
+            "valueText": "5",
+            "source": "EquipItemData.minimumSkill/statType"
+          }
+        ],
+        "durability": {
+          "kind": "max-durability",
+          "max": 100,
+          "source": "meleeDurabilityMax"
+        },
+        "stateFacts": [
+          {
+            "kind": "canonical-state",
+            "label": "Canonical compendium state",
+            "description": "Base item, no player or inventory context."
+          }
+        ],
+        "value": 25,
+        "weight": 3.5,
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "a7000003.fixture-base-weapon-grandchild",
+      "variant": "melee-weapon",
+      "fields": {
+        "id": "a7000003.fixture-base-weapon-grandchild",
+        "name": "Grandchild Blade",
+        "weight": 3.5,
+        "value": 25,
+        "iconRef": {
+          "kind": "lookupAsset",
+          "guid": "fixture-icon-iron-sword",
+          "unityType": "UnityEngine.Texture2D"
+        },
+        "description": "A simple iron blade.",
+        "equipSlot": "Weapon",
+        "animationSpeedMultiplier": 1,
+        "twoHanded": false,
+        "damage": 7.5,
+        "criticalHitChance": 0.05,
+        "meleeDurabilityMax": 100,
+        "canBlock": true,
+        "stackable": false,
+        "hideInGui": false,
+        "questItem": false,
+        "notLootableChance": 0,
+        "cannotBeOwned": false,
+        "quickslotIconRef": null,
+        "categoryRef": {
+          "kind": "namedAsset",
+          "entity": "item-category",
+          "name": "itemcat_weapons"
+        },
+        "categoryName": "Weapons",
+        "isIllegal": false,
+        "minimumSkill": 5,
+        "statType": "Strength",
+        "parentRef": {
+          "kind": "lookupAsset",
+          "guid": "a7000002.fixture-base-weapon-child",
+          "unityType": "ItemData"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "name": {
+          "kind": "parameter",
+          "source": "GetItemName()",
+          "isSet": true,
+          "inherited": false,
+          "parent": null
+        },
+        "weight": {
+          "kind": "parameter",
+          "source": "weight.Get()",
+          "isSet": true,
+          "inherited": false
+        },
+        "value": {
+          "kind": "parameter",
+          "source": "moneyValue.Get()",
+          "isSet": true,
+          "inherited": false
+        }
+      },
+      "diagnostics": [],
+      "presentation": {
+        "schemaVersion": 1,
+        "renderContext": "item-presentation-v1",
+        "displayName": "Grandchild Blade",
+        "displayNameSourceMethod": "fields.name",
+        "itemType": "Melee weapon",
+        "itemTypeSourceMethod": "variant:melee-weapon",
+        "descriptionSource": "A simple iron blade.",
+        "effectsSource": "",
+        "effects": [],
+        "statRows": [
+          {
+            "id": "damage",
+            "label": "Base damage",
+            "value": 7.5,
+            "valueText": "7.5",
+            "suffix": null,
+            "size": "large",
+            "indent": 0,
+            "comparison": null,
+            "source": "MeleeItem.GetItemStatInfos()"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "minimum-skill",
+            "label": "Strength",
+            "valueText": "5",
+            "source": "EquipItemData.minimumSkill/statType"
+          }
+        ],
+        "durability": {
+          "kind": "max-durability",
+          "max": 100,
+          "source": "meleeDurabilityMax"
+        },
+        "stateFacts": [
+          {
+            "kind": "canonical-state",
+            "label": "Canonical compendium state",
+            "description": "Base item, no player or inventory context."
+          }
+        ],
+        "value": 25,
+        "weight": 3.5,
+        "diagnostics": []
+      }
+    },
+    {
+      "id": "a7000005.fixture-placeholder-leaf",
+      "variant": "melee-weapon",
+      "fields": {
+        "id": "a7000005.fixture-placeholder-leaf",
+        "name": "Scroll of {lvl} {name}",
+        "weight": 3.5,
+        "value": 25,
+        "iconRef": {
+          "kind": "lookupAsset",
+          "guid": "fixture-icon-iron-sword",
+          "unityType": "UnityEngine.Texture2D"
+        },
+        "description": "A simple iron blade.",
+        "equipSlot": "Weapon",
+        "animationSpeedMultiplier": 1,
+        "twoHanded": false,
+        "damage": 7.5,
+        "criticalHitChance": 0.05,
+        "meleeDurabilityMax": 100,
+        "canBlock": true,
+        "stackable": false,
+        "hideInGui": false,
+        "questItem": false,
+        "notLootableChance": 0,
+        "cannotBeOwned": false,
+        "quickslotIconRef": null,
+        "categoryRef": {
+          "kind": "namedAsset",
+          "entity": "item-category",
+          "name": "itemcat_weapons"
+        },
+        "categoryName": "Weapons",
+        "isIllegal": false,
+        "minimumSkill": 5,
+        "statType": "Strength",
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
+      },
+      "tags": [],
+      "provenance": {
+        "name": {
+          "kind": "parameter",
+          "source": "GetItemName()",
+          "isSet": true,
+          "inherited": false,
+          "parent": null
+        },
+        "weight": {
+          "kind": "parameter",
+          "source": "weight.Get()",
+          "isSet": true,
+          "inherited": false
+        },
+        "value": {
+          "kind": "parameter",
+          "source": "moneyValue.Get()",
+          "isSet": true,
+          "inherited": false
+        }
+      },
+      "diagnostics": [],
+      "presentation": {
+        "schemaVersion": 1,
+        "renderContext": "item-presentation-v1",
+        "displayName": "Scroll of {lvl} {name}",
+        "displayNameSourceMethod": "fields.name",
+        "itemType": "Melee weapon",
+        "itemTypeSourceMethod": "variant:melee-weapon",
+        "descriptionSource": "A simple iron blade.",
+        "effectsSource": "",
+        "effects": [],
+        "statRows": [
+          {
+            "id": "damage",
+            "label": "Base damage",
+            "value": 7.5,
+            "valueText": "7.5",
+            "suffix": null,
+            "size": "large",
+            "indent": 0,
+            "comparison": null,
+            "source": "MeleeItem.GetItemStatInfos()"
+          }
+        ],
+        "requirements": [
+          {
+            "id": "minimum-skill",
+            "label": "Strength",
+            "valueText": "5",
+            "source": "EquipItemData.minimumSkill/statType"
+          }
+        ],
+        "durability": {
+          "kind": "max-durability",
+          "max": 100,
+          "source": "meleeDurabilityMax"
+        },
+        "stateFacts": [
+          {
+            "kind": "canonical-state",
+            "label": "Canonical compendium state",
+            "description": "Base item, no player or inventory context."
+          }
+        ],
+        "value": 25,
+        "weight": 3.5,
+        "diagnostics": []
       }
     }
   ]

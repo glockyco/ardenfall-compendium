@@ -24,6 +24,11 @@ export const relationshipRegistry = {
     inverseTitle: null,
     sortOrder: 10,
   },
+  derives_from: {
+    forwardTitle: "Derives from",
+    inverseTitle: "Variants of this",
+    sortOrder: 11,
+  },
   categorised_as: {
     forwardTitle: "Category",
     inverseTitle: null,
@@ -101,12 +106,12 @@ export const relationshipRegistry = {
     sortOrder: 130,
   },
   brews_into: {
-    forwardTitle: "Produces",
+    forwardTitle: null,
     inverseTitle: "Brewed by",
     sortOrder: 135,
   },
   requires_tag: {
-    forwardTitle: "Ingredients",
+    forwardTitle: null,
     inverseTitle: "Used in recipes",
     sortOrder: 136,
   },

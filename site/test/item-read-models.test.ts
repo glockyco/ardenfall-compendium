@@ -29,7 +29,8 @@ const seed = () => {
       durability_json TEXT,
       state_facts_json TEXT NOT NULL,
       value INTEGER,
-      weight REAL
+      weight REAL,
+      name_is_placeholder INTEGER NOT NULL
     );
     CREATE TABLE entity_nodes (
       entity_type TEXT NOT NULL,
@@ -57,15 +58,17 @@ const seed = () => {
       '[
         {"kind":"status-effect","label":"Attack Speed I","targetType":"status-effect","targetId":"status-speed","level":1,"source":"items.statusEffectRef"},
         {"kind":"status-effect","label":"Unknown Effect I","targetType":null,"targetId":null,"level":1,"source":"items.statusEffectRef"},
+        {"kind":"status-effect","label":"Hidden Effect I","targetType":"status-effect","targetId":"status-hidden","level":1,"source":"items.statusEffectRef"},
         {"kind":"spell","label":"Fire Shield","targetType":"spell","targetId":"named;spell;spell_fire-shield","level":2,"source":"items.spellRef"},
         {"kind":"spell","label":"Unknown Spell","targetType":"spell","targetId":"named;spell;spell_missing","level":1,"source":"items.spellRef"}
       ]',
-      '[]', '[]', NULL, '[]', 10, 1.5
+      '[]', '[]', NULL, '[]', 10, 1.5, 1
     );
     INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
       ('status-effect', 'status-speed', 'Attack Speed', 'Attack Speed', '/status-effects/attack-speed--abc12345', 'attack-speed--abc12345', 'abc12345', 1),
+      ('status-effect', 'status-hidden', 'Hidden Effect', 'Hidden Effect', '/status-effects/hidden-effect--def67890', 'hidden-effect--def67890', 'def67890', 0),
       ('spell', 'named;spell;spell_fire-shield', 'Fire Shield', 'Fire Shield', '/spells/fire-shield--abc12345', 'fire-shield--abc12345', 'abc12345', 1),
-      ('item', 'item-sword', 'Sword', 'Sword', '/items/item-sword', 'item-sword', 'item-sword', 1);
+      ('item', 'item-sword', 'Sword', 'Unnamed item — Melee Weapon', '/items/item-sword', 'item-sword', 'item-sword', 1);
     INSERT INTO entity_relationship_sections VALUES
       ('item-sword:variant_of', 'item', 'item-sword', 'Variant', 'variant_of', 0,
        '[{"targetType":"item","targetId":"item-base","targetLabel":"Base Sword","targetRoutePath":"/items/base-sword--22222222","predicate":"variant_of","label":"Variant","weight":1,"anchor":null}]');
@@ -75,12 +78,16 @@ const seed = () => {
 };
 
 describe("item effect read-model accessors", () => {
-  it("joins resolved effect routes while leaving unresolved effects without one", async () => {
+  it("joins resolved effect routes while leaving page-less and unresolved effects without one", async () => {
     const originalCwd = process.cwd();
     const root = seed();
     try {
       process.chdir(root);
       const readModels = await import("../src/lib/server/read-models");
+      expect(readModels.getItemPresentation("item-sword")).toMatchObject({
+        name: "Unnamed item — Melee Weapon",
+        nameIsPlaceholder: true,
+      });
       expect(readModels.getItemPresentation("item-sword")?.effects).toEqual([
         {
           kind: "status-effect",
@@ -96,6 +103,15 @@ describe("item effect read-model accessors", () => {
           label: "Unknown Effect I",
           targetType: null,
           targetId: null,
+          targetRoutePath: null,
+          level: 1,
+          source: "items.statusEffectRef",
+        },
+        {
+          kind: "status-effect",
+          label: "Hidden Effect I",
+          targetType: "status-effect",
+          targetId: "status-hidden",
           targetRoutePath: null,
           level: 1,
           source: "items.statusEffectRef",

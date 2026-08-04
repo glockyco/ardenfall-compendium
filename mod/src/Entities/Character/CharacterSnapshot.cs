@@ -8,7 +8,8 @@ public sealed record CharacterSnapshot(
     [property: JsonProperty("id")] string Id,
     [property: JsonProperty("name")] string? Name,
     [property: JsonProperty("dropRefs")] List<SnapshotRef> DropRefs,
-    [property: JsonProperty("startingFactions")] List<SnapshotRef>? StartingFactions);
+    [property: JsonProperty("startingFactions")] List<SnapshotRef>? StartingFactions,
+    [property: JsonProperty("parentRef")] SnapshotRef ParentRef);
 
 public sealed class CharacterSnapshotRow
 {

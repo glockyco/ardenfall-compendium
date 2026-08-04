@@ -35,13 +35,23 @@ public sealed class BuiltLookupTableCharacterAssetSource : ICharacterAssetSource
             var itemRefs = FlattenItemRefs(asset.itemLists.Get());
             var additionalRefs = ToItemRefs(asset.additionalItems.Get(), "CharacterData.additionalItems");
             var factionRefs = ToAssetRefs(asset.startingFactions.Get(), "CharacterData.startingFactions");
+            var parentRef = ResolveParentRef(asset.parent);
             yield return new CharacterAsset(
                 AssetName: asset.name,
                 CharacterName: NullIfEmpty(storedName),
                 ItemRefs: itemRefs,
                 AdditionalItemRefs: additionalRefs,
-                StartingFactions: factionRefs);
+                StartingFactions: factionRefs,
+                ParentRef: parentRef);
         }
+    }
+
+    private static SnapshotRef ResolveParentRef(ParameterizedObject? parent)
+    {
+        if (parent == null) return SnapshotRef.Missing("noParent", "ParameterizedObject.parent");
+        return string.IsNullOrWhiteSpace(parent.name)
+            ? SnapshotRef.Missing("parentNameMissing", "ParameterizedObject.parent")
+            : SnapshotRef.NamedAsset("character", parent.name);
     }
 
     private static IReadOnlyList<SnapshotRef> FlattenItemRefs(IReadOnlyList<CountedItemListAsset>? lists)

@@ -123,7 +123,7 @@ describe("loadSnapshot", () => {
     expect(out.manifest.preflight.passed).toBe(true);
     const items = out.envelopes["item"];
     if (!items) throw new Error("item envelope not loaded");
-    expect(items.rows.length).toBe(5);
+    expect(items.rows.length).toBe(9);
   });
 
   it("loads root finalize timings as a typed auxiliary artifact", async () => {

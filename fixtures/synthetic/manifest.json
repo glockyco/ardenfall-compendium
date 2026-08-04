@@ -24,7 +24,10 @@
     "NPC fixture rows for one location, two locations, no locations, and no character reference",
     "Quest fixture rows for stable child ordinals, all reward kinds, counted item rewards, character links, and disabled retention",
     "Potion recipe rows for ordered tag ingredients, drinkable and throwing products, status effect links, and an unresolved status effect",
-    "Enchantment rows for status effect and non-status effect kinds, plus an enchantment with no applicable items"
+    "Enchantment rows for status effect and non-status effect kinds, plus an enchantment with no applicable items",
+    "ItemData parentRef inheritance with two-level chains and prototype publication gating",
+    "Enchantment prototype whitelist fan-out and loot prototype diagnostic",
+    "derives_from relation for item and character parents"
   ],
   "selection": [
     {
@@ -34,9 +37,13 @@
         "5ea7beef.fixture-leather-tunic",
         "6a71c0de.fixture-stamina-draught",
         "7ab10c55.fixture-slate-spell",
-        "8c0ffee0.fixture-throwing-potion"
+        "8c0ffee0.fixture-throwing-potion",
+        "a7000001.fixture-base-weapon",
+        "a7000002.fixture-base-weapon-child",
+        "a7000003.fixture-base-weapon-grandchild",
+        "a7000005.fixture-placeholder-leaf"
       ],
-      "rationale": "one melee branch + one armor branch + one consumable subtype branch + slate spell and throwing potion icon behavior branches"
+      "rationale": "one melee branch + one armor branch + one consumable subtype branch + slate spell and throwing potion icon behavior branches; two-level prototype chain with two publishable descendants, real parent, and placeholder leaf"
     },
     {
       "entity": "stat-type",
@@ -69,7 +76,7 @@
         "named;character;character_villager",
         "named;character;character_phantom"
       ],
-      "rationale": "character with two drops and two starting factions, character with no drops, and unresolved drop reference"
+      "rationale": "character with two drops and two starting factions, character with no drops, and unresolved drop reference; loot entry naming an unpublishable prototype"
     },
     {
       "entity": "faction",
@@ -99,7 +106,7 @@
     {
       "entity": "enchantment",
       "ids": ["a6000001.fixture-enchantment-burning", "a6000002.fixture-enchantment-particle"],
-      "rationale": "status effect and non-status effect kinds, plus an enchantment applying to no items"
+      "rationale": "status effect and non-status effect kinds, plus an enchantment applying to no items; whitelist fan-out from a prototype"
     }
   ],
   "scrubbing": "synthetic; no scrubbing required",
@@ -107,10 +114,10 @@
   "hashes": {
     "snapshot/spells.json": "4008d7c3dd28d2237b1f5de8cf3580152e11b4509bbe87ae56856307ffdc6f6f",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
-    "snapshot/manifest.json": "06438a675485255b50bb3b39940978bbb1949d2fca9a49e704894d4e687df119",
+    "snapshot/manifest.json": "b12bef3591ebd2e4bc286cfddf1be85d82b956cebbf0dbb953500e68fc39451f",
     "snapshot/potion-recipes.json": "5234ba27367cab6a0edea83bd47ca41eaf181ea70689e1d4416676b3d09cf07f",
-    "snapshot/enchantments.json": "ec4d185fc9ce27d58ae6a0018e67cd069ccaf0e8ab03475b5e48f534e2eb8597",
-    "snapshot/items.json": "f85e557abf2e9c6a9be4ffdf5062576db83769328d302eac55bc408244719cde",
+    "snapshot/enchantments.json": "ca6689999040b93f82e84402c23758d8627c2907431a3affb15c29c3a884ec34",
+    "snapshot/items.json": "2d09c1e397b571f56148457369f9a67ee6d154777c94ab4b7a98a5d3bc50ad3c",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
     "snapshot/assets/items/fixture-icon-blue.png": "d6d4b05209c7541985841a63d955337a411a005d7abb936426791cbfde258f17",
@@ -120,7 +127,7 @@
     "snapshot/item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
     "snapshot/locations.json": "856982c52ff602e34a3caccd13bfcfc8b4a74bc3f44c2e7e3b0f5dba3e3b7f82",
     "snapshot/portals.json": "370bf4c3647b38982b88910fc8775bd23316782002b49be46851509f5eb1fabe",
-    "snapshot/characters.json": "753f68ff20db93a360bffa0b1de7aa743dd94382767f9a76c47b4d1783f5d24a",
+    "snapshot/characters.json": "dcde106bf0eea3f7cbc34665fe991fc4f637176a22398d3c58888e138f979f25",
     "snapshot/npcs.json": "39a5d8942ae6a1a4d052374785bbd78576de22a2526d2adf3cf7fe01bd048c5a",
     "snapshot/factions.json": "92231e488c599f271c7ae02ac7db1950bc9b71431ba4871232582e52f46346dc",
     "snapshot/quests.json": "87c935a3f7d5191d323a277fdc2d3718b9a957701f8ce259b1c2d66591b59f84"
