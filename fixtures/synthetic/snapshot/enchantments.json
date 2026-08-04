@@ -9,6 +9,7 @@
         "enchantmentName": "Burning Edge",
         "moneyValue": 42.5,
         "hideEffectTooltips": false,
+        "tooltipSource": "<b>Burning Edge</b> enchants the weapon.",
         "appliesToItemRefs": [
           {
             "kind": "lookupAsset",
@@ -27,7 +28,8 @@
             "statusEffectRef": {
               "kind": "lookupAsset",
               "guid": "91a00002.fixture-status-effect-burning"
-            }
+            },
+            "tooltipSource": "<color=#86FF86>Burns the target.</color>"
           }
         ]
       }
@@ -39,12 +41,33 @@
         "enchantmentName": "Silent Particle",
         "moneyValue": 12,
         "hideEffectTooltips": true,
+        "tooltipSource": null,
         "appliesToItemRefs": [],
         "effects": [
           {
             "ordinal": 0,
             "kind": "MeleeParticleEchantmentEffect",
-            "statusEffectRef": null
+            "statusEffectRef": null,
+            "tooltipSource": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "a6000003.fixture-enchantment-honed",
+      "fields": {
+        "id": "a6000003.fixture-enchantment-honed",
+        "enchantmentName": "Honed",
+        "moneyValue": 30.0,
+        "hideEffectTooltips": false,
+        "tooltipSource": "<color=#86FF86>Increases</color> Crit Chance by <color=#86FF86>{1}</color>",
+        "appliesToItemRefs": [],
+        "effects": [
+          {
+            "ordinal": 0,
+            "kind": "WeaponModificationEnchantmentEffect",
+            "statusEffectRef": null,
+            "tooltipSource": null
           }
         ]
       }

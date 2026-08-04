@@ -145,6 +145,26 @@ describe("translateRichTextV1", () => {
     );
   });
 
+  it("separates an unsubstituted variable from a missing dictionary code", () => {
+    // The shipped master data carries zero tooltip codes, so a numeric token cannot be a
+    // dictionary miss. It is a positional variable the game failed to fill, and naming the
+    // right cause is what lets the enchantment read model withhold the text.
+    const positional = translateRichTextV1("Crit Chance by {1}");
+    expect(positional.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "unfilledTooltipVariable" }),
+    );
+    expect(positional.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "unresolvedTooltipCode" }),
+    );
+    const named = translateRichTextV1("the town of {viatiru}");
+    expect(named.diagnostics).toContainEqual(
+      expect.objectContaining({ code: "unresolvedTooltipCode" }),
+    );
+    expect(named.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "unfilledTooltipVariable" }),
+    );
+  });
+
   it("resolves term links through the generated graph contract when a resolver is supplied", () => {
     const rich = translateRichTextV1('<link="tooltip_stamina">Stamina</link>', {
       resolveTerm: (termId, label) => ({

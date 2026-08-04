@@ -114,9 +114,9 @@
   "hashes": {
     "snapshot/spells.json": "4008d7c3dd28d2237b1f5de8cf3580152e11b4509bbe87ae56856307ffdc6f6f",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
-    "snapshot/manifest.json": "b12bef3591ebd2e4bc286cfddf1be85d82b956cebbf0dbb953500e68fc39451f",
+    "snapshot/manifest.json": "9ad7bfc6ebf64723172b2d8bc650df458f67c97209f3fe736f6ec7c7a25910c0",
     "snapshot/potion-recipes.json": "5234ba27367cab6a0edea83bd47ca41eaf181ea70689e1d4416676b3d09cf07f",
-    "snapshot/enchantments.json": "ca6689999040b93f82e84402c23758d8627c2907431a3affb15c29c3a884ec34",
+    "snapshot/enchantments.json": "74d06f2c4db42cf743c4b748bfd6df7b423e01d284b57f0b3b98477ed1a021c4",
     "snapshot/items.json": "2d09c1e397b571f56148457369f9a67ee6d154777c94ab4b7a98a5d3bc50ad3c",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",

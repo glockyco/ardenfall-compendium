@@ -187,6 +187,139 @@ describe("potion recipes and enchantments", () => {
     });
   });
 
+  it("publishes enchantment and effect tooltip rich text while preserving silent effects", () => {
+    const db = new Database(":memory:");
+    db.exec(ENCHANTMENT_DDL);
+    db.exec(ENTITY_GRAPH_DDL);
+    const statusEffectId = "e5f60718293a4b5c6d7e8f90a1b2c3d4.11400000";
+    seedNode(db, "status-effect", statusEffectId, "Burning", "/status-effects/burning");
+    canonicaliseEnchantments(db, {
+      entityId: "enchantment",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "a1b2c3d4e5f60718293a4b5c6d7e8f90.11400000",
+          fields: {
+            id: "a1b2c3d4e5f60718293a4b5c6d7e8f90.11400000",
+            enchantmentName: "Burning Edge",
+            moneyValue: 10,
+            hideEffectTooltips: false,
+            tooltipSource: "<b>Burning Edge</b>",
+            appliesToItemRefs: [],
+            effects: [
+              {
+                ordinal: 0,
+                kind: "StatusEffectEnchantmentEffect",
+                statusEffectRef: { kind: "lookupAsset", guid: statusEffectId },
+                tooltipSource: "<color=#86FF86>Burns target</color>",
+              },
+              {
+                ordinal: 1,
+                kind: "MeleeParticleEchantmentEffect",
+                statusEffectRef: null,
+                tooltipSource: null,
+              },
+            ],
+          },
+        },
+      ],
+    });
+    expect(emitEnchantmentReadModels(db)).toEqual([]);
+
+    const row = db
+      .query<
+        {
+          tooltip_source: string | null;
+          tooltip_rich_text_json: string | null;
+          effects_json: string;
+        },
+        []
+      >(
+        "SELECT tooltip_source, tooltip_rich_text_json, effects_json FROM enchantment_presentation_rows",
+      )
+      .get();
+    expect(row?.tooltip_source).toBe("<b>Burning Edge</b>");
+    expect(JSON.parse(row?.tooltip_rich_text_json ?? "null").nodes).toEqual([
+      { type: "strong", children: [{ type: "text", text: "Burning Edge" }] },
+    ]);
+    expect(JSON.parse(row?.effects_json ?? "[]")).toEqual([
+      {
+        ordinal: 0,
+        kind: "StatusEffectEnchantmentEffect",
+        statusEffectId,
+        statusEffectLabel: "Burning",
+        statusEffectRoutePath: "/status-effects/burning",
+        tooltipSource: "<color=#86FF86>Burns target</color>",
+        tooltipRichText: expect.objectContaining({
+          nodes: [
+            {
+              type: "color",
+              token: null,
+              color: "#86FF86",
+              children: [{ type: "text", text: "Burns target" }],
+            },
+          ],
+        }),
+      },
+      {
+        ordinal: 1,
+        kind: "MeleeParticleEchantmentEffect",
+        statusEffectId: null,
+        statusEffectLabel: null,
+        statusEffectRoutePath: null,
+        tooltipSource: null,
+        tooltipRichText: null,
+      },
+    ]);
+    db.close();
+  });
+
+  it("withholds template prose and still reports why", () => {
+    const db = new Database(":memory:");
+    db.exec(ENCHANTMENT_DDL);
+    db.exec(ENTITY_GRAPH_DDL);
+    canonicaliseEnchantments(db, {
+      entityId: "enchantment",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "b1c2d3e4f5061728394a5b6c7d8e9f01.11400000",
+          fields: {
+            id: "b1c2d3e4f5061728394a5b6c7d8e9f01.11400000",
+            enchantmentName: "Honed",
+            moneyValue: 30,
+            hideEffectTooltips: false,
+            // The shipped game asks for variable 1 while declaring only variable 0, so it
+            // leaves the brace in its own tooltip and a reader would see "Crit Chance by {1}".
+            tooltipSource: "Crit Chance by {1}",
+            appliesToItemRefs: [],
+            effects: [
+              {
+                ordinal: 0,
+                kind: "WeaponModificationEnchantmentEffect",
+                statusEffectRef: null,
+                tooltipSource: null,
+              },
+            ],
+          },
+        },
+      ],
+    });
+    // Withholding the text and reporting the reason are one behaviour. An earlier version
+    // returned a bare null, which hid the prose from readers and the cause from maintainers,
+    // and a test that only checked the column passed anyway.
+    expect(emitEnchantmentReadModels(db)).toEqual([
+      expect.objectContaining({ code: "unfilledTooltipVariable", entityType: "enchantment" }),
+    ]);
+    expect(
+      db
+        .query<{ tooltip_rich_text_json: string | null }, []>(
+          "SELECT tooltip_rich_text_json FROM enchantment_presentation_rows",
+        )
+        .get()?.tooltip_rich_text_json,
+    ).toBeNull();
+    db.close();
+  });
   it("uses a recipe placeholder and diagnostic when its status effect cannot resolve", () => {
     const db = new Database(":memory:");
     db.exec(POTION_RECIPE_DDL);

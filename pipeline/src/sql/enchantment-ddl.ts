@@ -3,7 +3,8 @@ CREATE TABLE enchantments (
   id                    TEXT PRIMARY KEY NOT NULL,
   enchantment_name      TEXT,
   money_value           REAL,
-  hide_effect_tooltips  INTEGER
+  hide_effect_tooltips  INTEGER,
+  tooltip_source        TEXT
 );
 CREATE TABLE enchantment_items (
   id                    TEXT PRIMARY KEY,
@@ -18,6 +19,7 @@ CREATE TABLE enchantment_effects (
   effect_ordinal       INTEGER NOT NULL,
   kind                 TEXT NOT NULL,
   status_effect_ref_json TEXT,
+  tooltip_source       TEXT,
   UNIQUE(enchantment_id, effect_ordinal)
 );
 `;

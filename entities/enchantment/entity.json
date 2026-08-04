@@ -35,6 +35,13 @@
       "column": "hide_effect_tooltips"
     },
     {
+      "name": "tooltipSource",
+      "type": "string",
+      "from": "tooltip.GetTooltip(1f, this, null)",
+      "missingPolicy": "optional-empty",
+      "column": "tooltip_source"
+    },
+    {
       "name": "appliesToItemRefs",
       "type": "json",
       "from": "baseItemDataFilterWhitelist",

@@ -87,7 +87,19 @@ export function translateRichTextV1(source: string, options: RichTextOptions = {
       const key = token.slice(1, -1);
       const label = options.tooltipCodes?.[key];
       if (label) current().push({ type: "text", text: label });
-      else {
+      else if (/^[0-9]+$/.test(key)) {
+        // A numeric token is a positional variable that the game substitutes from an effect
+        // field, not a dictionary code. The shipped master data carries zero tooltip codes,
+        // so blaming the dictionary for these sent readers looking for a vocabulary entry
+        // that never existed. `enchant_melee_honed` reaches here because its template asks
+        // for variable 1 while the enchantment declares only variable 0, so the game leaves
+        // the brace in its own tooltip too.
+        diagnostic(
+          "unfilledTooltipVariable",
+          `Tooltip variable '${key}' was never substituted, so the text carries a template token.`,
+        );
+        pushText(token);
+      } else {
         diagnostic(
           "unresolvedTooltipCode",
           `Tooltip code '${key}' is not present in the master tooltip dictionary.`,

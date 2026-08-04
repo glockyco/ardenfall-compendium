@@ -37,6 +37,7 @@ const seed = () => {
       render_context TEXT NOT NULL,
       money_value REAL NOT NULL,
       hide_effect_tooltips INTEGER NOT NULL,
+      tooltip_rich_text_json TEXT,
       items_json TEXT NOT NULL,
       effects_json TEXT NOT NULL
     );
@@ -74,10 +75,11 @@ const seed = () => {
       ('enchant-any', 'Any item raw label', 0, 0);
     INSERT INTO enchantment_presentation_rows VALUES
       ('enchant-status', 'Raw enchantment label', 'enchantment-presentation-v1', 20, 0,
+       '{"schemaVersion":1,"sourceHash":"enchantment-source","nodes":[{"type":"text","text":"Deals fire damage"}],"diagnostics":[]}',
        '[{"itemId":"item-sword","itemLabel":"Iron Sword","itemRoutePath":"/items/iron-sword--item0001"}]',
-       '[{"ordinal":0,"kind":"StatusEffectEnchantmentEffect","statusEffectId":"status-burning","statusEffectLabel":"Burning","statusEffectRoutePath":"/status-effects/burning--effect0001"},{"ordinal":1,"kind":"MeleeParticleEchantmentEffect","statusEffectId":null,"statusEffectLabel":null,"statusEffectRoutePath":null}]');
+       '[{"ordinal":0,"kind":"StatusEffectEnchantmentEffect","tooltipRichText":null,"statusEffectId":"status-burning","statusEffectLabel":"Burning","statusEffectRoutePath":"/status-effects/burning--effect0001"},{"ordinal":1,"kind":"SubTooltipEnchantmentEffect","tooltipRichText":{"schemaVersion":1,"sourceHash":"effect-source","nodes":[{"type":"strong","children":[{"type":"text","text":"On hit"}]}],"diagnostics":[]},"statusEffectId":null,"statusEffectLabel":null,"statusEffectRoutePath":null},{"ordinal":2,"kind":"MeleeParticleEchantmentEffect","tooltipRichText":null,"statusEffectId":null,"statusEffectLabel":null,"statusEffectRoutePath":null}]');
     INSERT INTO enchantment_presentation_rows VALUES
-      ('enchant-any', 'Any item raw label', 'enchantment-presentation-v1', 0, 0, '[]', '[]');
+      ('enchant-any', 'Any item raw label', 'enchantment-presentation-v1', 0, 0, NULL, '[]', '[]');
     INSERT INTO entity_nodes VALUES
       ('potion-recipe','recipe-both','Levitation','Levitation','/potion-recipes/levitation--rec00001','levitation--rec00001','rec00001',1),
       ('potion-recipe','recipe-empty','Unnamed potion recipe','Unnamed potion recipe','/potion-recipes/unnamed-potion-recipe--rec00002','unnamed-potion-recipe--rec00002','rec00002',1),
@@ -151,7 +153,7 @@ describe("recipe and enchantment read-model accessors", () => {
     }
   });
 
-  it("publishes status effects and unextracted enchantment effect kinds", async () => {
+  it("publishes status effects and enchantment tooltip prose", async () => {
     const originalCwd = process.cwd();
     const root = seed();
     try {
@@ -159,10 +161,31 @@ describe("recipe and enchantment read-model accessors", () => {
       const readModels = await import("../src/lib/server/read-models");
       expect(readModels.getEnchantmentPresentation("status-enchantment--enc00001")).toMatchObject({
         name: "Status enchantment",
+        description: {
+          nodes: [{ type: "text", text: "Deals fire damage" }],
+        },
         appliesToItemRefs: [{ itemId: "item-sword" }],
         effects: [
-          { kind: "StatusEffectEnchantmentEffect", statusEffectLabel: "Burning" },
-          { kind: "MeleeParticleEchantmentEffect", statusEffectId: null },
+          {
+            kind: "StatusEffectEnchantmentEffect",
+            description: null,
+            statusEffectLabel: "Burning",
+            statusEffectRoutePath: "/status-effects/burning--effect0001",
+          },
+          {
+            kind: "SubTooltipEnchantmentEffect",
+            description: {
+              nodes: [{ type: "strong", children: [{ type: "text", text: "On hit" }] }],
+            },
+            statusEffectId: null,
+          },
+          {
+            kind: "MeleeParticleEchantmentEffect",
+            description: null,
+            statusEffectId: null,
+            statusEffectLabel: null,
+            statusEffectRoutePath: null,
+          },
         ],
       });
     } finally {

@@ -5,7 +5,9 @@ namespace ArdenfallCompendium.Entities.Enchantment;
 
 public sealed record EnchantmentEffectAsset(
     string Kind,
-    SnapshotRef? StatusEffectRef = null);
+    SnapshotRef? StatusEffectRef = null,
+    string? TooltipSource = null,
+    bool TooltipDependsOnItem = false);
 
 public sealed record EnchantmentAsset(
     string? Guid,
@@ -15,7 +17,9 @@ public sealed record EnchantmentAsset(
     bool HideEffectTooltips,
     IReadOnlyList<SnapshotRef>? AppliesToItemRefs = null,
     IReadOnlyList<EnchantmentEffectAsset>? Effects = null,
-    int BlacklistEntryCount = 0);
+    int BlacklistEntryCount = 0,
+    string? TooltipSource = null,
+    bool TooltipDependsOnItem = false);
 
 public interface IEnchantmentAssetSource
 {

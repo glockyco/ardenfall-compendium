@@ -78,17 +78,39 @@ public sealed class EnchantmentExtractor : WalkerBase<EnchantmentSnapshotRow>
                     if (itemRef != null) itemRefs.Add(itemRef);
                 }
 
+                if (asset.TooltipDependsOnItem)
+                {
+                    Diagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "enchantmentTooltipItemDependent",
+                        Field = "tooltipSource",
+                        Message = $"EnchantmentData '{id}' tooltip depends on a specific ItemData and was not extracted",
+                    });
+                }
+
                 var effects = new List<EnchantmentEffectSnapshot>();
                 var ordinal = 0;
                 foreach (var effect in asset.Effects ?? Array.Empty<EnchantmentEffectAsset>())
                 {
                     if (effect == null) continue;
+                    if (effect.TooltipDependsOnItem)
+                    {
+                        Diagnostics.Add(new Diagnostic
+                        {
+                            Severity = "diagnostic",
+                            Code = "enchantmentEffectTooltipItemDependent",
+                            Field = "effects.tooltipSource",
+                            Message = $"EnchantmentData '{id}' effect {ordinal} tooltip depends on a specific ItemData and was not extracted",
+                        });
+                    }
                     effects.Add(new EnchantmentEffectSnapshot(
                         Ordinal: ordinal++,
                         Kind: effect.Kind,
                         StatusEffectRef: effect.Kind == "StatusEffectEnchantmentEffect"
                             ? effect.StatusEffectRef
-                            : null));
+                            : null,
+                        TooltipSource: NullIfEmpty(effect.TooltipSource)));
                 }
 
                 return new EnchantmentSnapshotRow
@@ -99,6 +121,7 @@ public sealed class EnchantmentExtractor : WalkerBase<EnchantmentSnapshotRow>
                         EnchantmentName: enchantmentName,
                         MoneyValue: asset.MoneyValue,
                         HideEffectTooltips: asset.HideEffectTooltips,
+                        TooltipSource: NullIfEmpty(asset.TooltipSource),
                         AppliesToItemRefs: itemRefs,
                         Effects: effects),
                 };

@@ -411,6 +411,7 @@ export interface EnchantmentEffectSnapshot {
   ordinal: number;
   kind: string;
   statusEffectRef: SnapshotRef | null;
+  tooltipSource?: string | null;
 }
 
 export interface EnchantmentSnapshotFields {
@@ -418,6 +419,7 @@ export interface EnchantmentSnapshotFields {
   enchantmentName: string | null;
   moneyValue: number | null;
   hideEffectTooltips: boolean | null;
+  tooltipSource?: string | null;
   appliesToItemRefs: SnapshotRef[];
   effects: EnchantmentEffectSnapshot[];
 }

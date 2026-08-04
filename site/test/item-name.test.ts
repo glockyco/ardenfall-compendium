@@ -33,6 +33,17 @@ describe("stored item labels", () => {
     expect(occurrences(enchantmentRouteSource, "<RelationshipSection {section} />")).toBe(1);
   });
 
+  it("renders game tooltip prose without internal effect names", () => {
+    expect(enchantmentDetailSource).toContain("<RichText richText={enchantment.description} />");
+    expect(enchantmentDetailSource).toContain("<RichText richText={effect.description} />");
+    expect(enchantmentDetailSource).not.toContain("EnchantmentEffect");
+    // The literal above only catches the wording that shipped. The invariant is that the
+    // effect's kind never reaches the template at all, because the kind is a C# type name
+    // and interpolating it would leak one under any wording.
+    expect(enchantmentDetailSource).not.toContain("effect.kind");
+    expect(enchantmentDetailSource).not.toContain("is present, but");
+  });
+
   it("keeps each recipe panel while the route owns relationship rendering", () => {
     expect(occurrences(recipeDetailSource, ">Produces</h2>")).toBe(1);
     expect(occurrences(recipeDetailSource, ">Ingredients</h2>")).toBe(1);

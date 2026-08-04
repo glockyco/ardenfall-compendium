@@ -45,6 +45,73 @@ public sealed class EnchantmentExtractorTests
     }
 
     [Fact]
+    public void EmitsEffectTooltipText()
+    {
+        var source = new FakeSource(new[]
+        {
+            Build(effects: new[]
+            {
+                new EnchantmentEffectAsset(
+                    Kind: "SubTooltipEnchantmentEffect",
+                    TooltipSource: "Adds a burning effect"),
+            }),
+        });
+
+        var effect = Assert.Single(Assert.Single(new EnchantmentExtractor(source).Walk()).Fields.Effects);
+
+        Assert.Equal("Adds a burning effect", effect.TooltipSource);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" \t")]
+    public void BlankEffectTooltipYieldsNull(string tooltipSource)
+    {
+        var source = new FakeSource(new[]
+        {
+            Build(effects: new[]
+            {
+                new EnchantmentEffectAsset(
+                    Kind: "SubTooltipEnchantmentEffect",
+                    TooltipSource: tooltipSource),
+            }),
+        });
+
+        var effect = Assert.Single(Assert.Single(new EnchantmentExtractor(source).Walk()).Fields.Effects);
+
+        Assert.Null(effect.TooltipSource);
+    }
+
+    [Fact]
+    public void EmitsAssembledEnchantmentTooltipText()
+    {
+        var source = new FakeSource(new[]
+        {
+            Build(tooltipSource: "Adds a burning effect"),
+        });
+
+        var fields = Assert.Single(new EnchantmentExtractor(source).Walk()).Fields;
+
+        Assert.Equal("Adds a burning effect", fields.TooltipSource);
+    }
+
+    [Fact]
+    public void ItemDependentTooltipProducesDiagnosticAndNull()
+    {
+        var extractor = new EnchantmentExtractor(new FakeSource(new[]
+        {
+            Build(tooltipDependsOnItem: true),
+        }));
+
+        var fields = Assert.Single(extractor.Walk()).Fields;
+
+        Assert.Null(fields.TooltipSource);
+        var diagnostic = Assert.Single(extractor.Diagnostics);
+        Assert.Equal("enchantmentTooltipItemDependent", diagnostic.Code);
+        Assert.Contains("enchantment-guid", diagnostic.Message);
+    }
+
+    [Fact]
     public void BlacklistProducesDiagnosticAndDoesNotBecomeWhitelist()
     {
         var extractor = new EnchantmentExtractor(new FakeSource(new[]
@@ -79,17 +146,21 @@ public sealed class EnchantmentExtractorTests
 
     private static EnchantmentAsset Build(
         string enchantmentName = "Flame",
+        string? tooltipSource = null,
         IReadOnlyList<SnapshotRef>? appliesToItemRefs = null,
         IReadOnlyList<EnchantmentEffectAsset>? effects = null,
-        int blacklistEntryCount = 0) => new(
+        int blacklistEntryCount = 0,
+        bool tooltipDependsOnItem = false) => new(
         Guid: "enchantment-guid",
         AssetName: "enchantment",
         EnchantmentName: enchantmentName,
         MoneyValue: 12.5f,
         HideEffectTooltips: false,
+        TooltipSource: tooltipSource,
         AppliesToItemRefs: appliesToItemRefs,
         Effects: effects,
-        BlacklistEntryCount: blacklistEntryCount);
+        BlacklistEntryCount: blacklistEntryCount,
+        TooltipDependsOnItem: tooltipDependsOnItem);
 
     private sealed class FakeSource : IEnchantmentAssetSource
     {

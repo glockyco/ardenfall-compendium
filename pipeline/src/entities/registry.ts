@@ -241,7 +241,8 @@ export const entityRegistry: Record<string, EntityModule> = {
   enchantment: {
     ddl: ENCHANTMENT_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseEnchantments(db, envelope),
-    readModel: ({ db, entity }) => emitEnchantmentReadModels(db, entity.site?.route),
+    readModel: ({ db, entity, snapshot }) =>
+      emitEnchantmentReadModels(db, entity.site?.route, snapshot.masterTooltip),
   },
   faction: {
     ddl: FACTION_DDL,

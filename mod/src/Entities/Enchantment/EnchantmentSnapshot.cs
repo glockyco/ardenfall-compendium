@@ -7,13 +7,15 @@ namespace ArdenfallCompendium.Entities.Enchantment;
 public sealed record EnchantmentEffectSnapshot(
     [property: JsonProperty("ordinal")] int Ordinal,
     [property: JsonProperty("kind")] string Kind,
-    [property: JsonProperty("statusEffectRef")] SnapshotRef? StatusEffectRef);
+    [property: JsonProperty("statusEffectRef")] SnapshotRef? StatusEffectRef,
+    [property: JsonProperty("tooltipSource")] string? TooltipSource);
 
 public sealed record EnchantmentSnapshot(
     [property: JsonProperty("id")] string Id,
     [property: JsonProperty("enchantmentName")] string? EnchantmentName,
     [property: JsonProperty("moneyValue")] float MoneyValue,
     [property: JsonProperty("hideEffectTooltips")] bool HideEffectTooltips,
+    [property: JsonProperty("tooltipSource")] string? TooltipSource,
     [property: JsonProperty("appliesToItemRefs")] IReadOnlyList<SnapshotRef> AppliesToItemRefs,
     [property: JsonProperty("effects")] IReadOnlyList<EnchantmentEffectSnapshot> Effects);
 

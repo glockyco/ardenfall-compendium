@@ -55,6 +55,7 @@ public sealed class LoadedEnchantmentAssetSource : IEnchantmentAssetSource
             }
 
             var effects = new List<EnchantmentEffectAsset>();
+            var effectTooltipDependsOnItem = false;
             foreach (var effect in asset.effects ?? new List<EnchantmentEffect>())
             {
                 if (effect == null) continue;
@@ -69,19 +70,46 @@ public sealed class LoadedEnchantmentAssetSource : IEnchantmentAssetSource
                         _assetName,
                         "StatusEffectEnchantmentEffect.statusEffect");
                 }
-                effects.Add(new EnchantmentEffectAsset(kind, statusEffectRef));
+
+                var tooltipDependsOnItem = effect is SubTooltipEnchantmentEffect subTooltip
+                    && HasItemTargetVariables(subTooltip.tooltip);
+                effectTooltipDependsOnItem |= tooltipDependsOnItem;
+                effects.Add(new EnchantmentEffectAsset(
+                    Kind: kind,
+                    StatusEffectRef: statusEffectRef,
+                    TooltipSource: tooltipDependsOnItem
+                        ? null
+                        : NullIfEmpty(effect.GetSubTooltip(1f, asset, null)),
+                    TooltipDependsOnItem: tooltipDependsOnItem));
             }
 
+            var assembledTooltipDependsOnItem = HasItemTargetVariables(asset.tooltip);
             yield return new EnchantmentAsset(
                 Guid: _lookupGuid(asset),
                 AssetName: _assetName(asset),
                 EnchantmentName: asset.enchantmentName,
                 MoneyValue: asset.moneyValue,
                 HideEffectTooltips: asset.hideEffectTooltips,
+                TooltipSource: assembledTooltipDependsOnItem || effectTooltipDependsOnItem || asset.tooltip == null
+                    ? null
+                    : NullIfEmpty(asset.GetTooltip(1f, null)),
                 AppliesToItemRefs: itemRefs,
                 Effects: effects,
-                BlacklistEntryCount: asset.baseItemDataFilterBlacklist?.Count ?? 0);
+                BlacklistEntryCount: asset.baseItemDataFilterBlacklist?.Count ?? 0,
+                TooltipDependsOnItem: assembledTooltipDependsOnItem);
         }
+    }
+
+    private static string? NullIfEmpty(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value;
+
+    private static bool HasItemTargetVariables(EnchantmentTooltip? tooltip)
+    {
+        foreach (var variable in tooltip?.variables ?? new List<EnchantmentTooltip.TooltipEnchVar>())
+        {
+            if (variable?.targetVars != null && variable.targetVars.Count > 0) return true;
+        }
+        return false;
     }
 
     private static T ReadField<T>(object value, string field)
