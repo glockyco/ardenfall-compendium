@@ -26,6 +26,18 @@ Five audits ran over gate flags, publicity rules, numeric units, display names a
 
 ## Findings
 
+### A whitelist names a prototype to mean its descendants
+
+`EnchantmentData.baseItemDataFilterWhitelist` is evaluated with `HasParentInChain` (`Ardenfall/Item/EnchantmentData.cs:116-129`). The field does not identify one concrete item. It names a prototype so every descendant qualifies. Publishing the whitelist literally produced **139** links reading `Can enchant → Base`.
+
+The relationship extractor must resolve an unpublishable whitelist target through its full item inheritance chain, emit one `enchants` edge for each publishable descendant, and emit none to the prototype. The live whitelist has 19 distinct targets, 18 of them prototypes, and resolves to 484 publishable descendants. This is a relationship interpretation, not a name or route workaround.
+
+### Character names are random runtime values
+
+`CharacterData.CharName` has no authored value (`Ardenfall/CharacterData.cs:165-183`). While the game plays, the accessor assigns `new CharacterRandomName(Race)`. All **212** character definitions are nameless by design, so the extractor must not treat the runtime random name as authored identity.
+
+Every current character page is titled `Unnamed character`, and all 212 have no inbound link. Sixty are prototypes. Whether character definitions should have public pages remains an open maintainer decision. The inheritance audit records the evidence and the options without choosing one.
+
 ### A standalone recipe was anchored to an incidental item owner
 
 `Ardenfall/Item/PotionRecipe.cs:8` defines `PotionRecipe` as a standalone `ScriptableObject`. A live probe measured **48** `PotionRecipe` assets, but the compendium reached recipes only through the two items that happen to be `PotionRecipeItemData`, whose `recipe` field is declared in `Ardenfall/Item/PotionRecipeItemData.cs:10`. The `item_potion_recipes` table therefore shipped **2 rows**, and nothing in `pipeline/src` or `site/src` read those rows.

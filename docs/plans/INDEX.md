@@ -9,6 +9,7 @@
 - **Repository Health Audit — Open Findings** [audit] `2026-08-02-repo-health-audit` ← 2026-04-29-ardenfall-compendium-roadmap
 - **Extraction Coverage** [audit] `2026-08-03-extraction-coverage` ← 2026-04-29-ardenfall-compendium-roadmap
 - **Game Field Assumptions Audit, 2026-08-03** [audit] `2026-08-03-game-field-assumptions` ← 2026-04-29-ardenfall-compendium-roadmap
+- **Item and Character Inheritance Audit, 2026-08-04** [audit] `2026-08-04-item-character-inheritance` ← 2026-04-29-ardenfall-compendium-roadmap
 
 ## draft
 

@@ -477,7 +477,9 @@ So the next connective work is no longer a field, it is an entity:
 
 **Before that**, relationships were unified. Four slices in one day each grew a bespoke site accessor beside a generic mechanism that already existed, which is the Ancient Kingdoms failure exactly. Relationships are now declared once by predicate, the pipeline projects sections from the edges it emits, and an unregistered predicate fails the build. Adding a relationship is one registry entry and no site change, which matters because obtainability adds five at once.
 
-5. **Item obtainability and authored item connectivity**, in progress. Not loot alone. [`2026-08-02-item-obtainability`](2026-08-02-item-obtainability.md) measures every route by which a player can get or understand an item.
+5. **Item obtainability, inheritance, and authored item connectivity**, in progress. Not loot alone. [`2026-08-02-item-obtainability`](2026-08-02-item-obtainability.md) measures every route by which a player can get or understand an item. [`2026-08-04-item-character-inheritance`](2026-08-04-item-character-inheritance.md) records the prototype mechanism and its reader-facing decisions.
+
+   **Inheritance is part of item connectivity.** Item and character parent references are extracted from the game's `ParameterizedObject.parent` chain. The item read model suppresses 73 template-named prototypes, resolves `enchants` through 484 publishable descendants instead of 139 prototype links, and emits `derives_from` for the parent relation. The character page question remains open because all 212 character definitions are nameless by design and have no inbound link.
 
    The cheap authored addition is two standalone entities. `PotionRecipe` has **48** assets and reaches **127** currently unlinked items. `EnchantmentData` has **64** assets and reaches **19** currently unlinked items. Together they give **158** currently unreachable item pages a first inbound link and add **112** pages of their own without a world walk.
 

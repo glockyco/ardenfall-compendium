@@ -48,6 +48,12 @@ The 2026-08-03 release materializes 2,266 detail pages. A rendered-detail measur
 
 The 2026-08-03 release also extracts 38 `QuestData` rows with graph-backed read models.
 
+### Item inheritance is covered, world provenance is not
+
+Item and character snapshots now carry `parentRef`, and canonical rows carry `items.parent_ref_json` and `characters.parent_ref_json`. The item relation covers **1,238 of 1,273** items with a parent and the character relation covers **210 of 212** definitions. The item read model also classifies the 73 unpublishable prototype names and resolves chain-matched relationships as described in [`2026-08-04-item-character-inheritance`](2026-08-04-item-character-inheritance.md).
+
+This does not extract item provenance from streamed world content. The **683-cell** world walk remains the work between the compendium and the **278** items behind **182** scene-owned item lists. Inheritance extraction does not change that traversal or its cost.
+
 ## What the game holds and the compendium does not cover
 
 The missing content falls into three groups. The groups have different extraction costs.
