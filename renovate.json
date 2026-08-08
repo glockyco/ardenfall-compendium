@@ -1,4 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["local>glockyco/renovate-config"]
+  "extends": ["local>glockyco/renovate-config"],
+  "packageRules": [
+    {
+      "description": "TypeScript 7 awaits Svelte Check and typescript-eslint support",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7"
+    }
+  ]
 }
