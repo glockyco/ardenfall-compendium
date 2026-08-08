@@ -15,6 +15,13 @@ function copyArtifact(): { artifactDir: string; targetDir: string; root: string 
   return { artifactDir, targetDir: join(root, "static"), root };
 }
 
+function setDirtyProvenance(artifactDir: string): void {
+  const manifestPath = join(artifactDir, "artifact-manifest.json");
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as ArtifactManifest;
+  manifest.git.dirty = true;
+  writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+}
+
 function setReleaseProvenance(artifactDir: string, dirty: boolean): ArtifactManifest {
   const manifestPath = join(artifactDir, "artifact-manifest.json");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as ArtifactManifest;
@@ -78,6 +85,7 @@ describe("stage artifact provenance", () => {
 
   it("still stages a dirty fixture artifact", async () => {
     const { artifactDir, targetDir, root } = copyArtifact();
+    setDirtyProvenance(artifactDir);
     try {
       const result = await stageArtifact({ artifactDir, targetDir, mode: "fixture" });
       expect(result.manifest.artifactKind).toBe("fixture");
