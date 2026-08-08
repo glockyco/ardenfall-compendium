@@ -127,3 +127,24 @@ jobs:
       - run: bun run check:entity-fields
       - run: bun run check:fixtures
         env: { CI: "true" }
+
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [changes, lint, pipeline, site, mod, fixtures]
+    steps:
+      - name: Require every applicable CI job
+        run: |
+          test "${{ needs.changes.result }}" = success
+          test "${{ needs.lint.result }}" = success
+          for result in \
+            "${{ needs.pipeline.result }}" \
+            "${{ needs.site.result }}" \
+            "${{ needs.mod.result }}" \
+            "${{ needs.fixtures.result }}"; do
+            case "$result" in
+              success | skipped) ;;
+              *) exit 1 ;;
+            esac
+          done
