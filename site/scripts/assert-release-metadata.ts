@@ -43,4 +43,4 @@ if (readFailure || artifactKind !== "release" || sourceKind !== "live-game-expor
   );
 }
 
-console.log(`Verified release artifact ${artifactId} for Wrangler deployment.`);
+process.stdout.write(`Verified release artifact ${artifactId} for Wrangler deployment.\n`);
