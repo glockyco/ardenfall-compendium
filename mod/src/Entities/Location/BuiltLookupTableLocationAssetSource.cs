@@ -45,7 +45,6 @@ public sealed class BuiltLookupTableLocationAssetSource : ILocationAssetSource
                 yield return null!;
                 continue;
             }
-            if (!asset.enabled) continue;
             yield return ToRecord(asset, _lookupGuid, _assetName);
         }
     }

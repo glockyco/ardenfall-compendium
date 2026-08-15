@@ -67,8 +67,16 @@ public sealed class LocationExtractorTests
 
         Assert.Single(rows);
         Assert.Empty(rows[0].Fields.Volumes);
-        Assert.Contains(rows[0].Diagnostics, d =>
-            d.Code == "locationVolumesMalformed" && d.Field == "volumes" && d.Message.Contains("location-malformed"));
+        var diagnostic = Assert.Single(rows[0].Diagnostics);
+        Assert.Equal("locationVolumesMalformed", diagnostic.Code);
+        Assert.Equal("volumes", diagnostic.Field);
+        var message = diagnostic.Message;
+        Assert.NotNull(message);
+        if (message is null)
+        {
+            throw new Xunit.Sdk.XunitException("Expected a location volume diagnostic message.");
+        }
+        Assert.Contains("location-malformed", message);
     }
 
     [Fact]
@@ -87,7 +95,7 @@ public sealed class LocationExtractorTests
     }
 
     [Fact]
-    public void BuiltLookupSourceSkipsUnityNullAndDisabledLocations()
+    public void BuiltLookupSourceExtractsDisabledLocations()
     {
         var enabled = RuntimeLocation("enabled", enabled: true);
         var disabled = RuntimeLocation("disabled", enabled: false);
@@ -97,9 +105,12 @@ public sealed class LocationExtractorTests
             lookupGuid: asset => ReferenceEquals(asset, enabled) ? "enabled-guid" : "disabled-guid",
             assetName: asset => ((LocationAsset)asset).locationID);
 
-        var row = Assert.Single(source.EnumerateLocations());
+        var rows = new LocationExtractor(source).Walk().ToList();
 
-        Assert.Equal("enabled-guid", row.Guid);
+        Assert.Equal(2, rows.Count);
+        Assert.True(Assert.Single(rows, row => row.Id == "enabled-guid").Fields.Enabled);
+        var disabledRow = Assert.Single(rows, row => row.Id == "disabled-guid");
+        Assert.False(disabledRow.Fields.Enabled);
     }
 
     private sealed class FakeLocationAssetSource : ILocationAssetSource
