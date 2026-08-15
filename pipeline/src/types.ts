@@ -13,6 +13,7 @@ export interface EntityDescriptor {
     options?: Record<string, unknown>;
   };
   canonicalTable: string;
+  naming?: NamingDescriptor;
   definition?: { entity: string; via: string };
   placement?: { kind: "point" | "volume" | "point+volume"; from: string };
   presentationContext?: { renderContext: string };
@@ -33,6 +34,16 @@ export interface VariantDescriptor {
   hasPage?: boolean;
   position?: number;
   fields: FieldSpec[];
+}
+
+export interface NamingDescriptor {
+  displayName?: NamingSource;
+  authoringLabel?: NamingSource;
+}
+
+export interface NamingSource {
+  from: string;
+  policy: "player-visible" | "designer-identifier";
 }
 
 export type FieldType =

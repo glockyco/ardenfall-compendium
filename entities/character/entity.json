@@ -9,6 +9,12 @@
     "walker": "CharacterExtractor"
   },
   "canonicalTable": "characters",
+  "naming": {
+    "displayName": {
+      "from": "charName.Get()?.name",
+      "policy": "player-visible"
+    }
+  },
   "presentationContext": { "renderContext": "character-presentation-v1" },
   "site": {
     "route": "/characters",

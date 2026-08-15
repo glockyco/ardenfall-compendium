@@ -56,6 +56,7 @@
         "renderContext": { "type": "string", "minLength": 1 }
       }
     },
+    "naming": { "$ref": "#/$defs/naming" },
     "canonicalTable": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
     "fields": {
       "type": "array",
@@ -114,6 +115,23 @@
     }
   ],
   "$defs": {
+    "naming": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "displayName": { "$ref": "#/$defs/namingSource" },
+        "authoringLabel": { "$ref": "#/$defs/namingSource" }
+      }
+    },
+    "namingSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "policy"],
+      "properties": {
+        "from": { "type": "string", "minLength": 1 },
+        "policy": { "enum": ["player-visible", "designer-identifier"] }
+      }
+    },
     "field": {
       "type": "object",
       "additionalProperties": false,

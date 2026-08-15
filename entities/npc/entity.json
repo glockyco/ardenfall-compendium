@@ -15,6 +15,16 @@
     }
   },
   "canonicalTable": "npcs",
+  "naming": {
+    "displayName": {
+      "from": "StoredCharacterData.charName.Get()?.name",
+      "policy": "player-visible"
+    },
+    "authoringLabel": {
+      "from": "customFriendlyID",
+      "policy": "designer-identifier"
+    }
+  },
   "presentationContext": { "renderContext": "placed-character-presentation-v1" },
   "site": {
     "route": "/placed-characters",
