@@ -14,9 +14,11 @@
 
 ## 3. Race and name sets
 
-- [x] 3.1 Add `character-race` and `name-set` descriptors, and extract races with their player-visible name and ordered name sets.
-- [x] 3.2 Extract each name set once with its complete seed vocabulary, its generation order, and the races that use it.
+- [ ] 3.1 Add `character-race` and `name-set` descriptors, and extract races with their player-visible name and ordered name sets.
+- [ ] 3.2 Extract each name set once with its complete seed vocabulary, its generation order, and the races that use it.
 - [x] 3.3 Link every character definition and placement that resolves a race, and diagnose the three definitions that resolve none: one authoring omission chain `base_creature` → `mon_ato` → `mon_ato-baby`.
+- [ ] 3.4 Register both families in the export lifecycle, so a live run writes `character-races.json` and `name-sets.json`, counts them, aggregates their diagnostics, and evicts their caches. Descriptors, extractors, sources and fixtures exist, yet no live snapshot has ever contained either family.
+- [ ] 3.5 Fail the controller's snapshot validation and the pipeline's snapshot load when a descriptor declaring an extraction source has no snapshot file or no manifest count, distinguishing an absent family from an empty one. Both gates accepted the omission above, which surfaced three stages later as `no such table: character_race_overview_rows` during the site build.
 
 ## 4. Canonical data and read models
 
