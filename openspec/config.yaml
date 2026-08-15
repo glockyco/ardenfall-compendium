@@ -1,0 +1,35 @@
+schema: spec-driven
+
+context: |
+  Ardenfall Compendium extracts data from the Ardenfall Demo, a Unity Mono game, and publishes it as a static compendium.
+  Four subsystems: mod/ is a C# BepInEx walker, pipeline/ canonicalises snapshots into SQLite artifacts with Bun, site/ prerenders SvelteKit pages onto Cloudflare Workers Static Assets, and controller/ drives the game over HotRepl.
+  Nix provides the toolchain. `nix develop` is the entry point for every command.
+  `entities/<id>/entity.json` is the only cross-subsystem source of truth for entity shape, and its `site.route` decides whether an entity gets a public page. Do not restate entity shape in TypeScript, SQL or C#.
+  Ground every claim about game behaviour in the decompiled source under `.decompiled/`, then confirm data shape with a live export. Runtime reflection and prior documentation are not sources of truth.
+  Public presentation and link contracts are generated pipeline data. The site renders typed read models, rich-text nodes and relationship edges. Route code never parses descriptors or renders raw game markup.
+  Replace public contracts by clean cutover: remove the old read model, route, component or fallback in the same change. Keep temporary inspection private.
+  Fail fast when source-of-truth data is missing. Emit a diagnostic or fail the slice. Never hand-edit generated or deployed output.
+  Follow AGENTS.md and the relevant subsystem skill before implementation.
+
+rules:
+  proposal:
+    - State the reader-facing problem, the game evidence behind it, goals, and non-goals.
+    - Name every entity descriptor, public route and relationship predicate the change adds, changes or removes.
+  design:
+    - Cite decompiled game source or a live measurement for each claim about game data. Give file and line, or the probe and its result.
+    - Record which subsystem owns each new field, read model and page, and which old contract the change removes.
+  specs:
+    - Express observable contracts as testable scenarios: emitted tables and columns, public routes, relationship sections, and diagnostics.
+  tasks:
+    - Group work into atomic Conventional Commit units, one subsystem boundary at a time.
+    - Cover descriptor, mod, pipeline, site, synthetic fixture, documentation and cleanup work.
+
+operations:
+  apply:
+    guidance:
+      - Implement commits sequentially in the main working tree.
+      - Run the scoped tests for each touched subsystem, then the full gate in AGENTS.md before publication.
+      - Run a live export whenever the change alters extraction, and record its counts and diagnostics.
+  archive:
+    guidance:
+      - Archive only after the gate passes and the roadmap slice records the verification evidence.
