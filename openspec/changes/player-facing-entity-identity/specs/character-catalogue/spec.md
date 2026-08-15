@@ -4,9 +4,9 @@ Defines the two reader-facing character families, what each page answers for a p
 
 ## ADDED Requirements
 
-### Requirement: Characters are the individuals a player meets
+### Requirement: Characters are the placed characters a player can meet
 
-`/characters` MUST hold placed characters that carry their own authored name. A page MUST answer who this character is: the name the game shows, where the character stands, what type the character is, and the quests, dialogue and factions attached to them.
+`/characters` MUST hold every extracted placement. A page MUST answer who this character is: the name the game shows and where that name comes from, where the character stands, what type the character is, and the quests, dialogue and factions attached to them.
 
 #### Scenario: A named individual gets a page
 
@@ -21,12 +21,19 @@ Defines the two reader-facing character families, what each page answers for a p
 - **THEN** the page title is the authored name
 - **AND** the identifier appears on no public surface
 
-#### Scenario: A placement that inherits its name has no page
+#### Scenario: An inherited name is published with its provenance
 
 - **WHEN** a placement resolves its name from its prototype rather than setting its own
-- **THEN** `/characters` has no page for it
-- **AND** its type's page lists it as a placement
-- **AND** its map marker carries the inherited name
+- **THEN** its page is titled with that name
+- **AND** the page states that the name comes from the character's type and links to the type
+- **AND** an overview listing shows its location so that same-named placements are distinguishable
+
+#### Scenario: A placement with no name is published as unnamed
+
+- **WHEN** a placement resolves no name, including a placement that stores no character data
+- **THEN** its page exists and states that the game gives this character no name
+- **AND** the page shows its location and, when it has one, its type
+- **AND** the page does not display the record id as a title
 
 ### Requirement: Character types are the catalogue of what those individuals are
 

@@ -19,14 +19,17 @@ Three defects sit behind those numbers, and each is a modelling defect rather th
 ## What Changes
 
 - Add an entity identity contract that separates a **display name**, which the game shows a player, from an **authoring label**, which a designer typed. A public page requires a display name. An entity without one keeps its canonical row, its map marker and its relationships, and it is presented by the page that owns it.
-- Apply one prototype rule to every `ParameterizedObject` family, replacing the item-only `BASE`/`PLACEHOLDER`/`{token}` special case with a shared display-name test that items and characters both use.
+- Publish content by default and require behavioural evidence, not an empty name, before withholding a page. 57 of the 59 definitions that look nameless carry a race with name sets, so the game generates their names at runtime; the item prototype exclusion stays because the game's chain matching justifies it.
 - Emit `instance_of` edges from a placement to the definition it derives from, resolved through the prototype chain, and expose the inverse as the placements of a type.
-- Read a placement's display name from its own embedded character data through the prototype chain, so `Saya Sako` and `The Lone Healer` replace `Grainery Owner` and `Unnamed character`.
-- Publish a page for a placement only when the placement carries its **own** authored name. A placement that inherits its type's name is a sighting of that type, not an individual, and appears as a map marker and a row on the type's page.
+- Read a placement's display name from its own embedded character data through the prototype chain, so `Saya Sako` and `The Lone Healer` replace `Grainery Owner` and `Unnamed character`, and record how the game arrived at each name: authored here, inherited from the type, generated from race name sets, or genuinely absent.
+- Keep every placement published. A placement is content a player can encounter, so it keeps its page whatever its name resolves to. Whether the name is the placement's own or inherited from its type is stated on the page as provenance, and a placement with no name says so and identifies itself by its type and its location.
 - Rename the reader-facing families. `Characters` becomes the people and creatures a player meets by name; `Character types` becomes the catalogue of what they are. Neither label names an extraction mechanism.
 - Move dialogue for a quest character without a display name onto the quest page that owns the dialogue graph, so no content depends on a page that the identity contract removes.
 - Apply the identity contract to portals, whose titles become derived presentation with stated provenance rather than authoring strings.
-- **BREAKING**: `/placed-characters` is removed. Named individuals move to `/characters`, and definitions move to `/character-types`. The 59 nameless definitions and the placements without their own name lose their pages.
+- Separate **availability** from identity. Content the game marks unavailable stays extracted and published, and is marked. Extraction MUST NOT drop a row because a game flag says the content is off: `BuiltLookupTableLocationAssetSource` skips `LocationAsset.enabled == false` today, which makes the `Enabled` field it exports unable to be false and would silently delete locations from the map the moment a build disables one.
+- Mark availability the same way in every family. Quests already carry `disabled` and `hidden_in_quest_ui` and state them, but as a sentence on the overview and a `Disabled: No` row on 28 detail pages, and no other family states availability at all.
+- Publish `character-race` as an entity, because it is the authored vocabulary that names 57 definitions and every character the game names at runtime, and because it is the classification a reader recognises.
+- **BREAKING**: `/placed-characters` is removed. Every placement moves to `/characters`, and definitions move to `/character-types`. No page disappears.
 
 ### Goals
 
@@ -48,6 +51,8 @@ Three defects sit behind those numbers, and each is a modelling defect rather th
 - `entity-identity`: display name and authoring label, their provenance, and the rule that decides whether an entity has a public page.
 - `entity-inheritance`: the prototype chain, prototype classification, and the relation between a placed instance and its definition.
 - `character-catalogue`: the two reader-facing character families, their pages, their map behaviour, and where dialogue lives.
+- `content-availability`: how content the game marks unavailable is extracted, published and marked, and why the compendium never states that such content is unreachable.
+- `character-race`: the race entity, its name sets, and how it explains every generated character name.
 
 ## Impact
 

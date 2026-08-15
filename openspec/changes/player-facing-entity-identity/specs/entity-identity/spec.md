@@ -46,29 +46,73 @@ A resolved `player-visible` candidate becomes a display name only when it passes
 - **THEN** the value is not a display name
 - **AND** the item keeps the same treatment it has today
 
-### Requirement: A public page requires a display name
+### Requirement: Content is published unless the game's own behaviour says it is not content
 
-An entity MUST have a public page only when it resolves a display name. An entity without one MUST keep its canonical row, its placement, its map marker and its relationship edges, and MUST be presented by the page that owns it, such as its type, its location or its quest.
+The compendium MUST publish every authored row by default. Withholding a page requires evidence from game behaviour that the object is never presented to a player as itself. An absent name is NOT such evidence: it means the naming mechanism has not been understood yet, and it MUST be investigated and modelled rather than treated as grounds for exclusion.
 
-#### Scenario: A nameless definition is data without a page
+Two facts measured on 2026-08-15 make this concrete. 57 of the 59 character definitions that resolve no stored name carry a race with a player-visible name and two name sets, so the game generates a name for them at runtime and a player always sees one. Scene spawners hold direct `CharacterData` references through `NPCRandomSpawnerGroup.NPCSelection.characterData` and `WeightedNPCRandomSpawnerGroup.manualCharacterList`, so the absence of a placement at rest does not show that a definition is never instantiated.
 
-- **WHEN** the pipeline emits the 59 definitions that resolve no display name
-- **THEN** no `entity_nodes` row for them has `has_page = 1`
-- **AND** no sitemap entry, prerendered page or search index entry exists for them
-- **AND** their rows remain in the canonical table
+#### Scenario: A definition with no stored name is published
 
-#### Scenario: A nameless placement stays on the map
+- **WHEN** a definition resolves no stored name but its race supplies name sets
+- **THEN** it keeps its public page
+- **AND** the page states that the game generates each character's name from that race's name sets
+- **AND** the page names the race
 
-- **WHEN** a placement resolves no display name of its own
-- **THEN** it has no page
-- **AND** its map point still renders on its layer
-- **AND** the page that owns it lists it
+#### Scenario: Exclusion requires behavioural evidence
 
-#### Scenario: An entity with no display name is never an edge target
+- **WHEN** a family proposes to withhold pages for a class of rows
+- **THEN** the descriptor records the game behaviour that justifies it, such as the chain matching that makes an item prototype stand for its descendants
+- **AND** the pipeline reports how many rows the exclusion covers, so the decision stays visible in every export
 
-- **WHEN** a relationship would point at an entity without a display name
+#### Scenario: An excluded row remains data
+
+- **WHEN** a row is withheld from publication on that evidence
+- **THEN** its canonical row still exists
+- **AND** a diagnostic names it and the rule that withheld it
+
+#### Scenario: A placement without a name keeps its page
+
+- **WHEN** a placement resolves no display name at all
+- **THEN** it keeps its page, its canonical row and its map marker
+- **AND** the page states that the game gives this character no name
+- **AND** the page identifies the character by its type and its location
+
+#### Scenario: A placement whose name comes from its type keeps its page
+
+- **WHEN** a placement inherits its name from its prototype, as the eight `Darvaki` placements do
+- **THEN** each keeps its own page titled with that name
+- **AND** each page states that the name comes from the character's type
+- **AND** listings disambiguate them by location
+
+#### Scenario: An authoring artifact is never an edge target
+
+- **WHEN** a relationship would point at a definition that resolves no display name
 - **THEN** the edge is suppressed
 - **AND** the source row records a diagnostic naming the predicate and the unpublishable target
+
+### Requirement: A name carries the provenance that explains it
+
+Every published display name MUST carry how the game arrived at it. The states are: authored on this row; inherited from the row's prototype; generated at runtime from an authored vocabulary; or genuinely absent. Presentation MUST state the provenance whenever it is not the first case.
+
+#### Scenario: A generated name is explained, not faked
+
+- **WHEN** a character resolves no stored name and its race carries name sets
+- **THEN** the display name is recorded as generated rather than as a string
+- **AND** the page says that the game builds the name from that race's name sets when the player meets the character
+- **AND** the compendium shows no example name, because an example would be one roll of many
+
+#### Scenario: An inherited name says where it came from
+
+- **WHEN** a placement's name resolves through its prototype
+- **THEN** the page states that the name comes from the character's type
+- **AND** links to that type
+
+#### Scenario: A name is genuinely absent
+
+- **WHEN** a character has no stored name, and no race or a race with no name sets, as `mannequin` does
+- **THEN** the row records that no naming mechanism exists
+- **AND** a diagnostic names the row and the field
 
 ### Requirement: Absence of a name is reported, never invented
 
