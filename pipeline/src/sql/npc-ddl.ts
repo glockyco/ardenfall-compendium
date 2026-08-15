@@ -41,7 +41,10 @@ CREATE TABLE npc_presentation_rows (
   map_id            TEXT,
   map_x             REAL NOT NULL,
   map_y             REAL NOT NULL,
-  elevation         REAL NOT NULL,
-  location_ids_json TEXT NOT NULL
+  elevation            REAL NOT NULL,
+  location_ids_json    TEXT NOT NULL,
+  character_type_id    TEXT,
+  character_type_label TEXT,
+  character_type_route_path TEXT
 );
 `;

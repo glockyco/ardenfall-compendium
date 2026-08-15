@@ -41,7 +41,8 @@ describe("placed-character and portal site read models", () => {
           id TEXT PRIMARY KEY, name TEXT NOT NULL,
           display_name_provenance TEXT NOT NULL, display_name_owner TEXT,
           render_context TEXT NOT NULL, map_id TEXT, map_x REAL NOT NULL,
-          map_y REAL NOT NULL, elevation REAL NOT NULL, location_ids_json TEXT NOT NULL
+          map_y REAL NOT NULL, elevation REAL NOT NULL, location_ids_json TEXT NOT NULL,
+          character_type_id TEXT, character_type_label TEXT, character_type_route_path TEXT
         );
         CREATE TABLE entity_nodes (
           entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, label TEXT NOT NULL,
@@ -55,11 +56,11 @@ describe("placed-character and portal site read models", () => {
           edges_json TEXT NOT NULL
         );
         INSERT INTO npc_presentation_rows VALUES
-          ('npc-ada', 'Ada', 'own', NULL, 'placed-character-presentation-v1', 'overworld', 1, 2, 3, '[]'),
-          ('npc-darvaki-a', 'Darvaki', 'own', NULL, 'placed-character-presentation-v1', 'overworld', 4, 5, 6, '["location-woods"]'),
-          ('npc-darvaki-b', 'Darvaki', 'inherited', 'type-darvaki', 'placed-character-presentation-v1', 'overworld', 7, 8, 9, '["location-ruins"]'),
-          ('npc-unnamed-a', 'Unnamed character', 'absent', NULL, 'placed-character-presentation-v1', 'overworld', 10, 11, 12, '[]'),
-          ('npc-unnamed-b', 'Unnamed character', 'absent', NULL, 'placed-character-presentation-v1', NULL, 13, 14, 15, '[]');
+          ('npc-ada', 'Ada', 'own', NULL, 'placed-character-presentation-v1', 'overworld', 1, 2, 3, '[]', NULL, NULL, NULL),
+          ('npc-darvaki-a', 'Darvaki', 'own', NULL, 'placed-character-presentation-v1', 'overworld', 4, 5, 6, '["location-woods"]', NULL, NULL, NULL),
+          ('npc-darvaki-b', 'Darvaki', 'inherited', 'type-darvaki', 'placed-character-presentation-v1', 'overworld', 7, 8, 9, '["location-ruins"]', NULL, NULL, NULL),
+          ('npc-unnamed-a', 'Unnamed character', 'absent', NULL, 'placed-character-presentation-v1', 'overworld', 10, 11, 12, '[]', NULL, NULL, NULL),
+          ('npc-unnamed-b', 'Unnamed character', 'absent', NULL, 'placed-character-presentation-v1', NULL, 13, 14, 15, '[]', NULL, NULL, NULL);
         INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
           ('npc', 'npc-ada', 'Ada', 'Ada', '/placed-characters/ada--11111111', 'ada--11111111', '11111111', 1),
           ('npc', 'npc-darvaki-a', 'Darvaki', 'Darvaki', '/placed-characters/darvaki--44444444', 'darvaki--44444444', '44444444', 1),
@@ -98,7 +99,7 @@ describe("placed-character and portal site read models", () => {
     );
   });
 
-  it("resolves named and unnamed placed-character detail rows", async () => {
+  it("resolves named, race and missing placed-character types", async () => {
     await withDatabase(
       "ardenfall-site-placed-character-detail-",
       `
@@ -114,7 +115,8 @@ describe("placed-character and portal site read models", () => {
           id TEXT PRIMARY KEY, name TEXT NOT NULL,
           display_name_provenance TEXT NOT NULL, display_name_owner TEXT,
           render_context TEXT NOT NULL, map_id TEXT, map_x REAL NOT NULL,
-          map_y REAL NOT NULL, elevation REAL NOT NULL, location_ids_json TEXT NOT NULL
+          map_y REAL NOT NULL, elevation REAL NOT NULL, location_ids_json TEXT NOT NULL,
+          character_type_id TEXT, character_type_label TEXT, character_type_route_path TEXT
         );
         CREATE TABLE entity_nodes (
           entity_type TEXT NOT NULL, entity_id TEXT NOT NULL, label TEXT NOT NULL,
@@ -125,19 +127,22 @@ describe("placed-character and portal site read models", () => {
         CREATE TABLE map_points (
           id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
           map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,
-          enabled INTEGER NOT NULL, show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
+          enabled INTEGER NOT NULL, show_on_map_debug_only INTEGER NOT NULL,
+          allow_fast_travel INTEGER NOT NULL
         );
         CREATE TABLE map_volumes (
           id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
           map_id TEXT, geometry_json TEXT NOT NULL, elevation_min REAL, elevation_max REAL
         );
         INSERT INTO npc_presentation_rows VALUES
-          ('npc-ada', 'Ada', 'own', NULL, 'placed-character-presentation-v1', 'overworld', 1, 2, 3, '["location-woods"]'),
-          ('npc-inherited', 'Captain', 'inherited', 'preset_captain', 'placed-character-presentation-v1', 'overworld', 4, 5, 6, '[]'),
-          ('npc-unnamed', 'Unnamed character', 'absent', NULL, 'placed-character-presentation-v1', NULL, 7, 8, 9, '[]');
+          ('npc-ada', 'Ada', 'own', NULL, 'placed-character-presentation-v1', 'overworld', 1, 2, 3, '["location-woods"]', 'character-noble', 'Noble', '/character-types/noble--aaaaaaaa'),
+          ('npc-inherited', 'Captain', 'inherited', 'preset_captain', 'placed-character-presentation-v1', 'overworld', 4, 5, 6, '[]', 'character-captain', 'Captain', '/character-types/captain--bbbbbbbb'),
+          ('npc-race', 'Elf Scout', 'own', NULL, 'placed-character-presentation-v1', 'overworld', 10, 11, 12, '[]', 'race-elf', 'Elf', '/character-races/elf--cccccccc'),
+          ('npc-unnamed', 'Unnamed character', 'absent', NULL, 'placed-character-presentation-v1', NULL, 7, 8, 9, '[]', NULL, NULL, NULL);
         INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
           ('npc', 'npc-ada', 'Ada', 'Ada', '/placed-characters/ada--11111111', 'ada--11111111', '11111111', 1),
           ('npc', 'npc-inherited', 'Captain', 'Captain', '/placed-characters/captain--33333333', 'captain--33333333', '33333333', 1),
+          ('npc', 'npc-race', 'Elf Scout', 'Elf Scout', '/placed-characters/elf-scout--44444444', 'elf-scout--44444444', '44444444', 1),
           ('npc', 'npc-unnamed', 'Unnamed character', 'Unnamed character', '/placed-characters/unnamed-character--22222222', 'unnamed-character--22222222', '22222222', 1),
           ('location', 'location-woods', 'Shisivi Wood', 'Shisivi Wood', '/locations/shisivi-wood--33333333', 'shisivi-wood--33333333', '33333333', 1);
         INSERT INTO map_points VALUES
@@ -148,6 +153,11 @@ describe("placed-character and portal site read models", () => {
           name: "Ada",
           displayNameProvenance: "own",
           displayNameOwner: null,
+          characterType: {
+            id: "character-noble",
+            label: "Noble",
+            routePath: "/character-types/noble--aaaaaaaa",
+          },
           mapLabel: "Overworld",
           mapX: 1,
           mapY: 2,
@@ -158,10 +168,24 @@ describe("placed-character and portal site read models", () => {
           name: "Captain",
           displayNameProvenance: "inherited",
           displayNameOwner: "preset_captain",
+          characterType: {
+            id: "character-captain",
+            label: "Captain",
+            routePath: "/character-types/captain--bbbbbbbb",
+          },
           mapLabel: "Overworld",
           mapX: 4,
           mapY: 5,
           locations: [],
+        });
+        expect(readModels.getPlacedCharacterPresentation("elf-scout--44444444")).toMatchObject({
+          name: "Elf Scout",
+          displayNameProvenance: "own",
+          characterType: {
+            id: "race-elf",
+            label: "Elf",
+            routePath: "/character-races/elf--cccccccc",
+          },
         });
         expect(
           readModels.getPlacedCharacterPresentation("unnamed-character--22222222"),
@@ -169,6 +193,7 @@ describe("placed-character and portal site read models", () => {
           name: "Unnamed character",
           displayNameProvenance: "absent",
           displayNameOwner: null,
+          characterType: null,
           mapHref: null,
           locations: [],
         });
@@ -194,7 +219,8 @@ describe("placed-character and portal site read models", () => {
         CREATE TABLE map_points (
           id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
           map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,
-          enabled INTEGER NOT NULL, show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
+          enabled INTEGER NOT NULL, show_on_map_debug_only INTEGER NOT NULL,
+          allow_fast_travel INTEGER NOT NULL
         );
         CREATE TABLE map_volumes (
           id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,

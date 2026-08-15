@@ -1,10 +1,13 @@
 import type { Database } from "bun:sqlite";
+import { resolveCharacterType, resolveReferenceId } from "../character-type.ts";
+import type { CharacterTypeResolution } from "../character-type.ts";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
 import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
 
 interface NpcRow {
   id: string;
   record_ref_json: string;
+  character_ref_json: string | null;
   display_name: string | null;
   display_name_provenance: string;
   display_name_owner: string | null;
@@ -30,7 +33,7 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
   const writeNode = prepareEntityNodeWriter(db);
   const npcRows = db
     .query<NpcRow, []>(
-      `SELECT npcs.id, npcs.record_ref_json, npcs.display_name,
+      `SELECT npcs.id, npcs.record_ref_json, npcs.character_ref_json, npcs.display_name,
               provenance.provenance AS display_name_provenance,
               provenance.owner AS display_name_owner
        FROM npcs
@@ -72,11 +75,42 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
       .all()
       .map((row) => row.entity_id),
   );
+  const characterNodes = new Map(
+    db
+      .query<{ entity_id: string; has_page: number }, []>(
+        `SELECT entity_id, has_page
+         FROM entity_nodes
+         WHERE entity_type = 'character' AND has_page = 1`,
+      )
+      .all()
+      .map((row) => [row.entity_id, row] as const),
+  );
+  const definitionByNpc = new Map<string, string>();
+  const characterTypeByNpc = new Map<string, CharacterTypeResolution | null>();
+  for (const row of npcRows) {
+    const definitionId = resolveReferenceId(row.character_ref_json, "character");
+    if (definitionId === null || !characterNodes.has(definitionId)) {
+      diagnostics.push({
+        severity: "diagnostic",
+        source: "relationship-graph",
+        code: "npcCharacterReferenceUnresolved",
+        message: `NPC '${row.id}' has an unresolvable character reference.`,
+        entityType: "npc",
+        entityId: row.id,
+        field: "npcs.character_ref_json",
+        evidence: { characterRefJson: row.character_ref_json },
+      });
+      continue;
+    }
+    definitionByNpc.set(row.id, definitionId);
+    characterTypeByNpc.set(row.id, resolveCharacterType(db, definitionId));
+  }
   const presentationInsert = db.prepare(
     `INSERT INTO npc_presentation_rows (
       id, name, display_name_provenance, display_name_owner, render_context,
-      map_id, map_x, map_y, elevation, location_ids_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      map_id, map_x, map_y, elevation, location_ids_json,
+      character_type_id, character_type_label, character_type_route_path
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   const nodeTx = db.transaction(() => {
@@ -102,6 +136,7 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
             ),
         ),
       ];
+      const characterType = characterTypeByNpc.get(row.id) ?? null;
       presentationInsert.run(
         row.id,
         label,
@@ -113,6 +148,9 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
         placement.map_y,
         placement.elevation,
         JSON.stringify(locationIds),
+        characterType?.id ?? null,
+        characterType?.label ?? null,
+        characterType?.routePath ?? null,
       );
       writeNode({
         entityType: "npc",
@@ -136,6 +174,20 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
   );
   const seenPairs = new Set<string>();
   const edgeTx = db.transaction(() => {
+    for (const [npcId, definitionId] of definitionByNpc) {
+      edgeInsert.run(
+        `${npcId}:instance_of:character:${definitionId}`,
+        "npc",
+        npcId,
+        "character",
+        definitionId,
+        "instance_of",
+        "Character type",
+        1,
+        JSON.stringify({ source: "npcs.character_ref_json" }),
+        null,
+      );
+    }
     for (const ref of refs) {
       const npc = npcById.get(ref.npc_id);
       if (!npc) {

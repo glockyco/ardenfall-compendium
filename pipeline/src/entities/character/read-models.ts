@@ -256,7 +256,7 @@ export function emitCharacterReadModels(
       continue;
     }
     const parent = characterNodes.get(parentId);
-    if (!parent || parent.has_page !== 1) {
+    if (!parent) {
       diagnostics.push({
         severity: "diagnostic",
         source: "relationship-graph",

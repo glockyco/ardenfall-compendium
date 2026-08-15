@@ -3,12 +3,43 @@ import { Database } from "bun:sqlite";
 import { canonicaliseNpcs } from "../src/entities/npc/canonicaliser.ts";
 import { emitNpcReadModels } from "../src/entities/npc/read-models.ts";
 import { NPC_DDL } from "../src/sql/npc-ddl.ts";
+import { CHARACTER_DDL } from "../src/sql/character-ddl.ts";
 import { ENTITY_GRAPH_DDL } from "../src/relationships/relationship-graph.ts";
 import { entityRegistry } from "../src/entities/registry.ts";
 import type { NPCSnapshotFields, SnapshotEnvelope } from "../src/types.ts";
 
 const townRef = { kind: "lookupAsset", guid: "town", unityType: "LocationAsset" } as const;
 const caveRef = { kind: "lookupAsset", guid: "cave", unityType: "LocationAsset" } as const;
+const characterNames = ["GraineryOwner", "Fisherman", "GrainThief", "UnnamedCharacter"] as const;
+
+function missingParentRef(): string {
+  return JSON.stringify({ kind: "missing", reason: "noParent", source: "test" });
+}
+
+function seedCharacterDefinitions(db: Database): void {
+  for (const name of characterNames) {
+    const id = `named;character;${name}`;
+    db.run(
+      `INSERT INTO characters (id, character_name, parent_ref_json, race_ref_json, drop_refs_json)
+       VALUES (?, ?, ?, NULL, '[]')`,
+      [id, name, missingParentRef()],
+    );
+    db.run(
+      `INSERT INTO entity_nodes
+         (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+      [
+        "character",
+        id,
+        name,
+        name,
+        `/character-types/${name.toLowerCase()}`,
+        name.toLowerCase(),
+        name.toLowerCase(),
+      ],
+    );
+  }
+}
 
 function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
   return {
@@ -173,6 +204,7 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
 
 function setupCanonicalDb(source: SnapshotEnvelope<NPCSnapshotFields> = envelope()): Database {
   const db = new Database(":memory:");
+  db.exec(CHARACTER_DDL);
   db.exec(`${NPC_DDL}
     CREATE TABLE placements (
       entity_id TEXT NOT NULL, instance_id TEXT NOT NULL, map_id TEXT,
@@ -379,6 +411,7 @@ describe("NPC pipeline", () => {
         ('location', 'town', 'Town', 'Town', '/locations/town', 'town', 'town', 1),
         ('location', 'cave', 'Cave', 'Cave', '/locations/cave', 'cave', 'cave', 1);
     `);
+    seedCharacterDefinitions(db);
     const diagnostics = emitNpcReadModels(db);
     expect(diagnostics).toEqual([]);
     const node = db
@@ -538,6 +571,45 @@ describe("NPC pipeline", () => {
         edge_id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55:found_at:location:town",
       },
     ]);
+    expect(
+      db
+        .query(
+          `SELECT source_id, target_id, predicate, edge_id
+           FROM entity_edges
+           WHERE predicate = 'instance_of'
+           ORDER BY source_id`,
+        )
+        .all(),
+    ).toEqual([
+      {
+        source_id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
+        target_id: "named;character;UnnamedCharacter",
+        predicate: "instance_of",
+        edge_id:
+          "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b:instance_of:character:named;character;UnnamedCharacter",
+      },
+      {
+        source_id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+        target_id: "named;character;GraineryOwner",
+        predicate: "instance_of",
+        edge_id:
+          "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284:instance_of:character:named;character;GraineryOwner",
+      },
+      {
+        source_id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
+        target_id: "named;character;Fisherman",
+        predicate: "instance_of",
+        edge_id:
+          "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55:instance_of:character:named;character;Fisherman",
+      },
+      {
+        source_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        target_id: "named;character;GrainThief",
+        predicate: "instance_of",
+        edge_id:
+          "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:instance_of:character:named;character;GrainThief",
+      },
+    ]);
     const evidence = db
       .query<{ evidence_json: string }, []>(
         "SELECT evidence_json FROM entity_edges WHERE predicate = 'found_at'",
@@ -553,6 +625,57 @@ describe("NPC pipeline", () => {
       });
       expect(entry.npcRecordId).toMatch(/^instances;characters;[0-9a-f]{32}$/);
     }
+    db.close();
+  });
+
+  it("reports an unresolved character reference for its placement", () => {
+    const source = envelope();
+    const unresolvedSource: SnapshotEnvelope<NPCSnapshotFields> = {
+      ...source,
+      rows: source.rows.map((row, index) =>
+        index === 0
+          ? {
+              ...row,
+              fields: {
+                ...row.fields,
+                characterRef: {
+                  kind: "namedAsset",
+                  entity: "character",
+                  name: "MissingCharacter",
+                },
+              },
+            }
+          : row,
+      ),
+    };
+    const db = setupCanonicalDb(unresolvedSource);
+    db.exec(`${ENTITY_GRAPH_DDL}
+      CREATE TABLE locations (id TEXT PRIMARY KEY, name TEXT);
+      INSERT INTO locations VALUES ('town', 'Town'), ('cave', 'Cave');
+      INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+        ('location', 'town', 'Town', 'Town', '/locations/town', 'town', 'town', 1),
+        ('location', 'cave', 'Cave', 'Cave', '/locations/cave', 'cave', 'cave', 1);
+    `);
+    seedCharacterDefinitions(db);
+
+    expect(emitNpcReadModels(db)).toEqual([
+      {
+        severity: "diagnostic",
+        source: "relationship-graph",
+        code: "npcCharacterReferenceUnresolved",
+        message:
+          "NPC 'instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284' has an unresolvable character reference.",
+        entityType: "npc",
+        entityId: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+        field: "npcs.character_ref_json",
+        evidence: {
+          characterRefJson: '{"kind":"namedAsset","entity":"character","name":"MissingCharacter"}',
+        },
+      },
+    ]);
+    expect(
+      db.query("SELECT COUNT(*) AS count FROM entity_edges WHERE predicate = 'instance_of'").get(),
+    ).toEqual({ count: 3 });
     db.close();
   });
 });

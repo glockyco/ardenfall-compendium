@@ -29,6 +29,11 @@ export const relationshipRegistry = {
     inverseTitle: "Variants of this",
     sortOrder: 11,
   },
+  instance_of: {
+    forwardTitle: "Character type",
+    inverseTitle: "Placements",
+    sortOrder: 12,
+  },
   categorised_as: {
     forwardTitle: "Category",
     inverseTitle: null,

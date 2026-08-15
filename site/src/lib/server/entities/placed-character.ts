@@ -22,6 +22,9 @@ interface NpcPresentationRecord {
   map_y: number;
   elevation: number;
   location_ids_json: string;
+  character_type_id: string | null;
+  character_type_label: string | null;
+  character_type_route_path: string | null;
   route_path: string;
 }
 
@@ -44,6 +47,12 @@ export interface PlacedCharacterLocationLink {
   routePath: string;
 }
 
+export interface PlacedCharacterTypeLink {
+  id: string;
+  label: string;
+  routePath: string | null;
+}
+
 export interface PlacedCharacterPresentationRow {
   id: string;
   name: string;
@@ -51,6 +60,7 @@ export interface PlacedCharacterPresentationRow {
   displayNameOwner: string | null;
   renderContext: "placed-character-presentation-v1";
   routePath: string;
+  characterType: PlacedCharacterTypeLink | null;
   mapId: string | null;
   mapLabel: string;
   mapX: number;
@@ -116,7 +126,8 @@ export const getPlacedCharacterPresentation = (
   const row = get<NpcPresentationRecord>(
     `SELECT p.id, n.display_label AS name, p.display_name_provenance, p.display_name_owner,
             p.render_context, p.map_id, p.map_x, p.map_y, p.elevation,
-            p.location_ids_json, n.route_path
+            p.location_ids_json, p.character_type_id, p.character_type_label,
+            p.character_type_route_path, n.route_path
      FROM npc_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'npc'
@@ -127,6 +138,17 @@ export const getPlacedCharacterPresentation = (
   if (!row) return undefined;
 
   const locations = resolvePublishedLocations(row.location_ids_json, row.id);
+  let characterType: PlacedCharacterTypeLink | null = null;
+  if (row.character_type_id !== null) {
+    if (row.character_type_label === null) {
+      throw new Error(`NPC '${row.id}' has a character type without a label`);
+    }
+    characterType = {
+      id: row.character_type_id,
+      label: row.character_type_label,
+      routePath: row.character_type_route_path,
+    };
+  }
 
   return {
     id: row.id,
@@ -140,6 +162,7 @@ export const getPlacedCharacterPresentation = (
       "placed-character-presentation-v1",
     ),
     routePath: row.route_path,
+    characterType,
     mapId: row.map_id,
     mapLabel: displayMapLabel(row.map_id),
     mapX: row.map_x,
