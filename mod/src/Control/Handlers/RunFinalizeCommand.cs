@@ -491,6 +491,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             run.Counts["location"] = locationRows.Count;
             run.Counts["portal"] = portalRows.Count;
             run.Counts["faction"] = factionRows.Count;
+            run.Counts["npc"] = npcRows.Count;
             run.Counts["quest"] = questRows.Count;
             phaseStopwatch.Restart();
             _runs.Save(run);
@@ -507,6 +508,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             _locations.Evict(run);
             _portals.Evict(run);
             _factions.Evict(run);
+            _npcs.Evict(run);
             _quests.Evict(run);
             RecordTiming(timings, "run.save", phaseStopwatch, totalStopwatch);
 
