@@ -16,13 +16,13 @@ Render the Ardenfall world through a camera we position, stitch the frames into 
 
 `MapSettings.gameMapTexture` is the obvious candidate and it is a dead end. Probed live against `0.0.10.91`: `settings_overworld` holds a 4x4 white placeholder and `settings_interior` has none. Even fully authored it would be wrong. A prerendered artistic image carries no guarantee of matching current terrain, caps resolution at whatever the artist exported, and has no reliable correspondence to world coordinates.
 
-## What this settles for free
+## The projection is not an open question
 
-The map projection is currently an open question, recorded in the repo-health audit: the game's `WorldMapUI.GlobalPositionToMapPosition` divides world `x,z` by a per-map factor without a sign flip, while we map `x, -z`.
+An earlier version of this section claimed that our projection might be mirrored against the game's, and used capture as the thing that would dissolve the doubt. The doubt was unfounded, and it rested on a wrong statement about our own pipeline. Measured on 2026-08-15: the game maps `(x, z)` with no sign flip (`Ardenfall/UI/WorldMapUI.cs:410-416`), we map `y: point.z` with no flip (`pipeline/src/entities/location/canonicaliser.ts:188`), and the site renders with `flipY: false`, so screen `y` rises with world `z`. All three agree, and the repo-health audit records the closure.
 
-Capture dissolves it. Once the capture rig chooses camera positions, the mapping from world coordinates to pixels is **defined by construction** rather than inferred from a source reading, and we are no longer reimplementing the game's projection at all.
+The comparison with the reference projects still holds as a note about *their* conventions: Ancient Kingdoms documents `deck Y = -game Z` because it renders y-downward. We do not, so we do not negate. Neither choice is wrong; mixing them silently would be.
 
-Independently, the flip we already ship is corroborated by both reference projects. Ancient Kingdoms documents `deck Y = -game Z` and negates the second coordinate when reading rows. The Satisfactory community map places markers at `[-markerData.y, markerData.x]`. Leaflet's own `CRS.Simple` guidance notes that non-geographic maps take coordinates as `[y, x]`. Screen space runs y-downward and world space runs z-northward, so a negation is the norm, not an anomaly.
+Capture keeps its own justification: it produces a plate whose world-to-pixel mapping is ours by construction, which removes any future dependence on the game's UI-space factors. It is no longer needed as the answer to a projection doubt.
 
 ## Design
 
