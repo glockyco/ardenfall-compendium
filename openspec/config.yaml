@@ -19,7 +19,7 @@ rules:
     - Cite decompiled game source or a live measurement for each claim about game data. Give file and line, or the probe and its result.
     - Record which subsystem owns each new field, read model and page, and which old contract the change removes.
   specs:
-    - Express observable contracts as testable scenarios: emitted tables and columns, public routes, relationship sections, and diagnostics.
+    - Express observable contracts as testable scenarios over emitted tables and columns, public routes, relationship sections, and diagnostics.
   tasks:
     - Group work into atomic Conventional Commit units, one subsystem boundary at a time.
     - Cover descriptor, mod, pipeline, site, synthetic fixture, documentation and cleanup work.
