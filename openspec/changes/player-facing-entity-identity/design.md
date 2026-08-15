@@ -4,9 +4,9 @@ Every number here was measured against Ardenfall Demo `0.0.10.91` between 2026-0
 
 **The game has one authored object system.** `ItemData`, `CharacterData`, `CharacterRace`, `CharacterModule`, `Region`, `Weather` and `CreatureData` all extend `ParameterizedObject`, whose `parent` is a prototype reference and whose `Parameter<T>.Get()` resolves a value up the chain until a node has it set (`Ardenfall/ParameterizedObject.cs:11-16`, `Ardenfall/Parameter.cs:142-166`).
 
-**A placed record is a node in that same chain.** `CharacterRecord.characterData` is a `ScriptableObjectWrapper`, which is a copy rather than a reference: it stores `serializedType`, `serializedName` and every field whose value is not an unset `Parameter`, then rebuilds the object with `ScriptableObject.CreateInstance` (`Ardenfall/Utility/ScriptableObjectWrapper.cs`). The copy's own asset name is a Unity clone name such as `preset_sapper_stage1(Clone)(Clone)`, which is why the link to its definition looked impossible. Its `parent` is the authored definition in 298 of the 298 placements that carry data, across 73 definitions.
+**A placed record is a node in that same chain.** `CharacterRecord.characterData` is a `ScriptableObjectWrapper`, which is a copy rather than a reference: it stores `serializedType`, `serializedName` and every field whose value is not an unset `Parameter`, then rebuilds the object with `ScriptableObject.CreateInstance` (`Ardenfall/Utility/ScriptableObjectWrapper.cs`). The copy's own asset name is a Unity clone name such as `preset_sapper_stage1(Clone)(Clone)`, which is why the link to its definition looked impossible. Its `parent` is the authored definition. The master record table has one table, `instances`, which yields 320 NPC records but only 314 distinct `RecordID` values. Six rows repeat an id already seen; each repeat is a distinct object (`ReferenceEquals` is false), and both objects report `IsEditorCreated() == true`. The repeat objects carry identical data, so the export drops those rows and publishes 292 placements after filtering the 22 runtime-created records. The remaining placements link to their authored definitions through `parent`.
 
-**The leaf carries authored data of its own.** 262 of those 298 placements set at least one parameter themselves:
+**The leaf carries authored data of its own.** The editor-created source rows set parameters on the placement leaf itself, including:
 
 | parameter set on the placement                  | placements |
 | ----------------------------------------------- | ---------: |
@@ -18,13 +18,13 @@ Every number here was measured against Ardenfall Demo `0.0.10.91` between 2026-0
 | `startingLevel`                                 |         32 |
 | `characterGraphs`                               |        140 |
 
-`docs/plans/2026-08-03-extraction-coverage.md` records `CharacterData.merchantItemLists` as **0 entries, no merchant inventory configured at rest**, and `2026-08-02-item-obtainability.md` scoped merchant provenance out on that basis. Both measured definitions. The merchants are configured on the placements, in the master record table, reachable with no world walk.
+`CharacterData.merchantItemLists` is set on placement leaves in the master record table, so merchant inventory is reachable without a world walk. The live source also records placement-owned `merchantAdditionalItems`, `merchantGold` and `merchantCategories` values.
 
-**Names.** `CharacterData.CharName` returns the stored value and, only when `Application.isPlaying` and that value is empty, assigns `new CharacterRandomName(Race)` (`Ardenfall/CharacterData.cs:165-183`). It is what a player reads: `IDialogOwner.DialogName`, the loot container title, the pickpocket window, and the `[npc]` and `[npc_<id>]` substitutions in dialogue and journals. `CharacterRecord.customFriendlyID` appears only in `Debug.LogError`, ImGui debuggers and editor labels; `GetFriendlyName()` composes `customFriendlyID(CharName)` for those same surfaces.
+**Names.** `CharacterData.CharName` is the player-facing accessor (`Ardenfall/CharacterData.cs:165-183`). Its getter is `if (Application.isPlaying && charName.Get().name == "") charName.Set(new CharacterRandomName(Race)); return charName?.Get()?.name ?? "Missing Name";`. When play mode reads an empty stored name, the getter generates a name from `Race` and writes it back into the definition. The extractor therefore reads the backing `charName` field, not `CharName`, so extraction does not mutate the data it reads. `CharacterRecord.customFriendlyID` appears only in `Debug.LogError`, ImGui debuggers and editor labels; `GetFriendlyName()` composes `customFriendlyID(CharName)` for those same surfaces.
 
-153 of 212 definitions and 265 of 320 placements resolve a stored name. Of the 59 definitions that do not, 57 carry a race with a player-visible name and two name sets, so the game generates a name for every instance of them.
+`CharacterRandomName.Generate` joins one generated word per name set in name-set order. It returns the literal `[No Sets]` when the race has no name sets. The `CharName` getter returns `Missing Name` when no name resolves. Neither literal is a player-facing name for compendium presentation. A definition with no race and no authored name cannot use this game path because the generating constructor dereferences the null race. This affects the single omission chain `base_creature` → `mon_ato` → `mon_ato-baby`; `enableComplexRace` is false and `simpleRace` is unset throughout that chain.
 
-**Authored versus runtime.** `CharacterRecord.IsEditorCreated()` returns whether the record holds a stored `ScriptableObject` (`Ardenfall/RecordSystem/CharacterRecord.cs`). Live: 298 records are editor-created and 22 are runtime-created, the latter with no character data and no name. The baseline export published 314 placements while the table now holds 320, and the difference is entirely runtime records that spawned while the game ran.
+**Authored versus runtime.** `CharacterRecord.IsEditorCreated()` returns whether the record holds a stored `ScriptableObject` (`Ardenfall/RecordSystem/CharacterRecord.cs`). The `instances` table yields 320 rows and 314 distinct `RecordID` values. Six rows repeat an existing `RecordID`; the paired objects are distinct, both authored, and carry identical data. The other 22 distinct records are runtime-created. Extraction filters those 22 runtime records and drops the six identical repeats, publishing 292 placements. A `RecordID` is therefore not unique in the game's own table; the duplicate diagnostic is non-fatal because the repeated objects agree.
 
 ## Goals / Non-Goals
 
@@ -57,43 +57,43 @@ This replaces asking "does the definition or the instance own this?" in code. `P
 
 ### 3. Only authored content is extracted
 
-Extraction filters records by `IsEditorCreated()`. The 22 runtime-created records are not authored content, they carry no character data, and they exist only because NPCs spawned while the exporter was connected. Publishing them made the export depend on session length, which is why the baseline holds 314 placements and the table now holds 320.
+Extraction reads the single `instances` table. It yields 320 rows with 314 distinct `RecordID` values. Six rows repeat an existing id; `ReferenceEquals` is false for each pair, both objects are authored, and their data is identical. The 22 remaining distinct records are runtime-created and have no character data. Extraction reports both filters: 320 source rows minus six identical repeats minus 22 runtime records produces 292 published placements. A repeated `RecordID` is a diagnostic, not a hard failure, because the duplicate data agrees.
 
 This is not a visibility rule. Runtime state is already out of scope for this repository, and the game supplies the test, so the boundary is drawn where the game draws it. Extraction reports how many records it filtered so the number stays visible.
 
-Two related accessor hazards stay avoided for the same reason: `CharacterData.CharName` invents a name in play mode, so extraction reads the stored parameter, and `NPCRecord.SpawnPoint` writes a cache when its public getter runs, so extraction reads the backing field and falls back to the record transform.
+Two related accessor hazards stay avoided for the same reason: `CharacterData.CharName` generates and caches a name in play mode, so extraction reads the backing `charName` field, and `NPCRecord.SpawnPoint` writes a cache when its public getter runs, so extraction reads the backing field and falls back to the record transform.
 
 ### 4. Names resolve in a defined order, and the order is published
 
-A display name resolves as: the value set on this row; else the value inherited from the chain; else generated at runtime from the race's name sets; else absent. The resolved state is stored, not just the string.
+A display name resolves as: the value set on this row; else the value inherited from the chain; else generated at runtime from the race's name sets; else absent. The resolved state is stored, not just the string. Generated output is never replaced with `[No Sets]` or `Missing Name` in a player-facing name field.
 
 `customFriendlyID` is an authoring label. It stays in canonical data, it is available to diagnostics and private debug views, and it never titles a page, labels a link, or appears in search.
 
 ### 5. A generated name is published as a mechanism and a vocabulary
 
-`CharacterRandomName.Generate` walks the race's name sets in order and joins one word per set with a space (`Ardenfall/CharacterRandomName.cs:23-40`). Each word comes from `NameSet.Generate`, which trains a `Sobriquet.Generator` over a `MarkovChain` of the set's `generationOrder` on the set's authored `WeightedName` seeds, caches 100 outputs and samples them (`Ardenfall/NameSet.cs:53-98`).
+`CharacterRandomName.Generate` walks the race's name sets in order and joins one word per set with a space (`Ardenfall/CharacterRandomName.cs:23-40`). Each word comes from `NameSet.Generate`, which trains a `Sobriquet.Generator` over a `MarkovChain` of the set's `generationOrder` on the set's authored `WeightedName` seeds, caches 100 outputs and samples them (`Ardenfall/NameSet.cs:53-98`). A race with no name sets produces the literal `[No Sets]`; this is a generator status literal, not a name.
 
 Measured: 13 races carry both a player-visible name and name sets, over 7 distinct name-set assets. `Karu Elf` combines `nset_mystelf_female` with 361 seeds and `nset_mystelf_male` with 948, both at order 5. `Sand Elf`'s female set has 17.
 
-So `NameSet` becomes an entity, published once and referenced by every race that uses it, with its complete seed list. The race page states the mechanism and the counts and links to the sets.
+So `NameSet` becomes an entity, published once and referenced by every race that uses it, with its complete seed list. The race page states the mechanism and the counts and links to the sets. A missing resolved name uses the literal `Missing Name`; neither literal may appear as a player-facing compendium name.
 
 The generator's output is not published. Such a string would be a roll taken by this repository and would sit on the page indistinguishable from `Saya Sako`, which a designer typed. The seeds answer the reader's question better and are authored.
 
 ### 6. A character the game names at runtime is titled by description
 
-Its title is a descriptive label composed from published facts, beginning with the nearest recognisable type, extended by the next published fact when two would collide, and marked as a description rather than a name. `Karu Elf` rather than `A Karu Elf`: a title sorts, appears as link text and lands in search results, and a leading article costs all three while adding nothing that page prose cannot say better. Listings disambiguate by containing location, which 193 of 314 placements have, and URLs by the short id the node writer already produces.
+Its title is a descriptive label composed from published facts, beginning with the nearest recognisable type, extended by the next published fact when two would collide, and marked as a description rather than a name. `Karu Elf` rather than `A Karu Elf`: a title sorts, appears as link text and lands in search results, and a leading article costs all three while adding nothing that page prose cannot say better. Listings disambiguate by containing location, and URLs by the short id the node writer already produces.
 
 ### 7. The reader-facing type is the nearest recognisable ancestor, else the race
 
-For a creature the definition is named and its race is not: `Darvaki`, `Ato`, `Kawamoku`. For a humanoid the race is named and the definition is not: 45 definitions resolve to `Karu Elf`. Rather than branch on creature versus humanoid, type resolution walks up the chain to the nearest node with a player-visible name and falls back to the race, which is the game's own naming authority in exactly the case where the chain has none.
+Race is the naming vocabulary for every character type, not a humanoid-only classification. Every one of the 116 humanoid definitions resolves a race, and 93 of the 96 creature definitions resolve one. Type resolution therefore walks up the chain to the nearest node with a player-visible name and falls back to the race without branching on humanoid or creature. The three definitions with no race are one authoring omission: `base_creature` → `mon_ato` → `mon_ato-baby`. Their `enableComplexRace` is false and `simpleRace` is unset through the chain, so a definition with no authored name in this chain cannot generate a game name because `CharacterRandomName` dereferences the null race.
 
-One rule, no per-family branch, and the asymmetry becomes an outcome instead of a special case.
+One rule covers all character types. The race fallback is an outcome of the chain, not an asymmetry between creatures and humanoids.
 
 ### 8. Nothing is excluded for how its name looks
 
-An empty or template name is not evidence that content is unreachable. It is evidence that a naming mechanism has not been modelled, which is what the 57 race-named definitions proved.
+An empty or template name is not evidence that content is unreachable. It is evidence that the naming mechanism must be modelled. Race supplies that vocabulary for all character types except the three-definition authoring omission chain described above.
 
-The item prototype rule therefore also goes. It looked behavioural, because `EnchantmentData.SupportsItem` matches through `HasParentInChain` and `DebugFillContainer` excludes bases by default, but the baseline emits **9 `itemLootReferencesPrototype`** diagnostics: loot lists point at items we refuse to publish, which is the game saying they are obtainable. All 1,273 items and all 212 definitions are published, prototypes are marked as templates, and what we know about them is stated.
+The item prototype rule therefore also goes. `EnchantmentData.SupportsItem` matches through `HasParentInChain` and `DebugFillContainer` excludes bases by default, but identity does not depend on those behavioural filters. The live export publishes all 1,273 items and all 212 definitions, marks prototypes as templates, and states what is known about them.
 
 This removes code rather than adding it: `instance_of` and `derives_from` need no unpublishable-target suppression, and the enchantment whitelist no longer needs descendant fan-out to avoid naming a prototype.
 
@@ -117,8 +117,8 @@ Because nothing loses a page, the 245 `found_at` edges over 193 placements and 2
 
 ## Risks / Trade-offs
 
-- **Published page count rises.** 84 item prototypes and 59 definition prototypes gain pages, all marked as templates. That is the honest consequence of the visibility rule, and the loot references show at least 9 of the item ones are reachable.
-- **16 pages disappear**, the runtime-created records the baseline happened to capture. This is the only removal, and it is what makes the export reproducible.
+- **Published page count rises.** Item and definition prototypes gain pages, all marked as templates. That is the honest consequence of the visibility rule, and loot references show that some template items are reachable.
+- **Runtime-created records are not published.** The live filter and duplicate-yield filter make the placement export reproducible.
 - **Titles repeat.** Several pages will read `Karu Elf`. That is what the game calls them, so listings must carry the location column and slugs must keep their short id.
 - **Provenance widens the schema.** Every published field gains a provenance value. It is one column or one sidecar row per field, and it is the thing that stops the next "measured on the wrong object" conclusion.
 - **`IsEditorCreated` is load-bearing.** If a future build authors records at runtime deliberately, the filter would hide them. The filtered count is reported on every export so the number is visible.

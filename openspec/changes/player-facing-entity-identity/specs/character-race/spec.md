@@ -1,6 +1,6 @@
 ## Purpose
 
-Defines race as a published entity, because it is the authored vocabulary the game uses to name characters it does not name individually, and it is the classification a reader recognises.
+Defines race as a published entity, because it is the authored naming vocabulary the game uses for every kind of character, including characters the game does not name individually. Race is not a humanoid-only classification.
 
 ## ADDED Requirements
 
@@ -14,11 +14,12 @@ The compendium MUST extract `CharacterRace` as an entity, including its player-v
 - **THEN** the race has a canonical row and a public page
 - **AND** the page names the race and lists the character definitions that use it
 
-#### Scenario: A creature race without its own name
+#### Scenario: A character race without its own name
 
-- **WHEN** a race carries no player-visible name, as the per-creature races such as `race_balati` do
+- **WHEN** a race carries no player-visible name, as a per-character race such as `race_balati` does
 - **THEN** the race is still extracted
 - **AND** its identity in presentation comes from the character definitions that use it rather than from its asset name
+- **AND** race remains the naming vocabulary for both creature and humanoid definitions; 93 of 96 creatures and all 116 humanoids resolve a race
 
 #### Scenario: Name sets are published as vocabulary
 
@@ -31,6 +32,25 @@ The compendium MUST extract `CharacterRace` as an entity, including its player-v
 - **WHEN** a race page explains its naming
 - **THEN** it states that each name set contributes one word, that the words join in set order, and that each word is synthesised by a Markov chain of the set's generation order from that set's seed vocabulary
 - **AND** it gives the seed count for each set, such as 361 for the Karu Elf female set and 948 for the male set
+
+### Requirement: Extraction does not call the mutating name accessor
+
+The game getter is `if (Application.isPlaying && charName.Get().name == "") charName.Set(new CharacterRandomName(Race)); return charName?.Get()?.name ?? "Missing Name";`. In play mode, it generates a name from the race and writes that name into the definition when the stored name is empty. Extraction MUST read the backing `charName` field instead, because calling `CharName` mutates the data being read.
+
+#### Scenario: Game literals are not presented as names
+
+- **WHEN** a race has no name sets
+- **THEN** the game generator produces the literal `[No Sets]`
+- **AND** the compendium does not present `[No Sets]` as a player-facing name
+- **WHEN** no name resolves at all
+- **THEN** the getter produces the literal `Missing Name`
+- **AND** the compendium records the absence instead of presenting `Missing Name` as a player-facing name
+
+#### Scenario: The raceless chain cannot generate a name
+
+- **WHEN** a definition has neither a race nor an authored name
+- **THEN** the game's name-generation constructor dereferences the null race and cannot name the definition
+- **AND** this condition is reported for the one chain `base_creature` → `mon_ato` → `mon_ato-baby`
 
 #### Scenario: The seed vocabulary is published
 
@@ -56,9 +76,9 @@ A character definition and a placement MUST both link to the race that supplies 
 
 #### Scenario: A character without a race
 
-- **WHEN** a character resolves no race, which one definition in the current build does
-- **THEN** a diagnostic names the character and the field
-- **AND** the page states that the game defines no race for it
+- **WHEN** a character resolves no race, which occurs for three definitions in one omission chain in the current build
+- **THEN** a diagnostic names each character and the field
+- **AND** the page states that the game defines no race for each member of `base_creature` → `mon_ato` → `mon_ato-baby`
 
 ### Requirement: A character the game names at runtime is titled by description
 

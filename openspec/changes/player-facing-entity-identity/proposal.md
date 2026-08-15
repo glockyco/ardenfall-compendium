@@ -19,7 +19,7 @@ _Names come from wherever each extractor looked._ `npcs.friendly_name` is `custo
 - Extract a placed record as a **leaf of the prototype chain**, through the same resolution as a definition, so the placement's own factions, drops, merchant stock, level and graphs appear without per-field override code.
 - Store **provenance beside every published value**: set here, inherited from a named ancestor, generated, or absent. Ownership becomes data instead of a property of whichever extractor ran.
 - Emit **`instance_of`** from a placement to the definition it derives from, and expose the inverse as the placements of a type.
-- Resolve the **reader-facing type** as the nearest ancestor with a player-visible name, falling back to the race. One rule covers named creatures and unnamed humanoid presets without branching.
+- Resolve the **reader-facing type** as the nearest ancestor with a player-visible name, falling back to the race. One rule covers every character without branching, because race is the naming vocabulary for all of them: all 116 humanoid definitions and 93 of the 96 creature definitions carry one.
 - Read a placement's name from its own copy through the chain, so `Saya Sako` and `The Lone Healer` replace `Grainery Owner` and `Unnamed character`, and keep `customFriendlyID` as an authoring label that never titles anything.
 - Publish **race** and **name sets** as entities, including each set's complete seed vocabulary, and explain generated names by mechanism and vocabulary rather than by a synthesised sample.
 - Title a runtime-named character by a **descriptive label** such as `Karu Elf`, marked as a description, disambiguated in listings by location.

@@ -22,6 +22,50 @@ The audit uses these source labels:
 - **[assets]** The authored-asset source audit from 2026-08-03.
 - **[scene]** The Odin-graph and streamed-scene source audit from 2026-08-03.
 - **[fields]** The field-gap source audit from 2026-08-03.
+- **[live-run]** Ardenfall Demo `0.0.10.91`, measured 2026-08-15 against the live export.
+
+## Live run evidence, 2026-08-15
+
+The live run settles the current family counts. It reports 1,273 items, 212 character definitions, 292 published placements, 48 locations, 33 portals, 48 factions, 38 quests, 56 spells, 64 enchantments, 48 potion recipes, 172 status effects, 28 item tags, 7 item categories and 21 stat types.
+
+| Family | Live rows |
+| --- | ---: |
+| `item` | 1,273 |
+| `character` | 212 |
+| `npc` placements | 292 |
+| `location` | 48 |
+| `portal` | 33 |
+| `faction` | 48 |
+| `quest` | 38 |
+| `spell` | 56 |
+| `enchantment` | 64 |
+| `potion-recipe` | 48 |
+| `status-effect` | 172 |
+| `item-tag` | 28 |
+| `item-category` | 7 |
+| `stat-type` | 21 |
+
+The live diagnostic totals are:
+
+| Diagnostic | Count |
+| --- | ---: |
+| `itemFontRefMissing` | 65 |
+| `characterNameMissing` | 59 |
+| `npcDisplayNameMissing` | 33 |
+| `statusEffectNameMissing` | 18 |
+| `sourceYieldedDuplicateRecord` | 6 |
+| `questCharacterDialogueGraphEmpty` | 4 |
+| `connectedPortalMissing` | 3 |
+| `characterRaceMissing` | 3 |
+| `itemIconRefMissing` | 2 |
+| `factionNameMissing` | 2 |
+| `spellNameMissing` | 1 |
+| `portalFriendlyNameMissing` | 1 |
+| `nullAsset` | 1 |
+
+The `instances` master-record table yields 320 NPC rows but only 314 distinct `RecordID` values. Six repeated-id pairs are distinct objects (`ReferenceEquals` is false), and both objects report `IsEditorCreated() == true`. The repeated objects carry identical data, so extraction drops the repeats and emits `sourceYieldedDuplicateRecord` instead of failing. It then filters the 22 runtime-created records. The accounting is 320 source rows minus six repeats minus 22 runtime-created records, which produces 292 published placements. A `RecordID` is not unique in the game's own table.
+
+All 48 locations are enabled, and none is debug-only. Of the 38 quests, 16 are disabled and 11 are hidden from the quest UI. These flags describe authored state; they do not suppress the rows.
 
 ## What the game holds and the compendium covers
 
@@ -29,18 +73,18 @@ The compendium models twelve families in the [snapshot]. The 2026-08-03 release 
 
 | Family | Rows | Identity mechanism | What the row represents |
 | --- | ---: | --- | --- |
-| `item` | 1,273 [snapshot] | `lookupAsset` | An authored `ItemData` asset. |
+| `item` | 1,273 [live-run] | `lookupAsset` | An authored `ItemData` asset. |
 | `item-variant` | 17 [snapshot] | `variantId` | A descriptor-defined concrete item type. |
-| `item-category` | 7 [snapshot] | `namedAsset` | An `ItemCategory` asset found by its stable name. |
-| `item-tag` | 28 [snapshot] | `lookupAsset` | An authored `ItemTag` asset. |
-| `stat-type` | 21 [snapshot] | `namedAsset` | A `StatType` asset found by its stable name. |
-| `spell` | 56 [snapshot] | `namedAsset` | A `SpellData` asset found by its stable name. |
-| `status-effect` | 172 [snapshot] | `lookupAsset` | An authored `StatusEffectData` asset. |
-| `faction` | 48 [snapshot] | `lookupAsset` | An authored `Faction` asset. |
-| `location` | 48 [snapshot] | `lookupAsset` | An authored `LocationAsset`. |
-| `character` | 212 [snapshot] | `namedAsset` | An authored `CharacterData` asset found by its stable name. |
-| `npc` | 314 [snapshot] | `record` | A placed `NPCRecord` with a `RecordID`. |
-| `portal` | 33 [snapshot] | `record` | A placed `PortalRecord` with a `RecordID`. |
+| `item-category` | 7 [live-run] | `namedAsset` | An `ItemCategory` asset found by its stable name. |
+| `item-tag` | 28 [live-run] | `lookupAsset` | An authored `ItemTag` asset. |
+| `stat-type` | 21 [live-run] | `namedAsset` | A `StatType` asset found by its stable name. |
+| `spell` | 56 [live-run] | `namedAsset` | `SpellData` assets found by their stable name. |
+| `status-effect` | 172 [live-run] | `lookupAsset` | An authored `StatusEffectData` asset. |
+| `faction` | 48 [live-run] | `lookupAsset` | An authored `Faction` asset. |
+| `location` | 48 [live-run] | `lookupAsset` | An authored `LocationAsset`. |
+| `character` | 212 [live-run] | `namedAsset` | An authored `CharacterData` asset found by its stable name. |
+| `npc` | 292 [live-run] | `record` | A published placed `NPCRecord`; the live table has 320 rows and 314 distinct `RecordID` values before duplicate and runtime filtering. |
+| `portal` | 33 [live-run] | `record` | A placed `PortalRecord` with a `RecordID`. |
 
 The roadmap table predates the `CharacterExtractor` identity change. It labels `CharacterData` as `lookupAsset`. The extractor uses `namedAsset`, which is authoritative [fields].
 
@@ -60,44 +104,43 @@ The missing content falls into three groups. The groups have different extractio
 
 ### Record types in the master record table
 
-This is the lowest-cost group because two record sources already work. `MasterRecordTable` owns an arbitrary dictionary of table wrappers. `GetRecords(Type)` visits each named table, and `RecordTable.GetRecords(Type)` includes subclasses through `IsAssignableFrom` [records]. The instances wrapper scans every map cell, so all present `InstanceRecord` subclasses are reachable [records].
+This is the lowest-cost group because the `instances` record source works. `MasterRecordTable` owns an arbitrary dictionary of table wrappers. `GetRecords(Type)` visits each named table, and `RecordTable.GetRecords(Type)` includes subclasses through `IsAssignableFrom` [records]. The instances wrapper scans every map cell, so all present `InstanceRecord` subclasses are reachable [records].
 
 | Record type | Current status | Known count or limit | Reader value and cost |
 | --- | --- | --- | --- |
-| `CharacterRecord` | Not extracted directly. | Unknown. A base-type query also returns NPC and Player records [records]. | Can connect character data, volumes, homes, factions, relationships, quests, and AI targets. Can add no rows because concrete authored records are not proven. |
+| `CharacterRecord` | Extracted through the `instances` table as published placements. | 320 rows, 314 distinct `RecordID` values, 292 published after six identical repeats and 22 runtime records are filtered [live-run]. | Connects character data, volumes, homes, factions, relationships, quests and AI targets. |
 | `NPCTeleportPointRecord` | Candidate. | Unknown. The subtable is not declared in source [records]. | AI consumes these positions as NPC destinations. A page or map point can connect movement to authored world points. |
 | `VolumeRecord` | Candidate with a duplication check. | Unknown [records]. | Ownership, keys, public state, and geometry can connect characters, factions, and AI areas. Compare it with published location volumes. |
 | `PlayerRecord` | Deliberately excluded. | Unknown. The game normally holds the player record [records]. | It stores runtime character and save state. It is not authored world content. |
 | `LocationRecord` | Deliberately excluded. | Unknown [records]. | The subclass adds no fields or reader-facing use. Published locations come from `LocationAsset`. |
 | `SORecord` | Deliberately excluded. | Unknown [records]. | It wraps an arbitrary Unity `ScriptableObject`. It has no stable reader-facing content. |
 
-`NPCRecord` and `PortalRecord` already cover 314 and 33 rows respectively [snapshot]. The serialized master-table asset is not in this repository. No serialized asset lists the dictionary membership. The complete live table inventory and every unextracted record count therefore need a live probe [records]. The three source-known subtables are not the complete inventory.
+`NPCRecord` and `PortalRecord` cover 292 published placements and 33 portals respectively [live-run]. The live master-record table has exactly one table, `instances`, with 320 NPC rows and 314 distinct `RecordID` values. Six repeated-id pairs are distinct objects (`ReferenceEquals` is false), both report `IsEditorCreated() == true`, and their data is identical. The extractor emits `sourceYieldedDuplicateRecord` and drops the repeats rather than failing. It then filters the 22 runtime-created records, producing 292 published placements. A `RecordID` is not unique in the game's own table.
 
-A live record audit also found that 22 of 320 character records are created by the running game rather than by their authors. `CharacterRecord.IsEditorCreated()` reports this distinction. The baseline published 314 placements, but the table later held 320 because runtime records appeared while the exporter session ran. Publishing runtime records therefore made an export depend on session length; authored extraction must filter them and report the filtered count.
-
-The accessors add cost even in this cheap group. `CharacterRecord.StoredCharacterData` calls `Init` before it returns. `NPCRecord.SpawnPoint` writes its transformed value into a cache when the public getter runs, so the extractor reads its backing field. `CharacterData.CharName` creates a random name when the stored name is blank in play mode. A base-type `GetRecords(Type)` query includes derived records. These behaviors can change output or add rows during a probe [records, fields].
+The accessors add cost even in this cheap group. `CharacterRecord.StoredCharacterData` calls `Init` before it returns. `NPCRecord.SpawnPoint` writes its transformed value into a cache when the public getter runs, so the extractor reads its backing field. The `CharacterData.CharName` getter generates a name from the race and writes it back when play mode reads an empty stored name, so the extractor reads the backing `charName` field. A base-type `GetRecords(Type)` query includes derived records. These behaviors can change output or add rows during a probe [records, fields].
 
 ### Authored definition assets
 
-`BuiltLookupTable.GetAssetsOfType` can enumerate several missing families. `namedAsset` can find assets that the lookup table does not register. The current extractors do not cover these candidates.
+`BuiltLookupTable.GetAssetsOfType` can enumerate authored families. `namedAsset` can find assets that the lookup table does not register. The table records which families the live export covers and which candidates remain.
 
 | Candidate | Measured count | Source path or identity | Coverage state |
 | --- | ---: | --- | --- |
 | `ItemListAsset` and counted or leveled wrappers | 348 loaded assets reaching 811 distinct items [obtainability] | `BuiltLookupTable` call sites [assets] | The 530 reached from `CharacterData.itemLists` are exactly the 530 already published by `can_drop` edges. The other 278 items sit behind 182 lists with no at-rest asset references and require the 27 loadable cell scenes. The earlier 683-cell estimate counted `CellData` assets that have no scene. |
-| `EnchantmentData` | 64 [snapshot] | `BuiltLookupTable` call site [assets] | Not extracted. It can connect equipment to enchantments and effects. |
-| `PotionRecipe` | 48 [snapshot] | `BuiltLookupTable` call site [assets] | Not extracted. Recipe pages can connect tags, ingredients, and produced potions. |
+| `EnchantmentData` | 64 [live-run] | `BuiltLookupTable` call site [assets] | Extracted as authored enchantment rows. It connects equipment to enchantments and effects. |
+| `PotionRecipe` | 48 [live-run] | `BuiltLookupTable` call site [assets] | Extracted as authored recipe rows. Recipe pages connect tags, ingredients and produced potions. |
 | `PerkAsset` | 18 [snapshot] | `BuiltLookupTable` [assets] | Not extracted. It can connect characters to perks. |
 | `TraitType` | 17 [snapshot] | `BuiltLookupTable` [assets] | Not extracted. It can connect characters to traits. |
 | `JournalEntryAsset` | Unknown [assets] | No enumeration call site found [assets] | Investigate only with a live probe. |
 | `MerchantCategory` | 0 standalone live rows [snapshot] | Authored category type [assets] | This definition-asset count does not measure placement fields: 23 placements configure `merchantCategories`, and the placement values remain to be published. |
-| `FastTravelSetAsset`, `CharClass`, `NameSet`, `RaceGroup`, `DamageType`, `SpellContainer` | Unknown [assets] | No enumeration call site found [assets] | Do not claim coverage or counts without a live probe. |
+| `NameSet` | 7 distinct assets used by 13 races with player-visible names and name sets [live-run] | `CharacterRace` name-set references | Extract as shared naming vocabulary with ordered set references and authored seeds. |
+| `FastTravelSetAsset`, `CharClass`, `RaceGroup`, `DamageType`, `SpellContainer` | Unknown [assets] | No enumeration call site found [assets] | Do not claim coverage or counts without a live probe. |
 
 At-rest owner measurements prevent several declarations from being mistaken for populated provenance sources:
 
 | Declared owner | Live result | Meaning |
 | --- | --- | --- |
 | `CharacterData.itemLists` | 530 reachable items | These are exactly the 530 items already published by `can_drop` edges. This owner adds no new item reachability. |
-| `CharacterData.merchantItemLists` | ~~0 entries~~ **14 placements** | The earlier probe measured definitions, not placement leaves. The master record table has 14 placements with `merchantItemLists`, 8 with `merchantAdditionalItems`, 28 with `merchantGold`, and 23 with `merchantCategories`; all are reachable without a world walk. |
+| `CharacterData.merchantItemLists` | 14 placements | The master record table has 14 placements with `merchantItemLists`, 8 with `merchantAdditionalItems`, 28 with `merchantGold`, and 23 with `merchantCategories`; all are reachable without a world walk. |
 | `MasterPotionListAsset` | 0 loaded instances | This catalog is absent at rest. |
 | `MasterSpellListAsset` | 0 loaded instances | This catalog is absent at rest. |
 | `CharacterItemGroup` | 0 entries | No authored owner entries exist at rest. |
@@ -107,7 +150,7 @@ The 348 `ItemListAsset` figure is a count of loaded assets, not a count of new p
 
 The cheap authored additions are the standalone asset types. `PotionRecipe` has 48 assets and reaches 127 currently unlinked items. `EnchantmentData` has 64 assets and reaches 19 currently unlinked items. Together they give 158 currently unreachable item pages a first inbound link and add 112 pages of their own without a world walk.
 
-The item audit records merchant stock, NPC inventory, enemy inventory, quest rewards, graph grants, recipe learning, and potion crafting as potential provenance paths [obtainability]. Their authored fields are accessible at different costs. The earlier merchant conclusion was wrong because it inspected `CharacterData` definitions instead of placement leaves: 14 placements set `merchantItemLists`, 8 set `merchantAdditionalItems`, 28 set `merchantGold`, and 23 set `merchantCategories`. The current `CharacterData` pages do not publish those placement-owned merchant values.
+The item audit records merchant stock, NPC inventory, enemy inventory, quest rewards, graph grants, recipe learning, and potion crafting as potential provenance paths [obtainability]. Their authored fields are accessible at different costs. Placement leaves set `merchantItemLists`, `merchantAdditionalItems`, `merchantGold` and `merchantCategories`; the live counts are 14, 8, 28 and 23 respectively. These placement-owned merchant values remain separate from `CharacterData` definition values.
 
 ### Odin graphs and streamed scenes
 
@@ -132,7 +175,7 @@ These exclusions record negative findings so that later audits do not repeat the
 - The decompiled namespace contains 146 ScriptableObject or SerializedScriptableObject classes. Most are technical infrastructure, so the compendium excludes them as a group [assets].
 - `ItemFilter` is a reusable internal predicate, not a taxonomy [survey].
 - Reputation and bounty are runtime state on `FactionInstance`. Only authored `Faction` data belongs in this model [survey].
-- `CharacterRace`, `CharacterModule`, and the race-list selector are mainly rendering and AI configuration. A live probe measured zero entries in `CharacterModule.itemLists` at rest, so it is not a populated authored owner. They are not reader-facing entity families [survey].
+- `CharacterRace` is a reader-facing entity because its authored name sets supply the naming vocabulary for every character type. The live run resolves a race for all 116 humanoid definitions and 93 of 96 creature definitions. Exactly three definitions have no race, one authoring omission chain: `base_creature` → `mon_ato` → `mon_ato-baby`; `enableComplexRace` is false and `simpleRace` is unset through the chain. `CharacterModule` and the race-list selector remain rendering and AI configuration. A live probe measured zero entries in `CharacterModule.itemLists` at rest, so it is not a populated authored owner [live-run, survey].
 - No gameplay class for harvest, gathering, resource nodes, or breakable resources appeared in the source search. Foliage classes only render trees and grass [scene].
 - Enchanting mutates an existing equipment item. It does not create an item. Repair changes durability in place. `ItemConverter` has no call site [obtainability].
 - No cooking, smithing, disassembly, salvage, or upgrade system exists in the checked game builds [obtainability].
@@ -156,7 +199,7 @@ These fields can name other authored entities or references. The decompiled type
 - `Faction.autoAddFactions` can link factions to factions [fields].
 - `FactionItemTag.modifiers` can link item tags to factions [fields].
 - Item variant `bleedStatusEffect` fields can link items to status effects [fields].
-- ~~NPC embedded `CharacterData` has no stable authored id. It cannot safely link an NPC record to a character page~~ **The placement copy can link to its definition.** `ScriptableObjectWrapper` gives the embedded copy a Unity clone name such as `preset_sapper_stage1(Clone)(Clone)`, which made the copy look unlinkable. Its `parent` is the authored definition in all 298 of the 298 placements that carry data, across 73 definitions, so the parent relation safely links the NPC record to its character page [records, fields].
+- **The placement copy links to its definition.** `ScriptableObjectWrapper` gives the embedded copy a Unity clone name such as `preset_sapper_stage1(Clone)(Clone)`, but its `parent` identifies the authored definition. The live export publishes 292 placements with that definition relation [live-run, records, fields].
 
 `CharacterData.startingFactions` already creates character-to-faction links. It is not a missing field [snapshot, survey].
 
@@ -183,7 +226,7 @@ These fields improve fidelity without creating a useful new page or relationship
 - NPC records can add `customFriendlyID`, owned volumes, home volume, and embedded character data [fields].
 - `PortalRecord.isAccessable` stays excluded. `Copy()` is its only consumer, and all 33 current values are `true` [fields, snapshot].
 
-The accessor rules remain part of the field cost. `CharacterRecord.StoredCharacterData` initializes its result. `NPCRecord.SpawnPoint` mutates its cache through the public getter. `CharacterData.CharName` invents a random name for a blank stored value. A probe must read stable backing data and record these effects [records, fields].
+The accessor rules remain part of the field cost. `CharacterRecord.StoredCharacterData` initializes its result. `NPCRecord.SpawnPoint` mutates its cache through the public getter. `CharacterData.CharName` is `if (Application.isPlaying && charName.Get().name == "") charName.Set(new CharacterRandomName(Race)); return charName?.Get()?.name ?? "Missing Name";`: play mode generates from the race and writes the result into the definition. The extractor reads backing `charName` instead. `CharacterRandomName.Generate` returns `[No Sets]` for a race with no name sets. A definition with no race and no authored name cannot use this path because the generating constructor dereferences the null race; the affected chain is `base_creature` → `mon_ato` → `mon_ato-baby`. Neither `[No Sets]` nor `Missing Name` is a player-facing compendium name [records, fields, live-run].
 
 ## Ranked judgement by reader value
 
@@ -194,7 +237,7 @@ Reader value follows connectivity, not candidate size.
    The scene-side half is not extracted. An earlier probe measured `SimpleDialogInteractable.dialogs` as 0 at rest because it did not load the cell scenes. There are 25 such interactables across the authored cells. They require the 27 loadable cell scenes described above, not the earlier 683-cell estimate. Free-standing dialogue on characters who appear in no quest stays unreachable with it.
 2. **Quest definitions rank second.** A live probe counts **38** quests, and the release ships them as named assets with graph-backed read models. All 88 character quest objects resolve to placed-character record ids, which is the link the first item also chases [probe].
 3. **Authored item provenance and world scene enumeration are one slice.** The 348 `ItemListAsset` figure counts loaded assets reaching 811 distinct items, not new opportunities. The 530 items reached from `CharacterData.itemLists` are exactly the 530 already published by `can_drop` edges. The other 278 items sit behind 182 lists with no at-rest asset references and require the same 27 loadable cell scenes as containers, spawners, and pickups. The earlier 683-cell estimate counted `CellData` assets without scenes and overstated the cost.
-4. **Standalone potion recipes and enchantments are the cheap authored addition.** The 48 `PotionRecipe` assets reach 127 currently unlinked items, and the 64 `EnchantmentData` assets reach 19. Together they give 158 currently unreachable item pages a first inbound link and add 112 pages of their own without a world walk.
+4. **Standalone potion recipes and enchantments are authored families.** The live run publishes 48 `PotionRecipe` rows and 64 `EnchantmentData` rows without a world walk.
 5. **`NPCTeleportPointRecord` and `VolumeRecord` remain conditional candidates.** They can create high-value movement, ownership, faction, and AI links, but their live counts are unknown [records].
 
-The reports use different ranking lenses. The authored-asset audit identifies standalone potion recipes and enchantments as the cheap next addition, while `ItemListAsset` provenance and world scene enumeration share one traversal of the 27 loadable cell scenes. The scene-graph audit ranks quests first because they connect several entity families. This audit ranks by the pages and links that readers currently cannot reach. The records and program surveys also disagree on `VolumeRecord`, as recorded above.
+The reports use different ranking lenses. Standalone potion recipes and enchantments are now authored families, while `ItemListAsset` provenance and world scene enumeration share one traversal of the 27 loadable cell scenes. The scene-graph audit ranks quests first because they connect several entity families. This audit ranks by the pages and links that readers currently cannot reach. The records and program surveys also disagree on `VolumeRecord`, as recorded above.

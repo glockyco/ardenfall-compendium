@@ -74,8 +74,8 @@ Extraction MUST export a reference from a placed instance to the definition its 
 
 #### Scenario: Every placement has a type
 
-- **WHEN** the pipeline projects `instance_of` for all authored placements
-- **THEN** the edge count equals the number of placements whose copy has a parent, currently 298
+- **WHEN** the pipeline projects `instance_of` for all published authored placements
+- **THEN** the edge count equals the number of published placements whose copy has a parent, currently 292
 - **AND** no edge is suppressed for the target's name
 
 ### Requirement: The reader-facing type is the nearest recognisable ancestor
@@ -89,9 +89,11 @@ Type resolution MUST walk the chain from the row upward and select the first nod
 
 #### Scenario: The race is the type when the chain has no name
 
-- **WHEN** no ancestor of a placement carries a player-visible name, which is the case for 198 placements descending from role presets
-- **THEN** the race is the reader-facing type, such as `Karu Elf`
+- **WHEN** no ancestor of a placement carries a player-visible name and the placement resolves a race
+- **THEN** the race is the reader-facing type, such as `Karu Elf`, for a creature or a humanoid
 - **AND** the page still links to the immediate definition as its prototype
+- **AND** resolution does not branch on the character family: 93 of 96 creature definitions and all 116 humanoid definitions resolve a race
+- **AND** the three definitions without a race are identified as one omission chain, `base_creature` → `mon_ato` → `mon_ato-baby`
 
 ### Requirement: Inheritance and provenance counts are reported per export
 

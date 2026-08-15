@@ -16,7 +16,7 @@
 
 - [x] 3.1 Add `character-race` and `name-set` descriptors, and extract races with their player-visible name and ordered name sets.
 - [x] 3.2 Extract each name set once with its complete seed vocabulary, its generation order, and the races that use it.
-- [x] 3.3 Link every character definition and placement to its race, and diagnose the one definition that resolves none.
+- [x] 3.3 Link every character definition and placement that resolves a race, and diagnose the three definitions that resolve none: one authoring omission chain `base_creature` → `mon_ato` → `mon_ato-baby`.
 
 ## 4. Canonical data and read models
 
@@ -47,11 +47,11 @@
 
 - [x] 7.1 Extend the synthetic snapshot with a template definition, an own-named placement, an inherited-name placement, a generated-name placement, a merchant placement, a runtime-created record, and a disabled location.
 - [ ] 7.2 Update `bun test pipeline/test`, `bun test site/test` and the fixture checks for the new tables, provenance and routes.
-- [ ] 7.3 Run the full gate in `AGENTS.md`, then a live export, and record counts and diagnostics.
+- [ ] 7.3 Run the full gate in `AGENTS.md`; the live export counts and diagnostics are recorded in the extraction plans.
 - [ ] 7.4 Verify reproducibility: export twice in one session and assert equal counts per family.
 
 ## 8. Documentation and cleanup
 
-- [x] 8.1 Correct `docs/plans/2026-08-03-extraction-coverage.md`, which records merchant inventory as unconfigured and a placement as unlinkable to a definition, and `2026-08-04-item-character-inheritance.md`, which records characters as nameless.
+- [x] 8.1 Record live placement ownership, definition linkage, and authored naming behaviour in the extraction plans.
 - [x] 8.2 Correct the cell count in the plans: 27 loadable cell scenes and 607 cell assets, not 683 cells.
 - [ ] 8.3 Record the slice and its measured evidence in the roadmap, and archive this change.

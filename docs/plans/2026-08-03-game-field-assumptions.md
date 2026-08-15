@@ -14,7 +14,7 @@ Where our behaviour rests on a guess about what a game field means.
 
 ## The defect class
 
-`showOnMap` controls whether the player's in-game map draws a marker. We read the name, assumed it meant "this place is on the map", and used it to decide whether a location deserved a page. That withheld 14 real, named, enabled locations.
+`showOnMap` controls whether the player's in-game map draws a marker. It does not decide whether a location deserves a page. The live run publishes all 48 locations, which are all enabled.
 
 The general shape: **a field's name and its use can disagree, and only the game source settles it.** A name suggests a meaning, our code acts on the suggestion, and nothing checks the suggestion against the game.
 
@@ -22,7 +22,31 @@ Five audits ran over gate flags, publicity rules, numeric units, display names a
 
 ## What was already fixed
 
-**`showOnMap` used as a page gate.** `Ardenfall/LocationAsset.cs:25` puts the field under a literal `[Header("In-game Map")]`. `Ardenfall/UI/PlayerWorldMapUI.cs:85` reads it to draw a marker and combines it with whether the player found the place. `Ardenfall/MapLocationManager.cs:58` filters live content with `where loc.enabled`. All 48 locations are enabled, so the marker flag alone withheld 14. See [`2026-08-03-location-pages`](archive/2026-08-03-location-pages.md).
+**`showOnMap` used as a page gate.** `Ardenfall/LocationAsset.cs:25` puts the field under a literal `[Header("In-game Map")]`. `Ardenfall/UI/PlayerWorldMapUI.cs:85` reads it to draw a marker and combines it with whether the player found the place. `Ardenfall/MapLocationManager.cs:58` filters live content with `where loc.enabled`. The live run publishes all 48 locations, so `showOnMap` is not a page gate. See [`2026-08-03-location-pages`](archive/2026-08-03-location-pages.md).
+
+## Live run evidence, 2026-08-15
+
+The live run against Ardenfall Demo `0.0.10.91` reports 1,273 items, 212 character definitions, 292 published placements, 48 locations, 33 portals, 48 factions, 38 quests, 56 spells, 64 enchantments, 48 potion recipes, 172 status effects, 28 item tags, 7 item categories and 21 stat types.
+
+| Diagnostic | Count |
+| --- | ---: |
+| `itemFontRefMissing` | 65 |
+| `characterNameMissing` | 59 |
+| `npcDisplayNameMissing` | 33 |
+| `statusEffectNameMissing` | 18 |
+| `sourceYieldedDuplicateRecord` | 6 |
+| `questCharacterDialogueGraphEmpty` | 4 |
+| `connectedPortalMissing` | 3 |
+| `characterRaceMissing` | 3 |
+| `itemIconRefMissing` | 2 |
+| `factionNameMissing` | 2 |
+| `spellNameMissing` | 1 |
+| `portalFriendlyNameMissing` | 1 |
+| `nullAsset` | 1 |
+
+The master record table has one table, `instances`. It yields 320 NPC rows but only 314 distinct `RecordID` values. Six repeated-id pairs are distinct objects (`ReferenceEquals` is false); both objects report `IsEditorCreated() == true` and carry identical data. The compendium emits `sourceYieldedDuplicateRecord` and drops the repeated rows, rather than failing. It filters the 22 runtime-created records. Thus 320 source rows minus six repeats minus 22 runtime-created records produces 292 published placements. A `RecordID` is not unique in the game's own table.
+
+All 48 locations are enabled and none is debug-only. Of 38 quests, 16 are disabled and 11 are hidden from the quest UI. These authored flags remain data and do not suppress rows.
 
 ## Findings
 
@@ -32,23 +56,23 @@ Five audits ran over gate flags, publicity rules, numeric units, display names a
 
 The relationship extractor must resolve an unpublishable whitelist target through its full item inheritance chain, emit one `enchants` edge for each publishable descendant, and emit none to the prototype. The live whitelist has 19 distinct targets, 18 of them prototypes, and resolves to 484 publishable descendants. This is a relationship interpretation, not a name or route workaround.
 
-### Character names are random runtime values
+### Character names are generated and cached by a mutating accessor
 
-`CharacterData.CharName` has no authored value (`Ardenfall/CharacterData.cs:165-183`). While the game plays, the accessor assigns `new CharacterRandomName(Race)`. All **212** character definitions are nameless by design, so the extractor must not treat the runtime random name as authored identity.
+`CharacterData.CharName` is not a stored string (`Ardenfall/CharacterData.cs:165-183`). Its getter is `if (Application.isPlaying && charName.Get().name == "") charName.Set(new CharacterRandomName(Race)); return charName?.Get()?.name ?? "Missing Name";`. In play mode, reading an empty stored name generates from the race and writes the result back into the definition. The extractor reads the backing `charName` field so it does not mutate the data being read.
 
-Every current character page is titled `Unnamed character`, and all 212 have no inbound link. Sixty are prototypes. Whether character definitions should have public pages remains an open maintainer decision. The inheritance audit records the evidence and the options without choosing one.
+`CharacterRandomName.Generate` joins one generated word from each name set in set order. A race with no name sets produces `[No Sets]`. The getter produces `Missing Name` when no name resolves. Neither literal is a player-facing name. A definition with no race and no authored name cannot use the game's own naming path because the generating constructor dereferences the null race. The live run identifies one omission chain of three definitions: `base_creature` → `mon_ato` → `mon_ato-baby`; `enableComplexRace` is false and `simpleRace` is unset through the chain.
 
-### A standalone recipe was anchored to an incidental item owner
+Race is the naming vocabulary for every character type. Every one of the 116 humanoid definitions resolves a race, and 93 of the 96 creature definitions resolve one. The three-definition chain above is the only missing-race case and one authoring omission, not a creature-versus-humanoid rule.
 
-`Ardenfall/Item/PotionRecipe.cs:8` defines `PotionRecipe` as a standalone `ScriptableObject`. A live probe measured **48** `PotionRecipe` assets, but the compendium reached recipes only through the two items that happen to be `PotionRecipeItemData`, whose `recipe` field is declared in `Ardenfall/Item/PotionRecipeItemData.cs:10`. The `item_potion_recipes` table therefore shipped **2 rows**, and nothing in `pipeline/src` or `site/src` read those rows.
+### A standalone recipe is its own entity
 
-Anchoring an entity to an incidental owner silently loses the rest of the assets. Before deciding that an entity is a property of another entity, count its standalone assets and verify the owner path against that count.
+`Ardenfall/Item/PotionRecipe.cs:8` defines `PotionRecipe` as a standalone `ScriptableObject`. The live run measures 48 `PotionRecipe` assets, and the compendium publishes 48 potion-recipe rows. The `recipe` field on `PotionRecipeItemData` remains a relationship to the standalone recipe, not its identity (`Ardenfall/Item/PotionRecipeItemData.cs:10`). Count standalone assets before assigning an entity to an incidental owner.
 
 ### Portal names are authoring identifiers
 
-`entities/portal/entity.json:20` reads the game's `friendlyName`. `Ardenfall/RecordSystem/PortalRecord.cs:7` declares it and returns it directly, and no player-facing UI reads it. 29 of 32 named portals hold values such as `garkai_sheru-tombs_outside_1`, `sc_tutcave_ext` and `akaga.lighthouse.entrance`. Only `Underground Preservium`, `Ladder Door` and `Food Preserve` read as prose.
+`entities/portal/entity.json:20` reads the game's `friendlyName`. `Ardenfall/RecordSystem/PortalRecord.cs:7` declares it and returns it directly, and no player-facing UI reads it. The live run contains 33 portal rows, including values such as `garkai_sheru-tombs_outside_1`, `sc_tutcave_ext` and `akaga.lighthouse.entrance`; the field mixes authoring identifiers with prose.
 
-The extractor is correct. The game simply authored identifiers into a field whose name promises otherwise. Portals therefore get no page, which the location work applied.
+The extractor is correct. The game authors identifiers into a field whose name promises otherwise. Portal rows therefore keep the field as provenance data rather than treating it as a player-facing name.
 
 ### Portal accessibility has no game consumer
 
@@ -94,11 +118,9 @@ The canonical `item_slate_spells` row held two distinct `spellRef` values. Two i
 
 `mod/src/Entities/Item/ItemPresentationBuilder.cs:162-169` preserves those five source values. `site/src/lib/components/items/ItemEffectList.svelte` rendered only `effectKindLabel(effect.kind)`, so the five roles collapsed into the two coarse labels `Spell` and `Status effect`. The `casts` and `applies` edges also recorded a single generic source in `evidence_json`, including `items.spellRef` for both spell links, so the graph lost the role distinction that the presentation row retained. Extraction was right and presentation was lossy. This is the opposite of a source extraction failure and is worth naming as its own shape.
 
-### Open observation: named-asset disambiguators expose authoring identifiers
+### Named-asset disambiguators expose authoring identifiers
 
-`mod/src/Walker/NamedAssetIdentity.cs:3-15` builds identities from an entity type and the asset name. `pipeline/src/slug/derive-slug.ts:10-29` derives the disambiguator from that asset name, while lookup and record identities derive an eight-character hexadecimal id. In the shipped release, **108** character labels and **4** spell labels expose internal authoring identifiers such as `spell-blood-explosion` and `preset-enemy-looter-spell-far`. Every other entity type uses an eight-character hexadecimal id.
-
-This is inconsistent. For characters, the asset name is currently the only text distinguishing **212** identically titled pages. Whether character definitions should have public pages remains an open maintainer decision, and this disambiguator behaviour is part of that question. The evidence is recorded here without choosing a route or naming policy.
+`mod/src/Walker/NamedAssetIdentity.cs:3-15` builds identities from an entity type and the asset name. `pipeline/src/slug/derive-slug.ts:10-29` derives the disambiguator from that asset name, while lookup and record identities derive an eight-character hexadecimal id. Character definition pages use the `/character-types` route and keep the asset-derived disambiguator in their stable identity; it is not a player-facing name. The same rule applies to other named-asset entities.
 
 ## What the fixes measured
 
