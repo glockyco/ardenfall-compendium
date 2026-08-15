@@ -25,7 +25,8 @@ const seed = () => {
     CREATE TABLE map_points (
       id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
       map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,
-      show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
+      enabled INTEGER NOT NULL, show_on_map_debug_only INTEGER NOT NULL,
+      allow_fast_travel INTEGER NOT NULL
     );
     CREATE TABLE map_volumes (
       id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
@@ -49,7 +50,7 @@ const seed = () => {
       ('location-shisivi:volume:0', 'location-shisivi', 0, 'axis-aligned-box', '{}', '{}',
        -4, 2, 8, 14, -1, 5, '{}');
     INSERT INTO map_points VALUES
-      ('location-shisivi:point', 'location', 'location-shisivi', 'overworld', 1, 2, 3, 0, 1);
+      ('location-shisivi:point', 'location', 'location-shisivi', 'overworld', 1, 2, 3, 1, 0, 1);
     INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
       ('location', 'location-shisivi', 'Shisivi Wood', 'Shisivi Wood', '/locations/shisivi-wood--11111111',
        'shisivi-wood--11111111', '11111111', 1),
@@ -83,9 +84,14 @@ const withSeed = async (
 };
 
 describe("location read-model accessors", () => {
-  it("lists enabled locations even when the map marker is hidden", async () => {
+  it("lists locations regardless of authored enabled state", async () => {
     await withSeed((readModels) => {
       expect(readModels.listLocations()).toEqual([
+        {
+          id: "location-disabled",
+          name: "Disabled Place",
+          routePath: "/locations/disabled-place--22222222",
+        },
         {
           id: "location-shisivi",
           name: "Shisivi Wood",
@@ -116,6 +122,7 @@ describe("location read-model accessors", () => {
         id: "location-shisivi",
         name: "Shisivi Wood",
         routePath: "/locations/shisivi-wood--11111111",
+        enabled: true,
         mapLabel: "Overworld",
         allowFastTravel: true,
         mapHref: "/map?map=overworld&sel=11111111",

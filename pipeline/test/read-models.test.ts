@@ -996,6 +996,7 @@ describe("emitMapReadModels", () => {
       map_x: 12,
       map_y: -8,
       elevation: 3,
+      enabled: 1,
       show_on_map_debug_only: 0,
       allow_fast_travel: 1,
     });

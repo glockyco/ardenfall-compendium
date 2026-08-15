@@ -1,10 +1,15 @@
 <script lang="ts">
+  import AvailabilityNotice from "$lib/components/content/AvailabilityNotice.svelte";
   import type { LocationPresentationRow } from "$lib/server/read-models";
 
   let { presentation }: { presentation: LocationPresentationRow } = $props();
   const number = (value: number): string =>
     Number.isInteger(value) ? `${value}` : value.toFixed(2);
 </script>
+
+<AvailabilityNotice
+  flags={presentation.enabled ? [] : [{ kind: "disabled", subject: "location" }]}
+/>
 
 <div class="border-border bg-card mt-4 rounded-lg border p-5">
   <dl class="grid gap-4 sm:grid-cols-2">

@@ -12,6 +12,7 @@ CREATE TABLE map_points (
   map_x                      REAL NOT NULL,
   map_y                      REAL NOT NULL,
   elevation                  REAL NOT NULL,
+  enabled                    INTEGER NOT NULL,
   show_on_map_debug_only     INTEGER NOT NULL,
   allow_fast_travel          INTEGER NOT NULL
 );

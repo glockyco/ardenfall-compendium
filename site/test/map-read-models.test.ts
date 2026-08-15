@@ -35,7 +35,8 @@ const baseSchema = `
     id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
     name TEXT NOT NULL, map_id TEXT, map_x REAL NOT NULL,
     map_y REAL NOT NULL, elevation REAL NOT NULL,
-    show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
+    enabled INTEGER NOT NULL, show_on_map_debug_only INTEGER NOT NULL,
+    allow_fast_travel INTEGER NOT NULL
   );
   CREATE TABLE map_volumes (
     id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
@@ -65,7 +66,7 @@ describe("getMapView", () => {
            '[120,170,255]', 6, '["name"]', '[]', 'Locations', 0);
         INSERT INTO map_points VALUES
           ('location:11111111.fixture-town', 'location', '11111111.fixture-town',
-           'Harbor Town', 'ardenfall', 12, 8, 3, 0, 1);
+           'Harbor Town', 'ardenfall', 12, 8, 3, 1, 0, 1);
         INSERT INTO map_volumes VALUES
           ('vol-1', 'location', '11111111.fixture-town', 'Harbor Town', 'ardenfall',
            '{"ring":[[10,6],[14,6],[14,10],[10,10],[10,6]]}', 0, 2);
@@ -106,6 +107,7 @@ describe("getMapView", () => {
           elevation: 3,
           name: "Harbor Town",
           tooltip: "Harbor Town",
+          enabled: true,
           debugOnly: false,
           nodeShortId: "abc12345",
           routePath: "/locations/harbor-town--abc12345",
@@ -147,7 +149,7 @@ describe("getMapView", () => {
            '["map_points"]', 'point', 'character',
            '[255,200,120]', 4, '["characterName"]', '[]', 'Placed characters', 80);
         INSERT INTO map_points VALUES
-          ('npc:record-1', 'npc', 'record-1', 'Ada', 'overworld', 4, 5, 2, 0, 0);
+          ('npc:record-1', 'npc', 'record-1', 'Ada', 'overworld', 4, 5, 2, 1, 0, 0);
         INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
           ('npc', 'record-1', 'Ada', 'Ada', '/placed-characters/ada--npc11111',
            'ada--npc11111', 'npc11111', 0);
@@ -177,6 +179,7 @@ describe("getMapView", () => {
         instanceId: "record-1",
         name: "Ada",
         tooltip: "Ada",
+        enabled: true,
         nodeShortId: "npc11111",
         routePath: "/placed-characters/ada--npc11111",
         hasPage: false,
@@ -197,9 +200,9 @@ describe("getMapView", () => {
            '["map_points"]', 'point', 'portal',
            '[190,150,255]', 5, '["name"]', '[]', 'Portals', 903);
         INSERT INTO map_points VALUES
-          ('portal:a', 'portal', 'a', 'Harbor Gate', 'ardenfall', 1, 1, 0, 0, 0),
-          ('portal:b', 'portal', 'b', 'Cliff Stair', 'interior', 2, 2, 0, 0, 0),
-          ('portal:c', 'portal', 'c', 'Sealed Door', 'ardenfall', 3, 3, 0, 0, 0);
+          ('portal:a', 'portal', 'a', 'Harbor Gate', 'ardenfall', 1, 1, 0, 1, 0, 0),
+          ('portal:b', 'portal', 'b', 'Cliff Stair', 'interior', 2, 2, 0, 1, 0, 0),
+          ('portal:c', 'portal', 'c', 'Sealed Door', 'ardenfall', 3, 3, 0, 1, 0, 0);
         INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
           ('portal', 'a', 'Harbor Gate', 'Harbor Gate', '/map?map=ardenfall&sel=aaaa1111', 'harbor-gate--aaaa1111', 'aaaa1111', 0),
           ('portal', 'b', 'Cliff Stair', 'Cliff Stair', '/map?map=interior&sel=bbbb2222', 'cliff-stair--bbbb2222', 'bbbb2222', 0),

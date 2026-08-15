@@ -25,6 +25,7 @@ export interface MapPointRow {
   elevation: number;
   name: string;
   tooltip: string;
+  enabled: boolean;
   debugOnly: boolean;
   nodeShortId: string | null;
   routePath: string | null;

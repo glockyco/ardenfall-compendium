@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AvailabilityNotice from "$lib/components/content/AvailabilityNotice.svelte";
   import type { MapStore } from "$lib/map/map-store.svelte";
 
   let { store }: { store: MapStore } = $props();
@@ -46,6 +47,7 @@
         onclick={() => store.select(null)}>×</button
       >
     </div>
+    <AvailabilityNotice flags={point.enabled ? [] : [{ kind: "disabled", subject: "location" }]} />
     <dl class="text-muted-foreground mt-2 grid grid-cols-2 gap-1 text-sm">
       <dt>Layer</dt>
       <dd>{layerLabel}</dd>

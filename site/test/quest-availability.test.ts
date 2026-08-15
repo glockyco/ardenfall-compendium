@@ -1,13 +1,8 @@
 import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-
-const source = (relativePath: string) => readFileSync(join(import.meta.dir, relativePath), "utf8");
-const availabilityNoticeSource = source("../src/lib/components/content/AvailabilityNotice.svelte");
-const overviewSource = source("../src/routes/quests/+page.svelte");
-const detailSource = source("../src/routes/quests/[slug]/+page.svelte");
 
 const seed = () => {
   const root = mkdtempSync(join(tmpdir(), "ardenfall-site-quest-availability-"));
@@ -131,22 +126,5 @@ describe("quest availability notice", () => {
       process.chdir(originalCwd);
       rmSync(root, { recursive: true, force: true });
     }
-  });
-
-  it("renders one shared notice only when either authored flag is set", () => {
-    expect(availabilityNoticeSource).toContain("{#if disabled || hiddenInQuestUi}");
-    expect(availabilityNoticeSource).toContain(
-      "The game has this quest disabled. Other content may still reference it.",
-    );
-    expect(availabilityNoticeSource).toContain(
-      "The game marks this quest as hidden in the in-game quest log.",
-    );
-    expect(availabilityNoticeSource).not.toContain("cannot be started");
-    expect(availabilityNoticeSource).not.toContain("cannot be completed");
-    expect(overviewSource).toContain("<AvailabilityNotice");
-    expect(detailSource).toContain("<AvailabilityNotice");
-    expect(overviewSource).not.toContain("Disabled in game.");
-    expect(detailSource).not.toContain('"No"');
-    expect(detailSource).not.toContain(">Disabled</dt>");
   });
 });

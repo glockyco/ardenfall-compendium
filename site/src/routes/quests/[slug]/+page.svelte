@@ -4,12 +4,18 @@
   import QuestPhaseList from "$lib/components/quests/QuestPhaseList.svelte";
   import QuestRewardList from "$lib/components/quests/QuestRewardList.svelte";
   import AvailabilityNotice from "$lib/components/content/AvailabilityNotice.svelte";
+  import type { AvailabilityFlag } from "$lib/components/content/availability-flags";
   import DialogueSection from "$lib/components/content/DialogueSection.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
   const quest = $derived(data.presentation);
+
+  const availabilityFlags = $derived<AvailabilityFlag[]>([
+    ...(quest.disabled ? [{ kind: "disabled" as const, subject: "quest" }] : []),
+    ...(quest.hiddenInQuestUi ? [{ kind: "hidden-in-quest-ui" as const, subject: "quest" }] : []),
+  ]);
 
   const text = (value: string | null): string => value?.trim() ?? "";
 </script>
@@ -32,7 +38,7 @@
 
 <BackLink href={data.questRoute} label="quests" />
 <EntityDetailHeader title={quest.name} iconSrc={null} />
-<AvailabilityNotice disabled={quest.disabled} hiddenInQuestUi={quest.hiddenInQuestUi} />
+<AvailabilityNotice flags={availabilityFlags} />
 
 {#if quest.subname}
   <p class="text-muted-foreground mt-2 text-lg">{quest.subname}</p>

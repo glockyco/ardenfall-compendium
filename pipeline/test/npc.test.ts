@@ -500,8 +500,8 @@ describe("NPC pipeline", () => {
     db.exec(`CREATE TABLE map_points (
       id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
       name TEXT, map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL,
-      elevation REAL NOT NULL, show_on_map_debug_only INTEGER NOT NULL,
-      allow_fast_travel INTEGER NOT NULL
+      elevation REAL NOT NULL, enabled INTEGER NOT NULL,
+      show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
     );`);
     const npcModule = entityRegistry.npc;
     if (!npcModule?.mapProjection) throw new Error("npc registry entry has no map projection");

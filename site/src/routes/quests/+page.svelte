@@ -1,8 +1,17 @@
 <script lang="ts">
   import AvailabilityNotice from "$lib/components/content/AvailabilityNotice.svelte";
+  import type { AvailabilityFlag } from "$lib/components/content/availability-flags";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
+
+  const questAvailability = (quest: {
+    disabled: boolean;
+    hiddenInQuestUi: boolean;
+  }): AvailabilityFlag[] => [
+    ...(quest.disabled ? [{ kind: "disabled" as const, subject: "quest" }] : []),
+    ...(quest.hiddenInQuestUi ? [{ kind: "hidden-in-quest-ui" as const, subject: "quest" }] : []),
+  ];
 </script>
 
 <svelte:head>
@@ -34,7 +43,7 @@
             <span class="text-muted-foreground mt-1 block text-sm">{quest.subname}</span>
           {/if}
         </a>
-        <AvailabilityNotice disabled={quest.disabled} hiddenInQuestUi={quest.hiddenInQuestUi} />
+        <AvailabilityNotice flags={questAvailability(quest)} />
       </li>
     {/each}
   </ul>

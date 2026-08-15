@@ -17,6 +17,7 @@ const point = (id: string, overrides: Partial<MapPointRow> = {}): MapPointRow =>
   elevation: 0,
   name: id,
   tooltip: id,
+  enabled: true,
   debugOnly: false,
   nodeShortId: id,
   routePath: `/locations/${id}`,

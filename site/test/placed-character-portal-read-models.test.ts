@@ -125,7 +125,7 @@ describe("placed-character and portal site read models", () => {
         CREATE TABLE map_points (
           id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
           map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,
-          show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
+          enabled INTEGER NOT NULL, show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
         );
         CREATE TABLE map_volumes (
           id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
@@ -141,7 +141,7 @@ describe("placed-character and portal site read models", () => {
           ('npc', 'npc-unnamed', 'Unnamed character', 'Unnamed character', '/placed-characters/unnamed-character--22222222', 'unnamed-character--22222222', '22222222', 1),
           ('location', 'location-woods', 'Shisivi Wood', 'Shisivi Wood', '/locations/shisivi-wood--33333333', 'shisivi-wood--33333333', '33333333', 1);
         INSERT INTO map_points VALUES
-          ('npc-ada:point', 'npc', 'npc-ada', 'overworld', 1, 2, 3, 0, 1);
+          ('npc-ada:point', 'npc', 'npc-ada', 'overworld', 1, 2, 3, 1, 0, 1);
       `,
       (readModels) => {
         expect(readModels.getPlacedCharacterPresentation("ada--11111111")).toMatchObject({
@@ -194,7 +194,7 @@ describe("placed-character and portal site read models", () => {
         CREATE TABLE map_points (
           id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
           map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL, elevation REAL NOT NULL,
-          show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
+          enabled INTEGER NOT NULL, show_on_map_debug_only INTEGER NOT NULL, allow_fast_travel INTEGER NOT NULL
         );
         CREATE TABLE map_volumes (
           id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
@@ -207,7 +207,7 @@ describe("placed-character and portal site read models", () => {
           ('portal', 'portal-a', 'Gate A', 'Gate A', '/portals/gate-a--11111111', 'gate-a--11111111', '11111111', 1),
           ('portal', 'portal-b', 'Gate B', 'Gate B', '/portals/gate-b--22222222', 'gate-b--22222222', '22222222', 1);
         INSERT INTO map_points VALUES
-          ('portal-a:point', 'portal', 'portal-a', 'overworld', 10, 20, 30, 0, 1);
+          ('portal-a:point', 'portal', 'portal-a', 'overworld', 10, 20, 30, 1, 0, 1);
       `,
       (readModels) => {
         expect(readModels.listPortals()).toHaveLength(2);

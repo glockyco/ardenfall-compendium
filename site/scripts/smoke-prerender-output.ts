@@ -43,6 +43,13 @@ interface ItemTagProbeRow {
   item_name: string;
 }
 
+interface QuestProbeRow {
+  id: string;
+  name: string;
+  canonical_slug: string;
+  disabled: number;
+}
+
 const outputDir = join(import.meta.dirname, "..", ".svelte-kit", "cloudflare");
 const releasePath = join(import.meta.dirname, "..", "static", "_release.json");
 const outputReleasePath = join(outputDir, "_release.json");
@@ -116,6 +123,44 @@ if (detail.includes("_app/immutable/entry/app")) {
 if (probe.displayIconHash) {
   const assetPath = join(outputDir, "assets", `${probe.displayIconHash}.webp`);
   if (!existsSync(assetPath)) throw new Error(`missing probe asset: ${assetPath}`);
+}
+
+const disabledQuest = readQuestProbe("named;quest;quest_disabled-test");
+if (disabledQuest.disabled !== 1) {
+  throw new Error(`quest probe is not disabled: ${disabledQuest.id}`);
+}
+const disabledQuestPath = firstExisting([
+  join(outputDir, "quests", `${disabledQuest.canonical_slug}.html`),
+  join(outputDir, "quests", disabledQuest.canonical_slug, "index.html"),
+]);
+if (!disabledQuestPath) {
+  throw new Error(`missing prerendered quest detail page for ${disabledQuest.id}`);
+}
+const disabledQuestDetail = readFileSync(disabledQuestPath, "utf8");
+for (const snippet of [
+  disabledQuest.name,
+  'aria-label="Availability"',
+  "The game has this quest disabled. Other content may still reference it.",
+]) {
+  if (!disabledQuestDetail.includes(snippet)) {
+    throw new Error(`disabled quest detail HTML missing ${snippet}`);
+  }
+}
+
+const availableQuest = readQuestProbe("named;quest;quest_supply-run");
+if (availableQuest.disabled !== 0) {
+  throw new Error(`quest probe is disabled: ${availableQuest.id}`);
+}
+const availableQuestPath = firstExisting([
+  join(outputDir, "quests", `${availableQuest.canonical_slug}.html`),
+  join(outputDir, "quests", availableQuest.canonical_slug, "index.html"),
+]);
+if (!availableQuestPath) {
+  throw new Error(`missing prerendered quest detail page for ${availableQuest.id}`);
+}
+const availableQuestDetail = readFileSync(availableQuestPath, "utf8");
+if (availableQuestDetail.includes('aria-label="Availability"')) {
+  throw new Error("available quest detail should not render an availability notice");
 }
 
 const statProbe = readStatProbe();
@@ -269,6 +314,30 @@ function assertRouteParity(expected: string[], built: string[]): void {
     throw new Error(
       `prerendered page files are not explained by the staged database (${unexpected.length}): ${unexpected.join(", ")}`,
     );
+  }
+}
+
+function readQuestProbe(id: string): QuestProbeRow {
+  const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
+    readonly: true,
+    create: false,
+  });
+  try {
+    const row = db
+      .query<QuestProbeRow, [string]>(
+        `SELECT p.id, p.name, p.disabled, n.canonical_slug
+         FROM quest_presentation_rows p
+         JOIN entity_nodes n
+           ON n.entity_type = 'quest'
+          AND n.entity_id = p.id
+          AND n.has_page = 1
+         WHERE p.id = ?`,
+      )
+      .get(id);
+    if (!row) throw new Error(`staged artifact contains no quest probe: ${id}`);
+    return row;
+  } finally {
+    db.close();
   }
 }
 

@@ -37,6 +37,7 @@ interface MapPointRecord {
   map_x: number;
   map_y: number;
   elevation: number;
+  enabled: number;
   show_on_map_debug_only: number;
   short_id: string | null;
   route_path: string | null;
@@ -75,6 +76,7 @@ interface LocationOverviewRecord {
 interface LocationPresentationRecord {
   id: string;
   name: string;
+  enabled: number;
   map_id: string | null;
   allow_fast_travel: number;
   route_path: string;
@@ -100,6 +102,7 @@ export interface LocationPresentationRow {
   id: string;
   name: string;
   routePath: string;
+  enabled: boolean;
   mapLabel: string;
   allowFastTravel: boolean;
   mapHref: string | null;
@@ -186,7 +189,7 @@ function readPoints(layer: MapLayerConfig): MapPointRow[] {
       `SELECT p.id, p.entity_id, p.instance_id,
               COALESCE(n.display_label, p.name) AS name,
               p.map_id, p.map_x, p.map_y, p.elevation,
-              p.show_on_map_debug_only, n.short_id, n.route_path, n.has_page
+              p.enabled, p.show_on_map_debug_only, n.short_id, n.route_path, n.has_page
        FROM ${table} p
        LEFT JOIN entity_nodes n
          ON n.entity_type = p.entity_id AND n.entity_id = p.instance_id
@@ -205,6 +208,7 @@ function readPoints(layer: MapLayerConfig): MapPointRow[] {
         elevation: r.elevation,
         name: r.name,
         tooltip: r.name,
+        enabled: r.enabled === 1,
         debugOnly: r.show_on_map_debug_only === 1,
         nodeShortId: r.short_id,
         routePath: r.route_path,
@@ -341,7 +345,6 @@ export const listLocations = (): LocationOverviewRow[] =>
          ON n.entity_type = 'location'
         AND n.entity_id = l.id
         AND n.has_page = 1
-       WHERE l.enabled = 1
        ORDER BY n.display_label, l.id`,
   ).map((row) => ({
     id: row.id,
@@ -353,13 +356,13 @@ export const getLocationPresentation = (slug: string): LocationPresentationRow |
   const node = getEntityNodeBySlug("location", slug);
   if (!node || !node.hasPage) return undefined;
   const row = get<LocationPresentationRecord>(
-    `SELECT l.id, n.display_label AS name, l.map_id, l.allow_fast_travel, n.route_path
+    `SELECT l.id, n.display_label AS name, l.enabled, l.map_id, l.allow_fast_travel, n.route_path
      FROM locations l
      JOIN entity_nodes n
        ON n.entity_type = 'location'
       AND n.entity_id = l.id
       AND n.has_page = 1
-     WHERE l.id = ? AND l.enabled = 1`,
+     WHERE l.id = ?`,
     [node.entityId],
   );
   if (!row) return undefined;
@@ -401,6 +404,7 @@ export const getLocationPresentation = (slug: string): LocationPresentationRow |
     id: row.id,
     name: row.name,
     routePath: row.route_path,
+    enabled: row.enabled === 1,
     mapLabel: displayMapLabel(row.map_id),
     allowFastTravel: row.allow_fast_travel === 1,
     mapHref: getMapHref("location", row.id),

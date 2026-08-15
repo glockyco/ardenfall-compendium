@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { LOCATION_DDL } from "../src/sql/location-ddl.ts";
 import { ENTITY_GRAPH_DDL } from "../src/relationships/relationship-graph.ts";
-import { emitLocationReadModels } from "../src/entities/registry.ts";
+import { emitLocationReadModels } from "../src/entities/location/read-models.ts";
 import { emitMapReadModels } from "../src/map/read-models.ts";
 
 function seed(db: Database): void {

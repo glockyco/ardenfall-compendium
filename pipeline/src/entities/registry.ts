@@ -5,7 +5,6 @@ import type { LoadSnapshotOutput } from "../stages/load-snapshot.ts";
 import type { EntityDescriptor, SnapshotEnvelope, VariantDescriptor } from "../types.ts";
 import type { PipelineDiagnostic } from "../relationships/relationship-graph.ts";
 import { buildDDL } from "../sql/ddl";
-import { ENTITY_GRAPH_DDL } from "../relationships/relationship-graph.ts";
 import { ITEM_CATEGORY_DDL } from "../sql/item-category-ddl";
 import { ITEM_TAG_DDL } from "../sql/item-tag-ddl";
 import { CHARACTER_RACE_DDL } from "../sql/character-race-ddl";
@@ -46,13 +45,13 @@ import { canonicaliseFactions } from "./faction/canonicaliser";
 import { emitFactionReadModels } from "./faction/read-models";
 import { canonicaliseCharacters } from "./character/canonicaliser";
 import { canonicaliseLocations } from "./location/canonicaliser";
+import { emitLocationReadModels, locationProjection } from "./location/read-models";
 import { emitCharacterReadModels } from "./character/read-models";
 import { canonicalisePortals } from "./portal/canonicaliser";
 import { emitPortalReadModels } from "./portal/read-models";
 import { canonicaliseNpcs } from "./npc/canonicaliser";
 import { emitNpcReadModels } from "./npc/read-models";
 import { emitQuestReadModels } from "./quest/read-models";
-import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "./item/read-models";
 
 interface MapProjection {
   points: string;
@@ -91,64 +90,6 @@ interface EntityModule {
   };
 }
 
-export function emitLocationReadModels(db: Database): void {
-  db.exec(ENTITY_GRAPH_DDL);
-  const writeNode = prepareEntityNodeWriter(db);
-  const rows = db
-    .query<{ id: string; name: string }, []>(
-      `SELECT id, COALESCE(NULLIF(TRIM(name), ''), 'Unnamed location') AS name
-       FROM locations WHERE enabled = 1 ORDER BY name, id`,
-    )
-    .all();
-  const tx = db.transaction(() => {
-    for (const row of rows) {
-      const slug = deriveEntityNodeSlug(row.name, row.id);
-      writeNode({
-        entityType: "location",
-        entityId: row.id,
-        label: row.name,
-        routePath: `/locations/${slug.canonicalSlug}`,
-        canonicalSlug: slug.canonicalSlug,
-        shortId: slug.shortId,
-        hasPage: true,
-      });
-    }
-  });
-  tx();
-}
-
-const locationProjection: MapProjection = {
-  points: `
-      INSERT INTO map_points (
-        id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
-        show_on_map_debug_only, allow_fast_travel
-      )
-      SELECT 'location:' || l.id, 'location', l.id,
-             COALESCE(NULLIF(TRIM(l.name), ''), 'Unnamed location'),
-             p.map_id, p.map_x, p.map_y, p.elevation,
-             l.show_on_map_debug_only, l.allow_fast_travel
-      FROM locations l
-      JOIN placements p ON p.entity_id = 'location' AND p.instance_id = l.id
-      WHERE l.enabled = 1
-      ORDER BY COALESCE(NULLIF(TRIM(l.name), ''), 'Unnamed location'), l.id;
-    `,
-  volumes: `
-      INSERT INTO map_volumes (
-        id, entity_id, instance_id, name, map_id, geometry_json, elevation_min, elevation_max
-      )
-      SELECT v.id, 'location', v.location_id,
-             COALESCE(NULLIF(TRIM(l.name), ''), 'Unnamed location'),
-             p.map_id, v.geometry_json,
-             v.elevation_min, v.elevation_max
-      FROM location_volumes v
-      JOIN locations l ON l.id = v.location_id
-      JOIN placements p ON p.entity_id = 'location' AND p.instance_id = l.id
-      WHERE l.enabled = 1
-        AND v.geometry_json IS NOT NULL
-      ORDER BY COALESCE(NULLIF(TRIM(l.name), ''), 'Unnamed location'), v.volume_index;
-    `,
-};
-
 const portalProjection: MapProjection = {
   // `portals.friendly_name` is nullable because the game genuinely ships portals with an
   // empty `friendlyName`. The extractor records that as a diagnostic rather than
@@ -157,11 +98,12 @@ const portalProjection: MapProjection = {
   points: `
       INSERT INTO map_points (
         id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
-        show_on_map_debug_only, allow_fast_travel
+        enabled, show_on_map_debug_only, allow_fast_travel
       )
       SELECT 'portal:' || p.id, 'portal', p.id, COALESCE(p.friendly_name, 'Unnamed portal'),
              pl.map_id, pl.map_x, pl.map_y, pl.elevation,
-             0, 0
+             1, 0, 0 -- portals have no authored availability flag; they are available
+
       FROM portals p
       JOIN placements pl ON pl.entity_id = 'portal' AND pl.instance_id = p.id
       ORDER BY COALESCE(p.friendly_name, 'Unnamed portal'), p.id;
@@ -172,12 +114,13 @@ const npcProjection: MapProjection = {
   points: `
       INSERT INTO map_points (
         id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
-        show_on_map_debug_only, allow_fast_travel
+        enabled, show_on_map_debug_only, allow_fast_travel
       )
       SELECT 'npc:' || n.id, 'npc', n.id,
              COALESCE(NULLIF(TRIM(n.display_name), ''), 'Unnamed character'),
              p.map_id, p.map_x, p.map_y, p.elevation,
-             0, 0
+             1, 0, 0 -- NPCs have no authored availability flag; they are available
+
       FROM npcs n
       JOIN placements p ON p.entity_id = 'npc' AND p.instance_id = n.id
       ORDER BY COALESCE(NULLIF(TRIM(n.display_name), ''), 'Unnamed character'), n.id;

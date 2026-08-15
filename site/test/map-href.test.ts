@@ -23,7 +23,8 @@ const withDatabase = async (
       id TEXT PRIMARY KEY,
       entity_id TEXT NOT NULL,
       instance_id TEXT NOT NULL,
-      map_id TEXT
+      map_id TEXT,
+      enabled INTEGER NOT NULL
     );
     CREATE TABLE map_volumes (
       id TEXT PRIMARY KEY,
@@ -38,9 +39,9 @@ const withDatabase = async (
       ('npc', 'npc-point', 'npcpoint', 1),
       ('npc', 'npc-missing', 'npcmissing', 1);
     INSERT INTO map_points VALUES
-      ('location-point:point', 'location', 'location-point', 'overworld'),
-      ('portal-point:point', 'portal', 'portal-point', 'overworld'),
-      ('npc-point:point', 'npc', 'npc-point', 'overworld');
+      ('location-point:point', 'location', 'location-point', 'overworld', 1),
+      ('portal-point:point', 'portal', 'portal-point', 'overworld', 1),
+      ('npc-point:point', 'npc', 'npc-point', 'overworld', 1);
     INSERT INTO map_volumes VALUES
       ('location-point:volume', 'location', 'location-point', 'dungeon'),
       ('location-volume:volume', 'location', 'location-volume', 'dungeon');
