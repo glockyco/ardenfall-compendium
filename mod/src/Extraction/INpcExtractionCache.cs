@@ -7,6 +7,7 @@ namespace ArdenfallCompendium.Extraction;
 
 public interface INpcExtractionCache : IExtractionCache
 {
+    int FilteredRuntimeCreatedCount { get; }
     IReadOnlyList<NpcSnapshotRow> GetOrExtract(CompendiumRun run);
     IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run);
 }

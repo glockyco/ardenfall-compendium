@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using ArdenfallCompendium.Dtos;
@@ -15,7 +16,9 @@ public static class ManifestBuilder
         IDictionary<string, string> contentHashes,
         string extractorVersion,
         string? gameVersion = null,
-        string? buildIdentifier = null) => new()
+        string? buildIdentifier = null,
+        IDictionary<string, IDictionary<string, int>>? availability = null,
+        int filteredRuntimeCreatedCount = 0) => new()
         {
             SchemaVersion = 1,
             ExtractorVersion = extractorVersion,
@@ -25,6 +28,11 @@ public static class ManifestBuilder
             Source = new SnapshotSource { Kind = "live-game-export" },
             Preflight = preflight,
             Counts = new Dictionary<string, int>(counts),
+            Availability = availability?.ToDictionary(
+                pair => pair.Key,
+                pair => new Dictionary<string, int>(pair.Value)
+            ) ?? new Dictionary<string, Dictionary<string, int>>(),
+            FilteredRuntimeCreatedCount = filteredRuntimeCreatedCount,
             Diagnostics = diagnostics,
             Hashes = new Dictionary<string, string>(contentHashes),
         };

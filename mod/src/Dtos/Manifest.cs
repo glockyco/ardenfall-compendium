@@ -19,6 +19,8 @@ public sealed class Manifest
     [JsonProperty("source")] public SnapshotSource Source { get; init; } = new();
     [JsonProperty("preflight")] public PreflightReport Preflight { get; init; } = new();
     [JsonProperty("counts")] public Dictionary<string, int> Counts { get; init; } = new();
+    [JsonProperty("availability")] public Dictionary<string, Dictionary<string, int>> Availability { get; init; } = new();
+    [JsonProperty("filteredRuntimeCreatedCount")] public int FilteredRuntimeCreatedCount { get; init; }
     [JsonProperty("diagnostics")] public DiagnosticTotals Diagnostics { get; init; } = new();
     [JsonProperty("hashes")] public Dictionary<string, string> Hashes { get; init; } = new();
 }

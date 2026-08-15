@@ -458,6 +458,19 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["npc"] = npcRows.Count,
                 ["quest"] = questRows.Count,
             };
+            var availability = new Dictionary<string, IDictionary<string, int>>
+            {
+                ["location"] = new Dictionary<string, int>
+                {
+                    ["enabled"] = locationRows.Count(row => row.Fields.Enabled),
+                    ["showOnMapDebugOnly"] = locationRows.Count(row => row.Fields.ShowOnMapDebugOnly),
+                },
+                ["quest"] = new Dictionary<string, int>
+                {
+                    ["disabled"] = questRows.Count(row => row.Fields.Disabled),
+                    ["hiddenInQuestUi"] = questRows.Count(row => row.Fields.HiddenInQuestUi),
+                },
+            };
             var manifest = ManifestBuilder.Build(
                 preflight,
                 counts: counts,
@@ -465,7 +478,9 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 contentHashes: hashes,
                 extractorVersion: Plugin.Version,
                 gameVersion: run.GameVersion,
-                buildIdentifier: run.RunId
+                buildIdentifier: run.RunId,
+                availability: availability,
+                filteredRuntimeCreatedCount: _npcs.FilteredRuntimeCreatedCount
             );
             phaseStopwatch.Restart();
             var manifestJson = JsonConvert.SerializeObject(manifest, JsonSettings.Default);

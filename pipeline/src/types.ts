@@ -131,6 +131,8 @@ export interface SnapshotManifest {
     checks: { name: string; ok: boolean; reason?: string | null }[];
   };
   counts: Record<string, number>;
+  availability?: Record<string, Record<string, number>>;
+  filteredRuntimeCreatedCount?: number;
   diagnostics: { fatal: number; diagnostic: number };
   hashes: Record<string, string>;
 }
@@ -541,6 +543,7 @@ export interface CharacterSnapshotFields {
   id: string;
   name: string | null;
   parentRef: SnapshotRef;
+  raceRef: SnapshotRef | null;
   dropRefs: SnapshotRef[];
   startingFactions?: SnapshotRef[];
 }

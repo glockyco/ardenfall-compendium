@@ -973,6 +973,8 @@ public sealed class RunFinalizeCommandTests
 
     private sealed class FakeNpcExtractionCache : INpcExtractionCache
     {
+        public int FilteredRuntimeCreatedCount => 0;
+
         public void Evict(CompendiumRun run) { }
 
         public IReadOnlyList<NpcSnapshotRow> GetOrExtract(CompendiumRun run) =>

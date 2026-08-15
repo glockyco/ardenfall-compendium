@@ -15,6 +15,8 @@ public sealed class NpcExtractionService : INpcExtractionCache
         _source = source;
     }
 
+    public int FilteredRuntimeCreatedCount => _source.FilteredRuntimeCreatedCount;
+
     public IReadOnlyList<NpcSnapshotRow> GetOrExtract(CompendiumRun run) => GetState(run).Rows;
 
     public void Evict(CompendiumRun run) => _byRun.Remove(run.RunId);
