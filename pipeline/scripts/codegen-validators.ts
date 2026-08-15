@@ -34,14 +34,27 @@ const targets = [
   },
 ];
 
-// Single Ajv instance so $ref between schemas resolves.
-const ajv = new Ajv2020({ code: { source: true, esm: true }, allErrors: true });
-addFormats(ajv);
+const schemaDocs = targets.map(({ schema }) => JSON.parse(readFileSync(schema, "utf8")));
 
-// Pre-load every schema so cross-schema $ref works.
-for (const { schema } of targets) {
-  const doc = JSON.parse(readFileSync(schema, "utf8"));
-  ajv.addSchema(doc);
+/**
+ * One Ajv instance per target, each pre-loaded with every schema so the one
+ * cross-schema reference resolves (variant.schema.json points at
+ * entity.schema.json#/$defs/field).
+ *
+ * A shared instance would also resolve that reference, but Ajv numbers the
+ * functions and schema constants it emits from a counter that lives on the
+ * instance. Compiling every target through one instance therefore made each
+ * generated file's contents depend on every other schema: adding a subschema to
+ * entity.schema.json renumbered `validate36` to `validate38` in ten unrelated
+ * validators. `check:validators` regenerates and diffs these files, so that
+ * coupling turned the check into noise. Compiling one root per instance keeps
+ * the numbering local to that schema and its references.
+ */
+function createAjv(): Ajv2020 {
+  const ajv = new Ajv2020({ code: { source: true, esm: true }, allErrors: true });
+  addFormats(ajv);
+  for (const doc of schemaDocs) ajv.addSchema(doc);
+  return ajv;
 }
 
 // Shared `.d.ts` shape; matches Ajv 8's runtime ValidateFunction surface.
@@ -63,6 +76,7 @@ export default validate;
 
 for (const { schema, out } of targets) {
   const doc = JSON.parse(readFileSync(schema, "utf8"));
+  const ajv = createAjv();
   const validate = ajv.getSchema(doc.$id) ?? ajv.compile(doc);
   const code = standaloneCode(ajv, validate);
   mkdirSync(dirname(out), { recursive: true });
