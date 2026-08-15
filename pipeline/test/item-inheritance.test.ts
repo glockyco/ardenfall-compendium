@@ -2,7 +2,10 @@ import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { canonicaliseCharacters } from "../src/entities/character/canonicaliser.ts";
 import { emitCharacterReadModels } from "../src/entities/character/read-models.ts";
-import { collectTransitiveDescendants } from "../src/entities/item/read-models.ts";
+import {
+  collectTransitiveDescendants,
+  emitItemReadModels,
+} from "../src/entities/item/read-models.ts";
 import { canonicaliseEnchantments } from "../src/entities/enchantment/canonicaliser.ts";
 import { emitEnchantmentReadModels } from "../src/entities/enchantment/read-models.ts";
 import { ENTITY_GRAPH_DDL } from "../src/relationships/relationship-graph.ts";
@@ -42,6 +45,104 @@ describe("item inheritance", () => {
       ["a", "b", "b"],
       ["a", "a", "b"],
     ]);
+  });
+
+  it("publishes and marks a templated item", () => {
+    const db = new Database(":memory:");
+    db.exec(`
+      CREATE TABLE items (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        variant TEXT,
+        "categoryRef" TEXT,
+        parent_ref_json TEXT,
+        weight REAL,
+        value INTEGER
+      );
+      CREATE TABLE asset_refs (
+        entity_id TEXT NOT NULL,
+        entity_row_id TEXT NOT NULL,
+        slot TEXT NOT NULL,
+        asset_kind TEXT NOT NULL,
+        asset_hash TEXT NOT NULL,
+        PRIMARY KEY (entity_id, entity_row_id, slot)
+      );
+      CREATE TABLE item_categories (id TEXT PRIMARY KEY);
+      CREATE TABLE item_tags (id TEXT PRIMARY KEY);
+      CREATE TABLE item_tag_refs (item_id TEXT NOT NULL, tag TEXT NOT NULL);
+    `);
+    db.run(
+      `INSERT INTO items (id, name, variant, parent_ref_json, weight, value)
+       VALUES (?, ?, ?, NULL, ?, ?)`,
+      ["a7000001.11400000", "BASE ring", "ring", 1, 10],
+    );
+
+    emitItemReadModels(
+      db,
+      {
+        entities: { item: { site: { route: "/items" } } },
+        variants: { item: [{ variantId: "ring", label: "Ring" }] },
+      } as never,
+      [],
+      {
+        entityId: "item",
+        schemaVersion: 1,
+        rows: [
+          {
+            id: "a7000001.11400000",
+            fields: {},
+            variant: "ring",
+            presentation: {
+              schemaVersion: 1,
+              renderContext: "item-presentation-v1",
+              displayName: "BASE ring",
+              displayNameSourceMethod: "test",
+              itemType: "ring",
+              itemTypeSourceMethod: "test",
+              descriptionSource: "",
+              effectsSource: "",
+              effects: [],
+              statRows: [],
+              requirements: [],
+              durability: null,
+              stateFacts: [],
+              value: 10,
+              weight: 1,
+              diagnostics: [],
+            },
+          },
+        ],
+      },
+    );
+
+    expect(db.query(`SELECT id, name FROM item_overview_rows`).all()).toEqual([
+      { id: "a7000001.11400000", name: "Unnamed item — Ring" },
+    ]);
+    expect(
+      db
+        .query(
+          `SELECT route_path, has_page FROM entity_nodes
+           WHERE entity_type = 'item' AND entity_id = 'a7000001.11400000'`,
+        )
+        .get(),
+    ).toEqual({ route_path: "/items/a7000001.11400000", has_page: 1 });
+    expect(
+      db
+        .query(
+          `SELECT name_is_placeholder FROM item_presentation_rows
+           WHERE id = 'a7000001.11400000'`,
+        )
+        .get(),
+    ).toEqual({ name_is_placeholder: 1 });
+    expect(
+      db
+        .query(
+          `SELECT code FROM pipeline_diagnostics
+           WHERE entity_id = 'a7000001.11400000'`,
+        )
+        .all(),
+    ).toEqual([{ code: "itemNamePlaceholder" }]);
+    db.close();
   });
 });
 
@@ -93,11 +194,17 @@ describe("enchantment inheritance", () => {
 });
 
 describe("prototype loot diagnostics", () => {
-  it("drops a prototype loot edge and emits its diagnostic", () => {
+  it("publishes a prototype loot edge and emits its diagnostic", () => {
     const db = new Database(":memory:");
     db.exec(`${CHARACTER_DDL}${ENTITY_GRAPH_DDL}`);
     db.exec(`CREATE TABLE items (id TEXT PRIMARY KEY, parent_ref_json TEXT)`);
-    seedItem(db, "a7000001.11400000", "Unnamed item — Melee weapon", null, 0);
+    db.exec(
+      `CREATE TABLE item_presentation_rows (id TEXT PRIMARY KEY, name_is_placeholder INTEGER NOT NULL)`,
+    );
+    seedItem(db, "a7000001.11400000", "Unnamed item — Melee weapon", null, 1);
+    db.run(`INSERT INTO item_presentation_rows (id, name_is_placeholder) VALUES (?, 1)`, [
+      "a7000001.11400000",
+    ]);
     canonicaliseCharacters(db, {
       entityId: "named;character;fixture-character",
       schemaVersion: 1,
@@ -115,8 +222,30 @@ describe("prototype loot diagnostics", () => {
     });
     const diagnostics = emitCharacterReadModels(db);
 
+    expect(
+      db
+        .query(
+          `SELECT label, route_path, has_page FROM entity_nodes
+           WHERE entity_type = 'item' AND entity_id = 'a7000001.11400000'`,
+        )
+        .get(),
+    ).toEqual({
+      label: "Unnamed item — Melee weapon",
+      route_path: "/items/a7000001.11400000",
+      has_page: 1,
+    });
+    expect(
+      db
+        .query(
+          `SELECT name_is_placeholder FROM item_presentation_rows
+           WHERE id = 'a7000001.11400000'`,
+        )
+        .get(),
+    ).toEqual({ name_is_placeholder: 1 });
     expect(diagnostics).toEqual([expect.objectContaining({ code: "itemLootReferencesPrototype" })]);
-    expect(db.query(`SELECT * FROM entity_edges WHERE predicate = 'can_drop'`).all()).toEqual([]);
+    expect(
+      db.query(`SELECT target_id FROM entity_edges WHERE predicate = 'can_drop'`).all(),
+    ).toEqual([{ target_id: "a7000001.11400000" }]);
     db.close();
   });
 });

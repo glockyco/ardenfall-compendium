@@ -80,6 +80,7 @@ export function resolveItemDisplayLabel(
 ): { label: string; isPlaceholder: boolean } {
   const value = (presentationName ?? itemName)?.trim() ?? "";
   const isPlaceholder = isPlaceholderItemName(value);
+  // Keep template labels descriptive instead of presenting raw BASE or {token} text as a product name.
   return {
     label: isPlaceholder ? `Unnamed item — ${variantLabel}` : value,
     isPlaceholder,
@@ -195,7 +196,7 @@ export function emitItemReadModels(
       variantLabel,
       label: displayLabel.label,
       isPlaceholder: displayLabel.isPlaceholder,
-      hasPage: !displayLabel.isPlaceholder,
+      hasPage: true,
       parentRefJson: item?.parent_ref_json ?? null,
     });
   }
@@ -206,7 +207,7 @@ export function emitItemReadModels(
       severity: "diagnostic",
       source: "item-presentation-read-model",
       code: "itemNamePlaceholder",
-      message: `Item '${itemId}' has a prototype name and no public page: '${metadata.label}'.`,
+      message: `Item '${itemId}' has a prototype name: '${metadata.label}'.`,
       entityType: "item",
       entityId: itemId,
       field: "presentation.displayName",
@@ -239,10 +240,7 @@ export function emitItemReadModels(
     variant: string | null;
     display_icon_hash: string | null;
   }[];
-  const publishedOverviewSource = overviewSource.filter(
-    (row) => itemMetadata.get(row.id)?.hasPage === true,
-  );
-  for (const row of publishedOverviewSource) {
+  for (const row of overviewSource) {
     overviewInsert.run(
       row.id,
       itemMetadata.get(row.id)?.label ?? row.name,
@@ -254,7 +252,7 @@ export function emitItemReadModels(
     );
   }
   const categories = new Map<string, { label: string; count: number }>();
-  for (const row of publishedOverviewSource) {
+  for (const row of overviewSource) {
     if (!row.variant) continue;
     const current = categories.get(row.variant) ?? {
       label: titleCase(row.variant),
@@ -352,7 +350,6 @@ export function emitItemReadModels(
     categoryRef: string | null | undefined,
     tagIds: string[],
   ) => {
-    if (itemMetadata.get(itemId)?.isPlaceholder) return;
     for (const tagId of tagIds) {
       if (!pageTagIds.has(tagId)) {
         richTextDiagnostics.push({
@@ -413,7 +410,6 @@ export function emitItemReadModels(
       const item = itemById.get(snapshotRow.id);
       const metadata = itemMetadata.get(snapshotRow.id);
       if (!metadata) throw new Error(`Item '${snapshotRow.id}' has no resolved metadata`);
-      const sourceHasPage = metadata.hasPage;
       emitTaxonomyEdges(snapshotRow.id, item?.category_ref, tagsByItem.get(snapshotRow.id) ?? []);
       const presentation = snapshotRow.presentation;
       if (!presentation) continue;
@@ -490,20 +486,18 @@ export function emitItemReadModels(
             });
             return { ...effect, targetId: null };
           }
-          if (sourceHasPage) {
-            edgeInsert.run(
-              `${snapshotRow.id}:applies:status-effect:${targetId}`,
-              "item",
-              snapshotRow.id,
-              "status-effect",
-              targetId,
-              "applies",
-              "Applies",
-              1,
-              JSON.stringify({ source: effect.source, level: effect.level ?? null }),
-              null,
-            );
-          }
+          edgeInsert.run(
+            `${snapshotRow.id}:applies:status-effect:${targetId}`,
+            "item",
+            snapshotRow.id,
+            "status-effect",
+            targetId,
+            "applies",
+            "Applies",
+            1,
+            JSON.stringify({ source: effect.source, level: effect.level ?? null }),
+            null,
+          );
           return { ...effect, targetId };
         }
         if (effect.targetType !== "spell") return effect;
@@ -521,20 +515,18 @@ export function emitItemReadModels(
           });
           return { ...effect, targetId: null };
         }
-        if (sourceHasPage) {
-          edgeInsert.run(
-            `${snapshotRow.id}:casts:spell:${targetId}`,
-            "item",
-            snapshotRow.id,
-            "spell",
-            targetId,
-            "casts",
-            "Casts",
-            1,
-            JSON.stringify({ source: effect.source, level: effect.level ?? null }),
-            null,
-          );
-        }
+        edgeInsert.run(
+          `${snapshotRow.id}:casts:spell:${targetId}`,
+          "item",
+          snapshotRow.id,
+          "spell",
+          targetId,
+          "casts",
+          "Casts",
+          1,
+          JSON.stringify({ source: effect.source, level: effect.level ?? null }),
+          null,
+        );
         return { ...effect, targetId };
       });
       const labelledEffectFacts = rawEffectFacts.map((effect) => ({
@@ -551,8 +543,8 @@ export function emitItemReadModels(
         entityType: "item",
         entityId: snapshotRow.id,
         label: itemLabel,
-        routePath: sourceHasPage ? `${itemRoute}/${snapshotRow.id}` : null,
-        hasPage: sourceHasPage,
+        routePath: `${itemRoute}/${snapshotRow.id}`,
+        hasPage: true,
       });
       aliasInsert.run(aliasKey(itemLabel), "item", snapshotRow.id, itemLabel, "item-presentation");
       presentationInsert.run(
@@ -610,22 +602,20 @@ export function emitItemReadModels(
         variantLabel,
         "item-variant",
       );
-      if (sourceHasPage) {
-        edgeInsert.run(
-          `${snapshotRow.id}:variant_of:item-variant:${variantId}`,
-          "item",
-          snapshotRow.id,
-          "item-variant",
-          variantId,
-          "variant_of",
-          "Variant",
-          1,
-          JSON.stringify({ source: "items.variant" }),
-          "item-header",
-        );
-      }
+      edgeInsert.run(
+        `${snapshotRow.id}:variant_of:item-variant:${variantId}`,
+        "item",
+        snapshotRow.id,
+        "item-variant",
+        variantId,
+        "variant_of",
+        "Variant",
+        1,
+        JSON.stringify({ source: "items.variant" }),
+        "item-header",
+      );
 
-      for (const term of sourceHasPage ? collectTermLinks(description.nodes) : []) {
+      for (const term of collectTermLinks(description.nodes)) {
         const termLabel = masterTooltip?.tooltipCodes[term.termId] ?? term.label;
         writeNode({
           entityType: "term",
@@ -636,20 +626,18 @@ export function emitItemReadModels(
           shortId: term.termId,
         });
         aliasInsert.run(aliasKey(termLabel), "term", term.termId, termLabel, "master-tooltip");
-        if (sourceHasPage) {
-          edgeInsert.run(
-            `${snapshotRow.id}:references_term:term:${term.termId}`,
-            "item",
-            snapshotRow.id,
-            "term",
-            term.termId,
-            "references_term",
-            termLabel,
-            0.5,
-            JSON.stringify({ source: "presentation.descriptionSource" }),
-            "description",
-          );
-        }
+        edgeInsert.run(
+          `${snapshotRow.id}:references_term:term:${term.termId}`,
+          "item",
+          snapshotRow.id,
+          "term",
+          term.termId,
+          "references_term",
+          termLabel,
+          0.5,
+          JSON.stringify({ source: "presentation.descriptionSource" }),
+          "description",
+        );
       }
     }
   });
@@ -688,10 +676,7 @@ export function emitItemReadModels(
     }
     parentByChild.set(itemId, parentId);
   }
-  const descendants = collectTransitiveDescendants(
-    parentByChild,
-    new Set([...itemMetadata].filter(([, metadata]) => !metadata.isPlaceholder).map(([id]) => id)),
-  );
+  const descendants = collectTransitiveDescendants(parentByChild, new Set(itemMetadata.keys()));
   for (const cycle of descendants.cycles) {
     richTextDiagnostics.push({
       severity: "diagnostic",
@@ -705,9 +690,6 @@ export function emitItemReadModels(
     });
   }
   for (const [itemId, parentId] of parentByChild) {
-    const child = itemMetadata.get(itemId);
-    const parent = itemMetadata.get(parentId);
-    if (!child || !parent || child.isPlaceholder || parent.isPlaceholder) continue;
     edgeInsert.run(
       `${itemId}:derives_from:item:${parentId}`,
       "item",

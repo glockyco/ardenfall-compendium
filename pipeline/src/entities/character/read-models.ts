@@ -51,11 +51,19 @@ export function emitCharacterReadModels(
   const itemNodes = new Map(
     db
       .query<
-        { entity_id: string; label: string | null; route_path: string | null; has_page: number },
+        {
+          entity_id: string;
+          label: string | null;
+          route_path: string | null;
+          has_page: number;
+          name_is_placeholder: number | null;
+        },
         []
       >(
-        `SELECT entity_id, label, route_path, has_page
-         FROM entity_nodes WHERE entity_type = 'item'`,
+        `SELECT n.entity_id, n.label, n.route_path, n.has_page, p.name_is_placeholder
+         FROM entity_nodes n
+         LEFT JOIN item_presentation_rows p ON p.id = n.entity_id
+         WHERE n.entity_type = 'item'`,
       )
       .all()
       .map(
@@ -66,6 +74,8 @@ export function emitCharacterReadModels(
               label: row.label?.trim() || "Unnamed item",
               routePath: row.has_page === 1 ? row.route_path : null,
               hasPage: row.has_page === 1,
+              hasPresentation: row.name_is_placeholder !== null,
+              isPlaceholder: row.name_is_placeholder === 1,
             },
           ] as const,
       ),
@@ -157,7 +167,19 @@ export function emitCharacterReadModels(
           diagnostics.push(unresolvedDropDiagnostic(row, "reference does not identify an item"));
           continue;
         }
-        if (!target.hasPage) {
+        if (!target.hasPresentation) {
+          diagnostics.push({
+            severity: "diagnostic",
+            source: "relationship-graph",
+            code: "itemLootPresentationMissing",
+            message: `Character '${row.id}' loot references item '${targetId}' without a presentation row.`,
+            entityType: "character",
+            entityId: row.id,
+            field: "characters.drop_refs_json",
+            evidence: { itemId: targetId },
+          });
+        }
+        if (target.isPlaceholder) {
           diagnostics.push({
             severity: "diagnostic",
             source: "relationship-graph",
@@ -168,7 +190,6 @@ export function emitCharacterReadModels(
             field: "characters.drop_refs_json",
             evidence: { itemId: targetId },
           });
-          continue;
         }
         edgeInsert.run(
           `${row.id}:can_drop:item:${targetId}`,

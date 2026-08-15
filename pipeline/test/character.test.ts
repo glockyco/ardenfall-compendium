@@ -8,6 +8,8 @@ import { CHARACTER_DDL } from "../src/sql/character-ddl.ts";
 import type { SnapshotEnvelope, SnapshotRef } from "../src/types.ts";
 
 const itemId = "4ed20218.fixture-iron-sword";
+const templateItemId = "a7000001.fixture-base-ring";
+const missingPresentationItemId = "a7000002.fixture-missing-presentation";
 const characterId = "named;character;character_bandit";
 
 function missingParentRef(): SnapshotRef {
@@ -23,6 +25,25 @@ function seedDatabase(): Database {
         (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
        VALUES ('item', ?, 'Iron Sword', 'Iron Sword', '/items/iron-sword--4ed20218', 'iron-sword--4ed20218', '4ed20218', 1)`,
     [itemId],
+  );
+  db.exec(
+    `CREATE TABLE item_presentation_rows (id TEXT PRIMARY KEY, name_is_placeholder INTEGER NOT NULL)`,
+  );
+  db.run(`INSERT INTO item_presentation_rows (id, name_is_placeholder) VALUES (?, 0)`, [itemId]);
+  db.run(
+    `INSERT INTO entity_nodes
+        (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES ('item', ?, 'Unnamed item — Ring', 'Unnamed item — Ring', '/items/base-ring--a7000001', 'a7000001', 'a7000001', 1)`,
+    [templateItemId],
+  );
+  db.run(`INSERT INTO item_presentation_rows (id, name_is_placeholder) VALUES (?, 1)`, [
+    templateItemId,
+  ]);
+  db.run(
+    `INSERT INTO entity_nodes
+        (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES ('item', ?, 'Missing presentation', 'Missing presentation', '/items/missing-presentation--a7000002', 'a7000002', 'a7000002', 1)`,
+    [missingPresentationItemId],
   );
   return db;
 }
@@ -91,6 +112,70 @@ describe("character pipeline", () => {
         evidence_json: JSON.stringify({ source: "characters.itemLists" }),
       },
     ]);
+  });
+
+  it("links a template loot target and keeps its diagnostic", () => {
+    const db = seedDatabase();
+    canonicaliseCharacters(db, {
+      entityId: "character",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: characterId,
+          fields: {
+            id: characterId,
+            name: "Bandit",
+            parentRef: missingParentRef(),
+            dropRefs: [{ kind: "lookupAsset", guid: templateItemId }],
+          },
+        },
+      ],
+    });
+
+    expect(emitCharacterReadModels(db)).toEqual([
+      expect.objectContaining({ code: "itemLootReferencesPrototype" }),
+    ]);
+    expect(
+      db
+        .query(
+          `SELECT target_id FROM entity_edges
+           WHERE source_id = ? AND predicate = 'can_drop'`,
+        )
+        .all(characterId),
+    ).toEqual([{ target_id: templateItemId }]);
+    db.close();
+  });
+
+  it("diagnoses a loot target with no item presentation row", () => {
+    const db = seedDatabase();
+    canonicaliseCharacters(db, {
+      entityId: "character",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: characterId,
+          fields: {
+            id: characterId,
+            name: "Bandit",
+            parentRef: missingParentRef(),
+            dropRefs: [{ kind: "lookupAsset", guid: missingPresentationItemId }],
+          },
+        },
+      ],
+    });
+
+    expect(emitCharacterReadModels(db)).toEqual([
+      expect.objectContaining({ code: "itemLootPresentationMissing" }),
+    ]);
+    expect(
+      db
+        .query(
+          `SELECT target_id FROM entity_edges
+           WHERE source_id = ? AND predicate = 'can_drop'`,
+        )
+        .all(characterId),
+    ).toEqual([{ target_id: missingPresentationItemId }]);
+    db.close();
   });
 
   it("uses an unnamed label for a nameless character", () => {

@@ -141,15 +141,31 @@ describe("emitItemReadModels", () => {
       display_icon_hash: string | null;
       display_icon_color: string | null;
     }[];
+    expect(overview).toHaveLength(9);
     expect(overview.map(({ id, name }) => ({ id, name }))).toEqual([
       { id: "4ed20218.fixture-iron-sword", name: "Iron Sword" },
       { id: "5ea7beef.fixture-leather-tunic", name: "Leather Tunic" },
       { id: "6a71c0de.fixture-stamina-draught", name: "Stamina Draught" },
       { id: "7ab10c55.fixture-slate-spell", name: "Spark Slate" },
       { id: "8c0ffee0.fixture-throwing-potion", name: "Fire Flask" },
+      { id: "a7000001.fixture-base-weapon", name: "Unnamed item — Melee weapon" },
       { id: "a7000002.fixture-base-weapon-child", name: "Training Blade" },
       { id: "a7000003.fixture-base-weapon-grandchild", name: "Grandchild Blade" },
+      { id: "a7000005.fixture-placeholder-leaf", name: "Unnamed item — Melee weapon" },
     ]);
+    expect(db.query("SELECT COUNT(*) AS count FROM item_presentation_rows").get()).toEqual({
+      count: 9,
+    });
+    expect(
+      db
+        .query(
+          `SELECT o.name, p.name_is_placeholder
+           FROM item_overview_rows o
+           JOIN item_presentation_rows p ON p.id = o.id
+           WHERE o.id = 'a7000001.fixture-base-weapon'`,
+        )
+        .get(),
+    ).toEqual({ name: "Unnamed item — Melee weapon", name_is_placeholder: 1 });
     expect(db.query("SELECT id FROM items ORDER BY id").all()).toEqual([
       { id: "4ed20218.fixture-iron-sword" },
       { id: "5ea7beef.fixture-leather-tunic" },
@@ -522,7 +538,9 @@ describe("emitItemReadModels", () => {
         category_id: "melee-weapon",
         label: "Melee Weapon",
         href: "/objects/variant/melee-weapon",
-        item_count: 3,
+        // Counts the two template-named melee items as well, since a template is
+        // published and marked rather than withheld.
+        item_count: 5,
       },
       {
         category_id: "slate-spell",
@@ -547,7 +565,7 @@ describe("emitItemReadModels", () => {
     expect(JSON.parse(variantFilter.options_json)).toEqual([
       { value: "armor", label: "Armor", count: 1 },
       { value: "consumable", label: "Consumable", count: 1 },
-      { value: "melee-weapon", label: "Melee Weapon", count: 3 },
+      { value: "melee-weapon", label: "Melee Weapon", count: 5 },
       { value: "slate-spell", label: "Slate Spell", count: 1 },
       { value: "throwing-potion", label: "Throwing Potion", count: 1 },
     ]);
