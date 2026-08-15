@@ -183,7 +183,7 @@ function readPoints(layer: MapLayerConfig): MapPointRow[] {
       // emit-entity-display-labels has already disambiguated across the whole
       // entity type by appending a short id to a repeated label. map_points.name
       // is the raw canonical name, so reading it here would give two markers the
-      // same link text pointing at different pages: placed characters that
+      // same link text pointing at different pages: characters that
       // inherit a name from their prototype do repeat, with eight reading
       // `Darvaki`. p.name remains the fallback for a point with no public node.
       `SELECT p.id, p.entity_id, p.instance_id,

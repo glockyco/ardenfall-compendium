@@ -49,6 +49,24 @@
       }
     },
     {
+      "id": "named;character;character_race_fallback",
+      "fields": {
+        "id": "named;character;character_race_fallback",
+        "name": null,
+        "raceRef": {
+          "kind": "namedAsset",
+          "entity": "character-race",
+          "name": "race_karu_elf"
+        },
+        "dropRefs": [],
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
+      }
+    },
+    {
       "id": "named;character;character_villager",
       "fields": {
         "id": "named;character;character_villager",

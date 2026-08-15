@@ -140,18 +140,18 @@ describe("getMapView", () => {
     }
   });
 
-  it("keeps a page-less NPC marker selectable by its map short id", async () => {
+  it("keeps a page-less character marker selectable by its map short id", async () => {
     const root = withDb((db) => {
       db.exec(baseSchema);
       db.exec(`
         INSERT INTO map_layers VALUES
           ('npcs', 'npc', 'map_points',
            '["map_points"]', 'point', 'character',
-           '[255,200,120]', 4, '["characterName"]', '[]', 'Placed characters', 80);
+           '[255,200,120]', 4, '["characterName"]', '[]', 'Characters', 80);
         INSERT INTO map_points VALUES
           ('npc:record-1', 'npc', 'record-1', 'Ada', 'overworld', 4, 5, 2, 1, 0, 0);
         INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
-          ('npc', 'record-1', 'Ada', 'Ada', '/placed-characters/ada--npc11111',
+          ('npc', 'record-1', 'Ada', 'Ada', '/characters/ada--npc11111',
            'ada--npc11111', 'npc11111', 0);
       `);
     });
@@ -171,7 +171,7 @@ describe("getMapView", () => {
         icon: "character",
         tooltipFields: ["characterName"],
         filters: [],
-        legendLabel: "Placed characters",
+        legendLabel: "Characters",
         zOrder: 80,
       });
       expect(point).toMatchObject({
@@ -181,7 +181,7 @@ describe("getMapView", () => {
         tooltip: "Ada",
         enabled: true,
         nodeShortId: "npc11111",
-        routePath: "/placed-characters/ada--npc11111",
+        routePath: "/characters/ada--npc11111",
         hasPage: false,
       });
       expect(point?.name).not.toContain("record-1");

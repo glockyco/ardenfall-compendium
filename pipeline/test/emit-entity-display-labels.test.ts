@@ -11,9 +11,9 @@ describe("entity display labels", () => {
       INSERT INTO entity_nodes
         (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
       VALUES
-        ('npc', 'leader-one', 'Leader', 'Leader', '/placed-characters/leader--d998e13b', 'leader--d998e13b', 'd998e13b', 1),
-        ('npc', 'leader-two', 'Leader', 'Leader', '/placed-characters/leader--de74e04b', 'leader--de74e04b', 'de74e04b', 1),
-        ('npc', 'guard', 'Guard', 'Guard', '/placed-characters/guard--aabbccdd', 'guard--aabbccdd', 'aabbccdd', 1),
+        ('npc', 'leader-one', 'Leader', 'Leader', '/characters/leader--d998e13b', 'leader--d998e13b', 'd998e13b', 1),
+        ('npc', 'leader-two', 'Leader', 'Leader', '/characters/leader--de74e04b', 'leader--de74e04b', 'de74e04b', 1),
+        ('npc', 'guard', 'Guard', 'Guard', '/characters/guard--aabbccdd', 'guard--aabbccdd', 'aabbccdd', 1),
         ('location', 'leader-location', 'Leader', 'Leader', '/locations/leader--00112233', 'leader--00112233', '00112233', 1)
     `);
 

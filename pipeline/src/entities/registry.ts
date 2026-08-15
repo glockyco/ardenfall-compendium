@@ -214,7 +214,10 @@ export const entityRegistry: Record<string, EntityModule> = {
   character: {
     ddl: CHARACTER_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseCharacters(db, envelope),
-    readModel: ({ db, entity }) => emitCharacterReadModels(db, entity.site?.route),
+    readModel: ({ db, entity }) => {
+      if (!entity.site) throw new Error("entity 'character' is missing site.route");
+      return emitCharacterReadModels(db, entity.site.route);
+    },
     site: {
       overviewRenderer: () => "text",
     },
@@ -236,7 +239,10 @@ export const entityRegistry: Record<string, EntityModule> = {
     ddl: NPC_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseNpcs(db, envelope),
     readModelPhase: "after-map",
-    readModel: ({ db }) => emitNpcReadModels(db),
+    readModel: ({ db, entity }) => {
+      if (!entity.site) throw new Error("entity 'npc' is missing site.route");
+      return emitNpcReadModels(db, entity.site.route);
+    },
     mapProjection: npcProjection,
   },
   quest: {

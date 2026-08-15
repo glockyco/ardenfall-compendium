@@ -93,7 +93,9 @@ describe("sitemap routes", () => {
     expect(routes).toContain("/");
     expect(routes).toContain("/locations");
     expect(routes).toContain("/quests");
-    expect(routes).toContain("/placed-characters");
+    expect(routes).toContain("/characters");
+    expect(routes).toContain("/character-types");
+    expect(routes).not.toContain("/placed-characters");
     expect(routes).toContain("/portals");
     expect(routes).toContain("/items/iron-sword");
     expect(routes).toContain("/terms/strength");

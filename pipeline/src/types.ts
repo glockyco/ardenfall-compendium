@@ -20,7 +20,12 @@ export interface EntityDescriptor {
   fields: FieldSpec[];
   variants?: { dir: string; registry?: string };
   denormalise?: OperationRef[];
-  site?: { route: string; overview?: SiteOverview; detail?: SiteDetail };
+  site?: {
+    route: string;
+    previousRoutes?: string[];
+    overview?: SiteOverview;
+    detail?: SiteDetail;
+  };
   map?: SiteMap | null;
 }
 

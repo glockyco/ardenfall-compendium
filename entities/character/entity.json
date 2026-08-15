@@ -2,7 +2,7 @@
   "$schema": "../../schemas/entity.schema.json",
   "id": "character",
   "kind": "definition",
-  "label": { "singular": "Character", "plural": "Characters" },
+  "label": { "singular": "Character type", "plural": "Character types" },
   "extraction": {
     "source": "namedAsset",
     "root": "Resources.FindObjectsOfTypeAll<CharacterData>",
@@ -15,9 +15,10 @@
       "policy": "player-visible"
     }
   },
-  "presentationContext": { "renderContext": "character-presentation-v1" },
+  "presentationContext": { "renderContext": "character-type-presentation-v1" },
   "site": {
-    "route": "/characters",
+    "route": "/character-types",
+    "previousRoutes": ["/characters"],
     "overview": { "columns": ["name"], "search": ["name"] },
     "detail": {
       "sections": [

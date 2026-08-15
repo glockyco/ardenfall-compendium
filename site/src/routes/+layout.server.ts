@@ -3,10 +3,10 @@ import { join } from "node:path";
 
 import {
   listCharacters,
+  listCharacterTypes,
   listCharacterRaces,
   listFactions,
   listLocations,
-  listPlacedCharacters,
   listPortals,
   listQuests,
   getEntity,
@@ -63,9 +63,9 @@ export interface SiteChrome {
   itemCategoryRoute: string;
   itemTagRoute: string;
   characterRoute: string;
+  characterTypeRoute: string;
   characterRaceRoute: string;
   locationRoute: string;
-  placedCharacterRoute: string;
   portalRoute: string;
   factionRoute: string;
 }
@@ -206,10 +206,10 @@ function buildLayoutData(): SiteChrome {
   const statType = entitySection("stat-type", listStatTypes().length);
   const itemCategory = entitySection("item-category", listItemCategories().length);
   const itemTag = entitySection("item-tag", listItemTags().length);
-  const character = entitySection("character", listCharacters().length);
+  const character = entitySection("npc", listCharacters().length);
+  const characterType = entitySection("character", listCharacterTypes().length);
   const characterRace = entitySection("character-race", listCharacterRaces().length);
   const location = entitySection("location", listLocations().length);
-  const placedCharacter = entitySection("npc", listPlacedCharacters().length);
   const portal = entitySection("portal", listPortals().length);
   const faction = entitySection("faction", listFactions().length);
   const map = mapSection();
@@ -226,9 +226,9 @@ function buildLayoutData(): SiteChrome {
       itemCategory,
       itemTag,
       character,
+      characterType,
       characterRace,
       location,
-      placedCharacter,
       portal,
       faction,
       map,
@@ -245,9 +245,9 @@ function buildLayoutData(): SiteChrome {
     itemCategoryRoute: itemCategory.href,
     itemTagRoute: itemTag.href,
     characterRoute: character.href,
+    characterTypeRoute: characterType.href,
     characterRaceRoute: characterRace.href,
     locationRoute: location.href,
-    placedCharacterRoute: placedCharacter.href,
     portalRoute: portal.href,
     factionRoute: faction.href,
   };

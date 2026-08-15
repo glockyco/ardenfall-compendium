@@ -104,7 +104,7 @@ function seedDatabase(): Database {
     null,
   );
   for (const [entityType, entityId, label, routePath] of [
-    ["npc", npcId, "Giver", "/placed-characters/giver--11111111"],
+    ["npc", npcId, "Giver", "/characters/giver--11111111"],
     ["faction", factionId, "Guard", "/factions/guard--faction-guard"],
     ["item", itemId, "Sword", "/items/sword--item-sword"],
   ]) {

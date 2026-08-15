@@ -23,6 +23,7 @@
 
 <h1 class="text-2xl font-bold">Characters</h1>
 <p class="text-muted-foreground mt-2">
-  {data.characters.length} deterministic character records.
+  {data.characters.length} characters in the game data.
 </p>
+
 <CharacterOverview rows={data.characters} />

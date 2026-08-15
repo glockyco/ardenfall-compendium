@@ -85,6 +85,15 @@
           "type": "string",
           "pattern": "^/$|^/[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*)*$"
         },
+        "previousRoutes": {
+          "description": "Route bases that this entity family used before its current route.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^/$|^/[a-z0-9]+(?:-[a-z0-9]+)*(?:/[a-z0-9]+(?:-[a-z0-9]+)*)*$"
+          },
+          "uniqueItems": true
+        },
         "overview": { "$ref": "#/$defs/siteOverview" },
         "detail": { "$ref": "#/$defs/siteDetail" }
       }

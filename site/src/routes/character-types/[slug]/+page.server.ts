@@ -1,7 +1,7 @@
 import { error } from "@sveltejs/kit";
 import {
-  getPlacedCharacterPresentation,
-  listPlacedCharacters,
+  getCharacterTypePresentation,
+  listCharacterTypes,
   listRelationshipSections,
 } from "$lib/server/read-models";
 import type { EntryGenerator, PageServerLoad } from "./$types";
@@ -10,13 +10,13 @@ const slugFromRoutePath = (routePath: string) => routePath.slice(routePath.lastI
 export const prerender = true;
 
 export const entries: EntryGenerator = () =>
-  listPlacedCharacters().map((row) => ({ slug: slugFromRoutePath(row.routePath) }));
+  listCharacterTypes().map((row) => ({ slug: slugFromRoutePath(row.routePath) }));
 
 export const load: PageServerLoad = ({ params }) => {
-  const presentation = getPlacedCharacterPresentation(params.slug);
-  if (!presentation) throw error(404, "Placed character not found");
+  const presentation = getCharacterTypePresentation(params.slug);
+  if (!presentation) throw error(404, "Character type not found");
   return {
     presentation,
-    relationships: listRelationshipSections("npc", presentation.id),
+    relationships: listRelationshipSections("character", presentation.id),
   };
 };

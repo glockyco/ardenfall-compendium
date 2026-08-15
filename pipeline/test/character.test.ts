@@ -99,7 +99,7 @@ describe("character pipeline", () => {
       race_ref_json: JSON.stringify(raceRef),
       drop_refs_json: JSON.stringify([{ kind: "lookupAsset", guid: itemId }]),
     });
-    expect(emitCharacterReadModels(db)).toEqual([]);
+    expect(emitCharacterReadModels(db, "/character-types")).toEqual([]);
     expect(db.query(`SELECT name, drop_refs_json FROM character_presentation_rows`).get()).toEqual({
       name: "Bandit",
       drop_refs_json: JSON.stringify([
@@ -144,7 +144,7 @@ describe("character pipeline", () => {
       ],
     });
 
-    expect(emitCharacterReadModels(db)).toEqual([
+    expect(emitCharacterReadModels(db, "/character-types")).toEqual([
       expect.objectContaining({ code: "itemLootReferencesPrototype" }),
     ]);
     expect(
@@ -177,7 +177,7 @@ describe("character pipeline", () => {
       ],
     });
 
-    expect(emitCharacterReadModels(db)).toEqual([
+    expect(emitCharacterReadModels(db, "/character-types")).toEqual([
       expect.objectContaining({ code: "itemLootPresentationMissing" }),
     ]);
     expect(
@@ -210,7 +210,7 @@ describe("character pipeline", () => {
       ],
     });
 
-    expect(emitCharacterReadModels(db)).toEqual([]);
+    expect(emitCharacterReadModels(db, "/character-types")).toEqual([]);
     expect(db.query(`SELECT name FROM character_overview_rows`).get()).toEqual({
       name: "Unnamed character",
     });
@@ -226,7 +226,7 @@ describe("character pipeline", () => {
       [characterId, " \t ", JSON.stringify(missingParentRef()), null, "[]"],
     );
 
-    expect(emitCharacterReadModels(db)).toEqual([]);
+    expect(emitCharacterReadModels(db, "/character-types")).toEqual([]);
     expect(db.query(`SELECT name FROM character_overview_rows`).get()).toEqual({
       name: "Unnamed character",
     });
@@ -313,7 +313,7 @@ describe("character pipeline", () => {
       ],
     });
 
-    expect(emitCharacterReadModels(db)).toEqual([]);
+    expect(emitCharacterReadModels(db, "/character-types")).toEqual([]);
     expect(
       db
         .query(
@@ -356,7 +356,7 @@ describe("character pipeline", () => {
       },
     ],
   });
-  const diagnostics = emitCharacterReadModels(db);
+  const diagnostics = emitCharacterReadModels(db, "/character-types");
   expect(diagnostics).toEqual([
     expect.objectContaining({
       code: "characterDropUnresolved",
@@ -385,7 +385,7 @@ it("emits forward and inverse relationship sections", () => {
       },
     ],
   });
-  expect(emitCharacterReadModels(db)).toEqual([]);
+  expect(emitCharacterReadModels(db, "/character-types")).toEqual([]);
   emitRelationshipSections(db);
   expect(
     db

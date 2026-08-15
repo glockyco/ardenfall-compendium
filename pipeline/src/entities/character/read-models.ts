@@ -29,10 +29,7 @@ interface CharacterFactionRefRow {
   character_id: string;
   target_faction_id: string | null;
 }
-export function emitCharacterReadModels(
-  db: Database,
-  routeBase = "/characters",
-): PipelineDiagnostic[] {
+export function emitCharacterReadModels(db: Database, routeBase: string): PipelineDiagnostic[] {
   db.exec(CHARACTER_READ_MODEL_DDL);
   db.exec(ENTITY_GRAPH_DDL);
 
@@ -131,7 +128,7 @@ export function emitCharacterReadModels(
         presentationInsert.run(
           row.id,
           presentationName,
-          "character-presentation-v1",
+          "character-type-presentation-v1",
           JSON.stringify([]),
         );
         continue;
@@ -141,7 +138,7 @@ export function emitCharacterReadModels(
         presentationInsert.run(
           row.id,
           presentationName,
-          "character-presentation-v1",
+          "character-type-presentation-v1",
           JSON.stringify([]),
         );
         continue;
@@ -157,7 +154,7 @@ export function emitCharacterReadModels(
       presentationInsert.run(
         row.id,
         presentationName,
-        "character-presentation-v1",
+        "character-type-presentation-v1",
         JSON.stringify(drops),
       );
       for (const value of refs) {

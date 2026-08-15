@@ -57,7 +57,7 @@ const withDatabase = async (
 };
 
 describe("map href helper", () => {
-  it("builds the map selection href for location, portal, and placed character pages", async () => {
+  it("builds the map selection href for location, portal, and character pages", async () => {
     await withDatabase(({ getMapHref }) => {
       expect(getMapHref("location", "location-point")).toBe("/map?map=overworld&sel=locpoint");
       expect(getMapHref("portal", "portal-point")).toBe("/map?map=overworld&sel=portalpoint");

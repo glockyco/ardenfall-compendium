@@ -150,6 +150,53 @@
       }
     },
     {
+      "id": "instances;characters;6f31d4e8b2a947c5a8e6f1027d3c9b54",
+      "fields": {
+        "id": "instances;characters;6f31d4e8b2a947c5a8e6f1027d3c9b54",
+        "recordRef": {
+          "kind": "record",
+          "table": "instances",
+          "subtable": "characters",
+          "id": "6f31d4e8b2a947c5a8e6f1027d3c9b54",
+          "recordType": "NPCRecord"
+        },
+        "displayName": "Karu Elf Scout",
+        "displayNameProvenance": "own",
+        "displayNameOwner": null,
+        "authoringLabel": "Karu Elf Scout",
+        "characterRef": {
+          "kind": "namedAsset",
+          "entity": "character",
+          "name": "character_race_fallback"
+        },
+        "spawnPoint": {
+          "x": 24,
+          "y": 2,
+          "z": -34
+        },
+        "mapId": "ardenfall",
+        "containingLocationRefs": [],
+        "dropRefs": [],
+        "dropRefsProvenance": "absent",
+        "dropRefsOwner": null,
+        "startingFactions": [],
+        "startingFactionsProvenance": "absent",
+        "startingFactionsOwner": null,
+        "startingLevel": null,
+        "startingLevelProvenance": "absent",
+        "startingLevelOwner": null,
+        "merchantRefs": [],
+        "merchantRefsProvenance": "absent",
+        "merchantRefsOwner": null,
+        "merchantGold": null,
+        "merchantGoldProvenance": "absent",
+        "merchantGoldOwner": null,
+        "merchantCategories": [],
+        "merchantCategoriesProvenance": "absent",
+        "merchantCategoriesOwner": null
+      }
+    },
+    {
       "id": "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
       "fields": {
         "id": "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",

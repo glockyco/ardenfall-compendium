@@ -221,7 +221,7 @@ describe("prototype loot diagnostics", () => {
         },
       ],
     });
-    const diagnostics = emitCharacterReadModels(db);
+    const diagnostics = emitCharacterReadModels(db, "/character-types");
 
     expect(
       db

@@ -7,6 +7,8 @@ import { relationshipRegistry } from "./registry.ts";
 export { relationshipRegistry } from "./registry.ts";
 export type {
   RelationshipDescriptor,
+  RelationshipDirectionPresentation,
+  RelationshipPagePresentation,
   RelationshipPredicate,
   RelationshipTitle,
 } from "./registry.ts";
@@ -165,71 +167,75 @@ export function emitRelationshipSections(
       continue;
     }
 
-    const forwardTitle = resolveTitle(
-      descriptor.forwardTitle,
-      edge.source_type,
-      edge.predicate,
-      "forward",
-    );
-    if (forwardTitle !== null && sourceNode.has_page === 1) {
-      appendSection(
-        sections,
-        {
-          sourceType: edge.source_type,
-          sourceId: edge.source_id,
-          title: forwardTitle,
-          predicate: edge.predicate,
-          direction: "forward",
-          edges: [],
-          sortOrder: sectionSortOrder(descriptor, edge.predicate),
-          sourceEntityType: edge.source_type,
-        },
-        {
-          targetType: edge.target_type,
-          targetId: edge.target_id,
-          targetLabel: targetNode.display_label,
-          targetShortId: targetNode.short_id,
-          targetRoutePath: targetNode.route_path,
-          targetHasPage: targetNode.has_page === 1,
-          predicate: edge.predicate,
-          label: edge.label,
-          weight: edge.weight,
-          anchor: edge.anchor,
-        },
+    if (descriptor.pagePresentation?.forward !== "inline") {
+      const forwardTitle = resolveTitle(
+        descriptor.forwardTitle,
+        edge.source_type,
+        edge.predicate,
+        "forward",
       );
+      if (forwardTitle !== null && sourceNode.has_page === 1) {
+        appendSection(
+          sections,
+          {
+            sourceType: edge.source_type,
+            sourceId: edge.source_id,
+            title: forwardTitle,
+            predicate: edge.predicate,
+            direction: "forward",
+            edges: [],
+            sortOrder: sectionSortOrder(descriptor, edge.predicate),
+            sourceEntityType: edge.source_type,
+          },
+          {
+            targetType: edge.target_type,
+            targetId: edge.target_id,
+            targetLabel: targetNode.display_label,
+            targetShortId: targetNode.short_id,
+            targetRoutePath: targetNode.route_path,
+            targetHasPage: targetNode.has_page === 1,
+            predicate: edge.predicate,
+            label: edge.label,
+            weight: edge.weight,
+            anchor: edge.anchor,
+          },
+        );
+      }
     }
-    const inverseTitle = resolveTitle(
-      descriptor.inverseTitle,
-      edge.source_type,
-      edge.predicate,
-      "inverse",
-    );
-    if (inverseTitle !== null && targetNode.has_page === 1) {
-      appendSection(
-        sections,
-        {
-          sourceType: edge.target_type,
-          sourceId: edge.target_id,
-          title: inverseTitle,
-          predicate: edge.predicate,
-          direction: "inverse",
-          edges: [],
-          sortOrder: sectionSortOrder(descriptor, edge.predicate),
-          sourceEntityType: edge.source_type,
-        },
-        {
-          targetType: edge.source_type,
-          targetId: edge.source_id,
-          targetLabel: sourceNode.display_label,
-          targetShortId: sourceNode.short_id,
-          targetRoutePath: sourceNode.route_path,
-          targetHasPage: sourceNode.has_page === 1,
-          predicate: edge.predicate,
-          label: edge.label,
-          weight: edge.weight,
-          anchor: edge.anchor,
-        },
+    if (descriptor.pagePresentation?.inverse !== "inline") {
+      const inverseTitle = resolveTitle(
+        descriptor.inverseTitle,
+        edge.source_type,
+        edge.predicate,
+        "inverse",
       );
+      if (inverseTitle !== null && targetNode.has_page === 1) {
+        appendSection(
+          sections,
+          {
+            sourceType: edge.target_type,
+            sourceId: edge.target_id,
+            title: inverseTitle,
+            predicate: edge.predicate,
+            direction: "inverse",
+            edges: [],
+            sortOrder: sectionSortOrder(descriptor, edge.predicate),
+            sourceEntityType: edge.source_type,
+          },
+          {
+            targetType: edge.source_type,
+            targetId: edge.source_id,
+            targetLabel: sourceNode.display_label,
+            targetShortId: sourceNode.short_id,
+            targetRoutePath: sourceNode.route_path,
+            targetHasPage: sourceNode.has_page === 1,
+            predicate: edge.predicate,
+            label: edge.label,
+            weight: edge.weight,
+            anchor: edge.anchor,
+          },
+        );
+      }
     }
   }
 

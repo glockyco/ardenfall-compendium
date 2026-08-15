@@ -186,6 +186,28 @@ describe("relationship section projection", () => {
     expect(() => emitRelationshipSections(db)).toThrow("not_registered");
   });
 
+  it("suppresses inline forward sections and keeps inverse sections", () => {
+    const db = seedGraph();
+    db.run(
+      `INSERT INTO entity_nodes
+        (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES
+        ('npc', 'npc-a', 'Ada', 'Ada', '/characters/ada--11111111', 'ada--11111111', '11111111', 1),
+        ('character', 'character-a', 'Darvaki', 'Darvaki', '/character-types/darvaki--22222222', 'darvaki--22222222', '22222222', 1)`,
+    );
+    addEdge(db, "instance-edge", "npc", "npc-a", "character", "character-a", "instance_of");
+
+    emitRelationshipSections(db);
+
+    expect(
+      db
+        .query<{ source_type: string; source_id: string; title: string }, []>(
+          "SELECT source_type, source_id, title FROM entity_relationship_sections WHERE predicate = 'instance_of'",
+        )
+        .all(),
+    ).toEqual([{ source_type: "character", source_id: "character-a", title: "Placements" }]);
+  });
+
   it("keeps the variant_of section edge shape", () => {
     const db = seedGraph();
     db.run(
@@ -308,6 +330,12 @@ describe("relationship section projection", () => {
     expect(relationshipRegistry.speaks_about_quest).toEqual({
       forwardTitle: null,
       inverseTitle: null,
+    });
+    expect(relationshipRegistry.instance_of).toEqual({
+      forwardTitle: "Character type",
+      inverseTitle: "Placements",
+      pagePresentation: { forward: "inline", inverse: "section" },
+      sortOrder: 12,
     });
   });
 });

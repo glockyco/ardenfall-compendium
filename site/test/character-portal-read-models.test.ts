@@ -24,10 +24,10 @@ const withDatabase = async (
   }
 };
 
-describe("placed-character and portal site read models", () => {
-  it("lists every placed character and disambiguates unnamed labels", async () => {
+describe("character and portal site read models", () => {
+  it("lists every character and disambiguates unnamed labels", async () => {
     await withDatabase(
-      "ardenfall-site-placed-character-models-",
+      "ardenfall-site-character-models-",
       `
         CREATE TABLE quest_character_dialogue_rows (
           id TEXT PRIMARY KEY,
@@ -56,22 +56,22 @@ describe("placed-character and portal site read models", () => {
           edges_json TEXT NOT NULL
         );
         INSERT INTO npc_presentation_rows VALUES
-          ('npc-ada', 'Ada', 'own', NULL, 'placed-character-presentation-v1', 'overworld', 1, 2, 3, '[]', NULL, NULL, NULL),
-          ('npc-darvaki-a', 'Darvaki', 'own', NULL, 'placed-character-presentation-v1', 'overworld', 4, 5, 6, '["location-woods"]', NULL, NULL, NULL),
-          ('npc-darvaki-b', 'Darvaki', 'inherited', 'type-darvaki', 'placed-character-presentation-v1', 'overworld', 7, 8, 9, '["location-ruins"]', NULL, NULL, NULL),
-          ('npc-unnamed-a', 'Unnamed character', 'absent', NULL, 'placed-character-presentation-v1', 'overworld', 10, 11, 12, '[]', NULL, NULL, NULL),
-          ('npc-unnamed-b', 'Unnamed character', 'absent', NULL, 'placed-character-presentation-v1', NULL, 13, 14, 15, '[]', NULL, NULL, NULL);
+          ('npc-ada', 'Ada', 'own', NULL, 'character-presentation-v1', 'overworld', 1, 2, 3, '[]', NULL, NULL, NULL),
+          ('npc-darvaki-a', 'Darvaki', 'own', NULL, 'character-presentation-v1', 'overworld', 4, 5, 6, '["location-woods"]', NULL, NULL, NULL),
+          ('npc-darvaki-b', 'Darvaki', 'inherited', 'type-darvaki', 'character-presentation-v1', 'overworld', 7, 8, 9, '["location-ruins"]', NULL, NULL, NULL),
+          ('npc-unnamed-a', 'Unnamed character', 'absent', NULL, 'character-presentation-v1', 'overworld', 10, 11, 12, '[]', NULL, NULL, NULL),
+          ('npc-unnamed-b', 'Unnamed character', 'absent', NULL, 'character-presentation-v1', NULL, 13, 14, 15, '[]', NULL, NULL, NULL);
         INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
-          ('npc', 'npc-ada', 'Ada', 'Ada', '/placed-characters/ada--11111111', 'ada--11111111', '11111111', 1),
-          ('npc', 'npc-darvaki-a', 'Darvaki', 'Darvaki', '/placed-characters/darvaki--44444444', 'darvaki--44444444', '44444444', 1),
-          ('npc', 'npc-darvaki-b', 'Darvaki', 'Darvaki', '/placed-characters/darvaki--55555555', 'darvaki--55555555', '55555555', 1),
-          ('npc', 'npc-unnamed-a', 'Unnamed character', 'Unnamed character · 22222222', '/placed-characters/unnamed-character--22222222', 'unnamed-character--22222222', '22222222', 1),
-          ('npc', 'npc-unnamed-b', 'Unnamed character', 'Unnamed character · 33333333', '/placed-characters/unnamed-character--33333333', 'unnamed-character--33333333', '33333333', 1),
+          ('npc', 'npc-ada', 'Ada', 'Ada', '/characters/ada--11111111', 'ada--11111111', '11111111', 1),
+          ('npc', 'npc-darvaki-a', 'Darvaki', 'Darvaki', '/characters/darvaki--44444444', 'darvaki--44444444', '44444444', 1),
+          ('npc', 'npc-darvaki-b', 'Darvaki', 'Darvaki', '/characters/darvaki--55555555', 'darvaki--55555555', '55555555', 1),
+          ('npc', 'npc-unnamed-a', 'Unnamed character', 'Unnamed character · 22222222', '/characters/unnamed-character--22222222', 'unnamed-character--22222222', '22222222', 1),
+          ('npc', 'npc-unnamed-b', 'Unnamed character', 'Unnamed character · 33333333', '/characters/unnamed-character--33333333', 'unnamed-character--33333333', '33333333', 1),
           ('location', 'location-woods', 'Shisivi Wood', 'Shisivi Wood', '/locations/shisivi-wood--66666666', 'shisivi-wood--66666666', '66666666', 1),
           ('location', 'location-ruins', 'Old Ruins', 'Old Ruins', '/locations/old-ruins--77777777', 'old-ruins--77777777', '77777777', 1);
       `,
       (readModels) => {
-        const rows = readModels.listPlacedCharacters();
+        const rows = readModels.listCharacters();
         expect(rows).toHaveLength(5);
         expect(rows.map((row) => row.name)).toEqual([
           "Ada",
@@ -99,9 +99,9 @@ describe("placed-character and portal site read models", () => {
     );
   });
 
-  it("resolves named, race and missing placed-character types", async () => {
+  it("resolves definition, race and missing character types", async () => {
     await withDatabase(
-      "ardenfall-site-placed-character-detail-",
+      "ardenfall-site-character-detail-",
       `
         CREATE TABLE quest_character_dialogue_rows (
           id TEXT PRIMARY KEY,
@@ -135,21 +135,21 @@ describe("placed-character and portal site read models", () => {
           map_id TEXT, geometry_json TEXT NOT NULL, elevation_min REAL, elevation_max REAL
         );
         INSERT INTO npc_presentation_rows VALUES
-          ('npc-ada', 'Ada', 'own', NULL, 'placed-character-presentation-v1', 'overworld', 1, 2, 3, '["location-woods"]', 'character-noble', 'Noble', '/character-types/noble--aaaaaaaa'),
-          ('npc-inherited', 'Captain', 'inherited', 'preset_captain', 'placed-character-presentation-v1', 'overworld', 4, 5, 6, '[]', 'character-captain', 'Captain', '/character-types/captain--bbbbbbbb'),
-          ('npc-race', 'Elf Scout', 'own', NULL, 'placed-character-presentation-v1', 'overworld', 10, 11, 12, '[]', 'race-elf', 'Elf', '/character-races/elf--cccccccc'),
-          ('npc-unnamed', 'Unnamed character', 'absent', NULL, 'placed-character-presentation-v1', NULL, 7, 8, 9, '[]', NULL, NULL, NULL);
+          ('npc-ada', 'Ada', 'own', NULL, 'character-presentation-v1', 'overworld', 1, 2, 3, '["location-woods"]', 'character-noble', 'Noble', '/character-types/noble--aaaaaaaa'),
+          ('npc-inherited', 'Captain', 'inherited', 'preset_captain', 'character-presentation-v1', 'overworld', 4, 5, 6, '[]', 'character-captain', 'Captain', '/character-types/captain--bbbbbbbb'),
+          ('npc-race', 'Elf Scout', 'own', NULL, 'character-presentation-v1', 'overworld', 10, 11, 12, '[]', 'race-elf', 'Elf', '/character-races/elf--cccccccc'),
+          ('npc-unnamed', 'Unnamed character', 'absent', NULL, 'character-presentation-v1', NULL, 7, 8, 9, '[]', NULL, NULL, NULL);
         INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
-          ('npc', 'npc-ada', 'Ada', 'Ada', '/placed-characters/ada--11111111', 'ada--11111111', '11111111', 1),
-          ('npc', 'npc-inherited', 'Captain', 'Captain', '/placed-characters/captain--33333333', 'captain--33333333', '33333333', 1),
-          ('npc', 'npc-race', 'Elf Scout', 'Elf Scout', '/placed-characters/elf-scout--44444444', 'elf-scout--44444444', '44444444', 1),
-          ('npc', 'npc-unnamed', 'Unnamed character', 'Unnamed character', '/placed-characters/unnamed-character--22222222', 'unnamed-character--22222222', '22222222', 1),
+          ('npc', 'npc-ada', 'Ada', 'Ada', '/characters/ada--11111111', 'ada--11111111', '11111111', 1),
+          ('npc', 'npc-inherited', 'Captain', 'Captain', '/characters/captain--33333333', 'captain--33333333', '33333333', 1),
+          ('npc', 'npc-race', 'Elf Scout', 'Elf Scout', '/characters/elf-scout--44444444', 'elf-scout--44444444', '44444444', 1),
+          ('npc', 'npc-unnamed', 'Unnamed character', 'Unnamed character', '/characters/unnamed-character--22222222', 'unnamed-character--22222222', '22222222', 1),
           ('location', 'location-woods', 'Shisivi Wood', 'Shisivi Wood', '/locations/shisivi-wood--33333333', 'shisivi-wood--33333333', '33333333', 1);
         INSERT INTO map_points VALUES
           ('npc-ada:point', 'npc', 'npc-ada', 'overworld', 1, 2, 3, 1, 0, 1);
       `,
       (readModels) => {
-        expect(readModels.getPlacedCharacterPresentation("ada--11111111")).toMatchObject({
+        expect(readModels.getCharacterPresentation("ada--11111111")).toMatchObject({
           name: "Ada",
           displayNameProvenance: "own",
           displayNameOwner: null,
@@ -164,7 +164,7 @@ describe("placed-character and portal site read models", () => {
           locations: [{ label: "Shisivi Wood", routePath: "/locations/shisivi-wood--33333333" }],
           mapHref: "/map?map=overworld&sel=11111111",
         });
-        expect(readModels.getPlacedCharacterPresentation("captain--33333333")).toMatchObject({
+        expect(readModels.getCharacterPresentation("captain--33333333")).toMatchObject({
           name: "Captain",
           displayNameProvenance: "inherited",
           displayNameOwner: "preset_captain",
@@ -178,7 +178,7 @@ describe("placed-character and portal site read models", () => {
           mapY: 5,
           locations: [],
         });
-        expect(readModels.getPlacedCharacterPresentation("elf-scout--44444444")).toMatchObject({
+        expect(readModels.getCharacterPresentation("elf-scout--44444444")).toMatchObject({
           name: "Elf Scout",
           displayNameProvenance: "own",
           characterType: {
@@ -187,9 +187,7 @@ describe("placed-character and portal site read models", () => {
             routePath: "/character-races/elf--cccccccc",
           },
         });
-        expect(
-          readModels.getPlacedCharacterPresentation("unnamed-character--22222222"),
-        ).toMatchObject({
+        expect(readModels.getCharacterPresentation("unnamed-character--22222222")).toMatchObject({
           name: "Unnamed character",
           displayNameProvenance: "absent",
           displayNameOwner: null,

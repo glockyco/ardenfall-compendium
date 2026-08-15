@@ -17,6 +17,6 @@ export const load: PageServerLoad = ({ params }) => {
   if (!presentation) throw error(404, "Character not found");
   return {
     presentation,
-    relationships: listRelationshipSections("character", presentation.id),
+    relationships: listRelationshipSections("npc", presentation.id),
   };
 };

@@ -3,8 +3,8 @@
   "id": "npc",
   "kind": "instance",
   "label": {
-    "singular": "Placed character",
-    "plural": "Placed characters"
+    "singular": "Character",
+    "plural": "Characters"
   },
   "extraction": {
     "source": "record",
@@ -25,9 +25,10 @@
       "policy": "designer-identifier"
     }
   },
-  "presentationContext": { "renderContext": "placed-character-presentation-v1" },
+  "presentationContext": { "renderContext": "character-presentation-v1" },
   "site": {
-    "route": "/placed-characters",
+    "route": "/characters",
+    "previousRoutes": ["/placed-characters"],
     "overview": { "columns": ["displayName"], "search": ["displayName"] },
     "detail": {
       "sections": [
@@ -279,7 +280,7 @@
     "color": [255, 200, 120],
     "radius": 4,
     "tooltip": ["displayName"],
-    "legendLabel": "Placed characters",
+    "legendLabel": "Characters",
     "zOrder": 80
   }
 }

@@ -412,7 +412,7 @@ describe("NPC pipeline", () => {
         ('location', 'cave', 'Cave', 'Cave', '/locations/cave', 'cave', 'cave', 1);
     `);
     seedCharacterDefinitions(db);
-    const diagnostics = emitNpcReadModels(db);
+    const diagnostics = emitNpcReadModels(db, "/characters");
     expect(diagnostics).toEqual([]);
     const node = db
       .query<
@@ -425,7 +425,7 @@ describe("NPC pipeline", () => {
     expect(node).toEqual({
       has_page: 1,
       label: "Saya Sako",
-      route_path: "/placed-characters/saya-sako--4b1c9e07",
+      route_path: "/characters/saya-sako--4b1c9e07",
       short_id: "4b1c9e07",
     });
     expect(node?.label).not.toBe("Grainery Owner");
@@ -437,7 +437,7 @@ describe("NPC pipeline", () => {
     expect(namelessNode).toEqual({
       has_page: 1,
       label: "Unnamed character",
-      route_path: "/placed-characters/unnamed-character--2d6f47b3",
+      route_path: "/characters/unnamed-character--2d6f47b3",
     });
     expect(
       db.query("SELECT COUNT(*) AS count FROM entity_nodes WHERE entity_type = 'npc'").get(),
@@ -481,7 +481,7 @@ describe("NPC pipeline", () => {
       name: "Saya Sako",
       display_name_provenance: "own",
       display_name_owner: null,
-      render_context: "placed-character-presentation-v1",
+      render_context: "character-presentation-v1",
       map_id: "ardenfall",
       map_x: 1,
       map_y: 3,
@@ -529,7 +529,7 @@ describe("NPC pipeline", () => {
         display_name_owner: null,
       },
     ]);
-    expect(node?.route_path).toBe("/placed-characters/saya-sako--4b1c9e07");
+    expect(node?.route_path).toBe("/characters/saya-sako--4b1c9e07");
     db.exec(`CREATE TABLE map_points (
       id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
       name TEXT, map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL,
@@ -658,7 +658,7 @@ describe("NPC pipeline", () => {
     `);
     seedCharacterDefinitions(db);
 
-    expect(emitNpcReadModels(db)).toEqual([
+    expect(emitNpcReadModels(db, "/characters")).toEqual([
       {
         severity: "diagnostic",
         source: "relationship-graph",

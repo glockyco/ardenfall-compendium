@@ -59,8 +59,8 @@ const seed = () => {
       ('faction', 'named;faction;dawnkeepers', 'Dawnkeepers', 'Dawnkeepers', '/factions/dawnkeepers--22222222', 'dawnkeepers--22222222', '22222222', 1),
       ('item', 'named;item;ash-token', 'Ash Token', 'Ash Token', '/items/ash-token--33333333', 'ash-token--33333333', '33333333', 1),
       ('quest', 'named;quest;quest-ember', 'Embers at Dusk', 'Embers at Dusk', '/quests/ashes-at-dawn--99999999', 'ashes-at-dawn--99999999', '99999999', 1),
-      ('npc', 'instances;characters;aaa', 'Harbour Guard', 'Harbour Guard', '/placed-characters/harbour-guard--aaa', 'harbour-guard--aaa', 'aaa', 1),
-      ('npc', 'instances;characters;bbb', 'Silent Watcher', 'Silent Watcher', '/placed-characters/silent-watcher--bbb', 'silent-watcher--bbb', 'bbb', 0);
+      ('npc', 'instances;characters;aaa', 'Harbour Guard', 'Harbour Guard', '/characters/harbour-guard--aaa', 'harbour-guard--aaa', 'aaa', 1),
+      ('npc', 'instances;characters;bbb', 'Silent Watcher', 'Silent Watcher', '/characters/silent-watcher--bbb', 'silent-watcher--bbb', 'bbb', 0);
   `);
   db.close();
   return root;
@@ -160,7 +160,7 @@ describe("quest read-model accessors", () => {
         {
           id: "instances;characters;aaa",
           label: "Harbour Guard",
-          routePath: "/placed-characters/harbour-guard--aaa",
+          routePath: "/characters/harbour-guard--aaa",
           lines: [
             { kind: "greeting", text: expect.objectContaining({ schemaVersion: 1 }) },
             { kind: "topic", text: expect.objectContaining({ schemaVersion: 1 }) },

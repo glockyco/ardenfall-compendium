@@ -50,6 +50,14 @@ interface QuestProbeRow {
   disabled: number;
 }
 
+interface CharacterProbeRow {
+  id: string;
+  name: string;
+  canonical_slug: string;
+  character_type_label: string | null;
+  character_type_route_path: string | null;
+}
+
 const outputDir = join(import.meta.dirname, "..", ".svelte-kit", "cloudflare");
 const releasePath = join(import.meta.dirname, "..", "static", "_release.json");
 const outputReleasePath = join(outputDir, "_release.json");
@@ -69,6 +77,8 @@ if (!overviewPath) {
 const expectedRoutes = readExpectedRoutes();
 const builtRoutes = readBuiltPageRoutes();
 assertRouteParity(expectedRoutes, builtRoutes);
+assertCharacterRouteCutover(builtRoutes);
+assertCharacterPageCopy(readCharacterProbes());
 
 const manifestValue: unknown = JSON.parse(readFileSync(releasePath, "utf8"));
 const builtManifestValue: unknown = JSON.parse(readFileSync(outputReleasePath, "utf8"));
@@ -300,6 +310,22 @@ function readBuiltPageRoutes(): string[] {
   return [...routes].sort();
 }
 
+function assertCharacterRouteCutover(built: string[]): void {
+  const builtSet = new Set(built);
+  for (const route of ["/characters", "/character-types"]) {
+    if (!builtSet.has(route)) throw new Error(`missing character route: ${route}`);
+  }
+  const legacyBase = "/placed-characters";
+  const legacyRoutes = built.filter(
+    (route) => route === legacyBase || route.startsWith(`${legacyBase}/`),
+  );
+  if (legacyRoutes.length > 0) {
+    throw new Error(
+      `legacy character routes remain in prerendered output: ${legacyRoutes.join(", ")}`,
+    );
+  }
+}
+
 function assertRouteParity(expected: string[], built: string[]): void {
   const builtSet = new Set(built);
   const expectedSet = new Set(expected);
@@ -315,6 +341,85 @@ function assertRouteParity(expected: string[], built: string[]): void {
       `prerendered page files are not explained by the staged database (${unexpected.length}): ${unexpected.join(", ")}`,
     );
   }
+}
+
+function assertCharacterPageCopy(probes: {
+  definition: CharacterProbeRow;
+  race: CharacterProbeRow;
+  none: CharacterProbeRow;
+}): void {
+  const typed = [probes.definition, probes.race];
+  for (const probe of typed) {
+    const path = firstExisting([
+      join(outputDir, "characters", `${probe.canonical_slug}.html`),
+      join(outputDir, "characters", probe.canonical_slug, "index.html"),
+    ]);
+    if (!path) throw new Error(`missing character probe page: ${probe.id}`);
+    const html = readFileSync(path, "utf8");
+    if (countOccurrences(html, "This character is identified as") !== 1) {
+      throw new Error(`character type statement is not singular on ${probe.id}`);
+    }
+    if (!probe.character_type_label || !html.includes(probe.character_type_label)) {
+      throw new Error(`character type label missing on ${probe.id}`);
+    }
+    if (probe.character_type_route_path && !html.includes(probe.character_type_route_path)) {
+      throw new Error(`character type link missing on ${probe.id}`);
+    }
+  }
+
+  const nonePath = firstExisting([
+    join(outputDir, "characters", `${probes.none.canonical_slug}.html`),
+    join(outputDir, "characters", probes.none.canonical_slug, "index.html"),
+  ]);
+  if (!nonePath) throw new Error(`missing character probe page: ${probes.none.id}`);
+  const noneHtml = readFileSync(nonePath, "utf8");
+  if (countOccurrences(noneHtml, "The game does not say what this character is.") !== 1) {
+    throw new Error(`missing no-type statement on ${probes.none.id}`);
+  }
+}
+
+function readCharacterProbes(): {
+  definition: CharacterProbeRow;
+  race: CharacterProbeRow;
+  none: CharacterProbeRow;
+} {
+  const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
+    readonly: true,
+    create: false,
+  });
+  try {
+    const rows = db
+      .query<CharacterProbeRow, []>(
+        `SELECT p.id, p.name, n.canonical_slug,
+                p.character_type_label, p.character_type_route_path
+         FROM npc_presentation_rows p
+         JOIN entity_nodes n
+           ON n.entity_type = 'npc'
+          AND n.entity_id = p.id
+          AND n.has_page = 1
+         ORDER BY p.name, p.id`,
+      )
+      .all();
+    const definition = rows.find((row) =>
+      row.character_type_route_path?.startsWith("/character-types/"),
+    );
+    const race = rows.find(
+      (row) =>
+        row.character_type_route_path !== null &&
+        !row.character_type_route_path.startsWith("/character-types/"),
+    );
+    const none = rows.find((row) => row.character_type_route_path === null);
+    if (!definition || !race || !none) {
+      throw new Error("staged artifact lacks definition, race, or no-type character probes");
+    }
+    return { definition, race, none };
+  } finally {
+    db.close();
+  }
+}
+
+function countOccurrences(value: string, needle: string): number {
+  return value.split(needle).length - 1;
 }
 
 function readQuestProbe(id: string): QuestProbeRow {

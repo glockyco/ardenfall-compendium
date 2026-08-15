@@ -1,21 +1,32 @@
 export type RelationshipTitle = string | Readonly<Record<string, string>>;
+export type RelationshipPagePresentation = "inline" | "section";
+export interface RelationshipDirectionPresentation {
+  forward?: RelationshipPagePresentation;
+  inverse?: RelationshipPagePresentation;
+}
 
-export type RelationshipDescriptor =
-  | {
-      forwardTitle: RelationshipTitle;
-      inverseTitle: RelationshipTitle | null;
-      sortOrder: number;
-    }
-  | {
-      forwardTitle: RelationshipTitle | null;
-      inverseTitle: RelationshipTitle;
-      sortOrder: number;
-    }
-  | {
-      forwardTitle: null;
-      inverseTitle: null;
-      sortOrder?: never;
-    };
+type RelationshipDescriptorBase = {
+  pagePresentation?: RelationshipDirectionPresentation;
+};
+
+export type RelationshipDescriptor = RelationshipDescriptorBase &
+  (
+    | {
+        forwardTitle: RelationshipTitle;
+        inverseTitle: RelationshipTitle | null;
+        sortOrder: number;
+      }
+    | {
+        forwardTitle: RelationshipTitle | null;
+        inverseTitle: RelationshipTitle;
+        sortOrder: number;
+      }
+    | {
+        forwardTitle: null;
+        inverseTitle: null;
+        sortOrder?: never;
+      }
+  );
 
 /** Every emitted edge predicate must be declared here. */
 export const relationshipRegistry = {
@@ -32,6 +43,7 @@ export const relationshipRegistry = {
   instance_of: {
     forwardTitle: "Character type",
     inverseTitle: "Placements",
+    pagePresentation: { forward: "inline", inverse: "section" },
     sortOrder: 12,
   },
   categorised_as: {
@@ -80,7 +92,7 @@ export const relationshipRegistry = {
   },
   found_at: {
     forwardTitle: "Found at",
-    inverseTitle: "NPCs found here",
+    inverseTitle: "Characters found here",
     sortOrder: 100,
   },
   leads_to: {

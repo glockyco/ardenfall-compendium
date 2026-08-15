@@ -101,7 +101,7 @@ describe("location read-model accessors", () => {
     });
   });
 
-  it("lists named NPCs found at a location and omits nameless NPCs", async () => {
+  it("lists named characters found at a location and omits nameless characters", async () => {
     await withSeed((readModels) => {
       const sections = readModels.listRelationshipSections("location", "location-shisivi");
       expect(sections).toHaveLength(1);

@@ -38,14 +38,6 @@ CREATE TABLE IF NOT EXISTS entity_aliases (
   source TEXT NOT NULL DEFAULT 'generated',
   PRIMARY KEY (alias_key, target_type, target_id)
 );
-CREATE TABLE IF NOT EXISTS entity_redirects (
-  source_type TEXT NOT NULL,
-  source_id TEXT NOT NULL,
-  target_type TEXT NOT NULL,
-  target_id TEXT NOT NULL,
-  reason TEXT NOT NULL CHECK (reason IN ('legacy-id', 'name-changed', 'merged')),
-  PRIMARY KEY (source_type, source_id)
-);
 CREATE TABLE IF NOT EXISTS entity_edges (
   edge_id TEXT PRIMARY KEY,
   source_type TEXT NOT NULL,

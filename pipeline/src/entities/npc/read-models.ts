@@ -28,7 +28,7 @@ interface NpcLocationRefRow {
   ref_json: string;
 }
 
-export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
+export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiagnostic[] {
   const diagnostics: PipelineDiagnostic[] = [];
   const writeNode = prepareEntityNodeWriter(db);
   const npcRows = db
@@ -142,7 +142,7 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
         label,
         row.display_name_provenance,
         row.display_name_owner,
-        "placed-character-presentation-v1",
+        "character-presentation-v1",
         placement.map_id,
         placement.map_x,
         placement.map_y,
@@ -156,7 +156,7 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
         entityType: "npc",
         entityId: row.id,
         label,
-        routePath: `/placed-characters/${slug.canonicalSlug}`,
+        routePath: `${routeBase}/${slug.canonicalSlug}`,
         canonicalSlug: slug.canonicalSlug,
         shortId: slug.shortId,
         hasPage: true,

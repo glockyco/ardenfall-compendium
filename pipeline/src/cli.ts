@@ -117,7 +117,11 @@ const e = result["emit-sqlite"] as EmitSqliteOutput;
 console.warn(`wrote ${e.outputPath} (${e.byteSize} bytes)`);
 const a = result["emit-assets"] as EmitAssetsOutput;
 console.warn(`wrote ${a.refs.length} asset refs to ${a.assetsDir}`);
-const r = emitRedirects({ sqlitePath: e.outputPath, outputDir: join(outDir, "static") });
+const r = emitRedirects({
+  sqlitePath: e.outputPath,
+  outputDir: join(outDir, "static"),
+  descriptors: result["load-descriptors"] as Awaited<ReturnType<typeof loadDescriptors.run>>,
+});
 console.warn(`wrote ${r.count} redirects to ${r.filePath}`);
 
 if (artifactKind) {

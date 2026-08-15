@@ -90,8 +90,19 @@ export {
 } from "./entities/item";
 export { listRelationshipSections } from "./entities/relationship";
 
-export type { CharacterOverviewRow, CharacterPresentationRow } from "./entities/character";
+export type {
+  CharacterLocationLink,
+  CharacterOverviewRow,
+  CharacterPresentationRow,
+  CharacterTypeLink,
+} from "./entities/character";
 export { getCharacterPresentation, listCharacters } from "./entities/character";
+export type {
+  CharacterDrop,
+  CharacterTypeOverviewRow,
+  CharacterTypePresentationRow,
+} from "./entities/character-type";
+export { getCharacterTypePresentation, listCharacterTypes } from "./entities/character-type";
 export type {
   CharacterRaceNameSet,
   CharacterRaceOverviewRow,
@@ -159,12 +170,6 @@ export type {
 } from "./entities/location";
 export { getLocationPresentation, listLocations } from "./entities/location";
 
-export type {
-  PlacedCharacterLocationLink,
-  PlacedCharacterOverviewRow,
-  PlacedCharacterPresentationRow,
-} from "./entities/placed-character";
-export { getPlacedCharacterPresentation, listPlacedCharacters } from "./entities/placed-character";
 export type {
   PortalOverviewRow,
   PortalPresentationRow,

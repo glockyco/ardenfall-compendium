@@ -79,15 +79,14 @@ describe("relationship graph", () => {
     );
   });
 
-  it("rejects unsupported entity_redirects reasons", () => {
+  it("creates the graph edge table", () => {
     const db = new Database(":memory:");
     db.exec(ENTITY_GRAPH_DDL);
 
-    expect(() =>
-      db.run(
-        `INSERT INTO entity_redirects (source_type, source_id, target_type, target_id, reason)
-         VALUES ('item-route', '/items/old', 'item', 'item-a', 'temporary')`,
-      ),
-    ).toThrow(/CHECK/);
+    expect(
+      db
+        .query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'entity_edges'")
+        .get(),
+    ).toEqual({ name: "entity_edges" });
   });
 });
