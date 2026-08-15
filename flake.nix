@@ -70,6 +70,9 @@
               # gitignored .decompiled/ cache that grounds game-logic decisions.
               unstable.ilspycmd
 
+              # `bun run bepinex:install` unpacks the pinned loader archive.
+              pkgs.unzip
+
               # Ad-hoc inspection of an emitted data.sqlite.
               pkgs.sqlite
             ];

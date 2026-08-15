@@ -18,6 +18,7 @@ const REQUIRED_HOTREPL_DLLS = ["HotRepl.BepInEx.dll", "HotRepl.Core.dll", "mcs.d
 const ARDENFALL_DLLS = ["ArdenfallCompendium.dll"];
 
 export async function deployPlugins(options: DeployOptions): Promise<DeployResult> {
+  await requireLoader(options.pluginsDir);
   await removeObsoletePlugins(options.pluginsDir);
 
   for (const name of REQUIRED_HOTREPL_DLLS) await requireFile(join(options.hotReplOutDir, name));
@@ -39,6 +40,25 @@ export async function deployPlugins(options: DeployOptions): Promise<DeployResul
   await writeHotReplConfig(options);
 
   return { copied: sources.map((entry) => entry.name) };
+}
+
+/**
+ * A plugins directory only means something when the loader that reads it exists.
+ * Copying into a game without BepInEx creates the whole tree, starts the game
+ * normally, loads nothing, and surfaces later as a HotRepl connection failure
+ * rather than as the missing loader it is.
+ */
+async function requireLoader(pluginsDir: string): Promise<void> {
+  const preloader = join(dirname(pluginsDir), "core", "BepInEx.Preloader.dll");
+  try {
+    const info = await stat(preloader);
+    if (info.isFile()) return;
+  } catch {
+    // Fall through to the same error as a non-file entry.
+  }
+  throw new Error(
+    `BepInEx is not installed: ${preloader} is missing. Run \`bun run bepinex:install\` first.`,
+  );
 }
 
 async function removeObsoletePlugins(pluginsDir: string): Promise<void> {

@@ -9,11 +9,12 @@ Use this procedure when a configured game installation must produce a live snaps
 
 ## Export a snapshot
 
-1. Configure the repo-root `.env` with the game paths, `HOTREPL_URL`, and launch command.
-2. Run `bun run hotrepl:setup` to build and deploy the mod.
-3. Run `bun run hotrepl:launch` to start the game.
-4. Run `bun run hotrepl:export` to drive HotRepl, write a snapshot, and run the pipeline.
-5. Read `controller/src/export-orchestrator.ts` when you need the controller step sequence.
+1. Configure the repo-root `.env` with `ARDENFALL_GAME_DIR`, `HOTREPL_REPO`, `HOTREPL_URL`, and the launch command.
+2. Run `bun run bepinex:install` once per game install. It installs the pinned loader and, when the game lives in a CrossOver bottle, sets the `winhttp` DLL override that Wine needs before it loads the Doorstop proxy. Without that override the game starts normally and loads no plugins.
+3. Run `bun run hotrepl:setup` to build and deploy the mod. It refuses to deploy when the loader is absent.
+4. Run `bun run hotrepl:launch` to start the game.
+5. Run `bun run hotrepl:export` to drive HotRepl, write a snapshot, and run the pipeline.
+6. Read `controller/src/export-orchestrator.ts` when you need the controller step sequence.
 
 `hotrepl:deploy` rewrites the game's `hotrepl.bepinex.cfg` from `HOTREPL_BIND_HOST` and `HOTREPL_PORT`. The default port is `18590`. Any value other than `127.0.0.1` exposes unauthenticated remote code execution and requires the explicit `--allow-remote-repl` flag.
 

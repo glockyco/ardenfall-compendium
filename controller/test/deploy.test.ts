@@ -7,6 +7,12 @@ import { deployPlugins } from "../src/deploy";
 describe("deployPlugins", () => {
   const roots: string[] = [];
 
+  /** A deploy target is a game directory that already has the BepInEx loader. */
+  const installLoader = async (root: string): Promise<void> => {
+    await mkdir(join(root, "BepInEx", "core"), { recursive: true });
+    await writeFile(join(root, "BepInEx", "core", "BepInEx.Preloader.dll"), "preloader");
+  };
+
   afterEach(async () => {
     await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
   });
@@ -14,9 +20,10 @@ describe("deployPlugins", () => {
   it("copies HotRepl and Ardenfall runtime DLLs into plugins directory", async () => {
     const root = await mkdtemp(join(tmpdir(), "ardenfall-deploy-"));
     roots.push(root);
+    await installLoader(root);
     const hotrepl = join(root, "hotrepl");
     const mod = join(root, "mod");
-    const plugins = join(root, "plugins");
+    const plugins = join(root, "BepInEx", "plugins");
     await mkdir(hotrepl, { recursive: true });
     await mkdir(mod, { recursive: true });
     await writeFile(join(hotrepl, "HotRepl.BepInEx.dll"), "hotrepl");
@@ -45,9 +52,10 @@ describe("deployPlugins", () => {
   it("removes the stale pre-rename ArdenfallArchives plugin directory", async () => {
     const root = await mkdtemp(join(tmpdir(), "ardenfall-deploy-"));
     roots.push(root);
+    await installLoader(root);
     const hotrepl = join(root, "hotrepl");
     const mod = join(root, "mod");
-    const plugins = join(root, "plugins");
+    const plugins = join(root, "BepInEx", "plugins");
     await mkdir(hotrepl, { recursive: true });
     await mkdir(mod, { recursive: true });
     await mkdir(join(plugins, "ArdenfallArchives"), { recursive: true });
@@ -69,6 +77,7 @@ describe("deployPlugins", () => {
   it("writes a loopback HotRepl bind config without removed v1 auth settings", async () => {
     const root = await mkdtemp(join(tmpdir(), "ardenfall-deploy-"));
     roots.push(root);
+    await installLoader(root);
     const hotrepl = join(root, "hotrepl");
     const mod = join(root, "mod");
     const plugins = join(root, "BepInEx", "plugins");
@@ -97,6 +106,7 @@ describe("deployPlugins", () => {
   it("refuses a non-loopback HotRepl bind without explicit opt-in", async () => {
     const root = await mkdtemp(join(tmpdir(), "ardenfall-deploy-"));
     roots.push(root);
+    await installLoader(root);
     const hotrepl = join(root, "hotrepl");
     const mod = join(root, "mod");
     const plugins = join(root, "BepInEx", "plugins");
@@ -123,6 +133,7 @@ describe("deployPlugins", () => {
   it("writes an opted-in non-loopback bind and warns on stdout", async () => {
     const root = await mkdtemp(join(tmpdir(), "ardenfall-deploy-"));
     roots.push(root);
+    await installLoader(root);
     const hotrepl = join(root, "hotrepl");
     const mod = join(root, "mod");
     const plugins = join(root, "BepInEx", "plugins");
@@ -163,6 +174,7 @@ describe("deployPlugins", () => {
   it("writes an overridden HotRepl port so a busy default can be avoided", async () => {
     const root = await mkdtemp(join(tmpdir(), "ardenfall-deploy-"));
     roots.push(root);
+    await installLoader(root);
     const hotrepl = join(root, "hotrepl");
     const mod = join(root, "mod");
     const plugins = join(root, "BepInEx", "plugins");
@@ -186,15 +198,38 @@ describe("deployPlugins", () => {
     expect(config).not.toContain("Port = 18590");
   });
 
+  it("refuses to deploy into a game that has no BepInEx loader", async () => {
+    const root = await mkdtemp(join(tmpdir(), "ardenfall-deploy-"));
+    roots.push(root);
+    const hotrepl = join(root, "hotrepl");
+    const mod = join(root, "mod");
+    await mkdir(hotrepl, { recursive: true });
+    await mkdir(mod, { recursive: true });
+    await writeFile(join(hotrepl, "HotRepl.BepInEx.dll"), "hotrepl");
+    await writeFile(join(hotrepl, "HotRepl.Core.dll"), "core");
+    await writeFile(join(hotrepl, "mcs.dll"), "mcs");
+    await writeFile(join(mod, "ArdenfallCompendium.dll"), "compendium");
+
+    await expect(
+      deployPlugins({
+        hotReplOutDir: hotrepl,
+        ardenfallModOutDir: mod,
+        pluginsDir: join(root, "BepInEx", "plugins"),
+      }),
+    ).rejects.toThrow(/BepInEx is not installed/);
+    await expect(stat(join(root, "BepInEx", "plugins"))).rejects.toThrow();
+  });
+
   it("refuses to deploy when a required source DLL is missing", async () => {
     const root = await mkdtemp(join(tmpdir(), "ardenfall-deploy-"));
     roots.push(root);
+    await installLoader(root);
 
     await expect(
       deployPlugins({
         hotReplOutDir: join(root, "missing"),
         ardenfallModOutDir: join(root, "missing-mod"),
-        pluginsDir: join(root, "plugins"),
+        pluginsDir: join(root, "BepInEx", "plugins"),
       }),
     ).rejects.toThrow(/Missing deploy source/);
   });

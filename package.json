@@ -25,6 +25,7 @@
     "pipeline:run": "bun run pipeline/src/cli.ts run",
     "artifact:fixture": "bun run pipeline/src/cli.ts build-fixture",
     "artifact:release": "bun run pipeline/src/cli.ts build-release",
+    "bepinex:install": "scripts/with-env.sh bash -c ': \"${ARDENFALL_GAME_DIR:?set ARDENFALL_GAME_DIR}\"; bun run scripts/install-bepinex.ts --game \"$ARDENFALL_GAME_DIR\"'",
     "hotrepl:build": "scripts/with-env.sh bash -c ': \"${HOTREPL_REPO:?set HOTREPL_REPO}\"; dotnet build \"$HOTREPL_REPO/src/HotRepl.BepInEx\" --nologo -v q'",
     "mod:copy-libs": "scripts/with-env.sh bash -c ': \"${ARDENFALL_MANAGED_DIR:?set ARDENFALL_MANAGED_DIR}\"; : \"${HOTREPL_CORE_OUT:?set HOTREPL_CORE_OUT}\"; mod/scripts/copy-libs.sh \"$ARDENFALL_MANAGED_DIR\" \"$HOTREPL_CORE_OUT\"'",
     "mod:build": "dotnet build mod/ArdenfallCompendium.csproj -c Debug --nologo -v q",
