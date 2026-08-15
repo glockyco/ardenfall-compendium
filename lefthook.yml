@@ -1,25 +1,35 @@
+# Hooks also run from GUI clients, agents and other non-login shells that do not
+# have the dev shell on PATH, so every job that needs a pinned tool runs through
+# `nix develop`. That costs about a second per job against a warm store.
+#
+# Do not hardcode machine paths here. These jobs used to prepend
+# "$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin", which is empty on a Nix
+# workstation, so both the Bun jobs and the unprefixed `dotnet format` job failed
+# on a fresh machine. flake.nix is the one place that names a tool version.
 pre-commit:
   parallel: true
   jobs:
     - name: prettier
       glob: "*.{ts,js,mjs,svelte,json,jsonc,md,css,yaml,yml}"
-      run: PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH" bunx prettier --write {staged_files}
+      run: nix develop --command bunx prettier --write {staged_files}
       stage_fixed: true
     - name: eslint
       glob: "*.{ts,js,svelte}"
       exclude: ["pipeline/dist/**"]
-      run: PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH" bunx eslint --fix {staged_files}
+      run: nix develop --command bunx eslint --fix {staged_files}
       stage_fixed: true
     - name: dotnet-format
       glob: "*.cs"
-      run: dotnet format mod/ArdenfallCompendium.csproj --include {staged_files}
+      run: nix develop --command dotnet format mod/ArdenfallCompendium.csproj --include {staged_files}
       stage_fixed: true
       skip:
         - merge
         - rebase
+    # omp-plans is a personal tool rather than a repository dependency, so it is
+    # not in the dev shell and the job skips when it is absent.
     - name: plans docs
       glob: "docs/plans/**/*.md"
-      run: PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH" sh -c 'omp-plans index && omp-plans check'
+      run: sh -c 'omp-plans index && omp-plans check'
       stage_fixed: true
       skip:
         - run: "! command -v omp-plans"
@@ -27,11 +37,11 @@ pre-commit:
 commit-msg:
   jobs:
     - name: commitlint
-      run: PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH" bunx commitlint --edit {1}
+      run: nix develop --command bunx commitlint --edit {1}
 
 pre-push:
   jobs:
     - name: typecheck
-      run: PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH" bun run typecheck
+      run: nix develop --command bun run typecheck
     - name: tests
-      run: PATH="$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:$PATH" bun test --pass-with-no-tests
+      run: nix develop --command bun test --pass-with-no-tests

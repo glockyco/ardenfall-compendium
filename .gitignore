@@ -5,6 +5,11 @@ worktrees/
 # Decompiled third-party game sources (local analysis only; never committed)
 .decompiled/
 
+# Nix dev shell: direnv cache and `nix build` result symlinks
+.direnv/
+result
+result-*
+
 # Bun + Node
 node_modules/
 .bun/

@@ -10,6 +10,16 @@
 - `pipeline/AGENTS.md` — descriptor loader, stage orchestrator, canonicaliser, and site-metadata emitter.
 - `site/AGENTS.md` — SvelteKit pages, store accessors, design tokens, and deck.gl map.
 
+## Toolchain
+
+`flake.nix` pins every tool this repository needs: Bun, Node, the .NET SDK, `ilspycmd` and `sqlite3`. Enter the shell with `nix develop`, or let direnv enter it from `.envrc`. Every command below assumes that shell.
+
+Node is separate from Bun on purpose. `vite build` spawns Node, so SvelteKit prerendering uses the `better-sqlite3` branch of `site/src/lib/server/db.ts` instead of the `bun:sqlite` one.
+
+The dev shell and `.github/workflows/ci.yml` pin their versions independently. Keep both sides in step when either moves.
+
+Git hooks run their tools through `nix develop`, so a commit works from a GUI client or an agent shell that has no toolchain on PATH. Never put machine-specific paths in `lefthook.yml`.
+
 ## Commands
 
 - Pipeline: `bun test pipeline/test` · Site: `bun run --cwd site check` and `bun test site/test` · Mod (C#): `dotnet test mod-tests/ArdenfallCompendium.Tests.csproj --nologo -v q` · Controller: `bun test controller/test` · Cross-package: `bun test tooling.test.ts artifact-staging.test.ts`.
