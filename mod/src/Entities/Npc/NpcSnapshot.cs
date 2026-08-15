@@ -12,7 +12,11 @@ public sealed record NpcVector3Snapshot(
 public sealed record NpcSnapshot(
     [property: JsonProperty("id")] string Id,
     [property: JsonProperty("recordRef")] SnapshotRef RecordRef,
-    [property: JsonProperty("friendlyName")] string? FriendlyName,
+    [property: JsonProperty("displayName")] string? DisplayName,
+    [property: JsonProperty("displayNameProvenance")] string DisplayNameProvenance,
+    [property: JsonProperty("displayNameOwner")] string? DisplayNameOwner,
+    [property: JsonProperty("authoringLabel")] string? AuthoringLabel,
+    [property: JsonProperty("characterRef")] SnapshotRef? CharacterRef,
     [property: JsonProperty("spawnPoint")] NpcVector3Snapshot Position,
     [property: JsonProperty("mapId")] string? MapId,
     [property: JsonProperty("containingLocationRefs")] IReadOnlyList<SnapshotRef> ContainingLocationRefs);

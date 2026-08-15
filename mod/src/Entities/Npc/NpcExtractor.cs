@@ -9,6 +9,8 @@ public sealed class NpcExtractor : WalkerBase<NpcSnapshotRow>
 {
     private readonly INpcRecordSource _source;
 
+    public int FilteredRuntimeCreatedCount => _source.FilteredRuntimeCreatedCount;
+
     public NpcExtractor()
         : this(new MasterRecordTableNpcRecordSource())
     {
@@ -63,15 +65,15 @@ public sealed class NpcExtractor : WalkerBase<NpcSnapshotRow>
             (record, rowId) =>
             {
                 var rowDiagnostics = new List<Diagnostic>();
-                var friendlyName = NullIfEmpty(record.FriendlyName);
-                if (friendlyName == null)
+                var displayName = NullIfEmpty(record.DisplayName);
+                if (displayName == null)
                 {
                     rowDiagnostics.Add(new Diagnostic
                     {
                         Severity = "diagnostic",
-                        Code = "npcFriendlyNameMissing",
-                        Field = "friendlyName",
-                        Message = $"NPCRecord '{rowId}' has no customFriendlyID",
+                        Code = "npcDisplayNameMissing",
+                        Field = "displayName",
+                        Message = $"NPCRecord '{rowId}' resolves no display name",
                     });
                 }
 
@@ -92,7 +94,11 @@ public sealed class NpcExtractor : WalkerBase<NpcSnapshotRow>
                     Fields = new NpcSnapshot(
                         Id: rowId,
                         RecordRef: SnapshotRef.Record(record.Table!, record.Subtable!, record.Id!, "NPCRecord"),
-                        FriendlyName: friendlyName,
+                        DisplayName: displayName,
+                        DisplayNameProvenance: record.DisplayNameProvenance,
+                        DisplayNameOwner: NullIfEmpty(record.DisplayNameOwner),
+                        AuthoringLabel: NullIfEmpty(record.AuthoringLabel),
+                        CharacterRef: record.CharacterRef,
                         Position: record.Position!,
                         MapId: NullIfEmpty(record.MapId),
                         ContainingLocationRefs: record.ContainingLocationRefs),

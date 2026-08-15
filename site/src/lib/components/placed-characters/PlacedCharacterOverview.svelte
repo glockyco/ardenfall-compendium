@@ -11,6 +11,15 @@
         <a class="block underline-offset-4 hover:underline" href={character.routePath}>
           <span class="block font-medium">{character.name}</span>
         </a>
+        {#if character.locations.length > 0}
+          <p class="text-muted-foreground mt-1 text-sm">
+            {#each character.locations as location, index (location.id)}
+              {#if index > 0},
+              {/if}
+              <a class="underline underline-offset-2" href={location.routePath}>{location.label}</a>
+            {/each}
+          </p>
+        {/if}
       </li>
     {/each}
   </ul>

@@ -25,7 +25,11 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
             subtable: "characters",
             id: "00000000000000000000000000000001",
           },
-          friendlyName: "Grainery Owner",
+          displayName: "Saya Sako",
+          displayNameProvenance: "own",
+          displayNameOwner: null,
+          authoringLabel: "Grainery Owner",
+          characterRef: { kind: "namedAsset", entity: "character", name: "GraineryOwner" },
           spawnPoint: { x: 1, y: 2, z: 3 },
           mapId: "ardenfall",
           containingLocationRefs: [townRef],
@@ -41,7 +45,11 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
             subtable: "characters",
             id: "00000000000000000000000000000002",
           },
-          friendlyName: "Fishermen",
+          displayName: "Fishermen",
+          displayNameProvenance: "inherited",
+          displayNameOwner: "Fisherman",
+          authoringLabel: "fishermen-label",
+          characterRef: { kind: "namedAsset", entity: "character", name: "Fisherman" },
           spawnPoint: { x: 4, y: 5, z: 6 },
           mapId: "ardenfall",
           containingLocationRefs: [townRef, caveRef],
@@ -57,7 +65,11 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
             subtable: "characters",
             id: "00000000000000000000000000000003",
           },
-          friendlyName: "Grain Thief",
+          displayName: "Grain Thief",
+          displayNameProvenance: "own",
+          displayNameOwner: null,
+          authoringLabel: "grain-thief-label",
+          characterRef: { kind: "namedAsset", entity: "character", name: "GrainThief" },
           spawnPoint: { x: 7, y: 8, z: 9 },
           mapId: "ardenfall",
           containingLocationRefs: [],
@@ -73,7 +85,11 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
             subtable: "characters",
             id: "00000000000000000000000000000004",
           },
-          friendlyName: null,
+          displayName: null,
+          displayNameProvenance: "absent",
+          displayNameOwner: null,
+          authoringLabel: "unnamed-character-label",
+          characterRef: { kind: "namedAsset", entity: "character", name: "UnnamedCharacter" },
           spawnPoint: { x: 10, y: 11, z: 12 },
           mapId: "ardenfall",
           containingLocationRefs: [],
@@ -127,6 +143,58 @@ describe("NPC pipeline", () => {
 
   it("canonicalises rows and expands all containing locations", () => {
     const db = setupCanonicalDb();
+    expect(
+      db
+        .query<
+          {
+            id: string;
+            display_name: string | null;
+            display_name_provenance: string;
+            display_name_owner: string | null;
+            authoring_label: string | null;
+            character_ref_json: string | null;
+          },
+          []
+        >(
+          `SELECT id, display_name, display_name_provenance, display_name_owner,
+                  authoring_label, character_ref_json
+           FROM npcs ORDER BY id`,
+        )
+        .all(),
+    ).toEqual([
+      {
+        id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
+        display_name: null,
+        display_name_provenance: "absent",
+        display_name_owner: null,
+        authoring_label: "unnamed-character-label",
+        character_ref_json: '{"kind":"namedAsset","entity":"character","name":"UnnamedCharacter"}',
+      },
+      {
+        id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+        display_name: "Saya Sako",
+        display_name_provenance: "own",
+        display_name_owner: null,
+        authoring_label: "Grainery Owner",
+        character_ref_json: '{"kind":"namedAsset","entity":"character","name":"GraineryOwner"}',
+      },
+      {
+        id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
+        display_name: "Fishermen",
+        display_name_provenance: "inherited",
+        display_name_owner: "Fisherman",
+        authoring_label: "fishermen-label",
+        character_ref_json: '{"kind":"namedAsset","entity":"character","name":"Fisherman"}',
+      },
+      {
+        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        display_name: "Grain Thief",
+        display_name_provenance: "own",
+        display_name_owner: null,
+        authoring_label: "grain-thief-label",
+        character_ref_json: '{"kind":"namedAsset","entity":"character","name":"GrainThief"}',
+      },
+    ]);
     expect(db.query("SELECT COUNT(*) AS count FROM npcs").get()).toEqual({ count: 4 });
     expect(db.query("SELECT COUNT(*) AS count FROM npc_location_refs").get()).toEqual({ count: 3 });
     expect(db.query("SELECT id FROM npc_location_refs ORDER BY id").all()).toEqual([
@@ -158,10 +226,11 @@ describe("NPC pipeline", () => {
       .get("npc", "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284");
     expect(node).toEqual({
       has_page: 1,
-      label: "Grainery Owner",
-      route_path: "/placed-characters/grainery-owner--4b1c9e07",
+      label: "Saya Sako",
+      route_path: "/placed-characters/saya-sako--4b1c9e07",
       short_id: "4b1c9e07",
     });
+    expect(node?.label).not.toBe("Grainery Owner");
     const namelessNode = db
       .query<{ has_page: number; label: string | null; route_path: string }, [string, string]>(
         "SELECT has_page, label, route_path FROM entity_nodes WHERE entity_type = ? AND entity_id = ?",
@@ -193,6 +262,8 @@ describe("NPC pipeline", () => {
           {
             id: string;
             name: string;
+            display_name_provenance: string;
+            display_name_owner: string | null;
             render_context: string;
             map_id: string | null;
             map_x: number;
@@ -202,14 +273,16 @@ describe("NPC pipeline", () => {
           },
           [string]
         >(
-          `SELECT id, name, render_context, map_id, map_x, map_y, elevation,
-                  location_ids_json
+          `SELECT id, name, display_name_provenance, display_name_owner,
+                  render_context, map_id, map_x, map_y, elevation, location_ids_json
            FROM npc_presentation_rows WHERE id = ?`,
         )
         .get("instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284"),
     ).toEqual({
       id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
-      name: "Grainery Owner",
+      name: "Saya Sako",
+      display_name_provenance: "own",
+      display_name_owner: null,
       render_context: "placed-character-presentation-v1",
       map_id: "ardenfall",
       map_x: 1,
@@ -217,7 +290,48 @@ describe("NPC pipeline", () => {
       elevation: 2,
       location_ids_json: '["town"]',
     });
-    expect(node?.route_path).toBe("/placed-characters/grainery-owner--4b1c9e07");
+    expect(
+      db
+        .query<
+          {
+            id: string;
+            name: string;
+            display_name_provenance: string;
+            display_name_owner: string | null;
+          },
+          []
+        >(
+          `SELECT id, name, display_name_provenance, display_name_owner
+           FROM npc_presentation_rows ORDER BY id`,
+        )
+        .all(),
+    ).toEqual([
+      {
+        id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
+        name: "Unnamed character",
+        display_name_provenance: "absent",
+        display_name_owner: null,
+      },
+      {
+        id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+        name: "Saya Sako",
+        display_name_provenance: "own",
+        display_name_owner: null,
+      },
+      {
+        id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
+        name: "Fishermen",
+        display_name_provenance: "inherited",
+        display_name_owner: "Fisherman",
+      },
+      {
+        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        name: "Grain Thief",
+        display_name_provenance: "own",
+        display_name_owner: null,
+      },
+    ]);
+    expect(node?.route_path).toBe("/placed-characters/saya-sako--4b1c9e07");
     db.exec(`CREATE TABLE map_points (
       id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL,
       name TEXT, map_id TEXT, map_x REAL NOT NULL, map_y REAL NOT NULL,

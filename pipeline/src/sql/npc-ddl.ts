@@ -2,7 +2,11 @@ export const NPC_DDL = `
 CREATE TABLE npcs (
   id                       TEXT PRIMARY KEY,
   record_ref_json          TEXT NOT NULL,
-  friendly_name            TEXT,
+  display_name             TEXT,
+  display_name_provenance  TEXT NOT NULL,
+  display_name_owner       TEXT,
+  authoring_label          TEXT,
+  character_ref_json       TEXT,
   source_spawn_point_json  TEXT NOT NULL,
   map_id                   TEXT
 );
@@ -13,9 +17,11 @@ CREATE TABLE npc_location_refs (
   ref_json    TEXT NOT NULL
 );
 CREATE TABLE npc_presentation_rows (
-  id                TEXT PRIMARY KEY,
-  name              TEXT NOT NULL,
-  render_context    TEXT NOT NULL,
+  id                      TEXT PRIMARY KEY,
+  name                    TEXT NOT NULL,
+  display_name_provenance TEXT NOT NULL,
+  display_name_owner      TEXT,
+  render_context          TEXT NOT NULL,
   map_id            TEXT,
   map_x             REAL NOT NULL,
   map_y             REAL NOT NULL,

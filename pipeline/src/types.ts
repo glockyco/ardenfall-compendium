@@ -565,7 +565,11 @@ export interface PortalSnapshotFields {
 export interface NPCSnapshotFields {
   id: string;
   recordRef: SnapshotRef;
-  friendlyName: string | null;
+  displayName: string | null;
+  displayNameProvenance: "own" | "inherited" | "absent";
+  displayNameOwner: string | null;
+  authoringLabel: string | null;
+  characterRef: SnapshotRef | null;
   spawnPoint: SnapshotVector3;
   mapId: string | null;
   containingLocationRefs: SnapshotRef[];

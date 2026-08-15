@@ -28,14 +28,14 @@
   "presentationContext": { "renderContext": "placed-character-presentation-v1" },
   "site": {
     "route": "/placed-characters",
-    "overview": { "columns": ["friendlyName"], "search": ["friendlyName"] },
+    "overview": { "columns": ["displayName"], "search": ["displayName"] },
     "detail": {
       "sections": [
         {
           "id": "overview",
           "kind": "fieldList",
           "title": "Overview",
-          "fields": ["friendlyName", "mapId", "spawnPoint", "containingLocationRefs"]
+          "fields": ["displayName", "mapId", "spawnPoint", "containingLocationRefs"]
         }
       ]
     }
@@ -58,11 +58,39 @@
       "column": "record_ref_json"
     },
     {
-      "name": "friendlyName",
+      "name": "displayName",
       "type": "string",
-      "from": "friendlyName",
+      "from": "displayName",
       "missingPolicy": "diagnostic",
-      "column": "friendly_name"
+      "column": "display_name"
+    },
+    {
+      "name": "displayNameProvenance",
+      "type": "string",
+      "from": "displayNameProvenance",
+      "missingPolicy": "fatal",
+      "column": "display_name_provenance"
+    },
+    {
+      "name": "displayNameOwner",
+      "type": "string",
+      "from": "displayNameOwner",
+      "missingPolicy": "optional-empty",
+      "column": "display_name_owner"
+    },
+    {
+      "name": "authoringLabel",
+      "type": "string",
+      "from": "authoringLabel",
+      "missingPolicy": "optional-empty",
+      "column": "authoring_label"
+    },
+    {
+      "name": "characterRef",
+      "type": "ref:asset",
+      "from": "characterRef",
+      "missingPolicy": "optional-empty",
+      "column": "character_ref_json"
     },
     {
       "name": "spawnPoint",
@@ -94,7 +122,7 @@
     "icon": "character",
     "color": [255, 200, 120],
     "radius": 4,
-    "tooltip": ["friendlyName"],
+    "tooltip": ["displayName"],
     "legendLabel": "Placed characters",
     "zOrder": 80
   }

@@ -9,7 +9,7 @@ namespace ArdenfallCompendium.Tests;
 public sealed class NpcExtractorTests
 {
     [Fact]
-    public void ExtractsNpcWithFriendlyNameAndContainingLocation()
+    public void ExtractsPlacementNameSetOnItsCopy()
     {
         var location = SnapshotRef.LookupAsset(
             "location-guid",
@@ -21,7 +21,11 @@ public sealed class NpcExtractorTests
                 table: "world",
                 subtable: "npcs",
                 id: "npc-a",
-                friendlyName: "Grainery Owner",
+                displayName: "Grainery Owner",
+                displayNameProvenance: "own",
+                displayNameOwner: null,
+                authoringLabel: "grainery-owner",
+                characterRef: SnapshotRef.NamedAsset("character", "preset_sapper"),
                 mapId: "overworld",
                 position: new NpcVector3Snapshot(12f, 3f, -8f),
                 containingLocationRefs: new[] { location }),
@@ -31,10 +35,41 @@ public sealed class NpcExtractorTests
 
         Assert.Equal("world;npcs;npc-a", row.Id);
         Assert.Equal("NPCRecord", row.Fields.RecordRef.RecordType);
-        Assert.Equal("Grainery Owner", row.Fields.FriendlyName);
+        Assert.Equal("Grainery Owner", row.Fields.DisplayName);
+        Assert.Equal("own", row.Fields.DisplayNameProvenance);
+        Assert.Null(row.Fields.DisplayNameOwner);
+        Assert.Equal("grainery-owner", row.Fields.AuthoringLabel);
+        Assert.Equal("namedAsset", row.Fields.CharacterRef!.Kind);
+        Assert.Equal("preset_sapper", row.Fields.CharacterRef.Name);
         Assert.Equal("overworld", row.Fields.MapId);
         Assert.Equal(12f, row.Fields.Position.X);
         Assert.Equal("location-guid", Assert.Single(row.Fields.ContainingLocationRefs).Guid);
+        Assert.Empty(row.Diagnostics);
+    }
+
+    [Fact]
+    public void ReportsPrototypeNameWhenPlacementInheritsIt()
+    {
+        var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
+        {
+            NpcRecordSourceRow.Build(
+                table: "world",
+                subtable: "npcs",
+                id: "npc-inherited",
+                displayName: "Prototype Sapper",
+                displayNameProvenance: "inherited",
+                displayNameOwner: "preset_sapper",
+                authoringLabel: null,
+                characterRef: SnapshotRef.NamedAsset("character", "preset_sapper"),
+                mapId: "overworld",
+                position: new NpcVector3Snapshot(0f, 0f, 0f)),
+        }));
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Equal("Prototype Sapper", row.Fields.DisplayName);
+        Assert.Equal("inherited", row.Fields.DisplayNameProvenance);
+        Assert.Equal("preset_sapper", row.Fields.DisplayNameOwner);
         Assert.Empty(row.Diagnostics);
     }
 
@@ -47,7 +82,11 @@ public sealed class NpcExtractorTests
                 table: "world",
                 subtable: "npcs",
                 id: "npc-nested",
-                friendlyName: "Nested NPC",
+                displayName: "Nested NPC",
+                displayNameProvenance: "own",
+                displayNameOwner: null,
+                authoringLabel: null,
+                characterRef: null,
                 mapId: "overworld",
                 position: new NpcVector3Snapshot(0f, 0f, 0f),
                 containingLocationRefs: new[]
@@ -72,7 +111,11 @@ public sealed class NpcExtractorTests
                 table: "world",
                 subtable: "npcs",
                 id: "npc-open",
-                friendlyName: "Open NPC",
+                displayName: "Open NPC",
+                displayNameProvenance: "own",
+                displayNameOwner: null,
+                authoringLabel: null,
+                characterRef: null,
                 mapId: "overworld",
                 position: new NpcVector3Snapshot(0f, 0f, 0f)),
         }));
@@ -84,7 +127,7 @@ public sealed class NpcExtractorTests
     }
 
     [Fact]
-    public void DiagnosesNpcWithBlankFriendlyNameAndLeavesNameNull()
+    public void DiagnosesPlacementWithNoResolvedDisplayName()
     {
         var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
         {
@@ -92,28 +135,76 @@ public sealed class NpcExtractorTests
                 table: "world",
                 subtable: "npcs",
                 id: "npc-no-name",
-                friendlyName: " \t",
+                displayName: " \t",
+                displayNameProvenance: "absent",
+                displayNameOwner: null,
+                authoringLabel: null,
+                characterRef: null,
                 mapId: "interior",
                 position: new NpcVector3Snapshot(1f, 2f, 3f)),
         }));
 
         var row = Assert.Single(extractor.Walk());
 
-        Assert.Null(row.Fields.FriendlyName);
+        Assert.Null(row.Fields.DisplayName);
+        Assert.Equal("absent", row.Fields.DisplayNameProvenance);
         Assert.Contains(row.Diagnostics, diagnostic =>
             diagnostic.Severity == "diagnostic" &&
-            diagnostic.Code == "npcFriendlyNameMissing" &&
-            diagnostic.Field == "friendlyName");
+            diagnostic.Code == "npcDisplayNameMissing" &&
+            diagnostic.Field == "displayName");
+    }
+
+    [Fact]
+    public void FiltersRuntimeCreatedRecordsAndReportsCount()
+    {
+        var source = new FakeNpcRecordSource(
+            records: new List<NpcRecordSourceRow>(),
+            filteredRuntimeCreatedCount: 1);
+        var extractor = new NpcExtractor(source);
+
+        Assert.Empty(extractor.Walk());
+        Assert.Equal(1, extractor.FilteredRuntimeCreatedCount);
+        Assert.Equal(1, source.FilteredRuntimeCreatedCount);
+    }
+
+    [Fact]
+    public void UsesParentNameForCloneNamedCopyCharacterReference()
+    {
+        var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
+        {
+            NpcRecordSourceRow.Build(
+                table: "world",
+                subtable: "npcs",
+                id: "npc-clone",
+                displayName: "Clone Named NPC",
+                displayNameProvenance: "own",
+                displayNameOwner: null,
+                authoringLabel: "clone-debug-label",
+                characterRef: SnapshotRef.NamedAsset("character", "preset_sapper_stage1"),
+                mapId: "overworld",
+                position: new NpcVector3Snapshot(2f, 4f, 6f)),
+        }));
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Equal("preset_sapper_stage1", row.Fields.CharacterRef!.Name);
+        Assert.DoesNotContain("Clone", row.Fields.CharacterRef.Name!);
+        Assert.Equal("clone-debug-label", row.Fields.AuthoringLabel);
     }
 
     private sealed class FakeNpcRecordSource : INpcRecordSource
     {
         private readonly IReadOnlyList<NpcRecordSourceRow> _records;
 
-        public FakeNpcRecordSource(IReadOnlyList<NpcRecordSourceRow> records)
+        public FakeNpcRecordSource(
+            IReadOnlyList<NpcRecordSourceRow> records,
+            int filteredRuntimeCreatedCount = 0)
         {
             _records = records;
+            FilteredRuntimeCreatedCount = filteredRuntimeCreatedCount;
         }
+
+        public int FilteredRuntimeCreatedCount { get; }
 
         public IEnumerable<NpcRecordSourceRow> EnumerateNpcs() => _records;
     }

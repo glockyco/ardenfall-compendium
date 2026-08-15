@@ -169,12 +169,12 @@ const npcProjection: MapProjection = {
         show_on_map_debug_only, allow_fast_travel
       )
       SELECT 'npc:' || n.id, 'npc', n.id,
-             COALESCE(NULLIF(TRIM(n.friendly_name), ''), 'Unnamed character'),
+             COALESCE(NULLIF(TRIM(n.display_name), ''), 'Unnamed character'),
              p.map_id, p.map_x, p.map_y, p.elevation,
              0, 0
       FROM npcs n
       JOIN placements p ON p.entity_id = 'npc' AND p.instance_id = n.id
-      ORDER BY COALESCE(NULLIF(TRIM(n.friendly_name), ''), 'Unnamed character'), n.id;
+      ORDER BY COALESCE(NULLIF(TRIM(n.display_name), ''), 'Unnamed character'), n.id;
     `,
 };
 

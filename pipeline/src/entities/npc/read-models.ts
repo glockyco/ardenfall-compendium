@@ -5,7 +5,9 @@ import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-mode
 interface NpcRow {
   id: string;
   record_ref_json: string;
-  friendly_name: string | null;
+  display_name: string | null;
+  display_name_provenance: string;
+  display_name_owner: string | null;
 }
 
 interface NpcPlacementRow {
@@ -28,9 +30,9 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
   const writeNode = prepareEntityNodeWriter(db);
   const npcRows = db
     .query<NpcRow, []>(
-      `SELECT id, record_ref_json, friendly_name
+      `SELECT id, record_ref_json, display_name, display_name_provenance, display_name_owner
        FROM npcs
-       ORDER BY COALESCE(friendly_name, 'Unnamed character'), id`,
+       ORDER BY COALESCE(display_name, 'Unnamed character'), id`,
     )
     .all();
   const placements = new Map(
@@ -67,14 +69,19 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
   );
   const presentationInsert = db.prepare(
     `INSERT INTO npc_presentation_rows (
-      id, name, render_context, map_id, map_x, map_y, elevation,
-      location_ids_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, name, display_name_provenance, display_name_owner, render_context,
+      map_id, map_x, map_y, elevation, location_ids_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   const nodeTx = db.transaction(() => {
     for (const row of npcRows) {
-      const label = row.friendly_name ?? "Unnamed character";
+      // An absent name is an observation about game data, so extraction owns the
+      // diagnostic and emits `npcDisplayNameMissing` per row. Repeating it here
+      // would report one fact twice, in two artifacts. The read model's job is to
+      // publish the absence: `display_name` stays null and the provenance says
+      // `absent`, which is what the page states.
+      const label = row.display_name ?? "Unnamed character";
       const placement = placements.get(row.id);
       if (!placement) {
         throw new Error(`NPC '${row.id}' has no canonical placement`);
@@ -93,6 +100,8 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
       presentationInsert.run(
         row.id,
         label,
+        row.display_name_provenance,
+        row.display_name_owner,
         "placed-character-presentation-v1",
         placement.map_id,
         placement.map_x,

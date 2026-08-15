@@ -18,8 +18,9 @@ export function npcField<K extends keyof NPCSnapshotFields>(
 export function canonicaliseNpcs(db: Database, envelope: SnapshotEnvelope): void {
   const npcInsert = db.prepare(
     `INSERT INTO npcs (
-      id, record_ref_json, friendly_name, source_spawn_point_json, map_id
-    ) VALUES (?, ?, ?, ?, ?)`,
+      id, record_ref_json, display_name, display_name_provenance, display_name_owner,
+      authoring_label, character_ref_json, source_spawn_point_json, map_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const placementInsert = db.prepare(
     `INSERT INTO placements (
@@ -38,7 +39,7 @@ export function canonicaliseNpcs(db: Database, envelope: SnapshotEnvelope): void
       const recordRef = npcField(fields, "recordRef");
       const spawnPoint = npcField(fields, "spawnPoint");
       const point = sourceToMapPointForNpc(row.id, spawnPoint);
-      const friendlyName = npcField(fields, "friendlyName");
+      const displayName = npcField(fields, "displayName");
       const locationRefs = [...(npcField(fields, "containingLocationRefs") ?? [])].sort(
         (left, right) => compareStrings(locationSortKey(left), locationSortKey(right)),
       );
@@ -46,7 +47,11 @@ export function canonicaliseNpcs(db: Database, envelope: SnapshotEnvelope): void
       npcInsert.run(
         row.id,
         JSON.stringify(recordRef),
-        friendlyName?.trim() || null,
+        displayName?.trim() || null,
+        npcField(fields, "displayNameProvenance"),
+        npcField(fields, "displayNameOwner")?.trim() || null,
+        npcField(fields, "authoringLabel")?.trim() || null,
+        npcField(fields, "characterRef") ? JSON.stringify(npcField(fields, "characterRef")) : null,
         JSON.stringify(spawnPoint),
         npcField(fields, "mapId") ?? null,
       );

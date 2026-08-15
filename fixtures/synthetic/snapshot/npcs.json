@@ -13,7 +13,15 @@
           "id": "4b1c9e07a2d3418fb6ce5710dd93a284",
           "recordType": "NPCRecord"
         },
-        "friendlyName": "Grainery Owner",
+        "displayName": "Bandit",
+        "displayNameProvenance": "own",
+        "displayNameOwner": null,
+        "authoringLabel": "Grainery Owner",
+        "characterRef": {
+          "kind": "namedAsset",
+          "entity": "character",
+          "name": "character_bandit"
+        },
         "spawnPoint": {
           "x": 10,
           "y": 2,
@@ -40,7 +48,15 @@
           "id": "9f3a2c58e71d4b6a83cf10924eab7d55",
           "recordType": "NPCRecord"
         },
-        "friendlyName": "Fishermen",
+        "displayName": "Bandit",
+        "displayNameProvenance": "inherited",
+        "displayNameOwner": "character_bandit",
+        "authoringLabel": "Fishermen",
+        "characterRef": {
+          "kind": "namedAsset",
+          "entity": "character",
+          "name": "character_villager"
+        },
         "spawnPoint": {
           "x": 12,
           "y": 2,
@@ -72,7 +88,15 @@
           "id": "c7e08b41d9a24f37b15ce6208af391dc",
           "recordType": "NPCRecord"
         },
-        "friendlyName": "Grain Thief",
+        "displayName": "Phantom",
+        "displayNameProvenance": "own",
+        "displayNameOwner": null,
+        "authoringLabel": "Grain Thief",
+        "characterRef": {
+          "kind": "namedAsset",
+          "entity": "character",
+          "name": "character_phantom"
+        },
         "spawnPoint": {
           "x": 40,
           "y": 2,
@@ -93,7 +117,11 @@
           "id": "2d6f47b30c8e41a59fbd73e15c0a869b",
           "recordType": "NPCRecord"
         },
-        "friendlyName": null,
+        "displayName": null,
+        "displayNameProvenance": "absent",
+        "displayNameOwner": null,
+        "authoringLabel": null,
+        "characterRef": null,
         "spawnPoint": {
           "x": 50,
           "y": 2,
@@ -105,9 +133,9 @@
       "diagnostics": [
         {
           "severity": "diagnostic",
-          "code": "npcFriendlyNameMissing",
-          "field": "friendlyName",
-          "message": "NPCRecord 'instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b' has no friendlyName"
+          "code": "npcDisplayNameMissing",
+          "field": "displayName",
+          "message": "NPCRecord 'instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b' has no displayName"
         }
       ]
     }
