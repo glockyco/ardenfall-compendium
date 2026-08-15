@@ -41,14 +41,12 @@ const schemaDocs = targets.map(({ schema }) => JSON.parse(readFileSync(schema, "
  * cross-schema reference resolves (variant.schema.json points at
  * entity.schema.json#/$defs/field).
  *
- * A shared instance would also resolve that reference, but Ajv numbers the
- * functions and schema constants it emits from a counter that lives on the
- * instance. Compiling every target through one instance therefore made each
- * generated file's contents depend on every other schema: adding a subschema to
- * entity.schema.json renumbered `validate36` to `validate38` in ten unrelated
- * validators. `check:validators` regenerates and diffs these files, so that
- * coupling turned the check into noise. Compiling one root per instance keeps
- * the numbering local to that schema and its references.
+ * One instance per target is what keeps a generated file stable. Ajv numbers the
+ * functions and schema constants it emits from a counter held on the instance, so
+ * a shared instance makes every file's contents depend on every schema compiled
+ * before it, and editing one schema renumbers symbols in unrelated validators.
+ * `check:validators` regenerates these files and fails on any diff, so that
+ * numbering must depend only on the schema at hand and the schemas it references.
  */
 function createAjv(): Ajv2020 {
   const ajv = new Ajv2020({ code: { source: true, esm: true }, allErrors: true });
