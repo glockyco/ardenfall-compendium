@@ -1,52 +1,57 @@
-## 1. Identity contract
+## 1. Chain foundation
 
-- [ ] 1.1 Add the `naming` block with `displayName`, `authoringLabel` and `policy` to `schemas/entity.schema.json`, and fail descriptor validation when a declared name source omits its policy.
-- [ ] 1.2 Keep the item prototype rule where it is, record the game behaviour that justifies it in the item descriptor, and report the suppressed count in the manifest.
-- [ ] 1.3 Make the entity-node writer reject a `designer-identifier` value as a label, with a contract error that names the entity and field.
+- [ ] 1.1 Extract a `ParameterizedObject` through one shared resolver that returns each field's value and which node set it, and route the character and item extractors through it.
+- [ ] 1.2 Extract a character record as a leaf of that chain, so the record's own parameters resolve as its values and its parent resolves as its definition.
+- [ ] 1.3 Filter records by `CharacterRecord.IsEditorCreated()`, and report the authored and filtered counts in the run manifest.
+- [ ] 1.4 Cover all three in `mod-tests`: a clone-named copy whose parent is the authored definition, a placement that overrides merchant stock, and a runtime-created record.
 
-## 2. Extraction
+## 2. Identity contract
 
-- [ ] 2.1 Read a placement's display name from its embedded character data through `Parameter.Get()`, and export whether the placement's own parameter `IsSet`.
-- [ ] 2.2 Export `customFriendlyID` as the authoring label rather than as the name.
-- [ ] 2.3 Resolve `StoredCharacterData.parent` to a `namedAsset` reference and export it as the placement's definition.
-- [ ] 2.4 Cover the new extraction in `mod-tests`, including a clone-named copy whose parent is the authored definition, and a record with no stored character data.
+- [ ] 2.1 Add the `naming` block with `displayName`, `authoringLabel` and `policy` to `schemas/entity.schema.json`, and fail validation when a source omits its policy.
+- [ ] 2.2 Resolve a display name as own, inherited, generated, or absent, and export the provenance with the value.
+- [ ] 2.3 Export `customFriendlyID` as the authoring label, and make the entity-node writer reject a `designer-identifier` value as a label.
+- [ ] 2.4 Remove the item template exclusion, publish all 1,273 items, and mark templates as templates.
 
-## 3. Canonical data and read models
+## 3. Race and name sets
 
-- [ ] 3.1 Add `npcs.display_name`, `npcs.display_name_is_own`, `npcs.authoring_label` and `npcs.character_ref_json`, and remove `npcs.friendly_name`.
-- [ ] 3.2 Keep every character definition published, and record its name provenance as authored, inherited, generated or absent.
-- [ ] 3.3 Publish every placement, titled by its resolved name, with its provenance stated and its location shown in listings for disambiguation.
-- [ ] 3.4 Register `instance_of` in the relationship registry with forward title `Character type` and inverse title `Placements`, and project it from the definition reference.
-- [ ] 3.5 Emit `character-race` rows with their name sets, and link every character to its race.
-- [ ] 3.6 Keep a location page listing every placement found there, including placements that have no page, rendered with their map link.
+- [ ] 3.1 Add `character-race` and `name-set` descriptors, and extract races with their player-visible name and ordered name sets.
+- [ ] 3.2 Extract each name set once with its complete seed vocabulary, its generation order, and the races that use it.
+- [ ] 3.3 Link every character definition and placement to its race, and diagnose the one definition that resolves none.
 
-## 4. Availability
+## 4. Canonical data and read models
 
-- [ ] 4.1 Remove the `if (!asset.enabled) continue;` filter from `BuiltLookupTableLocationAssetSource`, and cover a disabled location in `mod-tests` so the exported flag can be false.
-- [ ] 4.2 Add one shared availability notice component, render it near the title and in listings, and word it as the authored flag rather than as unreachability.
-- [ ] 4.3 Replace the quest overview sentence and the `Disabled: Yes/No` detail rows with that component, and show nothing when no flag is set.
-- [ ] 4.4 Mark a disabled location on the map layer and on its page.
+- [ ] 4.1 Add `npcs.display_name`, `npcs.display_name_provenance`, `npcs.authoring_label`, `npcs.character_ref_json`, and the placement-owned faction, drop and merchant tables; remove `npcs.friendly_name`.
+- [ ] 4.2 Publish every character definition, with its template marking, its race, and what derives from it.
+- [ ] 4.3 Register `instance_of` with forward title `Character type` and inverse `Placements`, and project it from the definition reference.
+- [ ] 4.4 Resolve the reader-facing type as the nearest named ancestor with a race fallback, in one shared function.
+- [ ] 4.5 Project placement-owned merchant stock as item provenance, so an item page names the character that sells it.
+- [ ] 4.6 Compose the descriptive label for a runtime-named character, and disambiguate listings by containing location.
 
-## 5. Export reporting
+## 5. Availability
 
-- [ ] 5.1 Report own, inherited and absent display-name counts per family in the run manifest.
-- [ ] 5.2 Report disabled, hidden and debug-only counts per family in the run manifest, and report none rather than zero for a family without such a flag.
+- [ ] 5.1 Remove the `if (!asset.enabled) continue;` filter from `BuiltLookupTableLocationAssetSource`, and cover a disabled location in `mod-tests`.
+- [ ] 5.2 Add one shared availability notice, render it near the title and in listings, and word it as the authored flag.
+- [ ] 5.3 Replace the quest overview sentence and the `Disabled: Yes/No` rows with that notice, and show nothing when no flag is set.
+- [ ] 5.4 Mark a disabled location on the map layer and on its page.
+- [ ] 5.5 Report disabled, hidden and debug-only counts per family in the manifest.
 
 ## 6. Site
 
-- [ ] 6.1 Move definitions to `/character-types` and named individuals to `/characters`, and delete `/placed-characters` with its components and accessors.
-- [ ] 6.2 Render placements on a type page as map deep links, and the type on a character page.
-- [ ] 6.3 Render dialogue for an unnamed quest character on the quest page, labelled with the quest's role label and stated as unnamed.
+- [ ] 6.1 Move placements to `/characters` and definitions to `/character-types`, and delete `/placed-characters` with its components and accessors.
+- [ ] 6.2 Render a character's type, race, name provenance, stock and drops, stating which values are the character's own.
+- [ ] 6.3 Render a type's placements as map deep links, and a race's name sets with their vocabulary.
 - [ ] 6.4 Rename the navigation entries and update the sitemap route list.
-- [ ] 6.5 Emit redirects from every shipped `/placed-characters/<slug>` URL to the new page, the type page, or the map position.
+- [ ] 6.5 Emit redirects from every shipped `/placed-characters/<slug>` URL, and from a runtime-created record's URL to the character overview.
 
 ## 7. Fixtures and gate
 
-- [ ] 7.1 Extend the synthetic snapshot with a nameless prototype definition, an own-named placement, an inherited-name placement, a placement with no character data, and a disabled location.
-- [ ] 7.2 Update `bun test pipeline/test`, `bun test site/test` and the fixture checks for the new tables and routes.
+- [ ] 7.1 Extend the synthetic snapshot with a template definition, an own-named placement, an inherited-name placement, a generated-name placement, a merchant placement, a runtime-created record, and a disabled location.
+- [ ] 7.2 Update `bun test pipeline/test`, `bun test site/test` and the fixture checks for the new tables, provenance and routes.
 - [ ] 7.3 Run the full gate in `AGENTS.md`, then a live export, and record counts and diagnostics.
+- [ ] 7.4 Verify reproducibility: export twice in one session and assert equal counts per family.
 
 ## 8. Documentation and cleanup
 
-- [ ] 8.1 Correct `docs/plans/2026-08-03-extraction-coverage.md` and `docs/plans/2026-08-04-item-character-inheritance.md`, both of which state that characters are nameless and that a placement cannot be linked to a definition.
-- [ ] 8.2 Record the slice and its measured evidence in the roadmap, and archive this change.
+- [ ] 8.1 Correct `docs/plans/2026-08-03-extraction-coverage.md`, which records merchant inventory as unconfigured and a placement as unlinkable to a definition, and `2026-08-04-item-character-inheritance.md`, which records characters as nameless.
+- [ ] 8.2 Correct the cell count in the plans: 27 loadable cell scenes and 607 cell assets, not 683 cells.
+- [ ] 8.3 Record the slice and its measured evidence in the roadmap, and archive this change.

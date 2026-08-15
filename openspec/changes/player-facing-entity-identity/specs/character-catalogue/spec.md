@@ -1,18 +1,17 @@
 ## Purpose
 
-Defines the two reader-facing character families, what each page answers for a player, and where a character that has no page is presented instead.
+Defines the two reader-facing character families, what each page answers for a player, and how a character with no authored name of its own is presented.
 
 ## ADDED Requirements
 
 ### Requirement: Characters are the placed characters a player can meet
 
-`/characters` MUST hold every extracted placement. A page MUST answer who this character is: the name the game shows and where that name comes from, where the character stands, what type the character is, and the quests, dialogue and factions attached to them.
+`/characters` MUST hold every authored placement. A page MUST answer who this character is: the name the game shows and where that name comes from, where the character stands, what type the character is, and the quests, dialogue, factions, stock and drops attached to them.
 
 #### Scenario: A named individual gets a page
 
-- **WHEN** a placement sets its own `charName` and the value passes the display-name test
-- **THEN** `/characters/<slug>` exists
-- **AND** the title is the authored name, such as `Saya Sako`
+- **WHEN** a placement sets its own name and the value is a display name
+- **THEN** `/characters/<slug>` exists titled with that name, such as `Saya Sako`
 - **AND** the page links to the character's type, its map position, and its containing location
 
 #### Scenario: A designer identifier never titles the page
@@ -21,28 +20,35 @@ Defines the two reader-facing character families, what each page answers for a p
 - **THEN** the page title is the authored name
 - **AND** the identifier appears on no public surface
 
+#### Scenario: A merchant's own stock is presented as the character's
+
+- **WHEN** a placement sets its own merchant item lists, gold or categories
+- **THEN** the page lists what the character sells
+- **AND** the page states that the stock is configured on this character rather than on its type
+- **AND** each stocked item names the character as a source of that item
+
 #### Scenario: An inherited name is published with its provenance
 
-- **WHEN** a placement resolves its name from its prototype rather than setting its own
+- **WHEN** a placement resolves its name from its prototype
 - **THEN** its page is titled with that name
-- **AND** the page states that the name comes from the character's type and links to the type
-- **AND** an overview listing shows its location so that same-named placements are distinguishable
+- **AND** the page states that the name comes from the character's type and links to it
+- **AND** listings show the location so same-named placements are distinguishable
 
-#### Scenario: A placement with no name is published as unnamed
+#### Scenario: A character the game names at runtime
 
-- **WHEN** a placement resolves no name, including a placement that stores no character data
-- **THEN** its page exists and states that the game gives this character no name
-- **AND** the page shows its location and, when it has one, its type
-- **AND** the page does not display the record id as a title
+- **WHEN** a placement resolves no stored or inherited name but its race supplies name sets
+- **THEN** the page is titled by a descriptive label such as `Karu Elf`, marked as a description
+- **AND** the page says the game builds the character's name from that race's name sets when the player meets them
+- **AND** the title carries no indefinite article, so listings and search sort by the type
 
-### Requirement: Character types are the catalogue of what those individuals are
+### Requirement: Character types are the catalogue of what those characters are
 
-`/character-types` MUST hold definitions that resolve a display name. A page MUST answer what this kind of character is: its name, what it can drop, its factions, and every placement that derives from it.
+`/character-types` MUST hold every character definition. A page MUST answer what this kind of character is: its name or its race, what it can drop, its factions, what derives from it, and every placement that derives from it.
 
 #### Scenario: A creature type page answers where it appears
 
-- **WHEN** a definition such as `Darvaki` has 8 placements deriving from it
-- **THEN** its page lists 8 placements
+- **WHEN** a definition such as `Darvaki` has placements deriving from it
+- **THEN** its page lists them
 - **AND** each entry deep-links to that placement on the map
 
 #### Scenario: Drops connect items to types
@@ -51,11 +57,12 @@ Defines the two reader-facing character families, what each page answers for a p
 - **THEN** the item page names the definition as a source
 - **AND** the definition page lists the item
 
-#### Scenario: A prototype definition has no page
+#### Scenario: A template definition is published as a template
 
-- **WHEN** a definition resolves no display name
-- **THEN** `/character-types` has no page for it
-- **AND** it appears in no navigation, sitemap or search result
+- **WHEN** a definition resolves no name of its own, which applies to 59 definitions
+- **THEN** it keeps a page
+- **AND** the page states that it is a template, names its race, and lists what derives from it
+- **AND** the page states whether any placement uses it directly
 
 ### Requirement: Navigation names the reader's model
 
@@ -70,31 +77,25 @@ Navigation MUST label the two families as the reader understands them and MUST N
 #### Scenario: Old routes keep working
 
 - **WHEN** a reader follows a shipped `/placed-characters/<slug>` URL
-- **THEN** the site redirects to the character's new page when it has one
-- **AND** otherwise redirects to its type's page, or to its map position when the type is unpublished
+- **THEN** the site redirects to that character's page under `/characters`
+- **AND** a URL for a record that is no longer published, because the game created it at runtime, redirects to the character overview
 
-### Requirement: Dialogue is presented by a page that exists
+### Requirement: Dialogue is presented by the character who speaks it
 
-Authored dialogue MUST render on the page of the character who speaks it when that character has a page, and on the quest that owns the dialogue graph otherwise. No dialogue may be lost because a character has no display name.
+Authored dialogue MUST render on the page of the character who speaks it, and on the quest that owns the dialogue graph. No dialogue may depend on a page that does not exist.
 
-#### Scenario: A named quest character keeps dialogue on both surfaces
+#### Scenario: A quest character keeps dialogue on both surfaces
 
-- **WHEN** a quest character has an authored name
+- **WHEN** a quest character carries a dialogue graph, including one with no authored name
 - **THEN** the character page renders the dialogue
-- **AND** the quest page continues to list the character and its lines
-
-#### Scenario: An unnamed quest character's dialogue moves to the quest
-
-- **WHEN** a quest character resolves no display name, as the tutorial's dying man does
-- **THEN** the quest page renders that dialogue
-- **AND** the quest page labels the speaker with the quest's own role label and states that the character is unnamed
+- **AND** the quest page lists the character and its lines
 
 ### Requirement: Every placed character remains on the map
 
-Removing a page MUST NOT remove world presence. Every extracted placement MUST keep its placement row and its map marker, regardless of whether it has a page.
+Every authored placement MUST keep its placement row and its map marker.
 
 #### Scenario: Marker coverage after the cutover
 
 - **WHEN** the pipeline emits map points for placed characters
-- **THEN** the count equals the number of extracted placements with a spawn point
-- **AND** markers for placements without a page carry their type's name or state that the character is unnamed
+- **THEN** the count equals the number of authored placements with a resolvable position
+- **AND** a marker for a character the game names at runtime carries its descriptive label
