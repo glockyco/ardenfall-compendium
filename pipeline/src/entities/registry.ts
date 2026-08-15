@@ -8,6 +8,8 @@ import { buildDDL } from "../sql/ddl";
 import { ENTITY_GRAPH_DDL } from "../relationships/relationship-graph.ts";
 import { ITEM_CATEGORY_DDL } from "../sql/item-category-ddl";
 import { ITEM_TAG_DDL } from "../sql/item-tag-ddl";
+import { CHARACTER_RACE_DDL } from "../sql/character-race-ddl";
+import { NAME_SET_DDL } from "../sql/name-set-ddl";
 import { LOCATION_DDL } from "../sql/location-ddl";
 import { FACTION_DDL } from "../sql/faction-ddl";
 import { CHARACTER_DDL } from "../sql/character-ddl";
@@ -36,6 +38,10 @@ import { canonicaliseItemCategories } from "./item-category/canonicaliser";
 import { emitItemCategoryReadModels } from "./item-category/read-models";
 import { canonicaliseItemTags } from "./item-tag/canonicaliser";
 import { emitItemTagReadModels } from "./item-tag/read-models";
+import { canonicaliseCharacterRaces } from "./character-race/canonicaliser";
+import { emitCharacterRaceReadModels } from "./character-race/read-models";
+import { canonicaliseNameSets } from "./name-set/canonicaliser";
+import { emitNameSetReadModels } from "./name-set/read-models";
 import { canonicaliseFactions } from "./faction/canonicaliser";
 import { emitFactionReadModels } from "./faction/read-models";
 import { canonicaliseCharacters } from "./character/canonicaliser";
@@ -226,6 +232,16 @@ export const entityRegistry: Record<string, EntityModule> = {
     ddl: ITEM_TAG_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseItemTags(db, envelope),
     readModel: ({ db, entity }) => emitItemTagReadModels(db, entity.site?.route),
+  },
+  "name-set": {
+    ddl: NAME_SET_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseNameSets(db, envelope),
+    readModel: ({ db }) => emitNameSetReadModels(db),
+  },
+  "character-race": {
+    ddl: CHARACTER_RACE_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseCharacterRaces(db, envelope),
+    readModel: ({ db, entity }) => emitCharacterRaceReadModels(db, entity.site?.route),
   },
   spell: {
     ddl: SPELL_DDL,

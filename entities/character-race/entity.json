@@ -1,0 +1,40 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "character-race",
+  "kind": "definition",
+  "label": { "singular": "Character race", "plural": "Character races" },
+  "extraction": {
+    "source": "namedAsset",
+    "root": "Resources.FindObjectsOfTypeAll<CharacterRace>",
+    "walker": "CharacterRaceExtractor"
+  },
+  "canonicalTable": "character_races",
+  "naming": {
+    "displayName": {
+      "from": "raceName",
+      "policy": "player-visible"
+    }
+  },
+  "presentationContext": { "renderContext": "character-race-presentation-v1" },
+  "site": {
+    "route": "/races"
+  },
+  "fields": [
+    { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
+    {
+      "name": "raceName",
+      "type": "string",
+      "from": "raceName",
+      "missingPolicy": "diagnostic",
+      "column": "race_name"
+    },
+    {
+      "name": "nameSetRefs",
+      "type": "ref:asset[]",
+      "from": "nameSetRefs",
+      "missingPolicy": "optional-empty",
+      "column": "name_set_refs_json"
+    }
+  ],
+  "map": null
+}

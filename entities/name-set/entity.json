@@ -1,0 +1,37 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "name-set",
+  "kind": "definition",
+  "label": { "singular": "Name set", "plural": "Name sets" },
+  "extraction": {
+    "source": "namedAsset",
+    "root": "Resources.FindObjectsOfTypeAll<NameSet>",
+    "walker": "NameSetExtractor"
+  },
+  "canonicalTable": "name_sets",
+  "naming": {
+    "authoringLabel": {
+      "from": "id",
+      "policy": "designer-identifier"
+    }
+  },
+  "presentationContext": { "renderContext": "name-set-presentation-v1" },
+  "fields": [
+    { "name": "id", "type": "id", "from": "id", "missingPolicy": "fatal" },
+    {
+      "name": "seeds",
+      "type": "json",
+      "from": "seeds",
+      "missingPolicy": "optional-empty",
+      "column": "seeds_json"
+    },
+    {
+      "name": "generationOrder",
+      "type": "integer",
+      "from": "generationOrder",
+      "missingPolicy": "fatal",
+      "column": "generation_order"
+    }
+  ],
+  "map": null
+}

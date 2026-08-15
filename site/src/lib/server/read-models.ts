@@ -93,6 +93,13 @@ export { listRelationshipSections } from "./entities/relationship";
 export type { CharacterOverviewRow, CharacterPresentationRow } from "./entities/character";
 export { getCharacterPresentation, listCharacters } from "./entities/character";
 export type {
+  CharacterRaceNameSet,
+  CharacterRaceOverviewRow,
+  CharacterRacePresentationRow,
+  CharacterRaceSeed,
+} from "./entities/character-race";
+export { getCharacterRacePresentation, listCharacterRaces } from "./entities/character-race";
+export type {
   StatusEffectOverviewRow,
   StatusEffectPresentationRow,
 } from "./entities/status-effect";

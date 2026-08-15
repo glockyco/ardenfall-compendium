@@ -1,0 +1,41 @@
+{
+  "entityId": "character-race",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "named;character-race;race_karu_elf",
+      "fields": {
+        "id": "named;character-race;race_karu_elf",
+        "raceName": "Karu Elf",
+        "nameSetRefs": [
+          {
+            "kind": "namedAsset",
+            "entity": "name-set",
+            "name": "nset_mystelf_female"
+          },
+          {
+            "kind": "namedAsset",
+            "entity": "name-set",
+            "name": "nset_mystelf_male"
+          }
+        ]
+      }
+    },
+    {
+      "id": "named;character-race;race_unresolved",
+      "fields": {
+        "id": "named;character-race;race_unresolved",
+        "raceName": null,
+        "nameSetRefs": []
+      },
+      "diagnostics": [
+        {
+          "severity": "diagnostic",
+          "code": "characterRaceNameMissing",
+          "field": "raceName",
+          "message": "CharacterRace 'named;character-race;race_unresolved' has empty or whitespace raceName"
+        }
+      ]
+    }
+  ]
+}

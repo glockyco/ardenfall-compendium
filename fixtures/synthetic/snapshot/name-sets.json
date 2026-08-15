@@ -1,0 +1,48 @@
+{
+  "entityId": "name-set",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "named;name-set;nset_mystelf_female",
+      "fields": {
+        "id": "named;name-set;nset_mystelf_female",
+        "seeds": [
+          {
+            "name": "Saya",
+            "weight": 1
+          },
+          {
+            "name": "Lira",
+            "weight": 3
+          },
+          {
+            "name": "Mira",
+            "weight": 1
+          }
+        ],
+        "generationOrder": 5
+      }
+    },
+    {
+      "id": "named;name-set;nset_mystelf_male",
+      "fields": {
+        "id": "named;name-set;nset_mystelf_male",
+        "seeds": [
+          {
+            "name": "Sako",
+            "weight": 1
+          },
+          {
+            "name": "Taro",
+            "weight": 2
+          },
+          {
+            "name": "Kelan",
+            "weight": 1
+          }
+        ],
+        "generationOrder": 5
+      }
+    }
+  ]
+}

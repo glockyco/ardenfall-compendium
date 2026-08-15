@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import {
   listCharacters,
+  listCharacterRaces,
   listFactions,
   listLocations,
   listPlacedCharacters,
@@ -62,6 +63,7 @@ export interface SiteChrome {
   itemCategoryRoute: string;
   itemTagRoute: string;
   characterRoute: string;
+  characterRaceRoute: string;
   locationRoute: string;
   placedCharacterRoute: string;
   portalRoute: string;
@@ -205,6 +207,7 @@ function buildLayoutData(): SiteChrome {
   const itemCategory = entitySection("item-category", listItemCategories().length);
   const itemTag = entitySection("item-tag", listItemTags().length);
   const character = entitySection("character", listCharacters().length);
+  const characterRace = entitySection("character-race", listCharacterRaces().length);
   const location = entitySection("location", listLocations().length);
   const placedCharacter = entitySection("npc", listPlacedCharacters().length);
   const portal = entitySection("portal", listPortals().length);
@@ -223,6 +226,7 @@ function buildLayoutData(): SiteChrome {
       itemCategory,
       itemTag,
       character,
+      characterRace,
       location,
       placedCharacter,
       portal,
@@ -241,6 +245,7 @@ function buildLayoutData(): SiteChrome {
     itemCategoryRoute: itemCategory.href,
     itemTagRoute: itemTag.href,
     characterRoute: character.href,
+    characterRaceRoute: characterRace.href,
     locationRoute: location.href,
     placedCharacterRoute: placedCharacter.href,
     portalRoute: portal.href,

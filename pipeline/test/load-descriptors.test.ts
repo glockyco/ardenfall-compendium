@@ -19,12 +19,14 @@ describe("loadDescriptors", () => {
 
     expect(Object.keys(result.entities).sort()).toEqual([
       "character",
+      "character-race",
       "enchantment",
       "faction",
       "item",
       "item-category",
       "item-tag",
       "location",
+      "name-set",
       "npc",
       "portal",
       "potion-recipe",

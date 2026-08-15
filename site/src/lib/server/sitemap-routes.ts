@@ -23,6 +23,7 @@ export const listingRoutePaths = [
   "/categories",
   "/tags",
   "/characters",
+  "/races",
   "/locations",
   "/placed-characters",
   "/portals",
