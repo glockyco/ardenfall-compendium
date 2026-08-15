@@ -562,6 +562,12 @@ export interface PortalSnapshotFields {
   connectedPortalRef?: SnapshotRef | null;
 }
 
+export interface NpcLevelSnapshot {
+  automatic: boolean;
+  addValue: number;
+  value: number;
+}
+
 export interface NPCSnapshotFields {
   id: string;
   recordRef: SnapshotRef;
@@ -573,6 +579,24 @@ export interface NPCSnapshotFields {
   spawnPoint: SnapshotVector3;
   mapId: string | null;
   containingLocationRefs: SnapshotRef[];
+  dropRefs: SnapshotRef[];
+  dropRefsProvenance: "own" | "inherited" | "absent";
+  dropRefsOwner: string | null;
+  startingFactions: SnapshotRef[];
+  startingFactionsProvenance: "own" | "inherited" | "absent";
+  startingFactionsOwner: string | null;
+  startingLevel: NpcLevelSnapshot | null;
+  startingLevelProvenance: "own" | "inherited" | "absent";
+  startingLevelOwner: string | null;
+  merchantRefs: SnapshotRef[];
+  merchantRefsProvenance: "own" | "inherited" | "absent";
+  merchantRefsOwner: string | null;
+  merchantGold: SnapshotRef | null;
+  merchantGoldProvenance: "own" | "inherited" | "absent";
+  merchantGoldOwner: string | null;
+  merchantCategories: SnapshotRef[];
+  merchantCategoriesProvenance: "own" | "inherited" | "absent";
+  merchantCategoriesOwner: string | null;
 }
 
 export interface SnapshotDiagnosticArtifactEntry extends SnapshotDiagnostic {

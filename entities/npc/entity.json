@@ -69,14 +69,18 @@
       "type": "string",
       "from": "displayNameProvenance",
       "missingPolicy": "fatal",
-      "column": "display_name_provenance"
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
     },
     {
       "name": "displayNameOwner",
       "type": "string",
       "from": "displayNameOwner",
       "missingPolicy": "optional-empty",
-      "column": "display_name_owner"
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
     },
     {
       "name": "authoringLabel",
@@ -114,6 +118,158 @@
       "storage": "unstored",
       "reason": "Expanded into npc_location_refs rows. The mod runs LocationAsset.IsInside because containment is game logic, and a location holds several volumes that stored bounds cannot reproduce.",
       "projects": "npc_location_refs"
+    },
+    {
+      "name": "dropRefs",
+      "type": "ref:asset[]",
+      "from": "dropRefs",
+      "missingPolicy": "optional-empty",
+      "column": "drop_refs_json"
+    },
+    {
+      "name": "dropRefsProvenance",
+      "type": "string",
+      "from": "dropRefsProvenance",
+      "missingPolicy": "fatal",
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
+    },
+    {
+      "name": "dropRefsOwner",
+      "type": "string",
+      "from": "dropRefsOwner",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
+    },
+    {
+      "name": "startingFactions",
+      "type": "ref:asset[]",
+      "from": "startingFactions",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Expanded into npc_faction_refs rows.",
+      "projects": "npc_faction_refs"
+    },
+    {
+      "name": "startingFactionsProvenance",
+      "type": "string",
+      "from": "startingFactionsProvenance",
+      "missingPolicy": "fatal",
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
+    },
+    {
+      "name": "startingFactionsOwner",
+      "type": "string",
+      "from": "startingFactionsOwner",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
+    },
+    {
+      "name": "startingLevel",
+      "type": "json",
+      "from": "startingLevel",
+      "missingPolicy": "optional-empty",
+      "column": "starting_level_json"
+    },
+    {
+      "name": "startingLevelProvenance",
+      "type": "string",
+      "from": "startingLevelProvenance",
+      "missingPolicy": "fatal",
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
+    },
+    {
+      "name": "startingLevelOwner",
+      "type": "string",
+      "from": "startingLevelOwner",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
+    },
+    {
+      "name": "merchantRefs",
+      "type": "ref:asset[]",
+      "from": "merchantRefs",
+      "missingPolicy": "optional-empty",
+      "column": "merchant_refs_json"
+    },
+    {
+      "name": "merchantRefsProvenance",
+      "type": "string",
+      "from": "merchantRefsProvenance",
+      "missingPolicy": "fatal",
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
+    },
+    {
+      "name": "merchantRefsOwner",
+      "type": "string",
+      "from": "merchantRefsOwner",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
+    },
+    {
+      "name": "merchantGold",
+      "type": "ref:asset",
+      "from": "merchantGold",
+      "missingPolicy": "optional-empty",
+      "column": "merchant_gold_json"
+    },
+    {
+      "name": "merchantGoldProvenance",
+      "type": "string",
+      "from": "merchantGoldProvenance",
+      "missingPolicy": "fatal",
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
+    },
+    {
+      "name": "merchantGoldOwner",
+      "type": "string",
+      "from": "merchantGoldOwner",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
+    },
+    {
+      "name": "merchantCategories",
+      "type": "ref:asset[]",
+      "from": "merchantCategories",
+      "missingPolicy": "optional-empty",
+      "column": "merchant_categories_json"
+    },
+    {
+      "name": "merchantCategoriesProvenance",
+      "type": "string",
+      "from": "merchantCategoriesProvenance",
+      "missingPolicy": "fatal",
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
+    },
+    {
+      "name": "merchantCategoriesOwner",
+      "type": "string",
+      "from": "merchantCategoriesOwner",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Normalised into npc_value_provenance rather than repeated as a canonical column.",
+      "projects": "npc_value_provenance"
     }
   ],
   "map": {

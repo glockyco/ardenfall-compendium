@@ -30,9 +30,14 @@ export function emitNpcReadModels(db: Database): PipelineDiagnostic[] {
   const writeNode = prepareEntityNodeWriter(db);
   const npcRows = db
     .query<NpcRow, []>(
-      `SELECT id, record_ref_json, display_name, display_name_provenance, display_name_owner
+      `SELECT npcs.id, npcs.record_ref_json, npcs.display_name,
+              provenance.provenance AS display_name_provenance,
+              provenance.owner AS display_name_owner
        FROM npcs
-       ORDER BY COALESCE(display_name, 'Unnamed character'), id`,
+       JOIN npc_value_provenance AS provenance
+         ON provenance.npc_id = npcs.id
+        AND provenance.field_name = 'displayName'
+       ORDER BY COALESCE(npcs.display_name, 'Unnamed character'), npcs.id`,
     )
     .all();
   const placements = new Map(

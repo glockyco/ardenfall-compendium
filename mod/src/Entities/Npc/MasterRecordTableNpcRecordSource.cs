@@ -76,6 +76,25 @@ public sealed class MasterRecordTableNpcRecordSource : INpcRecordSource
     {
         var id = record.id;
         var nameResolution = ResolveDisplayName(storedCharacterData);
+        var dropResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.itemLists);
+        var additionalDropResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.additionalItems);
+        var factionResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.startingFactions);
+        var levelResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.startingLevel);
+        var merchantListResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.merchantItemLists);
+        var merchantAdditionalResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.merchantAdditionalItems);
+        var merchantGoldResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.merchantGold);
+        var merchantCategoryResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.merchantCategories);
+
+        // itemLists and additionalItems are one reader-facing drop fact, as in CharacterExtractor.
+        var dropRefs = MergeRefs(
+            FlattenItemRefs(dropResolution.Value),
+            ToItemRefs(additionalDropResolution.Value, "CharacterData.additionalItems"));
+        var dropOwnership = MergeOwnership(dropResolution.Ownership, additionalDropResolution.Ownership);
+        // merchantItemLists and merchantAdditionalItems are one reader-facing stock fact.
+        var merchantRefs = MergeRefs(
+            FlattenMerchantItemRefs(merchantListResolution.Value),
+            ToItemRefs(merchantAdditionalResolution.Value, "CharacterData.merchantAdditionalItems"));
+        var merchantOwnership = MergeOwnership(merchantListResolution.Ownership, merchantAdditionalResolution.Ownership);
         var spawnPoint = ReadSpawnPoint(record);
         var characterRef = ResolveParentRef(storedCharacterData.parent);
         if (spawnPoint == null)
@@ -91,7 +110,25 @@ public sealed class MasterRecordTableNpcRecordSource : INpcRecordSource
                 CharacterRef: characterRef,
                 MapId: null,
                 Position: null,
-                ContainingLocationRefs: new List<SnapshotRef>());
+                ContainingLocationRefs: new List<SnapshotRef>(),
+                DropRefs: dropRefs,
+                DropRefsProvenance: dropOwnership.Provenance,
+                DropRefsOwner: dropOwnership.Owner,
+                StartingFactions: ToAssetRefs(factionResolution.Value, "CharacterData.startingFactions"),
+                StartingFactionsProvenance: Provenance(factionResolution.Ownership),
+                StartingFactionsOwner: Owner(factionResolution.Ownership),
+                StartingLevel: ToLevelSnapshot(levelResolution.Value),
+                StartingLevelProvenance: Provenance(levelResolution.Ownership),
+                StartingLevelOwner: Owner(levelResolution.Ownership),
+                MerchantRefs: merchantRefs,
+                MerchantRefsProvenance: merchantOwnership.Provenance,
+                MerchantRefsOwner: merchantOwnership.Owner,
+                MerchantGold: ToOptionalAssetRef(merchantGoldResolution.Value, "CharacterData.merchantGold"),
+                MerchantGoldProvenance: Provenance(merchantGoldResolution.Ownership),
+                MerchantGoldOwner: Owner(merchantGoldResolution.Ownership),
+                MerchantCategories: ToAssetRefs(merchantCategoryResolution.Value, "CharacterData.merchantCategories"),
+                MerchantCategoriesProvenance: Provenance(merchantCategoryResolution.Ownership),
+                MerchantCategoriesOwner: Owner(merchantCategoryResolution.Ownership));
         }
 
         var containingLocations = new List<SnapshotRef>();
@@ -117,7 +154,160 @@ public sealed class MasterRecordTableNpcRecordSource : INpcRecordSource
                 spawnPoint.Value.position.x,
                 spawnPoint.Value.position.y,
                 spawnPoint.Value.position.z),
-            ContainingLocationRefs: containingLocations);
+            ContainingLocationRefs: containingLocations,
+            DropRefs: dropRefs,
+            DropRefsProvenance: dropOwnership.Provenance,
+            DropRefsOwner: dropOwnership.Owner,
+            StartingFactions: ToAssetRefs(factionResolution.Value, "CharacterData.startingFactions"),
+            StartingFactionsProvenance: Provenance(factionResolution.Ownership),
+            StartingFactionsOwner: Owner(factionResolution.Ownership),
+            StartingLevel: ToLevelSnapshot(levelResolution.Value),
+            StartingLevelProvenance: Provenance(levelResolution.Ownership),
+            StartingLevelOwner: Owner(levelResolution.Ownership),
+            MerchantRefs: merchantRefs,
+            MerchantRefsProvenance: merchantOwnership.Provenance,
+            MerchantRefsOwner: merchantOwnership.Owner,
+            MerchantGold: ToOptionalAssetRef(merchantGoldResolution.Value, "CharacterData.merchantGold"),
+            MerchantGoldProvenance: Provenance(merchantGoldResolution.Ownership),
+            MerchantGoldOwner: Owner(merchantGoldResolution.Ownership),
+            MerchantCategories: ToAssetRefs(merchantCategoryResolution.Value, "CharacterData.merchantCategories"),
+            MerchantCategoriesProvenance: Provenance(merchantCategoryResolution.Ownership),
+            MerchantCategoriesOwner: Owner(merchantCategoryResolution.Ownership));
+    }
+
+    private static IReadOnlyList<SnapshotRef> FlattenItemRefs(
+        IReadOnlyList<CountedItemListAsset>? lists)
+    {
+        var items = ItemListWalker.Flatten<
+            ItemListAsset,
+            object,
+            BaseWeightedItemData,
+            ItemData>(
+                roots: RootLists(lists),
+                listGroups: ListGroups,
+                groupEntries: GroupEntries,
+                isGroup: entry => entry is WeightedItemData weighted && weighted.isGroup,
+                entryGroups: EntryGroups,
+                isList: entry => entry.isList,
+                entryList: entry => entry.listAsset,
+                entryItem: entry => entry.singleItem,
+                listComparer: UnityObjectReferenceComparer<ItemListAsset>.Instance,
+                itemComparer: UnityObjectReferenceComparer<ItemData>.Instance);
+        return ToAssetRefs(items, "CharacterData.itemLists");
+    }
+
+    private static IReadOnlyList<SnapshotRef> FlattenMerchantItemRefs(
+        IReadOnlyList<CountedLeveledItemListAsset>? lists)
+    {
+        var roots = new List<CountedItemListAsset>();
+        foreach (var counted in lists ?? Array.Empty<CountedLeveledItemListAsset>())
+        {
+            if (counted?.list != null) roots.Add(counted.list);
+        }
+        return FlattenItemRefs(roots);
+    }
+
+    private static IReadOnlyList<SnapshotRef> ToItemRefs(
+        IEnumerable<CountedItemData>? items,
+        string source)
+    {
+        var itemAssets = new List<ItemData>();
+        foreach (var counted in items ?? Array.Empty<CountedItemData>())
+        {
+            if (counted?.item != null) itemAssets.Add(counted.item);
+        }
+        return ToAssetRefs(itemAssets, source);
+    }
+
+    private static IReadOnlyList<SnapshotRef> ToAssetRefs<T>(
+        IEnumerable<T>? items,
+        string source)
+        where T : UnityEngine.Object
+    {
+        var refs = new List<SnapshotRef>();
+        foreach (var item in items ?? Array.Empty<T>())
+        {
+            if (item == null) continue;
+            refs.Add(ToAssetRef(item, source));
+        }
+        return refs;
+    }
+
+    private static IReadOnlyList<SnapshotRef> MergeRefs(
+        IReadOnlyList<SnapshotRef> first,
+        IReadOnlyList<SnapshotRef> second)
+    {
+        var merged = new List<SnapshotRef>(first.Count + second.Count);
+        AddRefs(merged, first);
+        AddRefs(merged, second);
+        return merged;
+    }
+
+    private static void AddRefs(List<SnapshotRef> target, IReadOnlyList<SnapshotRef> refs)
+    {
+        foreach (var reference in refs)
+        {
+            if (!target.Contains(reference)) target.Add(reference);
+        }
+    }
+
+    private static (string Provenance, string? Owner) MergeOwnership(
+        ParameterOwnership first,
+        ParameterOwnership second)
+    {
+        // A merged fact is own when either contributing parameter is set on the placement.
+        if (first.IsSet || second.IsSet) return ("own", null);
+        if (first.Inherited) return ("inherited", Owner(first));
+        if (second.Inherited) return ("inherited", Owner(second));
+        return ("absent", null);
+    }
+
+    private static string Provenance(ParameterOwnership ownership) =>
+        ownership.IsSet ? "own" : ownership.Inherited ? "inherited" : "absent";
+
+    private static string? Owner(ParameterOwnership ownership) =>
+        ownership.Inherited ? NullIfEmpty(ownership.Owner?.name) : null;
+
+    private static NpcLevelSnapshot? ToLevelSnapshot(LevelValue? value) => value == null
+        ? null
+        : new NpcLevelSnapshot(value.automatic, value.addValue, value.value);
+
+    private static SnapshotRef? ToOptionalAssetRef(UnityEngine.Object? asset, string source) =>
+        asset == null ? null : ToAssetRef(asset, source);
+
+    private static IEnumerable<ItemListAsset> RootLists(IReadOnlyList<CountedItemListAsset>? lists)
+    {
+        foreach (var counted in lists ?? Array.Empty<CountedItemListAsset>())
+        {
+            if (counted?.list != null) yield return counted.list;
+        }
+    }
+
+    private static IEnumerable<object> ListGroups(ItemListAsset list)
+    {
+        if (list.itemGroups == null) yield break;
+        foreach (var group in list.itemGroups)
+        {
+            if (group != null) yield return group;
+        }
+    }
+
+    private static IEnumerable<BaseWeightedItemData> GroupEntries(object group) => group switch
+    {
+        ItemGroup itemGroup => itemGroup.items is null ? Array.Empty<BaseWeightedItemData>() : itemGroup.items,
+        BaseItemGroup baseGroup => baseGroup.items is null ? Array.Empty<BaseWeightedItemData>() : baseGroup.items,
+        _ => Array.Empty<BaseWeightedItemData>(),
+    };
+
+    private static IEnumerable<object> EntryGroups(BaseWeightedItemData entry)
+    {
+        if (entry is not WeightedItemData weighted) yield break;
+        if (weighted.group != null) yield return weighted.group;
+        if (weighted.groups == null) yield break;
+        foreach (var group in weighted.groups)
+        {
+            if (group != null) yield return group;
+        }
     }
 
     private static (string? Name, string Provenance, string? Owner) ResolveDisplayName(

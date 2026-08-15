@@ -192,6 +192,84 @@ public sealed class NpcExtractorTests
         Assert.Equal("clone-debug-label", row.Fields.AuthoringLabel);
     }
 
+    [Fact]
+    public void ExtractsPlacementMerchantStockAsOwn()
+    {
+        var stock = SnapshotRef.LookupAsset("item-stock");
+        var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
+        {
+            NpcRecordSourceRow.Build(
+                "world", "npcs", "merchant-own", "Merchant", "own", null, null, null,
+                "overworld", new NpcVector3Snapshot(0f, 0f, 0f),
+                merchantRefs: new[] { stock }, merchantRefsProvenance: "own"),
+        }));
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Equal("item-stock", Assert.Single(row.Fields.MerchantRefs).Guid);
+        Assert.Equal("own", row.Fields.MerchantRefsProvenance);
+        Assert.Null(row.Fields.MerchantRefsOwner);
+    }
+
+    [Fact]
+    public void ExtractsPlacementFactionAsOwn()
+    {
+        var faction = SnapshotRef.LookupAsset("faction-own");
+        var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
+        {
+            NpcRecordSourceRow.Build(
+                "world", "npcs", "faction-own", "Faction NPC", "own", null, null, null,
+                "overworld", new NpcVector3Snapshot(0f, 0f, 0f),
+                startingFactions: new[] { faction }, startingFactionsProvenance: "own"),
+        }));
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Equal("faction-own", Assert.Single(row.Fields.StartingFactions).Guid);
+        Assert.Equal("own", row.Fields.StartingFactionsProvenance);
+        Assert.Null(row.Fields.StartingFactionsOwner);
+    }
+
+    [Fact]
+    public void PreservesInheritedFactionsAndMerchantStock()
+    {
+        var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
+        {
+            NpcRecordSourceRow.Build(
+                "world", "npcs", "inherited-values", "Inherited NPC", "inherited", "preset_vendor", null, null,
+                "overworld", new NpcVector3Snapshot(0f, 0f, 0f),
+                startingFactions: new[] { SnapshotRef.LookupAsset("faction-inherited") },
+                startingFactionsProvenance: "inherited", startingFactionsOwner: "preset_vendor",
+                merchantRefs: new[] { SnapshotRef.LookupAsset("item-inherited") },
+                merchantRefsProvenance: "inherited", merchantRefsOwner: "preset_vendor"),
+        }));
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Equal("inherited", row.Fields.StartingFactionsProvenance);
+        Assert.Equal("preset_vendor", row.Fields.StartingFactionsOwner);
+        Assert.Equal("inherited", row.Fields.MerchantRefsProvenance);
+        Assert.Equal("preset_vendor", row.Fields.MerchantRefsOwner);
+    }
+
+    [Fact]
+    public void RepresentsAbsentMerchantStockWithoutDiagnostic()
+    {
+        var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
+        {
+            NpcRecordSourceRow.Build(
+                "world", "npcs", "no-stock", "No Stock NPC", "own", null, null, null,
+                "overworld", new NpcVector3Snapshot(0f, 0f, 0f)),
+        }));
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Empty(row.Fields.MerchantRefs);
+        Assert.Equal("absent", row.Fields.MerchantRefsProvenance);
+        Assert.Null(row.Fields.MerchantRefsOwner);
+        Assert.DoesNotContain(row.Diagnostics, diagnostic => diagnostic.Field == "merchantRefs");
+    }
+
     private sealed class FakeNpcRecordSource : INpcRecordSource
     {
         private readonly IReadOnlyList<NpcRecordSourceRow> _records;

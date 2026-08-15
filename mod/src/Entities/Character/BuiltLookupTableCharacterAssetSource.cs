@@ -56,7 +56,7 @@ public sealed class BuiltLookupTableCharacterAssetSource : ICharacterAssetSource
 
     private static IReadOnlyList<SnapshotRef> FlattenItemRefs(IReadOnlyList<CountedItemListAsset>? lists)
     {
-        var items = CharacterDropWalker.Flatten<
+        var items = ItemListWalker.Flatten<
             ItemListAsset,
             object,
             BaseWeightedItemData,

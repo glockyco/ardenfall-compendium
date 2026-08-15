@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities;
 using ArdenfallCompendium.Entities.Character;
 using Xunit;
 
@@ -125,7 +126,7 @@ public sealed class CharacterExtractorTests
     }
 
     private static string[] Walk(params ListNode[] roots) =>
-        CharacterDropWalker.Flatten<ListNode, GroupNode, Entry, string>(
+        ItemListWalker.Flatten<ListNode, GroupNode, Entry, string>(
             roots,
             list => list.Groups,
             group => group.Entries,

@@ -34,7 +34,46 @@
             "guid": "11111111.fixture-town",
             "unityType": "LocationAsset"
           }
-        ]
+        ],
+        "dropRefs": [],
+        "dropRefsProvenance": "absent",
+        "dropRefsOwner": null,
+        "startingFactions": [],
+        "startingFactionsProvenance": "absent",
+        "startingFactionsOwner": null,
+        "startingLevel": null,
+        "startingLevelProvenance": "absent",
+        "startingLevelOwner": null,
+        "merchantRefs": [
+          {
+            "kind": "lookupAsset",
+            "guid": "4ed20218.fixture-iron-sword",
+            "unityType": "ItemData"
+          },
+          {
+            "kind": "lookupAsset",
+            "guid": "6a71c0de.fixture-stamina-draught",
+            "unityType": "ItemData"
+          }
+        ],
+        "merchantRefsProvenance": "own",
+        "merchantRefsOwner": null,
+        "merchantGold": {
+          "kind": "lookupAsset",
+          "guid": "6a71c0de.fixture-stamina-draught",
+          "unityType": "ItemData"
+        },
+        "merchantGoldProvenance": "own",
+        "merchantGoldOwner": null,
+        "merchantCategories": [
+          {
+            "kind": "namedAsset",
+            "entity": "item-category",
+            "name": "itemcat_weapons"
+          }
+        ],
+        "merchantCategoriesProvenance": "own",
+        "merchantCategoriesOwner": null
       }
     },
     {
@@ -74,7 +113,40 @@
             "guid": "22222222.fixture-debug-cave",
             "unityType": "LocationAsset"
           }
-        ]
+        ],
+        "dropRefs": [],
+        "dropRefsProvenance": "inherited",
+        "dropRefsOwner": "character_bandit",
+        "startingFactions": [
+          {
+            "kind": "lookupAsset",
+            "guid": "a1000001.fixture-black-moth",
+            "unityType": "Faction"
+          },
+          {
+            "kind": "lookupAsset",
+            "guid": "a1000002.fixture-mages-guild",
+            "unityType": "Faction"
+          }
+        ],
+        "startingFactionsProvenance": "inherited",
+        "startingFactionsOwner": "character_bandit",
+        "startingLevel": {
+          "automatic": false,
+          "addValue": 0,
+          "value": 4
+        },
+        "startingLevelProvenance": "inherited",
+        "startingLevelOwner": "character_bandit",
+        "merchantRefs": [],
+        "merchantRefsProvenance": "inherited",
+        "merchantRefsOwner": "character_bandit",
+        "merchantGold": null,
+        "merchantGoldProvenance": "inherited",
+        "merchantGoldOwner": "character_bandit",
+        "merchantCategories": [],
+        "merchantCategoriesProvenance": "inherited",
+        "merchantCategoriesOwner": "character_bandit"
       }
     },
     {
@@ -103,7 +175,25 @@
           "z": -50
         },
         "mapId": "ardenfall",
-        "containingLocationRefs": []
+        "containingLocationRefs": [],
+        "dropRefs": [],
+        "dropRefsProvenance": "absent",
+        "dropRefsOwner": null,
+        "startingFactions": [],
+        "startingFactionsProvenance": "absent",
+        "startingFactionsOwner": null,
+        "startingLevel": null,
+        "startingLevelProvenance": "absent",
+        "startingLevelOwner": null,
+        "merchantRefs": [],
+        "merchantRefsProvenance": "absent",
+        "merchantRefsOwner": null,
+        "merchantGold": null,
+        "merchantGoldProvenance": "absent",
+        "merchantGoldOwner": null,
+        "merchantCategories": [],
+        "merchantCategoriesProvenance": "absent",
+        "merchantCategoriesOwner": null
       }
     },
     {
@@ -128,7 +218,35 @@
           "z": -60
         },
         "mapId": "ardenfall",
-        "containingLocationRefs": []
+        "containingLocationRefs": [],
+        "dropRefs": [
+          {
+            "kind": "lookupAsset",
+            "guid": "missing-item-guid",
+            "unityType": "ItemData"
+          }
+        ],
+        "dropRefsProvenance": "own",
+        "dropRefsOwner": null,
+        "startingFactions": [],
+        "startingFactionsProvenance": "own",
+        "startingFactionsOwner": null,
+        "startingLevel": {
+          "automatic": true,
+          "addValue": 2,
+          "value": 1
+        },
+        "startingLevelProvenance": "own",
+        "startingLevelOwner": null,
+        "merchantRefs": [],
+        "merchantRefsProvenance": "absent",
+        "merchantRefsOwner": null,
+        "merchantGold": null,
+        "merchantGoldProvenance": "absent",
+        "merchantGoldOwner": null,
+        "merchantCategories": [],
+        "merchantCategoriesProvenance": "absent",
+        "merchantCategoriesOwner": null
       },
       "diagnostics": [
         {

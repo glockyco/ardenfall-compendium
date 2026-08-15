@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 
-namespace ArdenfallCompendium.Entities.Character;
+namespace ArdenfallCompendium.Entities;
 
 /// <summary>
-/// Enumerates every reachable leaf in weighted loot structures without rolling them.
+/// Enumerates every reachable leaf in nested item-list structures without rolling them.
 /// The delegates keep this walk independent of Unity, so cycles can be tested with
 /// ordinary reference types.
 /// </summary>
-public static class CharacterDropWalker
+public static class ItemListWalker
 {
     public static IReadOnlyList<TItem> Flatten<TList, TGroup, TEntry, TItem>(
         IEnumerable<TList>? roots,

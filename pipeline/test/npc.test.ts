@@ -33,6 +33,24 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
           spawnPoint: { x: 1, y: 2, z: 3 },
           mapId: "ardenfall",
           containingLocationRefs: [townRef],
+          dropRefs: [],
+          dropRefsProvenance: "absent",
+          dropRefsOwner: null,
+          startingFactions: [],
+          startingFactionsProvenance: "absent",
+          startingFactionsOwner: null,
+          startingLevel: null,
+          startingLevelProvenance: "absent",
+          startingLevelOwner: null,
+          merchantRefs: [],
+          merchantRefsProvenance: "absent",
+          merchantRefsOwner: null,
+          merchantGold: null,
+          merchantGoldProvenance: "absent",
+          merchantGoldOwner: null,
+          merchantCategories: [],
+          merchantCategoriesProvenance: "absent",
+          merchantCategoriesOwner: null,
         },
       },
       {
@@ -53,6 +71,24 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
           spawnPoint: { x: 4, y: 5, z: 6 },
           mapId: "ardenfall",
           containingLocationRefs: [townRef, caveRef],
+          dropRefs: [],
+          dropRefsProvenance: "inherited",
+          dropRefsOwner: "Fisherman",
+          startingFactions: [],
+          startingFactionsProvenance: "inherited",
+          startingFactionsOwner: "Fisherman",
+          startingLevel: null,
+          startingLevelProvenance: "inherited",
+          startingLevelOwner: "Fisherman",
+          merchantRefs: [],
+          merchantRefsProvenance: "absent",
+          merchantRefsOwner: null,
+          merchantGold: null,
+          merchantGoldProvenance: "absent",
+          merchantGoldOwner: null,
+          merchantCategories: [],
+          merchantCategoriesProvenance: "absent",
+          merchantCategoriesOwner: null,
         },
       },
       {
@@ -73,6 +109,24 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
           spawnPoint: { x: 7, y: 8, z: 9 },
           mapId: "ardenfall",
           containingLocationRefs: [],
+          dropRefs: [{ kind: "namedAsset", entity: "item", name: "ThiefLoot" }],
+          dropRefsProvenance: "own",
+          dropRefsOwner: null,
+          startingFactions: [{ kind: "lookupAsset", guid: "thief-faction", unityType: "Faction" }],
+          startingFactionsProvenance: "own",
+          startingFactionsOwner: null,
+          startingLevel: { automatic: false, addValue: 2, value: 4 },
+          startingLevelProvenance: "own",
+          startingLevelOwner: null,
+          merchantRefs: [{ kind: "namedAsset", entity: "item", name: "ThiefStock" }],
+          merchantRefsProvenance: "own",
+          merchantRefsOwner: null,
+          merchantGold: { kind: "namedAsset", entity: "leveledCount", name: "ThiefGold" },
+          merchantGoldProvenance: "own",
+          merchantGoldOwner: null,
+          merchantCategories: [{ kind: "namedAsset", entity: "merchantCategory", name: "Weapons" }],
+          merchantCategoriesProvenance: "own",
+          merchantCategoriesOwner: null,
         },
       },
       {
@@ -93,6 +147,24 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
           spawnPoint: { x: 10, y: 11, z: 12 },
           mapId: "ardenfall",
           containingLocationRefs: [],
+          dropRefs: [],
+          dropRefsProvenance: "absent",
+          dropRefsOwner: null,
+          startingFactions: [],
+          startingFactionsProvenance: "absent",
+          startingFactionsOwner: null,
+          startingLevel: null,
+          startingLevelProvenance: "absent",
+          startingLevelOwner: null,
+          merchantRefs: [],
+          merchantRefsProvenance: "absent",
+          merchantRefsOwner: null,
+          merchantGold: null,
+          merchantGoldProvenance: "absent",
+          merchantGoldOwner: null,
+          merchantCategories: [],
+          merchantCategoriesProvenance: "absent",
+          merchantCategoriesOwner: null,
         },
       },
     ],
@@ -149,15 +221,19 @@ describe("NPC pipeline", () => {
           {
             id: string;
             display_name: string | null;
-            display_name_provenance: string;
-            display_name_owner: string | null;
             authoring_label: string | null;
             character_ref_json: string | null;
+            drop_refs_json: string;
+            starting_level_json: string | null;
+            merchant_refs_json: string;
+            merchant_gold_json: string | null;
+            merchant_categories_json: string;
           },
           []
         >(
-          `SELECT id, display_name, display_name_provenance, display_name_owner,
-                  authoring_label, character_ref_json
+          `SELECT id, display_name, authoring_label, character_ref_json,
+                  drop_refs_json, starting_level_json, merchant_refs_json,
+                  merchant_gold_json, merchant_categories_json
            FROM npcs ORDER BY id`,
         )
         .all(),
@@ -165,38 +241,127 @@ describe("NPC pipeline", () => {
       {
         id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
         display_name: null,
-        display_name_provenance: "absent",
-        display_name_owner: null,
         authoring_label: "unnamed-character-label",
         character_ref_json: '{"kind":"namedAsset","entity":"character","name":"UnnamedCharacter"}',
+        drop_refs_json: "[]",
+        starting_level_json: null,
+        merchant_refs_json: "[]",
+        merchant_gold_json: null,
+        merchant_categories_json: "[]",
       },
       {
         id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
         display_name: "Saya Sako",
-        display_name_provenance: "own",
-        display_name_owner: null,
         authoring_label: "Grainery Owner",
         character_ref_json: '{"kind":"namedAsset","entity":"character","name":"GraineryOwner"}',
+        drop_refs_json: "[]",
+        starting_level_json: null,
+        merchant_refs_json: "[]",
+        merchant_gold_json: null,
+        merchant_categories_json: "[]",
       },
       {
         id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
         display_name: "Fishermen",
-        display_name_provenance: "inherited",
-        display_name_owner: "Fisherman",
         authoring_label: "fishermen-label",
         character_ref_json: '{"kind":"namedAsset","entity":"character","name":"Fisherman"}',
+        drop_refs_json: "[]",
+        starting_level_json: null,
+        merchant_refs_json: "[]",
+        merchant_gold_json: null,
+        merchant_categories_json: "[]",
       },
       {
         id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
         display_name: "Grain Thief",
-        display_name_provenance: "own",
-        display_name_owner: null,
         authoring_label: "grain-thief-label",
         character_ref_json: '{"kind":"namedAsset","entity":"character","name":"GrainThief"}',
+        drop_refs_json: '[{"kind":"namedAsset","entity":"item","name":"ThiefLoot"}]',
+        starting_level_json: '{"automatic":false,"addValue":2,"value":4}',
+        merchant_refs_json: '[{"kind":"namedAsset","entity":"item","name":"ThiefStock"}]',
+        merchant_gold_json: '{"kind":"namedAsset","entity":"leveledCount","name":"ThiefGold"}',
+        merchant_categories_json:
+          '[{"kind":"namedAsset","entity":"merchantCategory","name":"Weapons"}]',
       },
     ]);
     expect(db.query("SELECT COUNT(*) AS count FROM npcs").get()).toEqual({ count: 4 });
+    expect(
+      (db.query("PRAGMA table_info('npcs')").all() as { name: string }[]).map(
+        (column) => column.name,
+      ),
+    ).not.toContain("display_name_provenance");
+    expect(
+      (db.query("PRAGMA table_info('npcs')").all() as { name: string }[]).map(
+        (column) => column.name,
+      ),
+    ).not.toContain("display_name_owner");
     expect(db.query("SELECT COUNT(*) AS count FROM npc_location_refs").get()).toEqual({ count: 3 });
+    expect(db.query("SELECT COUNT(*) AS count FROM npc_faction_refs").get()).toEqual({ count: 1 });
+    expect(
+      db
+        .query(
+          "SELECT id, npc_id, field_name, provenance, owner FROM npc_value_provenance WHERE npc_id = ? ORDER BY field_name",
+        )
+        .all("instances;characters;c7e08b41d9a24f37b15ce6208af391dc"),
+    ).toEqual([
+      {
+        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:displayName",
+        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        field_name: "displayName",
+        provenance: "own",
+        owner: null,
+      },
+      {
+        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:dropRefs",
+        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        field_name: "dropRefs",
+        provenance: "own",
+        owner: null,
+      },
+      {
+        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:merchantCategories",
+        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        field_name: "merchantCategories",
+        provenance: "own",
+        owner: null,
+      },
+      {
+        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:merchantGold",
+        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        field_name: "merchantGold",
+        provenance: "own",
+        owner: null,
+      },
+      {
+        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:merchantRefs",
+        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        field_name: "merchantRefs",
+        provenance: "own",
+        owner: null,
+      },
+      {
+        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:startingFactions",
+        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        field_name: "startingFactions",
+        provenance: "own",
+        owner: null,
+      },
+      {
+        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:startingLevel",
+        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        field_name: "startingLevel",
+        provenance: "own",
+        owner: null,
+      },
+    ]);
+    expect(
+      db.query("SELECT id, target_faction_id FROM npc_faction_refs ORDER BY id").all(),
+    ).toEqual([
+      {
+        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:starting-faction:0",
+        target_faction_id: "thief-faction",
+      },
+    ]);
     expect(db.query("SELECT id FROM npc_location_refs ORDER BY id").all()).toEqual([
       { id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284:location:0" },
       { id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55:location:0" },

@@ -114,7 +114,7 @@
   "hashes": {
     "snapshot/spells.json": "4008d7c3dd28d2237b1f5de8cf3580152e11b4509bbe87ae56856307ffdc6f6f",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
-    "snapshot/manifest.json": "51b95cc0696bcf738c02bd2d254a28a162427ba5884e5449025de5396c53e80c",
+    "snapshot/manifest.json": "fc5c94d4d73be9b057c2417e5212145dca42023f638a2978a7a4e80600b6c4bd",
     "snapshot/potion-recipes.json": "5234ba27367cab6a0edea83bd47ca41eaf181ea70689e1d4416676b3d09cf07f",
     "snapshot/enchantments.json": "74d06f2c4db42cf743c4b748bfd6df7b423e01d284b57f0b3b98477ed1a021c4",
     "snapshot/items.json": "2d09c1e397b571f56148457369f9a67ee6d154777c94ab4b7a98a5d3bc50ad3c",
@@ -129,7 +129,7 @@
     "snapshot/portals.json": "370bf4c3647b38982b88910fc8775bd23316782002b49be46851509f5eb1fabe",
     "snapshot/characters.json": "dcde106bf0eea3f7cbc34665fe991fc4f637176a22398d3c58888e138f979f25",
     "snapshot/character-races.json": "943c2f06f84fd20c884b80700b30e266b5ee8b5f4caa6e91ef1f867bef71d5a3",
-    "snapshot/npcs.json": "28b267c4685fc4170ba7b276464ff5288e6eed1d9c77bedee86ab17432d00a90",
+    "snapshot/npcs.json": "73f571952546e419f4fb0a745651fde6a7d3a06179663b2da1d2379f2f2e532d",
     "snapshot/name-sets.json": "7485b25de8f3f58f6d5c87e57e9f3bebcec3ebb52c00721e37456039a32330fd",
     "snapshot/factions.json": "92231e488c599f271c7ae02ac7db1950bc9b71431ba4871232582e52f46346dc",
     "snapshot/quests.json": "87c935a3f7d5191d323a277fdc2d3718b9a957701f8ce259b1c2d66591b59f84"
