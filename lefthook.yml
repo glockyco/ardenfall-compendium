@@ -1,6 +1,7 @@
 # Hooks also run from GUI clients, agents and other non-login shells that do not
 # have the dev shell on PATH, so every job that needs a pinned tool runs through
-# `nix develop`. That costs about a second per job against a warm store.
+# `scripts/hook.sh`, which enters the dev shell and finds nix even when the
+# caller's PATH lacks it. That costs about a second per job against a warm store.
 #
 # Do not hardcode machine paths here. These jobs used to prepend
 # "$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin", which is empty on a Nix
@@ -11,16 +12,16 @@ pre-commit:
   jobs:
     - name: prettier
       glob: "*.{ts,js,mjs,svelte,json,jsonc,md,css,yaml,yml}"
-      run: nix develop --command bunx prettier --write {staged_files}
+      run: scripts/hook.sh bunx prettier --write {staged_files}
       stage_fixed: true
     - name: eslint
       glob: "*.{ts,js,svelte}"
       exclude: ["pipeline/dist/**"]
-      run: nix develop --command bunx eslint --fix {staged_files}
+      run: scripts/hook.sh bunx eslint --fix {staged_files}
       stage_fixed: true
     - name: dotnet-format
       glob: "*.cs"
-      run: nix develop --command dotnet format mod/ArdenfallCompendium.csproj --include {staged_files}
+      run: scripts/hook.sh dotnet format mod/ArdenfallCompendium.csproj --include {staged_files}
       stage_fixed: true
       skip:
         - merge
@@ -37,11 +38,11 @@ pre-commit:
 commit-msg:
   jobs:
     - name: commitlint
-      run: nix develop --command bunx commitlint --edit {1}
+      run: scripts/hook.sh bunx commitlint --edit {1}
 
 pre-push:
   jobs:
     - name: typecheck
-      run: nix develop --command bun run typecheck
+      run: scripts/hook.sh bun run typecheck
     - name: tests
-      run: nix develop --command bun test --pass-with-no-tests
+      run: scripts/hook.sh bun test --pass-with-no-tests
