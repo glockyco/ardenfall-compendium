@@ -63,9 +63,11 @@ The predicate is `derives_from`: the descendant is the source and the parent is 
 
 ### 5. Character pages remain an open maintainer question
 
-`CharacterData.CharName` has no authored value (`Ardenfall/CharacterData.cs:165-183`). While the game plays, it assigns `new CharacterRandomName(Race)`. All **212** character definitions are therefore nameless by design, every current page is titled `Unnamed character`, and all **212** have no inbound link. **Sixty** are prototypes.
+~~`CharacterData.CharName` has no authored value (`Ardenfall/CharacterData.cs:165-183`). While the game plays, it assigns `new CharacterRandomName(Race)`. All **212** character definitions are therefore nameless by design, every current page is titled `Unnamed character`, and all **212** have no inbound link. **Sixty** are prototypes.~~
 
-The extraction and `derives_from` relation are still modelled. Whether character definitions should have public pages is not decided here. The evidence supports at least two maintainer options: keep the 212 pages as explicit `Unnamed character` definitions so their authored data and inheritance remain inspectable, or suppress character pages and retain only the internal extracted relation until a stable reader-facing identity or useful inbound connectivity exists. A decision must consider that removing the entity type would remove all 212 pages, not just the 60 prototypes.
+The live measurement corrected that finding. **153 of 212** character definitions carry an authored name. The published baseline titled **59** pages `Unnamed character`, not 212. Of those 59, **57** carry a race with a player-visible name and two name sets, so the game synthesises a name for each instance from authored vocabulary: `Karu Elf` covers 45 definitions with 361 and 948 seeds at Markov order 5, `Obsidian Dwarf` covers 6, and `Sand Elf` covers 6. The original measurement read the runtime-facing `CharName` accessor, which generates a name only while playing, as though it were the stored authored parameter.
+
+The extraction and `derives_from` relation are still modelled. Character definitions with authored names or a measured naming mechanism have reader-facing identity, so the earlier proposal to suppress all 212 pages no longer applies. The 59 baseline `Unnamed character` pages need the published naming mechanism and vocabulary evidence rather than a claim that every definition is nameless. **Sixty** definitions remain prototypes.
 
 ## Related presentation decisions
 
@@ -75,4 +77,4 @@ An item's name has one owner. The item read model resolves the composed name int
 
 ## Consequence for coverage
 
-Item inheritance is now an extraction concern as well as a game mechanism. It adds the parent reference and the diagnostics and descendant resolution described above. It does not enumerate world-owned item provenance. The **683-cell** streamed world walk remains the work required to reach the 278 items behind 182 scene-owned item lists, unchanged by this audit.
+Item inheritance is now an extraction concern as well as a game mechanism. It adds the parent reference and the diagnostics and descendant resolution described above. It does not enumerate world-owned item provenance. An earlier **683-cell** estimate was wrong because it counted `CellData` assets without scenes. The build has 27 loadable cell scenes (24 overworld and 3 interior) among 33 scenes, while 580 of 607 `CellData` assets have no scene and return null from `LoadSceneAsync`. Loading all 27 additively, three at a time, took about two and a half minutes; 15 hold content. Those scenes remain the work required to reach the 278 items behind 182 scene-owned item lists, unchanged by this audit.
