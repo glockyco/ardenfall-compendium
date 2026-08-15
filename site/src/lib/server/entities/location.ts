@@ -176,13 +176,22 @@ function readPoints(layer: MapLayerConfig): MapPointRow[] {
   const rows: MapPointRow[] = [];
   for (const table of layer.sourceTables.filter((t) => t === "map_points")) {
     const records = all<MapPointRecord>(
-      `SELECT p.id, p.entity_id, p.instance_id, p.name, p.map_id, p.map_x, p.map_y, p.elevation,
+      // The marker label comes from entity_nodes.display_label, which
+      // emit-entity-display-labels has already disambiguated across the whole
+      // entity type by appending a short id to a repeated label. map_points.name
+      // is the raw canonical name, so reading it here would give two markers the
+      // same link text pointing at different pages: placed characters that
+      // inherit a name from their prototype do repeat, with eight reading
+      // `Darvaki`. p.name remains the fallback for a point with no public node.
+      `SELECT p.id, p.entity_id, p.instance_id,
+              COALESCE(n.display_label, p.name) AS name,
+              p.map_id, p.map_x, p.map_y, p.elevation,
               p.show_on_map_debug_only, n.short_id, n.route_path, n.has_page
        FROM ${table} p
        LEFT JOIN entity_nodes n
          ON n.entity_type = p.entity_id AND n.entity_id = p.instance_id
        WHERE p.entity_id = ?
-       ORDER BY p.name`,
+       ORDER BY COALESCE(n.display_label, p.name)`,
       [layer.entityType],
     );
     for (const r of records) {
