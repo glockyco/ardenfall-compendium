@@ -4,8 +4,8 @@ import { entityRows, snapshotRefKey } from "../../types.ts";
 
 export function canonicaliseCharacters(db: Database, envelope: SnapshotEnvelope): void {
   const insert = db.prepare(
-    `INSERT INTO characters (id, character_name, parent_ref_json, drop_refs_json)
-     VALUES (?, ?, ?, ?)`,
+    `INSERT INTO characters (id, character_name, parent_ref_json, race_ref_json, drop_refs_json)
+     VALUES (?, ?, ?, ?, ?)`,
   );
   const factionRefInsert = db.prepare(
     `INSERT INTO character_faction_refs (id, character_id, target_faction_id, ref_json)
@@ -24,6 +24,7 @@ export function canonicaliseCharacters(db: Database, envelope: SnapshotEnvelope)
         row.id,
         row.fields.name?.trim() ? row.fields.name : null,
         JSON.stringify(row.fields.parentRef),
+        row.fields.raceRef == null ? null : JSON.stringify(row.fields.raceRef),
         JSON.stringify(dropRefs),
       );
       for (const [index, ref] of startingFactions.entries()) {

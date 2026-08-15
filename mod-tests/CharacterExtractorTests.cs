@@ -18,7 +18,8 @@ public sealed class CharacterExtractorTests
             "Guard",
             null,
             null,
-            ParentRef: parentRef)));
+            ParentRef: parentRef,
+            RaceRef: RaceRef())));
 
         var row = Assert.Single(extractor.Walk());
 
@@ -30,10 +31,39 @@ public sealed class CharacterExtractorTests
     }
 
     [Fact]
+    public void CharacterRaceRefIsEmitted()
+    {
+        var extractor = new CharacterExtractor(new FakeSource(
+            new CharacterAsset("guard", "Guard", null, null, RaceRef: RaceRef())));
+
+        var row = Assert.Single(extractor.Walk());
+
+        var race = Assert.IsType<SnapshotRef>(row.Fields.RaceRef);
+        Assert.Equal("namedAsset", race.Kind);
+        Assert.Equal("character-race", race.Entity);
+        Assert.Equal("race_karu_elf", race.Name);
+        Assert.Empty(extractor.Diagnostics);
+    }
+
+    [Fact]
+    public void CharacterWithoutRaceEmitsDiagnosticAndNullRef()
+    {
+        var extractor = new CharacterExtractor(new FakeSource(
+            new CharacterAsset("mannequin", "Mannequin", null, null)));
+
+        var row = Assert.Single(extractor.Walk());
+
+        Assert.Null(row.Fields.RaceRef);
+        var diagnostic = Assert.Single(extractor.Diagnostics);
+        Assert.Equal("characterRaceMissing", diagnostic.Code);
+        Assert.Equal("raceRef", diagnostic.Field);
+    }
+
+    [Fact]
     public void CharacterWithoutParentEmitsMissingParentRef()
     {
         var extractor = new CharacterExtractor(new FakeSource(
-            new CharacterAsset("guard", "Guard", null, null)));
+            new CharacterAsset("guard", "Guard", null, null, RaceRef: RaceRef())));
 
         var row = Assert.Single(extractor.Walk());
 
@@ -90,7 +120,7 @@ public sealed class CharacterExtractorTests
     public void CharacterWithNoListsYieldsNoRefsAndNoDiagnostic()
     {
         var extractor = new CharacterExtractor(new FakeSource(
-            new CharacterAsset("guard", "Guard", null, null)));
+            new CharacterAsset("guard", "Guard", null, null, RaceRef: RaceRef())));
 
         var row = Assert.Single(extractor.Walk());
 
@@ -103,7 +133,13 @@ public sealed class CharacterExtractorTests
     {
         var startingFaction = SnapshotRef.LookupAsset("faction-guid", "Ardenfall.Faction", "Black Moth");
         var extractor = new CharacterExtractor(new FakeSource(
-            new CharacterAsset("guard", "Guard", null, null, new[] { startingFaction })));
+            new CharacterAsset(
+                "guard",
+                "Guard",
+                null,
+                null,
+                new[] { startingFaction },
+                RaceRef: RaceRef())));
 
         var row = Assert.Single(extractor.Walk());
 
@@ -116,7 +152,7 @@ public sealed class CharacterExtractorTests
     public void NamelessCharacterYieldsDiagnosticWithoutInventingName()
     {
         var extractor = new CharacterExtractor(new FakeSource(
-            new CharacterAsset("guard", null, null, null)));
+            new CharacterAsset("guard", null, null, null, RaceRef: RaceRef())));
 
         var row = Assert.Single(extractor.Walk());
 
@@ -124,6 +160,9 @@ public sealed class CharacterExtractorTests
         var diagnostic = Assert.Single(extractor.Diagnostics);
         Assert.Equal("characterNameMissing", diagnostic.Code);
     }
+
+    private static SnapshotRef RaceRef() =>
+        SnapshotRef.NamedAsset("character-race", "race_karu_elf");
 
     private static string[] Walk(params ListNode[] roots) =>
         ItemListWalker.Flatten<ListNode, GroupNode, Entry, string>(

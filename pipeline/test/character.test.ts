@@ -11,6 +11,11 @@ const itemId = "4ed20218.fixture-iron-sword";
 const templateItemId = "a7000001.fixture-base-ring";
 const missingPresentationItemId = "a7000002.fixture-missing-presentation";
 const characterId = "named;character;character_bandit";
+const raceRef: SnapshotRef = {
+  kind: "namedAsset",
+  entity: "character-race",
+  name: "race_karu_elf",
+};
 
 function missingParentRef(): SnapshotRef {
   return { kind: "missing", reason: "noParent", source: "test" };
@@ -52,7 +57,9 @@ function canonicalCharacterRows(envelope: SnapshotEnvelope) {
   const db = seedDatabase();
   canonicaliseCharacters(db, envelope);
   const rows = {
-    characters: db.query(`SELECT id, character_name, drop_refs_json FROM characters`).all(),
+    characters: db
+      .query(`SELECT id, character_name, race_ref_json, drop_refs_json FROM characters`)
+      .all(),
     factions: db
       .query(
         `SELECT id, character_id, target_faction_id, ref_json
@@ -77,15 +84,19 @@ describe("character pipeline", () => {
             id: characterId,
             name: "Bandit",
             parentRef: missingParentRef(),
+            raceRef,
             dropRefs: [{ kind: "lookupAsset", guid: itemId }],
           },
         },
       ],
     });
 
-    expect(db.query(`SELECT id, character_name, drop_refs_json FROM characters`).get()).toEqual({
+    expect(
+      db.query(`SELECT id, character_name, race_ref_json, drop_refs_json FROM characters`).get(),
+    ).toEqual({
       id: characterId,
       character_name: "Bandit",
+      race_ref_json: JSON.stringify(raceRef),
       drop_refs_json: JSON.stringify([{ kind: "lookupAsset", guid: itemId }]),
     });
     expect(emitCharacterReadModels(db)).toEqual([]);
@@ -126,6 +137,7 @@ describe("character pipeline", () => {
             id: characterId,
             name: "Bandit",
             parentRef: missingParentRef(),
+            raceRef: null,
             dropRefs: [{ kind: "lookupAsset", guid: templateItemId }],
           },
         },
@@ -158,6 +170,7 @@ describe("character pipeline", () => {
             id: characterId,
             name: "Bandit",
             parentRef: missingParentRef(),
+            raceRef: null,
             dropRefs: [{ kind: "lookupAsset", guid: missingPresentationItemId }],
           },
         },
@@ -186,7 +199,13 @@ describe("character pipeline", () => {
       rows: [
         {
           id: characterId,
-          fields: { id: characterId, name: null, parentRef: missingParentRef(), dropRefs: [] },
+          fields: {
+            id: characterId,
+            name: null,
+            parentRef: missingParentRef(),
+            raceRef: null,
+            dropRefs: [],
+          },
         },
       ],
     });
@@ -203,8 +222,8 @@ describe("character pipeline", () => {
   it("treats a whitespace-only character name as unnamed", () => {
     const db = seedDatabase();
     db.run(
-      `INSERT INTO characters (id, character_name, parent_ref_json, drop_refs_json) VALUES (?, ?, ?, ?)`,
-      [characterId, " \t ", JSON.stringify(missingParentRef()), "[]"],
+      `INSERT INTO characters (id, character_name, parent_ref_json, race_ref_json, drop_refs_json) VALUES (?, ?, ?, ?, ?)`,
+      [characterId, " \t ", JSON.stringify(missingParentRef()), null, "[]"],
     );
 
     expect(emitCharacterReadModels(db)).toEqual([]);
@@ -235,6 +254,7 @@ describe("character pipeline", () => {
             id: characterId,
             name: "Bandit",
             parentRef: missingParentRef(),
+            raceRef: null,
             dropRefs,
             startingFactions,
           },
@@ -282,6 +302,7 @@ describe("character pipeline", () => {
             id: characterId,
             name: "Bandit",
             parentRef: missingParentRef(),
+            raceRef: null,
             dropRefs: [],
             startingFactions: [
               { kind: "lookupAsset", guid: "a1000001.fixture-black-moth" },
@@ -329,6 +350,7 @@ describe("character pipeline", () => {
           id: characterId,
           name: "Bandit",
           parentRef: missingParentRef(),
+          raceRef: null,
           dropRefs: [{ kind: "lookupAsset", guid: "missing-item" }],
         },
       },
@@ -357,6 +379,7 @@ it("emits forward and inverse relationship sections", () => {
           id: characterId,
           name: "Bandit",
           parentRef: missingParentRef(),
+          raceRef: null,
           dropRefs: [{ kind: "lookupAsset", guid: itemId }],
         },
       },

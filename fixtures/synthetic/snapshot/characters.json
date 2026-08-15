@@ -7,6 +7,11 @@
       "fields": {
         "id": "named;character;character_bandit",
         "name": "Bandit",
+        "raceRef": {
+          "kind": "namedAsset",
+          "entity": "character-race",
+          "name": "race_karu_elf"
+        },
         "dropRefs": [
           {
             "kind": "lookupAsset",
@@ -48,19 +53,33 @@
       "fields": {
         "id": "named;character;character_villager",
         "name": "Villager",
+        "raceRef": null,
         "dropRefs": [],
         "parentRef": {
           "kind": "missing",
           "reason": "noParent",
           "source": "ParameterizedObject.parent"
         }
-      }
+      },
+      "diagnostics": [
+        {
+          "severity": "diagnostic",
+          "code": "characterRaceMissing",
+          "field": "raceRef",
+          "message": "CharacterData 'named;character;character_villager' has no resolved race"
+        }
+      ]
     },
     {
       "id": "named;character;character_phantom",
       "fields": {
         "id": "named;character;character_phantom",
         "name": "Phantom",
+        "raceRef": {
+          "kind": "namedAsset",
+          "entity": "character-race",
+          "name": "race_unresolved"
+        },
         "dropRefs": [
           {
             "kind": "lookupAsset",

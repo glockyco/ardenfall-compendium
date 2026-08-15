@@ -215,6 +215,7 @@ describe("prototype loot diagnostics", () => {
             id: "named;character;fixture-character",
             name: "Character",
             parentRef: missingRef(),
+            raceRef: null,
             dropRefs: [ref("a7000001.11400000")],
           },
         },

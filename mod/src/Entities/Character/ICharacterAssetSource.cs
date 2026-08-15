@@ -9,7 +9,8 @@ public sealed record CharacterAsset(
     IReadOnlyList<SnapshotRef>? ItemRefs,
     IReadOnlyList<SnapshotRef>? AdditionalItemRefs,
     IReadOnlyList<SnapshotRef>? StartingFactions = null,
-    SnapshotRef? ParentRef = null);
+    SnapshotRef? ParentRef = null,
+    SnapshotRef? RaceRef = null);
 
 public interface ICharacterAssetSource
 {

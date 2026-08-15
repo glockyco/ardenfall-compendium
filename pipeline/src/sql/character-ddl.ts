@@ -3,6 +3,7 @@ CREATE TABLE characters (
   id              TEXT PRIMARY KEY NOT NULL,
   character_name  TEXT,
   parent_ref_json TEXT NOT NULL,
+  race_ref_json   TEXT,
   drop_refs_json  TEXT NOT NULL
 );
 CREATE TABLE character_faction_refs (

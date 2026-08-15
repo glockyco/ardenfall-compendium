@@ -47,6 +47,17 @@ public sealed class CharacterExtractor : WalkerBase<CharacterSnapshotRow>
                     });
                 }
 
+                if (asset.RaceRef == null)
+                {
+                    Diagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "characterRaceMissing",
+                        Field = "raceRef",
+                        Message = $"CharacterData '{id}' has no resolved race",
+                    });
+                }
+
                 var dropRefs = new List<SnapshotRef>();
                 AddRefs(dropRefs, asset.ItemRefs);
                 AddRefs(dropRefs, asset.AdditionalItemRefs);
@@ -61,7 +72,8 @@ public sealed class CharacterExtractor : WalkerBase<CharacterSnapshotRow>
                         asset.StartingFactions == null
                             ? null
                             : new List<SnapshotRef>(asset.StartingFactions),
-                        asset.ParentRef ?? SnapshotRef.Missing("noParent", "ParameterizedObject.parent")),
+                        asset.ParentRef ?? SnapshotRef.Missing("noParent", "ParameterizedObject.parent"),
+                        asset.RaceRef),
                 };
             });
     }

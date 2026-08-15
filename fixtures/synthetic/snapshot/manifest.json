@@ -51,7 +51,7 @@
   },
   "diagnostics": {
     "fatal": 0,
-    "diagnostic": 7
+    "diagnostic": 8
   },
   "hashes": {
     "items.json": "2d09c1e397b571f56148457369f9a67ee6d154777c94ab4b7a98a5d3bc50ad3c",
@@ -64,7 +64,7 @@
     "item-tags.json": "7e645d2e2e15f160301e664b43ce611af68c426271518e057948d69ed8457b4b",
     "locations.json": "856982c52ff602e34a3caccd13bfcfc8b4a74bc3f44c2e7e3b0f5dba3e3b7f82",
     "portals.json": "370bf4c3647b38982b88910fc8775bd23316782002b49be46851509f5eb1fabe",
-    "characters.json": "dcde106bf0eea3f7cbc34665fe991fc4f637176a22398d3c58888e138f979f25",
+    "characters.json": "9624b23fcee08f5e30c926a3b04b95a7be6b28b494a7605af800c43340f0fd97",
     "character-races.json": "943c2f06f84fd20c884b80700b30e266b5ee8b5f4caa6e91ef1f867bef71d5a3",
     "factions.json": "92231e488c599f271c7ae02ac7db1950bc9b71431ba4871232582e52f46346dc",
     "name-sets.json": "7485b25de8f3f58f6d5c87e57e9f3bebcec3ebb52c00721e37456039a32330fd",

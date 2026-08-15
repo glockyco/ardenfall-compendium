@@ -35,6 +35,13 @@
       "missingPolicy": "optional-empty"
     },
     {
+      "name": "raceRef",
+      "type": "ref:asset",
+      "from": "raceRef",
+      "column": "race_ref_json",
+      "missingPolicy": "diagnostic"
+    },
+    {
       "name": "name",
       "type": "string",
       "from": "charName.Get()?.name",

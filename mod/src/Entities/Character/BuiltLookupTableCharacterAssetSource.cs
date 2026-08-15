@@ -36,13 +36,15 @@ public sealed class BuiltLookupTableCharacterAssetSource : ICharacterAssetSource
             var additionalRefs = ToItemRefs(asset.additionalItems.Get(), "CharacterData.additionalItems");
             var factionRefs = ToAssetRefs(asset.startingFactions.Get(), "CharacterData.startingFactions");
             var parentRef = ResolveParentRef(asset.parent);
+            var raceRef = ResolveRaceRef(asset.Race);
             yield return new CharacterAsset(
                 AssetName: asset.name,
                 CharacterName: NullIfEmpty(storedName),
                 ItemRefs: itemRefs,
                 AdditionalItemRefs: additionalRefs,
                 StartingFactions: factionRefs,
-                ParentRef: parentRef);
+                ParentRef: parentRef,
+                RaceRef: raceRef);
         }
     }
 
@@ -52,6 +54,12 @@ public sealed class BuiltLookupTableCharacterAssetSource : ICharacterAssetSource
         return string.IsNullOrWhiteSpace(parent.name)
             ? SnapshotRef.Missing("parentNameMissing", "ParameterizedObject.parent")
             : SnapshotRef.NamedAsset("character", parent.name);
+    }
+
+    private static SnapshotRef? ResolveRaceRef(Ardenfall.CharacterRace? race)
+    {
+        if (race == null || string.IsNullOrWhiteSpace(race.name)) return null;
+        return SnapshotRef.NamedAsset("character-race", race.name);
     }
 
     private static IReadOnlyList<SnapshotRef> FlattenItemRefs(IReadOnlyList<CountedItemListAsset>? lists)
