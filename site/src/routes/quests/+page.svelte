@@ -1,4 +1,5 @@
 <script lang="ts">
+  import AvailabilityNotice from "$lib/components/content/AvailabilityNotice.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -33,16 +34,7 @@
             <span class="text-muted-foreground mt-1 block text-sm">{quest.subname}</span>
           {/if}
         </a>
-        {#if quest.disabled || quest.hiddenInQuestUi}
-          <p class="text-muted-foreground mt-3 text-sm">
-            {[
-              quest.disabled ? "Disabled in game." : null,
-              quest.hiddenInQuestUi ? "Hidden in the in-game quest log." : null,
-            ]
-              .filter((note) => note !== null)
-              .join(" ")}
-          </p>
-        {/if}
+        <AvailabilityNotice disabled={quest.disabled} hiddenInQuestUi={quest.hiddenInQuestUi} />
       </li>
     {/each}
   </ul>

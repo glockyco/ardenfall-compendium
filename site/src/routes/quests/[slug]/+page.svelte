@@ -3,6 +3,7 @@
   import EntityDetailHeader from "$lib/components/EntityDetailHeader.svelte";
   import QuestPhaseList from "$lib/components/quests/QuestPhaseList.svelte";
   import QuestRewardList from "$lib/components/quests/QuestRewardList.svelte";
+  import AvailabilityNotice from "$lib/components/content/AvailabilityNotice.svelte";
   import DialogueSection from "$lib/components/content/DialogueSection.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
@@ -31,28 +32,13 @@
 
 <BackLink href={data.questRoute} label="quests" />
 <EntityDetailHeader title={quest.name} iconSrc={null} />
+<AvailabilityNotice disabled={quest.disabled} hiddenInQuestUi={quest.hiddenInQuestUi} />
 
 {#if quest.subname}
   <p class="text-muted-foreground mt-2 text-lg">{quest.subname}</p>
 {/if}
 
 <div class="mt-4 grid gap-6">
-  <section class="border-border rounded-lg border p-5">
-    <h2 class="sr-only">Quest status</h2>
-    <dl class="grid gap-4 sm:grid-cols-2">
-      <div>
-        <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">Disabled</dt>
-        <dd class="mt-1">{quest.disabled ? "Yes" : "No"}</dd>
-      </div>
-      <div>
-        <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
-          Hidden in the in-game quest log
-        </dt>
-        <dd class="mt-1">{quest.hiddenInQuestUi ? "Yes" : "No"}</dd>
-      </div>
-    </dl>
-  </section>
-
   <section class="border-border rounded-lg border p-5">
     <h2 class="font-semibold">Journal text</h2>
     {#if text(quest.journalOnStart) || text(quest.journalOnSucceed) || text(quest.journalOnFailure)}
