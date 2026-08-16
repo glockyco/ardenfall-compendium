@@ -5,6 +5,7 @@ import { getEntityNodeBySlug } from "./item";
 interface CharacterTypeOverviewRecord {
   id: string;
   name: string | null;
+  name_is_description: number;
   route_path: string;
   display_label: string;
 }
@@ -12,6 +13,7 @@ interface CharacterTypeOverviewRecord {
 interface CharacterTypePresentationRecord {
   id: string;
   name: string | null;
+  name_is_description: number;
   render_context: string;
   drop_refs_json: string;
   route_path: string;
@@ -38,6 +40,7 @@ const isCharacterDropArray = (value: unknown): value is CharacterDrop[] =>
 export interface CharacterTypeOverviewRow {
   id: string;
   name: string | null;
+  nameIsDescription: boolean;
   displayName: string;
   routePath: string;
 }
@@ -45,6 +48,7 @@ export interface CharacterTypeOverviewRow {
 export interface CharacterTypePresentationRow {
   id: string;
   name: string | null;
+  nameIsDescription: boolean;
   renderContext: "character-type-presentation-v1";
   displayName: string;
   drops: CharacterDrop[];
@@ -53,7 +57,7 @@ export interface CharacterTypePresentationRow {
 
 export const listCharacterTypes = (): CharacterTypeOverviewRow[] => {
   const rows = all<CharacterTypeOverviewRecord>(
-    `SELECT o.id, o.name, n.route_path, n.display_label
+    `SELECT o.id, o.name, o.name_is_description, n.route_path, n.display_label
      FROM character_overview_rows o
      JOIN entity_nodes n
        ON n.entity_type = 'character'
@@ -63,6 +67,7 @@ export const listCharacterTypes = (): CharacterTypeOverviewRow[] => {
   ).map((row) => ({
     id: row.id,
     name: row.name,
+    nameIsDescription: row.name_is_description === 1,
     displayName: row.display_label,
     routePath: row.route_path,
   }));
@@ -75,8 +80,8 @@ export const getCharacterTypePresentation = (
   const node = getEntityNodeBySlug("character", slug);
   if (!node) return undefined;
   const row = get<CharacterTypePresentationRecord>(
-    `SELECT p.id, p.name, p.render_context, p.drop_refs_json, n.route_path,
-            n.display_label
+    `SELECT p.id, p.name, p.name_is_description, p.render_context, p.drop_refs_json,
+            n.route_path, n.display_label
      FROM character_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'character'
@@ -89,6 +94,7 @@ export const getCharacterTypePresentation = (
   return {
     id: row.id,
     name: row.name,
+    nameIsDescription: row.name_is_description === 1,
     renderContext: validateRenderContext(
       row.render_context,
       "character",

@@ -7,6 +7,7 @@ import { getMapHref } from "../map-href";
 interface CharacterOverviewRecord {
   id: string;
   name: string;
+  name_is_description: number;
   location_ids_json: string;
   route_path: string;
 }
@@ -14,6 +15,7 @@ interface CharacterOverviewRecord {
 interface CharacterPresentationRecord {
   id: string;
   name: string;
+  name_is_description: number;
   display_name_provenance: "own" | "inherited" | "absent";
   display_name_owner: string | null;
   render_context: string;
@@ -37,6 +39,7 @@ interface LocationLinkRecord {
 export interface CharacterOverviewRow {
   id: string;
   name: string;
+  nameIsDescription: boolean;
   routePath: string;
   locations: CharacterLocationLink[];
 }
@@ -56,6 +59,7 @@ export interface CharacterTypeLink {
 export interface CharacterPresentationRow {
   id: string;
   name: string;
+  nameIsDescription: boolean;
   displayNameProvenance: "own" | "inherited" | "absent";
   displayNameOwner: string | null;
   renderContext: "character-presentation-v1";
@@ -105,7 +109,7 @@ const resolvePublishedLocations = (
 
 export const listCharacters = (): CharacterOverviewRow[] => {
   const rows = all<CharacterOverviewRecord>(
-    `SELECT o.id, n.display_label AS name, o.location_ids_json, n.route_path
+    `SELECT o.id, n.display_label AS name, o.name_is_description, o.location_ids_json, n.route_path
      FROM npc_presentation_rows o
      JOIN entity_nodes n
        ON n.entity_type = 'npc'
@@ -114,6 +118,7 @@ export const listCharacters = (): CharacterOverviewRow[] => {
   ).map((row) => ({
     id: row.id,
     name: row.name,
+    nameIsDescription: row.name_is_description === 1,
     routePath: row.route_path,
     locations: resolvePublishedLocations(row.location_ids_json, row.id),
   }));
@@ -124,7 +129,8 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
   const node = getEntityNodeBySlug("npc", slug);
   if (!node) return undefined;
   const row = get<CharacterPresentationRecord>(
-    `SELECT p.id, n.display_label AS name, p.display_name_provenance, p.display_name_owner,
+    `SELECT p.id, n.display_label AS name, p.name_is_description,
+            p.display_name_provenance, p.display_name_owner,
             p.render_context, p.map_id, p.map_x, p.map_y, p.elevation,
             p.location_ids_json, p.character_type_id, p.character_type_label,
             p.character_type_route_path, n.route_path
@@ -153,6 +159,7 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
   return {
     id: row.id,
     name: row.name,
+    nameIsDescription: row.name_is_description === 1,
     displayNameProvenance: row.display_name_provenance,
     displayNameOwner: row.display_name_owner,
     renderContext: validateRenderContext(

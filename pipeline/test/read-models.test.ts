@@ -9,6 +9,7 @@ import { emitItemTagReadModels } from "$pipeline/entities/item-tag/read-models";
 import { ENTITY_GRAPH_DDL } from "$pipeline/relationships/relationship-graph";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { loadSnapshot } from "$pipeline/stages/load-snapshot";
+import { descriptorsForFamilies } from "./load-snapshot-input";
 import { canonicaliseStatTypes } from "$pipeline/entities/stat-type/canonicaliser";
 import { STAT_TYPE_DDL } from "$pipeline/sql/stat-type-ddl";
 import { canonicaliseItemCategories } from "$pipeline/entities/item-category/canonicaliser";
@@ -49,7 +50,7 @@ describe("prepareEntityNodeWriter", () => {
 describe("emitItemReadModels", () => {
   it("builds item_overview_rows and item_presentation_rows without legacy fields_json", async () => {
     const desc = await loadDescriptors.run({}, ctx);
-    const snap = await loadSnapshot.run({}, ctx);
+    const snap = await loadSnapshot.run({ "load-descriptors": desc }, ctx);
     const itemEntity = desc.entities.item;
     const itemVariants = desc.variants.item;
     const itemEnvelope = snap.envelopes.item;
@@ -574,7 +575,10 @@ describe("emitItemReadModels", () => {
 
 describe("emitStatTypeReadModels", () => {
   async function setupStatReadModel() {
-    const snap = await loadSnapshot.run({}, ctx);
+    const snap = await loadSnapshot.run(
+      { "load-descriptors": descriptorsForFamilies(ctx, ["stat-type"]) },
+      ctx,
+    );
     const statEnvelope = snap.envelopes["stat-type"];
     if (!statEnvelope) throw new Error("fixture missing stat-type envelope");
     const db = new Database(":memory:");

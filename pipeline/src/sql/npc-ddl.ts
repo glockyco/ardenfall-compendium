@@ -35,6 +35,7 @@ CREATE TABLE npc_value_provenance (
 CREATE TABLE npc_presentation_rows (
   id                      TEXT PRIMARY KEY,
   name                    TEXT NOT NULL,
+  name_is_description     INTEGER NOT NULL,
   display_name_provenance TEXT NOT NULL,
   display_name_owner      TEXT,
   render_context          TEXT NOT NULL,

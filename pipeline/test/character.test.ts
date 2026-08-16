@@ -191,7 +191,7 @@ describe("character pipeline", () => {
     db.close();
   });
 
-  it("uses an unnamed label for a nameless character", () => {
+  it("describes a nameless character without publishing its asset name", () => {
     const db = seedDatabase();
     canonicaliseCharacters(db, {
       entityId: "character",
@@ -212,10 +212,10 @@ describe("character pipeline", () => {
 
     expect(emitCharacterReadModels(db, "/character-types")).toEqual([]);
     expect(db.query(`SELECT name FROM character_overview_rows`).get()).toEqual({
-      name: "Unnamed character",
+      name: "Character type",
     });
     expect(db.query(`SELECT name FROM character_presentation_rows`).get()).toEqual({
-      name: "Unnamed character",
+      name: "Character type",
     });
   });
 
@@ -228,10 +228,10 @@ describe("character pipeline", () => {
 
     expect(emitCharacterReadModels(db, "/character-types")).toEqual([]);
     expect(db.query(`SELECT name FROM character_overview_rows`).get()).toEqual({
-      name: "Unnamed character",
+      name: "Character type",
     });
     expect(db.query(`SELECT name FROM character_presentation_rows`).get()).toEqual({
-      name: "Unnamed character",
+      name: "Character type",
     });
   });
 

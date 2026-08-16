@@ -9,7 +9,12 @@
     {#each rows as character (character.id)}
       <li class="border-border bg-card rounded-lg border p-4">
         <a class="block underline-offset-4 hover:underline" href={character.routePath}>
-          <span class="block font-medium">{character.name}</span>
+          <span class="block font-medium">
+            {#if character.nameIsDescription}<span class="text-muted-foreground text-sm"
+                >Description:
+              </span>{/if}
+            {character.name}
+          </span>
         </a>
         {#if character.locations.length > 0}
           <p class="text-muted-foreground mt-1 text-sm">

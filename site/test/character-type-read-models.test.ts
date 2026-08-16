@@ -11,11 +11,13 @@ const seed = () => {
   db.exec(`
     CREATE TABLE character_overview_rows (
       id TEXT PRIMARY KEY,
-      name TEXT
+      name TEXT,
+      name_is_description INTEGER NOT NULL
     );
     CREATE TABLE character_presentation_rows (
       id TEXT PRIMARY KEY,
       name TEXT,
+      name_is_description INTEGER NOT NULL,
       render_context TEXT NOT NULL,
       drop_refs_json TEXT NOT NULL
     );
@@ -36,20 +38,20 @@ const seed = () => {
       edges_json TEXT NOT NULL
     );
     INSERT INTO character_overview_rows VALUES
-      ('character-zed', 'Zed'),
-      ('character-ada', 'Ada'),
-      ('character-nameless', NULL);
+      ('character-zed', 'Zed', 0),
+      ('character-ada', 'Ada', 0),
+      ('character-nameless', 'Character type', 1);
     INSERT INTO character_presentation_rows VALUES
-      ('character-zed', 'Zed', 'character-type-presentation-v1', '[{"label":"Iron Sword","routePath":"/items/iron-sword--44444444"},{"label":"Unnamed item","routePath":null}]'),
-      ('character-ada', 'Ada', 'character-type-presentation-v1', '[]'),
-      ('character-nameless', NULL, 'character-type-presentation-v1', '[]');
+      ('character-zed', 'Zed', 0, 'character-type-presentation-v1', '[{"label":"Iron Sword","routePath":"/items/iron-sword--44444444"},{"label":"Unnamed item","routePath":null}]'),
+      ('character-ada', 'Ada', 0, 'character-type-presentation-v1', '[]'),
+      ('character-nameless', 'Character type', 1, 'character-type-presentation-v1', '[]');
     INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
       ('character', 'character-zed', 'Zed', 'Zed',
        '/character-types/zed--11111111', 'zed--11111111', '11111111', 1),
       ('character', 'character-ada', 'Ada', 'Ada',
        '/character-types/ada--22222222', 'ada--22222222', '22222222', 1),
-      ('character', 'character-nameless', 'Unnamed character', 'Unnamed character',
-       '/character-types/unnamed-character--33333333', 'unnamed-character--33333333', '33333333', 1);
+      ('character', 'character-nameless', 'Character type', 'Character type 33333333',
+       '/character-types/character-type-33333333--33333333', 'character-type-33333333--33333333', '33333333', 1);
     INSERT INTO entity_relationship_sections VALUES
       ('character-ada:found_at', 'character', 'character-ada',
        'Found at', 'found_at', 0,
@@ -79,20 +81,23 @@ describe("character type read-model accessors", () => {
     await withSeed((readModels) => {
       expect(readModels.listCharacterTypes()).toEqual([
         {
-          id: "character-nameless",
-          name: null,
-          displayName: "Unnamed character",
-          routePath: "/character-types/unnamed-character--33333333",
-        },
-        {
           id: "character-ada",
           name: "Ada",
+          nameIsDescription: false,
           displayName: "Ada",
           routePath: "/character-types/ada--22222222",
         },
         {
+          id: "character-nameless",
+          name: "Character type",
+          nameIsDescription: true,
+          displayName: "Character type 33333333",
+          routePath: "/character-types/character-type-33333333--33333333",
+        },
+        {
           id: "character-zed",
           name: "Zed",
+          nameIsDescription: false,
           displayName: "Zed",
           routePath: "/character-types/zed--11111111",
         },
@@ -129,6 +134,7 @@ describe("character type read-model accessors", () => {
       expect(readModels.getCharacterTypePresentation("ada--22222222")).toEqual({
         id: "character-ada",
         name: "Ada",
+        nameIsDescription: false,
         renderContext: "character-type-presentation-v1",
         displayName: "Ada",
         drops: [],
@@ -144,15 +150,15 @@ describe("character type read-model accessors", () => {
     });
   });
 
-  it("names a nameless character without exposing its identifier", async () => {
+  it("titles a nameless character as a distinct description", async () => {
     await withSeed((readModels) => {
-      expect(readModels.getCharacterTypePresentation("unnamed-character--33333333")).toMatchObject({
-        name: null,
-        displayName: "Unnamed character",
-      });
       expect(
-        readModels.getCharacterTypePresentation("unnamed-character--33333333")?.displayName,
-      ).not.toContain("33333333");
+        readModels.getCharacterTypePresentation("character-type-33333333--33333333"),
+      ).toMatchObject({
+        name: "Character type",
+        nameIsDescription: true,
+        displayName: "Character type 33333333",
+      });
     });
   });
 });

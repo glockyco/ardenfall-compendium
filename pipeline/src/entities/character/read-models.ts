@@ -3,15 +3,18 @@ import type { PipelineDiagnostic } from "../../relationships/relationship-graph.
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
 import type { SnapshotRef } from "../../types.ts";
 import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
+import { resolveCharacterType } from "../character-type.ts";
 
 export const CHARACTER_READ_MODEL_DDL = `
 CREATE TABLE character_overview_rows (
-  id   TEXT PRIMARY KEY,
-  name TEXT NOT NULL
+  id                  TEXT PRIMARY KEY,
+  name                TEXT NOT NULL,
+  name_is_description INTEGER NOT NULL
 );
 CREATE TABLE character_presentation_rows (
-  id             TEXT PRIMARY KEY,
-  name           TEXT NOT NULL,
+  id                  TEXT PRIMARY KEY,
+  name                TEXT NOT NULL,
+  name_is_description INTEGER NOT NULL,
   render_context TEXT NOT NULL,
   drop_refs_json TEXT NOT NULL
 );
@@ -33,10 +36,12 @@ export function emitCharacterReadModels(db: Database, routeBase: string): Pipeli
   db.exec(CHARACTER_READ_MODEL_DDL);
   db.exec(ENTITY_GRAPH_DDL);
 
-  const overviewInsert = db.prepare(`INSERT INTO character_overview_rows (id, name) VALUES (?, ?)`);
+  const overviewInsert = db.prepare(
+    `INSERT INTO character_overview_rows (id, name, name_is_description) VALUES (?, ?, ?)`,
+  );
   const presentationInsert = db.prepare(
-    `INSERT INTO character_presentation_rows (id, name, render_context, drop_refs_json)
-     VALUES (?, ?, ?, ?)`,
+    `INSERT INTO character_presentation_rows (id, name, name_is_description, render_context, drop_refs_json)
+     VALUES (?, ?, ?, ?, ?)`,
   );
   const edgeInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_edges (
@@ -101,15 +106,24 @@ export function emitCharacterReadModels(db: Database, routeBase: string): Pipeli
     .query<CharacterRow, []>(
       `SELECT id, character_name, parent_ref_json, drop_refs_json
        FROM characters
-       ORDER BY COALESCE(NULLIF(TRIM(character_name), ''), 'Unnamed character'), id`,
+       ORDER BY COALESCE(NULLIF(TRIM(character_name), ''), id), id`,
     )
     .all();
 
   const diagnostics: PipelineDiagnostic[] = [];
   const tx = db.transaction(() => {
     for (const row of rows) {
-      const presentationName = row.character_name?.trim() || "Unnamed character";
-      overviewInsert.run(row.id, presentationName);
+      const nameIsDescription = !row.character_name?.trim();
+      const resolvedType = nameIsDescription ? resolveCharacterType(db, row.id) : null;
+      // A definition the game never names is described by its race, which is the
+      // vocabulary the game names its instances from. The three definitions with
+      // neither carry the bare noun: appending an id would publish the designer's
+      // asset name as a title, which the identity contract forbids. Where two such
+      // titles collide, the shared label disambiguation appends a short id.
+      const presentationName = nameIsDescription
+        ? (resolvedType?.label ?? "Character type")
+        : row.character_name!.trim();
+      overviewInsert.run(row.id, presentationName, nameIsDescription ? 1 : 0);
       const slug = deriveEntityNodeSlug(presentationName, row.id);
       writeNode({
         entityType: "character",
@@ -128,6 +142,7 @@ export function emitCharacterReadModels(db: Database, routeBase: string): Pipeli
         presentationInsert.run(
           row.id,
           presentationName,
+          nameIsDescription ? 1 : 0,
           "character-type-presentation-v1",
           JSON.stringify([]),
         );
@@ -138,6 +153,7 @@ export function emitCharacterReadModels(db: Database, routeBase: string): Pipeli
         presentationInsert.run(
           row.id,
           presentationName,
+          nameIsDescription ? 1 : 0,
           "character-type-presentation-v1",
           JSON.stringify([]),
         );
@@ -154,6 +170,7 @@ export function emitCharacterReadModels(db: Database, routeBase: string): Pipeli
       presentationInsert.run(
         row.id,
         presentationName,
+        nameIsDescription ? 1 : 0,
         "character-type-presentation-v1",
         JSON.stringify(drops),
       );

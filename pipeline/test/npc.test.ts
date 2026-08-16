@@ -22,7 +22,7 @@ function seedCharacterDefinitions(db: Database): void {
     db.run(
       `INSERT INTO characters (id, character_name, parent_ref_json, race_ref_json, drop_refs_json)
        VALUES (?, ?, ?, NULL, '[]')`,
-      [id, name, missingParentRef()],
+      [id, name === "UnnamedCharacter" ? null : name, missingParentRef()],
     );
     db.run(
       `INSERT INTO entity_nodes
@@ -436,8 +436,8 @@ describe("NPC pipeline", () => {
       .get("npc", "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b");
     expect(namelessNode).toEqual({
       has_page: 1,
-      label: "Unnamed character",
-      route_path: "/characters/unnamed-character--2d6f47b3",
+      label: "Character 2d6f47b3",
+      route_path: "/characters/character-2d6f47b3--2d6f47b3",
     });
     expect(
       db.query("SELECT COUNT(*) AS count FROM entity_nodes WHERE entity_type = 'npc'").get(),
@@ -506,7 +506,7 @@ describe("NPC pipeline", () => {
     ).toEqual([
       {
         id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
-        name: "Unnamed character",
+        name: "Character 2d6f47b3",
         display_name_provenance: "absent",
         display_name_owner: null,
       },
@@ -625,6 +625,61 @@ describe("NPC pipeline", () => {
       });
       expect(entry.npcRecordId).toMatch(/^instances;characters;[0-9a-f]{32}$/);
     }
+    db.close();
+  });
+
+  it("titles generated-name placements from type and containing location", () => {
+    const source = envelope();
+    const descriptiveSource: SnapshotEnvelope<NPCSnapshotFields> = {
+      ...source,
+      rows: source.rows.map((row, index) =>
+        index === 1 || index === 2
+          ? {
+              ...row,
+              fields: {
+                ...row.fields,
+                displayName: null,
+                displayNameProvenance: "absent",
+                displayNameOwner: null,
+              },
+            }
+          : row,
+      ),
+    };
+    const db = setupCanonicalDb(descriptiveSource);
+    db.exec(`${ENTITY_GRAPH_DDL}
+      CREATE TABLE locations (id TEXT PRIMARY KEY, name TEXT);
+      INSERT INTO locations VALUES ('town', 'Town'), ('cave', 'Cave');
+      INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+        ('location', 'town', 'Town', 'Town', '/locations/town', 'town', 'town', 1),
+        ('location', 'cave', 'Cave', 'Cave', '/locations/cave', 'cave', 'cave', 1);
+    `);
+    seedCharacterDefinitions(db);
+    expect(emitNpcReadModels(db, "/characters")).toEqual([]);
+    expect(
+      db.query(`SELECT id, name, name_is_description FROM npc_presentation_rows ORDER BY id`).all(),
+    ).toEqual([
+      {
+        id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
+        name: "Character 2d6f47b3",
+        name_is_description: 1,
+      },
+      {
+        id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+        name: "Saya Sako",
+        name_is_description: 0,
+      },
+      {
+        id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
+        name: "Fisherman in Cave",
+        name_is_description: 1,
+      },
+      {
+        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        name: "GrainThief",
+        name_is_description: 1,
+      },
+    ]);
     db.close();
   });
 

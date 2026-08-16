@@ -28,6 +28,12 @@ interface NpcLocationRefRow {
   ref_json: string;
 }
 
+interface LocationNodeRow {
+  entity_id: string;
+  label: string | null;
+  display_label: string | null;
+}
+
 export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiagnostic[] {
   const diagnostics: PipelineDiagnostic[] = [];
   const writeNode = prepareEntityNodeWriter(db);
@@ -40,7 +46,7 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
        JOIN npc_value_provenance AS provenance
          ON provenance.npc_id = npcs.id
         AND provenance.field_name = 'displayName'
-       ORDER BY COALESCE(npcs.display_name, 'Unnamed character'), npcs.id`,
+       ORDER BY COALESCE(npcs.display_name, npcs.id), npcs.id`,
     )
     .all();
   const placements = new Map(
@@ -67,13 +73,15 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
     npcRefs.push(ref);
     refsByNpc.set(ref.npc_id, npcRefs);
   }
-  const locationNodes = new Set(
+  const locationNodes = new Map(
     db
-      .query<{ entity_id: string }, []>(
-        `SELECT entity_id FROM entity_nodes WHERE entity_type = 'location'`,
+      .query<LocationNodeRow, []>(
+        `SELECT entity_id, label, display_label
+         FROM entity_nodes
+         WHERE entity_type = 'location'`,
       )
       .all()
-      .map((row) => row.entity_id),
+      .map((row) => [row.entity_id, row] as const),
   );
   const characterNodes = new Map(
     db
@@ -107,10 +115,10 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
   }
   const presentationInsert = db.prepare(
     `INSERT INTO npc_presentation_rows (
-      id, name, display_name_provenance, display_name_owner, render_context,
+      id, name, name_is_description, display_name_provenance, display_name_owner, render_context,
       map_id, map_x, map_y, elevation, location_ids_json,
       character_type_id, character_type_label, character_type_route_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   const nodeTx = db.transaction(() => {
@@ -120,12 +128,10 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
       // would report one fact twice, in two artifacts. The read model's job is to
       // publish the absence: `display_name` stays null and the provenance says
       // `absent`, which is what the page states.
-      const label = row.display_name ?? "Unnamed character";
       const placement = placements.get(row.id);
       if (!placement) {
         throw new Error(`NPC '${row.id}' has no canonical placement`);
       }
-      const slug = deriveEntityNodeSlug(label, row.id);
       const locationIds = [
         ...new Set(
           (refsByNpc.get(row.id) ?? [])
@@ -137,9 +143,30 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
         ),
       ];
       const characterType = characterTypeByNpc.get(row.id) ?? null;
+      // A placement can sit in several containing volumes, so the title names them
+      // in a fixed order rather than whichever row the query returned first: a
+      // title that moves with row order is not a stable page name.
+      const locationLabel = locationIds
+        .map((locationId) => locationNodes.get(locationId))
+        .map((node) => node?.label?.trim() || node?.display_label?.trim())
+        .filter((label): label is string => Boolean(label))
+        .sort((left, right) => left.localeCompare(right))[0];
+      const isDescription = row.display_name === null;
+      // A character the game names at runtime is titled by description, composed
+      // only from facts already published: what it is, and where it stands.
+      const description =
+        characterType?.label && locationLabel
+          ? `${characterType.label} in ${locationLabel}`
+          : (characterType?.label ??
+            (locationLabel
+              ? `Character in ${locationLabel}`
+              : `Character ${deriveEntityNodeSlug("", row.id).shortId}`));
+      const label = row.display_name ?? description;
+      const slug = deriveEntityNodeSlug(label, row.id);
       presentationInsert.run(
         row.id,
         label,
+        isDescription ? 1 : 0,
         row.display_name_provenance,
         row.display_name_owner,
         "character-presentation-v1",

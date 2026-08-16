@@ -23,7 +23,8 @@
 
 <h1 class="text-2xl font-bold">Characters</h1>
 <p class="text-muted-foreground mt-2">
-  {data.characters.length} characters in the game data.
+  {data.characters.length} characters in the game data. Labels marked Description describe characters
+  the game names at runtime rather than naming them.
 </p>
 
 <CharacterOverview rows={data.characters} />

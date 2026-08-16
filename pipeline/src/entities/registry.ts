@@ -116,14 +116,14 @@ const npcProjection: MapProjection = {
         id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
         enabled, show_on_map_debug_only, allow_fast_travel
       )
-      SELECT 'npc:' || n.id, 'npc', n.id,
-             COALESCE(NULLIF(TRIM(n.display_name), ''), 'Unnamed character'),
+      SELECT 'npc:' || n.id, 'npc', n.id, r.name,
              p.map_id, p.map_x, p.map_y, p.elevation,
              1, 0, 0 -- NPCs have no authored availability flag; they are available
 
       FROM npcs n
+      JOIN npc_presentation_rows r ON r.id = n.id
       JOIN placements p ON p.entity_id = 'npc' AND p.instance_id = n.id
-      ORDER BY COALESCE(NULLIF(TRIM(n.display_name), ''), 'Unnamed character'), n.id;
+      ORDER BY r.name, n.id;
     `,
 };
 
