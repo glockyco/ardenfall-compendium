@@ -14,11 +14,11 @@
 
 ## 3. Race and name sets
 
-- [ ] 3.1 Add `character-race` and `name-set` descriptors, and extract races with their player-visible name and ordered name sets.
-- [ ] 3.2 Extract each name set once with its complete seed vocabulary, its generation order, and the races that use it.
+- [x] 3.1 Add `character-race` and `name-set` descriptors, and extract races with their player-visible name and ordered name sets.
+- [x] 3.2 Extract each name set once with its complete seed vocabulary, its generation order, and the races that use it.
 - [x] 3.3 Link every character definition and placement that resolves a race, and diagnose the three definitions that resolve none: one authoring omission chain `base_creature` → `mon_ato` → `mon_ato-baby`.
-- [ ] 3.4 Register both families in the export lifecycle, so a live run writes `character-races.json` and `name-sets.json`, counts them, aggregates their diagnostics, and evicts their caches. Descriptors, extractors, sources and fixtures exist, yet no live snapshot has ever contained either family.
-- [ ] 3.5 Fail the controller's snapshot validation and the pipeline's snapshot load when a descriptor declaring an extraction source has no snapshot file or no manifest count, distinguishing an absent family from an empty one. Both gates accepted the omission above, which surfaced three stages later as `no such table: character_race_overview_rows` during the site build.
+- [x] 3.4 Register both families in the export lifecycle, so a live run writes `character-races.json` and `name-sets.json`, counts them, aggregates their diagnostics, and evicts their caches. Descriptors, extractors, sources and fixtures exist, yet no live snapshot has ever contained either family.
+- [x] 3.5 Fail the controller's snapshot validation and the pipeline's snapshot load when a descriptor declaring an extraction source has no snapshot file or no manifest count, distinguishing an absent family from an empty one. Both gates accepted the omission above, which surfaced three stages later as `no such table: character_race_overview_rows` during the site build.
 
 ## 4. Canonical data and read models
 
@@ -26,8 +26,8 @@
 - [x] 4.2 Publish every character definition, with its template marking, its race, and what derives from it.
 - [x] 4.3 Register `instance_of` with forward title `Character type` and inverse `Placements`, and project it from the definition reference.
 - [x] 4.4 Resolve the reader-facing type as the nearest named ancestor with a race fallback, in one shared function.
-- [ ] 4.5 Project placement-owned merchant stock as item provenance, so an item page names the character that sells it.
-- [ ] 4.6 Compose the descriptive label for a runtime-named character, and disambiguate listings by containing location.
+- [x] 4.5 Project placement-owned merchant stock as item provenance, so an item page names the character that sells it.
+- [x] 4.6 Compose the descriptive label for a runtime-named character, and disambiguate listings by containing location.
 
 ## 5. Availability
 
@@ -39,18 +39,18 @@
 
 ## 6. Site
 
-- [ ] 6.1 Move placements to `/characters` and definitions to `/character-types`, and delete `/placed-characters` with its components and accessors.
+- [x] 6.1 Move placements to `/characters` and definitions to `/character-types`, and delete `/placed-characters` with its components and accessors.
 - [ ] 6.2 Render a character's type, race, name provenance, stock and drops, stating which values are the character's own.
 - [ ] 6.3 Render a type's placements as map deep links, and a race's name sets with their vocabulary.
-- [ ] 6.4 Rename the navigation entries and update the sitemap route list.
-- [ ] 6.5 Publish only current routes; old `/placed-characters/<slug>` URLs return the site's not-found page with its earlier-snapshot explanation.
+- [x] 6.4 Rename the navigation entries and update the sitemap route list.
+- [x] 6.5 Publish only current routes; old `/placed-characters/<slug>` URLs return the site's not-found page with its earlier-snapshot explanation.
 
 ## 7. Fixtures and gate
 
 - [x] 7.1 Extend the synthetic snapshot with a template definition, an own-named placement, an inherited-name placement, a generated-name placement, a merchant placement, a runtime-created record, and a disabled location.
-- [ ] 7.2 Update `bun test pipeline/test`, `bun test site/test` and the fixture checks for the new tables, provenance and routes.
-- [ ] 7.3 Run the full gate in `AGENTS.md`; the live export counts and diagnostics are recorded in the extraction plans.
-- [ ] 7.4 Verify reproducibility: export twice in one session and assert equal counts per family.
+- [x] 7.2 Update `bun test pipeline/test`, `bun test site/test` and the fixture checks for the new tables, provenance and routes.
+- [x] 7.3 Run the full gate in `AGENTS.md`; the live export counts and diagnostics are recorded in the extraction plans.
+- [x] 7.4 Verify reproducibility: export twice in one session and assert equal counts per family.
 
 ## 8. Documentation and cleanup
 

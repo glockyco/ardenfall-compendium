@@ -6,13 +6,14 @@ interface CliOptions {
   outputBaseDir: string;
   pipelineOutDir: string;
   waitForWorld: boolean;
+  noQuit: boolean;
 }
 
 async function main(argv: string[]): Promise<void> {
   const [command, ...args] = argv;
   if (command !== "export")
     throw new Error(
-      "Usage: controller export --url <ws-url> --output <dir> --pipeline-out <dir> [--no-wait-for-world]",
+      "Usage: controller export --url <ws-url> --output <dir> --pipeline-out <dir> [--no-wait-for-world] [--no-quit]",
     );
   const options = parseArgs(args);
   const client = new SdkControllerClient(options.url);
@@ -22,6 +23,7 @@ async function main(argv: string[]): Promise<void> {
       outputBaseDir: options.outputBaseDir,
       pipelineOutDir: options.pipelineOutDir,
       waitForWorld: options.waitForWorld,
+      noQuit: options.noQuit,
       log: (event) => process.stdout.write(`${JSON.stringify(event)}\n`),
     });
     process.stdout.write(
@@ -35,11 +37,19 @@ async function main(argv: string[]): Promise<void> {
 function parseArgs(args: string[]): CliOptions {
   const values = new Map<string, string>();
   let waitForWorld = true;
+  // Leaving the game running is what lets one session produce two exports, which is
+  // how the reproducibility check compares counts without a reload in between.
+  let noQuit = false;
   for (let i = 0; i < args.length;) {
     const key = args[i];
     if (!key?.startsWith("--")) throw new Error(`Invalid argument near ${key ?? "<end>"}`);
     if (key === "--no-wait-for-world") {
       waitForWorld = false;
+      i += 1;
+      continue;
+    }
+    if (key === "--no-quit") {
+      noQuit = true;
       i += 1;
       continue;
     }
@@ -55,7 +65,7 @@ function parseArgs(args: string[]): CliOptions {
   if (!url) throw new Error("--url is required");
   if (!outputBaseDir) throw new Error("--output is required");
   if (!pipelineOutDir) throw new Error("--pipeline-out is required");
-  return { url, outputBaseDir, pipelineOutDir, waitForWorld };
+  return { url, outputBaseDir, pipelineOutDir, waitForWorld, noQuit };
 }
 
 if (import.meta.main) {
