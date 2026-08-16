@@ -5,6 +5,7 @@
   "label": { "singular": "Category", "plural": "Categories" },
   "extraction": {
     "source": "namedAsset",
+    "file": "item-categories.json",
     "root": "Resources.FindObjectsOfTypeAll<ItemCategory>",
     "walker": "ItemCategoryExtractor"
   },

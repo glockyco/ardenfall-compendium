@@ -8,7 +8,7 @@ const item: EntityDescriptor = {
   kind: "definition",
   label: { singular: "Item", plural: "Items" },
   canonicalTable: "items",
-  extraction: { source: "lookupAsset", root: "x" },
+  extraction: { source: "lookupAsset", root: "x", file: "items.json" },
   fields: [
     { name: "id", type: "id", from: "guid", missingPolicy: "fatal" },
     { name: "name", type: "string", from: "n", missingPolicy: "diagnostic" },

@@ -8,6 +8,7 @@ import { emitAssets } from "$pipeline/stages/emit-assets";
 import { emitSqlite } from "$pipeline/stages/emit-sqlite";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { loadSnapshot } from "$pipeline/stages/load-snapshot";
+import { descriptorsForFamilies } from "./load-snapshot-input";
 import type { StageContext } from "$pipeline/types";
 
 const tinyPng = Buffer.from(
@@ -44,7 +45,10 @@ describe("asset conversion", () => {
 
 describe("asset manifest loading", () => {
   it("loads item asset slot manifests beside snapshot envelopes", async () => {
-    const snap = await loadSnapshot.run({}, ctx);
+    const snap = await loadSnapshot.run(
+      { "load-descriptors": descriptorsForFamilies(ctx, ["item"]) },
+      ctx,
+    );
 
     expect(snap.assetManifest?.schemaVersion).toBe(1);
     expect(snap.assetManifest?.assets).toContainEqual({
@@ -78,10 +82,11 @@ describe("asset manifest loading", () => {
         join(dir, "asset-manifest.json"),
         JSON.stringify({ schemaVersion: 1, assets: [{ entityId: "item" }] }),
       );
+      const descriptors = descriptorsForFamilies(ctx, ["item"]);
 
-      expect(() => loadSnapshot.run({}, { ...ctx, snapshotDir: dir })).toThrow(
-        /invalid snapshot asset manifest/,
-      );
+      expect(() =>
+        loadSnapshot.run({ "load-descriptors": descriptors }, { ...ctx, snapshotDir: dir }),
+      ).toThrow(/invalid snapshot asset manifest/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -92,7 +97,10 @@ describe("emitAssets", () => {
   it("converts manifest PNGs to content-addressed WebP files", async () => {
     const outDir = tempOut("ardenfall-assets-");
     try {
-      const snap = await loadSnapshot.run({}, ctx);
+      const snap = await loadSnapshot.run(
+        { "load-descriptors": descriptorsForFamilies(ctx, ["item"]) },
+        ctx,
+      );
       const result = await emitAssets.run({ "load-snapshot": snap }, { ...ctx, outDir });
 
       expect(result.refs).toHaveLength(7);
@@ -142,7 +150,10 @@ describe("emitAssets", () => {
   it("fails loudly when a referenced PNG is missing", async () => {
     const outDir = tempOut("ardenfall-assets-missing-");
     try {
-      const snap = await loadSnapshot.run({}, ctx);
+      const snap = await loadSnapshot.run(
+        { "load-descriptors": descriptorsForFamilies(ctx, ["item"]) },
+        ctx,
+      );
       const badSnap = {
         ...snap,
         assetManifest: {
@@ -175,7 +186,10 @@ describe("asset_refs", () => {
     const outDir = tempOut("ardenfall-asset-refs-");
     try {
       const desc = await loadDescriptors.run({}, ctx);
-      const snap = await loadSnapshot.run({}, ctx);
+      const snap = await loadSnapshot.run(
+        { "load-descriptors": descriptorsForFamilies(ctx, ["item"]) },
+        ctx,
+      );
       const emitted = await emitAssets.run({ "load-snapshot": snap }, { ...ctx, outDir });
 
       await emitSqlite.run(

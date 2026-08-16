@@ -391,6 +391,13 @@ describe("validateSnapshot", () => {
         spell: 1,
         character: 1,
         "status-effect": 1,
+        "character-race": 1,
+        "name-set": 1,
+        "potion-recipe": 1,
+        enchantment: 1,
+        faction: 1,
+        npc: 1,
+        quest: 1,
       },
     });
   });
@@ -455,25 +462,47 @@ describe("validateSnapshot", () => {
     await expect(validateSnapshot(root)).rejects.toThrow(/items\.json hash mismatch/);
   });
 
+  it("rejects a snapshot with a missing family file", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, { omitFiles: ["character-races.json"] });
+
+    await expect(validateSnapshot(root)).rejects.toThrow(
+      /family 'character-race'.*missing expected file 'character-races\.json'.*directory/i,
+    );
+  });
+
+  it("rejects a snapshot with a missing family manifest count", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, { omitCounts: ["name-set"] });
+
+    await expect(validateSnapshot(root)).rejects.toThrow(
+      /manifest is missing count.*name-set.*name-sets\.json.*directory/i,
+    );
+  });
+
   it("rejects a snapshot with a missing manifest artifact", async () => {
     const root = await snapshotRoot(roots);
     await writeSnapshot(root, { omitFiles: ["stat-types.json"] });
 
-    await expect(validateSnapshot(root)).rejects.toThrow(/stat-types\.json is missing/);
+    await expect(validateSnapshot(root)).rejects.toThrow(/stat-type.*stat-types\.json/);
   });
 
   it("rejects a snapshot with a missing locations artifact", async () => {
     const root = await snapshotRoot(roots);
     await writeSnapshot(root, { omitFiles: ["locations.json"] });
 
-    await expect(validateSnapshot(root)).rejects.toThrow(/locations\.json is missing/);
+    await expect(validateSnapshot(root)).rejects.toThrow(
+      /family 'location'.*missing expected file 'locations\.json'.*directory/i,
+    );
   });
 
   it("rejects a snapshot with a missing portals artifact", async () => {
     const root = await snapshotRoot(roots);
     await writeSnapshot(root, { omitFiles: ["portals.json"] });
 
-    await expect(validateSnapshot(root)).rejects.toThrow(/portals\.json is missing/);
+    await expect(validateSnapshot(root)).rejects.toThrow(
+      /family 'portal'.*missing expected file 'portals\.json'.*directory/i,
+    );
   });
 
   it("rejects a snapshot with a mismatched non-item hash", async () => {
@@ -517,6 +546,7 @@ describe("validateSnapshot", () => {
     root: string,
     options: {
       emptyEntities?: string[];
+      omitCounts?: string[];
       itemHash?: string;
       hashOverrides?: Record<string, string>;
       countOverrides?: Record<string, number>;
@@ -609,6 +639,69 @@ describe("validateSnapshot", () => {
         null,
         2,
       ),
+      "character-races.json": JSON.stringify(
+        {
+          entityId: "character-race",
+          schemaVersion: 1,
+          rows: emptyEntities.has("character-race") ? [] : [{ id: "named;character-race;human" }],
+        },
+        null,
+        2,
+      ),
+      "name-sets.json": JSON.stringify(
+        {
+          entityId: "name-set",
+          schemaVersion: 1,
+          rows: emptyEntities.has("name-set") ? [] : [{ id: "named;name-set;human" }],
+        },
+        null,
+        2,
+      ),
+      "potion-recipes.json": JSON.stringify(
+        {
+          entityId: "potion-recipe",
+          schemaVersion: 1,
+          rows: emptyEntities.has("potion-recipe") ? [] : [{ id: "potion-recipe-a" }],
+        },
+        null,
+        2,
+      ),
+      "enchantments.json": JSON.stringify(
+        {
+          entityId: "enchantment",
+          schemaVersion: 1,
+          rows: emptyEntities.has("enchantment") ? [] : [{ id: "enchantment-a" }],
+        },
+        null,
+        2,
+      ),
+      "factions.json": JSON.stringify(
+        {
+          entityId: "faction",
+          schemaVersion: 1,
+          rows: emptyEntities.has("faction") ? [] : [{ id: "faction-a" }],
+        },
+        null,
+        2,
+      ),
+      "npcs.json": JSON.stringify(
+        {
+          entityId: "npc",
+          schemaVersion: 1,
+          rows: emptyEntities.has("npc") ? [] : [{ id: "npc-a" }],
+        },
+        null,
+        2,
+      ),
+      "quests.json": JSON.stringify(
+        {
+          entityId: "quest",
+          schemaVersion: 1,
+          rows: emptyEntities.has("quest") ? [] : [{ id: "quest-a" }],
+        },
+        null,
+        2,
+      ),
       "asset-manifest.json": JSON.stringify({ assets: [], itemIconMetadata: [] }, null, 2),
       "master-tooltip.json": JSON.stringify({ schemaVersion: 2, tooltipCodes: {} }, null, 2),
     };
@@ -627,29 +720,38 @@ describe("validateSnapshot", () => {
     if (options.itemHash) hashes["items.json"] = options.itemHash;
     for (const [file, value] of Object.entries(options.hashOverrides ?? {})) hashes[file] = value;
 
+    const counts = {
+      item: options.countOverrides?.item ?? (emptyEntities.has("item") ? 0 : 2),
+      "stat-type":
+        options.countOverrides?.["stat-type"] ?? (emptyEntities.has("stat-type") ? 0 : 1),
+      "item-category":
+        options.countOverrides?.["item-category"] ?? (emptyEntities.has("item-category") ? 0 : 1),
+      "item-tag": options.countOverrides?.["item-tag"] ?? (emptyEntities.has("item-tag") ? 0 : 1),
+      location: options.countOverrides?.location ?? (emptyEntities.has("location") ? 0 : 1),
+      portal: options.countOverrides?.portal ?? (emptyEntities.has("portal") ? 0 : 1),
+      spell: options.countOverrides?.spell ?? (emptyEntities.has("spell") ? 0 : 1),
+      character: options.countOverrides?.character ?? (emptyEntities.has("character") ? 0 : 1),
+      "status-effect":
+        options.countOverrides?.["status-effect"] ?? (emptyEntities.has("status-effect") ? 0 : 1),
+      "character-race":
+        options.countOverrides?.["character-race"] ?? (emptyEntities.has("character-race") ? 0 : 1),
+      "name-set": options.countOverrides?.["name-set"] ?? (emptyEntities.has("name-set") ? 0 : 1),
+      "potion-recipe":
+        options.countOverrides?.["potion-recipe"] ?? (emptyEntities.has("potion-recipe") ? 0 : 1),
+      enchantment:
+        options.countOverrides?.enchantment ?? (emptyEntities.has("enchantment") ? 0 : 1),
+      faction: options.countOverrides?.faction ?? (emptyEntities.has("faction") ? 0 : 1),
+      npc: options.countOverrides?.npc ?? (emptyEntities.has("npc") ? 0 : 1),
+      quest: options.countOverrides?.quest ?? (emptyEntities.has("quest") ? 0 : 1),
+      ...options.extraCounts,
+    };
+    for (const entity of options.omitCounts ?? []) delete counts[entity as keyof typeof counts];
+
     await writeFile(
       join(root, "manifest.json"),
       JSON.stringify(
         {
-          counts: {
-            item: options.countOverrides?.item ?? (emptyEntities.has("item") ? 0 : 2),
-            "stat-type":
-              options.countOverrides?.["stat-type"] ?? (emptyEntities.has("stat-type") ? 0 : 1),
-            "item-category":
-              options.countOverrides?.["item-category"] ??
-              (emptyEntities.has("item-category") ? 0 : 1),
-            "item-tag":
-              options.countOverrides?.["item-tag"] ?? (emptyEntities.has("item-tag") ? 0 : 1),
-            location: options.countOverrides?.location ?? (emptyEntities.has("location") ? 0 : 1),
-            portal: options.countOverrides?.portal ?? (emptyEntities.has("portal") ? 0 : 1),
-            spell: options.countOverrides?.spell ?? (emptyEntities.has("spell") ? 0 : 1),
-            character:
-              options.countOverrides?.character ?? (emptyEntities.has("character") ? 0 : 1),
-            "status-effect":
-              options.countOverrides?.["status-effect"] ??
-              (emptyEntities.has("status-effect") ? 0 : 1),
-            ...options.extraCounts,
-          },
+          counts,
           hashes,
           diagnostics: { fatal: options.fatalDiagnostics ?? 0 },
         },

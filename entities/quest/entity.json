@@ -8,6 +8,7 @@
   },
   "extraction": {
     "source": "namedAsset",
+    "file": "quests.json",
     "root": "Resources.FindObjectsOfTypeAll<QuestData>",
     "walker": "QuestExtractor"
   },

@@ -8,6 +8,7 @@
   },
   "extraction": {
     "source": "record",
+    "file": "npcs.json",
     "root": "Ardenfall.RecordSystem.NPCRecord",
     "options": {
       "table": "instances",

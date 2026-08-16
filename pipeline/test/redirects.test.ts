@@ -21,7 +21,7 @@ function entity(id: string, route: string, previousRoutes?: string[]): EntityDes
     id,
     kind: id === "npc" ? "instance" : "definition",
     label: { singular: id, plural: `${id}s` },
-    extraction: { source: "record", root: "fixture" },
+    extraction: { source: "record", root: "fixture", file: `${id}s.json` },
     canonicalTable: `${id}s`,
     fields: [{ name: "id", type: "id", from: "id" }],
     site: previousRoutes ? { route, previousRoutes } : { route },

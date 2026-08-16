@@ -5,6 +5,7 @@
   "label": { "singular": "Status Effect", "plural": "Status Effects" },
   "extraction": {
     "source": "lookupAsset",
+    "file": "status-effects.json",
     "root": "BuiltLookupTable.GetAssetsOfType<StatusEffectData>",
     "walker": "StatusEffectExtractor"
   },

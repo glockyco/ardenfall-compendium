@@ -212,6 +212,7 @@ describe("loadDescriptors", () => {
     expect(portal.extraction).toEqual({
       source: "record",
       root: "Ardenfall.RecordSystem.PortalRecord",
+      file: "portals.json",
       options: { table: "world", subtable: "portals" },
     });
     expect(portal.definition).toBeUndefined();
@@ -243,6 +244,7 @@ describe("loadDescriptors", () => {
             label: { singular: "Stat type", plural: "Stat types" },
             extraction: {
               source: "lookupAsset",
+              file: "stat-types.json",
               root: "BuiltLookupTable.GetAssetsOfType<StatType>",
               walker: "StatTypeWalker",
             },
@@ -292,7 +294,7 @@ describe("loadDescriptors", () => {
             id: "thing",
             kind: "definition",
             label: { singular: "Thing", plural: "Things" },
-            extraction: { source: "lookupAsset", root: "Thing.Root" },
+            extraction: { source: "lookupAsset", root: "Thing.Root", file: "things.json" },
             definition: { entity: "thing", via: "definitionRef" },
             fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
             map: null,
@@ -325,7 +327,12 @@ describe("loadDescriptors", () => {
             id: "thing",
             kind: "definition",
             label: { singular: "Thing", plural: "Things" },
-            extraction: { source: "lookupAsset", root: "Thing.Root", walker: "ThingWalker" },
+            extraction: {
+              source: "lookupAsset",
+              root: "Thing.Root",
+              file: "things.json",
+              walker: "ThingWalker",
+            },
             fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
             site: { overview: { columns: ["id"] } },
             map: null,
@@ -359,7 +366,12 @@ describe("loadDescriptors", () => {
             id: "thing",
             kind: "definition",
             label: { singular: "Thing", plural: "Things" },
-            extraction: { source: "lookupAsset", root: "Thing.Root", walker: "ThingWalker" },
+            extraction: {
+              source: "lookupAsset",
+              root: "Thing.Root",
+              file: "things.json",
+              walker: "ThingWalker",
+            },
             fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
             site: { route: "Things", overview: { columns: ["id"] } },
             map: null,
@@ -400,7 +412,7 @@ describe("loadDescriptors", () => {
             id: "thing",
             kind: "definition",
             label: { singular: "Thing", plural: "Things" },
-            extraction: { source: "lookupAsset", root: "Thing.Root" },
+            extraction: { source: "lookupAsset", root: "Thing.Root", file: "things.json" },
             canonicalTable: "things",
             fields: [{ name: "id", type: "id", from: "id", missingPolicy: "fatal" }],
             site: { route: "/things", overview: { columns: ["id"] } },
@@ -426,6 +438,7 @@ describe("loadDescriptors", () => {
             extraction: {
               source: "lookupAsset",
               root: "BuiltLookupTable.GetAssetsOfType<ItemData>",
+              file: "items.json",
             },
             fields: [{ name: "id", type: "id", from: "guid", missingPolicy: "fatal" }],
             map: { layer: "items", renderKind: "point" },

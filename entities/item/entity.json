@@ -7,6 +7,7 @@
 
   "extraction": {
     "source": "lookupAsset",
+    "file": "items.json",
     "root": "BuiltLookupTable.GetAssetsOfType<ItemData>",
     "walker": "ItemWalker",
     "options": {

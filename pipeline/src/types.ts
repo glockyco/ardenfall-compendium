@@ -9,6 +9,7 @@ export interface EntityDescriptor {
   extraction: {
     source: "lookupAsset" | "namedAsset" | "record" | "scene";
     root: string;
+    file: string;
     walker?: string;
     options?: Record<string, unknown>;
   };

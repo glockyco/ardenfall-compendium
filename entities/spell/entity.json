@@ -5,6 +5,7 @@
   "label": { "singular": "Spell", "plural": "Spells" },
   "extraction": {
     "source": "namedAsset",
+    "file": "spells.json",
     "root": "Resources.FindObjectsOfTypeAll<SpellData>",
     "walker": "SpellExtractor"
   },

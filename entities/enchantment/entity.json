@@ -5,6 +5,7 @@
   "label": { "singular": "Enchantment", "plural": "Enchantments" },
   "extraction": {
     "source": "lookupAsset",
+    "file": "enchantments.json",
     "root": "Resources.FindObjectsOfTypeAll<Ardenfall.Item.EnchantmentData>",
     "walker": "EnchantmentExtractor"
   },

@@ -8,6 +8,7 @@
   },
   "extraction": {
     "source": "record",
+    "file": "portals.json",
     "root": "Ardenfall.RecordSystem.PortalRecord",
     "options": {
       "table": "world",

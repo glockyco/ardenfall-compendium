@@ -5,6 +5,7 @@
   "label": { "singular": "Potion recipe", "plural": "Potion recipes" },
   "extraction": {
     "source": "lookupAsset",
+    "file": "potion-recipes.json",
     "root": "Resources.FindObjectsOfTypeAll<Ardenfall.Item.PotionRecipe>",
     "walker": "PotionRecipeExtractor"
   },

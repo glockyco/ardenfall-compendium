@@ -5,6 +5,7 @@
   "label": { "singular": "Tag", "plural": "Tags" },
   "extraction": {
     "source": "lookupAsset",
+    "file": "item-tags.json",
     "root": "BuiltLookupTable.GetAssetsOfType<ItemTag>",
     "walker": "ItemTagExtractor"
   },

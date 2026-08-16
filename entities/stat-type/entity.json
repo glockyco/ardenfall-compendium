@@ -5,6 +5,7 @@
   "label": { "singular": "Stat", "plural": "Stats" },
   "extraction": {
     "source": "namedAsset",
+    "file": "stat-types.json",
     "root": "Resources.FindObjectsOfTypeAll<StatType>",
     "walker": "StatTypeExtractor"
   },

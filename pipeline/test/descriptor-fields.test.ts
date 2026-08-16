@@ -8,7 +8,7 @@ const entity = (id: string, fields: string[]): EntityDescriptor => ({
   id,
   kind: "definition",
   label: { singular: id, plural: `${id}s` },
-  extraction: { source: "record", root: id },
+  extraction: { source: "record", root: id, file: `${id}s.json` },
   canonicalTable: `${id}s`,
   fields: fields.map((name) => ({ name, type: "string", from: name })),
 });

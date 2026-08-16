@@ -17,14 +17,34 @@ interface EnvelopeShape {
   rows?: unknown[];
 }
 
+interface EntityDescriptorShape {
+  id?: unknown;
+  extraction?: { source?: unknown; file?: unknown };
+}
+
 export async function validateSnapshot(snapshotDir: string): Promise<SnapshotValidationResult> {
   const manifestText = await readRequiredText(snapshotDir, "manifest.json");
   const manifest = parseJson<ManifestShape>("manifest.json", manifestText);
   const hashes = manifest.hashes ?? {};
   const counts = manifest.counts ?? {};
   const parsedArtifacts = new Map<string, unknown>();
+  const snapshotFiles = new Set(await readdir(snapshotDir));
+  const descriptors = await readExtractionDescriptors();
 
   if (Object.keys(hashes).length === 0) throw new Error("manifest is missing hashes");
+  for (const descriptor of descriptors) {
+    const file = descriptor.file;
+    if (!snapshotFiles.has(file)) {
+      throw new Error(
+        `snapshot family '${descriptor.id}' is missing expected file '${file}' in directory '${snapshotDir}'`,
+      );
+    }
+    if (!Object.hasOwn(counts, descriptor.id)) {
+      throw new Error(
+        `snapshot manifest is missing count for family '${descriptor.id}' (expected file '${file}') in directory '${snapshotDir}'`,
+      );
+    }
+  }
 
   await Promise.all(
     Object.entries(hashes).map(async ([file, expectedHash]) => {
@@ -101,6 +121,23 @@ export async function validateSnapshot(snapshotDir: string): Promise<SnapshotVal
 
 function isRecord(value: unknown): value is EnvelopeShape {
   return typeof value === "object" && value !== null;
+}
+
+async function readExtractionDescriptors(): Promise<{ id: string; file: string }[]> {
+  const entitiesDir = join(import.meta.dir, "../../entities");
+  const descriptors: { id: string; file: string }[] = [];
+  for (const entry of await readdir(entitiesDir, { withFileTypes: true })) {
+    if (!entry.isDirectory() || entry.name.startsWith("_") || entry.name.startsWith(".")) continue;
+    const file = join(entitiesDir, entry.name, "entity.json");
+    const descriptor = parseJson<EntityDescriptorShape>(file, await readFile(file, "utf8"));
+    if (typeof descriptor.id === "string" && typeof descriptor.extraction?.source === "string") {
+      if (typeof descriptor.extraction.file !== "string") {
+        throw new Error(`descriptor '${descriptor.id}' extraction is missing snapshot file`);
+      }
+      descriptors.push({ id: descriptor.id, file: descriptor.extraction.file });
+    }
+  }
+  return descriptors.sort((left, right) => left.id.localeCompare(right.id));
 }
 
 async function readRequiredText(snapshotDir: string, file: string): Promise<string> {

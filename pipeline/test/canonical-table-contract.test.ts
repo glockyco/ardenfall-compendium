@@ -19,7 +19,7 @@ const baseEntity = (fields: EntityDescriptor["fields"]): EntityDescriptor => ({
   id: "record",
   kind: "definition",
   label: { singular: "Record", plural: "Records" },
-  extraction: { source: "lookupAsset", root: "Records.Root" },
+  extraction: { source: "lookupAsset", root: "Records.Root", file: "records.json" },
   canonicalTable: "records",
   fields,
 });

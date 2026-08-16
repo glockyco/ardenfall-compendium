@@ -6,6 +6,7 @@ import validateFinalizeTimings from "../../dist/validate-finalize-timings.mjs";
 import validateManifest from "../../dist/validate-manifest.mjs";
 import validateMasterTooltip from "../../dist/validate-master-tooltip.mjs";
 import validateSnapshot from "../../dist/validate-snapshot.mjs";
+import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type {
   SnapshotAssetManifest,
   FinalizeTiming,
@@ -15,6 +16,10 @@ import type {
   SnapshotManifest,
   Stage,
 } from "../types.ts";
+
+interface LoadSnapshotInputs {
+  "load-descriptors"?: LoadDescriptorsOutput;
+}
 
 export interface LoadSnapshotOutput {
   manifest: SnapshotManifest;
@@ -27,8 +32,13 @@ export interface LoadSnapshotOutput {
 
 export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
   id: "load-snapshot",
-  inputs: [],
+  inputs: ["load-descriptors"],
   run: (_inputs, ctx) => {
+    const snapshotInputs = _inputs as LoadSnapshotInputs;
+    const descriptors = snapshotInputs["load-descriptors"];
+    if (descriptors === undefined) {
+      throw new Error("stage load-snapshot requires load-descriptors input");
+    }
     const dir = ctx.snapshotDir;
     const manifestPath = join(dir, "manifest.json");
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as SnapshotManifest;
@@ -37,6 +47,24 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
         .map((e) => `${manifestPath}#${e.instancePath} — ${e.message}`)
         .join("\n");
       throw new Error(`invalid snapshot manifest at ${manifestPath}:\n${detail}`);
+    }
+
+    const snapshotFiles = new Set(readdirSync(dir));
+    for (const entity of Object.values(descriptors.entities).sort((left, right) =>
+      left.id.localeCompare(right.id),
+    )) {
+      if (entity.extraction?.source === undefined) continue;
+      const file = entity.extraction.file;
+      if (!snapshotFiles.has(file)) {
+        throw new Error(
+          `descriptor '${entity.id}' is missing expected snapshot file '${file}' in directory '${dir}'`,
+        );
+      }
+      if (!Object.hasOwn(manifest.counts, entity.id)) {
+        throw new Error(
+          `snapshot manifest is missing count for descriptor '${entity.id}' (expected file '${file}') in directory '${dir}'`,
+        );
+      }
     }
 
     const envelopes: Record<string, SnapshotEnvelope> = {};

@@ -5,6 +5,7 @@
   "label": { "singular": "Character type", "plural": "Character types" },
   "extraction": {
     "source": "namedAsset",
+    "file": "characters.json",
     "root": "Resources.FindObjectsOfTypeAll<CharacterData>",
     "walker": "CharacterExtractor"
   },

@@ -8,6 +8,7 @@
   },
   "extraction": {
     "source": "lookupAsset",
+    "file": "factions.json",
     "root": "BuiltLookupTable.GetAssetsOfType<Faction>",
     "walker": "FactionWalker"
   },

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { emitSqlite } from "$pipeline/stages/emit-sqlite";
 import { loadDescriptors } from "$pipeline/stages/load-descriptors";
 import { loadSnapshot } from "$pipeline/stages/load-snapshot";
+import { descriptorsForFamilies } from "./load-snapshot-input";
 import type {
   EntityDescriptor,
   ItemPresentationSnapshot,
@@ -67,7 +68,7 @@ const makeEntity = (id: string, fields: EntityDescriptor["fields"]): EntityDescr
   id,
   kind: "definition",
   label: { singular: id, plural: `${id}s` },
-  extraction: { source: "record", root: "Test.Record" },
+  extraction: { source: "record", root: "Test.Record", file: `${id}s.json` },
   canonicalTable: `${id}s`,
   fields,
 });
@@ -119,11 +120,50 @@ const makeValidationInputs = (
 
 describe("loadSnapshot", () => {
   it("loads manifest + per-entity envelopes", async () => {
-    const out = await loadSnapshot.run({}, ctx);
+    const out = await loadSnapshot.run({ "load-descriptors": descriptorsForFamilies(ctx) }, ctx);
     expect(out.manifest.preflight.passed).toBe(true);
     const items = out.envelopes["item"];
     if (!items) throw new Error("item envelope not loaded");
     expect(items.rows.length).toBe(9);
+  });
+
+  it("accepts a complete snapshot when every extraction family has a file and count", async () => {
+    const descriptors = await loadDescriptors.run({}, ctx);
+    expect(loadSnapshot.run({ "load-descriptors": descriptors }, ctx)).toBeDefined();
+  });
+
+  it("rejects a snapshot missing a declared family file", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "ardenfall-missing-family-file-"));
+    try {
+      cpSync("fixtures/synthetic/snapshot", dir, { recursive: true });
+      rmSync(join(dir, "character-races.json"));
+      const descriptors = await loadDescriptors.run({}, ctx);
+
+      expect(() =>
+        loadSnapshot.run({ "load-descriptors": descriptors }, { ...ctx, snapshotDir: dir }),
+      ).toThrow(/descriptor 'character-race'.*character-races\.json.*directory/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("rejects a snapshot missing a declared family manifest count", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "ardenfall-missing-family-count-"));
+    try {
+      cpSync("fixtures/synthetic/snapshot", dir, { recursive: true });
+      const manifest = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8")) as {
+        counts: Record<string, number>;
+      };
+      delete manifest.counts["name-set"];
+      writeFileSync(join(dir, "manifest.json"), JSON.stringify(manifest));
+      const descriptors = await loadDescriptors.run({}, ctx);
+
+      expect(() =>
+        loadSnapshot.run({ "load-descriptors": descriptors }, { ...ctx, snapshotDir: dir }),
+      ).toThrow(/manifest is missing count.*name-set.*name-sets\.json.*directory/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it("loads root finalize timings as a typed auxiliary artifact", async () => {
@@ -150,7 +190,10 @@ describe("loadSnapshot", () => {
         JSON.stringify([{ phase: "assets.write", elapsedMs: 42, totalElapsedMs: 50 }]),
       );
 
-      const out = await loadSnapshot.run({}, { ...ctx, snapshotDir: dir });
+      const out = await loadSnapshot.run(
+        { "load-descriptors": descriptorsForFamilies(ctx, ["item"]) },
+        { ...ctx, snapshotDir: dir },
+      );
 
       expect(out.finalizeTimings).toEqual([
         { phase: "assets.write", elapsedMs: 42, totalElapsedMs: 50 },
@@ -176,10 +219,11 @@ describe("loadSnapshot", () => {
         join(dir, "items.json"),
         readFileSync("fixtures/synthetic/snapshot/items.json", "utf8"),
       );
+      const descriptors = descriptorsForFamilies(ctx, ["item"]);
 
-      expect(() => loadSnapshot.run({}, { ...ctx, snapshotDir: dir })).toThrow(
-        /missing master tooltip vocabulary/,
-      );
+      expect(() =>
+        loadSnapshot.run({ "load-descriptors": descriptors }, { ...ctx, snapshotDir: dir }),
+      ).toThrow(/missing master tooltip vocabulary/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -209,7 +253,10 @@ describe("loadSnapshot", () => {
       delete ironSwordRow.presentation;
       writeFileSync(join(dir, "items.json"), `${JSON.stringify(items, null, 2)}\n`);
 
-      const snap = await loadSnapshot.run({}, { ...ctx, snapshotDir: dir });
+      const snap = await loadSnapshot.run(
+        { "load-descriptors": descriptorsForFamilies(ctx, ["item"]) },
+        { ...ctx, snapshotDir: dir },
+      );
       const desc = await loadDescriptors.run({}, ctx);
       const result = await validate.run({ "load-snapshot": snap, "load-descriptors": desc }, ctx);
 
@@ -228,7 +275,7 @@ describe("loadSnapshot", () => {
   });
 
   it("loads synthetic item presentations with schema version 2", async () => {
-    const out = await loadSnapshot.run({}, ctx);
+    const out = await loadSnapshot.run({ "load-descriptors": descriptorsForFamilies(ctx) }, ctx);
     const items = out.envelopes.item;
     if (!items) throw new Error("item envelope not loaded");
 
@@ -239,7 +286,7 @@ describe("loadSnapshot", () => {
   });
 
   it("loads the master tooltip vocabulary at schemaVersion 2", async () => {
-    const out = await loadSnapshot.run({}, ctx);
+    const out = await loadSnapshot.run({ "load-descriptors": descriptorsForFamilies(ctx) }, ctx);
     const v = out.masterTooltip;
     if (!v) throw new Error("master tooltip vocabulary missing");
     expect(v.schemaVersion).toBe(2);
@@ -268,9 +315,10 @@ describe("loadSnapshot", () => {
         join(dir, "master-tooltip.json"),
         JSON.stringify({ schemaVersion: 1, tooltipCodes: {}, tooltipColors: {} }),
       );
-      expect(() => loadSnapshot.run({}, { ...ctx, snapshotDir: dir })).toThrow(
-        /master tooltip.*schemaVersion/,
-      );
+      const descriptors = descriptorsForFamilies(ctx, ["item"]);
+      expect(() =>
+        loadSnapshot.run({ "load-descriptors": descriptors }, { ...ctx, snapshotDir: dir }),
+      ).toThrow(/master tooltip.*schemaVersion/);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -304,7 +352,10 @@ describe("loadSnapshot", () => {
         ]),
       );
 
-      const snap = await loadSnapshot.run({}, { ...ctx, snapshotDir: dir });
+      const snap = await loadSnapshot.run(
+        { "load-descriptors": descriptorsForFamilies(ctx, ["item"]) },
+        { ...ctx, snapshotDir: dir },
+      );
       expect(snap.diagnostics).toHaveLength(1);
 
       const desc = await loadDescriptors.run({}, ctx);
@@ -324,8 +375,8 @@ describe("loadSnapshot", () => {
 
 describe("validate", () => {
   it("passes the synthetic snapshot without fatal errors", async () => {
-    const snap = await loadSnapshot.run({}, ctx);
-    const desc = await loadDescriptors.run({}, ctx);
+    const desc = descriptorsForFamilies(ctx);
+    const snap = await loadSnapshot.run({ "load-descriptors": desc }, ctx);
     const result = await validate.run({ "load-snapshot": snap, "load-descriptors": desc }, ctx);
     // The synthetic fixture has one row-level diagnostic
     // (lookupAssetGuidMissing for 5ea7beef.fixture-leather-tunic.iconRef),
@@ -499,8 +550,8 @@ describe("emitSqlite validation gate", () => {
   it("rejects a fatal snapshot validation before creating SQLite output", async () => {
     const out = mkdtempSync(join(tmpdir(), "ardenfall-fatal-emission-"));
     try {
-      const snap = await loadSnapshot.run({}, ctx);
-      const desc = await loadDescriptors.run({}, ctx);
+      const desc = descriptorsForFamilies(ctx);
+      const snap = await loadSnapshot.run({ "load-descriptors": desc }, ctx);
       const fatalSnapshot = {
         ...snap,
         diagnostics: [
@@ -535,8 +586,8 @@ describe("emitSqlite validation gate", () => {
   it("emits SQLite output when validation has no fatal diagnostics", async () => {
     const out = mkdtempSync(join(tmpdir(), "ardenfall-clean-emission-"));
     try {
-      const snap = await loadSnapshot.run({}, ctx);
-      const desc = await loadDescriptors.run({}, ctx);
+      const desc = descriptorsForFamilies(ctx);
+      const snap = await loadSnapshot.run({ "load-descriptors": desc }, ctx);
       const validation = await validate.run(
         { "load-snapshot": snap, "load-descriptors": desc },
         ctx,

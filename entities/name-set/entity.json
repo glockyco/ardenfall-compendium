@@ -5,6 +5,7 @@
   "label": { "singular": "Name set", "plural": "Name sets" },
   "extraction": {
     "source": "namedAsset",
+    "file": "name-sets.json",
     "root": "Resources.FindObjectsOfTypeAll<NameSet>",
     "walker": "NameSetExtractor"
   },
