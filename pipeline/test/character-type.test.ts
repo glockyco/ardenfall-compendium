@@ -71,10 +71,11 @@ describe("character type resolution", () => {
       missingParentRef(),
       ref("character-race", "race_karu_elf"),
     );
-    db.run(`INSERT INTO character_races (id, race_name, name_set_refs_json) VALUES (?, ?, '[]')`, [
-      raceId,
-      "Karu Elf",
-    ]);
+    db.run(
+      `INSERT INTO character_races (id, race_name, name_set_refs_json, parent_ref_json)
+       VALUES (?, ?, '[]', NULL)`,
+      [raceId, "Karu Elf"],
+    );
     publishNode(db, "character-race", raceId, "Karu Elf", "/races/karu-elf");
 
     expect(resolveCharacterType(db, definitionId)).toEqual({

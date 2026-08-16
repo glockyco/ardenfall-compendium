@@ -7,12 +7,16 @@ namespace ArdenfallCompendium.Entities.CharacterRace;
 public sealed record CharacterRaceSnapshot(
     [property: JsonProperty("id")] string Id,
     [property: JsonProperty("raceName")] string? RaceName,
-    [property: JsonProperty("nameSetRefs")] List<SnapshotRef> NameSetRefs);
+    [property: JsonProperty("raceNameProvenance")] string RaceNameProvenance,
+    [property: JsonProperty("raceNameOwner")] string? RaceNameOwner,
+    [property: JsonProperty("nameSetRefs")] List<SnapshotRef> NameSetRefs,
+    [property: JsonProperty("parentRef")] SnapshotRef ParentRef);
 
 public sealed class CharacterRaceSnapshotRow
 {
     [JsonProperty("id")] public string Id { get; init; } = "";
     [JsonProperty("fields")] public CharacterRaceSnapshot Fields { get; init; } = null!;
+    [JsonProperty("provenance")] public Dictionary<string, Provenance> Provenance { get; init; } = new();
     [JsonProperty("diagnostics")] public List<Diagnostic> Diagnostics { get; init; } = new();
 }
 

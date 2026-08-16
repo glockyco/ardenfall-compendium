@@ -93,7 +93,10 @@ public sealed class CharacterRaceExtractor : WalkerBase<CharacterRaceSnapshotRow
                     Fields = new CharacterRaceSnapshot(
                         Id: id,
                         RaceName: raceName,
-                        NameSetRefs: nameSetRefs),
+                        RaceNameProvenance: asset.RaceNameProvenance,
+                        RaceNameOwner: asset.RaceNameOwner,
+                        NameSetRefs: nameSetRefs,
+                        ParentRef: asset.ParentRef ?? SnapshotRef.Missing("noParent", "ParameterizedObject.parent")),
                 };
             });
 

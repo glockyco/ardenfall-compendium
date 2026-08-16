@@ -30,6 +30,31 @@
       "column": "race_name"
     },
     {
+      "name": "raceNameProvenance",
+      "type": "string",
+      "from": "raceNameProvenance",
+      "missingPolicy": "fatal",
+      "storage": "unstored",
+      "reason": "Normalised into character_race_value_provenance rather than repeated as a canonical column.",
+      "projects": "character_race_value_provenance"
+    },
+    {
+      "name": "raceNameOwner",
+      "type": "string",
+      "from": "raceNameOwner",
+      "missingPolicy": "fatal",
+      "storage": "unstored",
+      "reason": "Normalised into character_race_value_provenance rather than repeated as a canonical column.",
+      "projects": "character_race_value_provenance"
+    },
+    {
+      "name": "parentRef",
+      "type": "ref:asset",
+      "from": "parentRef",
+      "missingPolicy": "optional-empty",
+      "column": "parent_ref_json"
+    },
+    {
       "name": "nameSetRefs",
       "type": "ref:asset[]",
       "from": "nameSetRefs",

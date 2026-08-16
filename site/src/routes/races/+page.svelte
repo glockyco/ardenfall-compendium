@@ -22,7 +22,7 @@
 
 <h1 class="text-2xl font-bold">Character Races</h1>
 <p class="text-muted-foreground mt-2">
-  {data.races.length} character race records with authored naming vocabularies.
+  {data.races.length} reader-facing character races.
 </p>
 
 {#if data.races.length > 0}
@@ -32,8 +32,8 @@
         <a class="block underline-offset-4 hover:underline" href={race.routePath}>
           <span class="block font-medium">{race.name}</span>
           <span class="text-muted-foreground text-sm">
-            {race.nameSetCount}
-            {race.nameSetCount === 1 ? "name set" : "name sets"}
+            {race.variantCount}
+            {race.variantCount === 1 ? "variant" : "variants"}
           </span>
         </a>
       </li>

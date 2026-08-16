@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Ardenfall;
+using ArdenfallCompendium.Dtos;
 using ArdenfallCompendium.Entities;
 using ArdenfallCompendium.Walker;
 using UnityEngine;
@@ -51,15 +52,27 @@ public sealed class LoadedCharacterRaceAssetSource : ICharacterRaceAssetSource
 
         foreach (var asset in assets.OrderBy(asset => _assetName(asset), StringComparer.Ordinal))
         {
-            var raceName = ParameterChain.Resolve(asset, asset.raceName).Value;
+            var raceNameResolution = ParameterChain.Resolve(asset, asset.raceName);
+            var raceName = raceNameResolution.Value;
+            var raceNameOwnership = raceNameResolution.Ownership;
             var nameSets = ParameterChain.Resolve(asset, asset.nameSets).Value;
+            var parentRef = ResolveParentRef(asset.parent);
             var nameSetAssetNames = nameSets == null
                 ? null
                 : nameSets.Select(nameSet => nameSet == null ? null : _assetName(nameSet)).ToList();
             yield return new CharacterRaceAsset(
                 AssetName: _assetName(asset),
                 RaceName: NullIfEmpty(raceName),
-                NameSetAssetNames: nameSetAssetNames);
+                NameSetAssetNames: nameSetAssetNames,
+                ParentRef: parentRef,
+                RaceNameProvenance: raceNameOwnership.IsSet
+                    ? "own"
+                    : raceNameOwnership.Inherited
+                        ? "inherited"
+                        : "absent",
+                RaceNameOwner: raceNameOwnership.Inherited && raceNameOwnership.Owner != null
+                    ? _assetName(raceNameOwnership.Owner)
+                    : null);
         }
     }
 
@@ -86,6 +99,14 @@ public sealed class LoadedCharacterRaceAssetSource : ICharacterRaceAssetSource
         {
             throw new InvalidOperationException("CharacterRace lookup failed for field 'asset'.", exception);
         }
+    }
+
+    private static SnapshotRef ResolveParentRef(Ardenfall.ParameterizedObject? parent)
+    {
+        if (parent == null) return SnapshotRef.Missing("noParent", "ParameterizedObject.parent");
+        return string.IsNullOrWhiteSpace(parent.name)
+            ? SnapshotRef.Missing("parentNameMissing", "ParameterizedObject.parent")
+            : SnapshotRef.NamedAsset("character-race", parent.name);
     }
 
     private static string? NullIfEmpty(string? value) =>

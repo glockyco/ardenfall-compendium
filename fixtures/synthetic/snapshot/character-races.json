@@ -7,18 +7,55 @@
       "fields": {
         "id": "named;character-race;race_karu_elf",
         "raceName": "Karu Elf",
+        "raceNameProvenance": "own",
+        "raceNameOwner": null,
+        "nameSetRefs": [],
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
+      }
+    },
+    {
+      "id": "named;character-race;race_karu_elf_female",
+      "fields": {
+        "id": "named;character-race;race_karu_elf_female",
+        "raceName": "Karu Elf",
+        "raceNameProvenance": "inherited",
+        "raceNameOwner": "race_karu_elf",
         "nameSetRefs": [
-          {
-            "kind": "namedAsset",
-            "entity": "name-set",
-            "name": "nset_mystelf_female"
-          },
-          {
-            "kind": "namedAsset",
-            "entity": "name-set",
-            "name": "nset_mystelf_male"
-          }
-        ]
+          { "kind": "namedAsset", "entity": "name-set", "name": "nset_mystelf_female" }
+        ],
+        "parentRef": { "kind": "namedAsset", "entity": "character-race", "name": "race_karu_elf" }
+      }
+    },
+    {
+      "id": "named;character-race;race_karu_elf_male",
+      "fields": {
+        "id": "named;character-race;race_karu_elf_male",
+        "raceName": "Karu Elf",
+        "raceNameProvenance": "own",
+        "raceNameOwner": null,
+        "nameSetRefs": [
+          { "kind": "namedAsset", "entity": "name-set", "name": "nset_mystelf_male" }
+        ],
+        "parentRef": { "kind": "namedAsset", "entity": "character-race", "name": "race_karu_elf" }
+      }
+    },
+    {
+      "id": "named;character-race;race_karu_elf_female_old",
+      "fields": {
+        "id": "named;character-race;race_karu_elf_female_old",
+        "raceName": "Karu Elf",
+        "raceNameProvenance": "inherited",
+        "raceNameOwner": "race_karu_elf",
+        "nameSetRefs": [],
+        "parentRef": {
+          "kind": "namedAsset",
+          "entity": "character-race",
+          "name": "race_karu_elf_female"
+        }
       }
     },
     {
@@ -26,7 +63,14 @@
       "fields": {
         "id": "named;character-race;race_unresolved",
         "raceName": null,
-        "nameSetRefs": []
+        "raceNameProvenance": "absent",
+        "raceNameOwner": null,
+        "nameSetRefs": [],
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
       },
       "diagnostics": [
         {

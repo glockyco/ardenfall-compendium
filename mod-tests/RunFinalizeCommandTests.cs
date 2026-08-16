@@ -770,11 +770,14 @@ public sealed class RunFinalizeCommandTests
                 Fields = new CharacterRaceSnapshot(
                     "named;character-race;Karu Elf",
                     "Karu Elf",
+                    "own",
+                    null,
                     new List<SnapshotRef>
                     {
                         SnapshotRef.NamedAsset("name-set", "Karu Elf Given"),
                         SnapshotRef.NamedAsset("name-set", "Karu Elf Family"),
-                    }),
+                    },
+                    SnapshotRef.Missing("race has no parent", "CharacterRace.parent")),
             },
         };
         var nameSetRows = new List<NameSetSnapshotRow>

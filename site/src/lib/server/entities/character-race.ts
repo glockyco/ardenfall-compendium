@@ -5,7 +5,7 @@ import { getEntityNodeBySlug } from "./item";
 interface CharacterRaceOverviewRecord {
   id: string;
   name: string;
-  name_set_count: number;
+  variant_count: number;
   route_path: string;
 }
 
@@ -13,7 +13,7 @@ interface CharacterRacePresentationRecord {
   id: string;
   name: string;
   render_context: string;
-  name_set_refs_json: string;
+  variants_json: string;
   route_path: string;
 }
 
@@ -40,16 +40,21 @@ export interface CharacterRaceNameSet {
 export interface CharacterRaceOverviewRow {
   id: string;
   name: string;
-  nameSetCount: number;
+  variantCount: number;
   routePath: string;
+}
+
+export interface CharacterRaceVariant {
+  nameSetCount: number;
+  nameSets: CharacterRaceNameSet[];
 }
 
 export interface CharacterRacePresentationRow {
   id: string;
   name: string;
   renderContext: "character-race-presentation-v1";
-  nameSetCount: number;
-  nameSets: CharacterRaceNameSet[];
+  variantCount: number;
+  variants: CharacterRaceVariant[];
   routePath: string;
 }
 
@@ -70,6 +75,20 @@ interface CharacterRaceRef {
   name?: string;
 }
 
+interface CharacterRaceVariantRef {
+  id: string;
+  nameSetRefs: CharacterRaceRef[];
+}
+
+const isCharacterRaceVariantArray = (value: unknown): value is CharacterRaceVariantRef[] =>
+  Array.isArray(value) &&
+  value.every(
+    (variant) =>
+      isRecord(variant) &&
+      typeof variant.id === "string" &&
+      isCharacterRaceRefArray(variant.nameSetRefs),
+  );
+
 const isCharacterRaceSeedArray = (value: unknown): value is CharacterRaceSeed[] =>
   Array.isArray(value) &&
   value.every(
@@ -78,7 +97,7 @@ const isCharacterRaceSeedArray = (value: unknown): value is CharacterRaceSeed[] 
 
 export const listCharacterRaces = (): CharacterRaceOverviewRow[] =>
   all<CharacterRaceOverviewRecord>(
-    `SELECT o.id, n.display_label AS name, o.name_set_count, n.route_path
+    `SELECT o.id, n.display_label AS name, o.variant_count, n.route_path
      FROM character_race_overview_rows o
      JOIN entity_nodes n
        ON n.entity_type = 'character-race'
@@ -88,7 +107,7 @@ export const listCharacterRaces = (): CharacterRaceOverviewRow[] =>
   ).map((row) => ({
     id: row.id,
     name: row.name,
-    nameSetCount: row.name_set_count,
+    variantCount: row.variant_count,
     routePath: row.route_path,
   }));
 
@@ -100,7 +119,7 @@ export const getCharacterRacePresentation = (
 
   const row = get<CharacterRacePresentationRecord>(
     `SELECT p.id, n.display_label AS name, p.render_context,
-            p.name_set_refs_json, n.route_path
+            p.variants_json, n.route_path
      FROM character_race_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'character-race'
@@ -111,13 +130,37 @@ export const getCharacterRacePresentation = (
   );
   if (!row) return undefined;
 
-  const refs = parseGeneratedJson(
-    row.name_set_refs_json,
+  const variants = parseGeneratedJson(
+    row.variants_json,
     "character-race",
-    "name_set_refs_json",
+    "variants_json",
     row.id,
-    isCharacterRaceRefArray,
-  );
+    isCharacterRaceVariantArray,
+  ).map((variant) => ({
+    nameSetCount: variant.nameSetRefs.length,
+    nameSets: readNameSets(row.id, variant.id, variant.nameSetRefs),
+  }));
+
+  return {
+    id: row.id,
+    name: row.name,
+    renderContext: validateRenderContext(
+      row.render_context,
+      "character-race",
+      row.id,
+      "character-race-presentation-v1",
+    ),
+    variantCount: variants.length,
+    variants,
+    routePath: row.route_path,
+  };
+};
+
+function readNameSets(
+  raceId: string,
+  variantId: string,
+  refs: CharacterRaceRef[],
+): CharacterRaceNameSet[] {
   const nameSets = all<CharacterRaceNameSetRecord>(
     `SELECT ns.id, ns.render_context, ns.generation_order, ns.seeds_json, ns.seed_count,
             refs.key AS position
@@ -130,7 +173,7 @@ export const getCharacterRacePresentation = (
            THEN 'named;name-set;' || json_extract(refs.value, '$.name')
        END
      ORDER BY refs.key`,
-    [row.name_set_refs_json],
+    [JSON.stringify(refs)],
   ).map((nameSet) => {
     validateRenderContext(
       nameSet.render_context,
@@ -153,21 +196,8 @@ export const getCharacterRacePresentation = (
   });
   if (nameSets.length !== refs.length) {
     throw new Error(
-      `character race '${row.id}' references ${refs.length} name sets, but only ${nameSets.length} are published`,
+      `character race '${raceId}' variant '${variantId}' references ${refs.length} name sets, but only ${nameSets.length} are published`,
     );
   }
-
-  return {
-    id: row.id,
-    name: row.name,
-    renderContext: validateRenderContext(
-      row.render_context,
-      "character-race",
-      row.id,
-      "character-race-presentation-v1",
-    ),
-    nameSetCount: refs.length,
-    nameSets,
-    routePath: row.route_path,
-  };
-};
+  return nameSets;
+}

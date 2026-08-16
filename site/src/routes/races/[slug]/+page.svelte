@@ -45,28 +45,41 @@
   </p>
 </section>
 
-{#if race.nameSets.length > 0}
-  <ol class="mt-6 grid gap-6">
-    {#each race.nameSets as nameSet, setIndex (nameSet.id)}
-      <li class="border-border bg-card rounded-lg border p-4">
-        <h2 class="text-lg font-semibold">
-          Name set {setIndex + 1}: <span class="font-mono text-base">{nameSet.id}</span>
-        </h2>
-        <p class="text-muted-foreground mt-1 text-sm">
-          {nameSet.seedCount}
-          {nameSet.seedCount === 1 ? "seed" : "seeds"}; generation order
-          {nameSet.generationOrder}.
-        </p>
-        <ul class="mt-4 grid gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
-          {#each nameSet.seeds as seed, seedIndex (seedIndex)}
-            <li class="font-mono text-sm">
-              {seed.name} <span class="text-muted-foreground">(weight {seed.weight})</span>
+<section class="mt-6 grid gap-3">
+  <h2 class="text-xl font-semibold">Race variants</h2>
+  <p class="text-muted-foreground">
+    This page combines the game's internal race variants. Each variant keeps its authored naming
+    vocabulary; the variant asset names are not reader-facing content.
+  </p>
+</section>
+
+<ol class="mt-6 grid gap-6">
+  {#each race.variants as variant, variantIndex (variantIndex)}
+    <li class="border-border bg-card rounded-lg border p-4">
+      <h2 class="text-lg font-semibold">Variant {variantIndex + 1}</h2>
+      {#if variant.nameSets.length > 0}
+        <ol class="mt-4 grid gap-4">
+          {#each variant.nameSets as nameSet, setIndex (nameSet.id)}
+            <li>
+              <h3 class="font-semibold">Name set {setIndex + 1}</h3>
+              <p class="text-muted-foreground mt-1 text-sm">
+                {nameSet.seedCount}
+                {nameSet.seedCount === 1 ? "seed" : "seeds"}; generation order
+                {nameSet.generationOrder}.
+              </p>
+              <ul class="mt-3 grid gap-x-4 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
+                {#each nameSet.seeds as seed, seedIndex (seedIndex)}
+                  <li class="font-mono text-sm">
+                    {seed.name} <span class="text-muted-foreground">(weight {seed.weight})</span>
+                  </li>
+                {/each}
+              </ul>
             </li>
           {/each}
-        </ul>
-      </li>
-    {/each}
-  </ol>
-{:else}
-  <p class="text-muted-foreground mt-6">This race has no authored name-set vocabulary.</p>
-{/if}
+        </ol>
+      {:else}
+        <p class="text-muted-foreground mt-3">This variant has no authored name-set vocabulary.</p>
+      {/if}
+    </li>
+  {/each}
+</ol>

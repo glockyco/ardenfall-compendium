@@ -11,6 +11,24 @@ import type { SnapshotEnvelope } from "../src/types.ts";
 
 const femaleSetId = "named;name-set;nset_mystelf_female";
 const maleSetId = "named;name-set;nset_mystelf_male";
+const race = (
+  id: string,
+  name: string | null,
+  parentRef: object,
+  nameSetRefs: object[],
+  isSet: boolean,
+  owner: string | null = null,
+): SnapshotEnvelope["rows"][number] => ({
+  id,
+  fields: {
+    id,
+    raceName: name,
+    raceNameProvenance: name === null ? "absent" : isSet ? "own" : "inherited",
+    raceNameOwner: owner,
+    parentRef,
+    nameSetRefs,
+  },
+});
 
 function seedDatabase(): Database {
   const db = new Database(":memory:");
@@ -21,7 +39,7 @@ function seedDatabase(): Database {
 }
 
 describe("character race and name set pipeline", () => {
-  it("round-trips a named race with its ordered name sets", () => {
+  it("groups variants and includes the name-authoring chain root", () => {
     const db = seedDatabase();
     const nameSets: SnapshotEnvelope = {
       entityId: "name-set",
@@ -29,103 +47,167 @@ describe("character race and name set pipeline", () => {
       rows: [
         {
           id: femaleSetId,
-          fields: {
-            id: femaleSetId,
-            seeds: [{ name: "Saya", weight: 2 }],
-            generationOrder: 5,
-          },
+          fields: { id: femaleSetId, seeds: [{ name: "Saya", weight: 2 }], generationOrder: 5 },
         },
         {
           id: maleSetId,
-          fields: {
-            id: maleSetId,
-            seeds: [{ name: "Sako", weight: 7 }],
-            generationOrder: 5,
-          },
+          fields: { id: maleSetId, seeds: [{ name: "Sako", weight: 7 }], generationOrder: 5 },
         },
       ],
     };
+    const missing = { kind: "missing", reason: "noParent", source: "ParameterizedObject.parent" };
+    const parent = (name: string) => ({ kind: "namedAsset", entity: "character-race", name });
     const races: SnapshotEnvelope = {
       entityId: "character-race",
       schemaVersion: 1,
       rows: [
-        {
-          id: "named;character-race;karu-elf",
-          fields: {
-            id: "named;character-race;karu-elf",
-            raceName: "Karu Elf",
-            nameSetRefs: [
-              { kind: "namedAsset", entity: "name-set", name: "nset_mystelf_female" },
-              { kind: "namedAsset", entity: "name-set", name: "nset_mystelf_male" },
-            ],
-          },
-        },
+        race("named;character-race;karu-elf", "Karu Elf", missing, [], true),
+        race(
+          "named;character-race;karu-elf-female",
+          "Karu Elf",
+          parent("karu-elf"),
+          [{ kind: "namedAsset", entity: "name-set", name: "nset_mystelf_female" }],
+          false,
+          "race_karu_elf",
+        ),
+        race(
+          "named;character-race;karu-elf-male",
+          "Karu Elf",
+          parent("karu-elf"),
+          [{ kind: "namedAsset", entity: "name-set", name: "nset_mystelf_male" }],
+          true,
+        ),
+        race(
+          "named;character-race;karu-elf-female-old",
+          "Karu Elf",
+          parent("karu-elf-female"),
+          [],
+          false,
+          "race_karu_elf",
+        ),
+        race("named;character-race;nameless", null, missing, [], false),
       ],
     };
 
     canonicaliseNameSets(db, nameSets);
     canonicaliseCharacterRaces(db, races);
-    emitNameSetReadModels(db);
-    emitCharacterRaceReadModels(db);
-
-    const race = db
-      .query<{ name: string; name_set_refs_json: string }, []>(
-        `SELECT name, name_set_refs_json
-         FROM character_race_presentation_rows`,
-      )
-      .get();
-    expect(race).toEqual({
-      name: "Karu Elf",
-      name_set_refs_json: JSON.stringify(races.rows[0]!.fields.nameSetRefs),
-    });
-    expect(JSON.parse(race!.name_set_refs_json)).toHaveLength(2);
-    expect(JSON.parse(race!.name_set_refs_json)).toEqual([
-      { kind: "namedAsset", entity: "name-set", name: "nset_mystelf_female" },
-      { kind: "namedAsset", entity: "name-set", name: "nset_mystelf_male" },
-    ]);
     expect(
       db
-        .query<{ entity_type: string; entity_id: string; label: string; route_path: string }, []>(
-          `SELECT entity_type, entity_id, label, route_path FROM entity_nodes`,
+        .query(
+          `
+      SELECT race_id, field_name, provenance, owner
+      FROM character_race_value_provenance
+      ORDER BY race_id
+    `,
         )
         .all(),
     ).toEqual([
       {
-        entity_type: "character-race",
-        entity_id: "named;character-race;karu-elf",
-        label: "Karu Elf",
-        route_path: "/races/karu-elf--karu-elf",
+        race_id: "named;character-race;karu-elf",
+        field_name: "raceName",
+        provenance: "own",
+        owner: null,
       },
+      {
+        race_id: "named;character-race;karu-elf-female",
+        field_name: "raceName",
+        provenance: "inherited",
+        owner: "race_karu_elf",
+      },
+      {
+        race_id: "named;character-race;karu-elf-female-old",
+        field_name: "raceName",
+        provenance: "inherited",
+        owner: "race_karu_elf",
+      },
+      {
+        race_id: "named;character-race;karu-elf-male",
+        field_name: "raceName",
+        provenance: "own",
+        owner: null,
+      },
+      {
+        race_id: "named;character-race;nameless",
+        field_name: "raceName",
+        provenance: "absent",
+        owner: null,
+      },
+    ]);
+    emitNameSetReadModels(db);
+    emitCharacterRaceReadModels(db);
+
+    expect(
+      db.query(`SELECT id, name, variant_count FROM character_race_overview_rows`).all(),
+    ).toEqual([{ id: "named;character-race;karu-elf", name: "Karu Elf", variant_count: 4 }]);
+    const variants = db
+      .query<{ variants_json: string }, []>(
+        `SELECT variants_json FROM character_race_presentation_rows`,
+      )
+      .get();
+    const variantIds = JSON.parse(variants!.variants_json).map(
+      (variant: { id: string; nameSetRefs: object[] }) => variant.id,
+    );
+    expect(variantIds).toEqual([
+      "named;character-race;karu-elf",
+      "named;character-race;karu-elf-female",
+      "named;character-race;karu-elf-female-old",
+      "named;character-race;karu-elf-male",
+    ]);
+    expect(variantIds).toContain("named;character-race;karu-elf");
+    expect(
+      JSON.parse(variants!.variants_json).find((variant: { id: string }) =>
+        variant.id.endsWith("female-old"),
+      ).nameSetRefs,
+    ).toEqual([]);
+    expect(
+      db
+        .query(
+          `SELECT entity_id AS id, has_page FROM entity_nodes WHERE entity_type = 'character-race' ORDER BY entity_id`,
+        )
+        .all(),
+    ).toEqual([
+      { id: "named;character-race;karu-elf", has_page: 1 },
+      { id: "named;character-race;karu-elf-female", has_page: 0 },
+      { id: "named;character-race;karu-elf-female-old", has_page: 0 },
+      { id: "named;character-race;karu-elf-male", has_page: 0 },
+      { id: "named;character-race;nameless", has_page: 0 },
     ]);
   });
 
-  it("canonicalises a race with no player-visible name", () => {
+  it("publishes a named race with one variant", () => {
     const db = seedDatabase();
     canonicaliseCharacterRaces(db, {
       entityId: "character-race",
       schemaVersion: 1,
-      rows: [
-        {
-          id: "named;character-race;race_balati",
-          fields: {
-            id: "named;character-race;race_balati",
-            raceName: null,
-            nameSetRefs: [],
-          },
-        },
-      ],
+      rows: [race("named;character-race;single", "Single Race", { kind: "missing" }, [], true)],
     });
-
+    emitCharacterRaceReadModels(db);
     expect(
-      db
-        .query<{ id: string; race_name: string | null; name_set_refs_json: string }, []>(
-          `SELECT id, race_name, name_set_refs_json FROM character_races`,
-        )
-        .get(),
+      db.query(`SELECT id, name, variant_count FROM character_race_overview_rows`).get(),
     ).toEqual({
-      id: "named;character-race;race_balati",
-      race_name: null,
-      name_set_refs_json: "[]",
+      id: "named;character-race;single",
+      name: "Single Race",
+      variant_count: 1,
+    });
+  });
+
+  it("retains a nameless race canonically without making a page", () => {
+    const db = seedDatabase();
+    canonicaliseCharacterRaces(db, {
+      entityId: "character-race",
+      schemaVersion: 1,
+      rows: [race("named;character-race;race_balati", null, { kind: "missing" }, [], false)],
+    });
+    expect(db.query(`SELECT id, race_name, name_set_refs_json FROM character_races`).get()).toEqual(
+      {
+        id: "named;character-race;race_balati",
+        race_name: null,
+        name_set_refs_json: "[]",
+      },
+    );
+    emitCharacterRaceReadModels(db);
+    expect(db.query(`SELECT COUNT(*) AS count FROM character_race_overview_rows`).get()).toEqual({
+      count: 0,
     });
   });
 
@@ -139,25 +221,14 @@ describe("character race and name set pipeline", () => {
     canonicaliseNameSets(db, {
       entityId: "name-set",
       schemaVersion: 1,
-      rows: [
-        {
-          id: femaleSetId,
-          fields: { id: femaleSetId, seeds, generationOrder: 5 },
-        },
-      ],
+      rows: [{ id: femaleSetId, fields: { id: femaleSetId, seeds, generationOrder: 5 } }],
     });
     emitNameSetReadModels(db);
-
     const row = db
       .query<{ generation_order: number; seeds_json: string; seed_count: number }, []>(
         `SELECT generation_order, seeds_json, seed_count FROM name_set_presentation_rows`,
       )
       .get();
-    expect(row).toEqual({
-      generation_order: 5,
-      seeds_json: JSON.stringify(seeds),
-      seed_count: 3,
-    });
-    expect(JSON.parse(row!.seeds_json)).toEqual(seeds);
+    expect(row).toEqual({ generation_order: 5, seeds_json: JSON.stringify(seeds), seed_count: 3 });
   });
 });
