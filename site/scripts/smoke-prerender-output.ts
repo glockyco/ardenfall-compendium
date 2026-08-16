@@ -7,6 +7,7 @@ import { listingRoutePaths } from "../src/lib/server/sitemap-routes";
 interface ReleaseProbe {
   id: string;
   name: string;
+  canonicalSlug: string;
   displayIconHash: string | null;
 }
 
@@ -117,14 +118,36 @@ if (overview.includes("_app/immutable/entry/app")) {
 }
 
 const detailPath = firstExisting([
-  join(outputDir, "items", `${probe.id}.html`),
-  join(outputDir, "items", probe.id, "index.html"),
+  join(outputDir, "items", `${probe.canonicalSlug}.html`),
+  join(outputDir, "items", probe.canonicalSlug, "index.html"),
 ]);
-if (!detailPath) throw new Error(`missing prerendered detail page for ${probe.id}`);
+if (!detailPath) throw new Error(`missing prerendered detail page for ${probe.canonicalSlug}`);
 
 const detail = readFileSync(detailPath, "utf8");
 for (const snippet of [probe.name, "item-icon", "/assets/"]) {
   if (!detail.includes(snippet)) throw new Error(`detail HTML missing ${snippet}`);
+}
+for (const [surface, html] of [
+  ["overview", overview],
+  ["detail", detail],
+] as const) {
+  // An icon that carries no alternative text repeats the name beside it, so it must
+  // be hidden from a screen reader rather than announced as an unnamed graphic.
+  const icons = [...html.matchAll(/<[a-z]+[^>]*\bitem-icon\b[^>]*>/g)].map((match) => match[0]);
+  if (icons.length === 0) throw new Error(`${surface} HTML has no item icon element`);
+  for (const icon of icons) {
+    const alt = /\salt="([^"]*)"/.exec(icon);
+    if (alt?.[1]) continue;
+    if (!icon.includes('aria-hidden="true"')) {
+      throw new Error(`${surface} item icon without alternative text must be aria-hidden: ${icon}`);
+    }
+  }
+  // A title attribute is not reachable by keyboard or touch, so tooltip content
+  // belongs in the page rather than in an attribute.
+  const body = html.slice(html.indexOf("<body"));
+  if (/\stitle="/.test(body)) {
+    throw new Error(`${surface} HTML must not carry tooltip content in a title attribute`);
+  }
 }
 if (detail.includes("_app/immutable/entry/app")) {
   throw new Error("detail page should not ship Svelte hydration entry by default");
@@ -564,7 +587,12 @@ function isNullableString(value: unknown): value is string | null {
 
 function isReleaseProbe(value: unknown): value is ReleaseProbe {
   if (!isRecord(value)) return false;
-  return isString(value.id) && isString(value.name) && isNullableString(value.displayIconHash);
+  return (
+    isString(value.id) &&
+    isString(value.name) &&
+    isString(value.canonicalSlug) &&
+    isNullableString(value.displayIconHash)
+  );
 }
 
 function isReleaseManifest(value: unknown): value is ReleaseManifest {

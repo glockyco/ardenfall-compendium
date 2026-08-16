@@ -67,6 +67,10 @@ export default tseslint.config(
     // benefit from the check.
     files: ["**/*.svelte", "**/*.svelte.ts"],
     rules: {
+      // Rich text arrives as parsed `rich_text_v1` nodes and is rendered element by
+      // element, so a component never needs raw markup. The linter owns this rather
+      // than a script that greps components for the syntax.
+      "svelte/no-at-html-tags": "error",
       "svelte/no-navigation-without-resolve": [
         "error",
         {

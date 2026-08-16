@@ -33,7 +33,6 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "smoke:error-route": "bun run scripts/smoke-error-route.ts",
-    "smoke:item-icons": "bun run scripts/smoke-item-icons.ts",
     "smoke:prerender": "bun run scripts/smoke-prerender-output.ts",
     "smoke:pagefind": "bun run scripts/smoke-pagefind.ts",
     "smoke:map": "bun run scripts/smoke-map-route.ts",
