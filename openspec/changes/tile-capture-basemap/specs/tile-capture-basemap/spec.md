@@ -1,82 +1,117 @@
 ## Purpose
 
-Defines reproducible terrain capture, static tile delivery, geometry freshness checks, and descriptor-driven basemap rendering.
+Defines how the compendium produces a basemap for a map, what a capture must record to be trusted, how tiles are delivered, and how the map renders them.
 
 ## ADDED Requirements
 
-### Requirement: A capture run derives a deterministic tile set from world geometry
+### Requirement: Capture bounds come from the map's declared grid
 
-A controller-driven capture command MUST derive bounds from the game's terrain geometry for each map. It MUST use an orthographic top-down projection. The capture MUST make the world-to-map mapping ours by construction. World x MUST map to map x. World z MUST map to map y. World y MUST map to elevation. A repeated run against the same geometry and capture state MUST produce the same tile content.
+A capture MUST take its bounds from the map's declared cell grid, computed from the grid offset, the grid size, and the cell size the game declares for that map. A capture MUST NOT derive bounds from placed content, and MUST NOT read bounds from a value written by hand.
 
-#### Scenario: A map is captured from its terrain
+The published bounds MUST contain every placement the compendium publishes for that map. A placement outside the published bounds MUST fail the pipeline.
 
-- **WHEN** the controller starts a capture for a map
-- **THEN** the command derives the capture bounds from world geometry
-- **AND** it renders an orthographic top-down tile set
-- **AND** the resulting tiles use the world x, z, and y mapping stated above
+#### Scenario: A map declares its grid
 
-#### Scenario: The same geometry is captured twice
+- **WHEN** a capture starts for a map
+- **THEN** its bounds equal the grid rectangle in world units
+- **AND** the recorded bounds name the grid offset, grid size, and cell size they came from
 
-- **WHEN** two runs use the same geometry and capture state
-- **THEN** they produce identical tile bytes and bounds
+#### Scenario: A placement falls outside the captured bounds
 
-### Requirement: A tile set is rejected when its geometry is stale
+- **WHEN** the pipeline ingests a tile set whose bounds exclude a published placement of that map
+- **THEN** the pipeline fails with a diagnostic naming the placement and the bounds
 
-Each capture run MUST record a checksum of the geometry used to produce its tile set. A renderer MUST compare that checksum with the current map geometry before it uses the tile set. A mismatch MUST fail the basemap load rather than render stale terrain.
+### Requirement: A capture records every input it depends on
 
-#### Scenario: A matching tile set is loaded
+A capture MUST set its own lighting, and MUST NOT depend on the session's time of day, weather, or interior lighting state. A capture MUST record the game build, the map, the grid, the pixels per unit, the camera parameters, the lighting values it set, the culling mask, the pinned time, the pinned weather, and the cell scenes it loaded.
 
-- **WHEN** the recorded geometry checksum equals the current geometry checksum
-- **THEN** the basemap is eligible to render
+A rerun with equal recorded inputs MUST produce equal bounds and an equal tile index.
 
-#### Scenario: A stale tile set is requested
+#### Scenario: Two captures share their inputs
 
-- **WHEN** the recorded geometry checksum differs from the current geometry checksum
-- **THEN** the basemap load fails with a stale-capture diagnostic
-- **AND** no stale tile is rendered
+- **WHEN** two captures record equal inputs for one map
+- **THEN** their bounds are equal
+- **AND** their tile index covers the same tile positions
 
-### Requirement: Capture output excludes runtime overlays
+#### Scenario: A capture runs while the world reports no sunlight
 
-Before rendering, the capture MUST suppress time progression, fog, post-processing, roofs, characters, particles, canvases, nameplates, damage numbers, and world-space text. The capture MUST verify suppression by comparing captures of matching terrain while dynamic content is present.
+- **WHEN** a capture begins while the session's directional light sits at zero intensity
+- **THEN** the capture sets its own sun and ambient values
+- **AND** the plate is lit by those values rather than by the session
 
-#### Scenario: Dynamic content is present during capture
+### Requirement: A capture mutates no world state
 
-- **WHEN** the same terrain is captured twice with dynamic content present
-- **THEN** the suppression verification finds no output difference caused by those listed overlays
-- **AND** the capture restores the runtime state after verification
+A capture MUST exclude transient content with a camera culling mask rather than by deactivating objects. Where a capture cannot express an exclusion as a layer, it MUST restore what it changed before it returns, and MUST report what it changed.
 
-### Requirement: Tiles use a static WebP pyramid
+After a capture, an export running in the same session MUST produce the same data it produces without a capture.
 
-The capture MUST write WebP tiles under `/tiles/{map}/{z}/{x}/{y}.webp`. The delivery path MUST serve those files as static assets without a Worker. Empty tiles MUST be omitted. The published bounds MUST remain available even when empty tiles are omitted.
+#### Scenario: Transient content is excluded
 
-#### Scenario: A non-empty tile is published
+- **WHEN** a capture renders a cell containing characters, items, and effects
+- **THEN** the plate contains none of them
+- **AND** every object in the scene remains active
 
-- **WHEN** a rendered tile contains terrain
-- **THEN** it is written as a WebP file at the documented pyramid path
-- **AND** the static delivery path can serve it without Worker execution
+#### Scenario: An export follows a capture in one session
 
-#### Scenario: A tile contains no terrain
+- **WHEN** an export runs after a capture in the same session
+- **THEN** its snapshot matches an export from a session with no capture
 
-- **WHEN** a tile contains no rendered terrain
-- **THEN** the tile file is omitted
-- **AND** the geometry-derived bounds still describe that tile's position in the pyramid
+### Requirement: Tiles are published as content-hashed assets with a generated index
 
-### Requirement: The basemap is a descriptor-declared map layer
+Each tile MUST be published through the asset path that carries every other image, named by the hash of its content and recorded in the artifact manifest. The pipeline MUST emit a tile index that resolves a map, a zoom level, and a tile position to that asset and its byte size.
 
-The pipeline MUST publish the basemap through the existing descriptor-declared layer contract and `map_layers` data path. The map MUST consume the basemap from that generated layer metadata. Map components MUST NOT branch on basemap identity.
+The finest zoom level MUST match the maximum zoom the map view allows, and both MUST come from one producer.
 
-#### Scenario: A descriptor declares the basemap
+A tile position inside the published bounds that the index does not resolve MUST fail the pipeline. A position with nothing to render MUST be recorded as empty rather than omitted silently.
 
-- **WHEN** site metadata emission processes a descriptor with a basemap layer
-- **THEN** it publishes the basemap layer through `map_layers`
-- **AND** the map loads it through the same layer metadata path as other layers
-- **AND** no map component needs a basemap-specific branch
+#### Scenario: A tile reaches the site
 
-### Requirement: The pipeline reports tile output
+- **WHEN** the pipeline ingests a capture
+- **THEN** each tile is an asset named by its content hash
+- **AND** the tile index resolves its map, zoom, and position to that asset
+- **AND** the artifact manifest records it
 
-The pipeline MUST report the generated tile count and total tile bytes for each capture output. The report MUST identify the map and capture geometry checksum.
+#### Scenario: A tile is missing inside the published bounds
+
+- **WHEN** the index lacks a tile position that the published bounds contain
+- **THEN** the pipeline fails with a diagnostic naming the map, zoom, and position
+
+#### Scenario: A region holds nothing to render
+
+- **WHEN** a tile position inside the bounds contains no geometry
+- **THEN** the index records that position as empty
+- **AND** the map renders no tile there
+
+### Requirement: The map renders the basemap from generated metadata
+
+The pipeline MUST publish basemap metadata per map, carrying the bounds, the pixels per unit, the zoom range, the tile size, and the tile index reference. The basemap MUST NOT be declared by an entity descriptor, because it belongs to no entity.
+
+The map MUST render the basemap beneath every marker layer. No map component may branch on layer identity, including the basemap.
+
+The site MUST NOT transform a coordinate. The basemap MUST use the map coordinates the pipeline already publishes.
+
+#### Scenario: A map view carries a basemap
+
+- **WHEN** the site loads a map that publishes basemap metadata
+- **THEN** it renders the basemap below the marker layers
+- **AND** it positions tiles from the published bounds and pixels per unit
+
+#### Scenario: A map publishes no basemap
+
+- **WHEN** a map has no captured tile set
+- **THEN** the map renders its markers with no basemap
+- **AND** no component fails
+
+### Requirement: Capture output is reported with its provenance
+
+The pipeline MUST report, per map, the tile count, the total tile bytes, the published bounds, the pixels per unit, and the game build the capture ran against. A capture whose game build differs from the snapshot's game build MUST fail the pipeline.
 
 #### Scenario: A capture is reported
 
-- **WHEN** the pipeline ingests a completed tile set
-- **THEN** its report includes the map, geometry checksum, tile count, and total WebP bytes
+- **WHEN** the pipeline finishes ingesting a capture
+- **THEN** its report names the map, bounds, pixels per unit, tile count, total bytes, and game build
+
+#### Scenario: A capture and a snapshot disagree about the build
+
+- **WHEN** a tile set records a different game build from the snapshot being published
+- **THEN** the pipeline fails with a diagnostic naming both builds

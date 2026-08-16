@@ -1,72 +1,131 @@
 ## Context
 
-The current map draws markers over a blank canvas. The game's authored map texture does not provide a reliable terrain basemap.
+See proposal.md for the motivation. This document holds the measurements that shaped the plan, and the decisions that follow from them.
 
-Terrain capture must use the game world as its source. Terrain bounds can exceed the extent of placed content. Bounds therefore come from world geometry.
+Every measurement below comes from one live session against Ardenfall Demo `0.0.10.91` on 2026-08-16, driven through the HotRepl CLI. A probe targets one game build and decays with that build. Repeat a probe before trusting it against a later build.
 
-The capture runs in game space and writes a static tile pyramid. The map already loads layers from descriptor metadata and the `map_layers` read model.
+The evaluator accepts one expression, so each probe is an invoked lambda: `new System.Func<string>(() => { … })()`.
+
+### What the game declares
+
+| Fact                  | Value                                                                               | Probe                                                                    |
+| --------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| overworld grid        | `gridOffset` (-18, -10), `gridSize` (25, 23), `cellSize` 150                        | `Resources.FindObjectsOfTypeAll<WorldData>()[0].maps`                    |
+| interior grid         | `gridOffset` (-6, -2), `gridSize` (12, 9), `cellSize` 600                           | same                                                                     |
+| interior terrain      | `enableTerrain` false                                                               | same                                                                     |
+| cell records          | 607 total: 575 overworld, 32 interior                                               | `Resources.FindObjectsOfTypeAll<CellData>()` grouped by `map.id`         |
+| cell scenes in build  | 27: 24 overworld in x -5..0 and z -10..-7, and interiors at (-6,-2), (-6,6), (4,-2) | `SceneUtility.GetScenePathByBuildIndex` over `sceneCountInBuildSettings` |
+| distant-cell prefabs  | overworld 575, interior 0                                                           | `MapData.GeneratedAssetReferences.distantCellPrefabs`                    |
+| generated map imagery | overworld 12 parts of 2048², normal size (6250, 5750); interior none                | `GeneratedAssetReferences.stitchedMapTextureParts`                       |
+| cell world origin     | offset coordinate times `cellSize`, at the cell corner                              | `cell_overworld_-3.-8` reported position (-450, 0, -1200)                |
+
+Grid bounds follow: overworld x -2700 to 1050 and z -1500 to 1950; interior x -3600 to 3600 and z -1200 to 4200.
+
+### What the reader needs covered
+
+Published placements from release `0.0.10.91-20260816-1023292829440`: overworld markers span x -1573 to 247 and z -1129 to 534; interior markers span x -3412 to 2936 and z -1158 to 3995. Every marker of both maps lies inside its declared grid. 83 of 373 lie inside an authored cell scene.
+
+### What a capture produced
+
+A camera with `orthographic = true`, `orthographicSize = 75`, position (-300, 1200, -1125), rotation (90, 0, 0), a 1024 by 512 render texture, and a culling mask excluding UI, NPC, player, item, and damageable layers rendered two loaded overworld cells into a fully opaque plate showing coastline, sand, foliage, a road, and structures. `ImageConversion.EncodeToPNG` returned 433,796 bytes.
+
+The same probe with the world time pinned to 12:00 and `timeMultiplier` set to 0 produced an almost identical plate. `ArdenfallSkybox.instance.ForceUpdate()` set the sun to intensity 0 pointing straight down. The player stood inside an interior throughout, and the game kills outdoor light in that state.
 
 ## Goals and non-goals
 
-**Goals:**
+**Goals**
 
-- Capture terrain reproducibly for each map.
-- Bind every tile set to the geometry used for its capture.
-- Remove runtime overlays from capture output.
-- Serve static WebP tiles through the existing map layer contract.
-- Report tile counts and total bytes.
+- A basemap under the markers, for every map the compendium publishes.
+- Bounds and tile positions that follow from data the game declares.
+- A capture whose result depends only on inputs it records.
+- Delivery through the asset path that already ships icons.
 
-**Non-goals:**
+**Non-goals**
 
-- Replacing the descriptor-owned map layer contract.
-- Adding a second world-to-map transform in the site.
-- Capturing runtime characters or other transient state.
+- A second world-to-map transform. `pipeline/src/entities/location/canonicaliser.ts` owns it.
+- A tile server, a runtime image service, or a Worker route.
+- Capturing transient content: characters, effects, weather, or the player.
+- Building a world loader. `world-cell-content` owns cell traversal.
 
 ## Decisions
 
-### 1. Capture uses orthographic top-down rendering
+### 1. Bounds come from the declared grid
 
-The controller-driven command captures each map from an orthographic top-down camera. It derives bounds from world geometry rather than placed content.
+`MapData.gridOffset`, `MapData.gridSize`, and `MapSettings.cellSize` give each map a rectangle in world units. The capture uses that rectangle.
 
-The capture suppresses time progression, fog, post-processing, roofs, characters, particles, canvases, nameplates, damage numbers, and world-space text before rendering.
+Two other candidates were rejected. Placed-content bounds move whenever content moves, and they omit terrain a reader can see; the earlier draft used them and undersized the overworld. A hand-written constant is what Ancient Kingdoms does in `MapScreenshotter.cs`, where bounds x -880 to 900 and z -740 to 1300 live in source, and what Erenshor does per zone in `zone-capture-config.json`. Both must be re-measured by hand whenever the game changes.
 
-A matching-terrain comparison with dynamic content present verifies that suppression works. The capture restores runtime state after the comparison.
+The game's own imagery confirms the rectangle: 6250 by 5750 pixels over 3750 by 3450 units is 1.667 pixels per unit on both axes, so the generator used the same grid.
 
-### 2. Capture makes the coordinate mapping ours by construction
+### 2. The capture owns its lighting
 
-`pipeline/src/entities/location/canonicaliser.ts` maps world x to map x, world z to map y, and world y to elevation. It applies no sign flip. The game uses the same orientation.
+Measured: the sun sits at intensity 0 while the player is inside an interior, and forcing the sky update does not change that. A capture that inherits game lighting therefore depends on where the player stands, which is not an input anyone records.
 
-The capture uses that mapping as its construction rule. The tile plate therefore does not depend on a later interpretation of game UI coordinates.
+The capture sets a fixed sun direction, sun intensity, ambient value, and fog state, disables post-processing, and records each value. Two captures of one cell agree because their inputs agree, not because the save happened to match.
 
-### 3. Geometry checksums guard freshness
+The game's own generated imagery is evenly lit with no shadows and no time of day, which is the same conclusion reached by its authors.
 
-Each run records a checksum of the geometry used to render its tiles. The map compares that checksum with current geometry before rendering. A mismatch fails the load instead of displaying stale terrain.
+### 3. Suppression uses a culling mask
 
-### 4. Static WebP delivery keeps the runtime simple
+`LayerUtility` names the layers: Water 4, postProcess 12, NoInteriorLight 13, Door 15, Item 16, Damagable 17, Player 18, NPC 19, WeatherCollision 20, Element 21, details 22 and 23, grass 6.
 
-The pyramid uses `/tiles/{map}/{z}/{x}/{y}.webp`. Empty tiles are omitted, while geometry bounds remain authoritative. The pipeline reports tile count and total bytes for each map and checksum.
+A culling mask excludes a layer for one camera and mutates nothing. Deactivating objects, which `GeometrySuppressor.cs` does in Erenshor and `MapScreenshotter.cs` does in Ancient Kingdoms, leaves the world in a modified state; Ancient Kingdoms documents that its `ShowEntities` is never called. A capture inside an export session must not damage the session that follows it.
 
-### 5. Open decision: tile storage
+Interiors need their ceilings removed to be legible from above, and a ceiling may not have a layer of its own. That is the open question in decision 8.
 
-The tiles can live in an external bucket such as Cloudflare R2 behind a custom domain. They can also live in the repository beside the static site assets.
+### 4. Reproducibility means recorded inputs, not identical bytes
 
-External storage avoids repeated repository rewrites as terrain changes. Repository storage keeps versioning and deployment in one place. The choice must happen before the first full run because moving tiles changes every URL.
+A GPU render is not bit-stable across drivers, frames, or streaming state. A requirement for identical bytes would fail on first contact and then be weakened, so it is not written.
 
-### 6. Open decision: interior capture shape
+Instead the capture records its inputs and its inventory: game build, map, grid, pixels per unit, camera parameters, lighting values, culling mask, pinned time, pinned weather, and the cell scenes loaded. A rerun with equal inputs must produce equal bounds and an equal tile index. Tile content is compared with a tolerance when it is compared at all.
 
-Interiors can be captured per interior space. They can also share a coordinate range and use sparse tiles for occupied spaces.
+Erenshor's `masterChecksum` in `state.py` is a skip guard for re-running a capture, not a claim about pixel equality. This plan keeps that meaning.
 
-Per-space capture avoids empty ranges and isolates updates. Shared sparse capture preserves one coordinate range but may create more index and cache work. The choice depends on the first complete interior inventory.
+### 5. Tiles are content-hashed assets with a generated index
 
-### 7. Open decision: lighting seams
+The repository already carries images end to end. `SpriteAssetExporter` writes `assets/{entityId}/{sha256}.png`, `emit-assets.ts` converts each to `assets/{sha256}.webp`, the artifact manifest records the asset tree hash, `stage-artifact.ts` copies the tree into the published directory, and the site requests `/assets/{hash}.webp`.
 
-The first capture can measure seams and then receive a lighting correction. The first release can also accept visible seams until a lighting correction exists.
+Tiles ride that path. A generated `map_tiles` index resolves map, zoom, and tile position to an asset hash and byte size.
 
-A correction may require game-side lighting changes or post-capture processing. Accepting seams keeps the first capture available but leaves a visible quality defect.
+This dissolves two problems the earlier plan carried. A path scheme of `/tiles/{map}/{z}/{x}/{y}.webp` needs cache invalidation on recapture, while a content-hashed asset never goes stale. And a tile index emitted from the same snapshot as the markers cannot disagree with them, so the browser needs no freshness check. The earlier requirement asked a renderer to compare a geometry checksum before rendering, which the site cannot do: it holds no geometry.
+
+The choice between a repository directory and an external bucket also disappears, because tiles become artifact assets like every other image. Committing generated output is already prohibited.
+
+### 6. The basemap is map metadata, not a descriptor-declared layer
+
+`map_layers.entity_id` is `NOT NULL`, and every row belongs to an entity descriptor whose `map` block declares it. A basemap has no entity, so publishing it as a layer row would require inventing an entity that nothing else uses.
+
+The basemap therefore belongs to the map's own metadata, emitted per map id beside the layer rows, carrying bounds, pixels per unit, zoom range, tile size, and the index reference.
+
+The invariant the earlier plan defended still holds, and it is worth restating because both reference projects lost it. Adding a marker type here costs one `map` block in one descriptor. Ancient Kingdoms has a generic `createEntityLayer` helper in `layers.ts` and then calls it once per hardcoded type; the helper existed and the architecture defeated it. No map component may branch on layer identity, and that includes the basemap.
+
+### 7. Resolution is the cost driver
+
+File count grows with the square of pixels per unit. Tiles are 256 pixels. The deploy gate fails above 20,000 files, and the live build currently ships 7,373.
+
+| pixels per unit                    | overworld files | interior files | total | share of remaining budget |
+| ---------------------------------- | --------------- | -------------- | ----- | ------------------------- |
+| 1.667, matching the game's imagery | 790             | 63             | 853   | 7%                        |
+| 3.33                               | 2,995           | 255            | 3,250 | 26%                       |
+| 5                                  | 6,742           | 579            | 7,321 | 58%                       |
+
+Interior counts assume the three authored cells only, since interiors have no distant geometry and 105 of 108 grid cells hold nothing.
+
+Two further constraints belong to this decision. The pyramid's finest level should match the map's maximum zoom, because a tile finer than the viewer allows is never requested; the viewer's zoom cap and the tile resolution are one fact with one producer. And the plate at 3.4 pixels per unit that this session captured is the only sample of legibility so far, so the choice needs one comparison at two resolutions before it is made.
+
+### 8. Open decisions
+
+**Capture resolution.** Choose pixels per unit after comparing sample plates at two values against the game's own imagery at 1.667. Cost is in the table above.
+
+**Interior ceilings.** An interior captured from above shows its roof. Options: exclude a ceiling layer if one exists, disable renderers tagged by `InteriorFilterVolume` for the duration of a capture and accept a mutation that must be undone, or capture interiors from a height below the ceiling. The first is preferred and its feasibility is unmeasured.
+
+**The game's own imagery.** It exists at 1.667 pixels per unit with placement and scale arrays, is evenly lit, and needs no capture. Options: publish it as an alternative layer a reader can switch to, use it only as an alignment reference for our capture, or ignore it. It is generated at editor time, so it may lag the shipped build; our capture is canonical either way.
+
+**Cells without an authored scene.** 24 of 575 overworld cells ship a scene, and only 83 of 373 placements sit inside one. Distant-cell prefabs cover the rest at lower detail. Options: capture the full grid and accept two fidelity levels in one plate, capture only authored cells and leave the remainder blank, or capture the full grid and record which cells were authored so the map can mark the difference. A reader who sees terrain expects it to be real, so the third option is the honest one and it costs a flag per cell.
 
 ## Risks and trade-offs
 
-- Geometry changes invalidate the checksum and require a new capture.
-- Suppression can miss a new overlay type unless the verification comparison detects it.
-- Sparse interior tiles reduce files but make spatial indexing less obvious.
-- Static assets avoid a tile server but require deployment capacity for every published tile.
+- The capture depends on `world-cell-content`. Until that walk exists, no overworld geometry can be reached, and this change cannot start.
+- Distant-cell geometry differs in detail from authored geometry, so a full-grid plate is not uniform. Decision 8 addresses it.
+- Lighting is set by us, so the basemap will not match a screenshot a player takes. That is intended: a map is not a screenshot.
+- Interior maps share one coordinate plane while occupying three separate patches of it. The tile index is sparse, and the map must not imply terrain between them.
