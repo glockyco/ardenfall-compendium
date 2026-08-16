@@ -86,6 +86,43 @@ describe("character type resolution", () => {
     db.close();
   });
 
+  it("resolves a race variant to the race page a reader can open", () => {
+    const db = seedDatabase();
+    const definitionId = "named;character;variant-preset";
+    const variantId = "named;character-race;race_karu-elf_female";
+    insertCharacter(
+      db,
+      definitionId,
+      "",
+      missingParentRef(),
+      ref("character-race", "race_karu-elf_female"),
+    );
+    // The game points a definition at whichever variant it uses, and the variants
+    // of one race share a page, so only the chain root is published.
+    db.run(
+      `INSERT INTO character_races (id, race_name, name_set_refs_json, parent_ref_json)
+       VALUES (?, ?, '[]', NULL)`,
+      [raceId, "Karu Elf"],
+    );
+    db.run(
+      `INSERT INTO character_races (id, race_name, name_set_refs_json, parent_ref_json)
+       VALUES (?, ?, '[]', ?)`,
+      [
+        variantId,
+        "Karu Elf",
+        JSON.stringify({ kind: "namedAsset", entity: "character-race", name: "race_karu_elf" }),
+      ],
+    );
+    publishNode(db, "character-race", raceId, "Karu Elf", "/races/karu-elf");
+
+    expect(resolveCharacterType(db, definitionId)).toEqual({
+      id: raceId,
+      label: "Karu Elf",
+      routePath: "/races/karu-elf",
+    });
+    db.close();
+  });
+
   it("finds a named grandparent two levels up", () => {
     const db = seedDatabase();
     const grandparentId = "named;character;named-grandparent";

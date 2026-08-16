@@ -1,3 +1,4 @@
+import { findSameNameChainRoot } from "./chain";
 import type { Database } from "bun:sqlite";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
 import type { SnapshotRef } from "../../types.ts";
@@ -94,41 +95,6 @@ export function emitCharacterRaceReadModels(db: Database, routeBase = "/races"):
     }
   });
   tx();
-}
-
-function findSameNameChainRoot(row: CharacterRaceRow, byId: Map<string, CharacterRaceRow>): string {
-  const name = row.race_name?.trim();
-  if (!name) return row.id;
-  let current = row;
-  const visited = new Set<string>();
-  while (!visited.has(current.id)) {
-    visited.add(current.id);
-    const parentId = parentIdFromJson(current.parent_ref_json, current.id);
-    if (parentId === null) return current.id;
-    const parent = byId.get(parentId);
-    if (!parent || parent.race_name?.trim() !== name) return current.id;
-    current = parent;
-  }
-  throw new Error(`character race parent cycle includes '${row.id}'`);
-}
-
-function parentIdFromJson(value: string | null, raceId: string): string | null {
-  if (value === null) return null;
-  let ref: unknown;
-  try {
-    ref = JSON.parse(value) as unknown;
-  } catch (error) {
-    throw new Error(`character race '${raceId}' has invalid parent reference JSON`, {
-      cause: error,
-    });
-  }
-  if (!ref || typeof ref !== "object") return null;
-  const candidate = ref as { kind?: unknown; entity?: unknown; name?: unknown };
-  return candidate.kind === "namedAsset" &&
-    candidate.entity === "character-race" &&
-    typeof candidate.name === "string"
-    ? `named;character-race;${candidate.name}`
-    : null;
 }
 
 function parseNameSetRefs(value: string, raceId: string): SnapshotRef[] {

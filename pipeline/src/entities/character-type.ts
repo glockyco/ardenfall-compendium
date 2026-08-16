@@ -1,3 +1,4 @@
+import { findSameNameChainRoot, loadRaceChain } from "./character-race/chain";
 import type { Database } from "bun:sqlite";
 import type { SnapshotRef } from "../types.ts";
 
@@ -59,10 +60,16 @@ export function resolveCharacterType(
   if (!definition) return null;
   const raceId = resolveReferenceId(definition.race_ref_json, "character-race");
   if (raceId === null) return null;
-  const raceNode = nodes.get(raceId);
+  // A definition references whichever race variant the game gave it, and the
+  // variants of one race share a page. Resolving to the variant would point at a
+  // record with no page, so the type is the race a reader can open.
+  const raceChain = loadRaceChain(db);
+  const raceRow = raceChain.get(raceId);
+  const readerFacingRaceId = raceRow ? findSameNameChainRoot(raceRow, raceChain) : raceId;
+  const raceNode = nodes.get(readerFacingRaceId);
   const raceLabel = raceNode?.has_page === 1 ? raceNode.label?.trim() : null;
   if (!raceLabel || raceLabel === "Unnamed race") return null;
-  return makeResolution(raceId, raceLabel, nodes);
+  return makeResolution(readerFacingRaceId, raceLabel, nodes);
 }
 
 function makeResolution(
