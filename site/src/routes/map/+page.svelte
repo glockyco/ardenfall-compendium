@@ -52,8 +52,8 @@
   <header>
     <h1 class="text-2xl font-semibold tracking-tight">Ardenfall map</h1>
     <p class="text-muted-foreground mt-2 max-w-2xl">
-      Explore locations and portals across the world. The map currently has no basemap, so markers
-      show spatial relationships without terrain or roads.
+      Explore the characters, locations and portals the game places across the world. The map
+      currently has no basemap, so markers show spatial relationships without terrain or roads.
     </p>
   </header>
 
