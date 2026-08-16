@@ -29,7 +29,6 @@
   "presentationContext": { "renderContext": "character-presentation-v1" },
   "site": {
     "route": "/characters",
-    "previousRoutes": ["/placed-characters"],
     "overview": { "columns": ["displayName"], "search": ["displayName"] },
     "detail": {
       "sections": [

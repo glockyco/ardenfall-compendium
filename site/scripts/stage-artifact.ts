@@ -164,8 +164,6 @@ export async function stageArtifact({
   assertAssetTree(assetsDir, manifest.outputs.assets.treeSha256);
   assertSqliteCounts(sqlitePath, manifest.counts);
   assertArtifactMetadata(sqlitePath, manifest);
-  const redirectsPath = join(artifactDir, "static", "_redirects");
-  if (!existsSync(redirectsPath)) throw new Error(`missing redirects artifact: ${redirectsPath}`);
 
   const projectRoot = dirname(targetDir);
   const dataDir = join(projectRoot, ".data");
@@ -179,13 +177,10 @@ export async function stageArtifact({
   rmSync(join(dataDir, "data.sqlite-wal"), { force: true });
   rmSync(join(dataDir, "data.sqlite-shm"), { force: true });
   rmSync(join(targetDir, "_release.json"), { force: true });
-  rmSync(join(projectRoot, "_redirects"), { force: true });
-  rmSync(join(targetDir, "_redirects"), { force: true });
   rmSync(join(targetDir, "assets"), { recursive: true, force: true });
 
   copyFileSync(sqlitePath, join(dataDir, "data.sqlite"));
   copyTree(assetsDir, join(targetDir, "assets"));
-  copyFileSync(redirectsPath, join(projectRoot, "_redirects"));
   writeFileSync(
     join(targetDir, "_release.json"),
     `${JSON.stringify(publicRelease(manifest), null, 2)}\n`,

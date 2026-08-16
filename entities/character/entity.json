@@ -19,7 +19,6 @@
   "presentationContext": { "renderContext": "character-type-presentation-v1" },
   "site": {
     "route": "/character-types",
-    "previousRoutes": ["/characters"],
     "overview": { "columns": ["name"], "search": ["name"] },
     "detail": {
       "sections": [

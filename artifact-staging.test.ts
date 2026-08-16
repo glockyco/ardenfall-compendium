@@ -77,10 +77,8 @@ describe("artifact staging rejects tampering", () => {
 
 async function createValidArtifact(root: string) {
   mkdirSync(join(root, "assets"), { recursive: true });
-  mkdirSync(join(root, "static"), { recursive: true });
   const assetPath = join(root, "assets", `${"a".repeat(64)}.webp`);
   writeFileSync(assetPath, "asset bytes");
-  writeFileSync(join(root, "static", "_redirects"), "# redirects\n");
 
   const db = new Database(join(root, "data.sqlite"));
   db.exec(`
@@ -127,7 +125,6 @@ async function createValidArtifact(root: string) {
       ],
       itemIconMetadata: [],
     },
-    redirectsOutput: { count: 0, filePath: join(root, "static", "_redirects") },
   });
 
   // buildArtifactManifest reads real git state, so these tests would otherwise pass

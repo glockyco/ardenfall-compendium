@@ -14,7 +14,6 @@ import {
   type EmitSqliteOutput,
 } from "./stages/emit-sqlite";
 import { emitAssets, type EmitAssetsOutput } from "./stages/emit-assets";
-import { emitRedirects, type EmitRedirectsOutput } from "./stages/emit-redirects";
 import type { ArtifactKind, Stage, StageContext } from "./types.ts";
 import type { ValidateOutput } from "./stages/validate.ts";
 
@@ -117,13 +116,6 @@ const e = result["emit-sqlite"] as EmitSqliteOutput;
 console.warn(`wrote ${e.outputPath} (${e.byteSize} bytes)`);
 const a = result["emit-assets"] as EmitAssetsOutput;
 console.warn(`wrote ${a.refs.length} asset refs to ${a.assetsDir}`);
-const r = emitRedirects({
-  sqlitePath: e.outputPath,
-  outputDir: join(outDir, "static"),
-  descriptors: result["load-descriptors"] as Awaited<ReturnType<typeof loadDescriptors.run>>,
-});
-console.warn(`wrote ${r.count} redirects to ${r.filePath}`);
-
 if (artifactKind) {
   const manifest = await buildArtifactManifest({
     artifactKind,
@@ -132,7 +124,6 @@ if (artifactKind) {
     snapshot: result["load-snapshot"] as LoadSnapshotOutput,
     sqliteOutput: e,
     assetsOutput: a,
-    redirectsOutput: r as EmitRedirectsOutput,
   });
   console.warn(
     `wrote ${outDir}/artifact-manifest.json (${manifest.artifactKind} ${manifest.artifactId})`,

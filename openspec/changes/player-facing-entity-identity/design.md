@@ -113,7 +113,7 @@ Because nothing loses a page, the 245 `found_at` edges over 193 placements and 2
 
 ### 11. Route names state the reader's model
 
-`/characters` holds the placements, `/character-types` holds the definitions, and navigation reads `Characters` and `Character types`. `/placed-characters` and its GUID redirects go, and every moved page keeps a redirect from its old canonical slug, because those URLs ship in a sitemap.
+`/characters` holds the placements, `/character-types` holds the definitions, and navigation reads `Characters` and `Character types`. `/placed-characters` and its GUID routes go. The compendium publishes only current routes: an old URL returns the site's not-found page, which already explains that a page may have existed in an earlier snapshot. Navigation exposes no extraction vocabulary.
 
 ## Risks / Trade-offs
 

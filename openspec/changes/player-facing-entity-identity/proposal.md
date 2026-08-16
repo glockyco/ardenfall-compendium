@@ -57,5 +57,5 @@ _Names come from wherever each extractor looked._ `npcs.friendly_name` is `custo
 - `entities/character/entity.json`, `entities/npc/entity.json`, `entities/portal/entity.json`, new descriptors for race and name sets, and the descriptor schema that gains `naming` and provenance.
 - `mod/src/Entities/Character`, `mod/src/Entities/Npc`, `mod/src/Entities/Location`, and the snapshot DTOs that carry display name, authoring label, provenance, and the definition reference.
 - `pipeline/src/entities/character`, `pipeline/src/entities/npc`, `pipeline/src/entities/item`, `pipeline/src/relationships/registry.ts`, and the shared prototype and name resolution.
-- `site/src/routes/characters`, `site/src/routes/placed-characters`, the quest and location pages, navigation, sitemap, and redirects.
+- `site/src/routes/characters`, `site/src/routes/placed-characters`, the quest and location pages, navigation, and sitemap.
 - `fixtures/synthetic/snapshot`, which must carry a template definition, a placement with its own name, an inherited-name placement, a runtime-created record, a merchant placement, and a disabled location.

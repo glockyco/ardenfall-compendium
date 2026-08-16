@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 
 type DecompileOptionsInput = {
@@ -244,7 +244,6 @@ describe("site deployment tooling", () => {
     expect(existsSync("site/scripts/build-pagefind.ts")).toBe(true);
     expect(existsSync("site/scripts/smoke-pagefind.ts")).toBe(true);
     expect(sitePrerenderSmoke).toContain("WHERE o.icon_hash IS NOT NULL");
-    expect(gitignore).toContain("site/_redirects");
   });
 
   it("stages site builds from explicit artifact directories", () => {
@@ -315,8 +314,8 @@ describe("site deployment tooling", () => {
     }
   });
 
-  it("rejects missing redirects before mutating target files", async () => {
-    const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-missing-redirects-"));
+  it("keeps a staged database out of the public directory", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-private-database-"));
     try {
       const artifact = join(root, "artifact");
       const target = join(root, "static");
@@ -338,7 +337,6 @@ describe("site deployment tooling", () => {
       mkdirSync(join(artifact, "assets"), { recursive: true });
       mkdirSync(join(target, "assets"), { recursive: true });
       writeFileSync(join(target, "data.sqlite"), "previous sqlite");
-      writeFileSync(join(target, "_redirects"), "previous redirects");
       writeFileSync(join(target, "assets", "stale.webp"), "stale asset");
 
       const sqlitePath = join(artifact, "data.sqlite");
@@ -393,17 +391,20 @@ describe("site deployment tooling", () => {
 
       await expect(
         stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),
-      ).rejects.toThrow(/missing redirects artifact/);
-      expect(readFileSync(join(target, "data.sqlite"), "utf8")).toBe("previous sqlite");
-      expect(readFileSync(join(target, "_redirects"), "utf8")).toBe("previous redirects");
-      expect(readFileSync(join(target, "assets", "stale.webp"), "utf8")).toBe("stale asset");
+      ).resolves.toMatchObject({ manifest: { artifactKind: "fixture" } });
+      // The database is a build-time input, so it is staged beside the public
+      // directory rather than inside it, and a copy left there by an earlier
+      // layout is removed instead of being served.
+      expect(existsSync(join(target, "data.sqlite"))).toBe(false);
+      expect(existsSync(join(target, "assets", "stale.webp"))).toBe(false);
+      expect(readFileSync(join(dirname(target), ".data", "data.sqlite"))).toEqual(sqliteBytes);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
   });
 
-  it("stages redirects at the Cloudflare adapter project root", async () => {
-    const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-root-redirects-"));
+  it("does not stage legacy route output", async () => {
+    const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-no-route-output-"));
     try {
       const artifact = join(root, "artifact");
       const projectRoot = join(root, "site");
@@ -424,11 +425,7 @@ describe("site deployment tooling", () => {
         dirty: false,
       };
       mkdirSync(join(artifact, "assets"), { recursive: true });
-      mkdirSync(join(artifact, "static"), { recursive: true });
       mkdirSync(target, { recursive: true });
-      writeFileSync(join(artifact, "static", "_redirects"), "# generated redirects\n");
-      writeFileSync(join(projectRoot, "_redirects"), "stale root redirects");
-      writeFileSync(join(target, "_redirects"), "stale static redirects");
 
       const sqlitePath = join(artifact, "data.sqlite");
       writeMinimalArtifactSqlite(sqlitePath, {
@@ -482,8 +479,8 @@ describe("site deployment tooling", () => {
 
       await stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" });
 
-      expect(readFileSync(join(projectRoot, "_redirects"), "utf8")).toBe("# generated redirects\n");
-      expect(existsSync(join(target, "_redirects"))).toBe(false);
+      expect(existsSync(join(target, "_release.json"))).toBe(true);
+      expect(existsSync(join(projectRoot, ".data", "data.sqlite"))).toBe(true);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -510,8 +507,6 @@ describe("site deployment tooling", () => {
         dirty: false,
       };
       mkdirSync(join(artifact, "assets"), { recursive: true });
-      mkdirSync(join(artifact, "static"), { recursive: true });
-      writeFileSync(join(artifact, "static", "_redirects"), "# redirects\n");
 
       const sqlitePath = join(artifact, "data.sqlite");
       writeMinimalArtifactSqlite(sqlitePath, {
@@ -592,8 +587,6 @@ describe("site deployment tooling", () => {
         dirty: false,
       };
       mkdirSync(join(artifact, "assets"), { recursive: true });
-      mkdirSync(join(artifact, "static"), { recursive: true });
-      writeFileSync(join(artifact, "static", "_redirects"), "# redirects\n");
 
       const sqlitePath = join(artifact, "data.sqlite");
       writeMinimalArtifactSqlite(sqlitePath, {
@@ -667,8 +660,6 @@ describe("site deployment tooling", () => {
         dirty: false,
       };
       mkdirSync(join(artifact, "assets"), { recursive: true });
-      mkdirSync(join(artifact, "static"), { recursive: true });
-      writeFileSync(join(artifact, "static", "_redirects"), "# redirects\n");
 
       const sqlitePath = join(artifact, "data.sqlite");
       writeMinimalArtifactSqlite(sqlitePath, {

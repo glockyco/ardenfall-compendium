@@ -30,7 +30,6 @@ pipeline/dist/*.mjs.tmp
 pipeline/artifacts/
 site/.data/data.sqlite
 site/static/_release.json
-site/_redirects
 site/.data/data.sqlite-wal
 site/.data/data.sqlite-shm
 site/static/assets/

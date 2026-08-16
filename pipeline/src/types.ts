@@ -23,7 +23,6 @@ export interface EntityDescriptor {
   denormalise?: OperationRef[];
   site?: {
     route: string;
-    previousRoutes?: string[];
     overview?: SiteOverview;
     detail?: SiteDetail;
   };

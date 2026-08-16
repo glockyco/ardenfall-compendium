@@ -74,11 +74,12 @@ Navigation MUST label the two families as the reader understands them and MUST N
 - **THEN** navigation offers `Characters` and `Character types`
 - **AND** no entry reads `Placed characters`
 
-#### Scenario: Old routes keep working
+#### Scenario: Only current routes are published
 
-- **WHEN** a reader follows a shipped `/placed-characters/<slug>` URL
-- **THEN** the site redirects to that character's page under `/characters`
-- **AND** a URL for a record that is no longer published, because the game created it at runtime, redirects to the character overview
+- **WHEN** a reader follows an old `/placed-characters/<slug>` URL
+- **THEN** the site returns its not-found page
+- **AND** the not-found page explains that a page may have existed in an earlier snapshot
+- **AND** no legacy route is published for a record that is no longer in the current snapshot
 
 ### Requirement: Dialogue is presented by the character who speaks it
 

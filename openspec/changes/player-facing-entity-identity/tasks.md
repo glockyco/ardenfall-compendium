@@ -43,7 +43,7 @@
 - [ ] 6.2 Render a character's type, race, name provenance, stock and drops, stating which values are the character's own.
 - [ ] 6.3 Render a type's placements as map deep links, and a race's name sets with their vocabulary.
 - [ ] 6.4 Rename the navigation entries and update the sitemap route list.
-- [ ] 6.5 Emit redirects from every shipped `/placed-characters/<slug>` URL, and from a runtime-created record's URL to the character overview.
+- [ ] 6.5 Publish only current routes; old `/placed-characters/<slug>` URLs return the site's not-found page with its earlier-snapshot explanation.
 
 ## 7. Fixtures and gate
 
