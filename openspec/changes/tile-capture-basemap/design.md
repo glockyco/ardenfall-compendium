@@ -31,6 +31,21 @@ A camera with `orthographic = true`, `orthographicSize = 75`, position (-300, 12
 
 The same probe with the world time pinned to 12:00 and `timeMultiplier` set to 0 produced an almost identical plate. `ArdenfallSkybox.instance.ForceUpdate()` set the sun to intensity 0 pointing straight down. The player stood inside an interior throughout, and the game kills outdoor light in that state.
 
+### What the stitched imagery shows
+
+The 12 parts were exported and assembled on 2026-08-16. Part positions are measured from the bottom of the plane, so north sits at the image top, and the mapping is:
+
+```
+px_x = (world_x + 2700) * 5 / 3
+px_y = 5750 - (world_z + 1500) * 5 / 3
+```
+
+That mapping was confirmed against a capture rather than assumed. The plate captured at world x -450 to -150 and z -1200 to -1050 matches the same region of the stitched imagery feature for feature, in the same orientation.
+
+All 278 published overworld markers were then drawn on the assembled image at those pixel positions. Every one lands on detailed terrain: characters in settlements and along roads, locations on named sites, portals at path junctions. None falls in the ocean, and none falls on flat ground.
+
+The imagery carries detail across the whole grid, including regions whose cell scenes the demo build does not ship. The 24 authored cells occupy pixels 3250, 4750 with size 1500 by 1000, which is the southern coastal strip alone. The two marker clusters in the north-west and the south-east sit on terrain that no cell scene in this build can render.
+
 ## Goals and non-goals
 
 **Goals**
@@ -119,9 +134,11 @@ Two further constraints belong to this decision. The pyramid's finest level shou
 
 **Interior ceilings.** An interior captured from above shows its roof. Options: exclude a ceiling layer if one exists, disable renderers tagged by `InteriorFilterVolume` for the duration of a capture and accept a mutation that must be undone, or capture interiors from a height below the ceiling. The first is preferred and its feasibility is unmeasured.
 
-**The game's own imagery.** It exists at 1.667 pixels per unit with placement and scale arrays, is evenly lit, and needs no capture. Options: publish it as an alternative layer a reader can switch to, use it only as an alignment reference for our capture, or ignore it. It is generated at editor time, so it may lag the shipped build; our capture is canonical either way.
+**The game's own imagery.** It exists at 1.667 pixels per unit with placement and scale arrays, is evenly lit, needs no capture, and aligns exactly with the grid and with our own capture. Against this build it also covers every marker, while a capture covers one cluster of three.
 
-**Cells without an authored scene.** 24 of 575 overworld cells ship a scene, and only 83 of 373 placements sit inside one. Distant-cell prefabs cover the rest at lower detail. Options: capture the full grid and accept two fidelity levels in one plate, capture only authored cells and leave the remainder blank, or capture the full grid and record which cells were authored so the map can mark the difference. A reader who sees terrain expects it to be real, so the third option is the honest one and it costs a flag per cell.
+Options: publish the imagery as the basemap for a build whose cell scenes cover little of the world, and let a capture supersede it per cell as authored coverage grows; publish it as an alternative layer beside a captured basemap; or use it only as an alignment reference. The first is the measured recommendation and the decision is the reader's to make, because the second and third ship a basemap with terrain under a fifth of the markers.
+
+**Cells without an authored scene.** 24 of 575 overworld cells ship a scene, and only 83 of 373 placements sit inside one. Distant-cell prefabs cover the rest at lower detail, and the marker overlay shows that the two largest clusters lie outside every authored cell. Options: capture the full grid and accept two fidelity levels in one plate, capture only authored cells and leave the remainder blank, or capture the full grid and record which cells were authored so the map can mark the difference. A reader who sees terrain expects it to be real, so the third option is the honest one and it costs a flag per cell.
 
 ## Risks and trade-offs
 
