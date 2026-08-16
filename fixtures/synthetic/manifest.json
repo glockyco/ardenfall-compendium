@@ -115,10 +115,10 @@
   "hashes": {
     "snapshot/spells.json": "4008d7c3dd28d2237b1f5de8cf3580152e11b4509bbe87ae56856307ffdc6f6f",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
-    "snapshot/manifest.json": "b704233edecfcad1f20298dc9012dcf06c261c1f988f3c3c1448d4fc1e8a9f77",
-    "snapshot/potion-recipes.json": "5234ba27367cab6a0edea83bd47ca41eaf181ea70689e1d4416676b3d09cf07f",
+    "snapshot/manifest.json": "502229340b7f85a59b33587764dc0a122ecb7ea078ad9057cef9fab31aafa5a7",
+    "snapshot/potion-recipes.json": "689c1202ed625d1010fc185eb33713a019f3274ab6957560f75bbea17f1fc1ad",
     "snapshot/enchantments.json": "74d06f2c4db42cf743c4b748bfd6df7b423e01d284b57f0b3b98477ed1a021c4",
-    "snapshot/items.json": "2d09c1e397b571f56148457369f9a67ee6d154777c94ab4b7a98a5d3bc50ad3c",
+    "snapshot/items.json": "af4053eb8ad0905efbd81fec5e9bc71fe102e0daea9d17f45cddd97930990e66",
     "snapshot/asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "snapshot/assets/items/fixture-icon-red.png": "1bed0b0f3417642483bf0883ed5a4c3630e28d635d6dcf0c674e468b2e8deb01",
     "snapshot/assets/items/fixture-icon-blue.png": "d6d4b05209c7541985841a63d955337a411a005d7abb936426791cbfde258f17",

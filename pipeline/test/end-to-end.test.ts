@@ -48,7 +48,7 @@ describe("end-to-end pipeline", () => {
         const overviewCount = (
           db.query("SELECT COUNT(*) c FROM item_overview_rows").get() as { c: number }
         ).c;
-        expect(overviewCount).toBe(9);
+        expect(overviewCount).toBe(10);
         const assetRefCount = (db.query("SELECT COUNT(*) c FROM asset_refs").get() as { c: number })
           .c;
         expect(assetRefCount).toBe(7);
@@ -224,7 +224,7 @@ describe("end-to-end pipeline", () => {
         const overviewCount = (
           db.query("SELECT COUNT(*) c FROM item_overview_rows").get() as { c: number }
         ).c;
-        expect(overviewCount).toBe(9);
+        expect(overviewCount).toBe(10);
       } finally {
         db.close();
       }

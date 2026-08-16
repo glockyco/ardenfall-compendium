@@ -54,7 +54,7 @@
     "diagnostic": 8
   },
   "hashes": {
-    "items.json": "2d09c1e397b571f56148457369f9a67ee6d154777c94ab4b7a98a5d3bc50ad3c",
+    "items.json": "af4053eb8ad0905efbd81fec5e9bc71fe102e0daea9d17f45cddd97930990e66",
     "asset-manifest.json": "375d813cdc20a2259fefeeda9e4374432b1c79bbed5415963c896e43a15c5984",
     "master-tooltip.json": "3913c8925bd4585d585162a7e7c361e9074ae646ab60640bfe450cb26fae236b",
     "stat-types.json": "8914e1e2e2329287e831c3b1ce3c8b22043a74baafa7bd9fe3f1f7a431fc4e11",
@@ -70,7 +70,7 @@
     "name-sets.json": "7485b25de8f3f58f6d5c87e57e9f3bebcec3ebb52c00721e37456039a32330fd",
     "npcs.json": "5ae49cea86f4a0f8c2a7a4f895c3c4b64628dc15e7a50e7d7e6b58dd18468a01",
     "quests.json": "87c935a3f7d5191d323a277fdc2d3718b9a957701f8ce259b1c2d66591b59f84",
-    "potion-recipes.json": "5234ba27367cab6a0edea83bd47ca41eaf181ea70689e1d4416676b3d09cf07f",
+    "potion-recipes.json": "689c1202ed625d1010fc185eb33713a019f3274ab6957560f75bbea17f1fc1ad",
     "enchantments.json": "74d06f2c4db42cf743c4b748bfd6df7b423e01d284b57f0b3b98477ed1a021c4"
   }
 }

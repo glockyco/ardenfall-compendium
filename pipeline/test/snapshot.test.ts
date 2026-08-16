@@ -124,7 +124,7 @@ describe("loadSnapshot", () => {
     expect(out.manifest.preflight.passed).toBe(true);
     const items = out.envelopes["item"];
     if (!items) throw new Error("item envelope not loaded");
-    expect(items.rows.length).toBe(9);
+    expect(items.rows.length).toBe(10);
   });
 
   it("accepts a complete snapshot when every extraction family has a file and count", async () => {
@@ -360,13 +360,19 @@ describe("loadSnapshot", () => {
 
       const desc = await loadDescriptors.run({}, ctx);
       const result = await validate.run({ "load-snapshot": snap, "load-descriptors": desc }, ctx);
-      expect(result.countsBySeverity.diagnostic).toBe(3);
-      expect(result.errors).toContainEqual({
-        entity: "snapshot",
-        code: "walkerDiagnostic",
-        field: "refs",
-        message: "walker diagnostic",
-      });
+      // The point is that the sibling artifact's entries reach the counts, so the
+      // assertion names the entry. A fixed total would move whenever the fixture
+      // gains an unrelated row and would say nothing about the sibling file.
+      const walkerEntries = result.errors.filter((error) => error.code === "walkerDiagnostic");
+      expect(walkerEntries).toEqual([
+        {
+          entity: "snapshot",
+          code: "walkerDiagnostic",
+          field: "refs",
+          message: "walker diagnostic",
+        },
+      ]);
+      expect(result.countsBySeverity.diagnostic).toBe(result.errors.length);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

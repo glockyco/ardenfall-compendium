@@ -362,6 +362,160 @@
       }
     },
     {
+      "id": "6a71c0df.fixture-stamina-draught-twin",
+      "variant": "consumable",
+      "fields": {
+        "id": "6a71c0df.fixture-stamina-draught-twin",
+        "name": "Stamina Draught",
+        "weight": 0.25,
+        "value": 9,
+        "iconRef": {
+          "kind": "missing",
+          "reason": "lookupAssetGuidMissing",
+          "source": "ItemData.icon"
+        },
+        "description": "A <b>small</b> <color=#7CFF8A>draught</color> that restores <link=\"tooltip_stamina\">Stamina</link>.",
+        "stackable": true,
+        "hideInGui": false,
+        "questItem": false,
+        "notLootableChance": 0,
+        "cannotBeOwned": false,
+        "quickslotIconRef": null,
+        "categoryRef": null,
+        "isIllegal": false,
+        "quickslotCooldownTime": 12.5,
+        "statusEffectsJson": [
+          {
+            "statusEffectRef": {
+              "kind": "lookupAsset",
+              "guid": "91a00001.fixture-status-effect-bleeding",
+              "unityType": "Ardenfall.StatusEffectData",
+              "name": "status-effect_bleeding",
+              "id": null
+            },
+            "level": 1.0,
+            "lifetime": 30,
+            "stackMode": {
+              "type": "Refresh",
+              "addLevel": 0,
+              "maxLevel": 0
+            }
+          },
+          {
+            "statusEffectRef": {
+              "kind": "lookupAsset",
+              "guid": "91a00002.fixture-status-effect-burning",
+              "unityType": "Ardenfall.StatusEffectData",
+              "name": "status-effect_burning",
+              "id": null
+            },
+            "level": 2.5,
+            "lifetime": 20,
+            "stackMode": {
+              "type": "Refresh",
+              "addLevel": 0,
+              "maxLevel": 0
+            }
+          }
+        ],
+        "parentRef": {
+          "kind": "missing",
+          "reason": "noParent",
+          "source": "ParameterizedObject.parent"
+        }
+      },
+      "tags": ["7a600001.fixture-tag-valuable-remedy", "7a600002.fixture-tag-rare"],
+      "provenance": {
+        "name": {
+          "kind": "parameter",
+          "source": "GetItemName()",
+          "isSet": true,
+          "inherited": false
+        },
+        "iconRef": {
+          "kind": "missing",
+          "source": "ItemData.icon",
+          "isSet": false,
+          "inherited": false
+        },
+        "quickslotCooldownTime": {
+          "kind": "parameter",
+          "source": "quickslotCooldownTime.Get()",
+          "isSet": true,
+          "inherited": false
+        },
+        "statusEffectsJson": {
+          "kind": "parameter",
+          "source": "statusEffects.Get()",
+          "isSet": true,
+          "inherited": false
+        }
+      },
+      "diagnostics": [
+        {
+          "severity": "diagnostic",
+          "code": "lookupAssetGuidMissing",
+          "field": "iconRef",
+          "message": "icon ref missing from BuiltLookupTable"
+        }
+      ],
+      "presentation": {
+        "schemaVersion": 1,
+        "renderContext": "item-presentation-v1",
+        "displayName": "Stamina Draught",
+        "displayNameSourceMethod": "GetItemName()",
+        "itemType": "Consumable",
+        "itemTypeSourceMethod": "variant:consumable",
+        "descriptionSource": "A <b>small</b> <color=#7CFF8A>draught</color> that restores <link=\"tooltip_stamina\">Stamina</link>.",
+        "effectsSource": "Applies Bleeding I and Burning II.",
+        "effects": [
+          {
+            "kind": "status-effect",
+            "label": "Bleeding I",
+            "targetType": "status-effect",
+            "targetId": null,
+            "targetRef": {
+              "kind": "lookupAsset",
+              "guid": "91a00001.fixture-status-effect-bleeding",
+              "unityType": "Ardenfall.StatusEffectData",
+              "name": "status-effect_bleeding",
+              "id": null
+            },
+            "level": 1.0,
+            "source": "statusEffectsJson"
+          },
+          {
+            "kind": "status-effect",
+            "label": "Burning II",
+            "targetType": "status-effect",
+            "targetId": null,
+            "targetRef": {
+              "kind": "lookupAsset",
+              "guid": "91a00002.fixture-status-effect-burning",
+              "unityType": "Ardenfall.StatusEffectData",
+              "name": "status-effect_burning",
+              "id": null
+            },
+            "level": 2.5,
+            "source": "statusEffectsJson"
+          }
+        ],
+        "statRows": [],
+        "requirements": [],
+        "durability": null,
+        "stateFacts": [
+          {
+            "kind": "canonical-state",
+            "label": "Canonical compendium state",
+            "description": "Base item, no player or inventory context."
+          }
+        ],
+        "value": 9,
+        "weight": 0.25,
+        "diagnostics": []
+      }
+    },
+    {
       "id": "7ab10c55.fixture-slate-spell",
       "variant": "slate-spell",
       "fields": {

@@ -53,6 +53,13 @@
               "source": "PotionRecipe.drinkablePotions"
             },
             "form": "drinkable"
+          },
+          {
+            "ref": {
+              "kind": "lookupAsset",
+              "guid": "6a71c0df.fixture-stamina-draught-twin"
+            },
+            "form": "drinkable"
           }
         ]
       }
