@@ -33,7 +33,7 @@ const seed = ({ publishMaleSet = true }: { publishMaleSet?: boolean } = {}) => {
       ('race-karu-elf', 'Karu Elf', 3);
     INSERT INTO character_race_presentation_rows VALUES
       ('race-karu-elf', 'Karu Elf', 'character-race-presentation-v1',
-       '[{"id":"race-karu-elf-base","nameSetRefs":[]},{"id":"race-karu-elf-female","nameSetRefs":[{"kind":"namedAsset","entity":"name-set","name":"nset_mystelf_female"}]},{"id":"race-karu-elf-male","nameSetRefs":[{"kind":"namedAsset","entity":"name-set","name":"nset_mystelf_male"}]}]');
+       '[{"id":"race-karu-elf-base","nameSetRefs":[]},{"id":"race-karu-elf-female","nameSetRefs":[{"kind":"namedAsset","entity":"name-set","name":"nset_mystelf_female"},{"kind":"namedAsset","entity":"name-set","name":"nset_mystelf_female"}]},{"id":"race-karu-elf-male","nameSetRefs":[{"kind":"namedAsset","entity":"name-set","name":"nset_mystelf_male"}]}]');
     INSERT INTO name_set_presentation_rows VALUES
       ('${femaleSetId}', 'name-set-presentation-v1', 5,
        '[{"name":"Saya","weight":2},{"name":"Mira","weight":1}]', 2),
@@ -89,8 +89,11 @@ describe("character race read-model accessors", () => {
         variants: [
           { nameSetCount: 0, nameSets: [] },
           {
-            nameSetCount: 1,
-            nameSets: [{ id: femaleSetId, generationOrder: 5, seedCount: 2 }],
+            nameSetCount: 2,
+            nameSets: [
+              { id: femaleSetId, generationOrder: 5, seedCount: 2 },
+              { id: femaleSetId, generationOrder: 5, seedCount: 2 },
+            ],
           },
           {
             nameSetCount: 1,
@@ -127,7 +130,7 @@ describe("character race read-model accessors", () => {
         presentation?.variants.flatMap((variant) =>
           variant.nameSets.flatMap((set) => set.seeds.map((seed) => seed.name)),
         ),
-      ).toEqual(["Saya", "Mira", "Sako", "Taro"]);
+      ).toEqual(["Saya", "Mira", "Saya", "Mira", "Sako", "Taro"]);
     });
   });
 });

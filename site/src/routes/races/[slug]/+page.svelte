@@ -59,7 +59,7 @@
       <h2 class="text-lg font-semibold">Variant {variantIndex + 1}</h2>
       {#if variant.nameSets.length > 0}
         <ol class="mt-4 grid gap-4">
-          {#each variant.nameSets as nameSet, setIndex (nameSet.id)}
+          {#each variant.nameSets as nameSet, setIndex (setIndex)}
             <li>
               <h3 class="font-semibold">Name set {setIndex + 1}</h3>
               <p class="text-muted-foreground mt-1 text-sm">

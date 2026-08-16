@@ -66,7 +66,11 @@ describe("character race and name set pipeline", () => {
           "named;character-race;karu-elf-female",
           "Karu Elf",
           parent("karu-elf"),
-          [{ kind: "namedAsset", entity: "name-set", name: "nset_mystelf_female" }],
+          [
+            // Repeated references are valid game data; the page keys this list by position.
+            { kind: "namedAsset", entity: "name-set", name: "nset_mystelf_female" },
+            { kind: "namedAsset", entity: "name-set", name: "nset_mystelf_female" },
+          ],
           false,
           "race_karu_elf",
         ),
@@ -144,9 +148,11 @@ describe("character race and name set pipeline", () => {
         `SELECT variants_json FROM character_race_presentation_rows`,
       )
       .get();
-    const variantIds = JSON.parse(variants!.variants_json).map(
-      (variant: { id: string; nameSetRefs: object[] }) => variant.id,
-    );
+    const publishedVariants = JSON.parse(variants!.variants_json) as Array<{
+      id: string;
+      nameSetRefs: object[];
+    }>;
+    const variantIds = publishedVariants.map((variant) => variant.id);
     expect(variantIds).toEqual([
       "named;character-race;karu-elf",
       "named;character-race;karu-elf-female",
@@ -154,11 +160,18 @@ describe("character race and name set pipeline", () => {
       "named;character-race;karu-elf-male",
     ]);
     expect(variantIds).toContain("named;character-race;karu-elf");
-    expect(
-      JSON.parse(variants!.variants_json).find((variant: { id: string }) =>
-        variant.id.endsWith("female-old"),
-      ).nameSetRefs,
-    ).toEqual([]);
+    const refsOf = (id: string): object[] | undefined =>
+      publishedVariants.find((variant) => variant.id === id)?.nameSetRefs;
+    // The game lets one variant reference the same name set twice, which is why the
+    // page keys its list by position rather than by the referenced id.
+    expect(refsOf("named;character-race;karu-elf-female")).toEqual([
+      { kind: "namedAsset", entity: "name-set", name: "nset_mystelf_female" },
+      { kind: "namedAsset", entity: "name-set", name: "nset_mystelf_female" },
+    ]);
+    expect(refsOf("named;character-race;karu-elf-male")).toEqual([
+      { kind: "namedAsset", entity: "name-set", name: "nset_mystelf_male" },
+    ]);
+    expect(refsOf("named;character-race;karu-elf-female-old")).toEqual([]);
     expect(
       db
         .query(
