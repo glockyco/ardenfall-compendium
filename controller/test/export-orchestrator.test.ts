@@ -125,6 +125,8 @@ describe("exportCompendium", () => {
 
     const result = await exportCompendium({
       client,
+      url: "ws://127.0.0.1:19612",
+      listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
       outputBaseDir: "/tmp/out",
       pipelineOutDir: "/tmp/pipeline",
       validate: async () => ({ itemCount: 150 }),
@@ -175,6 +177,8 @@ describe("exportCompendium", () => {
     await expect(
       exportCompendium({
         client,
+        url: "ws://127.0.0.1:19612",
+        listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
         outputBaseDir: "/tmp/out",
         pipelineOutDir: "/tmp/pipeline",
         jobTimeoutMs: 10,
@@ -191,6 +195,8 @@ describe("exportCompendium", () => {
 
     await exportCompendium({
       client,
+      url: "ws://127.0.0.1:19612",
+      listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
       outputBaseDir: "/tmp/out",
       pipelineOutDir: "/tmp/pipeline",
       validate: async () => ({ itemCount: 150 }),
@@ -207,6 +213,8 @@ describe("exportCompendium", () => {
     await expect(
       exportCompendium({
         client,
+        url: "ws://127.0.0.1:19612",
+        listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
         outputBaseDir: "/tmp/out",
         pipelineOutDir: "/tmp/pipeline",
         validate: async () => ({ itemCount: 150 }),
@@ -229,6 +237,8 @@ describe("exportCompendium", () => {
 
     await exportCompendium({
       client,
+      url: "ws://127.0.0.1:19612",
+      listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
       outputBaseDir: "/tmp/out",
       pipelineOutDir: "/tmp/pipeline",
       validate: async () => ({ itemCount: 150 }),
@@ -245,6 +255,8 @@ describe("exportCompendium", () => {
 
     await exportCompendium({
       client,
+      url: "ws://127.0.0.1:19612",
+      listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
       outputBaseDir: "/tmp/out",
       pipelineOutDir: "/tmp/pipeline",
       validate: async () => ({ itemCount: 150 }),
@@ -274,6 +286,8 @@ describe("exportCompendium", () => {
 
     await exportCompendium({
       client,
+      url: "ws://127.0.0.1:19612",
+      listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
       outputBaseDir: "/tmp/out",
       pipelineOutDir: "/tmp/pipeline",
       validate: async () => ({ itemCount: 150 }),
@@ -302,7 +316,13 @@ describe("exportCompendium", () => {
     };
 
     await expect(
-      exportCompendium({ client, outputBaseDir: "/tmp/out", pipelineOutDir: "/tmp/pipeline" }),
+      exportCompendium({
+        client,
+        url: "ws://127.0.0.1:19612",
+        listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+      }),
     ).rejects.toThrow(
       /compendium\.preflight is not ready: ardenfallGame: ArdenfallGame\.instance is null; worldData: ArdenfallGame\.instance\.worldData is null/,
     );
@@ -318,12 +338,74 @@ describe("exportCompendium", () => {
     };
 
     await expect(
-      exportCompendium({ client, outputBaseDir: "/tmp/out", pipelineOutDir: "/tmp/pipeline" }),
+      exportCompendium({
+        client,
+        url: "ws://127.0.0.1:19612",
+        listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+      }),
     ).rejects.toThrow(
       /expected Unity product name "Ardenfall Demo 2025".*reported "Vespera".*port collision/i,
     );
 
     expect(client.calls.map((call) => call.name)).toEqual(["compendium.preflight"]);
+  });
+
+  it("fails before connecting when the HotRepl port has multiple processes", async () => {
+    const client = new FakeClient();
+
+    await expect(
+      exportCompendium({
+        client,
+        url: "ws://127.0.0.1:19612",
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+        listHotReplProcesses: async () => [
+          { pid: 101, name: "ardenfall" },
+          { pid: 202, name: "ardenfall-stale" },
+        ],
+      }),
+    ).rejects.toThrow(
+      /HotRepl port 19612 is held by multiple processes: ardenfall \(pid 101\), ardenfall-stale \(pid 202\)/,
+    );
+    expect(client.calls).toEqual([]);
+  });
+
+  it("allows a single process to hold the HotRepl port", async () => {
+    const client = new FakeClient();
+
+    await expect(
+      exportCompendium({
+        client,
+        url: "ws://127.0.0.1:19612",
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+        listHotReplProcesses: async (port) => {
+          expect(port).toBe(19612);
+          return [{ pid: 101, name: "ardenfall" }];
+        },
+        validate: async () => ({ itemCount: 150 }),
+        runPipeline: async () => undefined,
+      }),
+    ).resolves.toEqual({ runId: "run-1", publishedDir: "/tmp/snapshot" });
+  });
+
+  it("fails loudly when the process list is unavailable", async () => {
+    const client = new FakeClient();
+
+    await expect(
+      exportCompendium({
+        client,
+        url: "ws://127.0.0.1:19612",
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+        listHotReplProcesses: async () => {
+          throw new Error("process list unavailable");
+        },
+      }),
+    ).rejects.toThrow("process list unavailable");
+    expect(client.calls).toEqual([]);
   });
 
   it("uses absolute output directories and normalizes published paths", async () => {
@@ -333,6 +415,8 @@ describe("exportCompendium", () => {
 
     const result = await exportCompendium({
       client,
+      url: "ws://127.0.0.1:19612",
+      listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
       outputBaseDir: "./snapshots",
       pipelineOutDir: "/tmp/pipeline",
       validate: async (snapshotDir) => {
@@ -353,7 +437,13 @@ describe("exportCompendium", () => {
     client.commands = client.commands.filter((descriptor) => descriptor.name !== "run.finalize");
 
     await expect(
-      exportCompendium({ client, outputBaseDir: "/tmp/out", pipelineOutDir: "/tmp/pipeline" }),
+      exportCompendium({
+        client,
+        url: "ws://127.0.0.1:19612",
+        listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+      }),
     ).rejects.toThrow(/Missing required HotRepl command: run\.finalize/);
   });
 

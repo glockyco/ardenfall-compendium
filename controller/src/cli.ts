@@ -20,6 +20,7 @@ async function main(argv: string[]): Promise<void> {
   try {
     const result = await exportCompendium({
       client,
+      url: options.url,
       outputBaseDir: options.outputBaseDir,
       pipelineOutDir: options.pipelineOutDir,
       waitForWorld: options.waitForWorld,

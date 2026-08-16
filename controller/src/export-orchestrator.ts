@@ -42,8 +42,18 @@ export interface ExportEvent {
   [key: string]: unknown;
 }
 
+export interface HotReplProcess {
+  pid: number;
+  name: string;
+}
+
+export type ListHotReplProcesses = (port: number) => Promise<HotReplProcess[]>;
+
 export interface ExportOptions {
   client: ControllerClient;
+  /** The WebSocket URL that identifies the HotRepl session. */
+  url: string;
+  listHotReplProcesses?: ListHotReplProcesses;
   outputBaseDir: string;
   pipelineOutDir: string;
   runPipeline?: (snapshotDir: string, pipelineOutDir: string) => Promise<void>;
@@ -106,6 +116,12 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
   const log = options.log ?? (() => undefined);
   const outputBaseDir = toRuntimePath(resolve(options.outputBaseDir));
   const connectTimeoutMs = options.connectTimeoutMs ?? CONTROLLER_TIMEOUTS.connectMs;
+  if (options.url !== undefined) {
+    const port = readHotReplPort(options.url);
+    const processes = await (options.listHotReplProcesses ?? listHotReplProcesses)(port);
+    assertSingleHotReplProcess(port, processes);
+    log({ phase: "portPreflight", status: "completed", port, processes });
+  }
   await options.client.connect({
     timeoutMs: connectTimeoutMs,
   });
@@ -341,6 +357,80 @@ async function runPipeline(snapshotDir: string, pipelineOutDir: string): Promise
   });
   const exitCode = await proc.exited;
   if (exitCode !== 0) throw new Error(`pipeline:run exited ${exitCode}`);
+}
+
+function readHotReplPort(url: string): number {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch (error) {
+    throw new Error(`HotRepl URL is invalid and has no readable port: ${url}`, { cause: error });
+  }
+  if (parsed.port.length === 0)
+    throw new Error(`HotRepl URL must include an explicit port: ${url}`);
+  const port = Number(parsed.port);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535)
+    throw new Error(`HotRepl URL has an invalid port ${parsed.port}: ${url}`);
+  return port;
+}
+
+async function listHotReplProcesses(port: number): Promise<HotReplProcess[]> {
+  let processList: Bun.Subprocess<"ignore", "pipe", "pipe">;
+  try {
+    processList = Bun.spawn(["lsof", "-nP", "-a", `-iTCP:${port}`, "-sTCP:LISTEN", "-Fpcn"], {
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`Unable to read the process list for HotRepl port ${port}: ${reason}`, {
+      cause: error,
+    });
+  }
+  const [stdout, stderr, exitCode] = await Promise.all([
+    new Response(processList.stdout).text(),
+    new Response(processList.stderr).text(),
+    processList.exited,
+  ]);
+  if (
+    exitCode !== 0 &&
+    !(exitCode === 1 && stdout.trim().length === 0 && stderr.trim().length === 0)
+  ) {
+    const detail = stderr.trim().length > 0 ? `: ${stderr.trim()}` : "";
+    throw new Error(
+      `Unable to read the process list for HotRepl port ${port}: lsof exited ${exitCode}${detail}`,
+    );
+  }
+  return parseLsofProcesses(stdout, port);
+}
+
+function parseLsofProcesses(output: string, port: number): HotReplProcess[] {
+  const processes = new Map<number, HotReplProcess>();
+  let pid: number | undefined;
+  let name = "<unknown>";
+  for (const line of output.split("\n")) {
+    if (line.startsWith("p")) {
+      const value = Number(line.slice(1));
+      if (!Number.isInteger(value) || value < 1)
+        throw new Error(`Unable to read the process list for HotRepl port ${port}: invalid PID`);
+      pid = value;
+      name = "<unknown>";
+    } else if (line.startsWith("c")) {
+      name = line.slice(1) || "<unknown>";
+    } else if (line.startsWith("n") && pid !== undefined) {
+      processes.set(pid, { pid, name });
+    }
+  }
+  return [...processes.values()];
+}
+
+function assertSingleHotReplProcess(port: number, processes: HotReplProcess[]): void {
+  if (processes.length === 0)
+    throw new Error(`No process holds HotRepl port ${port}; cannot prove which game answered.`);
+  if (processes.length > 1) {
+    const names = processes.map(({ name, pid }) => `${name} (pid ${pid})`).join(", ");
+    throw new Error(`HotRepl port ${port} is held by multiple processes: ${names}`);
+  }
 }
 
 function normalizeControllerPath(path: string): string {
