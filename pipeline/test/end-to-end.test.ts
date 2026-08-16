@@ -87,6 +87,22 @@ describe("end-to-end pipeline", () => {
             .get() as { c: number }
         ).c;
         expect(debugPointCount).toBe(1);
+        const npcPointCount = (
+          db.query("SELECT COUNT(*) c FROM map_points WHERE entity_id = 'npc'").get() as {
+            c: number;
+          }
+        ).c;
+        expect(npcPointCount).toBeGreaterThan(0);
+        const npcEmptyLayerDiagnostics = (
+          db
+            .query(
+              `SELECT COUNT(*) c
+               FROM pipeline_diagnostics
+               WHERE code = 'mapLayerEmptyProjection' AND entity_type = 'npc'`,
+            )
+            .get() as { c: number }
+        ).c;
+        expect(npcEmptyLayerDiagnostics).toBe(0);
         const mapLayer = db
           .query(
             "SELECT layer_id, source_table, source_tables_json FROM map_layers WHERE layer_id = 'locations'",

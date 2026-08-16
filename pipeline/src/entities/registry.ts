@@ -56,6 +56,7 @@ import { emitQuestReadModels } from "./quest/read-models";
 interface MapProjection {
   points: string;
   volumes?: string;
+  sourceTable: string;
 }
 
 interface ReadModelContext {
@@ -91,6 +92,7 @@ interface EntityModule {
 }
 
 const portalProjection: MapProjection = {
+  sourceTable: "portals",
   // `portals.friendly_name` is nullable because the game genuinely ships portals with an
   // empty `friendlyName`. The extractor records that as a diagnostic rather than
   // inventing a value. A map label cannot be null, so presentation supplies a
@@ -111,6 +113,7 @@ const portalProjection: MapProjection = {
 };
 
 const npcProjection: MapProjection = {
+  sourceTable: "npcs",
   points: `
       INSERT INTO map_points (
         id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
@@ -226,7 +229,7 @@ export const entityRegistry: Record<string, EntityModule> = {
     ddl: LOCATION_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseLocations(db, envelope),
     readModel: ({ db }) => emitLocationReadModels(db),
-    mapProjection: locationProjection,
+    mapProjection: { ...locationProjection, sourceTable: "locations" },
   },
   portal: {
     ddl: PORTAL_DDL,
@@ -238,7 +241,6 @@ export const entityRegistry: Record<string, EntityModule> = {
   npc: {
     ddl: NPC_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseNpcs(db, envelope),
-    readModelPhase: "after-map",
     readModel: ({ db, entity }) => {
       if (!entity.site) throw new Error("entity 'npc' is missing site.route");
       return emitNpcReadModels(db, entity.site.route);

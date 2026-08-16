@@ -1178,6 +1178,83 @@ describe("emitMapReadModels", () => {
     expect(node.has_page).toBe(1);
   });
 
+  it("projects placed NPCs after their presentation rows exist", () => {
+    const db = new Database(":memory:");
+    db.exec(`
+      CREATE TABLE npcs (id TEXT PRIMARY KEY);
+      CREATE TABLE npc_presentation_rows (id TEXT PRIMARY KEY, name TEXT NOT NULL);
+      CREATE TABLE placements (
+        entity_id TEXT NOT NULL,
+        instance_id TEXT NOT NULL,
+        map_id TEXT,
+        map_x REAL NOT NULL,
+        map_y REAL NOT NULL,
+        elevation REAL NOT NULL
+      );
+      INSERT INTO npcs (id) VALUES ('npc.fixture');
+      INSERT INTO npc_presentation_rows (id, name) VALUES ('npc.fixture', 'Fixture guard');
+      INSERT INTO placements (entity_id, instance_id, map_id, map_x, map_y, elevation)
+      VALUES ('npc', 'npc.fixture', 'ardenfall', 12, -8, 3);
+    `);
+
+    emitMapReadModels(db, ["npc"]);
+
+    expect(
+      db
+        .query(
+          `SELECT entity_id, instance_id, name, map_id, map_x, map_y, elevation
+           FROM map_points WHERE entity_id = 'npc'`,
+        )
+        .get(),
+    ).toEqual({
+      entity_id: "npc",
+      instance_id: "npc.fixture",
+      name: "Fixture guard",
+      map_id: "ardenfall",
+      map_x: 12,
+      map_y: -8,
+      elevation: 3,
+    });
+    expect(db.query("SELECT code FROM pipeline_diagnostics").all()).toEqual([]);
+  });
+
+  it("diagnoses a declared map layer with source rows but no projected rows", () => {
+    const db = new Database(":memory:");
+    db.exec(`
+      CREATE TABLE map_layers (layer_id TEXT NOT NULL, entity_id TEXT NOT NULL);
+      INSERT INTO map_layers (layer_id, entity_id) VALUES ('npcs', 'npc');
+      CREATE TABLE npcs (id TEXT PRIMARY KEY);
+      CREATE TABLE npc_presentation_rows (id TEXT PRIMARY KEY, name TEXT NOT NULL);
+      CREATE TABLE placements (
+        entity_id TEXT NOT NULL,
+        instance_id TEXT NOT NULL,
+        map_id TEXT,
+        map_x REAL NOT NULL,
+        map_y REAL NOT NULL,
+        elevation REAL NOT NULL
+      );
+      INSERT INTO npcs (id) VALUES ('npc.without-presentation');
+      INSERT INTO placements (entity_id, instance_id, map_id, map_x, map_y, elevation)
+      VALUES ('npc', 'npc.without-presentation', 'ardenfall', 1, 2, 3);
+    `);
+
+    emitMapReadModels(db, ["npc"]);
+
+    expect(
+      db
+        .query(
+          `SELECT code, message, entity_type, field
+           FROM pipeline_diagnostics WHERE code = 'mapLayerEmptyProjection'`,
+        )
+        .get(),
+    ).toEqual({
+      code: "mapLayerEmptyProjection",
+      message: "Map layer 'npcs' has no points or volumes although source table 'npcs' has 1 rows.",
+      entity_type: "npc",
+      field: "map",
+    });
+  });
+
   it("fails fast when a requested entity has no map projection", () => {
     const db = new Database(":memory:");
     db.exec(LOCATION_DDL);

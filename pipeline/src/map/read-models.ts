@@ -1,6 +1,10 @@
 import type { Database } from "bun:sqlite";
-import { ENTITY_GRAPH_DDL } from "../relationships/relationship-graph.ts";
 import { entityRegistry } from "../entities/registry";
+import {
+  ENTITY_GRAPH_DDL,
+  insertPipelineDiagnostics,
+} from "../relationships/relationship-graph.ts";
+import type { PipelineDiagnostic } from "../relationships/relationship-graph.ts";
 
 export const MAP_READ_MODEL_DDL = `
 CREATE TABLE map_points (
@@ -30,6 +34,45 @@ CREATE TABLE map_volumes (
 CREATE INDEX idx_map_volumes_entity_id_map_id ON map_volumes (entity_id, map_id);
 `;
 
+function mapLayerId(db: Database, entityId: string): string {
+  const hasMapLayers = db
+    .query<{ count: number }, []>(
+      `SELECT COUNT(*) AS count FROM sqlite_master WHERE type = 'table' AND name = 'map_layers'`,
+    )
+    .get()?.count;
+  if (!hasMapLayers) return entityId;
+  return (
+    db
+      .query<{ layer_id: string }, [string]>(
+        `SELECT layer_id FROM map_layers WHERE entity_id = ? LIMIT 1`,
+      )
+      .get(entityId)?.layer_id ?? entityId
+  );
+}
+
+function mapProjectionDiagnostics(
+  db: Database,
+  entityId: string,
+  sourceTable: string | undefined,
+  sourceRows: number,
+  outputRows: number,
+): PipelineDiagnostic[] {
+  if (sourceTable === undefined || sourceRows === 0 || outputRows > 0) return [];
+  const layer = mapLayerId(db, entityId);
+  return [
+    {
+      severity: "diagnostic",
+      source: "map-read-model",
+      code: "mapLayerEmptyProjection",
+      message: `Map layer '${layer}' has no points or volumes although source table '${sourceTable}' has ${sourceRows} rows.`,
+      entityType: entityId,
+      entityId: null,
+      field: "map",
+      evidence: { layer, sourceTable, sourceRows, outputRows },
+    },
+  ];
+}
+
 /**
  * Emits `map_points` and `map_volumes` for exactly the placed entities named in
  * `entityIds`. Entity nodes come from each entity's canonical read model.
@@ -45,6 +88,7 @@ export function emitMapReadModels(
   db.exec(MAP_READ_MODEL_DDL);
   db.exec(ENTITY_GRAPH_DDL);
 
+  const diagnostics: PipelineDiagnostic[] = [];
   for (const entityId of entityIds) {
     const projection = entityRegistry[entityId]?.mapProjection;
     if (!projection) {
@@ -52,5 +96,25 @@ export function emitMapReadModels(
     }
     db.exec(projection.points);
     if (projection.volumes) db.exec(projection.volumes);
+    const sourceRows = projection.sourceTable
+      ? (db
+          .query<{ count: number }, []>(`SELECT COUNT(*) AS count FROM ${projection.sourceTable}`)
+          .get()?.count ?? 0)
+      : 0;
+    const outputRows =
+      (db
+        .query<{ count: number }, [string]>(
+          `SELECT COUNT(*) AS count FROM map_points WHERE entity_id = ?`,
+        )
+        .get(entityId)?.count ?? 0) +
+      (db
+        .query<{ count: number }, [string]>(
+          `SELECT COUNT(*) AS count FROM map_volumes WHERE entity_id = ?`,
+        )
+        .get(entityId)?.count ?? 0);
+    diagnostics.push(
+      ...mapProjectionDiagnostics(db, entityId, projection.sourceTable, sourceRows, outputRows),
+    );
   }
+  insertPipelineDiagnostics(db, diagnostics, "map-read-model");
 }
