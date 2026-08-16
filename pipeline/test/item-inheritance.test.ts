@@ -4,9 +4,9 @@ import { canonicaliseCharacters } from "../src/entities/character/canonicaliser.
 import { emitCharacterReadModels } from "../src/entities/character/read-models.ts";
 import {
   collectTransitiveDescendants,
-  deriveEntityNodeSlug,
   emitItemReadModels,
 } from "../src/entities/item/read-models.ts";
+import { deriveEntityNodeSlug } from "../src/relationships/entity-nodes.ts";
 import { canonicaliseEnchantments } from "../src/entities/enchantment/canonicaliser.ts";
 import { emitEnchantmentReadModels } from "../src/entities/enchantment/read-models.ts";
 import { ENTITY_GRAPH_DDL } from "../src/relationships/relationship-graph.ts";

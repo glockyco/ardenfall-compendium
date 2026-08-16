@@ -2,7 +2,8 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 import { buildDDL } from "$pipeline/sql/ddl";
 import { canonicaliseItems } from "$pipeline/entities/item/canonicaliser";
-import { emitItemReadModels, prepareEntityNodeWriter } from "$pipeline/entities/item/read-models";
+import { emitItemReadModels } from "$pipeline/entities/item/read-models";
+import { prepareEntityNodeWriter } from "$pipeline/relationships/entity-nodes";
 import { emitStatTypeReadModels } from "$pipeline/entities/stat-type/read-models";
 import { emitItemCategoryReadModels } from "$pipeline/entities/item-category/read-models";
 import { emitItemTagReadModels } from "$pipeline/entities/item-tag/read-models";
@@ -170,11 +171,12 @@ describe("emitItemReadModels", () => {
       display_icon_hash: string | null;
       display_icon_color: string | null;
     }[];
-    expect(overview).toHaveLength(9);
+    expect(overview).toHaveLength(10);
     expect(overview.map(({ id, name }) => ({ id, name }))).toEqual([
       { id: "4ed20218.fixture-iron-sword", name: "Iron Sword" },
       { id: "5ea7beef.fixture-leather-tunic", name: "Leather Tunic" },
       { id: "6a71c0de.fixture-stamina-draught", name: "Stamina Draught" },
+      { id: "6a71c0df.fixture-stamina-draught-twin", name: "Stamina Draught" },
       { id: "7ab10c55.fixture-slate-spell", name: "Spark Slate" },
       { id: "8c0ffee0.fixture-throwing-potion", name: "Fire Flask" },
       { id: "a7000001.fixture-base-weapon", name: "Unnamed item — Melee weapon" },
@@ -183,7 +185,7 @@ describe("emitItemReadModels", () => {
       { id: "a7000005.fixture-placeholder-leaf", name: "Unnamed item — Melee weapon" },
     ]);
     expect(db.query("SELECT COUNT(*) AS count FROM item_presentation_rows").get()).toEqual({
-      count: 9,
+      count: 10,
     });
     expect(
       db
@@ -199,6 +201,7 @@ describe("emitItemReadModels", () => {
       { id: "4ed20218.fixture-iron-sword" },
       { id: "5ea7beef.fixture-leather-tunic" },
       { id: "6a71c0de.fixture-stamina-draught" },
+      { id: "6a71c0df.fixture-stamina-draught-twin" },
       { id: "7ab10c55.fixture-slate-spell" },
       { id: "8c0ffee0.fixture-throwing-potion" },
       { id: "a7000001.fixture-base-weapon" },
@@ -561,7 +564,7 @@ describe("emitItemReadModels", () => {
         category_id: "consumable",
         label: "Consumable",
         href: "/objects/variant/consumable",
-        item_count: 1,
+        item_count: 2,
       },
       {
         category_id: "melee-weapon",
@@ -593,7 +596,7 @@ describe("emitItemReadModels", () => {
     expect(variantFilter.kind).toBe("multi-select");
     expect(JSON.parse(variantFilter.options_json)).toEqual([
       { value: "armor", label: "Armor", count: 1 },
-      { value: "consumable", label: "Consumable", count: 1 },
+      { value: "consumable", label: "Consumable", count: 2 },
       { value: "melee-weapon", label: "Melee Weapon", count: 5 },
       { value: "slate-spell", label: "Slate Spell", count: 1 },
       { value: "throwing-potion", label: "Throwing Potion", count: 1 },

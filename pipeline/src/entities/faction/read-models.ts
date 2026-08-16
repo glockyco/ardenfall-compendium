@@ -1,7 +1,7 @@
 import type { Database } from "bun:sqlite";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
-import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../../relationships/entity-nodes.ts";
 
 export const FACTION_READ_MODEL_DDL = `
 CREATE TABLE faction_overview_rows (

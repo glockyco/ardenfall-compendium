@@ -3,7 +3,7 @@ import type { SnapshotRef } from "../../types.ts";
 import { resolveCharacterType, resolveReferenceId } from "../character-type.ts";
 import type { CharacterTypeResolution } from "../character-type.ts";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
-import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../../relationships/entity-nodes.ts";
 
 interface NpcRow {
   id: string;

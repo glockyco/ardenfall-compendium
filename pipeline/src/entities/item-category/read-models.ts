@@ -1,6 +1,6 @@
 import type { Database } from "bun:sqlite";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
-import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../../relationships/entity-nodes.ts";
 
 export const ITEM_CATEGORY_READ_MODEL_DDL = `
 CREATE TABLE item_category_overview_rows (

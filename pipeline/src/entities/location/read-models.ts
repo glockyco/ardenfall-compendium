@@ -1,6 +1,6 @@
 import type { Database } from "bun:sqlite";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
-import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../../relationships/entity-nodes";
 
 export interface LocationMapProjection {
   points: string;

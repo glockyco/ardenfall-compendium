@@ -2,7 +2,7 @@ import type { Database } from "bun:sqlite";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
 import type { SnapshotRef } from "../../types.ts";
-import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../../relationships/entity-nodes.ts";
 import { resolveCharacterType } from "../character-type.ts";
 
 export const CHARACTER_READ_MODEL_DDL = `
