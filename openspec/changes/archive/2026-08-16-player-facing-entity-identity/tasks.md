@@ -40,8 +40,8 @@
 ## 6. Site
 
 - [x] 6.1 Move placements to `/characters` and definitions to `/character-types`, and delete `/placed-characters` with its components and accessors.
-- [ ] 6.2 Render a character's type, race, name provenance, stock and drops, stating which values are the character's own.
-- [ ] 6.3 Render a type's placements as map deep links, and a race's name sets with their vocabulary.
+- [x] 6.2 Render a character's type, race, name provenance, stock and drops, stating which values are the character's own.
+- [x] 6.3 Render a type's placements as map deep links, and a race's name sets with their vocabulary.
 - [x] 6.4 Rename the navigation entries and update the sitemap route list.
 - [x] 6.5 Publish only current routes; old `/placed-characters/<slug>` URLs return the site's not-found page with its earlier-snapshot explanation.
 
@@ -56,4 +56,4 @@
 
 - [x] 8.1 Record live placement ownership, definition linkage, and authored naming behaviour in the extraction plans.
 - [x] 8.2 Correct the cell count in the plans: 27 loadable cell scenes and 607 cell assets, not 683 cells.
-- [ ] 8.3 Record the slice and its measured evidence in the roadmap, and archive this change.
+- [x] 8.3 Record the slice and its measured evidence in the roadmap, and archive this change.
