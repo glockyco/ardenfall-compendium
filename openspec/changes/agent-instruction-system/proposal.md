@@ -22,7 +22,7 @@ Our own artefacts produced three more errors. A window of `registry.ts` showed t
 
 `openspec/config.yaml` tells a reader to ground each claim in the decompiled source, and to confirm each shape with a live export. Nothing makes that instruction operational. The repository has no spike workflow, no home for probes, and no rule for a negative result.
 
-`docs/` holds the fourth home. Ten active plans, one roadmap of 76 kilobytes, one index, and 37 archived plans track status, findings, and counts. Specs, changes, tests, and emitted artifacts own each of those facts. A plan document therefore drifts from its owner, as "683 cells" drifted through three of them.
+`docs/` holds a fourth home, and a separate change retires it. A plan document drifts from its owner, as "683 cells" drifted through three of them.
 
 ## What Changes
 
@@ -34,8 +34,7 @@ Our own artefacts produced three more errors. A window of `registry.ts` showed t
 - Add an export preflight that fails when more than one instrumented game holds the HotRepl port. During the identity slice, a stale instance answered an export.
 - Add rules that match the tool arguments of a named anti-pattern. Three rules interrupt. The other rules report.
 - Replace review with tests where a test can compare a written claim against the thing that the claim describes.
-- Retire `docs/`. Ten active plans, one roadmap, one index, and 37 archived plans form a second planning system. Each fact in them has an owner already: a spec, a change, a test, a skill, or an emitted artifact. Move each surviving fact to its owner, then delete the directory. Git history keeps the record.
-- Convert each planned slice into a change with unstarted tasks, and each open finding into a test or a change.
+- Leave `docs/` to the change `retire-plans-into-specs`. A triage found that one file in it holds about fifteen architecture rules with no owner in `openspec/specs/`, so the retirement needs its own specs and its own tasks.
 
 This change adds no reader-facing behaviour. No entity descriptor, public route, or relationship predicate changes. The change adds three tests, five rules, and one controller preflight.
 

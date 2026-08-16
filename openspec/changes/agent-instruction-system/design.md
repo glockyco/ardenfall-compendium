@@ -50,25 +50,19 @@ A ledger of measurements looked attractive, and it fails the rule this change en
 
 The positive-control rule comes from a failure in this slice. An empty probe result became a report of a missing vocabulary. The probe read a field name that does not exist.
 
-### 5. `docs/` closes rather than moves
-
-The directory holds ten active plans, a roadmap of 76 kilobytes, an index, and 37 archived plans. Its content splits into five kinds, and each kind has an owner: requirements to specs, planned work to unstarted changes, known defects to tests, procedures to skills, and counts to emitted artifacts. A renamed directory would keep the fourth home, so the directory closes.
-
-Git history keeps the 37 archived plans. That costs browsability for the era before OpenSpec, and the cost is deliberate. A stale plan reads as current, and a commit does not.
-
-### 6. One evidence rule covers the game and this repository
+### 5. One evidence rule covers the game and this repository
 
 A claim about the game and a claim about our pipeline fail in the same way. A reader treats an artefact that describes behaviour as proof of behaviour. Two capabilities for one rule place one rule in two homes, and this change removes such duplication. `evidence-standard` therefore covers both. The spec names each artefact that is a hypothesis. The list holds comments, documents, test names, variable names, plans, and reports from other agents. The list also holds code whose existence looks like proof.
 
 The operational half is the mechanism check. Work observes the output of a stage, a table, or a projection in a built artifact before work extends it. That step catches a redirect emitter that never wrote a row. It also catches a declared map layer that stays empty, which the pipeline now reports.
 
-### 7. A test compares each written command against the command it names
+### 6. A test compares each written command against the command it names
 
 Three tests replace reading. The first compares the gate list against the package scripts. The second resolves every `skill://` reference. The third compares requirement sentences across the homes. The repository already tests such alignment. `tooling.test.ts` asserts the release-artifact deploy contract in the same way.
 
 The duplication test compares normalised sentences and not whole files, because paraphrase hid the current duplication. The test does not catch a rewritten paraphrase. A reviewer catches that case.
 
-### 8. The export proves its own provenance
+### 7. The export proves its own provenance
 
 A preflight fails when more than one process holds the HotRepl port. The port serves the process that binds first, and two instrumented games report no conflict. An export therefore refuses the ambiguous case. A written reminder cannot replace the refusal.
 
