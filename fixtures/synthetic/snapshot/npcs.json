@@ -77,6 +77,59 @@
       }
     },
     {
+      "id": "instances;characters;7c2e5b9048af41d7bc6690e5db1a3f77",
+      "fields": {
+        "id": "instances;characters;7c2e5b9048af41d7bc6690e5db1a3f77",
+        "recordRef": {
+          "kind": "record",
+          "table": "instances",
+          "subtable": "characters",
+          "id": "7c2e5b9048af41d7bc6690e5db1a3f77",
+          "recordType": "NPCRecord"
+        },
+        "displayName": "Bandit",
+        "displayNameProvenance": "own",
+        "displayNameOwner": null,
+        "authoringLabel": "Grainery Guard",
+        "characterRef": {
+          "kind": "namedAsset",
+          "entity": "character",
+          "name": "character_bandit"
+        },
+        "spawnPoint": {
+          "x": 14,
+          "y": 2,
+          "z": -26
+        },
+        "mapId": "ardenfall",
+        "containingLocationRefs": [
+          {
+            "kind": "lookupAsset",
+            "guid": "11111111.fixture-town",
+            "unityType": "LocationAsset"
+          }
+        ],
+        "dropRefs": [],
+        "dropRefsProvenance": "absent",
+        "dropRefsOwner": null,
+        "startingFactions": [],
+        "startingFactionsProvenance": "absent",
+        "startingFactionsOwner": null,
+        "startingLevel": null,
+        "startingLevelProvenance": "absent",
+        "startingLevelOwner": null,
+        "merchantRefs": [],
+        "merchantRefsProvenance": "absent",
+        "merchantRefsOwner": null,
+        "merchantGold": null,
+        "merchantGoldProvenance": "absent",
+        "merchantGoldOwner": null,
+        "merchantCategories": [],
+        "merchantCategoriesProvenance": "absent",
+        "merchantCategoriesOwner": null
+      }
+    },
+    {
       "id": "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
       "fields": {
         "id": "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",

@@ -121,7 +121,11 @@ function parseAttributes(source: string): Record<string, string | true> {
 function checkLinkPurpose(route: string, links: Element[], html: string): void {
   const destinations = new Map<string, { href: string }>();
   for (const link of links) {
-    const text = visibleText(link.body);
+    // A screen reader announces the accessible name, and `aria-label` overrides the
+    // content. Judging the content alone would fail a link that is correctly named.
+    const label = link.attributes["aria-label"];
+    const text =
+      typeof label === "string" && label.trim().length > 0 ? label.trim() : visibleText(link.body);
     const href = typeof link.attributes.href === "string" ? link.attributes.href.trim() : "";
     if (
       !text ||

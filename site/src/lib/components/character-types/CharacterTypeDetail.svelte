@@ -34,7 +34,11 @@
             {#if placement.mapHref}
               <span aria-hidden="true"> · </span>
               <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- map hrefs are generated from the static read model -->
-              <a class="underline underline-offset-2" href={placement.mapHref}>Show on map</a>
+              <a
+                class="underline underline-offset-2"
+                href={placement.mapHref}
+                aria-label={`Show ${placement.label} on the map`}>Show on map</a
+              >
             {/if}
           </li>
         {/each}
