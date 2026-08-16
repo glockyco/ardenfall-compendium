@@ -15,6 +15,7 @@ interface CharacterOverviewRecord {
 interface CharacterPresentationRecord {
   id: string;
   name: string;
+  display_name: string;
   name_is_description: number;
   display_name_provenance: "own" | "inherited" | "absent";
   display_name_owner: string | null;
@@ -58,7 +59,10 @@ export interface CharacterTypeLink {
 
 export interface CharacterPresentationRow {
   id: string;
+  /** The title as composed, without the short id a listing adds to tell two apart. */
   name: string;
+  /** The listing label: the title plus a short id when another title matches it. */
+  displayName: string;
   nameIsDescription: boolean;
   displayNameProvenance: "own" | "inherited" | "absent";
   displayNameOwner: string | null;
@@ -129,7 +133,7 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
   const node = getEntityNodeBySlug("npc", slug);
   if (!node) return undefined;
   const row = get<CharacterPresentationRecord>(
-    `SELECT p.id, n.display_label AS name, p.name_is_description,
+    `SELECT p.id, p.name, n.display_label AS display_name, p.name_is_description,
             p.display_name_provenance, p.display_name_owner,
             p.render_context, p.map_id, p.map_x, p.map_y, p.elevation,
             p.location_ids_json, p.character_type_id, p.character_type_label,
@@ -159,6 +163,7 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
   return {
     id: row.id,
     name: row.name,
+    displayName: row.display_name,
     nameIsDescription: row.name_is_description === 1,
     displayNameProvenance: row.display_name_provenance,
     displayNameOwner: row.display_name_owner,
