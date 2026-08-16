@@ -847,11 +847,22 @@ describe("site prerender architecture", () => {
     );
   });
 
-  it("keeps prerender smoke independent of synthetic fixture names", () => {
-    const smoke = readFileSync("site/scripts/smoke-prerender-output.ts", "utf8");
-    expect(smoke).not.toContain("fixture-iron-sword");
-    expect(smoke).not.toContain("Iron Sword");
-    expect(smoke).toContain("manifest.probes.items");
+  // A policy check, deliberately asserted on the script's source: whether a probe
+  // is chosen by name or by state is a fact about how the smoke is written, and it
+  // cannot be observed from the smoke's output. Assertions about what a page shows
+  // belong in the smoke itself, against built HTML.
+  it("keeps smokes independent of synthetic fixture names", () => {
+    const prerender = readFileSync("site/scripts/smoke-prerender-output.ts", "utf8");
+    expect(prerender).not.toContain("fixture-iron-sword");
+    expect(prerender).not.toContain("Iron Sword");
+    expect(prerender).toContain("manifest.probes.items");
+    // Quest probes select by the state under test, because a live export shares the
+    // states with the fixture but none of its ids.
+    expect(prerender).not.toContain("quest_disabled-test");
+    expect(prerender).not.toContain("quest_supply-run");
+    const map = readFileSync("site/scripts/smoke-map-route.ts", "utf8");
+    expect(map).not.toContain("Harbor Town");
+    expect(map).toContain("FROM map_points");
   });
 
   it("requires an icon-bearing stat prerender smoke probe", () => {

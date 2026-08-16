@@ -42,6 +42,16 @@ Git hooks run their tools through `nix develop`, so a commit works from a GUI cl
 
 - For live extraction, use `skill://live-extraction`.
 
+## What counts as verified
+
+The gate above proves the fixture path. It does not prove the compendium, because the fixture is a set of shapes we chose and the game is not. Every defect listed in the roadmap's Slice 8.5 evidence was found by one of the three steps below and by none of the tests.
+
+- **Export from the running game.** Two whole families were missing from every live snapshot while every test passed, and a family that reaches no map layer was silent. `bun run hotrepl:export` costs about two minutes; `--no-quit` exports twice in one session, which is how reproducibility is checked.
+- **Build the site from a release artifact.** Staging refuses a dirty tree, so this also proves the artifact's provenance. Live data carries shapes no fixture had: two items under one name, 95 races with no name, a variant referencing one name set twice.
+- **Open the result in a browser.** Prerendered HTML hides hydration errors. A keyed `{#each}` with duplicate keys crashed a published race page while its HTML looked correct and every smoke passed.
+
+When live data exposes a shape the fixture lacks, add it to `fixtures/synthetic/snapshot` in the same change, so the next regression is caught by CI rather than by a browser.
+
 ## Non-negotiable invariants
 
 - The descriptor's `site.route` decides whether an entity gets a public page. Start page work in the descriptor, not in a route file.
