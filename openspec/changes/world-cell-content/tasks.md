@@ -49,7 +49,6 @@
 
 ## 8. Documentation and cleanup
 
-- [ ] 8.1 Correct `docs/plans/2026-08-03-extraction-coverage.md`: 27 loadable cell scenes rather than 683 cells, and `SimpleDialogInteractable` measuring 25 rather than 0.
-- [ ] 8.2 Correct `docs/plans/2026-08-02-item-obtainability.md`, which prices the remaining item provenance against the 683-cell figure.
-- [ ] 8.3 Note in `docs/plans/2026-08-02-tile-capture.md` that content harvesting and tile capture share the streaming mechanism but not the traversal cost.
-- [ ] 8.4 Record the slice and its measured evidence in the roadmap, and archive this change.
+- [ ] 8.1 Record the measured walk cost in this change, so a later change prices its own traversal against a measurement rather than an estimate.
+- [ ] 8.2 State in `tile-capture-basemap` that content harvesting and tile capture share the streaming mechanism and not the traversal cost.
+- [ ] 8.3 Archive this change after the gate passes.

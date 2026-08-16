@@ -14,7 +14,7 @@
 - Never mutate game data during extraction. Read backing values, and derive absent values without writing them back. Report genuinely unknowable values as diagnostics.
 - Leave missing record names null. `PortalExtractor` reports `portalFriendlyNameMissing`, and `NpcExtractor` reports `npcFriendlyNameMissing`. The pipeline owns reader-facing unnamed labels.
 - Preserve the vertical texture flip in `SpriteAssetExporter.CropRgba`: Unity starts at bottom left, and PNG starts at top left.
-- Record unused game fields in `docs/plans/2026-08-03-game-field-assumptions.md` instead of extracting them. `PortalRecord.isAccessable` is an example.
+- State an unextracted game field as a comment at the extractor that reads its type, and say why the field is skipped. `PortalRecord.isAccessable` is an example. A comment beside the code survives a refactor of the code.
 - Pass every extraction source to `RunFinalizeCommand`, including items, stat types, spells, status effects, item categories, tags, locations, and portals. Do not construct live services by default.
 - Write extraction output to a staging path, then rename it atomically. Never let the pipeline read partial files.
 - Register HotRepl commands through `HotRepl.Control.GlobalControlCommandRegistry`. Keep BepInEx and MelonLoader support working. Use the Phase 4a API: `ControlCommandKind.Sync`, `ControlCommandContext<TOutput>`, and its failure helpers.

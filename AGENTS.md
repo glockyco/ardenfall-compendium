@@ -2,7 +2,11 @@
 
 ## Where to look first
 
-- Living roadmap: `docs/plans/2026-04-29-ardenfall-compendium-roadmap.md`
+- `openspec/specs/` — what the compendium must do now, one file per capability.
+- `openspec/changes/` — work in flight, with its tasks. Run `openspec list` for status.
+- `openspec/changes/archive/` — a delivered change, with the evidence that proved it.
+
+A requirement about the compendium lives in a spec. A measurement lives in the change that measured it, or in the artifact that emits it. Neither lives in prose elsewhere.
 
 ## Subsystem entry points
 

@@ -21,7 +21,7 @@
 - Name diagnostics as `<entity><Condition>` in camelCase. State what is absent, not how the pipeline searched. Use `fatal` only when the artifact is invalid. Give each condition its own code.
 - Sort canonical arrays and ordinals by `snapshotRefKey` identity before serialisation. Never sort by display name.
 - Normalize both guid spellings to one short id. `deriveShortId` strips hyphens from record ids.
-- Read decompiled game source before deciding how a field controls behaviour. Rename fields whose names conflict with their use. Record findings in `docs/plans/2026-08-03-game-field-assumptions.md`.
+- Read decompiled game source before deciding how a field controls behaviour. Rename fields whose names conflict with their use. State the mechanism in the spec requirement that depends on it, and record the probe in the change that used it.
 - Add entities through the central registry in `src/entities/registry.ts`. Keep each entity's pipeline and site capabilities in its registry entry. Let `validateDescriptorCoverage` fail when a descriptor lacks an implementation.
 
 ## Layout

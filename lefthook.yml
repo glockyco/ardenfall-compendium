@@ -26,15 +26,6 @@ pre-commit:
       skip:
         - merge
         - rebase
-    # omp-plans is a personal tool rather than a repository dependency, so it is
-    # not in the dev shell and the job skips when it is absent.
-    - name: plans docs
-      glob: "docs/plans/**/*.md"
-      run: sh -c 'omp-plans index && omp-plans check'
-      stage_fixed: true
-      skip:
-        - run: "! command -v omp-plans"
-
 commit-msg:
   jobs:
     - name: commitlint

@@ -15,9 +15,9 @@ The roadmap defers container loot, item spawners, scene dialogue and world spawn
 | `LocalNPCSpawner`           |    55 | a direct `CharacterData` reference                                                       |
 | `SimpleDialogInteractable`  |    25 | `dialogs` and an authored `dialogName`                                                   |
 
-Two documented conclusions are wrong as a result. `docs/plans/2026-08-03-extraction-coverage.md` records `SimpleDialogInteractable.dialogs` as measuring **0 at rest** and treats that as evidence the content sits behind an expensive traversal; there are 25, and they measured zero only because the scenes were not loaded. The same document prices the remaining item provenance — 278 items behind 182 lists — against a 683-cell walk that does not exist.
+Two earlier conclusions are wrong as a result. A prior measurement recorded `SimpleDialogInteractable.dialogs` as **0 at rest** and treated that as evidence the content sits behind an expensive traversal; there are 25, and they measured zero only because the scenes were not loaded. The same measurement priced the remaining item provenance — 278 items behind 182 lists — against a 683-cell walk that does not exist. The walk covers 27 loadable cell scenes.
 
-Identity is not a problem either. Of 142 content objects in the richest sampled cell, **140 carry a `GuidComponent` with a non-empty GUID** and 136 also carry a `StaticSaveComponent`, which is the third source mechanism `docs/plans/2026-06-04-compendium-data-architecture.md` already names and has never used.
+Identity is not a problem either. Of 142 content objects in the richest sampled cell, **140 carry a `GuidComponent` with a non-empty GUID** and 136 also carry a `StaticSaveComponent`, which is the third source mechanism the extraction architecture already names and has never used.
 
 So the largest remaining gap in reader value — where an item lies in the world, what a chest holds, who owns it, and who speaks in a room — is a two-minute walk behind a mechanism the repository already describes.
 
@@ -62,4 +62,4 @@ So the largest remaining gap in reader value — where an item lies in the world
 - `pipeline/src/entities/*` for the new families, `pipeline/src/map/read-models.ts` for their layers, and the relationship registry for ownership and provenance predicates.
 - `site` item, container, location, character and faction pages.
 - `fixtures/synthetic/snapshot`, which gains a cell with a spawner, a container, an owner and a dialogue owner.
-- `docs/plans/2026-08-03-extraction-coverage.md` and `2026-08-02-item-obtainability.md`, whose cell-count and at-rest figures are wrong.
+- The earlier cell-count and at-rest figures, which this proposal corrects above.

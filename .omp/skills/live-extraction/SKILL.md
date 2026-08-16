@@ -58,4 +58,4 @@ Never commit decompiled source, raw game JSON, snapshots, or generated databases
 
 ## Sources
 
-The procedure follows the repository export contract in `docs/plans/2026-05-06-hotrepl-export-workflow-design.md` and the harness skill guidance in `https://code.claude.com/docs/en/skills`.
+The export contract lives in `controller/src/export-orchestrator.ts` and in the snapshot validator it calls. Read those before you change a phase or a timeout.
