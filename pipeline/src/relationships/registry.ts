@@ -75,6 +75,11 @@ export const relationshipRegistry = {
     inverseTitle: "Dropped by",
     sortOrder: 60,
   },
+  sold_by: {
+    forwardTitle: "Sold by",
+    inverseTitle: "Sells",
+    sortOrder: 61,
+  },
   starts_in_faction: {
     forwardTitle: "Factions",
     inverseTitle: "Starting members",

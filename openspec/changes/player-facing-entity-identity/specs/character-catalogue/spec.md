@@ -57,6 +57,20 @@ Defines the two reader-facing character families, what each page answers for a p
 - **THEN** the item page names the definition as a source
 - **AND** the definition page lists the item
 
+#### Scenario: An item page names sellers and droppers
+
+- **WHEN** a published item is in a placement's merchant stock or drop references
+- **THEN** the item page lists the character under `Sold by` or `Dropped by`
+- **AND** the character page lists the stocked item under `Sells`
+- **AND** a placement-owned drop uses the same drop relation as a definition-owned drop
+- **AND** the relationship evidence states which placement or definition supplied the reference
+
+#### Scenario: An unresolvable placement item reference is diagnosed
+
+- **WHEN** a placement references an item that has no published item page
+- **THEN** the pipeline emits a diagnostic for that reference
+- **AND** it does not emit a relationship edge for the unresolved item
+
 #### Scenario: A template definition is published as a template
 
 - **WHEN** a definition resolves no name of its own, which applies to 59 definitions

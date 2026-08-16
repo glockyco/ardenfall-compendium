@@ -223,8 +223,14 @@
         },
         "mapId": "ardenfall",
         "containingLocationRefs": [],
-        "dropRefs": [],
-        "dropRefsProvenance": "absent",
+        "dropRefs": [
+          {
+            "kind": "lookupAsset",
+            "guid": "5ea7beef.fixture-leather-tunic",
+            "unityType": "ItemData"
+          }
+        ],
+        "dropRefsProvenance": "own",
         "dropRefsOwner": null,
         "startingFactions": [],
         "startingFactionsProvenance": "absent",

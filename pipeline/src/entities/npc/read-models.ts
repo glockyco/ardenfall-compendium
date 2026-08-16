@@ -1,4 +1,5 @@
 import type { Database } from "bun:sqlite";
+import type { SnapshotRef } from "../../types.ts";
 import { resolveCharacterType, resolveReferenceId } from "../character-type.ts";
 import type { CharacterTypeResolution } from "../character-type.ts";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
@@ -11,6 +12,12 @@ interface NpcRow {
   display_name: string | null;
   display_name_provenance: string;
   display_name_owner: string | null;
+  drop_refs_json: string;
+  drop_refs_provenance: string;
+  drop_refs_owner: string | null;
+  merchant_refs_json: string;
+  merchant_refs_provenance: string;
+  merchant_refs_owner: string | null;
 }
 
 interface NpcPlacementRow {
@@ -40,12 +47,23 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
   const npcRows = db
     .query<NpcRow, []>(
       `SELECT npcs.id, npcs.record_ref_json, npcs.character_ref_json, npcs.display_name,
+              npcs.drop_refs_json, npcs.merchant_refs_json,
               provenance.provenance AS display_name_provenance,
-              provenance.owner AS display_name_owner
+              provenance.owner AS display_name_owner,
+              drop_provenance.provenance AS drop_refs_provenance,
+              drop_provenance.owner AS drop_refs_owner,
+              merchant_provenance.provenance AS merchant_refs_provenance,
+              merchant_provenance.owner AS merchant_refs_owner
        FROM npcs
        JOIN npc_value_provenance AS provenance
          ON provenance.npc_id = npcs.id
         AND provenance.field_name = 'displayName'
+       JOIN npc_value_provenance AS drop_provenance
+         ON drop_provenance.npc_id = npcs.id
+        AND drop_provenance.field_name = 'dropRefs'
+       JOIN npc_value_provenance AS merchant_provenance
+         ON merchant_provenance.npc_id = npcs.id
+        AND merchant_provenance.field_name = 'merchantRefs'
        ORDER BY COALESCE(npcs.display_name, npcs.id), npcs.id`,
     )
     .all();
@@ -92,6 +110,16 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
       )
       .all()
       .map((row) => [row.entity_id, row] as const),
+  );
+  const itemNodes = new Set(
+    db
+      .query<{ entity_id: string }, []>(
+        `SELECT entity_id
+         FROM entity_nodes
+         WHERE entity_type = 'item'`,
+      )
+      .all()
+      .map((row) => row.entity_id),
   );
   const definitionByNpc = new Map<string, string>();
   const characterTypeByNpc = new Map<string, CharacterTypeResolution | null>();
@@ -215,6 +243,91 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
         null,
       );
     }
+    for (const row of npcRows) {
+      const drops = parseNpcItemRefs(
+        row.drop_refs_json,
+        row,
+        "npcs.drop_refs_json",
+        "npcDropUnresolved",
+        diagnostics,
+      );
+      for (const ref of drops) {
+        const targetId = itemReferenceId(ref);
+        const itemId = targetId !== null && itemNodes.has(targetId) ? targetId : null;
+        if (itemId === null) {
+          if (isItemReference(ref)) {
+            diagnostics.push(
+              unresolvedNpcItemDiagnostic(
+                row,
+                "npcs.drop_refs_json",
+                "npcDropUnresolved",
+                "reference does not identify a published item",
+              ),
+            );
+          }
+          continue;
+        }
+        edgeInsert.run(
+          `${row.id}:can_drop:item:${itemId}`,
+          "npc",
+          row.id,
+          "item",
+          itemId,
+          "can_drop",
+          "Can drop",
+          1,
+          JSON.stringify({
+            source: "npcs.drop_refs_json",
+            provenance: row.drop_refs_provenance,
+            owner: row.drop_refs_owner ?? row.id,
+            ownerType: row.drop_refs_provenance === "own" ? "placement" : "character",
+          }),
+          null,
+        );
+      }
+
+      const stock = parseNpcItemRefs(
+        row.merchant_refs_json,
+        row,
+        "npcs.merchant_refs_json",
+        "npcMerchantReferenceUnresolved",
+        diagnostics,
+      );
+      for (const ref of stock) {
+        const targetId = itemReferenceId(ref);
+        const itemId = targetId !== null && itemNodes.has(targetId) ? targetId : null;
+        if (itemId === null) {
+          if (isItemReference(ref)) {
+            diagnostics.push(
+              unresolvedNpcItemDiagnostic(
+                row,
+                "npcs.merchant_refs_json",
+                "npcMerchantReferenceUnresolved",
+                "reference does not identify a published item",
+              ),
+            );
+          }
+          continue;
+        }
+        edgeInsert.run(
+          `${itemId}:sold_by:npc:${row.id}`,
+          "item",
+          itemId,
+          "npc",
+          row.id,
+          "sold_by",
+          "Sold by",
+          1,
+          JSON.stringify({
+            source: "npcs.merchant_refs_json",
+            provenance: row.merchant_refs_provenance,
+            owner: row.merchant_refs_owner ?? row.id,
+            ownerType: row.merchant_refs_provenance === "own" ? "placement" : "character",
+          }),
+          null,
+        );
+      }
+    }
     for (const ref of refs) {
       const npc = npcById.get(ref.npc_id);
       if (!npc) {
@@ -281,4 +394,69 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
   edgeTx();
 
   return diagnostics;
+}
+
+function parseNpcItemRefs(
+  value: string,
+  row: NpcRow,
+  field: string,
+  code: "npcDropUnresolved" | "npcMerchantReferenceUnresolved",
+  diagnostics: PipelineDiagnostic[],
+): unknown[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value) as unknown;
+  } catch {
+    diagnostics.push(
+      unresolvedNpcItemDiagnostic(row, field, code, "reference list is not valid JSON"),
+    );
+    return [];
+  }
+  if (!Array.isArray(parsed)) {
+    diagnostics.push(
+      unresolvedNpcItemDiagnostic(row, field, code, "reference list is not an array"),
+    );
+    return [];
+  }
+  for (const ref of parsed) {
+    if (!isItemReference(ref)) {
+      diagnostics.push(
+        unresolvedNpcItemDiagnostic(row, field, code, "reference does not identify an item"),
+      );
+    }
+  }
+  return parsed;
+}
+
+function itemReferenceId(value: unknown): string | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+  const ref = value as Partial<SnapshotRef>;
+  if (ref.kind === "lookupAsset" && typeof ref.guid === "string") return ref.guid;
+  if (ref.kind === "namedAsset" && ref.entity === "item" && typeof ref.name === "string") {
+    return `named;item;${ref.name}`;
+  }
+  return null;
+}
+
+function isItemReference(value: unknown): boolean {
+  return itemReferenceId(value) !== null;
+}
+
+function unresolvedNpcItemDiagnostic(
+  row: NpcRow,
+  field: string,
+  code: "npcDropUnresolved" | "npcMerchantReferenceUnresolved",
+  reason: string,
+): PipelineDiagnostic {
+  const kind = code === "npcDropUnresolved" ? "drop" : "merchant";
+  return {
+    severity: "diagnostic",
+    source: "relationship-graph",
+    code,
+    message: `NPC '${row.id}' has an unresolvable ${kind} item reference: ${reason}.`,
+    entityType: "npc",
+    entityId: row.id,
+    field,
+    evidence: { reason },
+  };
 }

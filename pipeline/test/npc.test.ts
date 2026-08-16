@@ -16,6 +16,16 @@ function missingParentRef(): string {
   return JSON.stringify({ kind: "missing", reason: "noParent", source: "test" });
 }
 
+function seedPublishedLocations(db: Database): void {
+  db.exec(`${ENTITY_GRAPH_DDL}
+    CREATE TABLE locations (id TEXT PRIMARY KEY, name TEXT);
+    INSERT INTO locations VALUES ('town', 'Town'), ('cave', 'Cave');
+    INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+      ('location', 'town', 'Town', 'Town', '/locations/town', 'town', 'town', 1),
+      ('location', 'cave', 'Cave', 'Cave', '/locations/cave', 'cave', 'cave', 1);
+  `);
+}
+
 function seedCharacterDefinitions(db: Database): void {
   for (const name of characterNames) {
     const id = `named;character;${name}`;
@@ -34,6 +44,23 @@ function seedCharacterDefinitions(db: Database): void {
         name,
         name,
         `/character-types/${name.toLowerCase()}`,
+        name.toLowerCase(),
+        name.toLowerCase(),
+      ],
+    );
+  }
+  for (const name of ["ThiefLoot", "ThiefStock", "ThiefStockTwo"]) {
+    const id = `named;item;${name}`;
+    db.run(
+      `INSERT INTO entity_nodes
+         (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+      [
+        "item",
+        id,
+        name,
+        name,
+        `/items/${name.toLowerCase()}`,
         name.toLowerCase(),
         name.toLowerCase(),
       ],
@@ -149,7 +176,10 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
           startingLevel: { automatic: false, addValue: 2, value: 4 },
           startingLevelProvenance: "own",
           startingLevelOwner: null,
-          merchantRefs: [{ kind: "namedAsset", entity: "item", name: "ThiefStock" }],
+          merchantRefs: [
+            { kind: "namedAsset", entity: "item", name: "ThiefStock" },
+            { kind: "namedAsset", entity: "item", name: "ThiefStockTwo" },
+          ],
           merchantRefsProvenance: "own",
           merchantRefsOwner: null,
           merchantGold: { kind: "namedAsset", entity: "leveledCount", name: "ThiefGold" },
@@ -310,7 +340,8 @@ describe("NPC pipeline", () => {
         character_ref_json: '{"kind":"namedAsset","entity":"character","name":"GrainThief"}',
         drop_refs_json: '[{"kind":"namedAsset","entity":"item","name":"ThiefLoot"}]',
         starting_level_json: '{"automatic":false,"addValue":2,"value":4}',
-        merchant_refs_json: '[{"kind":"namedAsset","entity":"item","name":"ThiefStock"}]',
+        merchant_refs_json:
+          '[{"kind":"namedAsset","entity":"item","name":"ThiefStock"},{"kind":"namedAsset","entity":"item","name":"ThiefStockTwo"}]',
         merchant_gold_json: '{"kind":"namedAsset","entity":"leveledCount","name":"ThiefGold"}',
         merchant_categories_json:
           '[{"kind":"namedAsset","entity":"merchantCategory","name":"Weapons"}]',
@@ -404,13 +435,7 @@ describe("NPC pipeline", () => {
 
   it("emits page nodes, presentation rows, map points, and one edge per NPC-location pair", () => {
     const db = setupCanonicalDb();
-    db.exec(`${ENTITY_GRAPH_DDL}
-      CREATE TABLE locations (id TEXT PRIMARY KEY, name TEXT);
-      INSERT INTO locations VALUES ('town', 'Town'), ('cave', 'Cave');
-      INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
-        ('location', 'town', 'Town', 'Town', '/locations/town', 'town', 'town', 1),
-        ('location', 'cave', 'Cave', 'Cave', '/locations/cave', 'cave', 'cave', 1);
-    `);
+    seedPublishedLocations(db);
     seedCharacterDefinitions(db);
     const diagnostics = emitNpcReadModels(db, "/characters");
     expect(diagnostics).toEqual([]);
@@ -628,6 +653,134 @@ describe("NPC pipeline", () => {
     db.close();
   });
 
+  it("projects two stocked items and a placement-only drop", () => {
+    const db = setupCanonicalDb();
+    seedPublishedLocations(db);
+    seedCharacterDefinitions(db);
+
+    expect(emitNpcReadModels(db, "/characters")).toEqual([]);
+    expect(
+      db
+        .query(
+          `SELECT source_type, source_id, target_type, target_id, predicate
+           FROM entity_edges
+           WHERE predicate IN ('sold_by', 'can_drop')
+           ORDER BY predicate, source_id, target_id`,
+        )
+        .all(),
+    ).toEqual([
+      {
+        source_type: "npc",
+        source_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        target_type: "item",
+        target_id: "named;item;ThiefLoot",
+        predicate: "can_drop",
+      },
+      {
+        source_type: "item",
+        source_id: "named;item;ThiefStock",
+        target_type: "npc",
+        target_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        predicate: "sold_by",
+      },
+      {
+        source_type: "item",
+        source_id: "named;item;ThiefStockTwo",
+        target_type: "npc",
+        target_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        predicate: "sold_by",
+      },
+    ]);
+    const evidence = db
+      .query<{ predicate: string; evidence_json: string }, []>(
+        `SELECT predicate, evidence_json FROM entity_edges
+         WHERE predicate IN ('sold_by', 'can_drop') ORDER BY predicate, edge_id`,
+      )
+      .all()
+      .map((row) => ({ predicate: row.predicate, evidence: JSON.parse(row.evidence_json) }));
+    expect(evidence).toEqual([
+      {
+        predicate: "can_drop",
+        evidence: {
+          source: "npcs.drop_refs_json",
+          provenance: "own",
+          owner: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+          ownerType: "placement",
+        },
+      },
+      {
+        predicate: "sold_by",
+        evidence: {
+          source: "npcs.merchant_refs_json",
+          provenance: "own",
+          owner: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+          ownerType: "placement",
+        },
+      },
+      {
+        predicate: "sold_by",
+        evidence: {
+          source: "npcs.merchant_refs_json",
+          provenance: "own",
+          owner: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+          ownerType: "placement",
+        },
+      },
+    ]);
+    db.close();
+  });
+
+  it("reports an unresolved placement item reference", () => {
+    const source = envelope();
+    const unresolvedSource: SnapshotEnvelope<NPCSnapshotFields> = {
+      ...source,
+      rows: source.rows.map((row, index) =>
+        index === 3
+          ? {
+              ...row,
+              fields: {
+                ...row.fields,
+                dropRefs: [
+                  ...row.fields.dropRefs,
+                  { kind: "namedAsset", entity: "item", name: "MissingPlacementDrop" } as const,
+                ],
+              },
+            }
+          : row,
+      ),
+    };
+    const db = setupCanonicalDb(unresolvedSource);
+    seedPublishedLocations(db);
+    seedCharacterDefinitions(db);
+    expect(emitNpcReadModels(db, "/characters")).toEqual([
+      {
+        severity: "diagnostic",
+        source: "relationship-graph",
+        code: "npcDropUnresolved",
+        message:
+          "NPC 'instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b' has an unresolvable drop item reference: reference does not identify a published item.",
+        entityType: "npc",
+        entityId: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
+        field: "npcs.drop_refs_json",
+        evidence: { reason: "reference does not identify a published item" },
+      },
+    ]);
+    expect(
+      db
+        .query(
+          `SELECT source_id, target_id FROM entity_edges
+         WHERE predicate = 'can_drop' ORDER BY source_id, target_id`,
+        )
+        .all(),
+    ).toEqual([
+      {
+        source_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        target_id: "named;item;ThiefLoot",
+      },
+    ]);
+    db.close();
+  });
+
   it("titles generated-name placements from type and containing location", () => {
     const source = envelope();
     const descriptiveSource: SnapshotEnvelope<NPCSnapshotFields> = {
@@ -647,13 +800,7 @@ describe("NPC pipeline", () => {
       ),
     };
     const db = setupCanonicalDb(descriptiveSource);
-    db.exec(`${ENTITY_GRAPH_DDL}
-      CREATE TABLE locations (id TEXT PRIMARY KEY, name TEXT);
-      INSERT INTO locations VALUES ('town', 'Town'), ('cave', 'Cave');
-      INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
-        ('location', 'town', 'Town', 'Town', '/locations/town', 'town', 'town', 1),
-        ('location', 'cave', 'Cave', 'Cave', '/locations/cave', 'cave', 'cave', 1);
-    `);
+    seedPublishedLocations(db);
     seedCharacterDefinitions(db);
     expect(emitNpcReadModels(db, "/characters")).toEqual([]);
     expect(
@@ -704,13 +851,7 @@ describe("NPC pipeline", () => {
       ),
     };
     const db = setupCanonicalDb(unresolvedSource);
-    db.exec(`${ENTITY_GRAPH_DDL}
-      CREATE TABLE locations (id TEXT PRIMARY KEY, name TEXT);
-      INSERT INTO locations VALUES ('town', 'Town'), ('cave', 'Cave');
-      INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
-        ('location', 'town', 'Town', 'Town', '/locations/town', 'town', 'town', 1),
-        ('location', 'cave', 'Cave', 'Cave', '/locations/cave', 'cave', 'cave', 1);
-    `);
+    seedPublishedLocations(db);
     seedCharacterDefinitions(db);
 
     expect(emitNpcReadModels(db, "/characters")).toEqual([

@@ -312,6 +312,43 @@ describe("relationship section projection", () => {
     );
   });
 
+  it("shows sellers and droppers on the item side", () => {
+    const db = seedGraph();
+    db.run(
+      `INSERT INTO entity_nodes
+        (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      ["npc", "npc-a", "Ada", "Ada", "/characters/ada", "ada", "ada", 1],
+    );
+    addEdge(db, "sold-edge", "item", "item-a", "npc", "npc-a", "sold_by");
+    addEdge(db, "drop-edge", "npc", "npc-a", "item", "item-a", "can_drop");
+
+    expect(emitRelationshipSections(db)).toEqual([]);
+    expect(
+      db
+        .query<{ source_type: string; source_id: string; title: string }, []>(
+          `SELECT source_type, source_id, title FROM entity_relationship_sections
+           WHERE source_id = 'item-a' ORDER BY title`,
+        )
+        .all(),
+    ).toEqual([
+      { source_type: "item", source_id: "item-a", title: "Dropped by" },
+      { source_type: "item", source_id: "item-a", title: "Sold by" },
+    ]);
+    expect(
+      db
+        .query<{ source_type: string; source_id: string; title: string }, []>(
+          `SELECT source_type, source_id, title FROM entity_relationship_sections
+           WHERE source_id = 'npc-a' ORDER BY title`,
+        )
+        .all(),
+    ).toEqual([
+      { source_type: "npc", source_id: "npc-a", title: "Can drop" },
+      { source_type: "npc", source_id: "npc-a", title: "Sells" },
+    ]);
+    db.close();
+  });
+
   it("keeps rendered and graph-only registry shapes declarative", () => {
     expect(relationshipRegistry.variant_of).toEqual({
       forwardTitle: "Variant",
@@ -326,6 +363,11 @@ describe("relationship section projection", () => {
         enchantment: "Applied by enchantments",
       },
       sortOrder: 40,
+    });
+    expect(relationshipRegistry.sold_by).toEqual({
+      forwardTitle: "Sold by",
+      inverseTitle: "Sells",
+      sortOrder: 61,
     });
     expect(relationshipRegistry.speaks_about_quest).toEqual({
       forwardTitle: null,
