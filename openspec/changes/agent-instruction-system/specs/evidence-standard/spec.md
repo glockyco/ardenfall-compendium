@@ -75,15 +75,31 @@ Code that exists does not show that the code works. Work observes the output of 
 - **WHEN** a declared table, layer, or file is empty and its source table holds rows
 - **THEN** the pipeline reports that state and does not pass it in silence
 
-### Requirement: Spikes are disposable and measurements are durable
+### Requirement: Each measurement goes to the producer that owns it
 
-A spike is a probe that answers one question. Probes live in a directory that git ignores, because each probe targets one game build and decays with it. The measurement is durable. `docs/plans/` holds the measurement, its date, and the game build.
+A spike is a probe that answers one question. Probes live in a directory that git ignores, because each probe targets one game build and decays with it. The result then goes to one owner. The repository holds no separate ledger, because a ledger would copy values that already have producers.
 
-#### Scenario: A spike answers a question
+- A count, an availability figure, and a diagnostic total belong to the release `artifact-manifest.json` and the snapshot `diagnostics.json`. The pipeline emits both.
+- A game mechanism belongs to the spec requirement that it justifies, in one sentence.
+- The probe and its output belong to the change that used them, and stay in the archived change.
 
-- **WHEN** a spike produces a number, a shape, or a mechanism that a change needs
-- **THEN** the ledger records the measurement, the date, and the game build
-- **AND** the repository does not hold the probe
+#### Scenario: A spike measures a count
+
+- **WHEN** a spike measures a count, an availability figure, or a diagnostic total
+- **THEN** the change reads that value from the emitted artifact
+- **AND** no document restates the value
+
+#### Scenario: A spec claims a number
+
+- **WHEN** a spec states a count from the game
+- **THEN** a test asserts that count against the emitted artifact
+- **AND** the test fails when the game changes the count
+
+#### Scenario: A spike explains a mechanism
+
+- **WHEN** a spike explains how the game behaves
+- **THEN** the spec requirement that depends on the mechanism states it in one sentence
+- **AND** the archived change keeps the probe and its output
 
 #### Scenario: Extraction code changes after a measurement
 

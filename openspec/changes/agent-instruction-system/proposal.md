@@ -20,7 +20,9 @@ Work without a spike produced three wrong claims in the same slice. One claim re
 
 Our own artefacts produced three more errors. A window of `registry.ts` showed the `npc` entry without a read-model phase, and the diff showed that the phase was present. A query read a field name that does not exist, and the empty result became a defect report. Work extended the redirect mechanism, wired it through the CLI, and covered it with tests. The mechanism had never written a row, because the emitter filtered a source type that no code produces.
 
-`openspec/config.yaml` tells a reader to ground each claim in the decompiled source, and to confirm each shape with a live export. Nothing makes that instruction operational. The repository has no spike workflow, no home for probes, no rule for a negative result, and no requirement to record a measurement.
+`openspec/config.yaml` tells a reader to ground each claim in the decompiled source, and to confirm each shape with a live export. Nothing makes that instruction operational. The repository has no spike workflow, no home for probes, and no rule for a negative result.
+
+`docs/` holds the fourth home. Ten active plans, one roadmap of 76 kilobytes, one index, and 37 archived plans track status, findings, and counts. Specs, changes, tests, and emitted artifacts own each of those facts. A plan document therefore drifts from its owner, as "683 cells" drifted through three of them.
 
 ## What Changes
 
@@ -32,7 +34,8 @@ Our own artefacts produced three more errors. A window of `registry.ts` showed t
 - Add an export preflight that fails when more than one instrumented game holds the HotRepl port. During the identity slice, a stale instance answered an export.
 - Add rules that match the tool arguments of a named anti-pattern. Three rules interrupt. The other rules report.
 - Replace review with tests where a test can compare a written claim against the thing that the claim describes.
-- State the boundary between `docs/plans/` and `openspec/`. Specs hold what must be true. Changes hold work in flight. Plans hold audits, measurements, and slice evidence. The change tracker holds slice status.
+- Retire `docs/`. Ten active plans, one roadmap, one index, and 37 archived plans form a second planning system. Each fact in them has an owner already: a spec, a change, a test, a skill, or an emitted artifact. Move each surviving fact to its owner, then delete the directory. Git history keeps the record.
+- Convert each planned slice into a change with unstarted tasks, and each open finding into a test or a change.
 
 This change adds no reader-facing behaviour. No entity descriptor, public route, or relationship predicate changes. The change adds three tests, five rules, and one controller preflight.
 

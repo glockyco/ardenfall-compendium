@@ -29,14 +29,20 @@ Git hooks run their tools through `nix develop`, so a commit works from a GUI cl
 - Site dev server: `bun run dev`.
 - Before yielding non-trivial work, run the full gate:
   - Run the scoped tests above.
+  - Run `bun run typecheck` and `bun run --cwd site check`.
   - Run `bun run artifact:fixture synthetic fixtures/synthetic/snapshot`.
   - Run `bun run --cwd site build:fixture`.
-  - Run `bun run --cwd site smoke:prerender`.
+  - Run `bun run --cwd site smoke:accessibility`.
+  - Run `bun run --cwd site smoke:error-route`.
+  - Run `bun run --cwd site smoke:map`.
   - Run `bun run --cwd site smoke:pagefind`.
-  - Run `bun run format:check`.
-  - Run `bun run lint`.
+  - Run `bun run --cwd site smoke:prerender`.
+  - Run `bun run check:entity-fields`.
+  - Run `bun run check:fixtures`.
+  - Run `bun run check:validators`.
+  - Run `bun run lint` and `bun run format:check`.
   - Run `git diff --check`.
-- Commit through `skill://commit`.
+- Commit through `skill://commit-policy`.
 
 ## Live data and game logic
 

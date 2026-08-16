@@ -90,14 +90,26 @@ An instruction earns its place in two ways. The instruction changes a decision, 
 - **THEN** the instructions require a fix or a record for that defect
 - **AND** the instructions require a search for further instances before the commit
 
-### Requirement: Plans hold evidence and specs hold contracts
+### Requirement: The repository holds no parallel planning system
 
-`openspec/specs` states what must be true. `openspec/changes` states the work in flight. `docs/plans` holds audits, measurements, and slice evidence. Specs do not carry those numbers.
+`openspec/specs` states what must be true. `openspec/changes` holds the work in flight and the work not yet started. The archived changes hold the rationale of delivered work.
 
-The change tracker holds slice status. Two records of one status drift apart.
+The repository MUST NOT hold a second planning system. A roadmap, a plan index, and an audit document each restate a fact that a spec, a change, a test, or an emitted artifact already owns.
 
-#### Scenario: A slice reaches completion
+#### Scenario: Work is planned but not started
 
-- **WHEN** a slice completes
-- **THEN** the roadmap records the measured evidence and its date
-- **AND** the roadmap omits the status, because the change tracker holds it
+- **WHEN** work is planned for later
+- **THEN** it exists as a change with unstarted tasks
+- **AND** no document lists it a second time
+
+#### Scenario: A defect is known and unfixed
+
+- **WHEN** a defect is known and stays unfixed
+- **THEN** a test documents the current behaviour, or a change records the work
+- **AND** no document holds the defect as prose
+
+#### Scenario: A reader asks what is delivered
+
+- **WHEN** a reader asks which work is complete
+- **THEN** the change tracker answers with `openspec list`
+- **AND** the archived changes hold the evidence of each delivery

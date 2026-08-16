@@ -1,5 +1,7 @@
 # Sticky repository rules
 
+Requirements about this repository. `AGENTS.md` holds orientation, commands, and the definition of verified work. The user-level rules hold working style that applies to every repository.
+
 - Never edit generated or deployed output by hand. Change its source and regenerate it. Treat `site/static` and `pipeline/dist` as staging caches, not sources. A deploy artifact is identified by its `artifact-manifest.json`. Production deploys consume only release artifacts under `pipeline/artifacts/releases/*`. Fixture artifacts are never deployable. (Source: `docs/plans/2026-06-04-compendium-data-architecture.md` §6 and §8.)
 - Use `entities/<id>/entity.json` as the only cross-subsystem source of truth for entity shape. Do not duplicate its fields in TypeScript, SQL, or C#. (Source: `docs/plans/2026-06-04-compendium-data-architecture.md` §3 and §8.)
 - Fail fast when source-of-truth data is missing. Emit diagnostics or fail the slice. Add recovery only for an explicit, continuously verified contract. (Source: `docs/plans/2026-06-04-compendium-data-architecture.md` §6.)
@@ -8,4 +10,4 @@
 - A probe MUST select its subject by the state under test, never by a fixture's id or name. The same test and smoke run against the synthetic fixture and a live export, and those share states but not names. (Source: `tooling.test.ts` "keeps prerender smoke independent of synthetic fixture names".)
 - One fact, one producer. Do not copy a value another table already derives, and do not add a second way to compute it. A copied label or a second derivation is how ambiguous link text and mirrored map coordinates both shipped. (Source: `docs/plans/2026-06-04-compendium-data-architecture.md` §3.)
 - An input whose absence disables a check is prohibited. Required data is a required parameter, and a missing one fails loudly; optional inputs and defaulted values silently switch guards off. (Source: Slice 8.5, the snapshot completeness gate.)
-- Verify a reader-facing change in a browser against a live export before claiming it works. Prerendered HTML hides hydration errors, and a fixture hides shapes only live data has. (Source: `'/Users/glockyco/src/github.com/glockyco/ardenfall-compendium/.omp/skills/live-extraction'`; Slice 8.5 found `each_key_duplicate` and ambiguous link text this way.)
+- Verify a reader-facing change in a browser, against a live export, before you call it done. Prerendered HTML hides a hydration error, and the fixture lacks shapes that live data carries. (Source: `'/Users/glockyco/src/github.com/glockyco/ardenfall-compendium/.omp/skills/live-extraction'`; the identity slice found `each_key_duplicate` and ambiguous link text this way.)

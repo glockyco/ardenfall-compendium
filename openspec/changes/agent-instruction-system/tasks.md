@@ -1,19 +1,19 @@
 ## 1. One home per statement
 
-- [ ] 1.1 Remove from `openspec/config.yaml` each requirement that `.omp/RULES.md` states.
-- [ ] 1.2 Keep the planning-time artifact rules in `openspec/config.yaml`, and add a pointer to `AGENTS.md`.
-- [ ] 1.3 Confirm that the planning context still names the constraints that an artifact author needs.
-- [ ] 1.4 Move the working-style requirements from the repository files to the user-level rules.
-- [ ] 1.5 State in the user-level rules: take the complete fix, whatever its size.
-- [ ] 1.6 State in the user-level rules: record a change when the complete fix cannot land, and ship no compromise.
-- [ ] 1.7 State in the user-level rules: fix or record an adjacent defect of the same class.
-- [ ] 1.8 State in the user-level rules: search for further instances before the commit.
-- [ ] 1.9 State in the user-level rules: treat a report from another agent as a claim, and measure it again.
-- [ ] 1.10 State in the user-level rules: one subject per commit, and a green tree at each commit.
-- [ ] 1.11 Trim `.omp/RULES.md` to hard requirements about this repository.
-- [ ] 1.12 Add one line at the head of `.omp/RULES.md` that names the home of each kind of statement.
-- [ ] 1.13 Complete the gate list in `AGENTS.md` from the scripts in `package.json`.
-- [ ] 1.14 Replace `skill://commit` in `AGENTS.md` with the skill that exists.
+- [x] 1.1 Remove from `openspec/config.yaml` each requirement that `.omp/RULES.md` states.
+- [x] 1.2 Keep the planning-time artifact rules in `openspec/config.yaml`, and add a pointer to `AGENTS.md`.
+- [x] 1.3 Confirm that the planning context still names the constraints that an artifact author needs.
+- [x] 1.4 Move the working-style requirements from the repository files to the user-level rules.
+- [x] 1.5 State in the user-level rules: take the complete fix, whatever its size.
+- [x] 1.6 State in the user-level rules: record a change when the complete fix cannot land, and ship no compromise.
+- [x] 1.7 State in the user-level rules: fix or record an adjacent defect of the same class.
+- [x] 1.8 State in the user-level rules: search for further instances before the commit.
+- [x] 1.9 State in the user-level rules: treat a report from another agent as a claim, and measure it again.
+- [x] 1.10 State in the user-level rules: one subject per commit, and a green tree at each commit.
+- [x] 1.11 Trim `.omp/RULES.md` to hard requirements about this repository.
+- [x] 1.12 Add one line at the head of `.omp/RULES.md` that names the home of each kind of statement.
+- [x] 1.13 Complete the gate list in `AGENTS.md` from the scripts in `package.json`.
+- [x] 1.14 Replace `skill://commit` in `AGENTS.md` with the skill that exists.
 
 ## 2. Tests for written claims
 
@@ -41,9 +41,9 @@
 - [ ] 4.1 Add the spike practice to `skill://live-extraction`: one question, one probe, one recorded measurement.
 - [ ] 4.2 State in the skill that a negative result needs a positive control.
 - [ ] 4.3 Add `spikes/` to `.gitignore`.
-- [ ] 4.4 State in the skill why the repository holds the measurement and not the probe.
+- [ ] 4.4 State in the skill that the repository holds no probe, and that each result goes to its owner.
 - [ ] 4.5 State in the skill that work repeats a measurement after extraction code changes.
-- [ ] 4.6 Record in the ledger each measurement from this slice that the ledger lacks, with its date and build.
+- [ ] 4.6 Confirm that each measurement from this slice reached its owner: the artifact, a spec sentence, or the archived change.
 - [ ] 4.7 State in the user-level rules that an artefact which describes behaviour is a hypothesis.
 - [ ] 4.8 State that a behaviour claim rests on the line that does the work, or on an observed result.
 - [ ] 4.9 State that the commit which finds a contradicting artefact corrects it.
@@ -58,11 +58,21 @@
 - [ ] 5.5 Assert equal family counts, an equal filtered runtime-created count, and equal artifact hashes.
 - [ ] 5.6 Permit a difference in the timing records only.
 
-## 6. Boundary between plans and specs
+## 6. Retire the plans directory
 
-- [ ] 6.1 State in `AGENTS.md` that specs hold contracts, changes hold work in flight, and plans hold evidence.
-- [ ] 6.2 Remove the restated slice status from the roadmap, and keep the evidence sections.
-- [ ] 6.3 State in the roadmap that the change tracker holds slice status.
+- [ ] 6.1 Read the ten active plans, and list each fact that is still true.
+- [ ] 6.2 Move each surviving requirement into the spec that owns it.
+- [ ] 6.3 Move each game mechanism into the spec requirement that it justifies, in one sentence.
+- [ ] 6.4 Add a test for each count that a spec states, and assert it against the emitted artifact.
+- [ ] 6.5 Create a change with unstarted tasks for each planned slice, including tile capture.
+- [ ] 6.6 Convert each open finding into a test that documents the behaviour, or into a change.
+- [ ] 6.7 Move the export contract from the plan into `'/Users/glockyco/src/github.com/glockyco/ardenfall-compendium/.omp/skills/live-extraction'`.
+- [ ] 6.8 Repoint the six source citations in `.omp/RULES.md` to the archived change or the spec that holds the reason.
+- [ ] 6.9 Repoint the field-record instruction in `mod/AGENTS.md` and `pipeline/AGENTS.md` to the extractor and the spec.
+- [ ] 6.10 Update `README.md`, and describe `openspec/` in place of the plans directory.
+- [ ] 6.11 Update `AGENTS.md`, and state that specs hold contracts and changes hold work.
+- [ ] 6.12 Delete `docs/`.
+- [ ] 6.13 Confirm that no file refers to `docs/plans`, except an archived change.
 
 ## 7. Verification
 

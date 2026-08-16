@@ -1,15 +1,14 @@
 schema: spec-driven
 
+# This block holds only what an artifact author needs while planning. Repository
+# requirements live in `.omp/RULES.md`, and orientation lives in `AGENTS.md`. Both
+# load automatically, so a copy here would drift and could also cost the sticky
+# rules their stickiness.
 context: |
   Ardenfall Compendium extracts data from the Ardenfall Demo, a Unity Mono game, and publishes it as a static compendium.
   Four subsystems: mod/ is a C# BepInEx walker, pipeline/ canonicalises snapshots into SQLite artifacts with Bun, site/ prerenders SvelteKit pages onto Cloudflare Workers Static Assets, and controller/ drives the game over HotRepl.
-  Nix provides the toolchain. `nix develop` is the entry point for every command.
-  `entities/<id>/entity.json` is the only cross-subsystem source of truth for entity shape, and its `site.route` decides whether an entity gets a public page. Do not restate entity shape in TypeScript, SQL or C#.
-  Ground every claim about game behaviour in the decompiled source under `.decompiled/`, then confirm data shape with a live export. Runtime reflection and prior documentation are not sources of truth.
-  Public presentation and link contracts are generated pipeline data. The site renders typed read models, rich-text nodes and relationship edges. Route code never parses descriptors or renders raw game markup.
-  Replace public contracts by clean cutover: remove the old read model, route, component or fallback in the same change. Keep temporary inspection private.
-  Fail fast when source-of-truth data is missing. Emit a diagnostic or fail the slice. Never hand-edit generated or deployed output.
-  Follow AGENTS.md and the relevant subsystem skill before implementation.
+  Read AGENTS.md for the toolchain, the commands, and the definition of verified work. Read `.omp/RULES.md` for the requirements that hold in every change.
+  Name the reader before the mechanism. A change states what a player of the game can now answer.
 
 rules:
   proposal:
