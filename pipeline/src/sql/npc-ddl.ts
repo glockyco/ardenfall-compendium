@@ -38,6 +38,7 @@ CREATE TABLE npc_presentation_rows (
   name_is_description     INTEGER NOT NULL,
   display_name_provenance TEXT NOT NULL,
   display_name_owner      TEXT,
+  value_provenance_json    TEXT NOT NULL,
   render_context          TEXT NOT NULL,
   map_id            TEXT,
   map_x             REAL NOT NULL,

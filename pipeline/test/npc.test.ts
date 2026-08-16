@@ -487,6 +487,7 @@ describe("NPC pipeline", () => {
             name: string;
             display_name_provenance: string;
             display_name_owner: string | null;
+            value_provenance_json: string;
             render_context: string;
             map_id: string | null;
             map_x: number;
@@ -496,7 +497,7 @@ describe("NPC pipeline", () => {
           },
           [string]
         >(
-          `SELECT id, name, display_name_provenance, display_name_owner,
+          `SELECT id, name, display_name_provenance, display_name_owner, value_provenance_json,
                   render_context, map_id, map_x, map_y, elevation, location_ids_json
            FROM npc_presentation_rows WHERE id = ?`,
         )
@@ -506,6 +507,8 @@ describe("NPC pipeline", () => {
       name: "Saya Sako",
       display_name_provenance: "own",
       display_name_owner: null,
+      value_provenance_json:
+        '[{"name":"stock","provenance":"absent","owner":null},{"name":"drops","provenance":"absent","owner":null},{"name":"factions","provenance":"absent","owner":null},{"name":"level","provenance":"absent","owner":null}]',
       render_context: "character-presentation-v1",
       map_id: "ardenfall",
       map_x: 1,
@@ -521,10 +524,11 @@ describe("NPC pipeline", () => {
             name: string;
             display_name_provenance: string;
             display_name_owner: string | null;
+            value_provenance_json: string;
           },
           []
         >(
-          `SELECT id, name, display_name_provenance, display_name_owner
+          `SELECT id, name, display_name_provenance, display_name_owner, value_provenance_json
            FROM npc_presentation_rows ORDER BY id`,
         )
         .all(),
@@ -534,24 +538,32 @@ describe("NPC pipeline", () => {
         name: "Character 2d6f47b3",
         display_name_provenance: "absent",
         display_name_owner: null,
+        value_provenance_json:
+          '[{"name":"stock","provenance":"absent","owner":null},{"name":"drops","provenance":"absent","owner":null},{"name":"factions","provenance":"absent","owner":null},{"name":"level","provenance":"absent","owner":null}]',
       },
       {
         id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
         name: "Saya Sako",
         display_name_provenance: "own",
         display_name_owner: null,
+        value_provenance_json:
+          '[{"name":"stock","provenance":"absent","owner":null},{"name":"drops","provenance":"absent","owner":null},{"name":"factions","provenance":"absent","owner":null},{"name":"level","provenance":"absent","owner":null}]',
       },
       {
         id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
         name: "Fishermen",
         display_name_provenance: "inherited",
         display_name_owner: "Fisherman",
+        value_provenance_json:
+          '[{"name":"stock","provenance":"absent","owner":null},{"name":"drops","provenance":"inherited","owner":"Fisherman"},{"name":"factions","provenance":"inherited","owner":"Fisherman"},{"name":"level","provenance":"inherited","owner":"Fisherman"}]',
       },
       {
         id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
         name: "Grain Thief",
         display_name_provenance: "own",
         display_name_owner: null,
+        value_provenance_json:
+          '[{"name":"stock","provenance":"own","owner":null},{"name":"drops","provenance":"own","owner":null},{"name":"factions","provenance":"own","owner":null},{"name":"level","provenance":"own","owner":null}]',
       },
     ]);
     expect(node?.route_path).toBe("/characters/saya-sako--4b1c9e07");

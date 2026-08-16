@@ -40,6 +40,7 @@ describe("character and portal site read models", () => {
         CREATE TABLE npc_presentation_rows (
           id TEXT PRIMARY KEY, name TEXT NOT NULL, name_is_description INTEGER NOT NULL,
           display_name_provenance TEXT NOT NULL, display_name_owner TEXT,
+          value_provenance_json TEXT NOT NULL,
           render_context TEXT NOT NULL, map_id TEXT, map_x REAL NOT NULL,
           map_y REAL NOT NULL, elevation REAL NOT NULL, location_ids_json TEXT NOT NULL,
           character_type_id TEXT, character_type_label TEXT, character_type_route_path TEXT
@@ -56,11 +57,11 @@ describe("character and portal site read models", () => {
           edges_json TEXT NOT NULL
         );
         INSERT INTO npc_presentation_rows VALUES
-          ('npc-ada', 'Ada', 0, 'own', NULL, 'character-presentation-v1', 'overworld', 1, 2, 3, '[]', NULL, NULL, NULL),
-          ('npc-darvaki-a', 'Darvaki', 0, 'own', NULL, 'character-presentation-v1', 'overworld', 4, 5, 6, '["location-woods"]', NULL, NULL, NULL),
-          ('npc-darvaki-b', 'Darvaki', 0, 'inherited', 'type-darvaki', 'character-presentation-v1', 'overworld', 7, 8, 9, '["location-ruins"]', NULL, NULL, NULL),
-          ('npc-unnamed-a', 'Karu Elf in Shisivi Wood', 1, 'absent', NULL, 'character-presentation-v1', 'overworld', 10, 11, 12, '["location-woods"]', 'race-elf', 'Karu Elf', '/character-races/karu-elf--88888888'),
-          ('npc-unnamed-b', 'Character 33333333', 1, 'absent', NULL, 'character-presentation-v1', NULL, 13, 14, 15, '[]', NULL, NULL, NULL);
+          ('npc-ada', 'Ada', 0, 'own', NULL, '[{"name":"stock","provenance":"own","owner":null},{"name":"drops","provenance":"absent","owner":null},{"name":"factions","provenance":"absent","owner":null},{"name":"level","provenance":"absent","owner":null}]', 'character-presentation-v1', 'overworld', 1, 2, 3, '[]', NULL, NULL, NULL),
+          ('npc-darvaki-a', 'Darvaki', 0, 'own', NULL, '[{"name":"stock","provenance":"absent","owner":null},{"name":"drops","provenance":"absent","owner":null},{"name":"factions","provenance":"absent","owner":null},{"name":"level","provenance":"absent","owner":null}]', 'character-presentation-v1', 'overworld', 4, 5, 6, '["location-woods"]', NULL, NULL, NULL),
+          ('npc-darvaki-b', 'Darvaki', 0, 'inherited', 'type-darvaki', '[{"name":"stock","provenance":"inherited","owner":"type-darvaki"},{"name":"drops","provenance":"inherited","owner":"type-darvaki"},{"name":"factions","provenance":"inherited","owner":"type-darvaki"},{"name":"level","provenance":"inherited","owner":"type-darvaki"}]', 'character-presentation-v1', 'overworld', 7, 8, 9, '["location-ruins"]', NULL, NULL, NULL),
+          ('npc-unnamed-a', 'Karu Elf in Shisivi Wood', 1, 'absent', NULL, '[{"name":"stock","provenance":"absent","owner":null},{"name":"drops","provenance":"absent","owner":null},{"name":"factions","provenance":"absent","owner":null},{"name":"level","provenance":"absent","owner":null}]', 'character-presentation-v1', 'overworld', 10, 11, 12, '["location-woods"]', 'race-elf', 'Karu Elf', '/character-races/karu-elf--88888888'),
+          ('npc-unnamed-b', 'Character 33333333', 1, 'absent', NULL, '[{"name":"stock","provenance":"absent","owner":null},{"name":"drops","provenance":"absent","owner":null},{"name":"factions","provenance":"absent","owner":null},{"name":"level","provenance":"absent","owner":null}]', 'character-presentation-v1', NULL, 13, 14, 15, '[]', NULL, NULL, NULL);
         INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
           ('npc', 'npc-ada', 'Ada', 'Ada', '/characters/ada--11111111', 'ada--11111111', '11111111', 1),
           ('npc', 'npc-darvaki-a', 'Darvaki', 'Darvaki', '/characters/darvaki--44444444', 'darvaki--44444444', '44444444', 1),
@@ -118,6 +119,7 @@ describe("character and portal site read models", () => {
         CREATE TABLE npc_presentation_rows (
           id TEXT PRIMARY KEY, name TEXT NOT NULL, name_is_description INTEGER NOT NULL,
           display_name_provenance TEXT NOT NULL, display_name_owner TEXT,
+          value_provenance_json TEXT NOT NULL,
           render_context TEXT NOT NULL, map_id TEXT, map_x REAL NOT NULL,
           map_y REAL NOT NULL, elevation REAL NOT NULL, location_ids_json TEXT NOT NULL,
           character_type_id TEXT, character_type_label TEXT, character_type_route_path TEXT
@@ -139,10 +141,10 @@ describe("character and portal site read models", () => {
           map_id TEXT, geometry_json TEXT NOT NULL, elevation_min REAL, elevation_max REAL
         );
         INSERT INTO npc_presentation_rows VALUES
-          ('npc-ada', 'Ada', 0, 'own', NULL, 'character-presentation-v1', 'overworld', 1, 2, 3, '["location-woods"]', 'character-noble', 'Noble', '/character-types/noble--aaaaaaaa'),
-          ('npc-inherited', 'Captain', 0, 'inherited', 'preset_captain', 'character-presentation-v1', 'overworld', 4, 5, 6, '[]', 'character-captain', 'Captain', '/character-types/captain--bbbbbbbb'),
-          ('npc-race', 'Elf Scout', 0, 'own', NULL, 'character-presentation-v1', 'overworld', 10, 11, 12, '[]', 'race-elf', 'Elf', '/character-races/elf--cccccccc'),
-          ('npc-unnamed', 'Character 22222222', 1, 'absent', NULL, 'character-presentation-v1', NULL, 7, 8, 9, '[]', NULL, NULL, NULL);
+          ('npc-ada', 'Ada', 0, 'own', NULL, '[{"name":"stock","provenance":"own","owner":null},{"name":"drops","provenance":"absent","owner":null},{"name":"factions","provenance":"absent","owner":null},{"name":"level","provenance":"absent","owner":null}]', 'character-presentation-v1', 'overworld', 1, 2, 3, '["location-woods"]', 'character-noble', 'Noble', '/character-types/noble--aaaaaaaa'),
+          ('npc-inherited', 'Captain', 0, 'inherited', 'preset_captain', '[{"name":"stock","provenance":"inherited","owner":"preset_captain"},{"name":"drops","provenance":"inherited","owner":"preset_captain"},{"name":"factions","provenance":"inherited","owner":"preset_captain"},{"name":"level","provenance":"inherited","owner":"preset_captain"}]', 'character-presentation-v1', 'overworld', 4, 5, 6, '[]', 'character-captain', 'Captain', '/character-types/captain--bbbbbbbb'),
+          ('npc-race', 'Elf Scout', 0, 'own', NULL, '[{"name":"stock","provenance":"absent","owner":null},{"name":"drops","provenance":"absent","owner":null},{"name":"factions","provenance":"absent","owner":null},{"name":"level","provenance":"absent","owner":null}]', 'character-presentation-v1', 'overworld', 10, 11, 12, '[]', 'race-elf', 'Elf', '/character-races/elf--cccccccc'),
+          ('npc-unnamed', 'Character 22222222', 1, 'absent', NULL, '[{"name":"stock","provenance":"absent","owner":null},{"name":"drops","provenance":"absent","owner":null},{"name":"factions","provenance":"absent","owner":null},{"name":"level","provenance":"absent","owner":null}]', 'character-presentation-v1', NULL, 7, 8, 9, '[]', NULL, NULL, NULL);
         INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
           ('npc', 'npc-ada', 'Ada', 'Ada', '/characters/ada--11111111', 'ada--11111111', '11111111', 1),
           ('npc', 'npc-inherited', 'Captain', 'Captain', '/characters/captain--33333333', 'captain--33333333', '33333333', 1),
@@ -158,6 +160,12 @@ describe("character and portal site read models", () => {
           nameIsDescription: false,
           displayNameProvenance: "own",
           displayNameOwner: null,
+          valueProvenance: [
+            { name: "stock", provenance: "own", owner: null },
+            { name: "drops", provenance: "absent", owner: null },
+            { name: "factions", provenance: "absent", owner: null },
+            { name: "level", provenance: "absent", owner: null },
+          ],
           characterType: {
             id: "character-noble",
             label: "Noble",
@@ -173,6 +181,12 @@ describe("character and portal site read models", () => {
           name: "Captain",
           displayNameProvenance: "inherited",
           displayNameOwner: "preset_captain",
+          valueProvenance: [
+            { name: "stock", provenance: "inherited", owner: "preset_captain" },
+            { name: "drops", provenance: "inherited", owner: "preset_captain" },
+            { name: "factions", provenance: "inherited", owner: "preset_captain" },
+            { name: "level", provenance: "inherited", owner: "preset_captain" },
+          ],
           characterType: {
             id: "character-captain",
             label: "Captain",
@@ -197,6 +211,12 @@ describe("character and portal site read models", () => {
           nameIsDescription: true,
           displayNameProvenance: "absent",
           displayNameOwner: null,
+          valueProvenance: [
+            { name: "stock", provenance: "absent", owner: null },
+            { name: "drops", provenance: "absent", owner: null },
+            { name: "factions", provenance: "absent", owner: null },
+            { name: "level", provenance: "absent", owner: null },
+          ],
           characterType: null,
           mapHref: null,
           locations: [],

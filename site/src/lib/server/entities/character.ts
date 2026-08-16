@@ -4,6 +4,15 @@ import { isStringArray, parseGeneratedJson, validateRenderContext } from "../jso
 import { getEntityNodeBySlug } from "./item";
 import { getMapHref } from "../map-href";
 
+export type CharacterValueProvenanceKind = "own" | "inherited" | "absent";
+export type CharacterValueName = "stock" | "drops" | "factions" | "level";
+
+export interface CharacterValueProvenance {
+  name: CharacterValueName;
+  provenance: CharacterValueProvenanceKind;
+  owner: string | null;
+}
+
 interface CharacterOverviewRecord {
   id: string;
   name: string;
@@ -19,6 +28,7 @@ interface CharacterPresentationRecord {
   name_is_description: number;
   display_name_provenance: "own" | "inherited" | "absent";
   display_name_owner: string | null;
+  value_provenance_json: string;
   render_context: string;
   map_id: string | null;
   map_x: number;
@@ -66,6 +76,7 @@ export interface CharacterPresentationRow {
   nameIsDescription: boolean;
   displayNameProvenance: "own" | "inherited" | "absent";
   displayNameOwner: string | null;
+  valueProvenance: CharacterValueProvenance[];
   renderContext: "character-presentation-v1";
   routePath: string;
   characterType: CharacterTypeLink | null;
@@ -82,6 +93,28 @@ export interface CharacterPresentationRow {
 const displayMapLabel = (mapId: string | null): string => {
   if (mapId === null) return "Unknown";
   return mapId.replace(/[-_]+/g, " ").replace(/\b\w/g, (character) => character.toUpperCase());
+};
+
+const isCharacterValueProvenance = (value: unknown): value is CharacterValueProvenance => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    (candidate.name === "stock" ||
+      candidate.name === "drops" ||
+      candidate.name === "factions" ||
+      candidate.name === "level") &&
+    (candidate.provenance === "own" ||
+      candidate.provenance === "inherited" ||
+      candidate.provenance === "absent") &&
+    (candidate.owner === null || typeof candidate.owner === "string")
+  );
+};
+
+const isCharacterValueProvenanceArray = (value: unknown): value is CharacterValueProvenance[] => {
+  if (!Array.isArray(value) || value.length !== 4 || !value.every(isCharacterValueProvenance)) {
+    return false;
+  }
+  return new Set(value.map((entry) => entry.name)).size === 4;
 };
 
 const resolvePublishedLocations = (
@@ -134,7 +167,7 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
   if (!node) return undefined;
   const row = get<CharacterPresentationRecord>(
     `SELECT p.id, p.name, n.display_label AS display_name, p.name_is_description,
-            p.display_name_provenance, p.display_name_owner,
+            p.display_name_provenance, p.display_name_owner, p.value_provenance_json,
             p.render_context, p.map_id, p.map_x, p.map_y, p.elevation,
             p.location_ids_json, p.character_type_id, p.character_type_label,
             p.character_type_route_path, n.route_path
@@ -160,6 +193,14 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
     };
   }
 
+  const valueProvenance = parseGeneratedJson(
+    row.value_provenance_json,
+    "npc",
+    "value_provenance_json",
+    row.id,
+    isCharacterValueProvenanceArray,
+  );
+
   return {
     id: row.id,
     name: row.name,
@@ -167,6 +208,7 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
     nameIsDescription: row.name_is_description === 1,
     displayNameProvenance: row.display_name_provenance,
     displayNameOwner: row.display_name_owner,
+    valueProvenance,
     renderContext: validateRenderContext(
       row.render_context,
       "npc",

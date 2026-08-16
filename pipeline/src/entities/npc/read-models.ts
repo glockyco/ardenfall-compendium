@@ -18,6 +18,14 @@ interface NpcRow {
   merchant_refs_json: string;
   merchant_refs_provenance: string;
   merchant_refs_owner: string | null;
+  starting_factions_provenance: string;
+  starting_factions_owner: string | null;
+  starting_level_provenance: string;
+  starting_level_owner: string | null;
+  merchant_gold_provenance: string;
+  merchant_gold_owner: string | null;
+  merchant_categories_provenance: string;
+  merchant_categories_owner: string | null;
 }
 
 interface NpcPlacementRow {
@@ -53,7 +61,15 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
               drop_provenance.provenance AS drop_refs_provenance,
               drop_provenance.owner AS drop_refs_owner,
               merchant_provenance.provenance AS merchant_refs_provenance,
-              merchant_provenance.owner AS merchant_refs_owner
+              merchant_provenance.owner AS merchant_refs_owner,
+              faction_provenance.provenance AS starting_factions_provenance,
+              faction_provenance.owner AS starting_factions_owner,
+              level_provenance.provenance AS starting_level_provenance,
+              level_provenance.owner AS starting_level_owner,
+              gold_provenance.provenance AS merchant_gold_provenance,
+              gold_provenance.owner AS merchant_gold_owner,
+              category_provenance.provenance AS merchant_categories_provenance,
+              category_provenance.owner AS merchant_categories_owner
        FROM npcs
        JOIN npc_value_provenance AS provenance
          ON provenance.npc_id = npcs.id
@@ -64,6 +80,18 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
        JOIN npc_value_provenance AS merchant_provenance
          ON merchant_provenance.npc_id = npcs.id
         AND merchant_provenance.field_name = 'merchantRefs'
+       JOIN npc_value_provenance AS faction_provenance
+         ON faction_provenance.npc_id = npcs.id
+        AND faction_provenance.field_name = 'startingFactions'
+       JOIN npc_value_provenance AS level_provenance
+         ON level_provenance.npc_id = npcs.id
+        AND level_provenance.field_name = 'startingLevel'
+       JOIN npc_value_provenance AS gold_provenance
+         ON gold_provenance.npc_id = npcs.id
+        AND gold_provenance.field_name = 'merchantGold'
+       JOIN npc_value_provenance AS category_provenance
+         ON category_provenance.npc_id = npcs.id
+        AND category_provenance.field_name = 'merchantCategories'
        ORDER BY COALESCE(npcs.display_name, npcs.id), npcs.id`,
     )
     .all();
@@ -143,10 +171,10 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
   }
   const presentationInsert = db.prepare(
     `INSERT INTO npc_presentation_rows (
-      id, name, name_is_description, display_name_provenance, display_name_owner, render_context,
-      map_id, map_x, map_y, elevation, location_ids_json,
+      id, name, name_is_description, display_name_provenance, display_name_owner,
+      value_provenance_json, render_context, map_id, map_x, map_y, elevation, location_ids_json,
       character_type_id, character_type_label, character_type_route_path
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   const nodeTx = db.transaction(() => {
@@ -191,12 +219,35 @@ export function emitNpcReadModels(db: Database, routeBase: string): PipelineDiag
               : `Character ${deriveEntityNodeSlug("", row.id).shortId}`));
       const label = row.display_name ?? description;
       const slug = deriveEntityNodeSlug(label, row.id);
+      const valueProvenance = [
+        {
+          name: "stock",
+          provenance: row.merchant_refs_provenance,
+          owner: row.merchant_refs_owner,
+        },
+        {
+          name: "drops",
+          provenance: row.drop_refs_provenance,
+          owner: row.drop_refs_owner,
+        },
+        {
+          name: "factions",
+          provenance: row.starting_factions_provenance,
+          owner: row.starting_factions_owner,
+        },
+        {
+          name: "level",
+          provenance: row.starting_level_provenance,
+          owner: row.starting_level_owner,
+        },
+      ];
       presentationInsert.run(
         row.id,
         label,
         isDescription ? 1 : 0,
         row.display_name_provenance,
         row.display_name_owner,
+        JSON.stringify(valueProvenance),
         "character-presentation-v1",
         placement.map_id,
         placement.map_x,
