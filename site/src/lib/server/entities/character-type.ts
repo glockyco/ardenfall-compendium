@@ -1,5 +1,6 @@
 import { all, get } from "../db";
 import { parseGeneratedJson, validateRenderContext } from "../json";
+import { getMapHref } from "../map-href";
 import { getEntityNodeBySlug } from "./item";
 
 interface CharacterTypeOverviewRecord {
@@ -23,6 +24,13 @@ interface CharacterTypePresentationRecord {
 export interface CharacterDrop {
   label: string;
   routePath: string | null;
+}
+
+export interface CharacterPlacementLink {
+  id: string;
+  label: string;
+  routePath: string | null;
+  mapHref: string | null;
 }
 
 const isCharacterDropArray = (value: unknown): value is CharacterDrop[] =>
@@ -52,8 +60,36 @@ export interface CharacterTypePresentationRow {
   renderContext: "character-type-presentation-v1";
   displayName: string;
   drops: CharacterDrop[];
+  placements: CharacterPlacementLink[];
   routePath: string;
 }
+
+interface CharacterPlacementRecord {
+  id: string;
+  label: string;
+  route_path: string | null;
+}
+
+const getCharacterTypePlacements = (characterTypeId: string): CharacterPlacementLink[] =>
+  all<CharacterPlacementRecord>(
+    `SELECT e.source_id AS id, n.display_label AS label, n.route_path
+     FROM entity_edges e
+     JOIN entity_nodes n
+       ON n.entity_type = e.source_type
+      AND n.entity_id = e.source_id
+      AND n.has_page = 1
+     WHERE e.source_type = 'npc'
+       AND e.target_type = 'character'
+       AND e.target_id = ?
+       AND e.predicate = 'instance_of'
+     ORDER BY n.display_label, e.source_id`,
+    [characterTypeId],
+  ).map((row) => ({
+    id: row.id,
+    label: row.label,
+    routePath: row.route_path,
+    mapHref: getMapHref("npc", row.id),
+  }));
 
 export const listCharacterTypes = (): CharacterTypeOverviewRow[] => {
   const rows = all<CharacterTypeOverviewRecord>(
@@ -109,6 +145,7 @@ export const getCharacterTypePresentation = (
       row.id,
       isCharacterDropArray,
     ),
+    placements: getCharacterTypePlacements(row.id),
     routePath: row.route_path,
   };
 };

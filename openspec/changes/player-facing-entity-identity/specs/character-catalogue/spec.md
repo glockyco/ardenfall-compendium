@@ -27,6 +27,32 @@ Defines the two reader-facing character families, what each page answers for a p
 - **AND** the page states that the stock is configured on this character rather than on its type
 - **AND** each stocked item names the character as a source of that item
 
+#### Scenario: A placement states where its visible values came from
+
+- **WHEN** a character page renders its stock, drops, factions or level
+- **THEN** each value has one provenance statement using the value name, its provenance and its owner
+- **AND** an own value says that this character carries it
+- **AND** an inherited value says that it comes from the named character type
+- **AND** an absent value says that the game configures none for this character
+- **AND** an absent value is not described as inherited or as an empty configured list
+
+#### Scenario: An individual carries its own stock
+
+- **WHEN** a placement sets its own merchant stock
+- **THEN** the character page states that the character has its own stock
+- **AND** the page does not attribute that stock to its type
+
+#### Scenario: Drops inherited from a named type are attributed
+
+- **WHEN** a placement inherits its drops from a type named `Fisherman`
+- **THEN** the character page states that its drops come from its type, `Fisherman`
+
+#### Scenario: A value absent from the game configuration is not inferred
+
+- **WHEN** a placement has absent factions or level provenance
+- **THEN** the character page says that the game configures no factions or level for this character
+- **AND** the page does not call the value inherited from a type
+
 #### Scenario: An inherited name is published with its provenance
 
 - **WHEN** a placement resolves its name from its prototype
@@ -47,9 +73,12 @@ Defines the two reader-facing character families, what each page answers for a p
 
 #### Scenario: A creature type page answers where it appears
 
-- **WHEN** a definition such as `Darvaki` has placements deriving from it
-- **THEN** its page lists them
-- **AND** each entry deep-links to that placement on the map
+- **WHEN** a definition such as `Darvaki` has two placements deriving from it
+- **AND** one placement has a map position while the other has none
+- **THEN** its page states that it has two placements
+- **AND** it links each placement to its own character page
+- **AND** the placement with a map position also has a deep link to that character on the map
+- **AND** the placement without a map position has no map link
 
 #### Scenario: Drops connect items to types
 

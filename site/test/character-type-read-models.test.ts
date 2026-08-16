@@ -37,6 +37,17 @@ const seed = () => {
       title TEXT NOT NULL, predicate TEXT NOT NULL, sort_order INTEGER NOT NULL,
       edges_json TEXT NOT NULL
     );
+    CREATE TABLE entity_edges (
+      source_type TEXT NOT NULL, source_id TEXT NOT NULL,
+      target_type TEXT NOT NULL, target_id TEXT NOT NULL,
+      predicate TEXT NOT NULL
+    );
+    CREATE TABLE map_points (
+      id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL, map_id TEXT
+    );
+    CREATE TABLE map_volumes (
+      id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL, map_id TEXT
+    );
     INSERT INTO character_overview_rows VALUES
       ('character-zed', 'Zed', 0),
       ('character-ada', 'Ada', 0),
@@ -52,6 +63,20 @@ const seed = () => {
        '/character-types/ada--22222222', 'ada--22222222', '22222222', 1),
       ('character', 'character-nameless', 'Character type', 'Character type 33333333',
        '/character-types/character-type-33333333--33333333', 'character-type-33333333--33333333', '33333333', 1);
+    INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
+      ('npc', 'npc-mapped', 'Mapped placement', 'Mapped placement',
+       '/characters/mapped-placement--aaaa1111', 'mapped-placement--aaaa1111', 'aaaa1111', 1),
+      ('npc', 'npc-unmapped', 'Unmapped placement', 'Unmapped placement',
+       '/characters/unmapped-placement--bbbb2222', 'unmapped-placement--bbbb2222', 'bbbb2222', 1);
+    INSERT INTO map_points (id, entity_id, instance_id, map_id)
+      VALUES ('npc:npc-mapped', 'npc', 'npc-mapped', 'overworld');
+    INSERT INTO entity_edges (source_type, source_id, target_type, target_id, predicate) VALUES
+      ('npc', 'npc-mapped', 'character', 'character-zed', 'instance_of'),
+      ('npc', 'npc-unmapped', 'character', 'character-zed', 'instance_of');
+    INSERT INTO entity_relationship_sections VALUES
+      ('character-zed:instance_of:inverse:npc', 'character', 'character-zed',
+       'Placements', 'instance_of', 12,
+       '[{"targetType":"npc","targetId":"npc-mapped","targetLabel":"Mapped placement","targetRoutePath":"/characters/mapped-placement--aaaa1111","targetHasPage":true,"predicate":"instance_of","label":"Character type","weight":1,"anchor":null},{"targetType":"npc","targetId":"npc-unmapped","targetLabel":"Unmapped placement","targetRoutePath":"/characters/unmapped-placement--bbbb2222","targetHasPage":true,"predicate":"instance_of","label":"Character type","weight":1,"anchor":null}]');
     INSERT INTO entity_relationship_sections VALUES
       ('character-ada:found_at', 'character', 'character-ada',
        'Found at', 'found_at', 0,
@@ -138,12 +163,27 @@ describe("character type read-model accessors", () => {
         renderContext: "character-type-presentation-v1",
         displayName: "Ada",
         drops: [],
+        placements: [],
         routePath: "/character-types/ada--22222222",
       });
       expect(readModels.getCharacterTypePresentation("zed--11111111")).toMatchObject({
         drops: [
           { label: "Iron Sword", routePath: "/items/iron-sword--44444444" },
           { label: "Unnamed item", routePath: null },
+        ],
+        placements: [
+          {
+            id: "npc-mapped",
+            label: "Mapped placement",
+            routePath: "/characters/mapped-placement--aaaa1111",
+            mapHref: "/map?map=overworld&sel=aaaa1111",
+          },
+          {
+            id: "npc-unmapped",
+            label: "Unmapped placement",
+            routePath: "/characters/unmapped-placement--bbbb2222",
+            mapHref: null,
+          },
         ],
       });
       expect(readModels.getCharacterTypePresentation("missing--99999999")).toBeUndefined();

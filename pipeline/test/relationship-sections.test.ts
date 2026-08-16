@@ -186,7 +186,7 @@ describe("relationship section projection", () => {
     expect(() => emitRelationshipSections(db)).toThrow("not_registered");
   });
 
-  it("suppresses inline forward sections and keeps inverse sections", () => {
+  it("suppresses inline forward and inverse placement sections while keeping the edge", () => {
     const db = seedGraph();
     db.run(
       `INSERT INTO entity_nodes
@@ -201,11 +201,35 @@ describe("relationship section projection", () => {
 
     expect(
       db
-        .query<{ source_type: string; source_id: string; title: string }, []>(
+        .query(
           "SELECT source_type, source_id, title FROM entity_relationship_sections WHERE predicate = 'instance_of'",
         )
         .all(),
-    ).toEqual([{ source_type: "character", source_id: "character-a", title: "Placements" }]);
+    ).toEqual([]);
+    expect(
+      db
+        .query<
+          {
+            source_type: string;
+            source_id: string;
+            target_type: string;
+            target_id: string;
+            predicate: string;
+          },
+          []
+        >(
+          "SELECT source_type, source_id, target_type, target_id, predicate FROM entity_edges WHERE predicate = 'instance_of'",
+        )
+        .all(),
+    ).toEqual([
+      {
+        source_type: "npc",
+        source_id: "npc-a",
+        target_type: "character",
+        target_id: "character-a",
+        predicate: "instance_of",
+      },
+    ]);
   });
 
   it("keeps the variant_of section edge shape", () => {
@@ -376,7 +400,9 @@ describe("relationship section projection", () => {
     expect(relationshipRegistry.instance_of).toEqual({
       forwardTitle: "Character type",
       inverseTitle: "Placements",
-      pagePresentation: { forward: "inline", inverse: "section" },
+      // Both directions are stated by the pages themselves: a character reads its
+      // type in prose, and a type page lists its placements with their map links.
+      pagePresentation: { forward: "inline", inverse: "inline" },
       sortOrder: 12,
     });
   });

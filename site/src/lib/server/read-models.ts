@@ -99,6 +99,7 @@ export type {
 export { getCharacterPresentation, listCharacters } from "./entities/character";
 export type {
   CharacterDrop,
+  CharacterPlacementLink,
   CharacterTypeOverviewRow,
   CharacterTypePresentationRow,
 } from "./entities/character-type";

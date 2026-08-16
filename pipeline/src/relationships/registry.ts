@@ -43,7 +43,7 @@ export const relationshipRegistry = {
   instance_of: {
     forwardTitle: "Character type",
     inverseTitle: "Placements",
-    pagePresentation: { forward: "inline", inverse: "section" },
+    pagePresentation: { forward: "inline", inverse: "inline" },
     sortOrder: 12,
   },
   categorised_as: {
