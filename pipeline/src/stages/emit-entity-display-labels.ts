@@ -3,8 +3,14 @@ import type { Database } from "bun:sqlite";
 /**
  * Persist the label that every consumer should display for an entity node.
  *
- * Labels are grouped across the complete graph, not a filtered list, so the
- * result stays stable wherever a node is rendered.
+ * A label is disambiguated against the labels a reader can reach, meaning nodes
+ * that have a page. Counting unreachable nodes would put a suffix on a title
+ * that nothing collides with: the race grouping publishes one page per race and
+ * keeps its variants as pageless rows, so 109 of them share the label `Karu Elf`
+ * while exactly one is reachable under it.
+ *
+ * The count is still taken once over the whole graph rather than per rendering
+ * surface, so a node's label is the same wherever it appears.
  */
 export function emitEntityDisplayLabels(db: Database): void {
   const rows = db
@@ -14,12 +20,14 @@ export function emitEntityDisplayLabels(db: Database): void {
         entity_id: string;
         label: string | null;
         short_id: string;
+        has_page: number;
         label_count: number;
       },
       []
     >(
-      `SELECT entity_type, entity_id, label, short_id,
-              COUNT(*) OVER (PARTITION BY entity_type, label) AS label_count
+      `SELECT entity_type, entity_id, label, short_id, has_page,
+              COUNT(*) FILTER (WHERE has_page = 1)
+                OVER (PARTITION BY entity_type, label) AS label_count
        FROM entity_nodes`,
     )
     .all();
@@ -35,7 +43,7 @@ export function emitEntityDisplayLabels(db: Database): void {
       );
     }
     update.run(
-      row.label_count > 1 ? `${row.label} · ${row.short_id}` : row.label,
+      row.has_page === 1 && row.label_count > 1 ? `${row.label} · ${row.short_id}` : row.label,
       row.entity_type,
       row.entity_id,
     );
