@@ -6,28 +6,27 @@
 
   let { data }: PageProps = $props();
   const character = $derived(data.presentation);
-  const titleLabel = $derived(
-    character.nameIsDescription ? `Description: ${character.displayName}` : character.displayName,
-  );
+
+  const pageName = $derived(character.name);
 </script>
 
 <svelte:head>
-  <title>{titleLabel} | Character types | Ardenfall Compendium</title>
-  <meta name="description" content={`${titleLabel} in the Ardenfall Compendium.`} />
+  <title>{pageName} | Character types | Ardenfall Compendium</title>
+  <meta name="description" content={`${pageName} in the Ardenfall Compendium.`} />
   <link rel="canonical" href={character.routePath} />
-  <meta property="og:title" content={`${titleLabel} | Character types | Ardenfall Compendium`} />
-  <meta property="og:description" content={`${titleLabel} in the Ardenfall Compendium.`} />
+  <meta property="og:title" content={`${pageName} | Character types | Ardenfall Compendium`} />
+  <meta property="og:description" content={`${pageName} in the Ardenfall Compendium.`} />
   <meta property="og:url" content={character.routePath} />
   <meta property="og:type" content="article" />
 </svelte:head>
 
 <BackLink href={data.characterTypeRoute} label="character types" />
-<h1 class="mt-2 text-2xl font-bold">
-  {#if character.nameIsDescription}<span class="text-muted-foreground text-base"
-      >Description:
-    </span>{/if}
-  {character.displayName}
-</h1>
+<div class="mt-2 flex items-center gap-2">
+  <h1 class="text-2xl font-bold">{pageName}</h1>
+  {#if character.nameIsDescription}
+    <span class="text-muted-foreground text-base">Description</span>
+  {/if}
+</div>
 
 <CharacterTypeDetail presentation={character} />
 

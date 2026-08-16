@@ -13,7 +13,14 @@
         <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
           Name source
         </dt>
-        <dd class="mt-1">The game gives this character no name.</dd>
+        <dd class="mt-1">
+          {#if presentation.characterType}
+            The game has no authored name for this character and generates one when it spawns from
+            the vocabulary of its race.
+          {:else}
+            The game has no authored name for this character and no race vocabulary to generate one.
+          {/if}
+        </dd>
       </div>
     {/if}
     <div>

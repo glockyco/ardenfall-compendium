@@ -2,6 +2,7 @@
   import type { CharacterTypePresentationRow } from "$lib/server/read-models";
 
   let { presentation }: { presentation: CharacterTypePresentationRow } = $props();
+  const pageName = $derived(presentation.name);
 </script>
 
 <div class="border-border bg-card mt-4 rounded-lg border p-5">
@@ -10,7 +11,7 @@
       <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
         {presentation.nameIsDescription ? "Description" : "Name"}
       </dt>
-      <dd class="mt-1">{presentation.displayName}</dd>
+      <dd class="mt-1">{pageName}</dd>
     </div>
   </dl>
 </div>
