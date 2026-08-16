@@ -46,6 +46,28 @@ All 278 published overworld markers were then drawn on the assembled image at th
 
 The imagery carries detail across the whole grid, including regions whose cell scenes the demo build does not ship. The 24 authored cells occupy pixels 3250, 4750 with size 1500 by 1000, which is the southern coastal strip alone. The two marker clusters in the north-west and the south-east sit on terrain that no cell scene in this build can render.
 
+### What a full capture of the loadable cells produced
+
+Run on 2026-08-16 against the same build. All 24 authored overworld cells were loaded, and each was rendered to 1024 pixels, which is 6.83 pixels per unit, or four times the resolution of the shipped imagery. The stitched result covers 900 by 600 units at 6144 by 4096 pixels, and weighs 20 MB as PNG and 2 MB as WebP.
+
+The recipe that produced a usable plate, in order:
+
+1. Load `map_<id>` and each cell scene. The skybox lives in the map scene, so `ArdenfallSkybox.instance` is null until the map scene loads.
+2. Pin the clock. Set `timeMultiplier` to 0, then call `SetTime`.
+3. Start `weather_clear` with `instant` true, then disable the weather manager. Region weather re-randomises otherwise, and a re-randomised weather returned a sun intensity of 0 in the middle of this spike.
+4. Force one sky update, then disable the skybox component, then set the sun's intensity, colour, angle, and shadow mode. The skybox recomputes the light every frame from time and weather, so it overwrites anything set while it runs.
+5. Swap the water renderers to a flat unlit material. `Universal Render Pipeline/Unlit` exists in the build, and `Unlit/Color` is stripped.
+6. Render each cell with a culling mask that excludes UI, post-processing, items, damageables, the player, characters, and weather collision.
+7. Restore the water materials, the weather manager, and the skybox.
+
+Three findings that a capture must handle, and that the shipped imagery already handles:
+
+- **Water cannot be captured as it renders in game.** The `Ardenfall/Water` shader on layer 4 renders nothing into an ad-hoc camera, and with the shader present the surface blows out to white, because a top-down camera sees the sun mirrored. Painting water with a flat material is the controllable answer, and its colour is ours to choose.
+- **Underwater foliage renders black from above** and dominates every water area. Kelp and seagrass share the detail and grass layers with land grass, so a culling mask cannot separate them. Suppression must select by height against the water plane, or by renderer.
+- **A capture's colour does not match the shipped imagery**, because our pinned sun and ambient differ from the editor's. Either calibrate against the imagery, which shares the grid, or accept a different look and state that it is ours.
+
+The comparison at equal scale is decisive on resolution and unfinished on cleanliness. The capture resolves individual rocks, jetty planks, and building footprints that the imagery blurs, while the imagery has clean blue water, no black foliage, and even lighting.
+
 ## Goals and non-goals
 
 **Goals**
@@ -118,11 +140,12 @@ The invariant the earlier plan defended still holds, and it is worth restating b
 
 File count grows with the square of pixels per unit. Tiles are 256 pixels. The deploy gate fails above 20,000 files, and the live build currently ships 7,373.
 
-| pixels per unit                    | overworld files | interior files | total | share of remaining budget |
-| ---------------------------------- | --------------- | -------------- | ----- | ------------------------- |
-| 1.667, matching the game's imagery | 790             | 63             | 853   | 7%                        |
-| 3.33                               | 2,995           | 255            | 3,250 | 26%                       |
-| 5                                  | 6,742           | 579            | 7,321 | 58%                       |
+| pixels per unit                              | overworld files | interior files | total | share of remaining budget |
+| -------------------------------------------- | --------------- | -------------- | ----- | ------------------------- |
+| 1.667, matching the game's imagery           | 790             | 63             | 853   | 7%                        |
+| 3.33                                         | 2,995           | 255            | 3,250 | 26%                       |
+| 5                                            | 6,742           | 579            | 7,321 | 58%                       |
+| 6.83, the spike's value, authored cells only | 512             | 63             | 575   | 5%                        |
 
 Interior counts assume the three authored cells only, since interiors have no distant geometry and 105 of 108 grid cells hold nothing.
 
@@ -130,7 +153,7 @@ Two further constraints belong to this decision. The pyramid's finest level shou
 
 ### 8. Open decisions
 
-**Capture resolution.** Choose pixels per unit after comparing sample plates at two values against the game's own imagery at 1.667. Cost is in the table above.
+**Capture resolution.** The spike settles legibility: 6.83 pixels per unit resolves detail the shipped imagery loses, and capturing only the authored cells at that resolution costs about 512 files. Capturing the full grid at that resolution costs about 12,300 files, which exceeds the deploy headroom and buys nothing where no cell scene exists. The open part is the pairing rather than the number: high resolution over authored cells, and what covers the rest.
 
 **Interior ceilings.** An interior captured from above shows its roof. Options: exclude a ceiling layer if one exists, disable renderers tagged by `InteriorFilterVolume` for the duration of a capture and accept a mutation that must be undone, or capture interiors from a height below the ceiling. The first is preferred and its feasibility is unmeasured.
 
