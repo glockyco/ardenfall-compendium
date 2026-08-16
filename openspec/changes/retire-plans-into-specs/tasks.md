@@ -40,5 +40,5 @@
 
 - [x] 6.1 Run `openspec validate --all`.
 - [x] 6.2 Run the full gate in `AGENTS.md`.
-- [ ] 6.3 Run a live export and a release build, and confirm the new specs describe what the artifact contains.
+- [x] 6.3 Run a live export and a release build, and confirm the new specs describe what the artifact contains.
 - [ ] 6.4 Archive this change after the gate passes.
