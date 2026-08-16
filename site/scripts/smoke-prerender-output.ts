@@ -13,6 +13,7 @@ interface ReleaseProbe {
 
 interface ReleaseManifest {
   artifactId: string;
+  artifactKind: "fixture" | "release";
   probes: { items: ReleaseProbe[] };
 }
 
@@ -79,7 +80,6 @@ const expectedRoutes = readExpectedRoutes();
 const builtRoutes = readBuiltPageRoutes();
 assertRouteParity(expectedRoutes, builtRoutes);
 assertCharacterRouteCutover(builtRoutes);
-assertCharacterPageCopy(readCharacterProbes());
 
 const manifestValue: unknown = JSON.parse(readFileSync(releasePath, "utf8"));
 const builtManifestValue: unknown = JSON.parse(readFileSync(outputReleasePath, "utf8"));
@@ -98,6 +98,8 @@ if (builtManifest.artifactId !== manifest.artifactId) {
 }
 const probe = manifest.probes.items[0];
 if (!probe) throw new Error("release metadata contains no item probes");
+
+assertCharacterPageCopy(readCharacterProbes());
 
 const overview = readFileSync(overviewPath, "utf8");
 for (const snippet of [probe.name, "/assets/", "item-icon"]) {
@@ -158,7 +160,7 @@ if (probe.displayIconHash) {
   if (!existsSync(assetPath)) throw new Error(`missing probe asset: ${assetPath}`);
 }
 
-const disabledQuest = readQuestProbe("named;quest;quest_disabled-test");
+const disabledQuest = readQuestProbe(true);
 if (disabledQuest.disabled !== 1) {
   throw new Error(`quest probe is not disabled: ${disabledQuest.id}`);
 }
@@ -180,7 +182,7 @@ for (const snippet of [
   }
 }
 
-const availableQuest = readQuestProbe("named;quest;quest_supply-run");
+const availableQuest = readQuestProbe(false);
 if (availableQuest.disabled !== 0) {
   throw new Error(`quest probe is disabled: ${availableQuest.id}`);
 }
@@ -369,7 +371,7 @@ function assertRouteParity(expected: string[], built: string[]): void {
 function assertCharacterPageCopy(probes: {
   definition: CharacterProbeRow;
   race: CharacterProbeRow;
-  none: CharacterProbeRow;
+  none: CharacterProbeRow | null;
 }): void {
   const typed = [probes.definition, probes.race];
   for (const probe of typed) {
@@ -390,6 +392,7 @@ function assertCharacterPageCopy(probes: {
     }
   }
 
+  if (!probes.none) return;
   const nonePath = firstExisting([
     join(outputDir, "characters", `${probes.none.canonical_slug}.html`),
     join(outputDir, "characters", probes.none.canonical_slug, "index.html"),
@@ -404,7 +407,7 @@ function assertCharacterPageCopy(probes: {
 function readCharacterProbes(): {
   definition: CharacterProbeRow;
   race: CharacterProbeRow;
-  none: CharacterProbeRow;
+  none: CharacterProbeRow | null;
 } {
   const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
     readonly: true,
@@ -432,10 +435,13 @@ function readCharacterProbes(): {
         !row.character_type_route_path.startsWith("/character-types/"),
     );
     const none = rows.find((row) => row.character_type_route_path === null);
-    if (!definition || !race || !none) {
-      throw new Error("staged artifact lacks definition, race, or no-type character probes");
+    if (!definition || !race) {
+      throw new Error("staged artifact lacks a definition-typed or race-typed character probe");
     }
-    return { definition, race, none };
+    if (!none && manifest.artifactKind === "fixture") {
+      throw new Error("the synthetic fixture must keep a character whose type resolves to nothing");
+    }
+    return { definition, race, none: none ?? null };
   } finally {
     db.close();
   }
@@ -445,24 +451,35 @@ function countOccurrences(value: string, needle: string): number {
   return value.split(needle).length - 1;
 }
 
-function readQuestProbe(id: string): QuestProbeRow {
+/**
+ * Finds a quest by the state under test rather than by a fixture's id, so the same
+ * smoke judges a synthetic artifact and a live export. The live game carries 16
+ * disabled quests and 11 hidden from its quest UI.
+ */
+function readQuestProbe(disabled: boolean): QuestProbeRow {
   const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
     readonly: true,
     create: false,
   });
   try {
     const row = db
-      .query<QuestProbeRow, [string]>(
+      .query<QuestProbeRow, [number]>(
         `SELECT p.id, p.name, p.disabled, n.canonical_slug
          FROM quest_presentation_rows p
          JOIN entity_nodes n
            ON n.entity_type = 'quest'
           AND n.entity_id = p.id
           AND n.has_page = 1
-         WHERE p.id = ?`,
+         WHERE p.disabled = ?
+         ORDER BY p.name, p.id
+         LIMIT 1`,
       )
-      .get(id);
-    if (!row) throw new Error(`staged artifact contains no quest probe: ${id}`);
+      .get(disabled ? 1 : 0);
+    if (!row) {
+      throw new Error(
+        `staged artifact contains no ${disabled ? "disabled" : "available"} quest to probe`,
+      );
+    }
     return row;
   } finally {
     db.close();
@@ -597,6 +614,7 @@ function isReleaseProbe(value: unknown): value is ReleaseProbe {
 
 function isReleaseManifest(value: unknown): value is ReleaseManifest {
   if (!isRecord(value) || !isRecord(value.probes) || !isString(value.artifactId)) return false;
+  if (value.artifactKind !== "fixture" && value.artifactKind !== "release") return false;
   return Array.isArray(value.probes.items) && value.probes.items.every(isReleaseProbe);
 }
 
