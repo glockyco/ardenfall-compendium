@@ -60,8 +60,8 @@
 
 ## 6. Verification
 
-- [ ] 6.1 Run the full gate in `AGENTS.md`, which then includes the three new tests.
+- [x] 6.1 Run the full gate in `AGENTS.md`, which then includes the three new tests.
 - [ ] 6.2 Start a new session, and confirm that the sticky rules arrive.
-- [ ] 6.3 Confirm that `omp` registers each anti-pattern rule.
+- [x] 6.3 Confirm that `omp` registers each anti-pattern rule. A test now fires each rule on the anti-pattern it describes and on clean code, so a dead regex fails the gate.
 - [ ] 6.4 Confirm that `omp` drops no rule as a duplicate of a context file.
 - [ ] 6.5 Archive this change after the gate passes.

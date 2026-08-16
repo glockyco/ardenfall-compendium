@@ -186,6 +186,24 @@ function writeEmptyItemTagReadModelTables(sqlitePath: string): void {
     db.close();
   }
 }
+function ruleConditions(frontMatter: string): string[] {
+  const start = frontMatter.indexOf("condition:");
+  if (start < 0) return [];
+  const rest = frontMatter.slice(start + "condition:".length);
+  const nextKey = rest.search(/\n[a-zA-Z_]+:/);
+  const region = nextKey < 0 ? rest : rest.slice(0, nextKey);
+  return [...region.matchAll(/'((?:[^']|'')*)'|"((?:[^"\\]|\\.)*)"/g)].map((match) =>
+    (match[1] ?? match[2] ?? "").replace(/''/g, "'"),
+  );
+}
+
+function compileRuleCondition(condition: string): RegExp {
+  const inlineFlags = /^\((\?[ims]+)\)/.exec(condition);
+  const body = inlineFlags ? condition.slice(inlineFlags[0].length) : condition;
+  const flags = new Set([...(inlineFlags?.[1]?.slice(1) ?? ""), "s"]);
+  return new RegExp(body, [...flags].join(""));
+}
+
 describe("format tooling", () => {
   it("formats mjs files in the pre-commit prettier hook", () => {
     expect(lefthook).toContain("mjs");
@@ -963,6 +981,59 @@ describe("site prerender architecture", () => {
         const name = reference.slice("skill://".length);
         if (localSkills.has(name) || externallyProvidedSkills[name]) continue;
         throw new Error(`Unresolved ${reference} in ${file}`);
+      }
+    }
+  });
+
+  // A rule whose regex stops matching is silently dead, so each one carries a sample of
+  // the anti-pattern it guards and a sample of the clean code it must ignore.
+  it("fires each anti-pattern rule on its pattern and not on clean code", () => {
+    const controls: Record<string, { pattern: string; clean: string }> = {
+      "no-verify-commit": {
+        pattern: 'git commit -m "wip" --no-verify',
+        clean: 'git commit -m "wip"',
+      },
+      "source-text-test": {
+        pattern:
+          'const source = readFileSync("site/src/routes/items/+page.svelte", "utf8");\nexpect(source).toContain("ItemIcon");',
+        clean:
+          'const rows = db.query("SELECT name FROM items").all();\nexpect(rows).toHaveLength(9);',
+      },
+      "defaulted-sql-column": {
+        pattern: "CREATE TABLE items (name TEXT NOT NULL DEFAULT 'null');",
+        clean: "CREATE TABLE items (name TEXT NOT NULL);",
+      },
+      "retired-route-contract": {
+        pattern: 'export const previousRoutes = ["/placed-characters/[slug]"];',
+        clean: "export const load = async () => ({});",
+      },
+      "fixture-selected-probe": {
+        pattern: 'const probe = rows.find((row) => row.name === "Iron Sword");',
+        clean: "const probe = rows.find((row) => row.icon_hash !== null);",
+      },
+    };
+
+    const ruleFiles = readdirSync(".omp/rules").filter((name) => name.endsWith(".md"));
+    expect(ruleFiles.map((name) => name.replace(/\.md$/, "")).sort()).toEqual(
+      Object.keys(controls).sort(),
+    );
+
+    for (const [name, control] of Object.entries(controls)) {
+      const frontMatter = /^---\n([\s\S]*?)\n---\n/.exec(
+        readFileSync(join(".omp/rules", `${name}.md`), "utf8"),
+      )?.[1];
+      if (!frontMatter) throw new Error(`.omp/rules/${name}.md has no front matter`);
+
+      const conditions = ruleConditions(frontMatter);
+      if (conditions.length === 0) {
+        throw new Error(`.omp/rules/${name}.md declares no condition, so it never fires`);
+      }
+      const patterns = conditions.map(compileRuleCondition);
+      if (!patterns.some((pattern) => pattern.test(control.pattern))) {
+        throw new Error(`Rule ${name} does not match the anti-pattern it describes`);
+      }
+      if (patterns.some((pattern) => pattern.test(control.clean))) {
+        throw new Error(`Rule ${name} matches clean code, so it cries wolf`);
       }
     }
   });
