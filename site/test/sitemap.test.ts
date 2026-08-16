@@ -86,7 +86,7 @@ describe("sitemap routes", () => {
 
   it("adds listing pages and entity page routes", () => {
     const routes = sitemapRoutePaths([
-      { route_path: "/items/iron-sword" },
+      { route_path: "/items/iron-sword--abcdef12" },
       { route_path: "/terms/strength" },
     ]);
 
@@ -97,7 +97,7 @@ describe("sitemap routes", () => {
     expect(routes).toContain("/character-types");
     expect(routes).not.toContain("/placed-characters");
     expect(routes).toContain("/portals");
-    expect(routes).toContain("/items/iron-sword");
+    expect(routes).toContain("/items/iron-sword--abcdef12");
     expect(routes).toContain("/terms/strength");
     expect(routes).not.toContain("/map?map=overworld&sel=portal");
   });

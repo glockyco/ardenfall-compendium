@@ -116,10 +116,13 @@ function readItemProbes(sqlitePath: string): ArtifactManifest["probes"]["items"]
   try {
     return db
       .query(
-        `SELECT id, name, display_icon_hash AS displayIconHash
-         FROM item_overview_rows
-         WHERE name IS NOT NULL
-         ORDER BY display_icon_hash IS NULL, name
+        `SELECT o.id, o.name, n.canonical_slug AS canonicalSlug,
+                o.display_icon_hash AS displayIconHash
+         FROM item_overview_rows o
+         JOIN entity_nodes n
+           ON n.entity_type = 'item' AND n.entity_id = o.id AND n.has_page = 1
+         WHERE o.name IS NOT NULL
+         ORDER BY o.display_icon_hash IS NULL, o.name
          LIMIT 3`,
       )
       .all() as ArtifactManifest["probes"]["items"];

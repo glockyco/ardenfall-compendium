@@ -73,6 +73,7 @@ export interface ArtifactManifest {
     items: {
       id: string;
       name: string;
+      canonicalSlug: string;
       displayIconHash: string | null;
     }[];
   };

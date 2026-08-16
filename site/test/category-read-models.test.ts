@@ -96,8 +96,8 @@ describe("item-category read-model accessors", () => {
         ('fixture-training-dagger', '{"kind":"missing","reason":"lookupAssetGuidMissing"}', 'Weapons');
       INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
         ('item-category', 'named;item-category;itemcat_weapons', 'Weapons', 'Weapons', '/categories/weapons--abc12345', 'weapons--abc12345', 'abc12345', 1),
-        ('item', '4ed20218.fixture-iron-sword', 'Iron Sword', 'Iron Sword', '/items/4ed20218.fixture-iron-sword', 'iron-sword--4ed20218', '4ed20218', 1),
-        ('item', 'fixture-training-dagger', 'Training Dagger', 'Training Dagger', '/items/fixture-training-dagger', 'training-dagger--fbfb0000', 'fbfb0000', 1);
+        ('item', '4ed20218.fixture-iron-sword', 'Iron Sword', 'Iron Sword', '/items/iron-sword--4ed20218', 'iron-sword--4ed20218', '4ed20218', 1),
+        ('item', 'fixture-training-dagger', 'Training Dagger', 'Training Dagger', '/items/training-dagger--fbfb0000', 'training-dagger--fbfb0000', 'fbfb0000', 1);
     `);
 
     try {
@@ -137,7 +137,7 @@ describe("item-category read-model accessors", () => {
           variantLabel: "Melee Weapon",
           displayIconSrc: `/assets/${iconHash}.webp`,
           displayIconColor: categoryColor,
-          routePath: "/items/4ed20218.fixture-iron-sword",
+          routePath: "/items/iron-sword--4ed20218",
         },
       ]);
     } finally {

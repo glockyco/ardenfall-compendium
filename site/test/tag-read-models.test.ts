@@ -92,7 +92,7 @@ describe("item-tag read-model accessors", () => {
       INSERT INTO entity_nodes (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page) VALUES
         ('item-tag', '7a600001.fixture-tag-valuable-remedy', 'Valuable remedy', 'Valuable remedy', '/tags/valuable-remedy--abc12345', 'valuable-remedy--abc12345', 'abc12345', 1),
         ('item-tag', '7a600002.fixture-tag-rare', 'Rare', 'Rare', '/tags/rare--def67890', 'rare--def67890', 'def67890', 1),
-        ('item', '6a71c0de.fixture-stamina-draught', 'Stamina Draught', 'Stamina Draught', '/items/6a71c0de.fixture-stamina-draught', 'stamina-draught--6a71c0de', '6a71c0de', 1);
+        ('item', '6a71c0de.fixture-stamina-draught', 'Stamina Draught', 'Stamina Draught', '/items/stamina-draught--6a71c0de', 'stamina-draught--6a71c0de', '6a71c0de', 1);
     `);
 
     try {
@@ -133,7 +133,7 @@ describe("item-tag read-model accessors", () => {
           variantLabel: "Consumable",
           displayIconSrc: null,
           displayIconColor: null,
-          routePath: "/items/6a71c0de.fixture-stamina-draught",
+          routePath: "/items/stamina-draught--6a71c0de",
         },
       ]);
     } finally {

@@ -4,6 +4,7 @@ import { canonicaliseCharacters } from "../src/entities/character/canonicaliser.
 import { emitCharacterReadModels } from "../src/entities/character/read-models.ts";
 import {
   collectTransitiveDescendants,
+  deriveEntityNodeSlug,
   emitItemReadModels,
 } from "../src/entities/item/read-models.ts";
 import { canonicaliseEnchantments } from "../src/entities/enchantment/canonicaliser.ts";
@@ -125,7 +126,7 @@ describe("item inheritance", () => {
            WHERE entity_type = 'item' AND entity_id = 'a7000001.11400000'`,
         )
         .get(),
-    ).toEqual({ route_path: "/items/a7000001.11400000", has_page: 1 });
+    ).toEqual({ route_path: "/items/unnamed-item-ring--a7000001", has_page: 1 });
     expect(
       db
         .query(
@@ -232,7 +233,7 @@ describe("prototype loot diagnostics", () => {
         .get(),
     ).toEqual({
       label: "Unnamed item — Melee weapon",
-      route_path: "/items/a7000001.11400000",
+      route_path: "/items/unnamed-item-melee-weapon--a7000001",
       has_page: 1,
     });
     expect(
@@ -267,10 +268,19 @@ function seedItem(
   hasPage: number,
 ) {
   db.run(`INSERT INTO items (id, parent_ref_json) VALUES (?, ?)`, [id, parentRefJson]);
+  const slug = deriveEntityNodeSlug(label, id);
   db.run(
     `INSERT INTO entity_nodes
       (entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page)
      VALUES ('item', ?, ?, ?, ?, ?, ?, ?)`,
-    [id, label, label, hasPage === 1 ? `/items/${id}` : null, id, id, hasPage],
+    [
+      id,
+      label,
+      label,
+      hasPage === 1 ? `/items/${slug.canonicalSlug}` : null,
+      slug.canonicalSlug,
+      slug.shortId,
+      hasPage,
+    ],
   );
 }

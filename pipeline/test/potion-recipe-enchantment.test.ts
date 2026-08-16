@@ -16,8 +16,20 @@ describe("potion recipes and enchantments", () => {
     db.exec(ENTITY_GRAPH_DDL);
     seedNode(db, "item-tag", "f60718293a4b5c6d7e8f90a1b2c3d4e5.11400000", "Tag A", "/tags/tag-a");
     seedNode(db, "item-tag", "0718293a4b5c6d7e8f90a1b2c3d4e5f6.11400000", "Tag B", "/tags/tag-b");
-    seedNode(db, "item", "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000", "Drink", "/items/item-a");
-    seedNode(db, "item", "d4e5f60718293a4b5c6d7e8f90a1b2c3.11400000", "Throw", "/items/item-b");
+    seedNode(
+      db,
+      "item",
+      "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000",
+      "Drink",
+      "/items/drink--c3d4e5f6",
+    );
+    seedNode(
+      db,
+      "item",
+      "d4e5f60718293a4b5c6d7e8f90a1b2c3.11400000",
+      "Throw",
+      "/items/throw--d4e5f607",
+    );
     seedNode(
       db,
       "status-effect",
@@ -117,7 +129,13 @@ describe("potion recipes and enchantments", () => {
     const db = new Database(":memory:");
     db.exec(ENCHANTMENT_DDL);
     db.exec(ENTITY_GRAPH_DDL);
-    seedNode(db, "item", "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000", "Sword", "/items/item-a");
+    seedNode(
+      db,
+      "item",
+      "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000",
+      "Sword",
+      "/items/sword--c3d4e5f6",
+    );
     seedNode(
       db,
       "status-effect",
@@ -372,7 +390,13 @@ describe("potion recipes and enchantments", () => {
     const db = new Database(":memory:");
     db.exec(POTION_RECIPE_DDL);
     db.exec(ENTITY_GRAPH_DDL);
-    seedNode(db, "item", "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000", "Drink", "/items/item-a");
+    seedNode(
+      db,
+      "item",
+      "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000",
+      "Drink",
+      "/items/drink--c3d4e5f6",
+    );
     seedNode(
       db,
       "status-effect",

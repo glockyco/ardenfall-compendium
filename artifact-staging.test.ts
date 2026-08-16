@@ -94,7 +94,8 @@ async function createValidArtifact(root: string) {
     CREATE TABLE item_category_presentation_rows (id TEXT PRIMARY KEY);
     CREATE TABLE item_tag_overview_rows (id TEXT PRIMARY KEY);
     CREATE TABLE item_tag_presentation_rows (id TEXT PRIMARY KEY);
-    CREATE TABLE entity_nodes (entity_type TEXT, entity_id TEXT);
+    CREATE TABLE entity_nodes (entity_type TEXT, entity_id TEXT, canonical_slug TEXT, has_page INTEGER);
+    INSERT INTO entity_nodes VALUES ('item', 'item-a', 'item-a--aaaaaaaa', 1);
     CREATE TABLE entity_aliases (alias_key TEXT, target_type TEXT, target_id TEXT);
     CREATE TABLE entity_edges (edge_id TEXT PRIMARY KEY);
     CREATE TABLE entity_relationship_sections (section_id TEXT PRIMARY KEY);

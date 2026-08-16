@@ -61,6 +61,7 @@ interface ItemPresentationRecord {
   variant: string | null;
   value: number | null;
   weight: number | null;
+  route_path: string;
 }
 
 export interface ItemOverviewRow {
@@ -94,6 +95,7 @@ export interface ItemPresentationRow {
   stateFacts: ItemPresentationStateFact[];
   value: number | null;
   weight: number | null;
+  routePath: string;
 }
 
 export interface RichTextDocument {
@@ -275,6 +277,7 @@ const toItemPresentationRow = (row: ItemPresentationRecord): ItemPresentationRow
     ),
     value: row.value,
     weight: row.weight,
+    routePath: row.route_path,
   };
 };
 
@@ -375,23 +378,25 @@ export const listItemOverviewFilters = (): ItemOverviewFilter[] =>
     }),
   );
 
-export const listItemIds = (): string[] =>
-  all<{ id: string }>(
+export const listItemSlugs = (): string[] =>
+  all<{ canonical_slug: string }>(
     // This feeds the prerenderer's route entries, so it must name only items that
     // have a page. A prototype carries a presentation row but no page, and asking
     // the prerenderer to visit one fails the build with a 404.
-    `SELECT p.id
+    `SELECT n.canonical_slug
        FROM item_presentation_rows p
        JOIN entity_nodes n
          ON n.entity_type = 'item'
         AND n.entity_id = p.id
         AND n.has_page = 1
-       ORDER BY p.id`,
-  ).map((row) => row.id);
+       ORDER BY n.canonical_slug`,
+  ).map((row) => row.canonical_slug);
 
-export const getItemPresentation = (id: string): ItemPresentationRow | undefined => {
+export const getItemPresentation = (slug: string): ItemPresentationRow | undefined => {
+  const node = getEntityNodeBySlug("item", slug);
+  if (!node) return undefined;
   const row = get<ItemPresentationRecord>(
-    `SELECT p.*, n.display_label AS display_name,
+    `SELECT p.*, n.display_label AS display_name, n.route_path,
             COALESCE((
               SELECT json_group_object(target_id, route_path)
               FROM (
@@ -407,7 +412,7 @@ export const getItemPresentation = (id: string): ItemPresentationRow | undefined
        JOIN entity_nodes n
          ON n.entity_type = 'item' AND n.entity_id = p.id AND n.has_page = 1
        WHERE p.id = ?`,
-    [id],
+    [node.entityId],
   );
   return row ? toItemPresentationRow(row) : undefined;
 };

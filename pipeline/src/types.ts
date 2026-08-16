@@ -678,7 +678,14 @@ export interface ArtifactManifest {
     sqlite: { path: "data.sqlite"; bytes: number; sha256: string };
     assets: { path: "assets"; count: number; treeSha256: string };
   };
-  probes: { items: { id: string; name: string; displayIconHash: string | null }[] };
+  probes: {
+    items: {
+      id: string;
+      name: string;
+      canonicalSlug: string;
+      displayIconHash: string | null;
+    }[];
+  };
 }
 
 // Snapshot refs (canonical)

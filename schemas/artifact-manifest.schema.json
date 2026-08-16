@@ -108,10 +108,11 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "name"],
+            "required": ["id", "name", "canonicalSlug"],
             "properties": {
               "id": { "type": "string", "minLength": 1 },
               "name": { "type": "string", "minLength": 1 },
+              "canonicalSlug": { "type": "string", "minLength": 1 },
               "displayIconHash": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
             }
           }

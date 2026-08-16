@@ -522,7 +522,7 @@ describe("emitItemReadModels", () => {
         "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item' AND entity_id = '4ed20218.fixture-iron-sword'",
       )
       .get() as { route_path: string; canonical_slug: string; short_id: string };
-    expect(itemNode.route_path).toBe("/objects/4ed20218.fixture-iron-sword");
+    expect(itemNode.route_path).toBe("/objects/iron-sword--4ed20218");
     expect(itemNode.canonical_slug).toBe("iron-sword--4ed20218");
     expect(itemNode.short_id).toBe("4ed20218");
 

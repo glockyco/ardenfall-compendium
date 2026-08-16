@@ -68,7 +68,7 @@ const seed = () => {
       ('status-effect', 'status-speed', 'Attack Speed', 'Attack Speed', '/status-effects/attack-speed--abc12345', 'attack-speed--abc12345', 'abc12345', 1),
       ('status-effect', 'status-hidden', 'Hidden Effect', 'Hidden Effect', '/status-effects/hidden-effect--def67890', 'hidden-effect--def67890', 'def67890', 0),
       ('spell', 'named;spell;spell_fire-shield', 'Fire Shield', 'Fire Shield', '/spells/fire-shield--abc12345', 'fire-shield--abc12345', 'abc12345', 1),
-      ('item', 'item-sword', 'Sword', 'Unnamed item — Melee Weapon', '/items/item-sword', 'item-sword', 'item-sword', 1);
+      ('item', 'item-sword', 'Sword', 'Unnamed item — Melee Weapon', '/items/unnamed-item-melee-weapon--abcdef12', 'unnamed-item-melee-weapon--abcdef12', 'abcdef12', 1);
     INSERT INTO entity_relationship_sections VALUES
       ('item-sword:variant_of', 'item', 'item-sword', 'Variant', 'variant_of', 0,
        '[{"targetType":"item","targetId":"item-base","targetLabel":"Base Sword","targetRoutePath":"/items/base-sword--22222222","predicate":"variant_of","label":"Variant","weight":1,"anchor":null}]');
@@ -84,11 +84,14 @@ describe("item effect read-model accessors", () => {
     try {
       process.chdir(root);
       const readModels = await import("../src/lib/server/read-models");
-      expect(readModels.getItemPresentation("item-sword")).toMatchObject({
+      expect(readModels.getItemPresentation("unnamed-item-melee-weapon--abcdef12")).toMatchObject({
         name: "Unnamed item — Melee Weapon",
         nameIsPlaceholder: true,
       });
-      expect(readModels.getItemPresentation("item-sword")?.effects).toEqual([
+      expect(readModels.getItemPresentation("item-sword")).toBeUndefined();
+      expect(
+        readModels.getItemPresentation("unnamed-item-melee-weapon--abcdef12")?.effects,
+      ).toEqual([
         {
           kind: "status-effect",
           label: "Attack Speed I",
@@ -152,7 +155,7 @@ describe("item effect read-model accessors", () => {
       db.close();
       process.chdir(root);
       const readModels = await import("../src/lib/server/read-models");
-      expect(() => readModels.getItemPresentation("item-sword")).toThrow(
+      expect(() => readModels.getItemPresentation("unnamed-item-melee-weapon--abcdef12")).toThrow(
         "invalid generated JSON shape for item.description_rich_text_json row item-sword",
       );
     } finally {
@@ -173,7 +176,7 @@ describe("item effect read-model accessors", () => {
       db.close();
       process.chdir(root);
       const readModels = await import("../src/lib/server/read-models");
-      expect(() => readModels.getItemPresentation("item-sword")).toThrow(
+      expect(() => readModels.getItemPresentation("unnamed-item-melee-weapon--abcdef12")).toThrow(
         "invalid generated JSON shape for item.effect_facts_json row item-sword",
       );
     } finally {
@@ -194,7 +197,7 @@ describe("item effect read-model accessors", () => {
       db.close();
       process.chdir(root);
       const readModels = await import("../src/lib/server/read-models");
-      expect(() => readModels.getItemPresentation("item-sword")).toThrow(
+      expect(() => readModels.getItemPresentation("unnamed-item-melee-weapon--abcdef12")).toThrow(
         "unknown render_context 'item-presentation-v9' for item row item-sword",
       );
     } finally {

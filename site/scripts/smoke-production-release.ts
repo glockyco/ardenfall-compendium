@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 interface ArtifactProbe {
   id: string;
   name: string;
+  canonicalSlug: string;
   displayIconHash?: string | null;
 }
 
@@ -86,7 +87,7 @@ if (overview.includes("_app/immutable/entry/app")) {
   }
 }
 
-const detail = await fetchText(`${origin}/items/${probe.id}`);
+const detail = await fetchText(`${origin}/items/${probe.canonicalSlug}`);
 if (!detail.includes(probe.name) || !detail.includes("item-icon")) {
   throw new Error("production detail HTML does not contain release probe content");
 }
@@ -107,6 +108,7 @@ if (probe.displayIconHash) {
 // before `not_found_handling` was set. A crawler or a stale link meets this path, not a reader
 // following a link, which is why nothing noticed for months.
 for (const missing of [
+  `/items/${probe.id}`,
   `/items/does-not-exist`,
   `/factions/does-not-exist--00000000`,
   `/no-such-section`,
@@ -138,7 +140,12 @@ function isString(value: unknown): value is string {
 }
 
 function isArtifactProbe(value: unknown): value is ArtifactProbe {
-  if (!isRecord(value) || !isString(value.id) || !isString(value.name)) {
+  if (
+    !isRecord(value) ||
+    !isString(value.id) ||
+    !isString(value.name) ||
+    !isString(value.canonicalSlug)
+  ) {
     return false;
   }
   const displayIconHash = value.displayIconHash;

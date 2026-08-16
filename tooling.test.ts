@@ -298,7 +298,16 @@ describe("site deployment tooling", () => {
             sqlite: { path: "data.sqlite", bytes: 48, sha256: "c".repeat(64) },
             assets: { path: "assets", count: 0, treeSha256: "d".repeat(64) },
           },
-          probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
+          probes: {
+            items: [
+              {
+                id: "fixture",
+                name: "Fixture",
+                canonicalSlug: "fixture--aaaaaaaa",
+                displayIconHash: null,
+              },
+            ],
+          },
         }),
       );
 
@@ -381,7 +390,16 @@ describe("site deployment tooling", () => {
             },
             assets: { path: "assets", count: 0, treeSha256: sha256("") },
           },
-          probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
+          probes: {
+            items: [
+              {
+                id: "fixture",
+                name: "Fixture",
+                canonicalSlug: "fixture--aaaaaaaa",
+                displayIconHash: null,
+              },
+            ],
+          },
         }),
       );
 
@@ -469,7 +487,16 @@ describe("site deployment tooling", () => {
             },
             assets: { path: "assets", count: 0, treeSha256: sha256("") },
           },
-          probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
+          probes: {
+            items: [
+              {
+                id: "fixture",
+                name: "Fixture",
+                canonicalSlug: "fixture--aaaaaaaa",
+                displayIconHash: null,
+              },
+            ],
+          },
         }),
       );
 
@@ -550,7 +577,16 @@ describe("site deployment tooling", () => {
             },
             assets: { path: "assets", count: 0, treeSha256: sha256("") },
           },
-          probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
+          probes: {
+            items: [
+              {
+                id: "fixture",
+                name: "Fixture",
+                canonicalSlug: "fixture--aaaaaaaa",
+                displayIconHash: null,
+              },
+            ],
+          },
         }),
       );
 
@@ -623,7 +659,16 @@ describe("site deployment tooling", () => {
             },
             assets: { path: "assets", count: 0, treeSha256: sha256("") },
           },
-          probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
+          probes: {
+            items: [
+              {
+                id: "fixture",
+                name: "Fixture",
+                canonicalSlug: "fixture--aaaaaaaa",
+                displayIconHash: null,
+              },
+            ],
+          },
         }),
       );
 
@@ -707,7 +752,16 @@ describe("site deployment tooling", () => {
             },
             assets: { path: "assets", count: 0, treeSha256: sha256("") },
           },
-          probes: { items: [{ id: "fixture", name: "Fixture", displayIconHash: null }] },
+          probes: {
+            items: [
+              {
+                id: "fixture",
+                name: "Fixture",
+                canonicalSlug: "fixture--aaaaaaaa",
+                displayIconHash: null,
+              },
+            ],
+          },
         }),
       );
 

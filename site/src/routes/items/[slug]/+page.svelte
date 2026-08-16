@@ -10,7 +10,7 @@
   const itemDescription = $derived(
     `${item.name} is listed in the Ardenfall Compendium under the ${item.itemType?.toLowerCase() ?? "item"} category.`,
   );
-  const itemRoutePath = $derived(`/items/${encodeURIComponent(item.id)}`);
+  const itemRoutePath = $derived(item.routePath);
 </script>
 
 <svelte:head>

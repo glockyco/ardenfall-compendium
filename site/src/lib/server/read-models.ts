@@ -79,7 +79,7 @@ export {
   getEntityNodeBySlug,
   getItemPresentation,
   getTerm,
-  listItemIds,
+  listItemSlugs,
   listItemOverviewCategories,
   listItemOverviewFilters,
   listItemsByCategory,

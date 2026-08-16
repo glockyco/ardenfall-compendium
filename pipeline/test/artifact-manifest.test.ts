@@ -58,8 +58,13 @@ describe("artifact manifest emission", () => {
         INSERT INTO item_tag_overview_rows VALUES ('tag-valuable-remedy'), ('tag-rare');
         CREATE TABLE item_tag_presentation_rows (id TEXT PRIMARY KEY);
         INSERT INTO item_tag_presentation_rows VALUES ('tag-valuable-remedy'), ('tag-rare');
-        CREATE TABLE entity_nodes (entity_type TEXT, entity_id TEXT);
-        INSERT INTO entity_nodes VALUES ('item', 'item-a');
+        CREATE TABLE entity_nodes (
+          entity_type TEXT,
+          entity_id TEXT,
+          canonical_slug TEXT,
+          has_page INTEGER
+        );
+        INSERT INTO entity_nodes VALUES ('item', 'item-a', 'item-a--abcdef12', 1);
         CREATE TABLE entity_aliases (alias_key TEXT, target_type TEXT, target_id TEXT);
         INSERT INTO entity_aliases VALUES ('item-a', 'item', 'item-a');
         CREATE TABLE entity_edges (edge_id TEXT PRIMARY KEY);
@@ -117,7 +122,12 @@ describe("artifact manifest emission", () => {
       expect(manifest.counts.richTextDiagnostics).toBe(1);
       expect(manifest.outputs.sqlite.bytes).toBeGreaterThan(0);
       expect(manifest.probes.items).toEqual([
-        { id: "item-a", name: "Item A", displayIconHash: "a".repeat(64) },
+        {
+          id: "item-a",
+          name: "Item A",
+          canonicalSlug: "item-a--abcdef12",
+          displayIconHash: "a".repeat(64),
+        },
       ]);
 
       const metadataDb = new Database(join(root, "data.sqlite"), { readonly: true });

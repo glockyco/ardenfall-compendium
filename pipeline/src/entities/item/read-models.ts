@@ -550,11 +550,14 @@ export function emitItemReadModels(
       }));
       disambiguateLabels(labelledEffectFacts);
       const effectFacts = labelledEffectFacts.map(({ shortId: _shortId, ...effect }) => effect);
+      const itemSlug = deriveEntityNodeSlug(itemLabel, snapshotRow.id);
       writeNode({
         entityType: "item",
         entityId: snapshotRow.id,
         label: itemLabel,
-        routePath: `${itemRoute}/${snapshotRow.id}`,
+        routePath: `${itemRoute}/${itemSlug.canonicalSlug}`,
+        canonicalSlug: itemSlug.canonicalSlug,
+        shortId: itemSlug.shortId,
         hasPage: true,
       });
       aliasInsert.run(aliasKey(itemLabel), "item", snapshotRow.id, itemLabel, "item-presentation");
