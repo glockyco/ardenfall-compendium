@@ -61,7 +61,7 @@
 ## 6. Verification
 
 - [x] 6.1 Run the full gate in `AGENTS.md`, which then includes the three new tests.
-- [ ] 6.2 Start a new session, and confirm that the sticky rules and the five anti-pattern rules arrive. Rules load at session start, so this needs a restart. Each file parses, carries a description, and fires on its own control sample.
+- [x] 6.2 Start a new session, and confirm that the sticky rules and the five anti-pattern rules arrive. Rules load at session start, so this needs a restart. Each file parses, carries a description, and fires on its own control sample.
 - [x] 6.3 Confirm that `omp` registers each anti-pattern rule. A test now fires each rule on the anti-pattern it describes and on clean code, so a dead regex fails the gate.
 - [x] 6.4 Confirm that `omp` drops no rule as a duplicate of a context file. Deduplication applies to an always-apply rule, and each anti-pattern rule registers a condition, so all five sit in the trigger bucket. The duplicate-sentence test covers the narrative files.
-- [ ] 6.5 Archive this change after the gate passes.
+- [x] 6.5 Archive this change after the gate passes.
