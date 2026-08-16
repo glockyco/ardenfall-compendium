@@ -1,109 +1,111 @@
 ## Purpose
 
-Defines what counts as evidence for a claim about behaviour, whether the behaviour belongs to the game or to this repository, how a spike produces that evidence, where the measurement is kept, and the preflight that stops an export from answering with stale code.
+Defines the evidence that a behaviour claim needs. The rules apply to the game and to this repository. Defines the spike that produces evidence, the home of each measurement, and the preflight that keeps an export honest.
 
 ## ADDED Requirements
 
 ### Requirement: A claim about the game needs a measurement
 
-A statement about game behaviour or data shape is not a design input until a spike answers it. The evidence is a citation of decompiled source, giving file and line, or a probe with its output.
+A statement about game behaviour or game data shape becomes a design input only after a spike answers it. The evidence is a citation of the decompiled source with a file and a line, or a probe with its output.
 
-Prior documentation, runtime intuition and a plausible reading of a field name are not evidence. Three plan documents carried "683 cells" until a spike found 27 loadable cell scenes, and a design rule derived from a chain walk was wrong until a spike showed that a variant re-authors the name its parent authored.
+Prior documentation is not evidence. Runtime intuition is not evidence. A plausible reading of a field name is not evidence. Three plan documents claimed 683 cells until a spike found 27 loadable cell scenes. A chain-walk rule looked correct until a spike showed that a variant re-authors the name of its parent.
 
 #### Scenario: A design decision rests on game behaviour
 
-- **WHEN** a change's design states how the game behaves
-- **THEN** the statement cites decompiled source with file and line, or a probe and its recorded output
-- **AND** a reader can re-run the probe from what the document records
+- **WHEN** the design of a change states how the game behaves
+- **THEN** the statement cites the decompiled source with a file and a line, or a probe and its output
+- **AND** a reader can run that probe again from the record
 
-#### Scenario: An earlier document disagrees with a measurement
+#### Scenario: A measurement contradicts an earlier document
 
-- **WHEN** a spike contradicts a claim in an existing plan or spec
-- **THEN** the document is corrected in the same change, stating what was measured
-- **AND** the correction replaces the claim rather than annotating its history
+- **WHEN** a spike contradicts a claim in a plan or a spec
+- **THEN** the same change corrects the document and states the measurement
+- **AND** the correction replaces the claim and adds no history of the mistake
 
-### Requirement: A claim about this repository needs the same evidence as a claim about the game
+### Requirement: A claim about this repository needs the same evidence
 
-An artefact that describes behaviour is a hypothesis, not evidence. A comment, a document, a test name, a variable name, a plan, a prior agent's report, and code that merely exists all describe intent; none of them establishes what runs.
+An artefact that describes behaviour is a hypothesis. A comment, a document, a test name, a variable name, a plan, a report from another agent, and code that exists all describe intent. None of them shows what runs.
 
-A statement about how this repository behaves is established by reading the line that does the work, or by observing the result. Where the two disagree, the observation wins and the artefact is corrected.
+A statement about the behaviour of this repository rests on the line that does the work, or on an observed result. The observation wins when the two disagree.
 
-Three failures in the identity slice came from skipping this. A window of a file showed an entry without a phase field, and a design decision was built on that reading until the diff showed the field was there. A query read a field name that did not exist and its empty result was reported as a missing-vocabulary defect. A redirect mechanism was extended, wired and tested before anyone noticed it had never written a row, because its emitter filtered a source type nothing produced.
+Three failures in the identity slice show the cost. A window of one file showed an entry without a phase field, and the diff showed the field. A query read a field name that does not exist, and its empty result became a defect report. Work extended the redirect mechanism before anyone saw that the mechanism had never written a row.
 
 #### Scenario: A statement rests on a comment or a document
 
-- **WHEN** a change relies on how existing code behaves
+- **WHEN** a change depends on the behaviour of existing code
 - **THEN** the design cites the line that produces the behaviour, or an observed result
-- **AND** a comment, a test name or a plan is not offered as the evidence
+- **AND** the design does not offer a comment, a test name, or a plan as the evidence
 
 #### Scenario: An artefact contradicts the code
 
-- **WHEN** a comment, name or document disagrees with what the code does
-- **THEN** the artefact is corrected in the same commit as the work that found it
-- **AND** the correction states the current behaviour rather than the history of the mistake
+- **WHEN** a comment, a name, or a document disagrees with the code
+- **THEN** the commit that finds the disagreement corrects the artefact
+- **AND** the correction states the current behaviour and omits the history
 
-#### Scenario: A fragment is not the structure
+#### Scenario: A conclusion depends on the enclosing scope
 
-- **WHEN** a conclusion depends on which object or scope a line belongs to
-- **THEN** it is confirmed against the authoritative form, such as the parsed structure or the diff
-- **AND** an adjacent line is not taken as proof of the enclosing scope
-
-### Requirement: An existing mechanism is proved to run before it is extended
-
-Code that exists is not evidence that it works. Before a stage, table, projection or emitter is extended, its output is observed in a built artifact.
-
-#### Scenario: A mechanism is about to gain a feature
-
-- **WHEN** work would extend an existing stage, table or projection
-- **THEN** its current output is observed in a built artifact first
-- **AND** a mechanism found to produce nothing is repaired or removed rather than extended
-
-#### Scenario: A declared output is empty
-
-- **WHEN** a declared table, layer or file is empty while its source carries rows
-- **THEN** that state is reported by the pipeline rather than passing silently
+- **WHEN** a conclusion depends on the object or scope that holds a line
+- **THEN** work confirms the scope against the parsed structure or the diff
+- **AND** work does not accept an adjacent line as proof of the scope
 
 ### Requirement: A negative result needs a positive control
 
-A probe that returns nothing is not evidence of absence until the same probe returns data for a case known to carry it.
+A probe that returns nothing does not show absence. The same probe MUST return data for a case that carries the value.
 
-This is not a formality. A probe reading `variant.nameSets` returned empty for every race and was reported as a missing-vocabulary defect; the published field is `variant.nameSetRefs`, and the vocabulary was there all along.
+One probe read `variant.nameSets` and returned an empty result for every race. The report named a missing vocabulary. The published field has the name `variant.nameSetRefs`, and every vocabulary was present.
 
-#### Scenario: A probe finds nothing
+#### Scenario: A probe returns nothing
 
-- **WHEN** a spike reports an empty or zero result that would justify a change
-- **THEN** the same probe is run against a case known to carry the value
+- **WHEN** a spike returns an empty or zero result that justifies a change
+- **THEN** the same probe runs against a case that carries the value
 - **AND** the change records both results, or states that no such case exists
 
-### Requirement: Spikes are disposable and their measurements are not
+### Requirement: An existing mechanism runs before work extends it
 
-A spike is a throwaway probe answering one question. Probes live in a gitignored directory, because they are written against one game build and rot with it. The measurement they produce is durable and is recorded in the evidence ledger under `docs/plans/` with its date and the game build it came from.
+Code that exists does not show that the code works. Work observes the output of a stage, a table, a projection, or an emitter in a built artifact before work extends it.
+
+#### Scenario: Work extends an existing mechanism
+
+- **WHEN** work adds a feature to a stage, a table, or a projection
+- **THEN** work first observes the current output in a built artifact
+- **AND** work repairs or removes a mechanism that produces nothing, and does not extend it
+
+#### Scenario: A declared output stays empty
+
+- **WHEN** a declared table, layer, or file is empty and its source table holds rows
+- **THEN** the pipeline reports that state and does not pass it in silence
+
+### Requirement: Spikes are disposable and measurements are durable
+
+A spike is a probe that answers one question. Probes live in a directory that git ignores, because each probe targets one game build and decays with it. The measurement is durable. `docs/plans/` holds the measurement, its date, and the game build.
 
 #### Scenario: A spike answers a question
 
-- **WHEN** a spike produces a number, a shape or a mechanism that a change depends on
-- **THEN** the measurement, its date and the game build are recorded in the ledger
-- **AND** the probe itself is not committed
+- **WHEN** a spike produces a number, a shape, or a mechanism that a change needs
+- **THEN** the ledger records the measurement, the date, and the game build
+- **AND** the repository does not hold the probe
 
-#### Scenario: The mod changes after a measurement
+#### Scenario: Extraction code changes after a measurement
 
-- **WHEN** extraction code changes after a measurement was taken
-- **THEN** the measurement is retaken before the change is claimed complete, because the previous export cannot have exercised the new code
+- **WHEN** extraction code changes after a measurement
+- **THEN** work repeats the measurement before it claims the change complete
+- **AND** the reason is that the earlier export ran the earlier code
 
 ### Requirement: An export proves which game answered it
 
-An export states which build and which mod produced it, and refuses to run when more than one instrumented game could answer.
+An export names the build and the mod that produced it. An export fails when more than one instrumented game can answer.
 
-Two instrumented games sharing the HotRepl port do not report an error; connections reach whichever bound first. During the identity slice an export was answered by a stale instance, and the snapshot lacked fields the deployed mod emits, which read as a data defect rather than as a targeting mistake.
+Two instrumented games on one HotRepl port report no error. The connection reaches the game that bound first. During the identity slice a stale instance answered an export. The snapshot then lacked fields that the deployed mod emits, and the absence looked like a data defect.
 
-#### Scenario: Two instrumented games are running
+#### Scenario: Two instrumented games run at once
 
 - **WHEN** an export starts and more than one process holds the HotRepl port
-- **THEN** the export fails naming the port and the processes
-- **AND** it does not fall back to whichever instance answers first
+- **THEN** the export fails and names the port and the processes
+- **AND** the export does not use the instance that answers first
 
 #### Scenario: One session produces two exports
 
-- **WHEN** an export runs twice against one session without reloading the world
-- **THEN** the per-family counts, the filtered runtime-created count and every artifact hash match, except timing records
-- **AND** a mismatch fails the reproducibility check rather than being reported as a difference in the game
+- **WHEN** an export runs twice in one session and the world stays loaded
+- **THEN** the counts for each family match, the filtered runtime-created count matches, and each artifact hash matches
+- **AND** timing records are the only permitted difference
+- **AND** a mismatch fails the reproducibility check

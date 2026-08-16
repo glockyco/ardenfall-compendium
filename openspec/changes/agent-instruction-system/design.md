@@ -1,73 +1,73 @@
 ## Context
 
-See proposal.md for motivation. Four mechanisms are available, and they differ in ways that decide where each instruction goes. The facts below come from `omp://context-files.md` and `omp://rulebook-matching-pipeline.md`.
+See proposal.md for the motivation. Four mechanisms exist, and their differences select the home of each instruction. `omp://context-files.md` and `omp://rulebook-matching-pipeline.md` state the facts below.
 
-- A context file such as `AGENTS.md` is injected once, in the opening project prompt.
-- `.omp/RULES.md` is loaded as an always-apply rule and re-attached near the current turn, so it survives a long conversation.
-- A rule under `.omp/rules/` with a `condition` regex or an `astCondition` matches assistant text and tool arguments as they stream. It can abort the stream and re-inject itself, or with `interruptMode: never` fold a `<system-reminder>` into the matched tool call's result. `globs` acts as a path gate. AST conditions evaluate on edit and write arguments, per file, with language inferred from the path.
-- Always-apply rules are deduped against loaded context-file bodies: a rule whose normalized content already appears in a context file is omitted from injection.
+- A context file such as `AGENTS.md` enters the opening project prompt one time.
+- `omp` loads `.omp/RULES.md` as an always-apply rule and attaches it near the current turn. Its content stays in force through a long session.
+- A rule under `.omp/rules/` with a `condition` regex or an `astCondition` matches assistant text and tool arguments during the stream. The rule can abort the stream and inject itself again. With `interruptMode: never` the rule folds a `<system-reminder>` into the result of the matched tool call. A `globs` entry gates the match by path. An AST condition evaluates edit and write arguments for each file, and infers the language from the path.
+- `omp` dedupes always-apply rules against the loaded context files. `omp` drops a rule when a context file already contains its content.
 
-The repository currently has nine sticky rules, a 68-line `AGENTS.md`, three subsystem guides of 27, 30 and 37 lines, and an `openspec/config.yaml` carrying a context block plus per-artifact rules. Measured duplication: `entity.json` as sole source of truth and fail-fast appear in both `.omp/RULES.md` and `openspec/config.yaml`; clean cutover appears in `AGENTS.md` and `openspec/config.yaml`.
+The repository holds nine sticky rules, a 68-line `AGENTS.md`, and subsystem guides of 27, 30, and 37 lines. `openspec/config.yaml` holds a context block and artifact rules. Measured duplication: `.omp/RULES.md` and `openspec/config.yaml` both state the `entity.json` rule and the fail-fast rule. `AGENTS.md` and `openspec/config.yaml` both state the clean-cutover rule.
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- Place each instruction by the mechanism its job needs, so position matches purpose.
-- Convert the parts of the standing direction that change a decision into written, checkable statements, and drop the parts that cannot be verified.
-- Make the spike practice operational, with a home for probes and a ledger for measurements.
-- Replace review with tests wherever a written claim can be compared against the thing it describes.
+- Select the home of each instruction from the mechanism that its job needs.
+- Write the parts of the standing direction that change a decision. Drop the parts that no reader can check.
+- Make the spike practice operational. Give probes a home and measurements a ledger.
+- Replace review with a test wherever a test can compare a written claim against the thing that the claim describes.
 
 **Non-Goals:**
 
-- Rewriting the guides. Measurement says they are lean and current; the defects are duplication and two decayed lines.
-- Migrating the 37 archived plans into OpenSpec. They are history and reading them costs nothing.
-- Adding a rule for every anti-pattern imaginable. Only patterns that have already cost a cycle here are encoded.
+- A rewrite of the guides. The guides are short, and they contain no stale terms.
+- A migration of the 37 archived plans into OpenSpec. Those plans are history.
+- A rule for every possible anti-pattern. This change encodes the patterns that already cost a cycle here.
 
 ## Decisions
 
-### 1. Repository facts are sticky; working style is user-level
+### 1. Repository facts stay sticky, and working style moves to the user level
 
-`.omp/RULES.md` keeps requirements about this repository, because it is re-attached near the current turn and repository requirements must survive a long session. Working style that would apply to any repository moves to the user-level rules, where it is not confused with a fact about Ardenfall. This also keeps the repository file short enough to stay readable, which is the condition for it staying true.
+`.omp/RULES.md` holds requirements about this repository. `omp` attaches the file near the current turn, and repository requirements must survive a long session. Working style applies to every repository, so it moves to the user-level rules. The move also keeps the repository file short. A short file stays true.
 
-### 2. `openspec/config.yaml` thins to planning rules plus a pointer
+### 2. `openspec/config.yaml` keeps planning rules and a pointer
 
-Its context block currently restates repository requirements that `.omp/RULES.md` already carries. Duplication drifts, and the dedupe rule can silently remove the sticky copy. The block keeps only what is specific to producing planning artifacts, and points at `AGENTS.md` for the rest. Context files load automatically, so a planning agent loses nothing.
+The context block currently repeats requirements from `.omp/RULES.md`. Two copies drift apart, and the dedupe rule can remove the sticky copy. The block keeps the rules that apply to planning artifacts. For every other requirement the block points to `AGENTS.md`. Context files load without a request, so a planning agent loses nothing.
 
-Alternative considered: keep `config.yaml` self-contained so a planning agent needs nothing else. Rejected because it guarantees two copies of every requirement, which is what this change exists to remove.
+The alternative keeps `config.yaml` complete on its own. That alternative guarantees two copies of every requirement, and this change exists to remove them.
 
-### 3. Anti-pattern rules interrupt only when continuing is expensive
+### 3. Three rules interrupt, and the others report
 
-Three interrupt: a commit with `--no-verify`, a test or smoke that asserts on source text, and a `NOT NULL DEFAULT` column in pipeline SQL. Each of those, in the identity slice, either disabled a guard or produced work that had to be redone. Everything else reports without interrupting, in the shape that already works: the builtin `ts-set-map` rule folded a reminder into a write during this slice and changed the outcome without stopping it.
+Three anti-patterns interrupt: a commit with `--no-verify`, a test or smoke that asserts on source text, and a `NOT NULL DEFAULT` column in pipeline SQL. In the identity slice, each of the three disabled a guard or forced repeated work. Every other rule reports and continues. The builtin `ts-set-map` rule used that form during this slice. The reminder changed the outcome and did not stop the work.
 
-Precision is the constraint. Patterns are anchored to paths so that `--no-verify` matches a commit rather than prose about it, and a source-text pattern matches a read of a component from within a test or smoke rather than any file read. A rule that fires on good work is worse than no rule, because it trains the reader to dismiss the mechanism.
+Precision limits the set. Each pattern names a path, so `--no-verify` matches a commit and not prose about a commit. A source-text pattern matches a read of a component inside a test or a smoke, and not every file read. A rule that fires on correct work is worse than no rule, because the reader learns to dismiss the mechanism.
 
-### 4. Spikes are disposable; measurements are durable
+### 4. Spikes stay disposable, and measurements stay durable
 
-A probe is written against one game build and stops compiling against the next, so committing it invites rot and false authority. It lives in a gitignored `spikes/` directory during work. What survives is the measurement, in the ledger under `docs/plans/`, with its date and build, because that is what a later reader needs and what a later spike can contradict.
+A probe targets one game build, and the next build breaks it. A committed probe therefore decays and gains false authority. Each probe lives in a `spikes/` directory that git ignores. The measurement survives in `docs/plans/` with its date and its build. A later reader needs the measurement, and a later spike can contradict it.
 
-The positive-control requirement comes from a real failure in this slice: an empty probe result was reported as a missing-vocabulary defect when the probe was reading a field name that did not exist.
+The positive-control rule comes from a failure in this slice. An empty probe result became a report of a missing vocabulary. The probe read a field name that does not exist.
 
-### 5. One evidence rule covers the game and ourselves
+### 5. One evidence rule covers the game and this repository
 
-A claim about the game and a claim about our own pipeline fail the same way: an artefact that describes behaviour is read as if it established behaviour. Splitting them into two capabilities would put one rule in two homes, which is the defect this change exists to remove, so `evidence-standard` covers both and names the artefacts that are hypotheses: comments, documents, test names, variable names, plans, prior agent reports, and code whose existence is mistaken for proof that it runs.
+A claim about the game and a claim about our pipeline fail in the same way. A reader treats an artefact that describes behaviour as proof of behaviour. Two capabilities for one rule place one rule in two homes, and this change removes such duplication. `evidence-standard` therefore covers both. The spec names each artefact that is a hypothesis. The list holds comments, documents, test names, variable names, plans, and reports from other agents. The list also holds code whose existence looks like proof.
 
-The operational half is the mechanism check. Before extending a stage, table or projection, its output is observed in a built artifact. That single step would have caught the redirect emitter that never wrote a row, and the map layer that was declared while empty, which is now a pipeline diagnostic rather than a silence.
+The operational half is the mechanism check. Work observes the output of a stage, a table, or a projection in a built artifact before work extends it. That step catches a redirect emitter that never wrote a row. It also catches a declared map layer that stays empty, which the pipeline now reports.
 
-### 6. Written commands are compared against the commands they name
+### 6. A test compares each written command against the command it names
 
-Three tests replace reading: the gate list against the package scripts, every `skill://` reference against the discovered skills, and every requirement sentence against the other homes. This follows the repository's existing habit of asserting that documentation matches behaviour, as `tooling.test.ts` already does for the release-artifact deploy contract.
+Three tests replace reading. The first compares the gate list against the package scripts. The second resolves every `skill://` reference. The third compares requirement sentences across the homes. The repository already tests such alignment. `tooling.test.ts` asserts the release-artifact deploy contract in the same way.
 
-The duplication test compares normalized sentences rather than whole files, since paraphrase is how the current duplication survived. It will not catch a rewritten paraphrase; a reviewer still can.
+The duplication test compares normalised sentences and not whole files, because paraphrase hid the current duplication. The test does not catch a rewritten paraphrase. A reviewer catches that case.
 
 ### 7. The export proves its own provenance
 
-A preflight fails when more than one process holds the HotRepl port. The port is documented as first-come, and two instrumented games do not report a conflict, so the only way to keep an export honest is to refuse the ambiguous case rather than to remember the rule.
+A preflight fails when more than one process holds the HotRepl port. The port serves the process that binds first, and two instrumented games report no conflict. An export therefore refuses the ambiguous case. A written reminder cannot replace the refusal.
 
 ## Risks / Trade-offs
 
-- **A rule that fires on acceptable work.** Mitigated by anchoring every pattern to a path and by keeping the set to five. If one proves noisy, it is deleted rather than downgraded, because a rule nobody trusts costs budget for nothing.
-- **The duplication test entrenches wording.** Rewording a requirement in one home will make the test pass while the requirement is stated twice in different words. The test catches copies, not paraphrases; the boundary is stated in its failure message so a reader knows what it does not prove.
-- **`spikes/` invites accumulation.** A gitignored directory grows unread. Accepted, because the alternative is committing version-specific probes, and the ledger is where the durable result already lives.
-- **Working style in user-level rules is invisible to other contributors.** A collaborator cloning the repository sees the repository rules and not the working style. Accepted for this repository, which has one contributor; it would need revisiting with a second.
-- **Fewer written aspirations may read as lower standards.** The opposite is intended: a statement nobody can check is not a standard, it is a mood, and it displaces statements that can be checked.
+- **A rule fires on acceptable work.** Each pattern names a path, and the set holds five rules. A noisy rule leaves the set. A downgraded rule stays in the budget and earns no trust.
+- **The duplication test entrenches wording.** A reworded requirement passes the test and still states one requirement twice. The test catches copies. The failure message states that limit, so a reader knows what the test does not prove.
+- **The `spikes/` directory accumulates files.** An ignored directory grows and nobody reads it. The alternative commits probes that target one build. The ledger already holds the durable result.
+- **Working style stays invisible to a collaborator.** A collaborator reads the repository rules and not the user-level rules. This repository has one contributor. A second contributor needs a different arrangement.
+- **A shorter set of written aspirations can read as a lower standard.** The opposite holds. Nobody can check an unverifiable statement, and it takes the place of a statement that a reader can check.

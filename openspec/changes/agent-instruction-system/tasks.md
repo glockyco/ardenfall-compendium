@@ -1,46 +1,73 @@
 ## 1. One home per statement
 
-- [ ] 1.1 Remove from `openspec/config.yaml` every requirement that `.omp/RULES.md` already states, leaving planning-time artifact rules and a pointer to `AGENTS.md`. Confirm the planning context still names the constraints an artifact author needs.
-- [ ] 1.2 Move working-style requirements out of the repository files and into the user-level rules: prefer the complete fix and record rather than ship a compromise; fix or record an adjacent defect of the same class; fix the class rather than the instance; treat a subagent's report as a claim to re-measure; require a measurement for a behaviour claim; one subject per commit, green at every commit.
-- [ ] 1.3 Trim `.omp/RULES.md` to hard requirements about this repository, and state at its head which home holds what, so the next reader places a new rule correctly.
-- [ ] 1.4 Repair `AGENTS.md`: complete the gate list from the package scripts, and replace `skill://commit` with the skill that exists.
+- [ ] 1.1 Remove from `openspec/config.yaml` each requirement that `.omp/RULES.md` states.
+- [ ] 1.2 Keep the planning-time artifact rules in `openspec/config.yaml`, and add a pointer to `AGENTS.md`.
+- [ ] 1.3 Confirm that the planning context still names the constraints that an artifact author needs.
+- [ ] 1.4 Move the working-style requirements from the repository files to the user-level rules.
+- [ ] 1.5 State in the user-level rules: take the complete fix, whatever its size.
+- [ ] 1.6 State in the user-level rules: record a change when the complete fix cannot land, and ship no compromise.
+- [ ] 1.7 State in the user-level rules: fix or record an adjacent defect of the same class.
+- [ ] 1.8 State in the user-level rules: search for further instances before the commit.
+- [ ] 1.9 State in the user-level rules: treat a report from another agent as a claim, and measure it again.
+- [ ] 1.10 State in the user-level rules: one subject per commit, and a green tree at each commit.
+- [ ] 1.11 Trim `.omp/RULES.md` to hard requirements about this repository.
+- [ ] 1.12 Add one line at the head of `.omp/RULES.md` that names the home of each kind of statement.
+- [ ] 1.13 Complete the gate list in `AGENTS.md` from the scripts in `package.json`.
+- [ ] 1.14 Replace `skill://commit` in `AGENTS.md` with the skill that exists.
 
-## 2. Written claims become tests
+## 2. Tests for written claims
 
-- [ ] 2.1 Add a test that the gate list in `AGENTS.md` names exactly the site smoke scripts and repository check scripts that `package.json` defines, failing with the missing or stale entry.
-- [ ] 2.2 Add a test that every `skill://<name>` reference in the guidance files resolves to a discovered skill, failing with the reference and its file.
-- [ ] 2.3 Add a test that no requirement sentence appears in two homes, comparing normalised sentences across `.omp/RULES.md`, `AGENTS.md` and `openspec/config.yaml`, and stating in its failure message that it catches copies rather than paraphrases.
+- [ ] 2.1 Add a test that compares the gate list in `AGENTS.md` against the scripts in `package.json`.
+- [ ] 2.2 Fail that test with the name of the missing or stale entry.
+- [ ] 2.3 Add a test that resolves every `skill://<name>` reference in the guidance files.
+- [ ] 2.4 Fail that test with the reference and its file.
+- [ ] 2.5 Add a test that finds a requirement sentence in two homes.
+- [ ] 2.6 State in that failure message that the test catches copies and not paraphrases.
 
-## 3. Anti-patterns caught at the keystroke
+## 3. Rules for named anti-patterns
 
-- [ ] 3.1 Add an interrupting rule for a commit carrying `--no-verify`.
-- [ ] 3.2 Add an interrupting rule for a test or smoke that reads a component, module or config file and asserts on its contents, scoped to test and smoke paths, and worded so a deliberate policy check on source can say so.
-- [ ] 3.3 Add an interrupting rule for a `NOT NULL DEFAULT` column added under `pipeline/src/sql/`.
-- [ ] 3.4 Add reporting rules for reintroducing a retired name, covering the legacy route table, the `previousRoutes` descriptor field and the `Unnamed character` placeholder.
-- [ ] 3.5 Add a reporting rule for a probe or smoke that selects its subject by a fixture id or name rather than by the state under test.
-- [ ] 3.6 Verify each rule fires on a sample that should trigger it and stays silent on a sample that should not, and delete any rule that cannot be made precise.
+- [ ] 3.1 Add an interrupting rule for a commit that carries `--no-verify`.
+- [ ] 3.2 Add an interrupting rule for a test or smoke that asserts on source text.
+- [ ] 3.3 Scope that rule to test and smoke paths.
+- [ ] 3.4 Word that rule so that a deliberate policy check on source can declare itself.
+- [ ] 3.5 Add an interrupting rule for a `NOT NULL DEFAULT` column under `pipeline/src/sql/`.
+- [ ] 3.6 Add a reporting rule for the legacy route table, the `previousRoutes` field, and the `Unnamed character` placeholder.
+- [ ] 3.7 Add a reporting rule for a probe or smoke that selects a subject by a fixture id or name.
+- [ ] 3.8 Run each rule against a sample that must trigger it, and against a sample that must not.
+- [ ] 3.9 Delete each rule that cannot reach that precision.
 
-## 4. Spikes and their evidence
+## 4. Spikes and evidence
 
-- [ ] 4.1 Extend `skill://live-extraction` with the spike practice: the question, the probe, the recorded measurement, and the positive control required for a negative result.
-- [ ] 4.2 Add `spikes/` to `.gitignore` and say in the skill why a probe is not committed while its measurement is.
-- [ ] 4.3 State in the skill that a measurement is retaken after extraction code changes, since the previous export cannot have exercised the new code.
-- [ ] 4.4 Record in the evidence ledger the measurements this slice produced that are not yet written there, each with its date and game build.
-- [ ] 4.5 State in the user-level rules that an artefact describing behaviour is a hypothesis: a comment, document, test name, plan, prior agent report, or code that merely exists. Establish behaviour from the line that does the work or from an observed result, and correct a contradicting artefact in the same commit.
-- [ ] 4.6 State that an existing stage, table or projection is observed producing output in a built artifact before it is extended, and that one producing nothing is repaired or removed rather than extended.
+- [ ] 4.1 Add the spike practice to `skill://live-extraction`: one question, one probe, one recorded measurement.
+- [ ] 4.2 State in the skill that a negative result needs a positive control.
+- [ ] 4.3 Add `spikes/` to `.gitignore`.
+- [ ] 4.4 State in the skill why the repository holds the measurement and not the probe.
+- [ ] 4.5 State in the skill that work repeats a measurement after extraction code changes.
+- [ ] 4.6 Record in the ledger each measurement from this slice that the ledger lacks, with its date and build.
+- [ ] 4.7 State in the user-level rules that an artefact which describes behaviour is a hypothesis.
+- [ ] 4.8 State that a behaviour claim rests on the line that does the work, or on an observed result.
+- [ ] 4.9 State that the commit which finds a contradicting artefact corrects it.
+- [ ] 4.10 State that work observes the output of a mechanism in a built artifact before work extends it.
 
 ## 5. Export provenance
 
-- [ ] 5.1 Add a controller preflight that fails when more than one process holds the HotRepl port, naming the port and the processes, and covering it with a test.
-- [ ] 5.2 Cover the reproducibility contract with a test over two exports from one session, asserting equal per-family counts, equal filtered runtime-created count, and equal artifact hashes except timing records.
+- [ ] 5.1 Add a controller preflight that fails when more than one process holds the HotRepl port.
+- [ ] 5.2 Name the port and the processes in that failure.
+- [ ] 5.3 Cover the preflight with a test.
+- [ ] 5.4 Add a test for the reproducibility contract over two exports from one session.
+- [ ] 5.5 Assert equal family counts, an equal filtered runtime-created count, and equal artifact hashes.
+- [ ] 5.6 Permit a difference in the timing records only.
 
 ## 6. Boundary between plans and specs
 
-- [ ] 6.1 State in `AGENTS.md` that specs own what must be true, changes own what is in flight, and `docs/plans` owns audits, measurements and slice evidence.
-- [ ] 6.2 Remove restated slice status from the roadmap, keeping its evidence sections, and note that status is read from the change tracker.
+- [ ] 6.1 State in `AGENTS.md` that specs hold contracts, changes hold work in flight, and plans hold evidence.
+- [ ] 6.2 Remove the restated slice status from the roadmap, and keep the evidence sections.
+- [ ] 6.3 State in the roadmap that the change tracker holds slice status.
 
 ## 7. Verification
 
-- [ ] 7.1 Run the full gate in `AGENTS.md`, which by then includes the three new tests.
-- [ ] 7.2 Start a fresh session and confirm the sticky rules arrive, the anti-pattern rules are registered, and no rule is dropped as a duplicate of a context file.
-- [ ] 7.3 Archive this change once the gate passes and the roadmap records its evidence.
+- [ ] 7.1 Run the full gate in `AGENTS.md`, which then includes the three new tests.
+- [ ] 7.2 Start a new session, and confirm that the sticky rules arrive.
+- [ ] 7.3 Confirm that `omp` registers each anti-pattern rule.
+- [ ] 7.4 Confirm that `omp` drops no rule as a duplicate of a context file.
+- [ ] 7.5 Archive this change after the gate passes and the roadmap records the evidence.
