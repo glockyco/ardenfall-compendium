@@ -12,7 +12,9 @@ using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Entities.Portal;
 using ArdenfallCompendium.Entities.Character;
+using ArdenfallCompendium.Entities.CharacterRace;
 using ArdenfallCompendium.Entities.Faction;
+using ArdenfallCompendium.Entities.NameSet;
 using ArdenfallCompendium.Entities.Npc;
 using ArdenfallCompendium.Entities.Quest;
 using ArdenfallCompendium.Extraction;
@@ -36,7 +38,9 @@ public sealed class CompendiumCommandRegistry : IDisposable
         var locations = new LocationExtractionService(new BuiltLookupTableLocationAssetSource());
         var portals = new PortalExtractionService(new MasterRecordTablePortalRecordSource());
         var characters = new CharacterExtractionService(new BuiltLookupTableCharacterAssetSource());
+        var characterRaces = new CharacterRaceExtractionService(new LoadedCharacterRaceAssetSource());
         var factions = new FactionExtractionService(new BuiltLookupTableFactionAssetSource());
+        var nameSets = new NameSetExtractionService(new LoadedNameSetAssetSource());
         var npcs = new NpcExtractionService(new MasterRecordTableNpcRecordSource());
         var quests = new QuestExtractionService(new LoadedQuestAssetSource());
 
@@ -47,7 +51,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         Register(new Handlers.RunStatusCommand(runs));
         Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs, items));
-        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, potionRecipes: potionRecipes, enchantments: enchantments, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals, factions: factions, npcs: npcs, quests: quests));
+        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, potionRecipes: potionRecipes, enchantments: enchantments, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals, factions: factions, npcs: npcs, quests: quests, characterRaces: characterRaces, nameSets: nameSets));
         Register(new Handlers.RunDiscardCommand(runs, new IExtractionCache[]
         {
             items,
@@ -60,7 +64,9 @@ public sealed class CompendiumCommandRegistry : IDisposable
             locations,
             portals,
             characters,
+            characterRaces,
             factions,
+            nameSets,
             npcs,
             quests,
         }));

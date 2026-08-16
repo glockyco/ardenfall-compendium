@@ -18,7 +18,9 @@ using ArdenfallCompendium.Entities.ItemTag;
 using ArdenfallCompendium.Entities.Location;
 using ArdenfallCompendium.Entities.Portal;
 using ArdenfallCompendium.Entities.Character;
+using ArdenfallCompendium.Entities.CharacterRace;
 using ArdenfallCompendium.Entities.Faction;
+using ArdenfallCompendium.Entities.NameSet;
 using ArdenfallCompendium.Entities.Npc;
 using ArdenfallCompendium.Entities.Quest;
 using PublicItemTagSnapshot = ArdenfallCompendium.Entities.ItemTag.ItemTagSnapshot;
@@ -42,7 +44,9 @@ public sealed class RunFinalizeCommandTests
     private static readonly FakeQuestExtractionCache EmptyQuests = new();
     private static readonly FakeSpellExtractionCache EmptySpells = new();
     private static readonly FakeCharacterExtractionCache EmptyCharacters = new();
+    private static readonly FakeCharacterRaceExtractionCache EmptyCharacterRaces = new();
     private static readonly FakeStatusEffectExtractionCache EmptyStatusEffects = new();
+    private static readonly FakeNameSetExtractionCache EmptyNameSets = new();
 
     [Fact]
     public async Task RejectsFailedPreflightBeforePublishing()
@@ -69,7 +73,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, preflight: FailingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: FailingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -105,7 +109,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -138,7 +142,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
 
         await Assert.ThrowsAsync<System.InvalidOperationException>(() =>
             command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None).AsTask());
@@ -171,7 +175,7 @@ public sealed class RunFinalizeCommandTests
             Diagnostics = new List<Diagnostic> { Diagnostic("fatal", "rowFatal") },
         });
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
-        var command = new RunFinalizeCommand(runs, cache, EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, quests: EmptyQuests, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, cache, EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
@@ -239,7 +243,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -281,7 +285,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -318,7 +322,7 @@ public sealed class RunFinalizeCommandTests
             RowId = "item-a",
             DisplayIconColor = new AssetColorSnapshot(),
         });
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, quests: EmptyQuests, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -347,7 +351,7 @@ public sealed class RunFinalizeCommandTests
             Fields = new Dictionary<string, object?>(),
         });
         var source = FakeMasterTooltipSource.Default;
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), EmptySpells, EmptyCharacters, EmptyStatusEffects, source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, quests: EmptyQuests, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), EmptySpells, EmptyCharacters, EmptyStatusEffects, source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -416,7 +420,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
@@ -486,7 +490,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -543,7 +547,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -606,7 +610,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -663,7 +667,7 @@ public sealed class RunFinalizeCommandTests
             portals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -728,7 +732,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             factions,
             EmptyNpcs,
-            quests: EmptyQuests, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -744,6 +748,94 @@ public sealed class RunFinalizeCommandTests
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(factionsPath)), manifest.Hashes["factions.json"]);
         Assert.Equal(1, manifest.Counts["faction"]);
+    }
+
+    [Fact]
+    public async Task FinalizeWritesRaceAndNameSetSnapshotsCountsDiagnosticsAndEvictsCaches()
+    {
+        var runs = new CompendiumRunManager();
+        var outputBaseDir = Directory.CreateTempSubdirectory("ardenfall-finalize-race-name-set-test-").FullName;
+        var run = runs.Begin(outputBaseDir, "test-version");
+        WriteChunk(run, "000000.json", new ItemSnapshotRow
+        {
+            Id = "item-a",
+            Fields = new Dictionary<string, object?>(),
+        });
+
+        var raceRows = new List<CharacterRaceSnapshotRow>
+        {
+            new()
+            {
+                Id = "named;character-race;Karu Elf",
+                Fields = new CharacterRaceSnapshot(
+                    "named;character-race;Karu Elf",
+                    "Karu Elf",
+                    new List<SnapshotRef>
+                    {
+                        SnapshotRef.NamedAsset("name-set", "Karu Elf Given"),
+                        SnapshotRef.NamedAsset("name-set", "Karu Elf Family"),
+                    }),
+            },
+        };
+        var nameSetRows = new List<NameSetSnapshotRow>
+        {
+            new()
+            {
+                Id = "named;name-set;Karu Elf Given",
+                Fields = new NameSetSnapshot(
+                    "named;name-set;Karu Elf Given",
+                    new List<NameSetSeedSnapshot> { new("Ari", 7) },
+                    5),
+            },
+        };
+        var raceCache = new FakeCharacterRaceExtractionCache(
+            raceRows,
+            new[] { Diagnostic("diagnostic", "characterRaceWalker") });
+        var nameSetCache = new FakeNameSetExtractionCache(
+            nameSetRows,
+            new[] { Diagnostic("diagnostic", "nameSetWalker") });
+        var command = new RunFinalizeCommand(
+            runs,
+            new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()),
+            EmptySpells,
+            EmptyCharacters,
+            EmptyStatusEffects,
+            FakeMasterTooltipSource.Default,
+            EmptyStatTypes,
+            EmptyItemCategories,
+            EmptyItemTags,
+            EmptyLocations,
+            EmptyPortals,
+            EmptyFactions,
+            EmptyNpcs,
+            quests: EmptyQuests,
+            characterRaces: raceCache,
+            nameSets: nameSetCache,
+            preflight: PassingPreflight);
+
+        var result = await command.ExecuteAsync(
+            TestControlCommandContext.Create<RunFinalizeResult>(),
+            new RunIdArgs { RunId = run.RunId },
+            CancellationToken.None);
+
+        Assert.Empty(result.Diagnostics);
+        Assert.Equal(1, run.Counts["character-race"]);
+        Assert.Equal(1, run.Counts["name-set"]);
+        Assert.Equal(1, raceCache.EvictionCount);
+        Assert.Equal(1, nameSetCache.EvictionCount);
+        var characterRacesPath = Path.Combine(result.Output!.PublishedDir, "character-races.json");
+        var nameSetsPath = Path.Combine(result.Output.PublishedDir, "name-sets.json");
+        Assert.True(File.Exists(characterRacesPath));
+        Assert.True(File.Exists(nameSetsPath));
+        Assert.Single(JsonConvert.DeserializeObject<CharacterRaceSnapshotEnvelope>(
+            File.ReadAllText(characterRacesPath), JsonSettings.Default)!.Rows);
+        Assert.Single(JsonConvert.DeserializeObject<NameSetSnapshotEnvelope>(
+            File.ReadAllText(nameSetsPath), JsonSettings.Default)!.Rows);
+        var manifest = JsonConvert.DeserializeObject<Manifest>(
+            File.ReadAllText(result.Output.ManifestPath), JsonSettings.Default)!;
+        Assert.Equal(1, manifest.Counts["character-race"]);
+        Assert.Equal(1, manifest.Counts["name-set"]);
+        Assert.Equal(2, manifest.Diagnostics.Diagnostic);
     }
 
     private static Diagnostic Diagnostic(string severity, string code) => new()
@@ -859,6 +951,28 @@ public sealed class RunFinalizeCommandTests
             System.Array.Empty<Diagnostic>();
     }
 
+    private sealed class FakeCharacterRaceExtractionCache : ICharacterRaceExtractionCache
+    {
+        private readonly IReadOnlyList<CharacterRaceSnapshotRow> _rows;
+        private readonly IReadOnlyList<Diagnostic> _diagnostics;
+
+        public FakeCharacterRaceExtractionCache(
+            IReadOnlyList<CharacterRaceSnapshotRow>? rows = null,
+            IReadOnlyList<Diagnostic>? diagnostics = null)
+        {
+            _rows = rows ?? System.Array.Empty<CharacterRaceSnapshotRow>();
+            _diagnostics = diagnostics ?? System.Array.Empty<Diagnostic>();
+        }
+
+        public int EvictionCount { get; private set; }
+
+        public void Evict(CompendiumRun run) => EvictionCount++;
+
+        public IReadOnlyList<CharacterRaceSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
+
+        public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => _diagnostics;
+    }
+
     private sealed class FakeStatusEffectExtractionCache : IStatusEffectExtractionCache
     {
         private readonly IconAssetPlan _assetPlan;
@@ -969,6 +1083,28 @@ public sealed class RunFinalizeCommandTests
         public IconAssetPlan GetAssetPlan(CompendiumRun run) => _assetPlan;
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => System.Array.Empty<Diagnostic>();
+    }
+
+    private sealed class FakeNameSetExtractionCache : INameSetExtractionCache
+    {
+        private readonly IReadOnlyList<NameSetSnapshotRow> _rows;
+        private readonly IReadOnlyList<Diagnostic> _diagnostics;
+
+        public FakeNameSetExtractionCache(
+            IReadOnlyList<NameSetSnapshotRow>? rows = null,
+            IReadOnlyList<Diagnostic>? diagnostics = null)
+        {
+            _rows = rows ?? System.Array.Empty<NameSetSnapshotRow>();
+            _diagnostics = diagnostics ?? System.Array.Empty<Diagnostic>();
+        }
+
+        public int EvictionCount { get; private set; }
+
+        public void Evict(CompendiumRun run) => EvictionCount++;
+
+        public IReadOnlyList<NameSetSnapshotRow> GetOrExtract(CompendiumRun run) => _rows;
+
+        public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) => _diagnostics;
     }
 
     private sealed class FakeNpcExtractionCache : INpcExtractionCache
