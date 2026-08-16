@@ -136,6 +136,17 @@ export function prepareEntityNodeWriter(db: Database): EntityNodeWriter {
       explicitCanonicalSlug === undefined
         ? deriveEntityNodeSlug(node.label ?? "", node.entityId)
         : { canonicalSlug: explicitCanonicalSlug, shortId: explicitShortId as string };
+    const existing = db
+      .query<{ entity_id: string }, [string, string, string]>(
+        `SELECT entity_id FROM entity_nodes
+         WHERE entity_type = ? AND canonical_slug = ? AND entity_id <> ?`,
+      )
+      .get(node.entityType, slug.canonicalSlug, node.entityId);
+    if (existing) {
+      throw new Error(
+        `entity node slug collision: entities '${existing.entity_id}' and '${node.entityId}' resolve to canonical slug '${slug.canonicalSlug}'`,
+      );
+    }
     insert.run(
       node.entityType,
       node.entityId,

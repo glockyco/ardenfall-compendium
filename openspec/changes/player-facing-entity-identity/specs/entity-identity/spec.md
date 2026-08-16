@@ -90,3 +90,19 @@ A `designer-identifier` value MUST remain in canonical data and MUST be availabl
 - **WHEN** a maintainer inspects a placement through a private debug surface
 - **THEN** the authoring label is visible alongside the display name
 - **AND** the public page shows only the display name
+
+### Requirement: Page addresses use opaque stable suffixes
+
+A published page address MUST carry a reader-facing title and an opaque stable 8-hex suffix. The address MUST NOT contain an authoring identifier, including a named asset name. If two entities resolve the same canonical slug, the build MUST fail and name both entity ids and the slug.
+
+#### Scenario: Named assets produce opaque page addresses
+
+- **WHEN** a named asset is published as a page
+- **THEN** its address carries the reader-facing title and an opaque stable 8-hex suffix
+- **AND** the address does not contain the asset name
+
+#### Scenario: A canonical slug collision fails the build
+
+- **WHEN** two entities resolve the same canonical slug
+- **THEN** the build fails before it publishes either page
+- **AND** the error names both entity ids and the canonical slug

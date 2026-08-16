@@ -46,7 +46,35 @@ describe("prepareEntityNodeWriter", () => {
       }),
     ).toThrow(/cannot derive short_id/);
   });
+
+  it("fails loudly when two entities resolve the same canonical slug", () => {
+    const db = new Database(":memory:");
+    db.exec(ENTITY_GRAPH_DDL);
+    const writeNode = prepareEntityNodeWriter(db);
+    writeNode({
+      entityType: "item",
+      entityId: "entity-one",
+      label: "First",
+      routePath: "/items/shared--11111111",
+      canonicalSlug: "shared--11111111",
+      shortId: "11111111",
+    });
+
+    expect(() =>
+      writeNode({
+        entityType: "item",
+        entityId: "entity-two",
+        label: "Second",
+        routePath: "/items/shared--11111111",
+        canonicalSlug: "shared--11111111",
+        shortId: "22222222",
+      }),
+    ).toThrow(
+      "entities 'entity-one' and 'entity-two' resolve to canonical slug 'shared--11111111'",
+    );
+  });
 });
+
 describe("emitItemReadModels", () => {
   it("builds item_overview_rows and item_presentation_rows without legacy fields_json", async () => {
     const desc = await loadDescriptors.run({}, ctx);
@@ -642,10 +670,14 @@ describe("emitStatTypeReadModels", () => {
       label: string;
       routePath: string | null;
     }[];
-    expect(affects).toContainEqual({
-      label: "ALCHEMY",
-      routePath: "/attributes/alchemy--sk-alchemy",
-    });
+    expect(affects).toEqual(
+      expect.arrayContaining([
+        {
+          label: "ALCHEMY",
+          routePath: expect.stringMatching(/^\/attributes\/alchemy--[0-9a-f]{8}$/),
+        },
+      ]),
+    );
     expect(affects).toContainEqual({ label: "melee-damage", routePath: null });
 
     const node = db
@@ -653,8 +685,8 @@ describe("emitStatTypeReadModels", () => {
         "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'stat-type' AND entity_id = 'named;stat-type;att_strength'",
       )
       .get();
-    expect(node?.short_id).toBe("att-strength");
-    expect(node?.canonical_slug).toBe("strength--att-strength");
+    expect(node?.short_id).toMatch(/^[0-9a-f]{8}$/);
+    expect(node?.canonical_slug).toMatch(/^strength--[0-9a-f]{8}$/);
     expect(node?.route_path).toBe(`/attributes/${node?.canonical_slug}`);
   });
 
@@ -821,8 +853,8 @@ describe("emitItemCategoryReadModels", () => {
         "SELECT route_path, canonical_slug, short_id FROM entity_nodes WHERE entity_type = 'item-category' AND entity_id = 'named;item-category;itemcat_weapons'",
       )
       .get();
-    expect(node?.short_id).toBe("itemcat-weapons");
-    expect(node?.canonical_slug).toBe("weapons--itemcat-weapons");
+    expect(node?.short_id).toMatch(/^[0-9a-f]{8}$/);
+    expect(node?.canonical_slug).toMatch(/^weapons--[0-9a-f]{8}$/);
     expect(node?.route_path).toBe(`/groups/${node?.canonical_slug}`);
   });
 });

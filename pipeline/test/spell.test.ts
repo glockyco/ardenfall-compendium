@@ -279,8 +279,8 @@ describe("spell pipeline", () => {
       )
       .get(namelessSpellId);
     expect(node).toEqual({
-      route_path: "/spells/unnamed-spell--spell-brawler-fists",
-      canonical_slug: "unnamed-spell--spell-brawler-fists",
+      route_path: "/spells/unnamed-spell--5df12e13",
+      canonical_slug: "unnamed-spell--5df12e13",
     });
   });
   it("resolves an exported spell icon hash", () => {
@@ -338,9 +338,9 @@ describe("spell pipeline", () => {
       )
       .get(spellId);
     expect(node).toEqual({
-      route_path: "/spells/fire-shield--spell-fire-shield",
-      canonical_slug: "fire-shield--spell-fire-shield",
-      short_id: "spell-fire-shield",
+      route_path: "/spells/fire-shield--dc85a4a0",
+      canonical_slug: "fire-shield--dc85a4a0",
+      short_id: "dc85a4a0",
     });
   });
 

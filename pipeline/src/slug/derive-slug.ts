@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 export function kebab(input: string): string {
   return (input ?? "")
     .toLowerCase()
@@ -9,7 +11,8 @@ export function kebab(input: string): string {
  * Derives a short id from a lookup-asset id (`<8hex>[.suffix]`), a record id
  * (`<table>;<subtable>;<recordId>`, where `recordId` is a GUID written as 32 hex
  * characters with or without hyphens), or a named-asset id
- * (`named;<entityId>;<assetName>`), whose asset name is kebab-cased.
+ * (`named;<entityId>;<assetName>`), whose full id is hashed. The asset name is
+ * validated but never used as a public URL identifier.
  *
  * The game authors both hyphenated and bare record GUIDs. Portal records use the
  * bare form and NPC records use the hyphenated form. Hyphens are removed before
@@ -20,16 +23,17 @@ export function deriveShortId(id: string): string {
     const parts = id.split(";");
     const entityId = parts[1];
     const assetName = parts[2];
-    const shortId = assetName === undefined ? "" : kebab(assetName);
     if (
       parts.length === 3 &&
       entityId !== undefined &&
       /^[a-z][a-z0-9-]*$/.test(entityId) &&
       assetName !== undefined &&
       assetName !== "" &&
-      shortId !== ""
+      kebab(assetName) !== ""
     ) {
-      return shortId;
+      // Hash the full entity id, not the designer's asset name, so public URLs
+      // stay opaque and stable when a display name or authoring label changes.
+      return createHash("sha256").update(id).digest("hex").slice(0, 8);
     }
   } else if (id.includes(";")) {
     const parts = id.split(";");

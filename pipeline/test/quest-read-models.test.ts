@@ -103,10 +103,10 @@ function seedDatabase(): Database {
     "[]",
     null,
   );
-  for (const [entityType, entityId, label, routePath] of [
-    ["npc", npcId, "Giver", "/characters/giver--11111111"],
-    ["faction", factionId, "Guard", "/factions/guard--faction-guard"],
-    ["item", itemId, "Sword", "/items/sword--item-sword"],
+  for (const [entityType, entityId, label, routePath, canonicalSlug, shortId] of [
+    ["npc", npcId, "Giver", "/characters/giver--11111111", "giver--11111111", "11111111"],
+    ["faction", factionId, "Guard", "/factions/guard--d82d4526", "guard--d82d4526", "d82d4526"],
+    ["item", itemId, "Sword", "/items/sword--6d62d408", "sword--6d62d408", "6d62d408"],
   ]) {
     db.prepare(
       `INSERT INTO entity_nodes (
@@ -117,8 +117,8 @@ function seedDatabase(): Database {
       entityId ?? "",
       label ?? "",
       routePath ?? "",
-      `${entityType ?? ""}-${entityId ?? ""}`,
-      (entityId ?? "").slice(-8),
+      canonicalSlug ?? "",
+      shortId ?? "",
     );
   }
   return db;
@@ -151,7 +151,7 @@ describe("quest read models", () => {
       db
         .query(`SELECT route_path FROM entity_nodes WHERE entity_type = 'quest' AND entity_id = ?`)
         .get(questId),
-    ).toEqual({ route_path: "/quests/alpha--alpha" });
+    ).toEqual({ route_path: "/quests/alpha--970c0ae0" });
     const presentation = db
       .query<{ phases_json: string; rewards_json: string }, [string]>(
         `SELECT phases_json, rewards_json FROM quest_presentation_rows WHERE id = ?`,
@@ -188,7 +188,7 @@ describe("quest read models", () => {
             kind: "faction-reputation",
             amount: "+17",
             targetLabel: "Guard",
-            targetRoutePath: "/factions/guard--faction-guard",
+            targetRoutePath: "/factions/guard--d82d4526",
             items: [],
           },
           {
@@ -196,7 +196,7 @@ describe("quest read models", () => {
             amount: null,
             targetLabel: null,
             targetRoutePath: null,
-            items: [{ label: "Sword", routePath: "/items/sword--item-sword", count: 1 }],
+            items: [{ label: "Sword", routePath: "/items/sword--6d62d408", count: 1 }],
           },
         ],
       },

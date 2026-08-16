@@ -25,13 +25,16 @@ describe("deriveShortId", () => {
     expect(deriveShortId("ABCDEF0123")).toBe("abcdef01");
   });
 
-  it("derives the first 8 hex characters from a record id", () => {
+  it("derives the first 8 hex characters from bare and hyphenated record ids", () => {
     expect(deriveShortId("instances;portals;398213e43a41b4c47bffe4ef1998e782")).toBe("398213e4");
+    expect(deriveShortId("instances;portals;398213e4-3a41-b4c4-7bff-e4ef1998e782")).toBe(
+      "398213e4",
+    );
   });
 
-  it("derives a kebab-cased asset name from a named asset id", () => {
-    expect(deriveShortId("named;stat-type;att_strength")).toBe("att-strength");
-    expect(deriveShortId("named;item-category;itemcat_weapons")).toBe("itemcat-weapons");
+  it("hashes the full named asset id instead of exposing its asset name", () => {
+    expect(deriveShortId("named;stat-type;att_strength")).toBe("e3cd234d");
+    expect(deriveShortId("named;item-category;itemcat_weapons")).toBe("d58e048c");
   });
 
   it("rejects malformed named asset ids", () => {
@@ -56,6 +59,12 @@ describe("deriveSlug", () => {
         assetId: "4ed202185a05d98439595e3fcab021c8.11400000",
       }),
     ).toBe("iron-sword--4ed20218");
+  });
+
+  it("keeps named asset slugs opaque", () => {
+    expect(deriveSlug({ displayName: "Strength", assetId: "named;stat-type;att_strength" })).toBe(
+      "strength--e3cd234d",
+    );
   });
 
   it("falls back to `entity--<id8>` when the displayName slugs to empty", () => {
