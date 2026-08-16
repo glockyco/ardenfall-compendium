@@ -1,5 +1,13 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
 import { dirname, join } from "node:path";
@@ -53,6 +61,14 @@ const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
   scripts: Record<string, string>;
 };
 const prettierIgnore = readFileSync(".prettierignore", "utf8");
+const agents = readFileSync("AGENTS.md", "utf8");
+const guidanceFiles = [
+  "AGENTS.md",
+  "mod/AGENTS.md",
+  "pipeline/AGENTS.md",
+  "site/AGENTS.md",
+  ".omp/RULES.md",
+] as const;
 
 const sitePackageJson = JSON.parse(readFileSync("site/package.json", "utf8")) as {
   scripts: Record<string, string>;
@@ -70,6 +86,39 @@ const siteItemReadModels = readFileSync("site/src/lib/server/entities/item.ts", 
 
 function sha256(content: string | Buffer): string {
   return createHash("sha256").update(content).digest("hex");
+}
+
+function skillDirectoryNames(root: string): Set<string> {
+  const names = new Set<string>();
+  if (!existsSync(root)) return names;
+
+  const visit = (directory: string): void => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      names.add(entry.name);
+      visit(join(directory, entry.name));
+    }
+  };
+
+  visit(root);
+  return names;
+}
+
+function normaliseRequirementSentence(sentence: string): string {
+  return sentence
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function requirementSentences(source: string): string[] {
+  return source
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((sentence) => sentence.replace(/^\s*[-*#]+\s*/, "").trim())
+    .filter(
+      (sentence) => sentence.length > 0 && !sentence.startsWith("`") && !sentence.startsWith("#"),
+    );
 }
 
 function writeMinimalArtifactSqlite(
@@ -863,6 +912,81 @@ describe("site prerender architecture", () => {
     const map = readFileSync("site/scripts/smoke-map-route.ts", "utf8");
     expect(map).not.toContain("Harbor Town");
     expect(map).toContain("FROM map_points");
+  });
+
+  it("keeps the gate list aligned with package scripts", () => {
+    const entries = [
+      ...agents.matchAll(/Run `bun run(?: --cwd site)? ((?:check|smoke):[^`\s]+)`/g),
+    ].map((match) => {
+      const name = match[1];
+      if (!name) throw new Error(`AGENTS.md contains an invalid gate entry: ${match[0]}`);
+      return {
+        name,
+        text: match[0],
+        scripts: name.startsWith("smoke:") ? sitePackageJson.scripts : packageJson.scripts,
+        packageFile: name.startsWith("smoke:") ? "site/package.json" : "package.json",
+      };
+    });
+
+    const expected = [
+      ...Object.keys(packageJson.scripts)
+        .filter((name) => name.startsWith("check:"))
+        .map((name) => ({ name, packageFile: "package.json" })),
+      ...Object.keys(sitePackageJson.scripts)
+        .filter((name) => name.startsWith("smoke:"))
+        .map((name) => ({ name, packageFile: "site/package.json" })),
+    ];
+
+    for (const { name, packageFile } of expected) {
+      if (!entries.some((entry) => entry.name === name && entry.packageFile === packageFile)) {
+        throw new Error(`AGENTS.md has no gate entry for ${name} from ${packageFile}`);
+      }
+    }
+    for (const entry of entries) {
+      if (!entry.scripts[entry.name]) {
+        throw new Error(
+          `AGENTS.md names removed gate entry ${entry.name} in ${entry.text}, but ${entry.packageFile} has no such script`,
+        );
+      }
+    }
+  });
+
+  it("resolves every skill named by guidance", () => {
+    const localSkills = skillDirectoryNames(".omp/skills");
+    // This personal skill is supplied by the harness and intentionally stays outside this
+    // repository.
+    const externallyProvidedSkills: Record<string, true> = { "commit-policy": true };
+
+    for (const file of guidanceFiles) {
+      const source = readFileSync(file, "utf8");
+      for (const reference of source.match(/skill:\/\/[A-Za-z0-9_-]+/g) ?? []) {
+        const name = reference.slice("skill://".length);
+        if (localSkills.has(name) || externallyProvidedSkills[name]) continue;
+        throw new Error(`Unresolved ${reference} in ${file}`);
+      }
+    }
+  });
+
+  it("rejects copied requirement sentences across instruction homes", () => {
+    const homes = ["AGENTS.md", ".omp/RULES.md", "openspec/config.yaml"] as const;
+    const occurrences = new Map<string, Array<{ file: string; text: string }>>();
+
+    for (const file of homes) {
+      for (const text of requirementSentences(readFileSync(file, "utf8"))) {
+        const normalized = normaliseRequirementSentence(text);
+        if (normalized.split(" ").length < 8) continue;
+        const entries = occurrences.get(normalized) ?? [];
+        if (!entries.some((entry) => entry.file === file)) entries.push({ file, text });
+        occurrences.set(normalized, entries);
+      }
+    }
+
+    for (const entries of occurrences.values()) {
+      if (entries.length < 2) continue;
+      throw new Error(
+        `Requirement copies found, not paraphrases: ${entries.map((entry) => `${entry.file}: ${entry.text}`).join(" | ")}`,
+      );
+    }
   });
 
   it("requires an icon-bearing stat prerender smoke probe", () => {
