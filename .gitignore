@@ -42,6 +42,7 @@ mod/libs/
 
 # Snapshots and ad-hoc
 snapshots/
+spikes/
 fixtures/real-capsule/snapshot/
 *.log
 *.tmp

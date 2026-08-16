@@ -20,7 +20,8 @@ Use this procedure when a configured game installation must produce a live snaps
 
 If another HotRepl-instrumented game holds the default port, set `HOTREPL_PORT` and the matching `HOTREPL_URL` in `.env`. Do not hand-edit the generated config. Each deploy overwrites that file.
 
-Two games that claim one port do not report an error. Connections reach whichever game binds first. An export can therefore target the wrong game without an obvious failure.
+Two instrumented games on one port answer without an error. The game that binds first wins.
+An export that ends with a quit prevents a second measurement. Pass `--no-quit` to keep the session alive.
 
 ## Probe a running game
 
@@ -33,6 +34,25 @@ Two games that claim one port do not report an error. Connections reach whicheve
 ## Ground game-logic decisions
 
 Read the decompiled source instead of guessing. The gitignored cache is `.decompiled/<gameVersion>-<sha>/`. Regenerate it with `bun run decompile:game`.
+
+For each game-logic decision, state one question, run one probe, and record one result.
+A probe targets one game build and decays with that build. The repository holds no probe.
+Git ignores `spikes/`. Keep probes in `spikes/`.
+
+A negative result needs a positive control. Run the same probe against a case that carries the value.
+Record both results in the change that uses them.
+One probe read `variant.nameSets` and returned empty for every race. That empty result became a defect report.
+The published field has the name `variant.nameSetRefs`. Every vocabulary was present.
+
+## Store each result with its owner
+
+Place each measurement with the producer that owns it.
+A count belongs to the emitted `artifact-manifest.json`.
+A mechanism belongs to the spec requirement that it justifies.
+The probe and its output belong to the change that used them.
+The repository holds no ledger.
+
+Repeat a measurement after extraction code changes. The earlier export ran the earlier code.
 
 Never commit decompiled source, raw game JSON, snapshots, or generated databases.
 
