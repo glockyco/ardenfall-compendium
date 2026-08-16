@@ -441,7 +441,7 @@ A sweep of the decompiled source plus a live probe against Ardenfall Demo `0.0.1
 
 **Quests are first-class.** `Questing/QuestData` is a real ScriptableObject with authored identity, journal text, phases, objectives, and rewards, with runtime progress held separately in `QuestInstance`. Authored quest content is extractable, and only the progress state is out of scope.
 
-**Loot provenance is a major remaining gap in reader value.** `ItemListAsset`, `ItemGroup`, and the counted and leveled wrappers describe what drops and what is stocked. The character path is already represented by `can_drop` edges, while the remaining 278 items behind 182 lists have no at-rest asset references and share a 683-cell world walk with scene enumeration.
+**Loot provenance is a major remaining gap in reader value.** `ItemListAsset`, `ItemGroup`, and the counted and leveled wrappers describe what drops and what is stocked. The character path is already represented by `can_drop` edges, while the remaining 278 items behind 182 lists have no at-rest asset references and share a 27-loadable-cell world walk with scene enumeration.
 
 **Not entities, deliberately.** `ItemFilter` is a reusable internal predicate, not a taxonomy. Reputation and bounty are runtime state on `FactionInstance`, while only `Faction` itself is authored. `CharacterRace`, `CharacterModule`, and the race-list selector are mostly rendering and AI configuration. `VolumeRecord` is a gameplay ownership volume, unrelated to the location polygons already on the map.
 
@@ -469,7 +469,7 @@ Ordered by measured reader value against cost. The survey at [`2026-08-02-progra
 3. ~~Stat types to stat types~~ - **done.** Labels that match a published stat are links.
 4. ~~Items to categories and tags~~ - **done.** 1,268 `categorised_as` and 76 `tagged` edges. Item pages name both, and the tag and category pages were left alone because their existing tables already say it.
 
-**That exhausts the field-shaped edges**, and the remaining orphans are not spread evenly. The 2026-08-03 release leaves 726 of 2,266 public pages without an inbound link. The cheap authored additions are the standalone `PotionRecipe` and `EnchantmentData` entities. Their 48 and 64 assets reach 127 and 19 unlinked items. The remaining authored item-list provenance and scene-owned sources share the 683-cell world walk.
+**The current live measurement is item-scoped.** The export contains 1,273 item pages. A relationship edge points into 799 of them, leaving 474 without an inbound edge. Placement-owned merchant inventory covers 274 distinct items across 17 placements; 63 of the unlinked items are sold by a placement. Placement-owned drop lists cover 492 distinct items across 280 placements; 25 of the unlinked items are dropped by a placement.
 
 So the next connective work is no longer a field, it is an entity:
 
@@ -479,29 +479,49 @@ So the next connective work is no longer a field, it is an entity:
 
 5. **Item obtainability, inheritance, and authored item connectivity**, in progress. Not loot alone. [`2026-08-02-item-obtainability`](2026-08-02-item-obtainability.md) measures every route by which a player can get or understand an item. [`2026-08-04-item-character-inheritance`](2026-08-04-item-character-inheritance.md) records the prototype mechanism and its reader-facing decisions.
 
-   **Inheritance is part of item connectivity.** Item and character parent references are extracted from the game's `ParameterizedObject.parent` chain. The item read model suppresses 73 template-named prototypes, resolves `enchants` through 484 publishable descendants instead of 139 prototype links, and emits `derives_from` for the parent relation. The character page question remains open because all 212 character definitions are nameless by design and have no inbound link.
+   **Inheritance is part of item connectivity.** Item and character parent references are extracted from the game's `ParameterizedObject.parent` chain. The item read model publishes template-named prototypes, resolves `enchants` through their publishable descendants, and emits `derives_from` for the parent relation. Character definitions are also public and carry their race and template state.
 
    The cheap authored addition is two standalone entities. `PotionRecipe` has **48** assets and reaches **127** currently unlinked items. `EnchantmentData` has **64** assets and reaches **19** currently unlinked items. Together they give **158** currently unreachable item pages a first inbound link and add **112** pages of their own without a world walk.
 
-   `ItemListAsset` provenance and world scene enumeration are one slice, not two rankable slices. All **348** lists are loaded at rest and reach **811** distinct items. The **530** reachable from `CharacterData.itemLists` are exactly the 530 already published as `can_drop` edges. The remaining **278** unlinked items sit behind **182** lists with no at-rest asset references. Completing that path requires the same **683-cell** streamed traversal as containers and spawners, which tile capture also needs.
+   `ItemListAsset` provenance and world scene enumeration are one slice, not two rankable slices. All **348** lists are loaded at rest and reach **811** distinct items. The **530** reachable from `CharacterData.itemLists` are exactly the 530 already published as `can_drop` edges. The remaining **278** unlinked items sit behind **182** lists with no at-rest asset references. Completing that path requires the same **27-loadable-cell** streamed traversal as containers and spawners, which tile capture also needs.
 
-   The measured owner set does not include populated merchant or master-list sources. `CharacterData.merchantItemLists`, `CharacterItemGroup`, and `CharacterModule.itemLists` have zero entries at rest. `MasterPotionListAsset` and `MasterSpellListAsset` have zero loaded instances at rest.
+   Placement-owned values are part of the current provenance set. Merchant inventory covers 274 distinct items across 17 placements, with 63 currently unlinked items reached by those merchant rows. Placement drop lists cover 492 distinct items across 280 placements, with 25 currently unlinked items reached by those drop rows. The owner and field provenance rows are retained with each resolved value.
 
-   **Characters shipped first**, see [`2026-08-03-item-provenance-characters`](archive/2026-08-03-item-provenance-characters.md). 212 pages, 2,126 `can_drop` edges, and 545 of 1,273 items now name a source. A live probe measured zero configured merchant owners at rest, so merchant stock is not part of this scope.
-
-   The 2026-08-03 release leaves 726 item pages without an inbound link. Recipes and enchantments provide the cheap authored connectivity. The remaining ItemList and scene-owned provenance requires the shared world walk.
+   The current item coverage is therefore 474 unlinked pages, with placement-owned merchant and drop provenance reaching 63 and 25 of them. Recipes, merchants, drops, and enchantments rank the next authored connectivity work before the shared world walk.
 6. ~~Spells to status effects~~ - **done.** The 2026-08-03 release projects 26 spell-sourced `applies` edges to 25 status effects.
 7. **Status effects to status effects.** `StatusEffectData.modifyStatusEffects` is a direct authored reference, but the extractor does not currently emit it, so it needs mod work first.
 
-**Search.** Delivered. Pagefind runs after the prerender and indexes all 2,266 built pages in the 2026-08-03 release, so a reader finds a page by name even when nothing links to it. The index ships from `build:prepared`, which means no deployable build can omit it, and a smoke fails on an absent or empty index.
+**Search.** Delivered. Pagefind runs after the prerender and indexes every built page, so a reader finds a page by name even when nothing links to it. The index ships from `build:prepared`, which means no deployable build can omit it, and a smoke fails on an absent or empty index.
 
-**Every public entity now has a page**, so search and the sitemap describe the same set. The 2026-08-03 release ships twelve public entity families, including factions and quests. An accessibility smoke now runs in the gate against WCAG 2.2 Level AA, and the footer states the project's unofficial status on every page. All 48 locations and 33 portals have pages, and the sitemap URL set equals the built page set exactly at 2,266 each. Every detail route ships a meta description.
+**Every public entity now has a page**, so search and the sitemap describe the same set. An accessibility smoke runs in the gate against WCAG 2.2 Level AA, and the footer states the project's unofficial status on every page. All 48 locations and 33 portals have pages, the sitemap URL set equals the built page set, and every detail route ships a meta description.
 
-**A current release.** The newest release is dated 2026-08-03. The path is proven, and the release carries the current page and graph counts.
+**A current release.** The newest release is dated 2026-08-15. The path is proven, and the release carries the current page and graph counts.
 
 **Then the map.** Tile capture makes 400 extracted markers legible. It is specced and sized, and it deliberately follows the connective work.
 
-**Then new content**, in this order once things link: characters and NPCs, standalone recipes and enchantments, authored item-list provenance with the shared world walk, traits and perks and factions, quests. Each adds nodes, so each is worth more after the graph and search exist than before.
+**Then new content**, in this order once things link: standalone recipes and enchantments, authored item-list provenance with the shared world walk, traits and perks and factions, quests. Each adds nodes, so each is worth more after the graph and search exist than before.
+
+### Slice 8.5 — Player-facing entity identity
+
+**Status:** done
+**Completed:** 2026-08-15; live export evidence measured against Ardenfall Demo `0.0.10.91`.
+**Plan:** `openspec/changes/player-facing-entity-identity/`
+**Spec coverage:** player-facing identity, character prototypes and placements, race and name-set vocabulary, availability, route cutover, and snapshot validation.
+
+**Delivered:**
+
+- Character placements are published at `/characters` and character definitions at `/character-types`. Public navigation and page copy use only `Characters` and `Character types`; legacy placement and extraction labels are not public text.
+- A character that the game names at runtime has a descriptive title built from its nearest recognisable type and published facts. The title is not a generated name and listings disambiguate it with location.
+- Races are grouped into one page per reader-facing name. Each race page publishes its ordered name sets and their authored naming vocabulary. The race and name-set families are wired into extraction, snapshot manifests, pipeline loading, canonical data, read models, navigation, and sitemap generation.
+- The controller snapshot gate and the pipeline snapshot gate reject an export when a declared race or name-set family has no snapshot file or manifest count. An empty family remains distinct from a missing family.
+- Legacy `/placed-characters` routes and GUID routes are deleted. They are not redirected; an old address returns the site's not-found page.
+- Every public page address carries an opaque suffix. Designer identifiers remain authoring data and do not become public labels or URL identity.
+
+**Measured evidence:** the live export published 1,273 item pages, with 799 inbound relationship edges and 474 item pages without an inbound edge. It published 292 placements, 212 character definitions, 112 race records with 3 reader-facing races, and 7 name-set assets. Seventeen placements stock merchant inventory covering 274 distinct items, including named merchants such as `Artisan Ayarva`, `Jazemae Shuncho`, and `Gekki`, and 280 placements carry drop lists covering 492 distinct items; 63 of the unlinked item pages are sold by a placement and 25 are dropped by one. The `npcs` projection stores `merchant_refs_json`, `merchant_gold_json`, `merchant_categories_json`, and `drop_refs_json` with provenance rows. The export recorded 48 enabled locations, 16 disabled quests, 11 quests hidden from the quest UI, 22 runtime-created records filtered from publication, and 6 authored records stored twice under one `RecordID`.
+
+**Findings that changed the design:** `CharName` generates a name from the race and caches it into the definition when play mode reads an empty value, so extraction reads the backing `charName` field. Race is the naming vocabulary for every character, not a humanoid classification; type resolution therefore walks the same prototype chain for humanoid and creature definitions and uses race as its fallback.
+
+**Verification evidence:** the live snapshot was `snapshots/snapshots/0.0.10.91-20260815-0707496801550`; its run id carries the CrossOver bottle's clock. The export and both snapshot gates exercised the required family-file and manifest-count checks, and the route cutover leaves no legacy redirect path.
 
 ### Tile capture
 
@@ -542,7 +562,7 @@ The release projects 26 spell-sourced `applies` edges to 25 distinct status effe
 
 **Delivered:** 38 `QuestData` pages with `namedAsset` identity, typed root and child tables for phases, objectives, characters, journal entries, and rewards, plus public relationship-graph links to characters, factions, and items. Coordinate-only location objects remain out of scope.
 
-Dialogue came in with the same slice, because the flow graphs turned out to hang off quest character objects rather than characters. 484 authored lines, 292 greetings and 192 topics, reach 26 quest pages and 58 character pages, each page linking to the other. Scene-side dialogue on `SimpleDialogInteractable` stays out of scope: it measures 0 at rest and needs the 683-cell streamed traversal.
+Dialogue came in with the same slice, because the flow graphs turned out to hang off quest character objects rather than characters. 484 authored lines, 292 greetings and 192 topics, reach 26 quest pages and 58 character pages, each page linking to the other. Scene-side dialogue on `SimpleDialogInteractable` stays out of scope: it measures 0 at rest and needs the 27-loadable-cell streamed traversal.
 
 ### Slice 13 — Versioning, diff, and snapshot archive
 

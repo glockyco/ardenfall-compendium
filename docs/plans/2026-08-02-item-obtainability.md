@@ -8,20 +8,32 @@ superseded_by:
 archived:
 ---
 
-# Item Obtainability, 2026-08-02
+# Item Obtainability
 
 Every way a player can obtain an item in Ardenfall, established from the decompiled source and confirmed with live probes against Ardenfall Demo `0.0.10.91`, with a structural check against the non-public playtest build recorded below. Item provenance spans authored assets, authored graph grants, and streamed scene objects, so the audit measures each owner before treating it as a source.
 
-The 2026-08-03 release has 2,266 public pages, with 1,379 lacking an inbound edge. Items account for 726 of those unlinked pages, so this audit still decides the next provenance slice.
+The current live export contains 1,273 item pages. A relationship edge points into 799 of them, leaving 474 without an inbound edge. Placement-owned merchant inventory covers 274 distinct items, including named merchants such as `Artisan Ayarva`, `Jazemae Shuncho`, and `Gekki`; 63 of the unlinked item pages are sold by a placement. Placement-owned drop lists cover 492 distinct items, and 25 of the unlinked item pages are dropped by a placement.
+
+## Current reach ranking
+
+This ranking orders authored provenance by the number of currently unlinked item pages it reaches. Placement-owned merchant inventory and placement-owned drop lists are measured separately from character-definition drop edges.
+
+| rank | source | distinct items reached | currently unlinked item pages reached |
+| ---: | --- | ---: | ---: |
+| 1 | `PotionRecipe` | 127 | 127 |
+| 2 | placement-owned merchant inventory | 274 | 63 |
+| 3 | placement-owned drop lists | 492 | 25 |
+| 4 | `EnchantmentData` | 19 | 19 |
 
 ## The sources
 
 | source | mechanism | identity | enumerable | verdict |
 | --- | --- | --- | --- | --- |
-| Loot tables | `ItemListAsset`, weighted nested groups | authored asset | **348 loaded assets**, reaching 811 distinct items | The 530 reached from `CharacterData.itemLists` are exactly the 530 already published as `can_drop` edges. The other 278 items sit behind 182 lists with no at-rest asset references and require the 27 loadable cell scenes. The earlier 683-cell estimate counted `CellData` assets without scenes. |
+| Loot tables | `ItemListAsset`, weighted nested groups | authored asset | **348 loaded assets**, reaching 811 distinct items | The 530 reached from `CharacterData.itemLists` are exactly the 530 already published as `can_drop` edges. The other 278 items sit behind 182 lists with no at-rest asset references and require the 27 loadable cell scenes. The scene set contains 33 scenes, with 27 loadable cell scenes and 607 `CellData` assets. |
 | NPC inventory | `CharacterData.itemLists` rolled at spawn | authored template, **298** editor-created records (**320** total records) | complete for authored records | complete |
 | Enemy death | corpse carries the NPC's own inventory | as above | complete | complete |
-| Merchants | `CharacterData.merchantItemLists` plus additions | authored placement, per-NPC stock | **14 placements with `merchantItemLists`; 8 with `merchantAdditionalItems`; 28 with `merchantGold`; 23 with `merchantCategories`** | Merchants are configured on placement leaves in the master record table and are reachable without a world walk. The earlier 0-entry result measured definitions instead of placements. |
+| Merchants | `CharacterData.merchantItemLists` plus additions | authored placement, per-character stock | **17 placements stock merchant inventory covering 274 distinct items; 14 have `merchantItemLists`; 8 have `merchantAdditionalItems`; 28 have `merchantGold`; 23 have `merchantCategories`** | Merchants are configured on placement leaves in the master record table and are reachable without a world walk. |
+| Placement drops | placement-owned `dropRefs` and item lists | authored placement, per-character drops | **280 placements carry drop lists covering 492 distinct items** | Placement-owned drops are reachable from the master record table without a world walk. |
 | Quest rewards | `ItemsQuestReward` | authored, typed list | **38** quests, 4 item rewards | probed, extractable without the graph |
 | Graph grants | `AddItemListNode`, `SpawnItemNode` | authored, Odin graph | live only | complete, needs a live probe |
 | Potion crafting | standalone `PotionRecipe` asset with tag-based ingredients | authored asset | **48 recipes**, reaches 127 unlinked items | Missing entity, extractable without the world walk |
@@ -34,21 +46,23 @@ Live definition counts: 1,273 `ItemData`, 193 `ThrowingPotionData`, 64 `Enchantm
 
 **Character inventories are already covered.** `CharacterBase.cs:574-580` generates a character's inventory once at spawn from `CharacterData.itemLists`, and `DeadBodyContainer.cs:321-333` transfers that same live `Inventory` to the corpse. A live probe measured 530 items through this owner, exactly matching the 530 items already published by `can_drop` edges. There is no new item reachability in this path. The one exception is `DeadBodyContainer.CreateBodyFromData`, used for pre-placed corpses, which generates with `randomizeLootable`.
 
-**Merchant definitions and catalog owners were measured at the wrong level.** The earlier probe measured zero entries in `CharacterData.merchantItemLists` because it inspected definitions rather than placement leaves. A live placement audit found 14 placements with `merchantItemLists`, 8 with `merchantAdditionalItems`, 28 with `merchantGold`, and 23 with `merchantCategories`; all are reachable in the master record table without a world walk. `CharacterItemGroup` and `CharacterModule.itemLists` still measure zero entries, and `MasterPotionListAsset` and `MasterSpellListAsset` still have zero loaded instances. The catalog result does not rule out placement-owned merchant provenance.
+**Merchant inventory is placement-owned and reachable.** A live placement audit found 17 placements with merchant inventory covering 274 distinct items. It found 14 placements with `merchantItemLists`, 8 with `merchantAdditionalItems`, 28 with `merchantGold`, and 23 with `merchantCategories`; all are reachable in the master record table without a world walk. The export stores `merchantRefs`, `merchantGold`, `merchantCategories`, and `dropRefs` with field provenance, so the source of each value remains explicit.
+
+**Placement-owned drops are reachable.** A live placement audit found 280 placements carrying drop lists that cover 492 distinct items. Twenty-five of the 474 item pages without an inbound edge are reached by these placement drop rows.
 
 **Recipes are standalone assets.** `PotionRecipe` has 48 loaded assets. `RecipeItem.cs:5-25` matches each ingredient by `ItemTag` and count, so ingredients are tags rather than named items. The two `PotionRecipeItemData` items remain recipe-scroll variants, but their two rows in `item_potion_recipes` are a dead table because no TypeScript in `pipeline/src` or `site/src` reads it. The standalone recipe entity replaces that variant payload and reaches 127 currently unlinked items without a world walk.
 
-**The 348 figure is an asset count, not an opportunity count.** All 348 `ItemListAsset` candidates are loaded at rest and reach 811 distinct items. The 530 reachable through `CharacterData.itemLists` are exactly the 530 already published by `can_drop`. The remaining 278 unlinked items sit behind 182 lists with no at-rest asset references. Those lists are scene-owned and require the 27 loadable cell scenes. The earlier 683-cell estimate counted `CellData` assets without scenes: the build has 33 scenes, 27 cell scenes (24 overworld and 3 interior), and 607 `CellData` assets, while `LoadSceneAsync` returns null for the other 580. Loading all 27 additively, three at a time, took about two and a half minutes; 15 hold content. Authored item provenance and world scene enumeration are one slice, not two separately rankable slices.
+**The 348 figure is an asset count, not an opportunity count.** All 348 `ItemListAsset` candidates are loaded at rest and reach 811 distinct items. The 530 reachable through `CharacterData.itemLists` are exactly the 530 already published by `can_drop`. The remaining 278 unlinked items sit behind 182 lists with no at-rest asset references. Those lists are scene-owned and require the 27 loadable cell scenes. The build has 33 scenes, 27 cell scenes (24 overworld and 3 interior), and 607 `CellData` assets; `LoadSceneAsync` returns null for the other 580. Loading all 27 additively, three at a time, took about two and a half minutes; 15 hold content. Authored item provenance and world scene enumeration are one slice, not two separately rankable slices.
 
 **Enchantment data is a second cheap authored entity.** The game has 64 `EnchantmentData` assets, which reach 19 currently unlinked items. Together with the 48 standalone recipes, this adds 158 currently unreachable item pages a first inbound link and 112 pages of their own without a world walk.
 
-**Containers are the only real coverage hole.** `Container` does not implement `IInstanceRecordSceneObject`, unlike `Door`, which is why portals were extractable as record-backed instances and chests are not. Containers exist only as scene objects in a world that streams by cell. A probe in the starting area sees 57 containers, 185 item spawners and 178 free pickups. An earlier estimate described the world as 683 cells by multiplying `CellData` dimensions, but that includes 580 assets with no scene. The build has 33 scenes, of which 27 are cell scenes (24 overworld and 3 interior), and `LoadSceneAsync` returns null for the other assets. Loading all 27 cell scenes additively, three at a time, took about two and a half minutes; 15 hold content. Enumerating them all is a world walk rather than a lookup.
+**Containers are the only real coverage hole.** `Container` does not implement `IInstanceRecordSceneObject`, unlike `Door`, which is why portals are extractable as record-backed instances and chests are not. Containers exist only as scene objects in a world that streams by cell. A probe in the starting area sees 57 containers, 185 item spawners and 178 free pickups. The build has 33 scenes, of which 27 are cell scenes (24 overworld and 3 interior); `LoadSceneAsync` returns null for the other assets. Loading all 27 cell scenes additively, three at a time, took about two and a half minutes; 15 hold content. Enumerating them all is a world walk rather than a lookup.
 
 ## Scope, and what the playtest build changes
 
 Everything above is measured against **Ardenfall Demo `0.0.10.91`**, which is the only build we extract from. A second build is installed locally, the non-public playtest, and its `Assembly-CSharp.dll` was compared **structurally only**: a type-name listing, no data export, no launch, nothing decompiled beyond one class. 2,931 types against the demo's 2,802, with 232 present only in the playtest.
 
-**The ruling-out holds.** No cooking, smithing, salvage, disassembly or upgrade system exists in the playtest either. That claim was originally made from the demo alone, which was premature, and it is now checked.
+**The ruling-out holds.** No cooking, smithing, salvage, disassembly or upgrade system exists in the playtest.
 
 Four differences matter for item provenance.
 
@@ -86,6 +100,6 @@ Reputation and faction affect merchant *prices* through `TradeDiscount` and a re
 
 Provenance is one relationship with several sources rather than several unrelated features. An item page should answer "where does this come from" with a single list whose rows name a source and how reliable it is.
 
-The authored sources with data at rest include loot, NPCs, enemies, quests, graph grants, merchants on placements, and standalone recipes and enchantments. The earlier merchant result was empty because it measured definitions rather than placements: 14 placements configure `merchantItemLists`, 8 configure `merchantAdditionalItems`, 28 configure `merchantGold`, and 23 configure `merchantCategories`. The master-list owners remain empty or absent at rest. ItemList provenance beyond the already published character path and the placed half of provenance requires the 27 loadable cell scenes.
+The authored sources with data at rest include loot, characters, enemies, quests, graph grants, merchants on placements, placement-owned drops, and standalone recipes and enchantments. Merchant inventory covers 274 distinct items across 17 placements. Placement-owned drops cover 492 distinct items across 280 placements. ItemList provenance beyond the already published character path and the placed half of provenance requires the 27 loadable cell scenes.
 
 The placed half is containers, spawners, and the 278 items behind 182 unreferenced item lists. It needs a traversal of the 27 loadable cell scenes to be complete, and it shares that requirement with tile capture, which also has to visit those scenes. Those two should be planned together rather than each paying for world traversal separately.
