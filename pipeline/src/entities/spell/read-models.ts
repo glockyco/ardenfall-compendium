@@ -3,7 +3,11 @@ import type { MasterTooltipVocabulary } from "../../types.ts";
 import { translateRichTextV1 } from "../../rich-text/rich-text-v1.ts";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
-import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../../relationships/entity-nodes.ts";
+import {
+  prepareEntityLinkResolver,
+  type EntityLinkResolver,
+} from "../../relationships/entity-links.ts";
 
 export const SPELL_READ_MODEL_DDL = `
 CREATE TABLE spell_overview_rows (
@@ -41,7 +45,6 @@ interface SpellRow {
 
 interface PageStatType {
   entity_id: string;
-  label: string;
   grouping: "attribute" | "skill";
 }
 
@@ -99,6 +102,7 @@ export function emitSpellReadModels(
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const writeNode = prepareEntityNodeWriter(db);
+  const resolveLink = prepareEntityLinkResolver(db);
   const pageStats = new Map<string, PageStatType>();
   const hasStatTypeOverviewTable = db
     .query<{ name: string }, []>(
@@ -108,7 +112,7 @@ export function emitSpellReadModels(
   if (hasStatTypeOverviewTable) {
     for (const row of db
       .query<PageStatType, []>(
-        `SELECT n.entity_id, n.label, o.grouping
+        `SELECT n.entity_id, o.grouping
          FROM entity_nodes n
          JOIN stat_type_overview_rows o ON o.id = n.entity_id
          WHERE n.entity_type = 'stat-type' AND n.has_page = 1`,
@@ -131,21 +135,6 @@ export function emitSpellReadModels(
        ORDER BY COALESCE(NULLIF(TRIM(s.spell_name), ''), 'Unnamed spell'), s.id`,
     )
     .all();
-  const statusEffects = new Map<string, { label: string | null }>();
-  const hasStatusEffectsTable = db
-    .query<{ name: string }, []>(
-      `SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'status_effects'`,
-    )
-    .get();
-  if (hasStatusEffectsTable) {
-    for (const status of db
-      .query<{ id: string; status_effect_name: string | null }, []>(
-        `SELECT id, status_effect_name FROM status_effects`,
-      )
-      .all()) {
-      statusEffects.set(status.id, { label: status.status_effect_name });
-    }
-  }
   const effectsBySpell = new Map<string, SpellEffectRow[]>();
   for (const effect of db
     .query<SpellEffectRow, []>(
@@ -175,7 +164,7 @@ export function emitSpellReadModels(
           evidence: { iconRef: row.icon_ref_json },
         });
       }
-      const skill = resolveSkill(row, pageStats, diagnostics);
+      const skill = resolveSkill(row, pageStats, resolveLink, diagnostics);
       const tooltip =
         row.tooltip_source === null
           ? null
@@ -225,7 +214,11 @@ export function emitSpellReadModels(
           let statusEffectLabel: string | null = null;
           let statusEffectRoutePath: string | null = null;
           if (effect.status_effect_ref_json !== null) {
-            if (statusEffectCandidate === null || !statusEffects.has(statusEffectCandidate)) {
+            const statusEffectLink =
+              statusEffectCandidate === null
+                ? null
+                : resolveLink("status-effect", statusEffectCandidate);
+            if (statusEffectCandidate === null || statusEffectLink === null) {
               diagnostics.push({
                 severity: "diagnostic",
                 source: "spell-effect-read-model",
@@ -237,11 +230,9 @@ export function emitSpellReadModels(
                 evidence: { statusEffectRef: effect.status_effect_ref_json },
               });
             } else {
-              statusEffectLabel =
-                statusEffects.get(statusEffectCandidate)?.label ?? "Unnamed status effect";
+              statusEffectLabel = statusEffectLink.label;
               statusEffectId = statusEffectCandidate;
-              const slug = deriveEntityNodeSlug(statusEffectLabel, statusEffectId);
-              statusEffectRoutePath = `/status-effects/${slug.canonicalSlug}`;
+              statusEffectRoutePath = statusEffectLink.routePath;
               edgeInsert.run(
                 `${row.id}:applies:status-effect:${statusEffectId}`,
                 "spell",
@@ -310,6 +301,7 @@ export function emitSpellReadModels(
 function resolveSkill(
   row: SpellRow,
   pageStats: Map<string, PageStatType>,
+  resolveLink: EntityLinkResolver,
   diagnostics: PipelineDiagnostic[],
 ): { id: string; label: string; grouping: "attribute" | "skill" } | null {
   if (row.stat_type_ref_json === null) return null;
@@ -336,7 +328,14 @@ function resolveSkill(
     );
     return null;
   }
-  return { id: targetId, label: stat.label, grouping: stat.grouping };
+  const link = resolveLink("stat-type", targetId);
+  if (link === null) {
+    diagnostics.push(
+      unresolvedSkillDiagnostic(row, `target '${targetId}' is a stat type without a page`),
+    );
+    return null;
+  }
+  return { id: targetId, label: link.label, grouping: stat.grouping };
 }
 
 function namedAssetReference(value: unknown): NamedAssetReference | null {

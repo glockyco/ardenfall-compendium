@@ -91,6 +91,16 @@ A `designer-identifier` value MUST remain in canonical data and MUST be availabl
 - **THEN** the authoring label is visible alongside the display name
 - **AND** the public page shows only the display name
 
+### Requirement: Links use the target's disambiguated display label
+
+A stored link to another entity MUST use that target node's `display_label` and route. It MUST NOT take link text from the target entity's own source name, because the graph is the single place that knows whether the target label is ambiguous.
+
+#### Scenario: Same-named targets remain distinguishable in links
+
+- **WHEN** a page stores links to two different entities with the same authored label
+- **THEN** each link stores the target node's disambiguated display label
+- **AND** the two links do not read identically while pointing at different pages
+
 ### Requirement: Page addresses use opaque stable suffixes
 
 A published page address MUST carry a reader-facing title and an opaque stable 8-hex suffix. The address MUST NOT contain an authoring identifier, including a named asset name. If two entities resolve the same canonical slug, the build MUST fail and name both entity ids and the slug.

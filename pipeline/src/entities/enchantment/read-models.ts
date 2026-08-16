@@ -1,11 +1,9 @@
 import type { Database } from "bun:sqlite";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
-import {
-  deriveEntityNodeSlug,
-  prepareEntityNodeWriter,
-  collectTransitiveDescendants,
-} from "../item/read-models.ts";
+import { collectTransitiveDescendants } from "../item/read-models.ts";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../../relationships/entity-nodes.ts";
+import { prepareEntityLinkResolver } from "../../relationships/entity-links.ts";
 import type { SnapshotRef, MasterTooltipVocabulary } from "../../types.ts";
 import {
   translateRichTextV1,
@@ -54,7 +52,6 @@ interface EffectRow {
 }
 interface NodeRow {
   label: string | null;
-  route_path: string | null;
   has_page: number;
 }
 interface ItemPresentation {
@@ -121,10 +118,11 @@ export function emitEnchantmentReadModels(
     rows.push(row);
     effectsByEnchantment.set(row.enchantment_id, rows);
   }
+  const resolveLink = prepareEntityLinkResolver(db);
   const nodes = new Map<string, NodeRow>();
   for (const node of db
     .query<NodeRow & { entity_type: string; entity_id: string }, []>(
-      `SELECT entity_type, entity_id, display_label AS label, route_path, has_page FROM entity_nodes`,
+      `SELECT entity_type, entity_id, label, has_page FROM entity_nodes`,
     )
     .all())
     nodes.set(`${node.entity_type}:${node.entity_id}`, node);
@@ -213,7 +211,8 @@ export function emitEnchantmentReadModels(
         }
         for (const resolvedTargetId of targetIds) {
           const resolvedTarget = nodes.get(`item:${resolvedTargetId}`);
-          if (!resolvedTarget || resolvedTarget.has_page !== 1) continue;
+          const resolvedLink = resolveLink("item", resolvedTargetId);
+          if (!resolvedTarget || resolvedTarget.has_page !== 1 || !resolvedLink) continue;
           if (emittedEnchantTargets.has(resolvedTargetId)) continue;
           emittedEnchantTargets.add(resolvedTargetId);
           edgeInsert.run(
@@ -234,8 +233,8 @@ export function emitEnchantmentReadModels(
           );
           appliesToItemRefs.push({
             itemId: resolvedTargetId,
-            itemLabel: resolvedTarget.label,
-            itemRoutePath: resolvedTarget.route_path,
+            itemLabel: resolvedLink.label,
+            itemRoutePath: resolvedLink.routePath,
           });
         }
       }
@@ -282,12 +281,14 @@ export function emitEnchantmentReadModels(
             field: "enchantment_effects.tooltip_source",
           });
         }
+        const statusEffectLink =
+          targetId === null || !target ? null : resolveLink("status-effect", targetId);
         effects.push({
           ordinal: effect.effect_ordinal,
           kind: effect.kind,
           statusEffectId: targetId,
-          statusEffectLabel: target?.label ?? null,
-          statusEffectRoutePath: target?.route_path ?? null,
+          statusEffectLabel: statusEffectLink?.label ?? null,
+          statusEffectRoutePath: statusEffectLink?.routePath ?? null,
           tooltipSource: effect.tooltip_source,
           tooltipRichText: effectTooltip.document,
         });

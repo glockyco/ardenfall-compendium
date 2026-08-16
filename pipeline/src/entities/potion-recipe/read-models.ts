@@ -1,7 +1,8 @@
 import type { Database } from "bun:sqlite";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
-import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../../relationships/entity-nodes.ts";
+import { prepareEntityLinkResolver } from "../../relationships/entity-links.ts";
 import type { SnapshotRef } from "../../types.ts";
 
 export const POTION_RECIPE_READ_MODEL_DDL = `
@@ -48,7 +49,6 @@ interface ProductRow {
 }
 interface NodeRow {
   label: string | null;
-  route_path: string | null;
   has_page: number;
 }
 interface IngredientPresentation {
@@ -117,10 +117,11 @@ export function emitPotionRecipeReadModels(
     rows.push(row);
     productsByRecipe.set(row.potion_recipe_id, rows);
   }
+  const resolveLink = prepareEntityLinkResolver(db);
   const nodes = new Map<string, NodeRow>();
   for (const node of db
     .query<NodeRow & { entity_type: string; entity_id: string }, []>(
-      `SELECT entity_type, entity_id, display_label AS label, route_path, has_page FROM entity_nodes`,
+      `SELECT entity_type, entity_id, label, has_page FROM entity_nodes`,
     )
     .all())
     nodes.set(`${node.entity_type}:${node.entity_id}`, node);
@@ -184,7 +185,8 @@ export function emitPotionRecipeReadModels(
         const ref = parseRef(ingredient.tag_ref_json);
         const targetId = resolveRef(ref, "item-tag");
         const target = targetId === null ? undefined : nodes.get(`item-tag:${targetId}`);
-        if (targetId === null || !target) {
+        const link = targetId === null ? null : resolveLink("item-tag", targetId);
+        if (targetId === null || !target || !link) {
           diagnostics.push(
             unresolvedDiagnostic(
               row.id,
@@ -213,8 +215,8 @@ export function emitPotionRecipeReadModels(
         );
         ingredients.push({
           tagId: targetId,
-          tagLabel: target.label,
-          tagRoutePath: target.route_path,
+          tagLabel: link.label,
+          tagRoutePath: link.routePath,
           count: ingredient.count,
         });
       }
@@ -223,7 +225,8 @@ export function emitPotionRecipeReadModels(
         const ref = parseRef(product.item_ref_json);
         const targetId = resolveRef(ref, "item");
         const target = targetId === null ? undefined : nodes.get(`item:${targetId}`);
-        if (targetId === null || !target) {
+        const link = targetId === null ? null : resolveLink("item", targetId);
+        if (targetId === null || !target || !link) {
           diagnostics.push(
             unresolvedDiagnostic(
               row.id,
@@ -252,8 +255,8 @@ export function emitPotionRecipeReadModels(
         );
         producedRefs.push({
           itemId: targetId,
-          itemLabel: target.label,
-          itemRoutePath: target.route_path,
+          itemLabel: link.label,
+          itemRoutePath: link.routePath,
           form: product.form === "throwing" ? "throwing" : "drinkable",
         });
       }

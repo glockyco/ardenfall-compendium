@@ -3,7 +3,11 @@ import type { PipelineDiagnostic } from "../../relationships/relationship-graph.
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
 import { translateRichTextV1 } from "../../rich-text/rich-text-v1.ts";
 import type { SnapshotRef } from "../../types.ts";
-import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../item/read-models.ts";
+import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../../relationships/entity-nodes.ts";
+import {
+  prepareEntityLinkResolver,
+  type EntityLinkResolver,
+} from "../../relationships/entity-links.ts";
 
 export const QUEST_READ_MODEL_DDL = `
 CREATE TABLE quest_presentation_rows (
@@ -96,8 +100,8 @@ interface QuestRewardRow {
 }
 
 interface EntityNode {
+  entity_id: string;
   label: string | null;
-  route_path: string | null;
   has_page: number;
 }
 
@@ -180,6 +184,7 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const writeNode = prepareEntityNodeWriter(db);
+  const resolveLink = prepareEntityLinkResolver(db);
   const questRows = db
     .query<QuestRow, []>(
       `SELECT id, name, subname, disabled, hidden_in_quest_ui,
@@ -233,16 +238,15 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
         entity_type: string;
         entity_id: string;
         label: string | null;
-        route_path: string | null;
         has_page: number;
       },
       []
-    >(`SELECT entity_type, entity_id, label, route_path, has_page FROM entity_nodes`)
+    >(`SELECT entity_type, entity_id, label, has_page FROM entity_nodes`)
     .all()) {
     const nodes = nodesByType.get(node.entity_type) ?? new Map<string, EntityNode>();
     nodes.set(node.entity_id, {
+      entity_id: node.entity_id,
       label: node.label,
-      route_path: node.route_path,
       has_page: node.has_page,
     });
     nodesByType.set(node.entity_type, nodes);
@@ -421,6 +425,7 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
           diagnostics,
           quest.id,
           rewardEdges,
+          resolveLink,
         );
         const items =
           reward.kind === "items"
@@ -430,6 +435,7 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
                 diagnostics,
                 quest.id,
                 rewardEdges,
+                resolveLink,
               )
             : [];
         rewardSet.rewards.push({
@@ -545,6 +551,7 @@ function rewardTarget(
   diagnostics: PipelineDiagnostic[],
   questId: string,
   rewardEdges: Map<string, PendingRewardEdge>,
+  resolveLink: EntityLinkResolver,
 ): { label: string | null; routePath: string | null } | null {
   if (reward.kind === "faction-reputation") {
     const factionRef =
@@ -581,9 +588,13 @@ function rewardTarget(
       });
       rewardEdges.set(edgeId, pending);
     }
+    const link = resolveLink("faction", targetId);
+    if (link === null) {
+      throw new Error(`entity node 'faction:${targetId}' has no link label`);
+    }
     return {
-      label: node.label,
-      routePath: node.has_page === 1 ? node.route_path : null,
+      label: link.label,
+      routePath: link.routePath,
     };
   }
   if (reward.kind === "character-reputation") {
@@ -603,9 +614,13 @@ function rewardTarget(
       );
       return null;
     }
+    const link = resolveLink("npc", target.entity_id);
+    if (link === null) {
+      throw new Error(`entity node 'npc:${target.entity_id}' has no link label`);
+    }
     return {
-      label: target.label,
-      routePath: target.has_page === 1 ? target.route_path : null,
+      label: link.label,
+      routePath: link.routePath,
     };
   }
   return null;
@@ -617,6 +632,7 @@ function resolveItemRewards(
   diagnostics: PipelineDiagnostic[],
   questId: string,
   rewardEdges: Map<string, PendingRewardEdge>,
+  resolveLink: EntityLinkResolver,
 ): { label: string; routePath: string | null; count: number }[] {
   const itemRefs = parseReferenceArray(
     reward.items_json,
@@ -694,9 +710,13 @@ function resolveItemRewards(
       });
       rewardEdges.set(edgeId, pending);
     }
+    const link = resolveLink("item", targetId);
+    if (link === null) {
+      throw new Error(`entity node 'item:${targetId}' has no link label`);
+    }
     items.push({
-      label: node.label ?? "Unnamed item",
-      routePath: node.has_page === 1 ? node.route_path : null,
+      label: link.label,
+      routePath: link.routePath,
       count: item.count,
     });
   }

@@ -204,6 +204,20 @@ describe("spell pipeline", () => {
       "91a00002.fixture-status-effect-burning",
       "Burning",
     );
+    db.exec(ENTITY_GRAPH_DDL);
+    db.prepare(
+      `INSERT INTO entity_nodes (
+         entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+    ).run(
+      "status-effect",
+      "91a00002.fixture-status-effect-burning",
+      "Burning",
+      "Burning",
+      "/status-effects/burning--91a00002",
+      "burning--91a00002",
+      "91a00002",
+    );
     canonicaliseSpells(db, {
       entityId: "spell",
       schemaVersion: 1,

@@ -110,11 +110,12 @@ function seedDatabase(): Database {
   ]) {
     db.prepare(
       `INSERT INTO entity_nodes (
-         entity_type, entity_id, label, route_path, canonical_slug, short_id, has_page
-       ) VALUES (?, ?, ?, ?, ?, ?, 1)`,
+         entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
     ).run(
       entityType ?? "",
       entityId ?? "",
+      label ?? "",
       label ?? "",
       routePath ?? "",
       canonicalSlug ?? "",

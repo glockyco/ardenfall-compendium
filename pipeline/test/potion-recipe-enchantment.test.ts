@@ -20,15 +20,19 @@ describe("potion recipes and enchantments", () => {
       db,
       "item",
       "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000",
-      "Drink",
+      "Potion of Jump",
       "/items/drink--c3d4e5f6",
+      "Potion of Jump · c3d4e5f6",
+      "c3d4e5f6",
     );
     seedNode(
       db,
       "item",
       "d4e5f60718293a4b5c6d7e8f90a1b2c3.11400000",
-      "Throw",
+      "Potion of Jump",
       "/items/throw--d4e5f607",
+      "Potion of Jump · d4e5f607",
+      "d4e5f607",
     );
     seedNode(
       db,
@@ -118,10 +122,15 @@ describe("potion recipes and enchantments", () => {
         "SELECT products_json, skill_requirement FROM potion_recipe_presentation_rows",
       )
       .get();
-    expect(JSON.parse(presentation!.products_json).map((x: { form: string }) => x.form)).toEqual([
-      "drinkable",
-      "throwing",
+    const products = JSON.parse(presentation!.products_json) as {
+      itemLabel: string;
+      form: string;
+    }[];
+    expect(products.map((x) => x.itemLabel)).toEqual([
+      "Potion of Jump · c3d4e5f6",
+      "Potion of Jump · d4e5f607",
     ]);
+    expect(products.map((x) => x.form)).toEqual(["drinkable", "throwing"]);
     expect(presentation!.skill_requirement).toBeNull();
   });
 
@@ -133,8 +142,19 @@ describe("potion recipes and enchantments", () => {
       db,
       "item",
       "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000",
-      "Sword",
+      "Twin Sword",
       "/items/sword--c3d4e5f6",
+      "Twin Sword · c3d4e5f6",
+      "c3d4e5f6",
+    );
+    seedNode(
+      db,
+      "item",
+      "d4e5f60718293a4b2c3d4e5f60718293.11400000",
+      "Twin Sword",
+      "/items/sword--d4e5f607",
+      "Twin Sword · d4e5f607",
+      "d4e5f607",
     );
     seedNode(
       db,
@@ -156,6 +176,7 @@ describe("potion recipes and enchantments", () => {
             hideEffectTooltips: false,
             appliesToItemRefs: [
               { kind: "lookupAsset", guid: "c3d4e5f60718293a4b5c6d7e8f90a1b2.11400000" },
+              { kind: "lookupAsset", guid: "d4e5f60718293a4b2c3d4e5f60718293.11400000" },
             ],
             effects: [
               {
@@ -190,6 +211,7 @@ describe("potion recipes and enchantments", () => {
     ).toEqual([
       { source_type: "enchantment", target_type: "status-effect", predicate: "applies" },
       { source_type: "enchantment", target_type: "item", predicate: "enchants" },
+      { source_type: "enchantment", target_type: "item", predicate: "enchants" },
     ]);
     expect(
       db
@@ -198,6 +220,17 @@ describe("potion recipes and enchantments", () => {
         )
         .get(),
     ).toEqual({ count: 0 });
+    const itemLinks = JSON.parse(
+      db
+        .query<{ items_json: string }, []>(
+          "SELECT items_json FROM enchantment_presentation_rows WHERE id = 'a1b2c3d4e5f60718293a4b5c6d7e8f90.11400000'",
+        )
+        .get()!.items_json,
+    ) as { itemLabel: string }[];
+    expect(itemLinks.map((item) => item.itemLabel)).toEqual([
+      "Twin Sword · c3d4e5f6",
+      "Twin Sword · d4e5f607",
+    ]);
     expect(relationshipRegistry.applies.inverseTitle).toEqual({
       item: "Applied by items",
       spell: "Applied by spells",
@@ -460,10 +493,12 @@ function seedNode(
   entityId: string,
   label: string,
   routePath: string,
+  displayLabel = label,
+  shortId = entityId,
 ): void {
   db.prepare(
     `INSERT INTO entity_nodes (
     entity_type, entity_id, label, display_label, route_path, canonical_slug, short_id, has_page
   ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-  ).run(entityType, entityId, label, label, routePath, entityId, entityId);
+  ).run(entityType, entityId, label, displayLabel, routePath, entityId, shortId);
 }

@@ -1,4 +1,5 @@
 import type { Database } from "bun:sqlite";
+import { disambiguateEntityLabel } from "../relationships/entity-links.ts";
 
 /**
  * Persist the label that every consumer should display for an entity node.
@@ -43,7 +44,7 @@ export function emitEntityDisplayLabels(db: Database): void {
       );
     }
     update.run(
-      row.has_page === 1 && row.label_count > 1 ? `${row.label} · ${row.short_id}` : row.label,
+      disambiguateEntityLabel(row.label, row.short_id, row.has_page === 1, row.label_count),
       row.entity_type,
       row.entity_id,
     );
