@@ -49,7 +49,7 @@ public sealed class PotionRecipeExtractor : WalkerBase<PotionRecipeSnapshotRow>
             },
             (asset, id) =>
             {
-                if (asset.StatusEffectRef == null || asset.StatusEffectRef.Kind == "missing")
+                if (asset.StatusEffectRef.Kind == "missing")
                 {
                     Diagnostics.Add(new Diagnostic
                     {

@@ -101,7 +101,7 @@ public sealed class ItemCategoryExtractorTests
         Assert.Single(rows);
         Assert.Empty(rows[0].Fields.Columns);
         Assert.Contains(extractor.Diagnostics, d =>
-            d.Code == "itemCategoryColumnsMalformed" && d.Field == "columns" && d.Message.Contains("named;item-category;Malformed"));
+            d.Code == "itemCategoryColumnsMalformed" && d.Field == "columns" && d.Message?.Contains("named;item-category;Malformed") == true);
     }
 
     [Fact]

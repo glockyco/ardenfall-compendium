@@ -143,6 +143,7 @@ public sealed class CharacterExtractorTests
 
         var row = Assert.Single(extractor.Walk());
 
+        Assert.NotNull(row.Fields.StartingFactions);
         var faction = Assert.Single(row.Fields.StartingFactions);
         Assert.Equal("faction-guid", faction.Guid);
         Assert.Equal("lookupAsset", faction.Kind);
