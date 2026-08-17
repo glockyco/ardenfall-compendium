@@ -25,8 +25,10 @@ See `proposal.md` - Why for the measurements. Decompiled paths are relative to
 
 **Non-Goals:**
 
-- No graph evaluation, no condition resolution, and no ordering of lines into a conversation. A line is
-  authored text with a holder, not a path through a graph.
+- No graph evaluation, and no ordering of lines into a conversation. A line is authored text with a
+  holder, not a path through a graph.
+- No conditions. `dialogue-conditions` proposes them, because a probe measured the authored condition
+  payloads as declarative and resolvable rather than as semantics the compendium cannot support.
 - No translation, and no substitution of runtime tokens.
 - No barks. `BarkAsset` carries an expression and no prose, so the bark system adds no readable line.
 - No AI behaviour trees.
@@ -47,9 +49,10 @@ leave the character-graph corpus, the largest holder, reachable only through a q
 A line carries its holder, its node kind, its ordinal within the graph, and a speaker when the node names
 one. It does not carry a parent line or a branch condition.
 
-A conversation is a path through a graph that depends on quest state, relationship values and faction
-checks, which the census measured in the thousands. Publishing an authored order as if it were a
-conversation would state something the data does not support.
+A conversation is a path chosen at runtime from relationship values, faction membership and quest state.
+The checks themselves are authored and publishable, which is what `dialogue-conditions` proposes; the
+path taken through them is not, because it needs a live player. Publishing an authored node order as if
+it were a conversation would state the second while only holding the first.
 
 ### Deduplicate for reading, not for storage
 
