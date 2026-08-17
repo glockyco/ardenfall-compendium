@@ -85,19 +85,58 @@ through `sharp`.
 ### Poster first, viewer on demand
 
 Every model gets a still image from the same capture. That is not a fallback bolted on: the poster is what
-a prerendered page shows, what a reader without WebGL sees, and what a link preview uses. Warframe's wiki
+a prerendered page shows, what a reader without WebGL sees, and what a link preview uses.
+
+The poster must be a real element in the prerendered HTML, not the viewer's own `poster` attribute. That
+attribute is managed by the element at runtime, so it renders nothing until the custom element upgrades,
+which is precisely the case the fallback exists for. Satisfying the requirement with the attribute alone
+would leave a page blank for the reader it was written to serve. Warframe's wiki
 publishes stills only, at 512x512 under an explicit media policy, which is evidence that stills carry most
 of the value on their own.
 
-The viewer then loads on demand, exactly as the map route loads deck.gl. Measured costs decide the
-library: `@google/model-viewer@4.3.1` is 294,739 bytes gzipped and brings `alt` text, a keyboard
+The viewer then loads on demand, exactly as the map route loads deck.gl. That is a constraint rather than a
+preference: `@google/model-viewer` calls `customElements.define` at module top level, so a static import
+fails during a Node prerender, where `customElements` does not exist. Three.js imports cleanly and guards
+its `navigator` use, but its renderer still needs a browser canvas at construction. Either way the element
+is created after mount, and the prerendered page holds the poster.
+
+Measured costs decide the library: `@google/model-viewer@4.3.1` is 294,739 bytes gzipped and brings `alt` text, a keyboard
 interaction prompt and a poster mechanism; `three@0.183.0` alone is 127,631 bytes gzipped with no
 accessibility affordances of its own. Compression is `meshopt` at an 8,233-byte gzipped decoder, against
-Draco's 252,345 bytes across three files, and meshopt produced 409,991 bytes against Draco's 1,989,369 on
-Khronos' BrainStem sample.
+Draco's 252,345 bytes across three files. On Khronos' own BrainStem sample, a third-party asset rather than
+one of ours, the meshopt encoding is 409,991 bytes against Draco's 1,989,369. Our own per-model sizes are
+unmeasured until an export exists, so the decoder cost is the part of this decision that rests on measured
+numbers.
 
-Alternative considered: Threlte. Rejected for this surface because a single lazily loaded element needs no
-scene-graph framework, and its `Canvas` still wants a client-only wrapper.
+Alternative considered: Threlte. Rejected for this surface because one lazily loaded element needs no
+scene-graph framework, and this change adds no scene to manage. Not rejected for prerender safety: its
+`Canvas` gates the renderer behind a bound canvas, so it renders markup on the server and creates WebGL on
+the client.
+
+### Expect permission to arrive with conditions, and carry them as data
+
+The one surveyed policy that grants anything, Jagex's Fan Content Policy v1.3, permits 3D content derived
+from game models for personal use and pairs the grant with a mandated attribution notice in specified
+wording, while still forbidding decompilation and direct lifts with no creative input. It therefore does not
+authorise a published viewer, but it does show the shape a permission takes.
+
+So the permission this change waits on is likely to carry conditions, and a condition that must appear on a
+page is content, not markup. Recording the notice as data keeps one producer for it and lets a later
+revision change every surface at once, which also matters because such a grant is revocable.
+
+### Reading a reader's own install is the answer to a refusal, not to this change
+
+RuneApps' RuneScape model viewer ships a 680 KB gzipped bundle and no game assets at all: a reader drops a
+local game cache into the page, and the browser reads it. That architecture redistributes nothing, so it
+survives a refused permission, and it is the reason the rights question has an answer other than
+abandonment.
+
+It is not the recommendation here, for three measured reasons. It would need a browser-side reader for
+Unity's `data.unity3d` container, which is a second extraction toolchain beside the mod that already works.
+It would contradict this repository's rule that the site renders pipeline-emitted read models and does not
+parse game data. And it would show a model only to a reader who owns and locates the game files, so the
+compendium's pages would stay empty for everyone else. Recorded so a refusal has a designed path rather
+than an improvised one.
 
 ## Risks / Trade-offs
 

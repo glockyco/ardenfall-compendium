@@ -118,6 +118,22 @@ is traceable to its origin.
 - **WHEN** a model row is exported
 - **THEN** it records the source mesh asset name and the build identity
 
+### Requirement: A model surface carries the attribution its permission requires
+
+Where the permission to publish geometry requires a notice, a page showing a model MUST display that notice
+in wording the permission specifies. The notice MUST be data rather than markup repeated per page, so one
+edit changes every surface.
+
+#### Scenario: A model page shows its required notice
+
+- **WHEN** a page renders a model and the recorded permission requires a notice
+- **THEN** the page displays that notice
+
+#### Scenario: The notice is not restated per page
+
+- **WHEN** the required notice changes
+- **THEN** one change updates every page that shows a model
+
 ### Requirement: Model coverage is reported
 
 The run manifest MUST report, per entity family, how many rows carry a model, how many models were

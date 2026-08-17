@@ -3,6 +3,8 @@
 - [ ] 0.1 Obtain the developer's written permission to publish extracted geometry, and record it in this
       change. No task below starts before this one closes.
 - [ ] 0.2 Record the decision on whether a reader may download a model file, defaulting to view only.
+- [ ] 0.3 Record any attribution or notice the permission requires, as data a page reads, and any condition
+      that limits what may be published.
 
 ## 1. Asset path widening
 
@@ -60,7 +62,8 @@
 - [ ] 6.1 Add the model surface, rendering the poster from prerendered output with no viewer code.
 - [ ] 6.2 Load the viewer on demand only, and keep it out of the bundles of routes that show no model.
 - [ ] 6.3 Give the viewer alternative text, keyboard operation and a visible failure state.
-- [ ] 6.4 Apply `meshopt` compression and self-host its decoder.
+- [ ] 6.4 Apply `meshopt` compression, and self-host and pin its decoder. The viewer fetches auxiliary
+      decoders from a third-party CDN by default, which this site must not depend on.
 
 ## 7. Fixtures and gates
 

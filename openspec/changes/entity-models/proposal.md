@@ -90,6 +90,9 @@ a kind rather than changing the contract.
   publisher policy found, Blizzard's legal FAQ, grants only personal non-commercial display and forbids
   decompilation. Ardenfall is a demo-stage game by Spellcast Studios, so the cheap and durable answer is
   the developer's written permission. Until that exists, this change stays planned.
+  If permission is refused, one surveyed architecture still publishes nothing: RuneApps' RuneScape model
+  viewer hosts no game assets, because a reader supplies a local game cache and the page reads it in the
+  browser. `design.md` records what that would cost here, and it is not the recommendation.
 - Whether a reader may download a model file, or only view it. The conservative default is view only.
 - How many avatar variants a body needs. Armour is authored per gender, as `_MALE` and `_FEMALE` suffixes
   show, and races carry their own forms, so the variant count must be measured before avatars are built.
