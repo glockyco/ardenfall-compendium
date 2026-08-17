@@ -5,20 +5,12 @@
     # Same nixpkgs release the workstation pins, so the dev shell and the host
     # system share one evaluated package set and one binary cache.
     nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.2605";
-
-    # ilspycmd only. On aarch64-darwin the 26.05 build compiles ILSpy against
-    # dotnetCorePackages.sdk_8_0, which is the .NET VMR source build and pulls a
-    # from-source Swift toolchain with it. Unstable ships the same ilspycmd 9.1
-    # prebuilt, so the decompiler costs a 30 MiB fetch instead of a multi-hour
-    # rebuild. Everything else comes from the pinned release above.
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
 
   outputs =
     {
       self,
       nixpkgs,
-      nixpkgs-unstable,
     }:
     let
       # The mod only builds against a local game install, which is macOS here,
@@ -36,13 +28,24 @@
           system:
           f {
             pkgs = nixpkgs.legacyPackages.${system};
-            unstable = nixpkgs-unstable.legacyPackages.${system};
           }
         );
     in
     {
       devShells = forAllSystems (
-        { pkgs, unstable }:
+        { pkgs }:
+        let
+          dotnetSdk = pkgs.dotnetCorePackages.sdk_10_0-bin;
+          ilspycmd = pkgs.buildDotnetGlobalTool {
+            pname = "ilspycmd";
+            version = "11.0.0.9375";
+            # The global-tool builder otherwise keeps its source-built SDK 8
+            # default as the runtime even when dotnet-sdk is overridden.
+            dotnet-sdk = dotnetSdk;
+            dotnet-runtime = dotnetSdk;
+            nugetHash = "sha256-j1VbP8qQodelkFDXhTnGne7arUIXVr1P5HjRNb2sLeo=";
+          };
+        in
         {
           default = pkgs.mkShellNoCC {
             packages = [
@@ -64,11 +67,13 @@
               # actions/setup-dotnet installs for `dotnet format`. The
               # non-`-bin` attribute is the .NET VMR source build, which on
               # darwin also rebuilds Swift.
-              pkgs.dotnetCorePackages.sdk_10_0-bin
+              dotnetSdk
 
               # `bun run decompile:game` shells out to ilspycmd to refresh the
               # gitignored .decompiled/ cache that grounds game-logic decisions.
-              unstable.ilspycmd
+              # Package the official .NET 10 global tool because nixpkgs still
+              # ships ILSpy 9.1.
+              ilspycmd
 
               # `bun run bepinex:install` unpacks the pinned loader archive.
               pkgs.unzip
