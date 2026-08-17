@@ -12,6 +12,7 @@ required_managed_dlls=(
   UnityEngine.dll
   UnityEngine.CoreModule.dll
   UnityEngine.IMGUIModule.dll
+  UnityEngine.PhysicsModule.dll
   UnityEngine.UIModule.dll
   UnityEngine.UI.dll
   Sirenix.OdinInspector.Attributes.dll

@@ -71,6 +71,17 @@ public sealed class CompendiumCommandRegistry : IDisposable
             quests,
         }));
         Register(new Handlers.GameQuitCommand());
+
+        // The operator commands share one live target and one session ledger, so a photo-mode disable
+        // restores the flag an earlier enable recorded.
+        var operatorTarget = new OperatorTools.UnityOperatorTarget();
+        var operatorSession = new OperatorTools.OperatorSessionLedger();
+        Register(new Handlers.OperatorStatusCommand(operatorTarget, operatorSession));
+        Register(new Handlers.OperatorSetInvulnerableCommand(operatorTarget, operatorSession));
+        Register(new Handlers.OperatorRecoverFromDeathCommand(operatorTarget));
+        Register(new Handlers.OperatorTeleportCommand(operatorTarget));
+        Register(new Handlers.OperatorSetPhotoModeCommand(operatorTarget, operatorSession));
+        Register(new Handlers.OperatorSetTimescaleCommand(operatorTarget, operatorSession));
     }
 
     private void Register<TArgs, TOutput>(IControlCommandHandler<TArgs, TOutput> handler)

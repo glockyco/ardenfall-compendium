@@ -43,6 +43,20 @@ public static class CompendiumCommandResults
             )
             : null;
 
+    public static ControlCommandResult<TOutput>? RequiredValue<TOutput, TValue>(
+        ControlCommandContext<TOutput> context,
+        TValue? value,
+        string propertyName
+    )
+        where TValue : struct =>
+        value.HasValue
+            ? null
+            : Validation(
+                context,
+                propertyName + "Required",
+                propertyName + " must be present."
+            );
+
     public static ArtifactRef FileArtifact(
         string logicalName,
         string path,
