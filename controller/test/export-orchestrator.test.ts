@@ -170,6 +170,25 @@ describe("exportCompendium", () => {
     );
   });
 
+  it("exports against a host that exposes no operator command", async () => {
+    const client = new FakeClient();
+
+    const result = await exportCompendium({
+      client,
+      url: "ws://127.0.0.1:19612",
+      listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+      outputBaseDir: "/tmp/out",
+      pipelineOutDir: "/tmp/pipeline",
+      validate: async () => ({ itemCount: 150 }),
+      runPipeline: async () => undefined,
+    });
+
+    expect(result.runId).toBe("run-1");
+    expect(client.commands.some((entry) => entry.name.startsWith("operator."))).toBe(false);
+    expect(client.calls.some((call) => call.name.startsWith("operator."))).toBe(false);
+    expect(client.jobs.some((job) => job.name.startsWith("operator."))).toBe(false);
+  });
+
   it("fails a job that never completes and cancels the outstanding job", async () => {
     const client = new FakeClient();
     client.jobNeverCompletes = true;
