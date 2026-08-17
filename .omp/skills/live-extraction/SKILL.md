@@ -31,6 +31,23 @@ An export that ends with a quit prevents a second measurement. Pass `--no-quit` 
 - Use the HotRepl checkout at `$HOTREPL_REPO`.
 - Load the world with `compendium.continueFromMenu` before you read `worldData` or records.
 
+### Gotchas measured against Ardenfall Demo `0.0.10.91`
+
+- Send one statement in each `eval`. A submission that declares a local and then calls several members
+  can fail to compile with `(1,4): error CS0584: Internal compiler error: The invoked member is not
+supported in a dynamic module.` The same calls succeed one at a time.
+- Wait for readiness after `compendium.continueFromMenu`. The click returns at once, and
+  `compendium.preflight` still reports `ArdenfallGame.instance is null` for a few seconds.
+- Select the subject of a probe by the state under test. A cell probe that names a scene returns
+  `not-loaded` when the game streamed that scene out, and that answer proves nothing. Ask which loaded
+  scene holds the component you need, then probe that scene.
+- Restore every gate a probe sets. `PlayerCharacter.GodMode` is the game's damage floor, and the free
+  camera stays clamped to 10 units from the player unless both
+  `ArdenfallMaster.buildSettings.enableDebugTools` and `BuildSettingsFile.Instance.enableDebugTools`
+  are set. Those two gates also change camera speed, camera smoothing, and the debug interfaces.
+- Read the live values back before you call a session clean. One session ended with
+  `godMode=False;master=False;file=False;freeCamera=False;timescale=1`.
+
 ## Ground game-logic decisions
 
 Read the decompiled source instead of guessing. The gitignored cache is `.decompiled/<gameVersion>-<sha>/`. Regenerate it with `bun run decompile:game`.

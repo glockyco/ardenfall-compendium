@@ -42,7 +42,9 @@ Git hooks run their tools through `nix develop`, so a commit works from a GUI cl
   - Run `bun run --cwd site smoke:pagefind`.
   - Run `bun run --cwd site smoke:prerender`.
   - Run `bun run check:entity-fields`.
-  - Run `bun run check:fixtures`.
+  - Run `bun run check:fixtures`. A shell that exports `CI=true` makes this check reject a local
+    checkout that holds live outputs, such as `snapshots`, `site/.data/data.sqlite`, and
+    `site/static/assets`. Run it with `CI=false` in that shell; never delete live outputs to pass it.
   - Run `bun run check:validators`.
   - Run `bun run lint` and `bun run format:check`.
   - Run `git diff --check`.
