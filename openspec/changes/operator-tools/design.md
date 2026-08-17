@@ -89,6 +89,25 @@ That flag also changes camera smoothing, camera speed, and the cinematic interfa
 previous value would leave a session that nobody can return to retail behaviour, so the session
 records the value on first change and restores exactly that value on disable.
 
+### Report a pending close rather than a state the game has not reached
+
+Opening the free camera is synchronous, and closing it is not.
+`Ardenfall/UI/GUIManager.cs:411-444` removes the layer and then defers `OnClose` through
+`CoroutineManager.RunDelayingCoroutine(layer.disableDelay, ...)` when the layer animates its close, and
+`FreeCameraLayerUI.OnClose` is what calls `ArdenfallGame.DisableFreeCamera`.
+
+A live disable measured that gap: the command replied with `freeCamera: true` and status still read
+`timescale: 0`, because the game's close step had not run yet. `Ardenfall/ArdenfallGame.cs:323-326`
+shows that step restoring the timescale to 1.
+
+A synchronous command cannot wait for a coroutine it would block, so the disable path reports the
+pending close and lets the game finish. It also never writes the timescale, because the close step owns
+that value and a second writer would fight it.
+
+Opening the layer pauses the game, measured as `timescale: 0` right after an enable. Status therefore
+reports the live timescale and reconciles its changed set against live values, so a value the game
+returned on its own stops counting as a session change.
+
 ### Refuse rather than crash
 
 `PlayerCharacter.instance` is null before the world loads; a retail session measured

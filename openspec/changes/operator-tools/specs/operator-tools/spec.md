@@ -8,7 +8,8 @@ running game, and the state each command reports and restores.
 ### Requirement: Every operator command reports the state it produced
 
 An operator command SHALL return the live values it changed. An operator SHALL NOT need a second
-command to confirm an effect.
+command to confirm an effect. When the game completes part of a change on a later frame, the command
+SHALL name that pending transition instead of reporting a state the game has not reached.
 
 #### Scenario: Enabling invulnerability reports the live flag
 
@@ -21,6 +22,11 @@ command to confirm an effect.
 - **WHEN** an operator requests operator status
 - **THEN** the output reports invulnerability, photo mode, timescale, and whether the session changed
   each one
+
+#### Scenario: Status forgets a change the game reversed
+
+- **WHEN** the session changed a value and the game has since returned it to the value the session found
+- **THEN** operator status does not report that value as changed
 
 ### Requirement: An operator command without a live target fails by name
 
@@ -93,6 +99,18 @@ restore every value it changed to the value that value held before the session e
 - **THEN** the command succeeds
 - **AND** the debug flag holds the value it held before photo mode was enabled
 - **AND** the output reports photo mode as disabled
+
+#### Scenario: The game finishes the camera close on a later frame
+
+- **WHEN** an operator disables photo mode while the free camera is open
+- **THEN** the output reports the roaming clamp as restored
+- **AND** the output reports the free-camera close as pending while the game has not finished it
+
+#### Scenario: Photo mode pauses the game
+
+- **WHEN** an operator enables photo mode
+- **THEN** operator status reports the live timescale the game applied
+- **AND** status does not report the timescale as a value the operator changed
 
 ### Requirement: Timescale accepts only the range the game applies
 

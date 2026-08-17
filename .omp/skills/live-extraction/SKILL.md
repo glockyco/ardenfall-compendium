@@ -31,6 +31,34 @@ An export that ends with a quit prevents a second measurement. Pass `--no-quit` 
 - Use the HotRepl checkout at `$HOTREPL_REPO`.
 - Load the world with `compendium.continueFromMenu` before you read `worldData` or records.
 
+### Operator commands
+
+Use these instead of hand-written submissions. Each one reports the live state it produced, and
+`operator.status` reports what the session still holds.
+
+| Command                     | Args                   | Use                                                     |
+| --------------------------- | ---------------------- | ------------------------------------------------------- |
+| `operator.status`           | none                   | Read invulnerability, photo mode, timescale, and clamp  |
+| `operator.setInvulnerable`  | `{"enabled":true}`     | Survive a fall or a fight while exploring               |
+| `operator.recoverFromDeath` | none                   | Clear the death state, overlay, and death animation     |
+| `operator.teleport`         | `{"x":-3150,"z":3871}` | Move onto the surface under a horizontal target         |
+| `operator.setPhotoMode`     | `{"enabled":true}`     | Open the free camera and lift the 10-unit roaming clamp |
+| `operator.setTimescale`     | `{"scale":0}`          | Pause or slow the world, from 0 through 1               |
+
+Four behaviours are worth knowing before you rely on them.
+
+- Invulnerability is the game's damage floor, which holds health at 1. It is not immunity to a scripted
+  death.
+- A teleport refuses when no surface lies under its target, and leaves the character where it was. A
+  target in an unstreamed cell is the common cause.
+- Photo mode pauses the game, so `operator.status` reports `timescale: 0` until you leave it.
+- Disabling photo mode restores the clamp at once and reports `freeCameraClosePending: true`, because
+  the game closes the camera behind its close animation and restores the timescale in that step.
+  `operator.status` a moment later reports the settled values.
+
+End a session with `operator.setPhotoMode {"enabled":false}` and `operator.status`. An empty `changed`
+list means the session holds nothing.
+
 ### Gotchas measured against Ardenfall Demo `0.0.10.91`
 
 - Send one statement in each `eval`. A submission that declares a local and then calls several members

@@ -18,6 +18,10 @@
 - Pass every extraction source to `RunFinalizeCommand`, including items, stat types, spells, status effects, item categories, tags, locations, and portals. Do not construct live services by default.
 - Write extraction output to a staging path, then rename it atomically. Never let the pipeline read partial files.
 - Register HotRepl commands through `HotRepl.Control.GlobalControlCommandRegistry`. Keep BepInEx and MelonLoader support working. Use the Phase 4a API: `ControlCommandKind.Sync`, `ControlCommandContext<TOutput>`, and its failure helpers.
+- Keep the `operator.*` commands out of the export. They exist for live verification, they never run in an export phase, and `controller/test/export-orchestrator.test.ts` proves an export needs none of them.
+- Reach the live game through `IOperatorTarget`, and keep the Unity binding in `UnityOperatorTarget`. The mod tests run on `net10.0` without a Unity runtime, so operator logic must execute against a fake target.
+- An operator command reports the live state it produced. When the game finishes a change on a later frame, report that transition instead: closing the free camera runs behind the layer's close animation, and the game's own close step restores the timescale it paused.
+- Do not write a value the game already owns and restores. Photo mode never writes the timescale.
 
 ## HotRepl dependency
 
