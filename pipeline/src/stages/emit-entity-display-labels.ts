@@ -7,8 +7,8 @@ import { disambiguateEntityLabel } from "../relationships/entity-links.ts";
  * A label is disambiguated against the labels a reader can reach, meaning nodes
  * that have a page. Counting unreachable nodes would put a suffix on a title
  * that nothing collides with: the race grouping publishes one page per race and
- * keeps its variants as pageless rows, so 109 of them share the label `Karu Elf`
- * while exactly one is reachable under it.
+ * keeps its variants as pageless rows, so many rows can share one race label
+ * while exactly one row is reachable under it.
  *
  * The count is still taken once over the whole graph rather than per rendering
  * surface, so a node's label is the same wherever it appears.

@@ -90,11 +90,11 @@ export function resolveItemDisplayLabel(
 
 export function isPlaceholderItemName(value: string | null | undefined): boolean {
   const trimmed = value?.trim() ?? "";
-  // The authors mark a prototype by writing base or placeholder into its name, and they
-  // put the marker wherever it reads best: BASE ARMOR, Blunt BASE, Longbow base, Auto Base.
-  // Anchoring to the start missed eleven of them. Measured against all 1,273 items, the
-  // standalone word matches only prototypes, every one of which has between 1 and 62
-  // descendants, so there is no real item this catches by accident.
+  // The authors mark a prototype by writing base or placeholder into its name, and they put the
+  // marker wherever it reads best: BASE ARMOR, Blunt BASE, Longbow base, Auto Base. Anchoring to
+  // the start therefore misses markers, so the test matches the standalone word anywhere. Every
+  // name it catches belongs to a prototype, and a prototype always has descendants, so it catches
+  // no item a reader can hold.
   return (
     trimmed.length === 0 || /\b(?:base|placeholder)\b/i.test(trimmed) || /\{[^{}]+\}/.test(trimmed)
   );

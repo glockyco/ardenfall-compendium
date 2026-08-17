@@ -278,11 +278,15 @@ public sealed class LoadedQuestAssetSource : IQuestAssetSource
     /// Reads the authored dialogue a quest attaches to one of its character objects.
     /// </summary>
     /// <remarks>
-    /// A quest owns dialogue, not a character. <c>CharacterData.characterGraphs</c> holds
-    /// character behaviour graphs: a live probe measured 195 of its 196 containers as plain
-    /// <c>ObjectFlowGraph</c>, with a single <c>DialogFlowGraph</c> among them. The authored
-    /// dialogue lives on <c>CharacterQuestObject.dialogGraph.flowGraph</c>, on 82 of 88 such
-    /// objects.
+    /// This walk reads one dialogue holder: <c>CharacterQuestObject.dialogGraph.flowGraph</c>.
+    ///
+    /// It is not the only authored dialogue in a build. <c>CharacterData.characterGraphs</c> holds
+    /// containers whose graph may be a <c>DialogFlowGraph</c>, and <c>CharacterGroupQuestObject</c>
+    /// and <c>SimpleDialogSceneQuestObject</c> each hold a dialogue graph of their own. This walk
+    /// covers none of them, so a line authored there reaches no reader.
+    ///
+    /// How many lines each holder carries is a property of the build, so it belongs in the export's
+    /// own counts rather than in this comment.
     ///
     /// Greetings expose pure public accessors. Topics do not: <c>ITopicNode.GetTopicStatements</c>
     /// consults live graph state through <c>IsNodeChoiceEntered</c> and <c>ApplyModifiers</c>,

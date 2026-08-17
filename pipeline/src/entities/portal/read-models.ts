@@ -9,9 +9,9 @@ interface ConnectedPortalRow {
 }
 
 /**
- * The release data marks an internal-looking name with `_`, `-`, or `.` plus
- * a lowercase start or a digit. This rule catches 29 of 33 portal rows.
- * It leaves `Ladder Door`, `Food Preserve`, and `Underground Preservium` alone.
+ * An internal-looking portal name carries `_`, `-`, or `.` and then either starts lowercase or
+ * contains a digit. A name written for a reader, such as `Ladder Door`, carries neither marker, so
+ * the rule leaves it alone.
  */
 function looksLikeInternalPortalName(name: string): boolean {
   return /[_\-.]/.test(name) && (/^[a-z]/.test(name) || /\d/.test(name));
