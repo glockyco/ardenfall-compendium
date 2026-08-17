@@ -46,14 +46,13 @@ of those parts it changed.
 - **WHEN** the character is dead and an operator requests death recovery
 - **THEN** the command succeeds
 - **AND** the output reports the character as alive
-- **AND** the output reports that the death interface and the animation override were cleared
+- **AND** the output reports the death interface as closed and the animation override as stopped
 
 #### Scenario: Recovering a living character clears residue
 
-- **WHEN** the character is alive, the death interface is closed, and an animation override is active
-- **AND** an operator requests death recovery
+- **WHEN** the character is alive and an operator requests death recovery
 - **THEN** the command succeeds
-- **AND** the output reports the animation override as cleared
+- **AND** the output reports the animation override as stopped
 - **AND** the output reports that the death state needed no change
 
 ### Requirement: Teleport places the character on a surface or refuses the move
@@ -79,7 +78,7 @@ be the character itself.
 ### Requirement: Photo mode lifts the camera clamp and restores it
 
 Enabling photo mode SHALL free the camera from the retail roaming clamp. Disabling photo mode SHALL
-restore every gate it changed to the value that gate held before the session enabled photo mode.
+restore every value it changed to the value that value held before the session enabled photo mode.
 
 #### Scenario: Enabling photo mode frees the camera
 
@@ -88,11 +87,11 @@ restore every gate it changed to the value that gate held before the session ena
 - **AND** the output reports the roaming clamp as lifted
 - **AND** the output reports photo mode as enabled
 
-#### Scenario: Disabling photo mode restores the original gates
+#### Scenario: Disabling photo mode restores the original debug flag
 
 - **WHEN** an operator enables photo mode and later disables it
 - **THEN** the command succeeds
-- **AND** every gate photo mode changed holds the value it held before photo mode was enabled
+- **AND** the debug flag holds the value it held before photo mode was enabled
 - **AND** the output reports photo mode as disabled
 
 ### Requirement: Timescale accepts only the range the game applies

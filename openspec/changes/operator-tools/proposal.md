@@ -9,10 +9,13 @@ A live session against Ardenfall Demo `0.0.10.91` measured what that costs.
 - `FreeCameraLayerUI.nonDebugMaxDistance` is `10`. Every frame, `FreeCameraLayerUI.Update` pulls the
   free camera back to 10 units from the player while `ArdenfallMaster.buildSettings.enableDebugTools`
   is false. A retail session cannot look at a coastline from above.
-- Two separate flag holders gate the same behaviour. `FreeCamera` reads
-  `BuildSettingsFile.Instance.enableDebugTools` for its own input, and the clamp reads
-  `ArdenfallMaster.Instance.buildSettings.enableDebugTools`. Both read `false` in a retail session.
-  After both were set, the camera held 24.96 units from the player across frames.
+- One flag gates that clamp, and two accessors reach it. `BuildSettingsFile.Instance` returns
+  `MonoBehaviourSingleton<ArdenfallMaster>.Instance.buildSettings`, so
+  `BuildSettingsFile.Instance.enableDebugTools` and
+  `ArdenfallMaster.buildSettings.enableDebugTools` are one field. A probe confirmed it:
+  `object.ReferenceEquals` of the two returned `aliased=True`, a write through one accessor read back
+  as `master=True;file=True` through the other, and the restore read back `master=False;file=False`.
+  With the flag set, the camera held 24.96 units from the player across frames.
 - Recovering from death needs four calls in the right order: `PlayerCharacter.Revive`,
   `DeathUILayer.CloseLayer`, `CharacterAvatarAnimator.StopOverridingAnimation`, and
   `ForceUpdateValues`. `PlayerCharacter.OnDeath` starts an animation with `stopOnFinish: false`, so
@@ -31,8 +34,8 @@ not supported in a dynamic module.` The same operations succeed when each one is
   verification session needs: invulnerability, death recovery, teleport, photo mode, and timescale.
 - Report the resulting live state from every operator command, so an operator confirms an effect
   without a second probe.
-- Record what the session changed, and restore it on request. Photo mode restores both debug-tool
-  flags it set, because those flags also gate debug UI and free-camera input.
+- Record what the session changed, and restore it on request. Photo mode restores the debug-tool flag
+  it set, because that flag also gates debug UI and free-camera input.
 - Refuse an operator command that has no live target, with a named precondition failure rather than
   a null-reference exception.
 - Fail a teleport that finds no surface under its target, and leave the character where it was.

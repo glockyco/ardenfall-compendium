@@ -41,10 +41,13 @@ supported in a dynamic module.` The same calls succeed one at a time.
 - Select the subject of a probe by the state under test. A cell probe that names a scene returns
   `not-loaded` when the game streamed that scene out, and that answer proves nothing. Ask which loaded
   scene holds the component you need, then probe that scene.
-- Restore every gate a probe sets. `PlayerCharacter.GodMode` is the game's damage floor, and the free
-  camera stays clamped to 10 units from the player unless both
-  `ArdenfallMaster.buildSettings.enableDebugTools` and `BuildSettingsFile.Instance.enableDebugTools`
-  are set. Those two gates also change camera speed, camera smoothing, and the debug interfaces.
+- Restore every flag a probe sets. `PlayerCharacter.GodMode` is the game's damage floor, and the free
+  camera stays clamped to 10 units from the player while `enableDebugTools` is false. That flag also
+  changes camera speed, camera smoothing, and the debug interfaces.
+- Treat `BuildSettingsFile.Instance.enableDebugTools` and
+  `ArdenfallMaster.buildSettings.enableDebugTools` as one field.
+  `BuildSettingsFile.Instance` returns `MonoBehaviourSingleton<ArdenfallMaster>.Instance.buildSettings`,
+  and a probe measured `aliased=True`. Setting one name changes the other.
 - Read the live values back before you call a session clean. One session ended with
   `godMode=False;master=False;file=False;freeCamera=False;timescale=1`.
 

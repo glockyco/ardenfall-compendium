@@ -18,20 +18,25 @@ The game already owns every operation this capability needs.
 - `Ardenfall/ArdenfallGame.cs:306-330` opens and closes the free camera.
   `Ardenfall/ArdenfallGame.cs:240-244` sets the tool timescale, and `:267-268` multiplies it into
   `Time.timeScale`.
-- Two gates gate the same freedom. `Ardenfall/UI/FreeCameraLayerUI.cs:340-346` clamps the camera to
-  `nonDebugMaxDistance`, declared as `10` at `:110`, while
-  `ArdenfallMaster.Instance.buildSettings.enableDebugTools` is false.
+- One flag gates the clamp, and two accessors reach it.
+  `Ardenfall/UI/FreeCameraLayerUI.cs:340-346` clamps the camera to `nonDebugMaxDistance`, declared as
+  `10` at `:110`, while `ArdenfallMaster.buildSettings.enableDebugTools` is false.
   `Ardenfall/FreeCamera.cs:112`, `:129`, and `:153` gate the camera's own input on
-  `BuildSettingsFile.Instance.enableDebugTools`.
-- Those gates carry more than the clamp. `Ardenfall/UI/FreeCameraLayerUI.cs:160-163` forces camera
+  `BuildSettingsFile.Instance.enableDebugTools`, and `Ardenfall/BuildSettingsFile.cs:24` defines that
+  accessor as `MonoBehaviourSingleton<ArdenfallMaster>.Instance.buildSettings`. The two names are one
+  field.
+- That flag carries more than the clamp. `Ardenfall/UI/FreeCameraLayerUI.cs:160-163` forces camera
   smoothing and speed to its non-debug values, and `:328` gates the cinematic interface.
 
 Live results, one probe per claim:
 
-- `"master=" + master.buildSettings.enableDebugTools + ";file=" + BuildSettingsFile.Instance.enableDebugTools`
-  returned `master=False;file=False` in a retail session, and `master=True;file=True` after both were
-  set.
-- After both gates were set, `EnableFreeCamera()`, and a 25-unit offset,
+- `object.ReferenceEquals(BuildSettingsFile.Instance, MonoBehaviourSingleton<ArdenfallMaster>.Instance.buildSettings)`
+  returned `aliased=True`, and the same probe returned `sameAsFind=True` for
+  `FindObjectOfType<ArdenfallMaster>()`.
+- A write of `BuildSettingsFile.Instance.enableDebugTools = true` read back as
+  `master=True;file=True` through both accessors, and the restore read back
+  `master=False;file=False`. One field, two names.
+- After the flag was set, `EnableFreeCamera()`, and a 25-unit offset,
   `"enabled=" + freeCameraEnabled + ";distance=" + Vector3.Distance(camera, eye)` returned
   `enabled=True;distance=24.96307` on a later frame. The clamp holds that distance at `10`.
 - `"dead=" + Dead + ";health=" + Stats.health.Value + ";deathLayer=" + deathLayer.gameObject.activeSelf`
@@ -70,17 +75,19 @@ Operator handlers will take one injected target that exposes the live values and
 need. A fake target drives the tests, and the Unity implementation binds to the members in Context.
 
 Alternative considered: one interface per command. Rejected because these commands read and write one
-shared live state - the player, the game singleton, and the two gates - and a status command must
+shared live state - the player, the game singleton, and the debug flag - and a status command must
 report all of it. Splitting that across five interfaces would give five producers of the same facts.
 
-### Own the gates the session changed, and restore them together
+### Expose the debug flag once, and restore what the session changed
 
-Photo mode sets both `enableDebugTools` holders, and those holders also change camera smoothing,
-camera speed, and the cinematic interface (`Ardenfall/UI/FreeCameraLayerUI.cs:160-163`, `:328`).
-A command that set them without recording their previous values would leave a session that nobody
-can return to retail behaviour.
+`enableDebugTools` is one field behind two accessors, so the target exposes it once. A second property
+would invite a caller to set one name and read the other, and a later reader would take the pair for
+two independent gates, which is the reading this plan first recorded.
 
-The target records each gate's value on first change and restores exactly those values on disable.
+That flag also changes camera smoothing, camera speed, and the cinematic interface
+(`Ardenfall/UI/FreeCameraLayerUI.cs:160-163`, `:328`). A command that set it without recording its
+previous value would leave a session that nobody can return to retail behaviour, so the session
+records the value on first change and restores exactly that value on disable.
 
 ### Refuse rather than crash
 
@@ -98,10 +105,10 @@ rooftop from a seabed.
 
 ## Risks / Trade-offs
 
-- [Enabling debug tools changes more than the clamp] → Record and restore both gates, and report them
-  from status so a session can prove it returned to retail behaviour.
-- [A restored gate is still wrong if the game changed it meanwhile] → Status reports the live gate
-  values, not the recorded ones, so a mismatch is visible instead of assumed.
+- [Enabling debug tools changes more than the clamp] → Record and restore the flag, and report it from
+  status so a session can prove it returned to retail behaviour.
+- [A restored flag is still wrong if the game changed it meanwhile] → Status reports the live flag
+  value, not the recorded one, so a mismatch is visible instead of assumed.
 - [Invulnerability is a damage floor, not immunity] → Name it invulnerability in the output and state
   the floor in the skill, so nobody reads it as immunity to scripted death.
 - [A teleport can still land inside geometry] → Report the surface height and the collider the probe
