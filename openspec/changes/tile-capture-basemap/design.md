@@ -68,6 +68,23 @@ Three findings that a capture must handle, and that the shipped imagery already 
 
 The comparison at equal scale is decisive on resolution and unfinished on cleanliness. The capture resolves individual rocks, jetty planks, and building footprints that the imagery blurs, while the imagery has clean blue water, no black foliage, and even lighting.
 
+### What a capture of the retail build produced
+
+Measured on 2026-08-16 against the separate retail install, not the Demo this compendium targets. 97 cell scenes were captured: 88 overworld and 9 interior, against the Demo's 27.
+
+| Fact                 | Overworld                       | Interior                        |
+| -------------------- | ------------------------------- | ------------------------------- |
+| Cell scenes captured | 88, dense gx -6..1 by gz -9..1  | 9, sparse gx -6..4 by gz -2..6  |
+| Cell size            | 150 units                       | 600 units                       |
+| Capture resolution   | 1024 px per cell, 6.827 px/unit | 2048 px per cell, 3.413 px/unit |
+| Weight as PNG        | 126.2 MiB                       | 7.1 MiB                         |
+
+The stitched overworld covers x -900..300 at 8192 pixels, which confirms 6.827 pixels per unit, and weighs 9.6 MiB as WebP at quality 90 against 126.2 MiB as PNG.
+
+At 256-pixel tiles the retail overworld's finest level is 88 by 16, or 1,408 tiles, so Decision 7's authored-cell estimate of about 512 files holds for the Demo only.
+
+One render also hid 146 of 146 `ParticleSystemRenderer` components and restored all 146 afterwards, so transient content can be suppressed by renderer state with a restore, as an alternative to Decision 3's culling mask.
+
 ## Goals and non-goals
 
 **Goals**
