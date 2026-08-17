@@ -31,6 +31,26 @@ An export that ends with a quit prevents a second measurement. Pass `--no-quit` 
 - Use the HotRepl checkout at `$HOTREPL_REPO`.
 - Load the world with `compendium.continueFromMenu` before you read `worldData` or records.
 
+### Protect the save before a mutating probe
+
+The game autosaves on its own, so a probe that moves, kills, or teleports the character writes that
+state to disk without asking. Four rules, each earned by breaking it.
+
+- Copy the save folder aside before the first mutating probe, or play a disposable character. A probe
+  that only reads needs no copy.
+- Never quit while a save is in flight. `GlobalSaveManager.AutoSave` rotates the backups and then calls
+  `SaveGameAsync`, so quitting between the two leaves the rotated backup and no primary file. Watch the
+  save file's size and time until both stop changing, then quit.
+- Never bundle a scene unload with a cross-map teleport. The streamer then transitions against a world
+  it is still tearing down, and the map scene never loads. The symptoms are a `currentCell` that
+  disagrees with the position, and a character falling with no cell scene loaded. Unload, verify, then
+  teleport.
+- Hold invulnerability until the character is grounded. Clearing it during an async teleport kills the
+  character on arrival, because the fall damage lands before the move completes.
+
+To check a save's real state, make the file read-only, load it, read the position, then restore the
+mode. The game cannot overwrite what it cannot write.
+
 ### Two installs
 
 Steam holds two Ardenfall installs, and they are different games.
