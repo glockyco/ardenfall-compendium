@@ -31,6 +31,21 @@ An export that ends with a quit prevents a second measurement. Pass `--no-quit` 
 - Use the HotRepl checkout at `$HOTREPL_REPO`.
 - Load the world with `compendium.continueFromMenu` before you read `worldData` or records.
 
+### Two installs
+
+Steam holds two Ardenfall installs, and they are different games.
+
+- `Ardenfall Demo` reports `buildProfile: Demo2025`. The compendium targets it, and the controller
+  asserts the Unity product name `Ardenfall Demo 2025`, so an export against the other install fails by
+  design.
+- `Ardenfall` reports `buildProfile: Alpha`. It ships 97 cell scenes against the Demo's 27, so it is the
+  install to measure when a question is about world coverage.
+
+Each install root holds a `buildsettings.txt`, and the game reads it at startup through
+`BuildSettingsFile.ReadBuildSettingsFromFile`. `enableDebugTools` in that file survives a restart, while
+`operator.setPhotoMode` changes only the live value. If you edit the file, keep a `.bak` beside it and
+restore it, and never write capture output inside a game folder.
+
 ### Operator commands
 
 Use these instead of hand-written submissions. Each one reports the live state it produced, and
