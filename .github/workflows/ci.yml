@@ -39,6 +39,17 @@ jobs:
               - 'package.json'
               - 'bun.lock'
               - 'fixtures/**'
+  # The OpenSpec artifacts are repository content, and nothing verified them
+  # until now. The check is defined once for the whole workstation in the fleet
+  # input: it fails on an invalid artifact and on a change archived with
+  # unfinished tasks.
+  openspec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: DeterminateSystems/determinate-nix-action@668647a33843b1f280cb2ef4c41736f86b29f826 # v3
+      - run: nix build --no-link ".#checks.$(nix eval --raw --impure --expr builtins.currentSystem).openspec"
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -131,11 +142,12 @@ jobs:
     name: CI Success
     runs-on: ubuntu-latest
     if: always()
-    needs: [changes, lint, pipeline, site, mod, fixtures]
+    needs: [changes, openspec, lint, pipeline, site, mod, fixtures]
     steps:
       - name: Require every applicable CI job
         run: |
           test "${{ needs.changes.result }}" = success
+          test "${{ needs.openspec.result }}" = success
           test "${{ needs.lint.result }}" = success
           for result in \
             "${{ needs.pipeline.result }}" \
