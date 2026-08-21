@@ -8,7 +8,7 @@ Defines the evidence that a behaviour claim needs. The rules apply to the game a
 
 ### Requirement: A claim about the game needs a measurement
 
-A statement about game behaviour or game data shape becomes a design input only after a spike answers it. The evidence is a citation of the decompiled source with a file and a line, or a probe with its output.
+A statement about game behaviour or game data shape SHALL become a design input only after a spike answers it. The evidence is a citation of the decompiled source with a file and a line, or a probe with its output.
 
 Prior documentation is not evidence. Runtime intuition is not evidence. A plausible reading of a field name is not evidence. Three plan documents claimed 683 cells until a spike found 27 loadable cell scenes. A chain-walk rule looked correct until a spike showed that a variant re-authors the name of its parent.
 
@@ -28,7 +28,7 @@ Prior documentation is not evidence. Runtime intuition is not evidence. A plausi
 
 An artefact that describes behaviour is a hypothesis. A comment, a document, a test name, a variable name, a plan, a report from another agent, and code that exists all describe intent. None of them shows what runs.
 
-A statement about the behaviour of this repository rests on the line that does the work, or on an observed result. The observation wins when the two disagree.
+A statement about the behaviour of this repository SHALL rest on the line that does the work, or on an observed result. The observation wins when the two disagree.
 
 Three failures in the identity slice show the cost. A window of one file showed an entry without a phase field, and the diff showed the field. A query read a field name that does not exist, and its empty result became a defect report. Work extended the redirect mechanism before anyone saw that the mechanism had never written a row.
 
@@ -64,7 +64,7 @@ One probe read `variant.nameSets` and returned an empty result for every race. T
 
 ### Requirement: An existing mechanism runs before work extends it
 
-Code that exists does not show that the code works. Work observes the output of a stage, a table, a projection, or an emitter in a built artifact before work extends it.
+Code that exists does not show that the code works. Work SHALL observe the output of a stage, a table, a projection, or an emitter in a built artifact before work extends it.
 
 #### Scenario: Work extends an existing mechanism
 
@@ -79,7 +79,7 @@ Code that exists does not show that the code works. Work observes the output of 
 
 ### Requirement: Each measurement goes to the producer that owns it
 
-A spike is a probe that answers one question. Probes live in a directory that git ignores, because each probe targets one game build and decays with it. The result then goes to one owner. The repository holds no separate ledger, because a ledger would copy values that already have producers.
+A spike is a probe that answers one question. Probes live in a directory that git ignores, because each probe targets one game build and decays with it. The result SHALL then go to one owner. The repository holds no separate ledger, because a ledger would copy values that already have producers.
 
 - A count, an availability figure, and a diagnostic total belong to the release `artifact-manifest.json` and the snapshot `diagnostics.json`. The pipeline emits both.
 - A game mechanism belongs to the spec requirement that it justifies, in one sentence.
@@ -111,7 +111,7 @@ A spike is a probe that answers one question. Probes live in a directory that gi
 
 ### Requirement: An export proves which game answered it
 
-An export names the build and the mod that produced it. An export fails when more than one instrumented game can answer.
+An export SHALL name the build and the mod that produced it. An export SHALL fail when more than one instrumented game can answer.
 
 Two instrumented games on one HotRepl port report no error. The connection reaches the game that bound first. During the identity slice a stale instance answered an export. The snapshot then lacked fields that the deployed mod emits, and the absence looked like a data defect.
 

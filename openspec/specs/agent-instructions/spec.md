@@ -31,7 +31,7 @@ A requirement MUST NOT appear in two homes. Two copies drift apart. `omp` also d
 
 ### Requirement: A test compares a written command against the command it names
 
-Guidance names commands, scripts, and skills. A test checks each name. Two such names decayed while every gate stayed green.
+Guidance names commands, scripts, and skills. A test SHALL check each name. Two such names decayed while every gate stayed green.
 
 #### Scenario: The gate list omits a smoke
 
