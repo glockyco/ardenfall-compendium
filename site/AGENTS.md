@@ -20,6 +20,26 @@
 - Deploy files only. Keep `adapter-static` without a Worker and `wrangler.toml` without `main`. Set `not_found_handling = "404-page"`. Revisit this decision before adding request-time rendering.
 - Edit owned shadcn-svelte primitives in `src/lib/components/ui/*` without depending on an upstream version. Add only primitives that a page consumes.
 
+## Decision examples
+
+### Rich-text pair
+
+**Wrong:** Render a game or TMP markup string with an HTML insertion directive in a route.
+
+**Right:** Pass the translated, typed read-model document to `site/src/lib/components/content/RichText.svelte`, as `site/src/lib/components/items/ItemPresentationPanel.svelte` does. The component renders supported nodes without exposing raw markup.
+
+### Relationship-link pair
+
+**Wrong:** Build a relationship label or URL from route-local source names and parameters.
+
+**Right:** Pass the pipeline-resolved target to `site/src/lib/components/relationships/EntityLink.svelte`, as `site/src/lib/components/relationships/RelationshipSection.svelte` does. The component uses the resolved label and page status.
+
+### Shared-component intake pair
+
+**Wrong:** Repeat route-local presentation markup or pass an untyped object to a visual shortcut.
+
+**Right:** Add typed props, token-backed styling, and decorative-image behavior to `site/src/lib/components/items/ItemIcon.svelte`. Consume it from `site/src/routes/items/[slug]/+page.svelte` instead of repeating the markup.
+
 ## Layout
 
 - Put owned UI primitives in `src/lib/components/ui/`, entity presentation in `src/lib/components/<entity>/`, server-only loaders in `src/lib/server/`, and pages in `src/routes/`.

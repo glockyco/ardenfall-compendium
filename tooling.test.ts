@@ -350,6 +350,8 @@ describe("site deployment tooling", () => {
             snapshotId: "synthetic",
             gameVersion: "fixture",
             buildIdentifier: "synthetic",
+            productName: "synthetic-fixture",
+            buildProfile: "synthetic",
             extractorVersion: "0.1.0",
             snapshotManifestSha256: "a".repeat(64),
           },
@@ -401,6 +403,8 @@ describe("site deployment tooling", () => {
         snapshotId: "synthetic",
         gameVersion: "fixture",
         buildIdentifier: "synthetic",
+        productName: "synthetic-fixture",
+        buildProfile: "synthetic",
         extractorVersion: "0.1.0",
         snapshotManifestSha256: "a".repeat(64),
       };
@@ -500,6 +504,8 @@ describe("site deployment tooling", () => {
         snapshotId: "synthetic",
         gameVersion: "fixture",
         buildIdentifier: "synthetic",
+        productName: "synthetic-fixture",
+        buildProfile: "synthetic",
         extractorVersion: "0.1.0",
         snapshotManifestSha256: "a".repeat(64),
       };
@@ -591,6 +597,8 @@ describe("site deployment tooling", () => {
         snapshotId: "synthetic",
         gameVersion: "fixture",
         buildIdentifier: "synthetic",
+        productName: "synthetic-fixture",
+        buildProfile: "synthetic",
         extractorVersion: "0.1.0",
         snapshotManifestSha256: "a".repeat(64),
       };
@@ -680,6 +688,8 @@ describe("site deployment tooling", () => {
         snapshotId: "synthetic",
         gameVersion: "fixture",
         buildIdentifier: "synthetic",
+        productName: "synthetic-fixture",
+        buildProfile: "synthetic",
         extractorVersion: "0.1.0",
         snapshotManifestSha256: "a".repeat(64),
       };
@@ -762,6 +772,8 @@ describe("site deployment tooling", () => {
         snapshotId: "synthetic",
         gameVersion: "fixture",
         buildIdentifier: "synthetic",
+        productName: "synthetic-fixture",
+        buildProfile: "synthetic",
         extractorVersion: "0.1.0",
         snapshotManifestSha256: "a".repeat(64),
       };
@@ -983,6 +995,34 @@ describe("site prerender architecture", () => {
         throw new Error(`Unresolved ${reference} in ${file}`);
       }
     }
+  });
+
+  it("keeps subsystem decision pairs complete and their repository paths resolvable", () => {
+    const expectedPairs = {
+      "pipeline/AGENTS.md": ["Read-model cutover pair", "Relationship-link pair"],
+      "site/AGENTS.md": [
+        "Rich-text pair",
+        "Relationship-link pair",
+        "Shared-component intake pair",
+      ],
+    } as const;
+
+    const validate = (file: string, source: string) => {
+      for (const pair of expectedPairs[file as keyof typeof expectedPairs] ?? []) {
+        expect(source).toContain(`### ${pair}`);
+      }
+      for (const path of source.matchAll(/`((?:pipeline|site)\/[^`]+)`/g)) {
+        const citedPath = path[1];
+        if (citedPath && !existsSync(citedPath)) {
+          throw new Error(`${file} cites missing repository path: ${citedPath}`);
+        }
+      }
+    };
+
+    for (const file of Object.keys(expectedPairs)) validate(file, readFileSync(file, "utf8"));
+    expect(() =>
+      validate("site/AGENTS.md", "`site/src/lib/components/missing/Nope.svelte`"),
+    ).toThrow("site/src/lib/components/missing/Nope.svelte");
   });
 
   // A rule whose regex stops matching is silently dead, so each one carries a sample of

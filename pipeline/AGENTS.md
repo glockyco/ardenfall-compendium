@@ -24,6 +24,20 @@
 - Read decompiled game source before deciding how a field controls behaviour. Rename fields whose names conflict with their use. State the mechanism in the spec requirement that depends on it, and record the probe in the change that used it.
 - Add entities through the central registry in `src/entities/registry.ts`. Keep each entity's pipeline and site capabilities in its registry entry. Let `validateDescriptorCoverage` fail when a descriptor lacks an implementation.
 
+## Decision examples
+
+### Read-model cutover pair
+
+**Wrong:** Add a new table and accessor, but keep the obsolete public table and its loader as a second supported path.
+
+**Right:** Register the replacement in `pipeline/src/entities/registry.ts`, update its consumer in `site/src/lib/server/read-models.ts`, and delete the obsolete public path in the same change. The artifact then exposes one current contract.
+
+### Relationship-link pair
+
+**Wrong:** Give the site a source name and route parameters, then make the route compose link text and guess whether the target has a page.
+
+**Right:** Resolve the target label, route, and page status in `pipeline/src/relationships/relationship-graph.ts`. Give the result to `site/src/lib/components/relationships/EntityLink.svelte`, which renders the resolved link or plain text.
+
 ## Layout
 
 - Find stage orchestration in `src/stages/`, entity operations in `src/entities/<id>/`, SQL in `src/sql/`, and tests in `test/`.
