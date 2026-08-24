@@ -25,6 +25,14 @@
 
 ## 5. Guidance integrity gate
 
-- [ ] 5.1 Extend the existing guidance integrity test in `tooling.test.ts` for the four pair markers and file citations.
-- [ ] 5.2 Make the check fail when a right example loses its observable contract or cites a missing file.
-- [ ] 5.3 Keep the check focused on guidance integrity and do not add a parallel documentation test suite.
+- [ ] 5.1 Extend the existing guidance integrity test in `tooling.test.ts` to require the four named pairs and validate every cited repository path.
+- [ ] 5.2 Do not infer semantic correctness from prose keywords or copied implementation text; review each right example directly against its cited owner and observable result.
+- [ ] 5.3 Keep the check focused on objective guidance integrity and do not add a parallel documentation test suite.
+
+## 6. Verification
+
+- [ ] 6.1 Run `bun test tooling.test.ts` and confirm that a missing cited path fails with the path in the diagnostic.
+- [ ] 6.2 Run the repository formatter check on the changed guidance and test files.
+- [ ] 6.3 Review each pair against its cited source and confirm the example contains no field inventory or complete function copied from implementation.
+- [ ] 6.4 Run `openspec validate subsystem-guidance-examples --strict`.
+- [ ] 6.5 Do not run release-only browser, live-export, or full-repository gates unless another change in the same commit affects those contracts.

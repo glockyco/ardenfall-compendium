@@ -46,9 +46,15 @@ A new site component needs a typed prop boundary, token-backed styling, an acces
 
 The example cites one component file and one route file. The cited files must exist when the guide change lands.
 
-### 5. Examples are checked as repository guidance
+### 5. Automate objective integrity, review meaning
 
-The existing guidance integrity test gains checks for the four pattern pairs, file citations, and required right-version markers. The check may read guidance text because it validates the guide contract. It does not replace runtime tests for the pipeline or site behavior.
+The existing guidance integrity test verifies that each named pair exists and that every cited repository path resolves. It does not infer semantic correctness from prose keywords or copied source fragments. Such checks are easy to satisfy while preserving a wrong example, and they couple guidance wording to the test.
+
+Review each pair against the cited owner and observable result. Runtime tests remain the authority for pipeline and site behavior.
+
+### 6. Keep examples smaller than their sources
+
+Each pair is a minimal pseudo-diff or before/after fragment. It names the violated invariant, the owner, and the observable result. It does not copy complete functions, schemas, or field inventories that can drift independently. This is progressive disclosure: the guide teaches the decision and the citation supplies implementation detail.
 
 ## Risks and Trade-offs
 

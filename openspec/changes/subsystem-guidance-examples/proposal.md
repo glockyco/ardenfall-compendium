@@ -11,6 +11,8 @@ Subsystem guidance lacks worked examples for several recurring design decisions.
 - Place each example in the subsystem guide that owns the decision.
 - Show the observable result and the owning source in every good example.
 - Explain the failure and the violated rule in every bad example.
+- Keep each pair to the smallest pseudo-diff that shows the decision; point to source instead of copying implementation.
+- Extend the existing guidance integrity test only for objective structure and path existence. Review example meaning directly.
 
 ## Capabilities
 

@@ -35,7 +35,7 @@ The site guide MUST contain one wrong example and one right example for rich-tex
 #### Scenario: The right example bypasses the shared contract
 
 - **WHEN** the right rich-text example uses raw markup or a route-local parser
-- **THEN** the guidance check rejects the example
+- **THEN** review identifies that the example contradicts its cited owner
 - **AND** the guide does not satisfy the typed rich-text requirement
 
 ### Requirement: Pipeline and site guidance show relationship-link ownership
@@ -52,7 +52,7 @@ The subsystem guides MUST contain one wrong example and one right example for re
 #### Scenario: A route invents relationship text
 
 - **WHEN** the right relationship example builds link text from a source name or route parameter
-- **THEN** the guidance check rejects the example
+- **THEN** review identifies that the example contradicts its cited owner
 - **AND** the guide does not satisfy the relationship-link requirement
 
 ### Requirement: Site guidance shows component intake as a consumed shared component
@@ -69,5 +69,20 @@ The site guide MUST contain one wrong example and one right example for taking a
 #### Scenario: A component example is not consumed
 
 - **WHEN** the right component example has no route consumer or file citation
-- **THEN** the guidance check rejects the example
+- **THEN** the objective guidance check reports the missing pair structure or path
 - **AND** the guide does not satisfy the component-intake requirement
+
+### Requirement: Guidance automation checks only objective integrity
+
+The guidance integrity gate MUST verify the presence of each required pair and the existence of every cited repository path. It MUST NOT treat prose keywords or copied implementation text as proof that an example is semantically correct.
+
+#### Scenario: A cited owner moves or is removed
+
+- **WHEN** a guidance example cites a repository path that does not exist
+- **THEN** the guidance integrity gate fails and names the missing path
+
+#### Scenario: An example preserves required keywords but teaches the wrong behavior
+
+- **WHEN** an example contains expected marker words but contradicts the cited implementation
+- **THEN** marker presence does not make the example valid
+- **AND** direct review against the cited owner is required
