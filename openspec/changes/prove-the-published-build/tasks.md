@@ -38,15 +38,16 @@
 
 ## 7. Documentation
 
-- [ ] 7.1 State the embargo in `.omp/skills/live-extraction/SKILL.md` where it describes the two installs, so the reason sits beside the mechanism.
-- [ ] 7.2 Keep the recommendation to measure the alpha for coverage questions, and state that those measurements stay in the spike area and never become published content.
-- [ ] 7.3 Confirm no document now describes the split as targeting alone.
+- [ ] 7.1 State in `AGENTS.md` that only Demo-derived artifacts may be published, beside the route to the live-extraction skill.
+- [ ] 7.2 State the embargo in `.omp/skills/live-extraction/SKILL.md` where it describes the two installs, so the reason sits beside the mechanism.
+- [ ] 7.3 Keep read-only alpha probes for coverage questions, but distinguish them from export: probes stay in the spike area, create no snapshot, and never become published content.
+- [ ] 7.4 Confirm no document describes the split as targeting alone or suggests that an alpha export is permitted.
 
 ## 8. Verification
 
 - [ ] 8.1 Run a live export against the Demo and confirm the snapshot records the identity, and that the values describe the connected game.
-- [ ] 8.2 Confirm an export against the other install fails, and that the failure names the embargo.
-- [ ] 8.3 Confirm publication refuses a snapshot with an absent identity and one naming another game.
+- [ ] 8.2 Run a read-only alpha probe and confirm it produces no snapshot; then confirm an export against the alpha fails and names the embargo.
+- [ ] 8.3 Confirm the real release path refuses a snapshot with an absent identity and one naming another game before it writes or replaces any artifact.
 - [ ] 8.4 Run the full gate in `AGENTS.md`.
 - [ ] 8.5 Run `openspec validate prove-the-published-build --strict`.
 - [ ] 8.6 Confirm the delta merges cleanly against `openspec/specs/evidence-standard/spec.md`, keeping the two scenarios the existing requirement already carries.

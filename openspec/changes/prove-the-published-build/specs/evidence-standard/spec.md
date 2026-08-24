@@ -6,7 +6,7 @@ An export SHALL name the build and the mod that produced it. An export SHALL fai
 
 An export SHALL confirm the identity of the answering game and SHALL fail when it is not the published game. The snapshot SHALL record that identity, and publication SHALL refuse a snapshot whose recorded identity is absent or names another game.
 
-Steam holds two installs and they are different games. Only the Demo is public. The full game is a private alpha, and no content extracted from it may reach a reader. Measuring the alpha is legitimate, so the boundary is enforced where content becomes published rather than where the game is connected.
+Steam holds two installs and they are different games. Only the Demo is public. The full game is a private alpha, and no content extracted from it may reach a reader. Read-only alpha probes are legitimate in the spike area. Export snapshots remain Demo-only, and publication independently verifies the stored identity.
 
 Two instrumented games on one HotRepl port report no error. The connection reaches the game that bound first. During the identity slice a stale instance answered an export. The snapshot then lacked fields that the deployed mod emits, and the absence looked like a data defect.
 
@@ -45,8 +45,15 @@ Two instrumented games on one HotRepl port report no error. The connection reach
 - **WHEN** publication runs against a snapshot that records no identity
 - **THEN** it refuses, because an unproven source is not a proven one
 
-#### Scenario: The alpha is measured
+#### Scenario: The alpha is probed
 
-- **WHEN** a measurement is taken against the private alpha
-- **THEN** it is permitted
+- **WHEN** a read-only probe runs against the private alpha in the spike area
+- **THEN** the probe is permitted
+- **AND** it does not create an export snapshot
 - **AND** its results stay outside published content
+
+#### Scenario: Repository guidance states the publication boundary
+
+- **WHEN** an agent reads the root repository guidance
+- **THEN** it states that only Demo-derived artifacts may be published
+- **AND** it points live extraction work to the scoped skill

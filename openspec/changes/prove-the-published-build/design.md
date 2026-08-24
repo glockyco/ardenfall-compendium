@@ -38,14 +38,14 @@ Only the mod can observe the live game's identity, so the field originates there
 
 **Non-Goals**
 
-- Preventing connections to the alpha. Measuring it is deliberate and documented.
+- Preventing read-only probes against the alpha. Those probes are deliberate and documented; export snapshots remain Demo-only.
 - Replacing the product name assertion, which stays and keeps its port-collision role.
 - Any change to entity families, read models, routes, or the site.
 - Retrofitting identity into existing snapshots, which cannot be done honestly after the fact.
 
 ## Decisions
 
-**The gate is at publication, not at connection.** Alternative: refuse to connect to the alpha at all. Rejected because the skill documents a legitimate reason to connect, and a rule that forbids a useful activity gets worked around. Guarding the point where content becomes public protects the property that matters and leaves the activity alone.
+**The artifact gate is at publication, while export remains Demo-only.** Alternative: permit alpha exports and rely only on the later publication gate. Rejected because alpha snapshots would enter the same store as publishable data and invite accidental reuse. The existing product assertion remains the export boundary. Read-only HotRepl probes can still inspect alpha world coverage in the spike area without creating a snapshot. Publication validates stored identity independently, so a copied or legacy snapshot cannot bypass the embargo.
 
 **Identity is recorded in the snapshot, not derived later.** The two installs are distinguishable only while a game is answering. After that, `gameVersion` alone cannot separate them. Recording it at the moment it is observable is the only honest option, and it is why the field originates in the mod rather than in the pipeline.
 
@@ -53,7 +53,7 @@ Only the mod can observe the live game's identity, so the field originates there
 
 **The failure text names the embargo.** The current message offers a port collision as the likely cause, which is true for one of the two conditions and misleading for the other. Naming both, with the publication consequence, is what stops the check being relaxed by someone who reads only the message.
 
-**The skill keeps recommending the alpha, with a boundary attached.** Deleting the recommendation would lose a real capability. The sentence gains what happens to those measurements: they stay in the spike area, which the skill already establishes as the home for probes.
+**The skill keeps read-only alpha probes, with an explicit boundary.** Deleting the recommendation would lose a real capability. The skill distinguishes probes from export: alpha observations stay in the spike area and do not create snapshots. Root guidance owns the repository-wide fact that only Demo-derived artifacts may be published.
 
 ## Risks / Trade-offs
 

@@ -15,7 +15,7 @@ The artifact carries no proof. A snapshot manifest records `gameVersion`, `build
 - A reader never meets alpha content, and the repository states that as the reason its checks exist.
 - Every published artifact carries the identity of the game that produced it.
 - A snapshot that cannot prove it came from the Demo is refused before it reaches the site.
-- Measuring the alpha stays possible, because it is a legitimate and documented activity.
+- Read-only probes against the alpha stay possible in the spike area, but export snapshots remain Demo-only.
 
 ## Non-Goals
 
@@ -29,7 +29,8 @@ The artifact carries no proof. A snapshot manifest records `gameVersion`, `build
 - Record the publication embargo as the reason the boundary exists, in the specification, in the skill that describes the two installs, and in the failure the assertion raises.
 - Record the identity of the answering game in the snapshot manifest, alongside the build and extractor fields already there.
 - Refuse to publish a snapshot whose recorded identity is absent or is not the Demo, so the artifact is checked and not only the run.
-- State in the skill that measurements taken against the alpha stay in the spike area and never become published content.
+- State in root guidance that only Demo-derived artifacts may be published.
+- State in the skill that read-only probes against the alpha stay in the spike area, cannot create export snapshots, and never become published content.
 
 ## Capabilities
 
@@ -42,5 +43,5 @@ The artifact carries no proof. A snapshot manifest records `gameVersion`, `build
 - **Controller:** `controller/src/export-orchestrator.ts` records the observed product name and build profile, and its failure names the embargo.
 - **Snapshot format:** the manifest gains identity fields. Existing snapshots lack them, so the publication gate treats an absent identity as a refusal rather than as a pass.
 - **Pipeline:** publication checks the recorded identity before it emits artifacts.
-- **Documentation:** `.omp/skills/live-extraction/SKILL.md` states the embargo where it describes the two installs and where it recommends the alpha for coverage questions.
+- **Documentation:** `AGENTS.md` states the repository-wide publication boundary. `.omp/skills/live-extraction/SKILL.md` distinguishes read-only alpha probes from Demo-only exports where it describes the two installs.
 - **Unaffected:** extraction, entity families, read models, routes, and the site.
