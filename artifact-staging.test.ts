@@ -148,6 +148,8 @@ function liveExportSnapshot(): LoadSnapshotOutput {
       source: { kind: "live-game-export" },
       gameVersion: "0.0.10.91",
       buildIdentifier: "run-a",
+      productName: "Ardenfall Demo 2025",
+      buildProfile: "release",
       extractorVersion: "0.1.0",
       extractedAt: "2026-05-15T00:00:00.000Z",
       preflight: { passed: true, completedAt: "2026-05-15T00:00:00.000Z", checks: [] },
