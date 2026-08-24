@@ -365,7 +365,7 @@ describe("exportCompendium", () => {
         pipelineOutDir: "/tmp/pipeline",
       }),
     ).rejects.toThrow(
-      /expected Unity product name "Ardenfall Demo 2025".*reported "Vespera".*port collision/i,
+      /publication embargo.*expected Unity product name "Ardenfall Demo 2025".*reported "Vespera".*port collision.*must not be published/i,
     );
 
     expect(client.calls.map((call) => call.name)).toEqual(["compendium.preflight"]);
@@ -490,6 +490,8 @@ describe("validateSnapshot", () => {
 
     await expect(validateSnapshot(root)).resolves.toEqual({
       itemCount: 2,
+      productName: "synthetic-fixture",
+      buildProfile: "synthetic",
       counts: {
         item: 2,
         "stat-type": 1,
@@ -860,6 +862,8 @@ describe("validateSnapshot", () => {
       join(root, "manifest.json"),
       JSON.stringify(
         {
+          productName: "synthetic-fixture",
+          buildProfile: "synthetic",
           counts,
           hashes,
           diagnostics: { fatal: options.fatalDiagnostics ?? 0 },

@@ -30,6 +30,8 @@ const testColor = { r: 0, g: 0, b: 0, a: 1 };
 
 const testManifest: SnapshotManifest = {
   schemaVersion: 1,
+  productName: "synthetic-fixture",
+  buildProfile: "synthetic",
   extractorVersion: "test",
   extractedAt: "2026-01-01T00:00:00.000Z",
   source: { kind: "synthetic-fixture", fixtureName: "validation-test" },

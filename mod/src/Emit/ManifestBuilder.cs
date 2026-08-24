@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using ArdenfallCompendium.Dtos;
+using UnityEngine;
 
 namespace ArdenfallCompendium.Emit;
 
@@ -24,6 +25,8 @@ public static class ManifestBuilder
             ExtractorVersion = extractorVersion,
             GameVersion = gameVersion,
             BuildIdentifier = buildIdentifier,
+            ProductName = Application.productName,
+            BuildProfile = Debug.isDebugBuild ? "development" : "release",
             ExtractedAt = DateTimeOffset.UtcNow.ToString("O"),
             Source = new SnapshotSource { Kind = "live-game-export" },
             Preflight = preflight,

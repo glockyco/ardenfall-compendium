@@ -127,6 +127,8 @@ export interface SnapshotManifest {
   schemaVersion: number;
   gameVersion?: string;
   buildIdentifier?: string;
+  productName: string;
+  buildProfile: string;
   extractorVersion: string;
   extractedAt: string;
   source: SnapshotSource;
@@ -662,6 +664,8 @@ export interface ArtifactManifest {
     snapshotId: string;
     gameVersion: string;
     buildIdentifier: string;
+    productName: string;
+    buildProfile: string;
     extractorVersion: string;
     snapshotManifestSha256: string;
   };

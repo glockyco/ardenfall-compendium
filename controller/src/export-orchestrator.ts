@@ -447,9 +447,10 @@ function assertExpectedProductName(result: Record<string, unknown>): void {
   const actual = typeof result.productName === "string" ? result.productName : "<missing>";
   if (actual !== EXPECTED_PRODUCT_NAME) {
     throw new Error(
-      `Wrong game connected: expected Unity product name "${EXPECTED_PRODUCT_NAME}", ` +
+      `Publication embargo: expected Unity product name "${EXPECTED_PRODUCT_NAME}", ` +
         `but HotRepl reported "${actual}". This usually indicates a port collision with ` +
-        "another instrumented game; stop it and reconnect to Ardenfall before exporting.",
+        "another instrumented game. Content from that install must not be published; stop it and " +
+        "reconnect to Ardenfall Demo before exporting.",
     );
   }
 }

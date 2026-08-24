@@ -14,6 +14,8 @@ public sealed class Manifest
     [JsonProperty("schemaVersion")] public int SchemaVersion { get; init; } = 1;
     [JsonProperty("gameVersion")] public string? GameVersion { get; init; }
     [JsonProperty("buildIdentifier")] public string? BuildIdentifier { get; init; }
+    [JsonProperty("productName")] public string ProductName { get; init; } = "";
+    [JsonProperty("buildProfile")] public string BuildProfile { get; init; } = "";
     [JsonProperty("extractorVersion")] public string ExtractorVersion { get; init; } = "0.0.0";
     [JsonProperty("extractedAt")] public string ExtractedAt { get; init; } = "";
     [JsonProperty("source")] public SnapshotSource Source { get; init; } = new();

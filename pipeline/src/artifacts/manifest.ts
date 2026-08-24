@@ -57,6 +57,8 @@ export async function buildArtifactManifest(
       snapshotId,
       gameVersion: input.snapshot.manifest.gameVersion ?? "unknown",
       buildIdentifier: input.snapshot.manifest.buildIdentifier ?? "unknown",
+      productName: input.snapshot.manifest.productName,
+      buildProfile: input.snapshot.manifest.buildProfile,
       extractorVersion: input.snapshot.manifest.extractorVersion,
       snapshotManifestSha256: sha256Json(input.snapshot.manifest),
     },

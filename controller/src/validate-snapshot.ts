@@ -4,9 +4,13 @@ import { join } from "node:path";
 export interface SnapshotValidationResult {
   itemCount: number;
   counts: Record<string, number>;
+  productName: string;
+  buildProfile: string;
 }
 
 interface ManifestShape {
+  productName?: string;
+  buildProfile?: string;
   counts?: Record<string, number>;
   hashes?: Record<string, string>;
   diagnostics?: { fatal?: number };
@@ -31,6 +35,8 @@ export async function validateSnapshot(snapshotDir: string): Promise<SnapshotVal
   const snapshotFiles = new Set(await readdir(snapshotDir));
   const descriptors = await readExtractionDescriptors();
 
+  if (!manifest.productName) throw new Error("manifest is missing productName");
+  if (!manifest.buildProfile) throw new Error("manifest is missing buildProfile");
   if (Object.keys(hashes).length === 0) throw new Error("manifest is missing hashes");
   for (const descriptor of descriptors) {
     const file = descriptor.file;
@@ -116,7 +122,12 @@ export async function validateSnapshot(snapshotDir: string): Promise<SnapshotVal
   if ((manifest.diagnostics?.fatal ?? 0) > 0)
     throw new Error("snapshot contains fatal diagnostics");
 
-  return { itemCount: resultCounts.item ?? 0, counts: resultCounts };
+  return {
+    itemCount: resultCounts.item ?? 0,
+    counts: resultCounts,
+    productName: manifest.productName,
+    buildProfile: manifest.buildProfile,
+  };
 }
 
 function isRecord(value: unknown): value is EnvelopeShape {

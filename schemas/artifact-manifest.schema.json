@@ -29,6 +29,8 @@
         "snapshotId",
         "gameVersion",
         "buildIdentifier",
+        "productName",
+        "buildProfile",
         "extractorVersion",
         "snapshotManifestSha256"
       ],
@@ -38,6 +40,8 @@
         "snapshotId": { "type": "string", "minLength": 1 },
         "gameVersion": { "type": "string", "minLength": 1 },
         "buildIdentifier": { "type": "string", "minLength": 1 },
+        "productName": { "type": "string", "minLength": 1 },
+        "buildProfile": { "type": "string", "minLength": 1 },
         "extractorVersion": { "type": "string", "minLength": 1 },
         "snapshotManifestSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
       }

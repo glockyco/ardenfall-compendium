@@ -238,6 +238,8 @@ function fixtureSnapshot(kind: "live-game-export" | "synthetic-fixture"): LoadSn
       source: kind === "live-game-export" ? { kind } : { kind, fixtureName: "synthetic" },
       gameVersion: "0.0.10.91",
       buildIdentifier: "run-a",
+      productName: "Ardenfall Demo 2025",
+      buildProfile: "release",
       extractorVersion: "0.1.0",
       extractedAt: "2026-05-15T00:00:00.000Z",
       preflight: { passed: true, completedAt: "2026-05-15T00:00:00.000Z", checks: [] },

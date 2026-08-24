@@ -3,6 +3,7 @@ import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { buildArtifactManifest } from "./artifacts/manifest";
 import { runStages } from "./orchestrator";
+import { assertPublishableSnapshotIdentity } from "./publication-identity";
 import { loadDescriptors } from "./stages/load-descriptors";
 import { loadSnapshot, type LoadSnapshotOutput } from "./stages/load-snapshot";
 import { validate } from "./stages/validate";
@@ -43,6 +44,8 @@ if (subcommand === "build-fixture" && firstArg && secondArg) {
   const snapshotManifest = JSON.parse(await Bun.file(`${snapshotDir}/manifest.json`).text()) as {
     gameVersion?: string;
     buildIdentifier?: string;
+    productName?: string;
+    buildProfile?: string;
     source?: { kind?: string };
   };
   if (snapshotManifest.source?.kind !== "live-game-export") {
@@ -51,6 +54,10 @@ if (subcommand === "build-fixture" && firstArg && secondArg) {
   if (!snapshotManifest.gameVersion || !snapshotManifest.buildIdentifier) {
     throw new Error("release snapshots require gameVersion and buildIdentifier");
   }
+  assertPublishableSnapshotIdentity({
+    productName: snapshotManifest.productName ?? "",
+    buildProfile: snapshotManifest.buildProfile ?? "",
+  });
   artifactId = `${snapshotManifest.gameVersion}-${snapshotManifest.buildIdentifier}`;
   outDir = `pipeline/artifacts/releases/${artifactId}`;
   artifactKind = "release";
