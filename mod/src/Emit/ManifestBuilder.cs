@@ -4,7 +4,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using ArdenfallCompendium.Dtos;
-using UnityEngine;
 
 namespace ArdenfallCompendium.Emit;
 
@@ -16,6 +15,8 @@ public static class ManifestBuilder
         DiagnosticTotals diagnostics,
         IDictionary<string, string> contentHashes,
         string extractorVersion,
+        string productName,
+        string buildProfile,
         string? gameVersion = null,
         string? buildIdentifier = null,
         IDictionary<string, IDictionary<string, int>>? availability = null,
@@ -25,8 +26,8 @@ public static class ManifestBuilder
             ExtractorVersion = extractorVersion,
             GameVersion = gameVersion,
             BuildIdentifier = buildIdentifier,
-            ProductName = Application.productName,
-            BuildProfile = Debug.isDebugBuild ? "development" : "release",
+            ProductName = RequireIdentity(productName, "Unity product name"),
+            BuildProfile = RequireIdentity(buildProfile, "Unity build profile"),
             ExtractedAt = DateTimeOffset.UtcNow.ToString("O"),
             Source = new SnapshotSource { Kind = "live-game-export" },
             Preflight = preflight,
@@ -39,6 +40,11 @@ public static class ManifestBuilder
             Diagnostics = diagnostics,
             Hashes = new Dictionary<string, string>(contentHashes),
         };
+
+    private static string RequireIdentity(string value, string label) =>
+        string.IsNullOrWhiteSpace(value)
+            ? throw new InvalidOperationException($"{label} is unavailable from the running game")
+            : value;
 
     public static string Sha256Hex(string content)
     {

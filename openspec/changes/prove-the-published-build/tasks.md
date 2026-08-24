@@ -9,7 +9,7 @@
 - [x] 2.1 Add the answering game's Unity product name and build profile to the manifest shape in `mod/src/Dtos/Manifest.cs`.
 - [x] 2.2 Populate both from the live game in `mod/src/Emit/ManifestBuilder.cs`, reading what the runtime reports rather than a compiled-in constant.
 - [x] 2.3 Confirm `mod/src/Emit/SnapshotWriter.cs` writes the new fields into `manifest.json`.
-- [ ] 2.4 Run the mod tests.
+- [x] 2.4 Run the mod tests.
 
 ## 3. Controller: fail on the wrong game for the right reason
 

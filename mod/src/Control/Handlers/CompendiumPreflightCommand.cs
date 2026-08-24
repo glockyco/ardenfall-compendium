@@ -14,6 +14,8 @@ public interface IGameIdentitySource
     string ProductName { get; }
 
     string GameVersion { get; }
+
+    string BuildProfile { get; }
 }
 
 public sealed class UnityGameIdentitySource : IGameIdentitySource
@@ -21,6 +23,8 @@ public sealed class UnityGameIdentitySource : IGameIdentitySource
     public string ProductName => Application.productName;
 
     public string GameVersion => Application.version;
+
+    public string BuildProfile => Debug.isDebugBuild ? "development" : "release";
 }
 
 public sealed class CompendiumPreflightCommand

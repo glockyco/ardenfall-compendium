@@ -55,5 +55,7 @@ public sealed class CompendiumPreflightCommandTests
         public string ProductName { get; }
 
         public string GameVersion { get; }
+
+        public string BuildProfile => "release";
     }
 }

@@ -47,6 +47,7 @@ public sealed class RunFinalizeCommandTests
     private static readonly FakeCharacterRaceExtractionCache EmptyCharacterRaces = new();
     private static readonly FakeStatusEffectExtractionCache EmptyStatusEffects = new();
     private static readonly FakeNameSetExtractionCache EmptyNameSets = new();
+    private static readonly IGameIdentitySource FakeGameIdentity = new TestGameIdentitySource();
 
     [Fact]
     public async Task RejectsFailedPreflightBeforePublishing()
@@ -73,7 +74,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: FailingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: FailingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -109,7 +110,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -142,7 +143,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
 
         await Assert.ThrowsAsync<System.InvalidOperationException>(() =>
             command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None).AsTask());
@@ -175,7 +176,7 @@ public sealed class RunFinalizeCommandTests
             Diagnostics = new List<Diagnostic> { Diagnostic("fatal", "rowFatal") },
         });
         var cache = new FakeItemExtractionCache(new[] { Diagnostic("diagnostic", "walkerDiagnostic") });
-        var command = new RunFinalizeCommand(runs, cache, EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, cache, EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
@@ -243,7 +244,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -285,7 +286,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -322,7 +323,7 @@ public sealed class RunFinalizeCommandTests
             RowId = "item-a",
             DisplayIconColor = new AssetColorSnapshot(),
         });
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>(), assetPlan), EmptySpells, EmptyCharacters, EmptyStatusEffects, FakeMasterTooltipSource.Default, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -336,6 +337,8 @@ public sealed class RunFinalizeCommandTests
         Assert.Single(assetManifest.ItemIconMetadata);
         Assert.Contains("asset-manifest", result.Artifacts.Keys);
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
+        Assert.Equal("Ardenfall Demo 2025", manifest.ProductName);
+        Assert.Equal("release", manifest.BuildProfile);
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(assetManifestPath)), manifest.Hashes["asset-manifest.json"]);
     }
 
@@ -351,7 +354,7 @@ public sealed class RunFinalizeCommandTests
             Fields = new Dictionary<string, object?>(),
         });
         var source = FakeMasterTooltipSource.Default;
-        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), EmptySpells, EmptyCharacters, EmptyStatusEffects, source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+        var command = new RunFinalizeCommand(runs, new FakeItemExtractionCache(System.Array.Empty<Diagnostic>()), EmptySpells, EmptyCharacters, EmptyStatusEffects, source, EmptyStatTypes, EmptyItemCategories, EmptyItemTags, EmptyLocations, EmptyPortals, EmptyFactions, EmptyNpcs, quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -420,7 +423,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
         Assert.Empty(result.Diagnostics);
@@ -490,7 +493,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -547,7 +550,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -610,7 +613,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -667,7 +670,7 @@ public sealed class RunFinalizeCommandTests
             portals,
             EmptyFactions,
             EmptyNpcs,
-            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -732,7 +735,7 @@ public sealed class RunFinalizeCommandTests
             EmptyPortals,
             factions,
             EmptyNpcs,
-            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, preflight: PassingPreflight);
+            quests: EmptyQuests, characterRaces: EmptyCharacterRaces, nameSets: EmptyNameSets, gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(TestControlCommandContext.Create<RunFinalizeResult>(), new RunIdArgs { RunId = run.RunId }, CancellationToken.None);
 
@@ -814,7 +817,7 @@ public sealed class RunFinalizeCommandTests
             quests: EmptyQuests,
             characterRaces: raceCache,
             nameSets: nameSetCache,
-            preflight: PassingPreflight);
+            gameIdentity: FakeGameIdentity, preflight: PassingPreflight);
 
         var result = await command.ExecuteAsync(
             TestControlCommandContext.Create<RunFinalizeResult>(),
@@ -1132,6 +1135,15 @@ public sealed class RunFinalizeCommandTests
 
         public IReadOnlyList<Diagnostic> GetWalkerDiagnostics(CompendiumRun run) =>
             System.Array.Empty<Diagnostic>();
+    }
+
+    private sealed class TestGameIdentitySource : IGameIdentitySource
+    {
+        public string ProductName => "Ardenfall Demo 2025";
+
+        public string GameVersion => "test-version";
+
+        public string BuildProfile => "release";
     }
 
     private sealed class FakeMasterTooltipSource : IMasterTooltipSnapshotSource

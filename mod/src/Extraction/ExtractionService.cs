@@ -60,6 +60,8 @@ public sealed class ExtractionService
                     ["asset-manifest.json"] = ManifestBuilder.Sha256Hex(assetManifestJson),
                 },
                 extractorVersion: Plugin.Version,
+                productName: request.ProductName,
+                buildProfile: request.BuildProfile,
                 gameVersion: request.GameVersion);
             writer.WriteManifest(staging, manifest);
 

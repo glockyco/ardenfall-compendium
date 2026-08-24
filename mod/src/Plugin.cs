@@ -46,6 +46,8 @@ public sealed class Plugin : BaseUnityPlugin
         {
             OutputBaseDir = _outputDir.Value,
             GameVersion = Game.GameInfo.SnapshotVersionSegment,
+            ProductName = Application.productName,
+            BuildProfile = Debug.isDebugBuild ? "development" : "release",
         });
 
         if (!result.Preflight.Passed)

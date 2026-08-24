@@ -56,6 +56,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     private readonly INpcExtractionCache _npcs;
     private readonly IQuestExtractionCache _quests;
     private readonly IMasterTooltipSnapshotSource _masterTooltip;
+    private readonly IGameIdentitySource _gameIdentity;
     private readonly Func<PreflightReport> _preflight;
 
     public RunFinalizeCommand(
@@ -75,6 +76,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         IQuestExtractionCache quests,
         ICharacterRaceExtractionCache characterRaces,
         INameSetExtractionCache nameSets,
+        IGameIdentitySource gameIdentity,
         IPotionRecipeExtractionCache? potionRecipes = null,
         IEnchantmentExtractionCache? enchantments = null,
         Func<PreflightReport>? preflight = null
@@ -100,6 +102,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         _npcs = npcs;
         _quests = quests;
         _masterTooltip = masterTooltip;
+        _gameIdentity = gameIdentity;
         _preflight = preflight ?? PreflightRunner.Run;
     }
 
@@ -515,6 +518,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 diagnostics: diagnosticTotals,
                 contentHashes: hashes,
                 extractorVersion: Plugin.Version,
+                productName: _gameIdentity.ProductName,
+                buildProfile: _gameIdentity.BuildProfile,
                 gameVersion: run.GameVersion,
                 buildIdentifier: run.RunId,
                 availability: availability,
