@@ -34,7 +34,7 @@
 - [x] 5.2 Extract `PickablePlant` with its item reference, item count, regrow days and `giveXP`.
 - [x] 5.3 Canonicalise pickable plants, project placements and map points, and link each to the item it yields.
 - [x] 5.4 Add the ingredient-page section naming where a plant grows and what a harvest awards, reading each value from its placement.
-- [ ] 5.5 Carry `spikes/plant-xp-runtime.sh` and its rows into this change, since the measurement that justifies the family belongs with it.
+- [x] 5.5 Carry `spikes/plant-xp-runtime.sh` and its rows into this change, since the measurement that justifies the family belongs with it.
 
 ## 6. World spawns
 
