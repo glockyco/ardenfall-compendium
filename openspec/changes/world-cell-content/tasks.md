@@ -1,12 +1,12 @@
 ## 1. Walk mechanism
 
-- [ ] 1.1 Add a cell-scene inventory that enumerates build-settings scenes, filters `cell_` names, confirms each with `Application.CanStreamedLevelBeLoaded`, and reports cells with no scene.
-- [ ] 1.2 Add `world.plan` and `world.walkBatch` commands driven by a coroutine, loading a bounded number of scenes additively in build-index order, harvesting, and unloading.
-- [ ] 1.3 Capture and restore `Application.backgroundLoadingPriority`, including on failure, and unload every scene the walk loaded.
-- [ ] 1.4 Assert record counts per type are unchanged across the walk, and fail the run when they differ.
-- [ ] 1.5 Identify harvested objects from `GuidComponent.GuidString`, and diagnose an object with none instead of publishing it.
-- [ ] 1.6 Report per-cell object and harvested counts, plus component types seen but not modelled.
-- [ ] 1.7 Cover the inventory, the identity rule and the unchanged-records assertion in `mod-tests`.
+- [x] 1.1 Add a cell-scene inventory that enumerates build-settings scenes, filters `cell_` names, confirms each with `Application.CanStreamedLevelBeLoaded`, and reports cells with no scene.
+- [x] 1.2 Add `world.plan` and `world.walkBatch` commands driven by a coroutine, loading a bounded number of scenes additively in build-index order, harvesting, and unloading.
+- [x] 1.3 Capture and restore `Application.backgroundLoadingPriority`, including on failure, and unload every scene the walk loaded.
+- [x] 1.4 Assert record counts per type are unchanged across the walk, and fail the run when they differ.
+- [x] 1.5 Identify harvested objects from `GuidComponent.GuidString`, and diagnose an object with none instead of publishing it.
+- [x] 1.6 Report per-cell object and harvested counts, plus component types seen but not modelled.
+- [x] 1.7 Cover the inventory, the identity rule and the unchanged-records assertion in `mod-tests`.
 
 ## 2. Placed items
 
@@ -31,7 +31,7 @@
 ## 5. Pickable plants
 
 - [ ] 5.1 Add a pickable-plant descriptor with the `sceneObject` identity mechanism and a map layer.
-- [ ] 5.2 Extract `PickablePlant` with its item reference, item count, regrow days and `giveXP`.
+- [x] 5.2 Extract `PickablePlant` with its item reference, item count, regrow days and `giveXP`.
 - [ ] 5.3 Canonicalise pickable plants, project placements and map points, and link each to the item it yields.
 - [ ] 5.4 Add the ingredient-page section naming where a plant grows and what a harvest awards, reading each value from its placement.
 - [ ] 5.5 Carry `spikes/plant-xp-runtime.sh` and its rows into this change, since the measurement that justifies the family belongs with it.

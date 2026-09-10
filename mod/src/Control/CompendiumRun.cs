@@ -14,6 +14,7 @@ public sealed class CompendiumRun
     public string State { get; set; } = "open";
     public Dictionary<string, int> Counts { get; } = new();
     public Dictionary<string, CompendiumEntityRunPlan> EntityPlans { get; } = new();
+    public CompendiumWorldWalkPlan? WorldPlan { get; private set; }
     public bool Finalized => State == "finalized";
 
     public CompendiumEntityRunPlan SetEntityPlan(string entity, int total, int batchSize)
@@ -26,6 +27,13 @@ public sealed class CompendiumRun
         };
         EntityPlans[entity] = plan;
         return plan;
+    }
+
+    public CompendiumWorldWalkPlan SetWorldPlan(IReadOnlyList<string> cells, int batchSize)
+    {
+        WorldPlan = new CompendiumWorldWalkPlan { BatchSize = batchSize };
+        WorldPlan.Cells.AddRange(cells);
+        return WorldPlan;
     }
 
     public bool TryGetEntityPlan(string entity, out CompendiumEntityRunPlan plan) =>
@@ -70,6 +78,24 @@ public sealed class CompendiumEntityRunPlan
         }
         CompletedChunks.Add(new CompendiumEntityChunk { Offset = offset, Written = written });
         CompletedChunks.Sort((left, right) => left.Offset.CompareTo(right.Offset));
+    }
+}
+
+public sealed class CompendiumWorldWalkPlan
+{
+    [JsonProperty("cells")] public List<string> Cells { get; } = new();
+    [JsonProperty("batchSize")] public int BatchSize { get; set; }
+    [JsonProperty("walkedCells")] public List<string> WalkedCells { get; } = new();
+
+    [JsonIgnore]
+    public int Pending => Cells.Count - WalkedCells.Count;
+
+    public void MarkWalked(IEnumerable<string> cells)
+    {
+        foreach (var cell in cells)
+        {
+            if (!WalkedCells.Contains(cell)) WalkedCells.Add(cell);
+        }
     }
 }
 
