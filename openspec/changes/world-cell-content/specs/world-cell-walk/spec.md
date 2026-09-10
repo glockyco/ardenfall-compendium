@@ -81,7 +81,9 @@ The run manifest MUST record, per cell, the objects seen and the modelled object
 
 - **WHEN** a walk completes
 - **THEN** the manifest lists each cell with its object count and its harvested count
-- **AND** it lists which cells held no content, currently 12 of 27
+- **AND** it lists which cells held no content, measured by the walk itself rather than carried
+  forward, because the earlier figure of 12 of 27 predates `PickablePlant` and that component
+  occupies 12 cell scenes
 
 #### Scenario: An unmodelled type is visible
 

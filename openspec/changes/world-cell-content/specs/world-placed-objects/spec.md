@@ -33,6 +33,32 @@ Each `ItemSpawner` MUST become a canonical row with its cell, its world position
 - **THEN** the row records a diagnostic naming the cell and the spawner
 - **AND** the placement still publishes its position
 
+### Requirement: A pickable plant is an entity with a yield and a harvest reward
+
+Each `PickablePlant` MUST become a canonical row with its cell, its world position, the item it
+yields, the item count, the regrow interval and the harvest XP, and MUST project a placement and a
+map marker. Each value MUST come from the harvested placement. The compendium MUST NOT publish a
+per-species harvest constant, because a species is uniform only in the build that was measured.
+
+#### Scenario: Pickable plants are extracted
+
+- **WHEN** the walk harvests pickable plants, currently 140 placements across 12 cell scenes
+- **THEN** each becomes a canonical row referencing the item it yields
+- **AND** each carries its cell, map and position
+- **AND** each carries its item count, its regrow interval and its harvest XP
+
+#### Scenario: An ingredient page answers whether harvesting awards experience
+
+- **WHEN** an ingredient is yielded by placed plants
+- **THEN** the ingredient page lists those placements with the XP each harvest awards
+- **AND** a placement that awards none says so, rather than omitting the value
+
+#### Scenario: A harvest reward is read, never inferred
+
+- **WHEN** every placement of one species carries the same harvest XP
+- **THEN** the published value still comes from each placement
+- **AND** no species-level constant is emitted
+
 ### Requirement: A container is an entity with loot, a name and a lock
 
 Each `StaticContainer` MUST become a canonical row with its player-visible name, its loot lists, its additional items, its level, and its lock state, and MUST project a placement and a map marker.

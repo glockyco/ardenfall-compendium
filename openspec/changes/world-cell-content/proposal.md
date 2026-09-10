@@ -14,6 +14,17 @@ The roadmap defers container loot, item spawners, scene dialogue and world spawn
 | `RecordNPCSpawner`          |    62 | a `RecordReference` to a record we already extract                                       |
 | `LocalNPCSpawner`           |    55 | a direct `CharacterData` reference                                                       |
 | `SimpleDialogInteractable`  |    25 | `dialogs` and an authored `dialogName`                                                   |
+| `PickablePlant`             |   140 | an `ItemData` reference, item count, regrow days, and harvest XP                         |
+
+`PickablePlant` was added on 2026-09-10 by a later sweep, which is why the cell counts above predate
+it. It is a standalone `MonoBehaviour` rather than a `SimpleUtilityInteractable`
+(`Ardenfall/PickablePlant.cs:9`), so the original component set dropped it. Two producers agree on
+its count: an offline enumeration of `data.unity3d` and a live sweep of all 27 cells both reach 140
+placements, in 12 cell scenes, plus 3 preloaded prefabs. It carries the reader-facing values a
+harvest question needs — `item`, `itemCount`, `regrowDays` and `giveXP` — and awards `giveXP` on each
+harvest, scaled by `CharacterStatsController.ModifyExperienceGain` and repeatable once the plant
+regrows (`Ardenfall/PickablePlant.cs:202-206`). Identity is not an obstacle: `PickablePlant` requires
+`StaticSaveComponent`, which requires `GuidComponent`, so every plant satisfies the GUID rule below.
 
 Two earlier conclusions are wrong as a result. A prior measurement recorded `SimpleDialogInteractable.dialogs` as **0 at rest** and treated that as evidence the content sits behind an expensive traversal; there are 25, and they measured zero only because the scenes were not loaded. The same measurement priced the remaining item provenance — 278 items behind 182 lists — against a 683-cell walk that does not exist. The walk covers 27 loadable cell scenes.
 
@@ -29,6 +40,9 @@ So the largest remaining gap in reader value — where an item lies in the world
 - Extract **containers** from `StaticContainer`, with their loot lists, additional items, level, lock, player-visible name and owner, as placements on the map.
 - Extract **scene dialogue** from `SimpleDialogInteractable`, with its authored `dialogName` and its dialogue graphs, through the existing dialogue read models.
 - Extract **world spawns** from `LocalNPCSpawner` and `RecordNPCSpawner`, which is what shows that a character definition is instantiated in the world.
+- Extract **pickable plants** from `PickablePlant`, with the item they yield, its count, the regrow
+  interval and the harvest XP, as placements on the map, so an ingredient page answers where a plant
+  grows and whether harvesting it awards experience.
 - Project **ownership** from `OwnedObject`, whose `factionOwners` and `characterOwners` connect an item or a container to a faction or to a specific placed character.
 - Guarantee the walk changes nothing: restore `Application.backgroundLoadingPriority`, create no records, write no save state, and assert record counts are unchanged across the walk.
 
@@ -50,7 +64,7 @@ So the largest remaining gap in reader value — where an item lies in the world
 ### New Capabilities
 
 - `world-cell-walk`: the traversal, its identity mechanism, its side-effect guarantees, and its reporting.
-- `world-placed-objects`: placed items and containers as canonical rows, placements and pages.
+- `world-placed-objects`: placed items, containers and pickable plants as canonical rows, placements and pages.
 - `world-ownership`: faction and character ownership of placed objects.
 - `world-spawns`: what the world instantiates, and how that reaches a character definition.
 - `world-dialogue`: scene dialogue owners and their lines.
@@ -58,8 +72,8 @@ So the largest remaining gap in reader value — where an item lies in the world
 ## Impact
 
 - `mod/src/Entities/World` and the export lifecycle commands, which gain a walk phase alongside `entity.plan` and `entity.exportBatch`.
-- New descriptors for placed items, containers and scene dialogue owners, each declaring the `sceneObject` identity mechanism and a map layer.
+- New descriptors for placed items, containers, pickable plants and scene dialogue owners, each declaring the `sceneObject` identity mechanism and a map layer.
 - `pipeline/src/entities/*` for the new families, `pipeline/src/map/read-models.ts` for their layers, and the relationship registry for ownership and provenance predicates.
 - `site` item, container, location, character and faction pages.
-- `fixtures/synthetic/snapshot`, which gains a cell with a spawner, a container, an owner and a dialogue owner.
+- `fixtures/synthetic/snapshot`, which gains a cell with a spawner, a container, an owner, a dialogue owner, and two plants of one species with different harvest XP.
 - The earlier cell-count and at-rest figures, which this proposal corrects above.

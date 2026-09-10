@@ -28,27 +28,35 @@
 - [ ] 4.2 Register the ownership predicate, project edges, and render owner sections on character and faction pages.
 - [ ] 4.3 Diagnose an owner reference that does not resolve, and emit no edge for it.
 
-## 5. World spawns
+## 5. Pickable plants
 
-- [ ] 5.1 Extract `LocalNPCSpawner` with its character definition reference and position.
-- [ ] 5.2 Extract `RecordNPCSpawner` and resolve it to the record it refers to.
-- [ ] 5.3 State on a character definition page how the world reaches it, and report the counts per category in the manifest.
+- [ ] 5.1 Add a pickable-plant descriptor with the `sceneObject` identity mechanism and a map layer.
+- [ ] 5.2 Extract `PickablePlant` with its item reference, item count, regrow days and `giveXP`.
+- [ ] 5.3 Canonicalise pickable plants, project placements and map points, and link each to the item it yields.
+- [ ] 5.4 Add the ingredient-page section naming where a plant grows and what a harvest awards, reading each value from its placement.
+- [ ] 5.5 Carry `spikes/plant-xp-runtime.sh` and its rows into this change, since the measurement that justifies the family belongs with it.
 
-## 6. Scene dialogue
+## 6. World spawns
 
-- [ ] 6.1 Add a scene-dialogue-owner descriptor with the `sceneObject` identity mechanism and a map layer.
-- [ ] 6.2 Extract `SimpleDialogInteractable` with its name, interaction text and dialogue graphs, reusing the quest dialogue read models.
-- [ ] 6.3 Render a scene dialogue owner page with its lines through the shared rich-text contract.
+- [ ] 6.1 Extract `LocalNPCSpawner` with its character definition reference and position.
+- [ ] 6.2 Extract `RecordNPCSpawner` and resolve it to the record it refers to.
+- [ ] 6.3 State on a character definition page how the world reaches it, and report the counts per category in the manifest.
 
-## 7. Fixtures and gate
+## 7. Scene dialogue
 
-- [ ] 7.1 Extend the synthetic snapshot with a cell holding a placed item, a container with loot and a lock, an owned object, a local spawner and a scene dialogue owner.
-- [ ] 7.2 Update pipeline, site and fixture tests for the new families, layers and relationship sections.
-- [ ] 7.3 Run the full gate in `AGENTS.md`, then a live export including the walk, and record per-cell counts, diagnostics and walk duration.
-- [ ] 7.4 Verify the walk is side-effect free by exporting twice in one session and asserting equal counts.
+- [ ] 7.1 Add a scene-dialogue-owner descriptor with the `sceneObject` identity mechanism and a map layer.
+- [ ] 7.2 Extract `SimpleDialogInteractable` with its name, interaction text and dialogue graphs, reusing the quest dialogue read models.
+- [ ] 7.3 Render a scene dialogue owner page with its lines through the shared rich-text contract.
 
-## 8. Documentation and cleanup
+## 8. Fixtures and gate
 
-- [ ] 8.1 Record the measured walk cost in this change, so a later change prices its own traversal against a measurement rather than an estimate.
-- [ ] 8.2 State in `tile-capture-basemap` that content harvesting and tile capture share the streaming mechanism and not the traversal cost.
-- [ ] 8.3 Archive this change after the gate passes.
+- [ ] 8.1 Extend the synthetic snapshot with a cell holding a placed item, a container with loot and a lock, an owned object, a local spawner, a scene dialogue owner, and two plants of one species whose harvest XP differs, so a species-level constant cannot pass the gate.
+- [ ] 8.2 Update pipeline, site and fixture tests for the new families, layers and relationship sections.
+- [ ] 8.3 Run the full gate in `AGENTS.md`, then a live export including the walk, and record per-cell counts, diagnostics and walk duration.
+- [ ] 8.4 Verify the walk is side-effect free by exporting twice in one session and asserting equal counts.
+
+## 9. Documentation and cleanup
+
+- [ ] 9.1 Record the measured walk cost in this change, so a later change prices its own traversal against a measurement rather than an estimate.
+- [ ] 9.2 State in `tile-capture-basemap` that content harvesting and tile capture share the streaming mechanism and not the traversal cost.
+- [ ] 9.3 Archive this change after the gate passes.
