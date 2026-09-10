@@ -66,24 +66,38 @@ none.
 4. Read the component with `Resources.FindObjectsOfTypeAll<T>()`, and keep the items whose
    `gameObject.scene.buildIndex` equals `i`. The unfiltered result also holds preloaded prefabs, which
    report an empty scene name and build index `-1`.
-5. Read the values twice, and accept a count that stops changing.
+5. Read the count in one statement and the rows in another, then reconcile them. A dump that holds
+   fewer rows than the count lost data in the client, not in the game.
 6. Call `SceneManager.UnloadSceneAsync(i)` before the next cell.
-7. End the sweep with `SceneManager.sceneCount` at `1`, then `UnityEngine.Application.Quit(0)`.
+7. End the sweep with `SceneManager.sceneCount` at `1`. Quit only when the sweep is the last
+   measurement of the session, because a relaunch waits on Steam.
 
 A sweep of the Demo's 27 cells costs about 90 seconds and needs no character, no teleport, and no
 operator flag.
+
+An unseen type cannot be told apart from an absent one, so cross-check a total against a second
+producer before it justifies anything. The sweep and an offline enumeration of `data.unity3d` both
+reached 140 placed `PickablePlant` components across 27 cells, which is what makes that count a
+census rather than a floor.
 
 ### Capture a UI surface
 
 Capture a picture when a question is about what a player sees. Read the surface the game renders, not
 the source that builds it.
 
-- Write the file from inside the game: `UnityEngine.ScreenCapture.CaptureScreenshot(@"Z:\<host path>")`.
-  Wine maps the host root to `Z:`, so the game writes straight into `spikes/captures/`. The call
-  returns at once and the file appears one frame later.
-- Do not use `unity.screenshot.capture` for a file. The command works and reports its size, but the
-  PNG stays in an in-memory artifact, and the protocol has no read channel for that artifact. The SDK
-  fails with `protocol must be http:, https: or s3:`.
+- Write the file from inside the game, with one absolute Windows path:
+  `UnityEngine.ScreenCapture.CaptureScreenshot(@"Z:\Users\glockyco\src\github.com\glockyco\ardenfall-compendium\spikes\captures\hud.png")`.
+  Wine maps the host root to `Z:`, so the game writes straight into `spikes/captures/`. A relative
+  argument is legal for that call and lands inside the game's persistent data directory instead.
+- Confirm the host file exists and is not empty. The call returns at once, writes one frame later,
+  and reports nothing, so a capture that never landed is silent.
+- `unity.screenshot.capture` is the other route, and it needs HotRepl at `03f4cb2` or later deployed
+  in the game. Before that commit the PNG stayed in an unreadable in-memory artifact and the SDK
+  failed with `protocol must be http:, https: or s3:`. From that commit the command returns a
+  file-backed reference under the engine's artifact directory, which is
+  `C:\users\crossover\AppData\Local\HotRepl\artifacts\<jobId>\screenshot` inside the bottle. Reading
+  it from macOS needs `connect({ resolveArtifactPath })` to map `C:\` onto the bottle's `drive_c`,
+  which the published `@hotrepl/sdk` 4.0.1 does not have.
 - Select a surface by its typed layer on `GameGUIManager`, through
   `PlayerCharacter.instance.GameUI.OpenLayer(...)`. Never drive the interface with synthetic input.
   `hudLayer`, `pausePanel`, `optionsPanel` and `levelUpLayer` open with no arguments.
@@ -160,9 +174,11 @@ supported in a dynamic module.` The same calls succeed one at a time.
 - Select the subject of a probe by the state under test. A cell probe that names a scene returns
   `not-loaded` when the game streamed that scene out, and that answer proves nothing. Ask which loaded
   scene holds the component you need, then probe that scene.
-- Treat `Scene.isLoaded` as a load signal, not as a readiness signal. A `PrefabCollection` spawns its
-  children after that flag turns true. A cell sweep of `cell_overworld_-1.-7` read 40 `PickablePlant`
-  components on the first pass, and 46 on a second pass of the same loaded scene.
+- Never pipe a probe's output through `head` or `tail`. A sweep script capped each cell's row dump at
+  40 lines, `cell_overworld_-1.-7` holds 47 plants, and the 7 missing rows read exactly like a game
+  that had not finished spawning. `Scene.isLoaded` was accurate: a direct count one poll after that
+  flag turned true already reported 47, and it still reported 47 five seconds later. Suspect the
+  client before the game, and reconcile a dump against a count.
 - Restore every flag a probe sets. `PlayerCharacter.GodMode` is the game's damage floor, and the free
   camera stays clamped to 10 units from the player while `enableDebugTools` is false. That flag also
   changes camera speed, camera smoothing, and the debug interfaces.
@@ -188,8 +204,9 @@ until a live read of the same component agrees. The flake pins no asset reader, 
 is the answer.
 
 For each game-logic decision, state one question, run one probe, and record one result.
-A probe targets one game build and decays with that build. The repository holds no probe.
-Git ignores `spikes/`. Keep probes in `spikes/`.
+A probe targets one game build and decays with that build. Write it in gitignored `spikes/`.
+A probe that a change uses then travels with that change and stays in it after the archive, which
+`openspec/specs/evidence-standard/spec.md` owns. The repository holds no ledger beside it.
 
 A negative result needs a positive control. Run the same probe against a case that carries the value.
 Record both results in the change that uses them.
