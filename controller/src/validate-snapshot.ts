@@ -6,11 +6,13 @@ export interface SnapshotValidationResult {
   counts: Record<string, number>;
   productName: string;
   buildProfile: string;
+  pluginSha256: string;
 }
 
 interface ManifestShape {
   productName?: string;
   buildProfile?: string;
+  pluginSha256?: string;
   counts?: Record<string, number>;
   hashes?: Record<string, string>;
   diagnostics?: { fatal?: number };
@@ -37,6 +39,9 @@ export async function validateSnapshot(snapshotDir: string): Promise<SnapshotVal
 
   if (!manifest.productName) throw new Error("manifest is missing productName");
   if (!manifest.buildProfile) throw new Error("manifest is missing buildProfile");
+  // A snapshot has to name the plugin that produced it, not only the game: extractorVersion is a
+  // hand-maintained constant and is equal across builds.
+  if (!manifest.pluginSha256) throw new Error("manifest is missing pluginSha256");
   if (Object.keys(hashes).length === 0) throw new Error("manifest is missing hashes");
   for (const descriptor of descriptors) {
     const file = descriptor.file;
@@ -126,6 +131,7 @@ export async function validateSnapshot(snapshotDir: string): Promise<SnapshotVal
     itemCount: resultCounts.item ?? 0,
     counts: resultCounts,
     productName: manifest.productName,
+    pluginSha256: manifest.pluginSha256,
     buildProfile: manifest.buildProfile,
   };
 }

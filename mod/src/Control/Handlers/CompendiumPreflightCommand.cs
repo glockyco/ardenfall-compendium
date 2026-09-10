@@ -31,13 +31,16 @@ public sealed class CompendiumPreflightCommand
     : IControlCommandHandler<EmptyArgs, CompendiumPreflightResult>
 {
     private readonly IGameIdentitySource _gameIdentity;
+    private readonly IPluginIdentitySource _pluginIdentity;
     private readonly System.Func<PreflightReport> _preflight;
 
     public CompendiumPreflightCommand(
         IGameIdentitySource? gameIdentity = null,
-        System.Func<PreflightReport>? preflight = null)
+        System.Func<PreflightReport>? preflight = null,
+        IPluginIdentitySource? pluginIdentity = null)
     {
         _gameIdentity = gameIdentity ?? new UnityGameIdentitySource();
+        _pluginIdentity = pluginIdentity ?? new AssemblyPluginIdentitySource();
         _preflight = preflight ?? PreflightRunner.Run;
     }
 
@@ -66,6 +69,13 @@ public sealed class CompendiumPreflightCommand
                     Checks = report.Checks,
                     ProductName = RequireIdentity(_gameIdentity.ProductName, "Unity product name"),
                     GameVersion = RequireIdentity(_gameIdentity.GameVersion, "Unity game version"),
+                    PluginPath = RequireIdentity(_pluginIdentity.Path, "plugin assembly path"),
+                    PluginSha256 = RequireIdentity(
+                        _pluginIdentity.Sha256,
+                        "plugin assembly digest"),
+                    PluginModifiedAt = RequireIdentity(
+                        _pluginIdentity.ModifiedAt,
+                        "plugin assembly write time"),
                 }
             )
         );

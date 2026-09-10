@@ -15,6 +15,7 @@ public static class ManifestBuilder
         DiagnosticTotals diagnostics,
         IDictionary<string, string> contentHashes,
         string extractorVersion,
+        string pluginSha256,
         string productName,
         string buildProfile,
         string? gameVersion = null,
@@ -24,6 +25,9 @@ public static class ManifestBuilder
         {
             SchemaVersion = 1,
             ExtractorVersion = extractorVersion,
+            // The digest of the plugin that produced the snapshot. The version string above is
+            // maintained by hand and is equal across builds, so it cannot name a build.
+            PluginSha256 = RequireIdentity(pluginSha256, "plugin assembly digest"),
             GameVersion = gameVersion,
             BuildIdentifier = buildIdentifier,
             ProductName = RequireIdentity(productName, "Unity product name"),

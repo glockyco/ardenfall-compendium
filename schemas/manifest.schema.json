@@ -9,6 +9,7 @@
     "productName",
     "buildProfile",
     "extractorVersion",
+    "pluginSha256",
     "extractedAt",
     "source",
     "preflight",
@@ -23,6 +24,7 @@
     "productName": { "type": "string", "minLength": 1 },
     "buildProfile": { "type": "string", "minLength": 1 },
     "extractorVersion": { "type": "string", "minLength": 1 },
+    "pluginSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "extractedAt": { "type": "string", "format": "date-time" },
     "source": {
       "oneOf": [

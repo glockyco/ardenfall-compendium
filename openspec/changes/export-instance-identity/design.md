@@ -19,17 +19,19 @@ See proposal.md — Why. Three constraints shape the approach.
 
 ## Decisions
 
-### 1. The identity is the plugin assembly's module version id
+### 1. The identity is the SHA-256 of the plugin assembly file
 
-`Assembly.GetExecutingAssembly().ManifestModule.ModuleVersionId` is a fresh GUID for every compilation, so it separates two builds of the same source. The mod reports it beside `Assembly.Location` and `File.GetLastWriteTimeUtc`, which make a mismatch legible to a reader.
+The mod hashes the bytes of its own assembly, found through `typeof(Plugin).Assembly.Location`, and reports the digest with the path and the file's last write time. The controller hashes the deployed `ArdenfallCompendium/ArdenfallCompendium.dll` under `ARDENFALL_PLUGINS_DIR` and compares digests. Equal bytes are the same build, and a rebuild changes them.
 
-Alternatives considered. A file hash means the controller reads the DLL twice and compares bytes; the MVID is already a content-derived identity and needs no reader on the game side. `Plugin.Version` is a maintained constant and cannot distinguish builds. The assembly's build timestamp is not reliable under deterministic builds.
+**The digest is read while the plugin loads, not when preflight runs.** The first implementation read it lazily and a live test passed when it had to fail: a deploy into a running game replaces the file at `Assembly.Location`, so the running plugin hashed the new build and reported itself as current. The plugin now constructs one identity in `Awake` and every command shares it, which is also what the log line at startup prints.
 
-### 2. The controller reads the MVID from the deployed file
+Alternatives considered. `Assembly.ManifestModule.ModuleVersionId` is also per-compilation, and an earlier draft of this design chose it, but reading a GUID out of a deployed file means parsing the PE header, the CLI header, the metadata root, the stream headers and the Module table to reach the `#GUID` heap. That is a second reader of a binary format on the critical path of every export, for no additional guarantee over a hash of the same bytes. `Plugin.Version` is a maintained constant and cannot distinguish builds. The assembly's build timestamp is not reliable under deterministic builds.
 
-The controller cannot compare a Windows path to a host path, so it compares identities rather than locations. It reads the MVID out of the deployed `ArdenfallCompendium.dll` under `ARDENFALL_PLUGINS_DIR`. That value lives in the CLI header's GUID heap, so the reader parses the PE and metadata headers rather than shelling out to a .NET tool the export does not otherwise need.
+The path and the write time stay in the failure message as evidence for a reader; only the digest is compared, because the game reports a Windows path for a file the controller holds by its host path.
 
-The reported path stays in the failure message as evidence, not as the comparison.
+### 2. The port guard already covers the second half of the requirement
+
+`assertSingleHotReplProcess` in `controller/src/export-orchestrator.ts:427` already fails when zero or more than one process holds the HotRepl port, so "more than one instrumented game can answer" is caught before the connection. What remains unguarded is one process running an old build of this mod, which is what the digest comparison adds.
 
 ### 3. A missing identity fails the export
 
@@ -37,7 +39,7 @@ An absent field must not silently reduce the check to the product-name compariso
 
 ## Risks / Trade-offs
 
-- [The PE and metadata parse is a second reader of a binary format] → Keep it to the path from the COFF header to the `#GUID` heap, cover it with a test against the deployed DLL, and fail loudly rather than returning a default when a header is absent.
+- [`Assembly.Location` is empty when a loader loads a plugin from bytes rather than from a file] → BepInEx 5 loads plugins from disk, so the location is present. Report the absence as a failed export rather than as a skipped comparison, which is what makes the case visible if a loader ever changes.
 - [A developer who edits the mod without redeploying now sees a failed export instead of a confusing snapshot] → That is the intent. The message names `bun run hotrepl:setup` as the fix.
 - [`ARDENFALL_PLUGINS_DIR` is absent in a shell that never deployed] → Fail with the missing-variable message the other scripts already use, rather than skipping the comparison.
 

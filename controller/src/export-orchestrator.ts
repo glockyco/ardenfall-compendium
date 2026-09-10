@@ -6,6 +6,7 @@ import type {
   JobCancelResult,
   JobPollResult,
 } from "./control-types";
+import { assertDeployedPluginAnswered } from "./plugin-identity";
 import { validateSnapshot } from "./validate-snapshot";
 import { waitForWorld } from "./wait-for-world";
 
@@ -54,6 +55,12 @@ export interface ExportOptions {
   /** The WebSocket URL that identifies the HotRepl session. */
   url: string;
   listHotReplProcesses?: ListHotReplProcesses;
+  /**
+   * Plugin directory the deploy step writes. The export compares the plugin that answered against
+   * the plugin deployed here, so it is required rather than optional: without it the comparison
+   * would silently not happen.
+   */
+  pluginsDir: string;
   outputBaseDir: string;
   pipelineOutDir: string;
   runPipeline?: (snapshotDir: string, pipelineOutDir: string) => Promise<void>;
@@ -143,7 +150,10 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
           const result = await options.client.call(name, args, {
             timeoutMs: CONTROLLER_TIMEOUTS.commandMs,
           });
-          if (name === "compendium.preflight") assertExpectedProductName(result.output);
+          if (name === "compendium.preflight") {
+            assertExpectedProductName(result.output);
+            await assertDeployedPluginAnswered(result.output, options.pluginsDir);
+          }
           return result;
         },
       },
@@ -157,6 +167,7 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
       { timeoutMs: CONTROLLER_TIMEOUTS.commandMs },
     );
     assertExpectedProductName(preflight.output);
+    await assertDeployedPluginAnswered(preflight.output, options.pluginsDir);
     if (preflight.output.ready !== true) throw new Error(formatPreflightFailure(preflight.output));
   }
   log({ phase: "preflight", status: "completed" });

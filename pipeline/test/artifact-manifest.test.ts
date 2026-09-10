@@ -241,6 +241,7 @@ function fixtureSnapshot(kind: "live-game-export" | "synthetic-fixture"): LoadSn
       productName: "Ardenfall Demo 2025",
       buildProfile: "release",
       extractorVersion: "0.1.0",
+      pluginSha256: "0000000000000000000000000000000000000000000000000000000000000000",
       extractedAt: "2026-05-15T00:00:00.000Z",
       preflight: { passed: true, completedAt: "2026-05-15T00:00:00.000Z", checks: [] },
       counts: { item: 1 },

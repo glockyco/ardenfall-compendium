@@ -33,6 +33,7 @@ const testManifest: SnapshotManifest = {
   productName: "synthetic-fixture",
   buildProfile: "synthetic",
   extractorVersion: "test",
+  pluginSha256: "0000000000000000000000000000000000000000000000000000000000000000",
   extractedAt: "2026-01-01T00:00:00.000Z",
   source: { kind: "synthetic-fixture", fixtureName: "validation-test" },
   preflight: { passed: true, completedAt: "2026-01-01T00:00:00.000Z", checks: [] },

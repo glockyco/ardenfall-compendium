@@ -5,6 +5,7 @@ interface CliOptions {
   url: string;
   outputBaseDir: string;
   pipelineOutDir: string;
+  pluginsDir: string;
   waitForWorld: boolean;
   noQuit: boolean;
 }
@@ -13,7 +14,7 @@ async function main(argv: string[]): Promise<void> {
   const [command, ...args] = argv;
   if (command !== "export")
     throw new Error(
-      "Usage: controller export --url <ws-url> --output <dir> --pipeline-out <dir> [--no-wait-for-world] [--no-quit]",
+      "Usage: controller export --url <ws-url> --output <dir> --pipeline-out <dir> --plugins <dir> [--no-wait-for-world] [--no-quit]",
     );
   const options = parseArgs(args);
   const client = new SdkControllerClient(options.url);
@@ -23,6 +24,7 @@ async function main(argv: string[]): Promise<void> {
       url: options.url,
       outputBaseDir: options.outputBaseDir,
       pipelineOutDir: options.pipelineOutDir,
+      pluginsDir: options.pluginsDir,
       waitForWorld: options.waitForWorld,
       noQuit: options.noQuit,
       log: (event) => process.stdout.write(`${JSON.stringify(event)}\n`),
@@ -63,10 +65,14 @@ function parseArgs(args: string[]): CliOptions {
   const url = values.get("--url");
   const outputBaseDir = values.get("--output");
   const pipelineOutDir = values.get("--pipeline-out");
+  // The export proves which plugin answered by comparing it against the deployed one, so the
+  // plugin directory is required. An optional value here would switch that proof off silently.
+  const pluginsDir = values.get("--plugins");
   if (!url) throw new Error("--url is required");
   if (!outputBaseDir) throw new Error("--output is required");
   if (!pipelineOutDir) throw new Error("--pipeline-out is required");
-  return { url, outputBaseDir, pipelineOutDir, waitForWorld, noQuit };
+  if (!pluginsDir) throw new Error("--plugins is required");
+  return { url, outputBaseDir, pipelineOutDir, pluginsDir, waitForWorld, noQuit };
 }
 
 if (import.meta.main) {

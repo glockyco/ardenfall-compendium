@@ -253,6 +253,8 @@ public sealed class RunFinalizeCommandTests
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
         Assert.Equal(0, manifest.Diagnostics.Fatal);
         Assert.Equal(1, manifest.Diagnostics.Diagnostic);
+        // A snapshot names the plugin that produced it, so a reader can tell two builds apart.
+        Assert.Matches("^[0-9a-f]{64}$", manifest.PluginSha256);
 
         var diagnosticsPath = Path.Combine(Path.GetDirectoryName(manifestPath)!, "diagnostics.json");
         Assert.True(File.Exists(diagnosticsPath));

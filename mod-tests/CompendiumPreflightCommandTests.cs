@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using ArdenfallCompendium.Control;
 using ArdenfallCompendium.Control.Handlers;
 using ArdenfallCompendium.Control.Results;
 using ArdenfallCompendium.Dtos;
@@ -26,7 +28,8 @@ public sealed class CompendiumPreflightCommandTests
                 {
                     new() { Name = "test", Ok = true },
                 },
-            });
+            },
+            new FakePluginIdentitySource());
 
         var result = await command.ExecuteAsync(
             TestControlCommandContext.Create<CompendiumPreflightResult>(),
@@ -38,10 +41,44 @@ public sealed class CompendiumPreflightCommandTests
         Assert.True(result.Output.Passed);
         Assert.Equal("Ardenfall Demo 2025", result.Output.ProductName);
         Assert.Equal("0.0.10.91", result.Output.GameVersion);
+        Assert.Equal("/plugins/ArdenfallCompendium.dll", result.Output.PluginPath);
+        Assert.Equal(new string('a', 64), result.Output.PluginSha256);
+        Assert.Equal("2026-09-10T18:00:00.0000000Z", result.Output.PluginModifiedAt);
 
         var json = JObject.Parse(JsonConvert.SerializeObject(result.Output));
         Assert.Equal("Ardenfall Demo 2025", json["productName"]?.Value<string>());
         Assert.Equal("0.0.10.91", json["gameVersion"]?.Value<string>());
+        Assert.Equal(new string('a', 64), json["pluginSha256"]?.Value<string>());
+        Assert.Equal("/plugins/ArdenfallCompendium.dll", json["pluginPath"]?.Value<string>());
+    }
+
+    [Fact]
+    public async Task RefusesToReportReadinessWithoutAPluginDigest()
+    {
+        var command = new CompendiumPreflightCommand(
+            new FakeGameIdentitySource("Ardenfall Demo 2025", "0.0.10.91"),
+            () => new PreflightReport { Passed = true },
+            new FakePluginIdentitySource(sha256: string.Empty));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await command.ExecuteAsync(
+                TestControlCommandContext.Create<CompendiumPreflightResult>(),
+                new EmptyArgs(),
+                CancellationToken.None));
+    }
+
+    private sealed class FakePluginIdentitySource : IPluginIdentitySource
+    {
+        public FakePluginIdentitySource(string? sha256 = null)
+        {
+            Sha256 = sha256 ?? new string('a', 64);
+        }
+
+        public string Path => "/plugins/ArdenfallCompendium.dll";
+
+        public string Sha256 { get; }
+
+        public string ModifiedAt => "2026-09-10T18:00:00.0000000Z";
     }
 
     private sealed class FakeGameIdentitySource : IGameIdentitySource

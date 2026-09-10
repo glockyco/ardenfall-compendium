@@ -18,15 +18,21 @@ public sealed class Plugin : BaseUnityPlugin
     private Triggers.ReadinessMonitor _readiness = null!;
     private Control.CompendiumRunManager _runs = null!;
     private Control.CompendiumCommandRegistry _commands = null!;
+    private Control.IPluginIdentitySource _pluginIdentity = null!;
 
     private void Awake()
     {
+        // Captured while the assembly is loading. A deploy into a running game replaces this file,
+        // and a later read would then report the new build as the running one.
+        _pluginIdentity = new Control.AssemblyPluginIdentitySource();
         _hotkey = Config.Bind("Triggers", "Hotkey", new KeyboardShortcut(KeyCode.F8), "Trigger snapshot extraction");
         _outputDir = Config.Bind("Output", "BaseDir", Path.Combine(Paths.PluginPath, "ArdenfallCompendium", "snapshots"), "Where to write snapshots");
         _runs = new Control.CompendiumRunManager();
-        _commands = new Control.CompendiumCommandRegistry(_runs, _outputDir.Value);
+        _commands = new Control.CompendiumCommandRegistry(_runs, _outputDir.Value, _pluginIdentity);
         _readiness = new Triggers.ReadinessMonitor(Logger);
-        Logger.LogInfo($"{Name} {Version} loaded; hotkey {_hotkey.Value} will extract.");
+        Logger.LogInfo(
+            $"{Name} {Version} loaded from {_pluginIdentity.Path} (sha256 {_pluginIdentity.Sha256}); "
+                + $"hotkey {_hotkey.Value} will extract.");
     }
 
     private void Update()
@@ -47,6 +53,7 @@ public sealed class Plugin : BaseUnityPlugin
             OutputBaseDir = _outputDir.Value,
             GameVersion = Game.GameInfo.SnapshotVersionSegment,
             ProductName = Application.productName,
+            PluginSha256 = _pluginIdentity.Sha256,
             BuildProfile = Debug.isDebugBuild ? "development" : "release",
         });
 

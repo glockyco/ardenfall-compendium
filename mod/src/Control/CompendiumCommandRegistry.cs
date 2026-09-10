@@ -25,8 +25,13 @@ public sealed class CompendiumCommandRegistry : IDisposable
 {
     private readonly List<IDisposable> _registrations = new();
 
-    public CompendiumCommandRegistry(CompendiumRunManager runs, string outputBaseDir)
+    public CompendiumCommandRegistry(
+        CompendiumRunManager runs,
+        string outputBaseDir,
+        IPluginIdentitySource pluginIdentity)
     {
+        if (pluginIdentity is null) throw new ArgumentNullException(nameof(pluginIdentity));
+
         var items = new ItemExtractionService(new BuiltLookupTableItemAssetSource());
         var statTypes = new StatTypeExtractionService(new LoadedStatTypeAssetSource());
         var spells = new SpellExtractionService(new LoadedSpellAssetSource());
@@ -46,13 +51,13 @@ public sealed class CompendiumCommandRegistry : IDisposable
         var gameIdentity = new Handlers.UnityGameIdentitySource();
 
         Register(new Handlers.CompendiumInfoCommand());
-        Register(new Handlers.CompendiumPreflightCommand(gameIdentity));
+        Register(new Handlers.CompendiumPreflightCommand(gameIdentity, pluginIdentity: pluginIdentity));
         Register(new Handlers.ContinueFromMenuCommand());
         Register(new Handlers.RunBeginCommand(runs, outputBaseDir));
         Register(new Handlers.RunStatusCommand(runs));
         Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs, items));
-        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, potionRecipes: potionRecipes, enchantments: enchantments, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals, factions: factions, npcs: npcs, quests: quests, characterRaces: characterRaces, nameSets: nameSets, gameIdentity: gameIdentity));
+        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, potionRecipes: potionRecipes, enchantments: enchantments, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals, factions: factions, npcs: npcs, quests: quests, characterRaces: characterRaces, nameSets: nameSets, gameIdentity: gameIdentity, pluginIdentity: pluginIdentity));
         Register(new Handlers.RunDiscardCommand(runs, new IExtractionCache[]
         {
             items,

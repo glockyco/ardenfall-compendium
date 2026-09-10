@@ -21,6 +21,15 @@ public sealed class CompendiumPreflightResult
     [JsonProperty("gameVersion", Required = Required.Always)]
     public string GameVersion { get; set; } = string.Empty;
 
+    [JsonProperty("pluginPath", Required = Required.Always)]
+    public string PluginPath { get; set; } = string.Empty;
+
+    [JsonProperty("pluginSha256", Required = Required.Always)]
+    public string PluginSha256 { get; set; } = string.Empty;
+
+    [JsonProperty("pluginModifiedAt", Required = Required.Always)]
+    public string PluginModifiedAt { get; set; } = string.Empty;
+
     [JsonProperty("checks", Required = Required.Always)]
     public List<PreflightCheck> Checks { get; set; } = new();
 }

@@ -9,6 +9,26 @@ import {
 } from "../src/export-orchestrator";
 import { validateSnapshot } from "../src/validate-snapshot";
 
+/**
+ * A deployed plugin the export can hash. The export refuses to run when the plugin that answered
+ * does not match this file, so every test needs one.
+ */
+async function deployedPluginFixture(): Promise<{ dir: string; sha256: string }> {
+  const dir = await mkdtemp(join(tmpdir(), "plugins-"));
+  await mkdir(join(dir, "ArdenfallCompendium"), { recursive: true });
+  const bytes = new TextEncoder().encode("deployed-plugin-bytes");
+  await writeFile(join(dir, "ArdenfallCompendium", "ArdenfallCompendium.dll"), bytes);
+  return { dir, sha256: new Bun.CryptoHasher("sha256").update(bytes).digest("hex") };
+}
+
+const PLUGIN = await deployedPluginFixture();
+
+const RUNNING_PLUGIN = {
+  pluginPath: "C:\\plugins\\ArdenfallCompendium\\ArdenfallCompendium.dll",
+  pluginSha256: PLUGIN.sha256,
+  pluginModifiedAt: "2026-09-10T18:00:00.0000000Z",
+};
+
 function command(name: string, kind: "sync" | "job" = "sync", mutatesState = false) {
   return { name, version: 1, kind, mutatesState };
 }
@@ -55,7 +75,12 @@ class FakeClient implements ControllerClient {
       ...(options === undefined ? {} : { options }),
     });
     if (name === "compendium.preflight") {
-      const output = this.preflightResults.shift() ?? this.preflightResult;
+      // Every deployed build reports its plugin identity, so the fake supplies one unless a
+      // test overrides it.
+      const output = {
+        ...RUNNING_PLUGIN,
+        ...(this.preflightResults.shift() ?? this.preflightResult),
+      };
       return { status: "ok", output, artifacts: {} };
     }
     if (name === "run.begin")
@@ -127,6 +152,7 @@ describe("exportCompendium", () => {
       client,
       url: "ws://127.0.0.1:19612",
       listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+      pluginsDir: PLUGIN.dir,
       outputBaseDir: "/tmp/out",
       pipelineOutDir: "/tmp/pipeline",
       validate: async () => ({ itemCount: 150 }),
@@ -177,6 +203,7 @@ describe("exportCompendium", () => {
       client,
       url: "ws://127.0.0.1:19612",
       listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+      pluginsDir: PLUGIN.dir,
       outputBaseDir: "/tmp/out",
       pipelineOutDir: "/tmp/pipeline",
       validate: async () => ({ itemCount: 150 }),
@@ -198,6 +225,7 @@ describe("exportCompendium", () => {
         client,
         url: "ws://127.0.0.1:19612",
         listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        pluginsDir: PLUGIN.dir,
         outputBaseDir: "/tmp/out",
         pipelineOutDir: "/tmp/pipeline",
         jobTimeoutMs: 10,
@@ -216,6 +244,7 @@ describe("exportCompendium", () => {
       client,
       url: "ws://127.0.0.1:19612",
       listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+      pluginsDir: PLUGIN.dir,
       outputBaseDir: "/tmp/out",
       pipelineOutDir: "/tmp/pipeline",
       validate: async () => ({ itemCount: 150 }),
@@ -234,6 +263,7 @@ describe("exportCompendium", () => {
         client,
         url: "ws://127.0.0.1:19612",
         listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        pluginsDir: PLUGIN.dir,
         outputBaseDir: "/tmp/out",
         pipelineOutDir: "/tmp/pipeline",
         validate: async () => ({ itemCount: 150 }),
@@ -258,6 +288,7 @@ describe("exportCompendium", () => {
       client,
       url: "ws://127.0.0.1:19612",
       listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+      pluginsDir: PLUGIN.dir,
       outputBaseDir: "/tmp/out",
       pipelineOutDir: "/tmp/pipeline",
       validate: async () => ({ itemCount: 150 }),
@@ -276,6 +307,7 @@ describe("exportCompendium", () => {
       client,
       url: "ws://127.0.0.1:19612",
       listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+      pluginsDir: PLUGIN.dir,
       outputBaseDir: "/tmp/out",
       pipelineOutDir: "/tmp/pipeline",
       validate: async () => ({ itemCount: 150 }),
@@ -307,6 +339,7 @@ describe("exportCompendium", () => {
       client,
       url: "ws://127.0.0.1:19612",
       listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+      pluginsDir: PLUGIN.dir,
       outputBaseDir: "/tmp/out",
       pipelineOutDir: "/tmp/pipeline",
       validate: async () => ({ itemCount: 150 }),
@@ -339,12 +372,77 @@ describe("exportCompendium", () => {
         client,
         url: "ws://127.0.0.1:19612",
         listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        pluginsDir: PLUGIN.dir,
         outputBaseDir: "/tmp/out",
         pipelineOutDir: "/tmp/pipeline",
       }),
     ).rejects.toThrow(
       /compendium\.preflight is not ready: ardenfallGame: ArdenfallGame\.instance is null; worldData: ArdenfallGame\.instance\.worldData is null/,
     );
+  });
+
+  it("refuses to run when the game answers from a plugin other than the deployed one", async () => {
+    const client = new FakeClient();
+    client.preflightResult = {
+      ready: true,
+      productName: "Ardenfall Demo 2025",
+      gameVersion: "0.0.10.91",
+      pluginPath: "C:\\plugins\\ArdenfallCompendium\\ArdenfallCompendium.dll",
+      pluginSha256: "f".repeat(64),
+      pluginModifiedAt: "2026-08-01T10:00:00.0000000Z",
+      checks: [],
+    };
+
+    await expect(
+      exportCompendium({
+        client,
+        url: "ws://127.0.0.1:19612",
+        listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        pluginsDir: PLUGIN.dir,
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+      }),
+    ).rejects.toThrow(/not running the deployed plugin[\s\S]*sha256 f{64}/);
+    expect(client.calls.map((call) => call.name)).toEqual(["compendium.preflight"]);
+  });
+
+  it("refuses to run when preflight reports no plugin identity", async () => {
+    const client = new FakeClient();
+    client.preflightResult = {
+      ready: true,
+      productName: "Ardenfall Demo 2025",
+      gameVersion: "0.0.10.91",
+      pluginPath: "",
+      pluginSha256: "",
+      pluginModifiedAt: "",
+      checks: [],
+    };
+
+    await expect(
+      exportCompendium({
+        client,
+        url: "ws://127.0.0.1:19612",
+        listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        pluginsDir: PLUGIN.dir,
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+      }),
+    ).rejects.toThrow(/reported no pluginSha256/);
+  });
+
+  it("refuses to run when the deployed plugin is absent", async () => {
+    const client = new FakeClient();
+
+    await expect(
+      exportCompendium({
+        client,
+        url: "ws://127.0.0.1:19612",
+        listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        pluginsDir: join(tmpdir(), "plugins-that-do-not-exist"),
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+      }),
+    ).rejects.toThrow(/Cannot read the deployed plugin/);
   });
 
   it("refuses to run when preflight identifies a different game", async () => {
@@ -361,6 +459,7 @@ describe("exportCompendium", () => {
         client,
         url: "ws://127.0.0.1:19612",
         listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        pluginsDir: PLUGIN.dir,
         outputBaseDir: "/tmp/out",
         pipelineOutDir: "/tmp/pipeline",
       }),
@@ -378,6 +477,7 @@ describe("exportCompendium", () => {
       exportCompendium({
         client,
         url: "ws://127.0.0.1:19612",
+        pluginsDir: PLUGIN.dir,
         outputBaseDir: "/tmp/out",
         pipelineOutDir: "/tmp/pipeline",
         listHotReplProcesses: async () => [
@@ -398,6 +498,7 @@ describe("exportCompendium", () => {
       exportCompendium({
         client,
         url: "ws://127.0.0.1:19612",
+        pluginsDir: PLUGIN.dir,
         outputBaseDir: "/tmp/out",
         pipelineOutDir: "/tmp/pipeline",
         listHotReplProcesses: async (port) => {
@@ -417,6 +518,7 @@ describe("exportCompendium", () => {
       exportCompendium({
         client,
         url: "ws://127.0.0.1:19612",
+        pluginsDir: PLUGIN.dir,
         outputBaseDir: "/tmp/out",
         pipelineOutDir: "/tmp/pipeline",
         listHotReplProcesses: async () => {
@@ -436,6 +538,7 @@ describe("exportCompendium", () => {
       client,
       url: "ws://127.0.0.1:19612",
       listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+      pluginsDir: PLUGIN.dir,
       outputBaseDir: "./snapshots",
       pipelineOutDir: "/tmp/pipeline",
       validate: async (snapshotDir) => {
@@ -460,6 +563,7 @@ describe("exportCompendium", () => {
         client,
         url: "ws://127.0.0.1:19612",
         listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        pluginsDir: PLUGIN.dir,
         outputBaseDir: "/tmp/out",
         pipelineOutDir: "/tmp/pipeline",
       }),
@@ -492,6 +596,7 @@ describe("validateSnapshot", () => {
       itemCount: 2,
       productName: "synthetic-fixture",
       buildProfile: "synthetic",
+      pluginSha256: PLUGIN.sha256,
       counts: {
         item: 2,
         "stat-type": 1,
@@ -639,6 +744,13 @@ describe("validateSnapshot", () => {
     await expect(validateSnapshot(root)).rejects.toThrow(/diagnostics\.json must be an array/);
   });
 
+  it("rejects a manifest with no plugin digest", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root, { omitPluginSha256: true });
+
+    await expect(validateSnapshot(root)).rejects.toThrow(/manifest is missing pluginSha256/);
+  });
+
   it("rejects fatal diagnostics", async () => {
     const root = await snapshotRoot(roots);
     await writeSnapshot(root, { fatalDiagnostics: 1 });
@@ -665,6 +777,7 @@ describe("validateSnapshot", () => {
       diagnosticsText?: string;
       fatalDiagnostics?: number;
       extraCounts?: Record<string, number>;
+      omitPluginSha256?: boolean;
     } = {},
   ) {
     const emptyEntities = new Set(options.emptyEntities ?? []);
@@ -864,6 +977,7 @@ describe("validateSnapshot", () => {
         {
           productName: "synthetic-fixture",
           buildProfile: "synthetic",
+          ...(options.omitPluginSha256 === true ? {} : { pluginSha256: PLUGIN.sha256 }),
           counts,
           hashes,
           diagnostics: { fatal: options.fatalDiagnostics ?? 0 },

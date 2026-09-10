@@ -17,6 +17,7 @@ public sealed class Manifest
     [JsonProperty("productName")] public string ProductName { get; init; } = "";
     [JsonProperty("buildProfile")] public string BuildProfile { get; init; } = "";
     [JsonProperty("extractorVersion")] public string ExtractorVersion { get; init; } = "0.0.0";
+    [JsonProperty("pluginSha256")] public string PluginSha256 { get; init; } = "";
     [JsonProperty("extractedAt")] public string ExtractedAt { get; init; } = "";
     [JsonProperty("source")] public SnapshotSource Source { get; init; } = new();
     [JsonProperty("preflight")] public PreflightReport Preflight { get; init; } = new();

@@ -57,6 +57,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     private readonly IQuestExtractionCache _quests;
     private readonly IMasterTooltipSnapshotSource _masterTooltip;
     private readonly IGameIdentitySource _gameIdentity;
+    private readonly IPluginIdentitySource _pluginIdentity;
     private readonly Func<PreflightReport> _preflight;
 
     public RunFinalizeCommand(
@@ -79,7 +80,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         IGameIdentitySource gameIdentity,
         IPotionRecipeExtractionCache? potionRecipes = null,
         IEnchantmentExtractionCache? enchantments = null,
-        Func<PreflightReport>? preflight = null
+        Func<PreflightReport>? preflight = null,
+        IPluginIdentitySource? pluginIdentity = null
     )
     {
         _runs = runs;
@@ -103,6 +105,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         _quests = quests;
         _masterTooltip = masterTooltip;
         _gameIdentity = gameIdentity;
+        _pluginIdentity = pluginIdentity ?? new AssemblyPluginIdentitySource();
         _preflight = preflight ?? PreflightRunner.Run;
     }
 
@@ -518,6 +521,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 diagnostics: diagnosticTotals,
                 contentHashes: hashes,
                 extractorVersion: Plugin.Version,
+                pluginSha256: _pluginIdentity.Sha256,
                 productName: _gameIdentity.ProductName,
                 buildProfile: _gameIdentity.BuildProfile,
                 gameVersion: run.GameVersion,

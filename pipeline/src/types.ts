@@ -130,6 +130,8 @@ export interface SnapshotManifest {
   productName: string;
   buildProfile: string;
   extractorVersion: string;
+  /** SHA-256 of the plugin assembly that produced the snapshot. */
+  pluginSha256: string;
   extractedAt: string;
   source: SnapshotSource;
   preflight: {

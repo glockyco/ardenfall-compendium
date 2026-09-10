@@ -155,12 +155,14 @@ list means the session holds nothing.
 
 ### Gotchas measured against Ardenfall Demo `0.0.10.91`
 
-- Identify the backend before you trust a probe. `hotrepl --json info` reports the loader, and
-  Ardenfall answers with `BepInEx` on `Unity Mono`. A `MelonLoader` host on `Unity IL2CPP` is another
-  instrumented game on the same port, and it answers every request without an error. One session read
-  `unity.screenshot.capture` failures and a `maxJobConcurrency` refusal from a game named
-  `ancientkingdoms`. Give each instrumented game its own `HOTREPL_PORT`, and confirm
-  `UnityEngine.Application.productName` after the handshake.
+- Identify the backend before you trust an ad-hoc probe. `hotrepl --json info` reports the loader,
+  and Ardenfall answers with `BepInEx` on `Unity Mono`. A `MelonLoader` host on `Unity IL2CPP` is
+  another instrumented game on the same port, and it answers every request without an error. One
+  session read `unity.screenshot.capture` failures and a `maxJobConcurrency` refusal from a game
+  named `ancientkingdoms`. Give each instrumented game its own `HOTREPL_PORT`.
+  An export needs no hand check: `controller/src/export-orchestrator.ts` fails when the port has no
+  single holder, when the product name is another game, and when the plugin that answered is not the
+  plugin deployed under `ARDENFALL_PLUGINS_DIR`.
 - Read `Steam/logs/console_log.txt` when a launch produces no port. Steam holds the launch behind a
   modal that a shell cannot answer, and the log names it, such as
   `LaunchApp waiting for user response to KickingOtherSession`. A second Steam session is the common

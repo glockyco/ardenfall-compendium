@@ -5,6 +5,7 @@
   "productName": "synthetic-fixture",
   "buildProfile": "synthetic",
   "extractorVersion": "0.0.0-test",
+  "pluginSha256": "0000000000000000000000000000000000000000000000000000000000000000",
   "extractedAt": "2026-05-03T12:00:00Z",
   "source": {
     "kind": "synthetic-fixture",
