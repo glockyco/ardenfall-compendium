@@ -48,6 +48,8 @@ class FakeClient implements ControllerClient {
     command("run.begin", "sync", true),
     command("entity.plan"),
     command("entity.exportBatch", "job", true),
+    command("world.plan"),
+    command("world.walkBatch", "job", true),
     command("run.finalize", "sync", true),
     command("run.discard", "sync", true),
     command("game.quit", "sync", true),
@@ -93,6 +95,12 @@ class FakeClient implements ControllerClient {
       return {
         status: "ok",
         output: { entity: "item", total: 150, batchSize: 100, batches: 2 },
+        artifacts: {},
+      };
+    if (name === "world.plan")
+      return {
+        status: "ok",
+        output: { total: 4, batchSize: 3, scenesInBuild: 10, unloadable: 0, cells: [] },
         artifacts: {},
       };
     if (name === "compendium.continueFromMenu")
@@ -165,14 +173,18 @@ describe("exportCompendium", () => {
       "compendium.preflight",
       "run.begin",
       "entity.plan",
+      "world.plan",
       "run.finalize",
       "game.quit",
     ]);
     expect(client.jobs.map((job) => job.args)).toEqual([
       { runId: "run-1", entity: "item", offset: 0, limit: 100 },
       { runId: "run-1", entity: "item", offset: 100, limit: 100 },
+      // The walk runs before finalize, one batch per group of cells.
+      { runId: "run-1", offset: 0, limit: 3 },
+      { runId: "run-1", offset: 3, limit: 3 },
     ]);
-    expect(client.jobPolls).toEqual(["job-1", "job-2"]);
+    expect(client.jobPolls).toEqual(["job-1", "job-2", "job-3", "job-4"]);
     expect(events).toContainEqual(
       expect.objectContaining({ phase: "pipeline", status: "completed" }),
     );
@@ -275,6 +287,7 @@ describe("exportCompendium", () => {
       "compendium.preflight",
       "run.begin",
       "entity.plan",
+      "world.plan",
       "run.finalize",
       "run.discard",
       "game.quit",

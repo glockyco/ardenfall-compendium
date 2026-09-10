@@ -724,9 +724,9 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     /// <summary>
     /// Reads the chunks the cell walk wrote for this run, in batch order.
     /// </summary>
-    private static List<Entities.World.PlacedPlantFields> ReadWalkedPlacedPlants(CompendiumRun run)
+    private static List<Entities.World.PlacedPlantSnapshotRow> ReadWalkedPlacedPlants(CompendiumRun run)
     {
-        var rows = new List<Entities.World.PlacedPlantFields>();
+        var rows = new List<Entities.World.PlacedPlantSnapshotRow>();
         var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "placed-plant", "chunks");
         if (!Directory.Exists(chunksDir)) return rows;
         foreach (var path in Directory.GetFiles(chunksDir, "*.json").OrderBy(name => name, StringComparer.Ordinal))

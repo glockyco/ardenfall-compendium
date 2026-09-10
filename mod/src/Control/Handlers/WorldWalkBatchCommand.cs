@@ -95,7 +95,7 @@ public sealed class WorldWalkBatchCommand
             "chunks",
             $"{args.Offset:D6}.json");
         var json = string.Empty;
-        var rows = new List<PlacedPlantFields>();
+        var rows = new List<PlacedPlantSnapshotRow>();
         CellWalkBatch batch;
         try
         {
@@ -105,7 +105,14 @@ public sealed class WorldWalkBatchCommand
                 cells,
                 walked =>
                 {
-                    rows = walked.Cells.SelectMany(cell => cell.Plants).ToList();
+                    rows = walked.Cells
+                        .SelectMany(cell => cell.Plants)
+                        .Select(plant => new PlacedPlantSnapshotRow
+                        {
+                            Id = plant.Id,
+                            Fields = plant,
+                        })
+                        .ToList();
                     json = JsonConvert.SerializeObject(
                         new PlacedPlantSnapshotEnvelope { Rows = rows },
                         JsonSettings.Default);

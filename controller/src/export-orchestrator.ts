@@ -85,6 +85,8 @@ const REQUIRED_COMMANDS = new Map<string, "sync" | "job">([
   ["run.begin", "sync"],
   ["entity.plan", "sync"],
   ["entity.exportBatch", "job"],
+  ["world.plan", "sync"],
+  ["world.walkBatch", "job"],
   ["run.finalize", "sync"],
   ["game.quit", "sync"],
 ]);
@@ -205,6 +207,26 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
       await waitForJob(options.client, accepted.jobId, options.jobTimeoutMs);
       activeJobId = undefined;
       log({ phase: "entity.exportBatch", status: "completed", runId, offset });
+    }
+
+    // The cell walk runs before finalization, because finalize publishes what it harvested.
+    const worldPlan = await options.client.call(
+      "world.plan",
+      { runId },
+      { timeoutMs: CONTROLLER_TIMEOUTS.commandMs },
+    );
+    const cellTotal = requireNumber(worldPlan.output.total, "world.plan output.total");
+    const cellBatchSize = requireNumber(worldPlan.output.batchSize, "world.plan output.batchSize");
+    for (let offset = 0; offset < cellTotal; offset += cellBatchSize) {
+      const accepted = await options.client.startJob(
+        "world.walkBatch",
+        { runId, offset, limit: cellBatchSize },
+        { timeoutMs: CONTROLLER_TIMEOUTS.batchStartMs },
+      );
+      activeJobId = accepted.jobId;
+      await waitForJob(options.client, accepted.jobId, options.jobTimeoutMs);
+      activeJobId = undefined;
+      log({ phase: "world.walkBatch", status: "completed", runId, offset });
     }
 
     log({ phase: "run.finalize", status: "started", runId });
