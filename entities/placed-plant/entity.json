@@ -1,0 +1,112 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "placed-plant",
+  "kind": "instance",
+  "label": {
+    "singular": "Pickable Plant",
+    "plural": "Pickable Plants"
+  },
+  "extraction": {
+    "source": "scene",
+    "file": "placed-plants.json",
+    "root": "Ardenfall.PickablePlant",
+    "options": {
+      "component": "PickablePlant"
+    }
+  },
+  "canonicalTable": "placed_plants",
+  "presentationContext": {
+    "renderContext": "placed-plant-presentation-v1"
+  },
+  "site": {
+    "route": "/pickable-plants",
+    "overview": {
+      "columns": ["itemRef", "harvestXp", "regrowDays", "cell"],
+      "search": ["cell"]
+    },
+    "detail": {
+      "sections": [
+        {
+          "id": "overview",
+          "kind": "fieldList",
+          "title": "Overview",
+          "fields": ["itemRef", "itemCount", "harvestXp", "regrowDays", "cell", "map", "position"]
+        }
+      ]
+    }
+  },
+  "placement": {
+    "kind": "point",
+    "from": "transform"
+  },
+  "fields": [
+    {
+      "name": "id",
+      "type": "id",
+      "from": "id",
+      "missingPolicy": "fatal"
+    },
+    {
+      "name": "cell",
+      "type": "string",
+      "from": "cell",
+      "column": "cell",
+      "missingPolicy": "fatal"
+    },
+    {
+      "name": "map",
+      "type": "string",
+      "from": "map",
+      "column": "map_id",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "position",
+      "type": "json",
+      "from": "position",
+      "column": "source_position_json",
+      "projects": "map_points"
+    },
+    {
+      "name": "itemRef",
+      "type": "ref:asset",
+      "from": "itemRef",
+      "column": "item_ref_json",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "itemCount",
+      "type": "integer",
+      "from": "itemCount",
+      "column": "item_count"
+    },
+    {
+      "name": "regrowDays",
+      "type": "integer",
+      "from": "regrowDays",
+      "column": "regrow_days"
+    },
+    {
+      "name": "harvestXp",
+      "type": "integer",
+      "from": "harvestXp",
+      "column": "harvest_xp"
+    },
+    {
+      "name": "interactionText",
+      "type": "string",
+      "from": "interactionText",
+      "column": "interaction_text"
+    }
+  ],
+  "map": {
+    "layer": "pickable-plants",
+    "renderKind": "point",
+    "icon": "plant",
+    "color": [120, 200, 120],
+    "radius": 3,
+    "tooltip": ["itemRef"],
+    "legendLabel": "Pickable Plants",
+    "zOrder": 60
+  }
+}

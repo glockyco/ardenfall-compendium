@@ -37,3 +37,22 @@ export type PortalSnapshotFields = Pick<
   SourcePortalSnapshotFields,
   Extract<PortalFieldName, keyof SourcePortalSnapshotFields>
 >;
+
+import type { PlacedPlantSnapshotFields as SourcePlacedPlantSnapshotFields } from "../src/types.ts";
+
+export declare const placedPlantFieldNames: readonly [
+  "id",
+  "cell",
+  "map",
+  "position",
+  "itemRef",
+  "itemCount",
+  "regrowDays",
+  "harvestXp",
+  "interactionText"
+];
+export type PlacedPlantFieldName = (typeof placedPlantFieldNames)[number];
+export type PlacedPlantSnapshotFields = Pick<
+  SourcePlacedPlantSnapshotFields,
+  Extract<PlacedPlantFieldName, keyof SourcePlacedPlantSnapshotFields>
+>;

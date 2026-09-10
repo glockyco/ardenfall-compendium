@@ -27,6 +27,7 @@ export const listingRoutePaths = [
   "/races",
   "/locations",
   "/portals",
+  "/pickable-plants",
   "/factions",
   "/map",
   "/search",

@@ -278,6 +278,14 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             WriteJson(stagingDir, "npcs.json", npcEnvelope, hashes);
             var questEnvelope = new QuestSnapshotEnvelope { Rows = questRows };
             WriteJson(stagingDir, "quests.json", questEnvelope, hashes);
+            // The walk writes one chunk per batch of cells, so the snapshot's file is their
+            // concatenation. A run with no walk publishes an empty family rather than no file.
+            var placedPlantRows = ReadWalkedPlacedPlants(run);
+            WriteJson(
+                stagingDir,
+                "placed-plants.json",
+                new Entities.World.PlacedPlantSnapshotEnvelope { Rows = placedPlantRows },
+                hashes);
             RecordTiming(timings, "metadata.write", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
@@ -501,6 +509,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["name-set"] = nameSetRows.Count,
                 ["npc"] = npcRows.Count,
                 ["quest"] = questRows.Count,
+                ["placed-plant"] = placedPlantRows.Count,
             };
             var availability = new Dictionary<string, IDictionary<string, int>>
             {
@@ -557,6 +566,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             run.Counts["name-set"] = nameSetRows.Count;
             run.Counts["npc"] = npcRows.Count;
             run.Counts["quest"] = questRows.Count;
+            run.Counts["placed-plant"] = placedPlantRows.Count;
             phaseStopwatch.Restart();
             _runs.Save(run);
             _runs.ReleaseFinalized(run.RunId);
@@ -605,6 +615,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["character-races"] = CompendiumCommandResults.FileArtifact("character-races", Path.Combine(publishedDir, "character-races.json"), "application/json", hashes["character-races.json"]),
                 ["name-sets"] = CompendiumCommandResults.FileArtifact("name-sets", Path.Combine(publishedDir, "name-sets.json"), "application/json", hashes["name-sets.json"]),
                 ["quests"] = CompendiumCommandResults.FileArtifact("quests", Path.Combine(publishedDir, "quests.json"), "application/json", hashes["quests.json"]),
+                ["placed-plants"] = CompendiumCommandResults.FileArtifact("placed-plants", Path.Combine(publishedDir, "placed-plants.json"), "application/json", hashes["placed-plants.json"]),
                 ["finalize-timings"] = CompendiumCommandResults.FileArtifact("finalize-timings", Path.Combine(publishedDir, "finalize-timings.json"), "application/json", hashes["finalize-timings.json"]),
             };
             if (hashes.TryGetValue("diagnostics.json", out var diagnosticsHash))
@@ -708,6 +719,25 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             );
 
         return null;
+    }
+
+    /// <summary>
+    /// Reads the chunks the cell walk wrote for this run, in batch order.
+    /// </summary>
+    private static List<Entities.World.PlacedPlantFields> ReadWalkedPlacedPlants(CompendiumRun run)
+    {
+        var rows = new List<Entities.World.PlacedPlantFields>();
+        var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "placed-plant", "chunks");
+        if (!Directory.Exists(chunksDir)) return rows;
+        foreach (var path in Directory.GetFiles(chunksDir, "*.json").OrderBy(name => name, StringComparer.Ordinal))
+        {
+            var envelope = JsonConvert.DeserializeObject<Entities.World.PlacedPlantSnapshotEnvelope>(
+                File.ReadAllText(path),
+                JsonSettings.Default);
+            if (envelope?.Rows != null) rows.AddRange(envelope.Rows);
+        }
+
+        return rows;
     }
 
     private static string ChunkPath(string chunksDir, int offset) =>

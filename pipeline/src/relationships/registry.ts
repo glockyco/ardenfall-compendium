@@ -147,6 +147,11 @@ export const relationshipRegistry = {
     inverseTitle: "Potion recipes",
     sortOrder: 138,
   },
+  yields_item: {
+    forwardTitle: "Yields",
+    inverseTitle: "Grows in the world",
+    sortOrder: 139,
+  },
 } satisfies Record<string, RelationshipDescriptor>;
 
 export type RelationshipPredicate = keyof typeof relationshipRegistry;

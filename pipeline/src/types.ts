@@ -574,6 +574,20 @@ export interface PortalSnapshotFields {
   connectedPortalRef?: SnapshotRef | null;
 }
 
+/** One pickable plant placed in a cell scene, as the cell walk harvested it. */
+export interface PlacedPlantSnapshotFields {
+  id: string;
+  cell: string;
+  map: string | null;
+  position: SnapshotVector3;
+  itemRef: SnapshotRef;
+  itemCount: number;
+  regrowDays: number;
+  /** Experience one harvest awards, read from this placement rather than from its species. */
+  harvestXp: number;
+  interactionText: string;
+}
+
 export interface NpcLevelSnapshot {
   automatic: boolean;
   addValue: number;

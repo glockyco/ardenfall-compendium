@@ -13,6 +13,11 @@ interface Descriptor {
 const targets = [
   { entity: "location", typeName: "LocationFieldName", sourceTypeName: "LocationSnapshotFields" },
   { entity: "portal", typeName: "PortalFieldName", sourceTypeName: "PortalSnapshotFields" },
+  {
+    entity: "placed-plant",
+    typeName: "PlacedPlantFieldName",
+    sourceTypeName: "PlacedPlantSnapshotFields",
+  },
 ] as const;
 
 function readFields(entity: string): string[] {

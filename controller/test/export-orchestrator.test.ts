@@ -613,6 +613,7 @@ describe("validateSnapshot", () => {
         enchantment: 1,
         faction: 1,
         npc: 1,
+        "placed-plant": 1,
         quest: 1,
       },
     });
@@ -926,6 +927,15 @@ describe("validateSnapshot", () => {
         null,
         2,
       ),
+      "placed-plants.json": JSON.stringify(
+        {
+          entityId: "placed-plant",
+          schemaVersion: 1,
+          rows: emptyEntities.has("placed-plant") ? [] : [{ id: "scene;cell_a;plant-1" }],
+        },
+        null,
+        2,
+      ),
       "asset-manifest.json": JSON.stringify({ assets: [], itemIconMetadata: [] }, null, 2),
       "master-tooltip.json": JSON.stringify({ schemaVersion: 2, tooltipCodes: {} }, null, 2),
     };
@@ -967,6 +977,8 @@ describe("validateSnapshot", () => {
       faction: options.countOverrides?.faction ?? (emptyEntities.has("faction") ? 0 : 1),
       npc: options.countOverrides?.npc ?? (emptyEntities.has("npc") ? 0 : 1),
       quest: options.countOverrides?.quest ?? (emptyEntities.has("quest") ? 0 : 1),
+      "placed-plant":
+        options.countOverrides?.["placed-plant"] ?? (emptyEntities.has("placed-plant") ? 0 : 1),
       ...options.extraCounts,
     };
     for (const entity of options.omitCounts ?? []) delete counts[entity as keyof typeof counts];

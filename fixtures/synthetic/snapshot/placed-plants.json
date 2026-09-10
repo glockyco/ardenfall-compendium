@@ -1,0 +1,62 @@
+{
+  "entityId": "placed-plant",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "scene;cell_fixture_0.0;7f1c2b40-0001-4a00-9c00-000000000001",
+      "fields": {
+        "id": "scene;cell_fixture_0.0;7f1c2b40-0001-4a00-9c00-000000000001",
+        "cell": "cell_fixture_0.0",
+        "map": "ardenfall",
+        "position": { "x": 12, "y": 4, "z": -18 },
+        "itemRef": {
+          "kind": "lookupAsset",
+          "guid": "6a71c0de.fixture-stamina-draught",
+          "unityType": "Ardenfall.Item.ItemData",
+          "name": "fixture-stamina-draught"
+        },
+        "itemCount": 1,
+        "regrowDays": 14,
+        "harvestXp": 10,
+        "interactionText": "Pick"
+      }
+    },
+    {
+      "id": "scene;cell_fixture_0.0;8e2d3c51-0002-4a00-9c00-000000000002",
+      "fields": {
+        "id": "scene;cell_fixture_0.0;8e2d3c51-0002-4a00-9c00-000000000002",
+        "cell": "cell_fixture_0.0",
+        "map": "ardenfall",
+        "position": { "x": 14, "y": 4, "z": -20 },
+        "itemRef": {
+          "kind": "lookupAsset",
+          "guid": "6a71c0de.fixture-stamina-draught",
+          "unityType": "Ardenfall.Item.ItemData",
+          "name": "fixture-stamina-draught"
+        },
+        "itemCount": 2,
+        "regrowDays": 0,
+        "harvestXp": 0,
+        "interactionText": "Gather"
+      }
+    },
+    {
+      "id": "scene;cell_fixture_0.1;9f3e4d62-0003-4a00-9c00-000000000003",
+      "fields": {
+        "id": "scene;cell_fixture_0.1;9f3e4d62-0003-4a00-9c00-000000000003",
+        "cell": "cell_fixture_0.1",
+        "map": "ardenfall",
+        "position": { "x": -6, "y": 2, "z": 9 },
+        "itemRef": {
+          "kind": "missing",
+          "reason": "lookupAssetGuidMissing",
+          "source": "PickablePlant.item"
+        },
+        "itemCount": 1,
+        "regrowDays": 4,
+        "harvestXp": 3,
+        "interactionText": "Pick"
+      }
+    }
+  ]
+}

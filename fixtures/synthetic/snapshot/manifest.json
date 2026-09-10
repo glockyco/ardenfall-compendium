@@ -50,7 +50,8 @@
     "npc": 5,
     "quest": 2,
     "potion-recipe": 2,
-    "enchantment": 2
+    "enchantment": 2,
+    "placed-plant": 3
   },
   "diagnostics": {
     "fatal": 0,
