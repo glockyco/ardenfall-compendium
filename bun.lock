@@ -27,7 +27,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@hotrepl/protocol": "^4.0.1",
-        "@hotrepl/sdk": "^4.0.1",
+        "@hotrepl/sdk": "^4.0.2",
       },
     },
     "pipeline": {
@@ -218,7 +218,7 @@
 
     "@hotrepl/protocol": ["@hotrepl/protocol@4.0.1", "", { "dependencies": { "typebox": "^1.0.0" } }, "sha512-WFn8OV7e+mOQMn7BCe1Hn1FOu8uY9ENzEk/pXAgs2WTmMhx0PYUvZVrgEdqqw7BWyt17l+FpQNQk9lQoAvp/FA=="],
 
-    "@hotrepl/sdk": ["@hotrepl/sdk@4.0.1", "", { "dependencies": { "@hotrepl/protocol": "4.0.1" } }, "sha512-huRwDxc9PWDSpuqahBjVaRWE5yczP5aKJE1kfviYBdIUrnqFZNuMgHWTQyykWZtR07es04MmtTtHSsYDGIHTcw=="],
+    "@hotrepl/sdk": ["@hotrepl/sdk@4.0.2", "", { "dependencies": { "@hotrepl/protocol": "4.0.1" } }, "sha512-Y6Pcphqc7uC5QXbpt5z58j05v/V5EDUUKWsd13cXz2HrPq7ywGiehvGlf/O76ZA5xPayktSwvfwkh3ZZ2+Dudg=="],
 
     "@humanfs/core": ["@humanfs/core@0.19.2", "", { "dependencies": { "@humanfs/types": "^0.15.0" } }, "sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA=="],
 

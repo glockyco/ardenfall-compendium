@@ -91,13 +91,13 @@ the source that builds it.
   argument is legal for that call and lands inside the game's persistent data directory instead.
 - Confirm the host file exists and is not empty. The call returns at once, writes one frame later,
   and reports nothing, so a capture that never landed is silent.
-- `unity.screenshot.capture` is the other route, and it needs HotRepl at `03f4cb2` or later deployed
-  in the game. Before that commit the PNG stayed in an unreadable in-memory artifact and the SDK
-  failed with `protocol must be http:, https: or s3:`. From that commit the command returns a
-  file-backed reference under the engine's artifact directory, which is
-  `C:\users\crossover\AppData\Local\HotRepl\artifacts\<jobId>\screenshot` inside the bottle. Reading
-  it from macOS needs `connect({ resolveArtifactPath })` to map `C:\` onto the bottle's `drive_c`,
-  which the published `@hotrepl/sdk` 4.0.1 does not have.
+- `unity.screenshot.capture` is the other route, and it needs HotRepl `03f4cb2` or later deployed in
+  the game and `@hotrepl/sdk` 4.0.2 or later in the client. Before those the PNG stayed in an
+  unreadable in-memory artifact and the SDK failed with `protocol must be http:, https: or s3:`.
+  Now the command returns a file-backed reference under the engine's artifact directory, which is
+  `C:\users\crossover\AppData\Local\HotRepl\artifacts\<jobId>\screenshot` inside the bottle, and
+  `connect({ resolveArtifactPath })` maps `C:\` onto the bottle's `drive_c` so the client reads the
+  same bytes. `spikes/artifact-read.ts` is that call.
 - Select a surface by its typed layer on `GameGUIManager`, through
   `PlayerCharacter.instance.GameUI.OpenLayer(...)`. Never drive the interface with synthetic input.
   `hudLayer`, `pausePanel`, `optionsPanel` and `levelUpLayer` open with no arguments.

@@ -5,6 +5,6 @@
   "type": "module",
   "dependencies": {
     "@hotrepl/protocol": "^4.0.1",
-    "@hotrepl/sdk": "^4.0.1"
+    "@hotrepl/sdk": "^4.0.2"
   }
 }
