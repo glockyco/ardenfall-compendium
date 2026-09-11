@@ -188,7 +188,9 @@ public static class DialogueGraphWalk
                 return DialogueNodeReaders.Read(node).Gate;
             }
 
-            authoredChain.Add(authoredType);
+            // The node's own title is what an author reads in the editor, such as
+            // "Get Is In Battle Mode". It says more than the wrapper's type name.
+            authoredChain.Add(string.IsNullOrWhiteSpace(node.name) ? authoredType : node.name);
             foreach (var edge in valueEdges.Where(edge => edge.Target == current))
             {
                 pending.Enqueue(edge.Source);

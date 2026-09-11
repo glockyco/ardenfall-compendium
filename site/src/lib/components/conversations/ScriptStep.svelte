@@ -95,6 +95,9 @@
   <p class="text-muted-foreground mt-1 text-xs uppercase" id={`node-${step.nodeId}`}>
     The conversation ends
   </p>
+  {#each step.next as next, index (index)}
+    <ScriptStep step={next} depth={depth + 1} />
+  {/each}
 {:else if step.kind === "jump"}
   <!--
     The game resolves this at runtime to the choice list the player last saw, so the page says

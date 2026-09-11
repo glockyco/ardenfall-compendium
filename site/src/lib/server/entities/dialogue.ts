@@ -75,7 +75,7 @@ export type DialogueScriptStep =
     }
   | { kind: "condition"; nodeId: number; gate: DialogueGate; next: DialogueScriptStep[] }
   | { kind: "effects"; nodeId: number; effects: DialogueOutcome[]; next: DialogueScriptStep[] }
-  | { kind: "end"; nodeId: number }
+  | { kind: "end"; nodeId: number; next: DialogueScriptStep[] }
   | { kind: "jump"; nodeId: number; targetNodeId: number | null }
   | { kind: "loop"; targetNodeId: number }
   | { kind: "reference"; targetNodeId: number }

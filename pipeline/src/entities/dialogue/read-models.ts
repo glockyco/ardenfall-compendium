@@ -75,7 +75,7 @@ type ScriptStep =
     }
   | { kind: "condition"; nodeId: number; gate: GateView; next: ScriptStep[] }
   | { kind: "effects"; nodeId: number; effects: EffectView[]; next: ScriptStep[] }
-  | { kind: "end"; nodeId: number }
+  | { kind: "end"; nodeId: number; next: ScriptStep[] }
   | { kind: "jump"; nodeId: number; targetNodeId: number | null }
   | { kind: "loop"; targetNodeId: number }
   | { kind: "reference"; targetNodeId: number }
@@ -340,7 +340,9 @@ function buildStep(
         next: followEdges(outgoing, nextPath, context),
       };
     case "end":
-      return { kind: "end", nodeId };
+      // Closing the conversation is not the last thing that happens: the teleporter finishes the
+      // dialogue and then moves the character. What follows belongs on the page.
+      return { kind: "end", nodeId, next: followEdges(outgoing, nextPath, context) };
     case "jump":
       // The game resolves this at runtime to the choice list the player last saw, so the walk can
       // name no target and the page says where the conversation returns to instead of inventing one.
