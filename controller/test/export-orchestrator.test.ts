@@ -61,7 +61,7 @@ class FakeClient implements ControllerClient {
   ];
   preflightResult: Record<string, unknown> = {
     ready: true,
-    productName: "Ardenfall Demo 2025",
+    productName: "Ardenfall",
     gameVersion: "0.0.10.91",
   };
   preflightResults: Record<string, unknown>[] = [];
@@ -465,13 +465,13 @@ describe("exportCompendium", () => {
     client.preflightResults = [
       {
         ready: false,
-        productName: "Ardenfall Demo 2025",
+        productName: "Ardenfall",
         gameVersion: "0.0.10.91",
         checks: [{ name: "ardenfallGame", ok: false, reason: "ArdenfallGame.instance is null" }],
       },
       {
         ready: true,
-        productName: "Ardenfall Demo 2025",
+        productName: "Ardenfall",
         gameVersion: "0.0.10.91",
         checks: [],
       },
@@ -501,7 +501,7 @@ describe("exportCompendium", () => {
     const client = new FakeClient();
     client.preflightResult = {
       ready: false,
-      productName: "Ardenfall Demo 2025",
+      productName: "Ardenfall",
       gameVersion: "0.0.10.91",
       checks: [
         { name: "ardenfallGame", ok: false, reason: "ArdenfallGame.instance is null" },
@@ -527,7 +527,7 @@ describe("exportCompendium", () => {
     const client = new FakeClient();
     client.preflightResult = {
       ready: true,
-      productName: "Ardenfall Demo 2025",
+      productName: "Ardenfall",
       gameVersion: "0.0.10.91",
       pluginPath: "C:\\plugins\\ArdenfallCompendium\\ArdenfallCompendium.dll",
       pluginSha256: "f".repeat(64),
@@ -552,7 +552,7 @@ describe("exportCompendium", () => {
     const client = new FakeClient();
     client.preflightResult = {
       ready: true,
-      productName: "Ardenfall Demo 2025",
+      productName: "Ardenfall",
       gameVersion: "0.0.10.91",
       pluginPath: "",
       pluginSha256: "",
@@ -606,7 +606,7 @@ describe("exportCompendium", () => {
         pipelineOutDir: "/tmp/pipeline",
       }),
     ).rejects.toThrow(
-      /publication embargo.*expected Unity product name "Ardenfall Demo 2025".*reported "Vespera".*only Demo-derived content may be published.*port collision/i,
+      /publication embargo.*expected Unity product name "Ardenfall".*reported "Vespera".*another install.*port collision/i,
     );
 
     expect(client.calls.map((call) => call.name)).toEqual(["compendium.preflight"]);

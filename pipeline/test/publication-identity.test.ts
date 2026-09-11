@@ -5,7 +5,7 @@ import {
 } from "../src/publication-identity";
 
 describe("publication identity", () => {
-  it("accepts a proven Demo snapshot", () => {
+  it("accepts a proven main-game snapshot", () => {
     expect(() =>
       assertPublishableSnapshotIdentity({
         productName: PUBLISHED_PRODUCT_NAME,
