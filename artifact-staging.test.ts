@@ -23,7 +23,7 @@ describe("artifact staging rejects tampering", () => {
       writeFileSync(sqlitePath, Buffer.concat([readFileSync(sqlitePath), Buffer.from("tampered")]));
 
       await expect(
-        stageArtifact({ artifactDir: root, targetDir: join(root, "staged"), mode: "release" }),
+        stageArtifact({ artifactDir: root, mode: "release", ...tempSite(root) }),
       ).rejects.toThrow(/artifact file (?:size|hash) mismatch for .*data\.sqlite/);
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -40,7 +40,7 @@ describe("artifact staging rejects tampering", () => {
       writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
       await expect(
-        stageArtifact({ artifactDir: root, targetDir: join(root, "staged"), mode: "release" }),
+        stageArtifact({ artifactDir: root, mode: "release", ...tempSite(root) }),
       ).rejects.toThrow(/itemOverviewRows mismatch: expected 2, got 1/);
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -54,7 +54,7 @@ describe("artifact staging rejects tampering", () => {
       rmSync(join(root, "assets", `${"a".repeat(64)}.webp`));
 
       await expect(
-        stageArtifact({ artifactDir: root, targetDir: join(root, "staged"), mode: "release" }),
+        stageArtifact({ artifactDir: root, mode: "release", ...tempSite(root) }),
       ).rejects.toThrow(/asset tree hash mismatch/);
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -67,13 +67,24 @@ describe("artifact staging rejects tampering", () => {
       await createValidArtifact(root);
 
       await expect(
-        stageArtifact({ artifactDir: root, targetDir: join(root, "staged"), mode: "release" }),
+        stageArtifact({ artifactDir: root, mode: "release", ...tempSite(root) }),
       ).resolves.toMatchObject({ manifest: { artifactKind: "release" } });
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
   });
 });
+
+/**
+ * Stages into a site directory under the test root, never into the repository's own
+ * `site/.stage/release` slot, which a live release build may be occupying.
+ */
+function tempSite(root: string): { siteDir: string; trackedStaticDir: string } {
+  const siteDir = join(root, "site");
+  const trackedStaticDir = join(siteDir, "static");
+  mkdirSync(trackedStaticDir, { recursive: true });
+  return { siteDir, trackedStaticDir };
+}
 
 async function createValidArtifact(root: string) {
   mkdirSync(join(root, "assets"), { recursive: true });
