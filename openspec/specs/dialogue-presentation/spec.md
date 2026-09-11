@@ -42,11 +42,26 @@ A gated opener or choice MUST state its requirement as prose built from the publ
 list comparison MUST use the game's own wording. The page MUST NOT state whether the reader passes a
 gate, because that depends on a save.
 
+A requirement built from several checks MUST state each of them and whether all or any must pass. The
+page MUST NOT print a comparison as the game's own enumeration name, and MUST place a subject inside
+the sentence rather than after it.
+
 #### Scenario: A gated opener
 
 - **WHEN** an opener is gated
 - **THEN** the page states the requirement beside that opener
 - **AND** the page marks the openers as alternatives rather than as a sequence
+
+#### Scenario: A requirement of several checks
+
+- **WHEN** a gate holds several checks
+- **THEN** the page states each of them
+- **AND** it states whether all or any must pass
+
+#### Scenario: A standing check
+
+- **WHEN** a gate compares standing with a faction
+- **THEN** the page names the faction inside the sentence and states the tier in words
 
 #### Scenario: A gate naming published entities
 
@@ -73,7 +88,8 @@ carries one, and MUST link to the entity it acts on.
 
 ### Requirement: Branches and loops are visible as structure
 
-A branch MUST present its alternatives with the label of the output each one leaves from. A jump MUST
+A branch MUST present its alternatives with the check behind each output, or with the label of the
+output when the branch declares no check. A jump MUST
 present as a link to the point the conversation returns to, and MUST NOT repeat that part of the
 conversation.
 
@@ -82,6 +98,12 @@ conversation.
 - **WHEN** a reply branches on a relationship tier
 - **THEN** each alternative carries its tier label
 - **AND** the alternatives read as siblings
+
+#### Scenario: A branch that checks each output
+
+- **WHEN** a branch states a check per output
+- **THEN** each alternative reads as the requirement it carries
+- **AND** the fall-through alternative reads as the remaining case
 
 #### Scenario: A loop back to the choices
 

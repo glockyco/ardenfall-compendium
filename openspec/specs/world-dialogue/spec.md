@@ -10,14 +10,14 @@ Defines scene dialogue, the half of the game's authored dialogue that does not h
 
 Authored dialogue a scene places MUST become a canonical row per dialogue graph, carrying the graph's asset name, the authored flow the `dialogue-flow` capability defines, and every placement that can start it.
 
-A placement is not the identity. A `SimpleDialogInteractable` carries no `GuidComponent` in 8 of the 27 placements this build ships, including both signs in `cell_interior_4.-2` whose graph holds greetings and topics, so a placement-keyed row cannot publish them at all. The graph asset has a stable name, and the same graph placed twice is one conversation rather than two.
+A placement is not the identity. A `SimpleDialogInteractable` carries no `GuidComponent` in 8 of the 27 placements this build ships, including both signs in `cell_interior_4.-2` whose graph holds greetings and topics, so a placement-keyed row cannot publish them at all. The graph asset and the quest that owns it are the identity together, and the same graph placed twice is one conversation rather than two. The asset name alone is not enough: 231 authored graphs ship under 211 names, because a quest reuses a generic name for its own graph.
 
 A scene placement is one holder among several. The same graph reached from a character definition or a quest MUST publish once, with both holders named.
 
 #### Scenario: Scene dialogue is extracted
 
 - **WHEN** the walk harvests scene dialogue
-- **THEN** each dialogue graph becomes one canonical row identified by its asset name
+- **THEN** each dialogue graph becomes one canonical row identified by its asset name and its owning quest
 - **AND** its nodes, edges, statements, gates and outcomes publish through the flow contract
 - **AND** every placement that starts it appears as a marker on its map layer
 
