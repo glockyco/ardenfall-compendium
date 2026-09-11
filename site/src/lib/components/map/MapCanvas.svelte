@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { buildEntityLayerSpecs, type LayerSpec } from "$lib/map/layer-spec";
+  import { buildMapLayerSpecs, type LayerSpec } from "$lib/map/layer-spec";
   import { mapAccessibleName, visibleMapMarkers } from "$lib/map/map-accessibility";
   import type { MapStore } from "$lib/map/map-store.svelte";
   import type { MapBounds } from "$lib/map/types";
@@ -136,7 +136,7 @@
     const mapId = store.activeMapId;
     const points = store.view.points.filter((p) => p.mapId === mapId);
     const volumes = store.view.volumes.filter((v) => v.mapId === mapId);
-    return store.view.layers.flatMap((layer) => buildEntityLayerSpecs(layer, points, volumes, ui));
+    return buildMapLayerSpecs(store.view.layers, points, volumes, ui);
   }
 
   function syncCanvasLabel(): void {

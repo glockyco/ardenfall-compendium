@@ -137,6 +137,6 @@
     "radius": 3,
     "tooltip": ["containerName"],
     "legendLabel": "Containers",
-    "zOrder": 50
+    "zOrder": 45
   }
 }

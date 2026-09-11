@@ -181,7 +181,7 @@ describe("loadDescriptors", () => {
       radius: 6,
       tooltip: ["name"],
       legendLabel: "Locations",
-      zOrder: 100,
+      zOrder: 70,
     });
     expect(location.fields.map((field) => field.name)).toEqual([
       "id",

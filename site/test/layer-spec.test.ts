@@ -1,5 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { buildEntityLayerSpecs, type LayerSpec } from "../src/lib/map/layer-spec";
+import {
+  buildEntityLayerSpecs,
+  buildMapLayerSpecs,
+  type LayerSpec,
+} from "../src/lib/map/layer-spec";
 import type { MapLayerConfig, MapPointRow, MapVolumeRow } from "../src/lib/map/types";
 
 const layer: MapLayerConfig = {
@@ -109,5 +113,47 @@ describe("buildEntityLayerSpecs", () => {
         baseUi,
       ),
     ).toThrow(/unknown render kind/i);
+  });
+});
+
+describe("buildMapLayerSpecs", () => {
+  const markers: MapLayerConfig = {
+    ...layer,
+    layerId: "npcs",
+    entityType: "npc",
+    renderKind: "point",
+    sourceTables: ["map_points"],
+    legendLabel: "Characters",
+    // A z-order below the area layer: an area must still paint first.
+    zOrder: 10,
+  };
+  const areas: MapLayerConfig = { ...layer, zOrder: 70 };
+
+  it("paints every area below every marker, so a marker inside an area stays clickable", () => {
+    const specs = buildMapLayerSpecs(
+      [areas, markers],
+      [point("a"), point("n", { layerId: "npcs", entityId: "npc" })],
+      [volume],
+      baseUi,
+    );
+    expect(specs.map((s) => `${s.layerId}:${s.kind}`)).toEqual([
+      "locations:polygon",
+      "npcs:scatterplot",
+      "locations:scatterplot",
+    ]);
+  });
+
+  it("orders each group by the layer z-order", () => {
+    const specs = buildMapLayerSpecs(
+      [{ ...markers, zOrder: 90 }, areas],
+      [point("a"), point("n", { layerId: "npcs", entityId: "npc" })],
+      [],
+      baseUi,
+    );
+    expect(specs.map((s) => `${s.layerId}:${s.kind}`)).toEqual([
+      "locations:polygon",
+      "locations:scatterplot",
+      "npcs:scatterplot",
+    ]);
   });
 });

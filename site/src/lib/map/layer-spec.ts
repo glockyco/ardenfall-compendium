@@ -30,6 +30,30 @@ function filterPoints(rows: MapPointRow[], ui: MapUiFilters): MapPointRow[] {
   return rows.filter((r) => ui.showDebug || !r.debugOnly);
 }
 
+/**
+ * Every layer's specs, in the order deck.gl paints and picks them.
+ *
+ * deck.gl draws later layers over earlier ones and picks the topmost hit, so paint order decides
+ * what a reader can click. An area covers thousands of square units and a marker covers a few
+ * pixels, so an area painted last swallows every click inside it. Areas therefore paint below all
+ * markers, whatever their layer's z-order, and the z-order then orders each group.
+ */
+export function buildMapLayerSpecs(
+  layers: MapLayerConfig[],
+  points: MapPointRow[],
+  volumes: MapVolumeRow[],
+  ui: MapUiFilters,
+): LayerSpec[] {
+  const byZOrder = [...layers].sort(
+    (left, right) => left.zOrder - right.zOrder || left.layerId.localeCompare(right.layerId),
+  );
+  const specs = byZOrder.flatMap((layer) => buildEntityLayerSpecs(layer, points, volumes, ui));
+  return [
+    ...specs.filter((spec) => spec.kind === "polygon"),
+    ...specs.filter((spec) => spec.kind !== "polygon"),
+  ];
+}
+
 export function buildEntityLayerSpecs(
   layer: MapLayerConfig,
   points: MapPointRow[],

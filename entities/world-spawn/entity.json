@@ -97,6 +97,6 @@
     "radius": 3,
     "tooltip": ["kind"],
     "legendLabel": "World Spawns",
-    "zOrder": 45
+    "zOrder": 55
   }
 }

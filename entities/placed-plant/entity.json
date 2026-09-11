@@ -107,6 +107,6 @@
     "radius": 3,
     "tooltip": ["itemRef"],
     "legendLabel": "Pickable Plants",
-    "zOrder": 60
+    "zOrder": 50
   }
 }

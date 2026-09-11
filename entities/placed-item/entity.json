@@ -123,6 +123,6 @@
     "radius": 3,
     "tooltip": ["itemRef"],
     "legendLabel": "Placed Items",
-    "zOrder": 55
+    "zOrder": 40
   }
 }

@@ -93,6 +93,6 @@
     "radius": 6,
     "tooltip": ["name"],
     "legendLabel": "Locations",
-    "zOrder": 100
+    "zOrder": 70
   }
 }

@@ -207,7 +207,7 @@ describe("emitSiteMetadata", () => {
       tooltip_fields_json: JSON.stringify(["name"]),
       filters_json: JSON.stringify([]),
       legend_label: "Locations",
-      z_order: 100,
+      z_order: 70,
     });
 
     // A location has both a map layer and a page, so it must reach `site_entities`. The site
