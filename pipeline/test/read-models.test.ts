@@ -1060,6 +1060,37 @@ describe("emitMapReadModels", () => {
     ]);
   });
 
+  it("does not publish points or volumes for a location hidden from the map", () => {
+    const db = new Database(":memory:");
+    db.exec(LOCATION_DDL);
+    canonicaliseLocations(db, {
+      entityId: "location",
+      schemaVersion: 1,
+      rows: [
+        {
+          id: "hidden-location",
+          fields: {
+            id: "hidden-location",
+            name: "Hidden room",
+            enabled: true,
+            mapId: "ardenfall",
+            showOnMap: false,
+            showOnMapDebugOnly: false,
+            mapPosition: { x: 12, y: 3, z: -8 },
+            allowFastTravel: false,
+            fastTravelPosition: null,
+            volumes: [{ index: 0, center: { x: 10, y: 2, z: -20 }, size: { x: 6, y: 4, z: 8 } }],
+          },
+        },
+      ],
+    });
+
+    emitMapReadModels(db, ["location"]);
+
+    expect(db.query("SELECT COUNT(*) AS count FROM map_points").get()).toEqual({ count: 0 });
+    expect(db.query("SELECT COUNT(*) AS count FROM map_volumes").get()).toEqual({ count: 0 });
+  });
+
   it("includes debug-only map points so the map can offer a debug toggle", () => {
     const db = new Database(":memory:");
     db.exec(LOCATION_DDL);

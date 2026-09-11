@@ -45,6 +45,7 @@ export const locationProjection: LocationMapProjection = {
              l.enabled, l.show_on_map_debug_only, l.allow_fast_travel
       FROM locations l
       JOIN placements p ON p.entity_id = 'location' AND p.instance_id = l.id
+      WHERE l.show_on_map = 1
       ORDER BY COALESCE(NULLIF(TRIM(l.name), ''), 'Unnamed location'), l.id;
     `,
   volumes: `
@@ -58,7 +59,7 @@ export const locationProjection: LocationMapProjection = {
       FROM location_volumes v
       JOIN locations l ON l.id = v.location_id
       JOIN placements p ON p.entity_id = 'location' AND p.instance_id = v.location_id
-      WHERE v.geometry_json IS NOT NULL
+      WHERE v.geometry_json IS NOT NULL AND l.show_on_map = 1
       ORDER BY COALESCE(NULLIF(TRIM(l.name), ''), 'Unnamed location'), v.volume_index;
     `,
 };
