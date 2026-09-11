@@ -59,14 +59,18 @@ public static class DialogueGraphContraction
 
         foreach (var source in published)
         {
-            var seen = new HashSet<int>();
+            // Keyed by the port as well as the node, because several options of one choice reach the
+            // same control node: four of five options of one choice enter the same `GoToStatement`,
+            // and a node-only guard published the first and dropped the other three, which left
+            // those options looking like choices that lead nowhere.
+            var seen = new HashSet<(int Target, string Port)>();
             var pending = new Queue<AuthoredDialogueEdge>();
             foreach (var edge in Edges(outgoing, source)) pending.Enqueue(edge);
 
             while (pending.Count > 0)
             {
                 var edge = pending.Dequeue();
-                if (!seen.Add(edge.Target)) continue;
+                if (!seen.Add((edge.Target, edge.Port))) continue;
                 if (publishedSet.Contains(edge.Target))
                 {
                     contracted.Add(new AuthoredDialogueEdge(source, edge.Target, edge.Port));

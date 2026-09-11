@@ -86,3 +86,27 @@ public class DialogueGraphContractionTests
     private static AuthoredDialogueEdge Edge(int source, int target, string port = "") =>
         new(source, target, port);
 }
+
+public class SharedControlNodeTests
+{
+    [Fact]
+    public void EveryOptionThroughOneControlNodeKeepsItsEdge()
+    {
+        // Four options of one choice enter the same jump node, which reaches a published reply.
+        var authored = new List<AuthoredDialogueEdge>
+        {
+            new(1, 2, "0"),
+            new(1, 2, "1"),
+            new(1, 2, "2"),
+            new(1, 3, "3"),
+            new(2, 4, ""),
+        };
+
+        var contracted = DialogueGraphContraction.Contract(authored, new[] { 1, 3, 4 }, new[] { 2 });
+
+        Assert.Equal(
+            new[] { "0", "1", "2" },
+            contracted.Where(edge => edge.Target == 4).Select(edge => edge.Port).OrderBy(port => port).ToArray());
+        Assert.Single(contracted.Where(edge => edge.Target == 3));
+    }
+}
