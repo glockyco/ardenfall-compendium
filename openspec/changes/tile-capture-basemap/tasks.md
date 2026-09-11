@@ -23,25 +23,25 @@
 
 ## 4. Pipeline ingest
 
-- [ ] 4.1 Convert captured PNG tiles to WebP through the existing asset stage, so each tile becomes a content-hashed asset in the artifact manifest.
-- [ ] 4.2 Emit the tile index that resolves map, zoom, and position to an asset hash and byte size, and record empty positions.
-- [ ] 4.3 Build the zoom pyramid by combining finer tiles, and take the finest level from the map's maximum zoom so one producer owns that number.
-- [ ] 4.4 Fail the slice when a published placement lies outside the captured bounds, when a position inside the bounds is unresolved, or when the capture's game build differs from the snapshot's.
-- [ ] 4.5 Emit basemap metadata per map on the map view: bounds, pixels per unit, zoom range, tile size, and index reference.
-- [ ] 4.6 Report tile count, total bytes, bounds, pixels per unit, and game build per map.
-- [ ] 4.7 Add pipeline tests for the index, the pyramid, the empty-position record, and each failure above.
+- [x] 4.1 Convert captured PNG tiles to WebP through the existing asset stage, so each tile becomes a content-hashed asset in the artifact manifest.
+- [x] 4.2 Emit the tile index that resolves map, zoom, and position to an asset hash and byte size, and record empty positions.
+- [x] 4.3 Build the zoom pyramid by combining finer tiles, and take the finest level from the map's maximum zoom so one producer owns that number.
+- [x] 4.4 Fail the slice when a published placement lies outside the captured bounds, when a position inside the bounds is unresolved, or when the capture's game build differs from the snapshot's.
+- [x] 4.5 Emit basemap metadata per map on the map view: bounds, pixels per unit, zoom range, tile size, and index reference.
+- [x] 4.6 Report tile count, total bytes, bounds, pixels per unit, and game build per map.
+- [x] 4.7 Add pipeline tests for the index, the pyramid, the empty-position record, and each failure above.
 
 ## 5. Site rendering
 
-- [ ] 5.1 Decide the renderer: `TileLayer` from `@deck.gl/geo-layers`, which is not installed, or a tile selector over the installed `BitmapLayer`. Record the measurement that decided it, including bundle cost on the map route.
-- [ ] 5.2 Render the basemap beneath the marker layers from the published metadata, with no coordinate transform and no branch on layer identity.
-- [ ] 5.3 Keep the map working when a map publishes no basemap.
-- [ ] 5.4 Add site tests for basemap ordering, for a map without a basemap, and for tile requests resolving through the index.
+- [x] 5.1 Decide the renderer: `TileLayer` from `@deck.gl/geo-layers`, which is not installed, or a tile selector over the installed `BitmapLayer`. Record the measurement that decided it, including bundle cost on the map route.
+- [x] 5.2 Render the basemap beneath the marker layers from the published metadata, with no coordinate transform and no branch on layer identity.
+- [x] 5.3 Keep the map working when a map publishes no basemap.
+- [x] 5.4 Add site tests for basemap ordering, for a map without a basemap, and for tile requests resolving through the index.
 
 ## 6. Fixture and gate
 
-- [ ] 6.1 Add a small captured tile set to `fixtures/synthetic/snapshot`, including one empty position and one map without a basemap, so CI exercises both paths.
-- [ ] 6.2 Extend the map smoke to assert that a basemap tile reaches the built page, selected by state rather than by a fixture name.
+- [x] 6.1 Add a small captured tile set to `fixtures/synthetic/snapshot`, including one empty position and one map without a basemap, so CI exercises both paths.
+- [x] 6.2 Extend the map smoke to assert that a basemap tile reaches the built page, selected by state rather than by a fixture name.
 - [ ] 6.3 Report the deploy file count against the 20,000 limit after the first full capture, and record it.
 
 ## 7. Verification
