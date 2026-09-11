@@ -9,13 +9,13 @@
   <title>Scene Dialogue | Ardenfall Compendium</title>
   <meta
     name="description"
-    content={`Browse ${data.sceneDialogue.length} speakers the game places in the world.`}
+    content={`Browse ${data.sceneDialogue.length} conversations the game places in the world.`}
   />
   <link rel="canonical" href={data.sceneDialogueRoute} />
   <meta property="og:title" content="Scene Dialogue | Ardenfall Compendium" />
   <meta
     property="og:description"
-    content={`Browse ${data.sceneDialogue.length} speakers the game places in the world.`}
+    content={`Browse ${data.sceneDialogue.length} conversations the game places in the world.`}
   />
   <meta property="og:url" content={data.sceneDialogueRoute} />
   <meta property="og:type" content="website" />
@@ -23,8 +23,8 @@
 
 <h1 class="text-2xl font-bold">Scene Dialogue</h1>
 <p class="text-muted-foreground mt-2">
-  {data.sceneDialogue.length} speakers the scenes place, with the lines they own. This is the dialogue
-  that hangs off no quest.
+  {data.sceneDialogue.length} conversations the scenes place, each with its lines and every place a reader
+  can start it. This is the dialogue that hangs off no quest.
 </p>
 
 <SceneDialogueOverview rows={data.sceneDialogue} />
