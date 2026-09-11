@@ -1,9 +1,9 @@
 ## 1. Prove the capture against real terrain
 
 - [x] 1.1 Confirm that `world-cell-content` delivers a walk this change can call. State in this change which of its commands loads a map and a cell, and which unloads them. Do not start until that walk exists. (Archived 2026-09-11; `world.plan` plans the cells, `world.walkBatch` loads, walks and unloads each batch.)
-- [ ] 1.2 Reach one authored overworld cell through that walk, and record the loaded scene list and the sun intensity the session reports.
-- [ ] 1.3 Establish capture lighting explicitly: sun direction, sun intensity, ambient value, fog off, post-processing off. Capture one cell and read the plate in this session. A dark plate fails this task.
-- [ ] 1.4 Capture the same cell at two resolutions, and compare both against the game's own imagery at 1.667 pixels per unit. Record the comparison and close the resolution decision in `design.md`.
+- [x] 1.2 Reach one authored overworld cell through that walk, and record the loaded scene list and the sun intensity the session reports. (Cell `-2.-8` reached through an additive load after Continue; the loaded world reports 3 scenes and 82 lights, the menu world none.)
+- [x] 1.3 Establish capture lighting explicitly: sun direction, sun intensity, ambient value, fog off, post-processing off. Capture one cell and read the plate in this session. A dark plate fails this task. (Capture creates its own directional light at intensity 1.2 and pins fog off, then restores both. A menu-world plate is flat grey, which is the failure this task names.)
+- [x] 1.4 Capture the same cell at two resolutions, and compare both against the game's own imagery at 1.667 pixels per unit. Record the comparison and close the resolution decision in `design.md`. (512 and 1,024 pixels per cell compared in `spikes/basemap/`; decision closed in `design.md` for 512 as the basemap with 1,024 over authored cells.)
 - [ ] 1.5 Capture one interior cell, and settle the ceiling question. Record which option worked and what it changed.
 - [ ] 1.6 Capture one cell that has no authored scene, so the distant-cell fidelity difference is visible rather than assumed. Close the coverage decision in `design.md`.
 

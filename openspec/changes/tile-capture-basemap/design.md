@@ -175,7 +175,24 @@ File count grows with the square of pixels per unit. Tiles are 256 pixels. The d
 
 Interior counts assume the three authored cells only, since interiors have no distant geometry and 105 of 108 grid cells hold nothing.
 
-Two further constraints belong to this decision. The pyramid's finest level should match the map's maximum zoom, because a tile finer than the viewer allows is never requested; the viewer's zoom cap and the tile resolution are one fact with one producer. And the plate at 3.4 pixels per unit that this session captured is the only sample of legibility so far, so the choice needs one comparison at two resolutions before it is made.
+Two further constraints belong to this decision. The pyramid's finest level should match the map's maximum zoom, because a tile finer than the viewer allows is never requested; the viewer's zoom cap and the tile resolution are one fact with one producer.
+
+The comparison is now measured. On 2026-09-11 cell `-2.-8`, the densest authored cell at 1,228 renderers, was captured at 512 and at 1,024 pixels over its declared rectangle, by `probes/basemap-capture.sh`, kept beside this design with the 512-pixel plate as `probes/cell--2.-8-512.png`. At 512 pixels, 3.41 per unit, the coastline, the cliffs, the beach, the jetty and every building footprint read clearly. At 1,024, 6.83 per unit, individual props resolve: crates on the jetty, the planks of the pier, single rocks. Nothing legible at 1,024 is lost at 512 except props, so **512 carries the basemap and 1,024 is the detail level over authored cells**, which is what the sparse finest level in decision 8 pairs.
+
+### 7a. Capture inputs, measured
+
+Three findings from the capture spike belong in the implementation rather than in a later surprise.
+
+- **The world must be loaded.** At the main menu a cell scene loads and its renderers report correct
+  bounds, but the plate is flat ambient grey: the menu world holds **no lights at all**. After the
+  Continue button is clicked the loaded world holds 82. The capture runs against a loaded world.
+- **The capture brings its own sun.** `RenderSettings.sun` is null even in the loaded world, so a
+  capture creates a directional light, pins fog off, and restores both. Nothing is inherited from
+  the save's time or weather.
+- **Bounds come from the grid, never from renderers.** Cell `-2.-8` reports renderer bounds of
+  1,339 by 504 units, because a cell scene parents distant geometry far outside its own rectangle.
+  The declared grid is exact: a cell spans `index * 150` to `(index + 1) * 150` on both axes with no
+  offset, which the all-water cell `-5.-10` confirmed by reporting renderer bounds of exactly 150 by 150.
 
 ### 8. Open decisions
 
