@@ -59,4 +59,4 @@
 
 - [x] 9.1 Record the measured walk cost in this change, so a later change prices its own traversal against a measurement rather than an estimate.
 - [x] 9.2 State in `tile-capture-basemap` that content harvesting and tile capture share the streaming mechanism and not the traversal cost.
-- [ ] 9.3 Archive this change after the gate passes.
+- [x] 9.3 Archive this change after the gate passes.
