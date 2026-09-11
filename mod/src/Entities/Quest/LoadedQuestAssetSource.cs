@@ -5,10 +5,9 @@ using Ardenfall;
 using Ardenfall.Item;
 using Ardenfall.RecordSystem;
 using Ardenfall.Questing;
-using System.Reflection;
 using Ardenfall.Dialog;
-using Ardenfall.Dialog.Nodes;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities.Dialogue;
 using UnityObject = UnityEngine.Object;
 
 namespace ArdenfallCompendium.Entities.Quest;
@@ -278,73 +277,32 @@ public sealed class LoadedQuestAssetSource : IQuestAssetSource
     /// Reads the authored dialogue a quest attaches to one of its character objects.
     /// </summary>
     /// <remarks>
-    /// This walk reads one dialogue holder: <c>CharacterQuestObject.dialogGraph.flowGraph</c>.
+    /// This reads one dialogue holder: <c>CharacterQuestObject.dialogGraph.flowGraph</c>.
     ///
-    /// It is not the only authored dialogue in a build. <c>CharacterData.characterGraphs</c> holds
-    /// containers whose graph may be a <c>DialogFlowGraph</c>, and <c>CharacterGroupQuestObject</c>
-    /// and <c>SimpleDialogSceneQuestObject</c> each hold a dialogue graph of their own. This walk
-    /// covers none of them, so a line authored there reaches no reader.
+    /// It is not the only authored dialogue in a build. <c>SimpleDialogInteractable</c> holds the
+    /// dialogue a scene places, which the cell walk harvests as its own family.
+    /// <c>CharacterData.characterGraphs</c> holds containers whose graph may be a
+    /// <c>DialogFlowGraph</c>, and <c>CharacterGroupQuestObject</c> and
+    /// <c>SimpleDialogSceneQuestObject</c> each hold a graph of their own. This walk covers none of
+    /// them, so a line authored there reaches no reader.
     ///
     /// How many lines each holder carries is a property of the build, so it belongs in the export's
     /// own counts rather than in this comment.
-    ///
-    /// Greetings expose pure public accessors. Topics do not: <c>ITopicNode.GetTopicStatements</c>
-    /// consults live graph state through <c>IsNodeChoiceEntered</c> and <c>ApplyModifiers</c>,
-    /// which no asset-time walk can satisfy, so the authored <c>statement</c> field is read
-    /// directly. That field is also the text a reader wants: unsubstituted source prose, before
-    /// the runtime rewrites it with a debug prefix or a failed-check alternative.
     /// </remarks>
-    /// <param name="walked">
-    /// True when a dialogue graph was present and its nodes were enumerated, whatever the walk
-    /// yielded. Distinguishes "this object has no dialogue" from "a graph produced no lines".
-    /// </param>
     private static IReadOnlyList<QuestCharacterDialogueAsset> WalkDialogue(
         CharacterQuestObject character,
         out bool walked)
     {
-        walked = false;
-        var lines = new List<QuestCharacterDialogueAsset>();
-        if (character.dialogGraph?.flowGraph?.graph is not DialogFlowGraph graph) return lines;
-
-        var nodes = graph.allNodes;
-        if (nodes == null) return lines;
-
-        walked = true;
-        var ordinal = 0;
-        foreach (var node in nodes)
-        {
-            var current = ordinal++;
-            switch (node)
-            {
-                case GreetingFlowNode greeting:
-                    AddLine(lines, current, "greeting", greeting.EditorGetStatement()?.text, greeting.GetImportance());
-                    break;
-                case TopicFlowNode topic:
-                    AddLine(lines, current, "topic", AuthoredStatementText(topic), ((ITopicNode)topic).Importance);
-                    break;
-            }
-        }
-
-        return lines;
+        var graph = character.dialogGraph?.flowGraph?.graph as DialogFlowGraph;
+        return DialogueGraphWalk
+            .Walk(graph, out walked)
+            .Select(line => new QuestCharacterDialogueAsset(
+                line.LineOrdinal,
+                line.Kind,
+                line.Text,
+                line.Importance))
+            .ToList();
     }
-
-    private static void AddLine(
-        List<QuestCharacterDialogueAsset> lines,
-        int lineOrdinal,
-        string kind,
-        string? text,
-        int importance)
-    {
-        var authored = NullIfEmpty(text);
-        if (authored == null) return;
-        lines.Add(new QuestCharacterDialogueAsset(lineOrdinal, kind, authored, importance));
-    }
-
-    private static readonly FieldInfo? TopicStatementField = typeof(TopicFlowNode)
-        .GetField("statement", BindingFlags.Instance | BindingFlags.NonPublic);
-
-    private static string? AuthoredStatementText(TopicFlowNode topic) =>
-        TopicStatementField?.GetValue(topic) is Statement statement ? statement.text : null;
 
     private static SnapshotRef? RecordReferenceSnapshot(RecordReference? reference)
     {
