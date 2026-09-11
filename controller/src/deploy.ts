@@ -22,8 +22,19 @@ export async function deployPlugins(options: DeployOptions): Promise<DeployResul
   await removeObsoletePlugins(options.pluginsDir);
 
   for (const name of REQUIRED_HOTREPL_DLLS) await requireFile(join(options.hotReplOutDir, name));
+  const hotReplSources = await hotReplDllSources(options.hotReplOutDir, options.pluginsDir);
+  const jsonSource = hotReplSources.find((entry) => entry.name === "Newtonsoft.Json.dll");
   const sources = [
-    ...(await hotReplDllSources(options.hotReplOutDir, options.pluginsDir)),
+    ...hotReplSources,
+    ...(jsonSource
+      ? [
+          {
+            ...jsonSource,
+            target: join(options.pluginsDir, "ArdenfallCompendium", jsonSource.name),
+          },
+          { ...jsonSource, target: join(dirname(options.pluginsDir), "core", jsonSource.name) },
+        ]
+      : []),
     ...ARDENFALL_DLLS.map((name) => ({
       name,
       source: join(options.ardenfallModOutDir, name),

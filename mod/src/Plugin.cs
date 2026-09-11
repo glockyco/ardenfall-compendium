@@ -28,11 +28,19 @@ public sealed class Plugin : BaseUnityPlugin
         _hotkey = Config.Bind("Triggers", "Hotkey", new KeyboardShortcut(KeyCode.F8), "Trigger snapshot extraction");
         _outputDir = Config.Bind("Output", "BaseDir", Path.Combine(Paths.PluginPath, "ArdenfallCompendium", "snapshots"), "Where to write snapshots");
         _runs = new Control.CompendiumRunManager();
-        _commands = new Control.CompendiumCommandRegistry(
-            _runs,
-            _outputDir.Value,
-            _pluginIdentity,
-            routine => StartCoroutine(routine));
+        try
+        {
+            _commands = new Control.CompendiumCommandRegistry(
+                _runs,
+                _outputDir.Value,
+                _pluginIdentity,
+                routine => StartCoroutine(routine));
+        }
+        catch (System.Exception exception)
+        {
+            Logger.LogError($"command registration failed: {exception}");
+            throw;
+        }
         _readiness = new Triggers.ReadinessMonitor(Logger);
         Logger.LogInfo(
             $"{Name} {Version} loaded from {_pluginIdentity.Path} (sha256 {_pluginIdentity.Sha256}); "

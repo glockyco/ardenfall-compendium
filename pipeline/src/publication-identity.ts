@@ -1,6 +1,6 @@
 import type { SnapshotManifest } from "./types";
 
-export const PUBLISHED_PRODUCT_NAME = "Ardenfall";
+export const PUBLISHED_PRODUCT_NAME = "Ardenfall Alpha";
 
 export function assertPublishableSnapshotIdentity(
   manifest: Pick<SnapshotManifest, "productName" | "buildProfile">,

@@ -244,7 +244,7 @@ function fixtureSnapshot(kind: "live-game-export" | "synthetic-fixture"): LoadSn
       source: kind === "live-game-export" ? { kind } : { kind, fixtureName: "synthetic" },
       gameVersion: "0.0.10.91",
       buildIdentifier: "run-a",
-      productName: "Ardenfall",
+      productName: "Ardenfall Alpha",
       buildProfile: "release",
       extractorVersion: "0.1.0",
       pluginSha256: "0000000000000000000000000000000000000000000000000000000000000000",

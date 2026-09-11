@@ -131,7 +131,7 @@ export const CONTROLLER_TIMEOUTS = {
  * loudly when the controller has attached to a different HotRepl-instrumented
  * game, which happens when two of them claim the same port.
  */
-const EXPECTED_PRODUCT_NAME = "Ardenfall";
+const EXPECTED_PRODUCT_NAME = "Ardenfall Alpha";
 
 export async function exportCompendium(options: ExportOptions): Promise<ExportResult> {
   const log = options.log ?? (() => undefined);
