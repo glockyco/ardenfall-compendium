@@ -115,7 +115,7 @@
   "hashes": {
     "snapshot/spells.json": "4008d7c3dd28d2237b1f5de8cf3580152e11b4509bbe87ae56856307ffdc6f6f",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
-    "snapshot/dialogues.json": "0f172b980287ecabdb2d33c0df4fd4814ee6a404bbf6963388d2fd56b95f5840",
+    "snapshot/dialogues.json": "f95d6fee511c37395bc39e9302988b5cdb98b9b61734a5d39e4f0bd345b6cdcd",
     "snapshot/scene-dialogue.json": "d78cc0c2d4b71bbac10bb3c399619ce98c60087b95977d723f30e6d92a82894c",
     "snapshot/world-spawns.json": "1731d4aca4e7ae9d2c9755a6648b0275375f9e46f5cf0ba953d0433544135aa9",
     "snapshot/placed-containers.json": "0f7be12c91442c68383116699788773f576f319bd77f6c6f84f05ee2d4de254e",

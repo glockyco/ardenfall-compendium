@@ -66,10 +66,6 @@
         return `is ${gate.value ?? "in the state the check names"}`;
       case "quest-phase":
         return "is at the authored phase";
-      case "quest-objective":
-        return gate.label
-          ? `objective ${gate.label} is ${gate.value ?? "at the authored state"}`
-          : `is at the authored objective`;
       case "quest-variable":
         return "holds the authored value";
       case "faction-relationship":
@@ -81,7 +77,7 @@
 
   /** A quest check with no named subject still states which state it reads. */
   const fallbackSubject = $derived(
-    gate.subjects.length === 0 && tail() !== ""
+    gate.subjects.length === 0 && (tail() !== "" || gate.kind === "quest-objective")
       ? gate.kind === "faction-relationship"
         ? "the faction"
         : "the quest"
@@ -109,9 +105,13 @@
         return "Only when standing with";
       case "stat-check":
         return `Requires a ${gate.value ?? ""} check of`.trim();
+      case "quest-objective":
+        // The objective is the subject a reader cares about; the quest is where it lives.
+        return gate.label
+          ? `Only while “${gate.label.trim().replace(/[.]$/, "")}” is ${gate.value ?? "at the authored state"} in`
+          : "Only while the authored objective is reached in";
       case "quest-state":
       case "quest-phase":
-      case "quest-objective":
       case "quest-variable":
         return "Only while";
       case "quest-location":
