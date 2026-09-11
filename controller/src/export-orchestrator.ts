@@ -135,7 +135,11 @@ const EXPECTED_PRODUCT_NAME = "Ardenfall Alpha";
 
 export async function exportCompendium(options: ExportOptions): Promise<ExportResult> {
   const log = options.log ?? (() => undefined);
-  const outputBaseDir = toRuntimePath(resolve(options.outputBaseDir));
+  const outputBaseDir = toRuntimePath(
+    /^[a-z]:[\\/]/i.test(options.outputBaseDir)
+      ? options.outputBaseDir
+      : resolve(options.outputBaseDir),
+  );
   const connectTimeoutMs = options.connectTimeoutMs ?? CONTROLLER_TIMEOUTS.connectMs;
   if (options.url !== undefined) {
     const port = readHotReplPort(options.url);
@@ -539,8 +543,19 @@ function assertSingleHotReplProcess(port: number, processes: HotReplProcess[]): 
 }
 
 function normalizeControllerPath(path: string): string {
-  const normalized = path.replaceAll("\\", "/");
-  return normalized.replace(/^z:\//i, "/");
+  const normalized = path.replaceAll("\\\\", "/");
+  if (/^z:\//i.test(normalized)) return normalized.replace(/^z:\//i, "/");
+  if (/^c:\//i.test(normalized)) {
+    const gameDir = process.env.ARDENFALL_GAME_DIR;
+    if (gameDir) {
+      const driveRoot = gameDir.slice(
+        0,
+        gameDir.toLowerCase().indexOf("/drive_c") + "/drive_c".length,
+      );
+      return `${driveRoot}${normalized.slice(2)}`;
+    }
+  }
+  return normalized;
 }
 
 function toRuntimePath(path: string): string {

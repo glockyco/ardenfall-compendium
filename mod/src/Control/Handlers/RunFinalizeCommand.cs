@@ -585,7 +585,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             RecordTiming(timings, "manifest.write", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
-            Directory.Move(stagingDir, publishedDir);
+            PublishDirectory(stagingDir, publishedDir);
             RecordTiming(timings, "publish", phaseStopwatch, totalStopwatch);
 
             run.PublishedDir = publishedDir;
@@ -675,7 +675,13 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         }
         catch
         {
-            if (Directory.Exists(stagingDir)) Directory.Delete(stagingDir, recursive: true);
+            try
+            {
+                if (Directory.Exists(stagingDir)) Directory.Delete(stagingDir, recursive: true);
+            }
+            catch
+            {
+            }
             throw;
         }
     }
@@ -846,6 +852,20 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
 
     private static string ChunkPath(string chunksDir, int offset) =>
         Path.Combine(chunksDir, $"{offset:D6}.json");
+
+    private static void PublishDirectory(string stagingDir, string publishedDir)
+    {
+        if (Directory.Exists(publishedDir)) Directory.Delete(publishedDir, recursive: true);
+        Directory.CreateDirectory(publishedDir);
+        foreach (var source in Directory.GetFiles(stagingDir, "*", SearchOption.AllDirectories))
+        {
+            var relative = Path.GetRelativePath(stagingDir, source);
+            var target = Path.Combine(publishedDir, relative);
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            File.Copy(source, target, overwrite: true);
+        }
+        Directory.Delete(stagingDir, recursive: true);
+    }
 
     private static void CopyCaptureWorkspace(
         CompendiumRun run,

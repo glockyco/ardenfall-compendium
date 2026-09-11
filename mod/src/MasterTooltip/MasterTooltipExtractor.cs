@@ -24,7 +24,10 @@ public sealed class RuntimeMasterTooltipSnapshotSource : IMasterTooltipSnapshotS
 
     public MasterTooltipVocabularySnapshot BuildSnapshot()
     {
-        return MasterTooltipExtractor.Build(ArdenfallMasterData.Instance, null);
+        var master = ArdenfallMasterData.Instance;
+        return master == null
+            ? new MasterTooltipVocabularySnapshot { SchemaVersion = 2 }
+            : MasterTooltipExtractor.Build(master, null);
     }
 }
 
