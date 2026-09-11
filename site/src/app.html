@@ -7,10 +7,15 @@
     <meta name="theme-color" content="#010309" />
     %sveltekit.head%
   </head>
-  <!-- Pages are prerendered and +layout.ts disables CSR, so every click is a full
-       document navigation. Preloading on hover would fetch data the browser then
-       throws away. -->
-  <body data-sveltekit-preload-data="off" class="bg-background text-foreground antialiased">
+  <!-- Pages are prerendered and +layout.ts disables CSR. Every link is a document load,
+       also from the few hydrated routes, so no page fetches another page's data file and
+       the build ships none for the static pages. Preloading on hover would fetch data the
+       browser then throws away. -->
+  <body
+    data-sveltekit-preload-data="off"
+    data-sveltekit-reload
+    class="bg-background text-foreground antialiased"
+  >
     <div style="display: contents">%sveltekit.body%</div>
   </body>
 </html>
