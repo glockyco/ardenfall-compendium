@@ -5,7 +5,7 @@ schema: spec-driven
 # load automatically, so a copy here would drift and could also cost the sticky
 # rules their stickiness.
 context: |
-  Ardenfall Compendium extracts data from the Ardenfall Demo, a Unity Mono game, and publishes it as a static compendium.
+  Ardenfall Compendium extracts data from Ardenfall, a Unity Mono game, in its current Alpha build, and publishes it as a static compendium.
   Four subsystems: mod/ is a C# BepInEx walker, pipeline/ canonicalises snapshots into SQLite artifacts with Bun, site/ prerenders SvelteKit pages onto Cloudflare Workers Static Assets, and controller/ drives the game over HotRepl.
   Read AGENTS.md for the toolchain, the commands, and the definition of verified work. Read `.omp/RULES.md` for the requirements that hold in every change.
   Name the reader before the mechanism. A change states what a player of the game can now answer.

@@ -111,13 +111,11 @@ A spike is a probe that answers one question. Probes live in a directory that gi
 
 ### Requirement: An export proves which game answered it
 
-An export SHALL name the build and the mod that produced it. An export SHALL fail when more than one instrumented game can answer.
+An export SHALL name the game build and mod that produced it. An export SHALL fail when more than one instrumented game can answer.
 
-An export SHALL confirm the identity of the answering game and SHALL fail when it is not the published game. The snapshot SHALL record that identity, and publication SHALL refuse a snapshot whose recorded identity is absent or names another game.
+The current main game, whose Unity product is `Ardenfall Alpha`, is the only published game. The discontinued Demo is not a supported fallback. An export SHALL confirm the answering product before it writes entity data. The snapshot SHALL record that identity, and publication SHALL refuse a snapshot whose identity is absent or names another product.
 
-Steam holds two installs and they are different games. Only the Demo is public. The full game is a private alpha, and no content extracted from it may reach a reader. Read-only alpha probes are legitimate in the spike area. Export snapshots remain Demo-only, and publication independently verifies the stored identity.
-
-Two instrumented games on one HotRepl port report no error. The connection reaches the game that bound first. During the identity slice a stale instance answered an export. The snapshot then lacked fields that the deployed mod emits, and the absence looked like a data defect.
+Two instrumented games on one HotRepl port report no error. The connection reaches the game that bound first. Product identity, port ownership, and the deployed plugin digest therefore remain independent required checks.
 
 #### Scenario: Two instrumented games run at once
 
@@ -134,20 +132,20 @@ Two instrumented games on one HotRepl port report no error. The connection reach
 
 #### Scenario: The answering game is not the published one
 
-- **WHEN** an export runs against an install other than the published game
-- **THEN** the export fails
-- **AND** the failure states that content from that install must not be published
+- **WHEN** an export connects to the Demo or any product other than `Ardenfall Alpha`
+- **THEN** the export fails before extraction
+- **AND** the failure states that the main game is required
 
 #### Scenario: A snapshot records its source
 
 - **WHEN** an export produces a snapshot
-- **THEN** the snapshot records the identity of the game that answered
+- **THEN** the snapshot records the identity of the main game that answered
 - **AND** that identity can be read from the artifact without the session that produced it
 
 #### Scenario: Publication checks the artifact
 
 - **WHEN** publication runs against a snapshot
-- **THEN** it proceeds only when the recorded identity names the published game
+- **THEN** it proceeds only when the recorded identity names `Ardenfall Alpha`
 
 #### Scenario: A snapshot carries no identity
 
@@ -156,13 +154,12 @@ Two instrumented games on one HotRepl port report no error. The connection reach
 
 #### Scenario: The alpha is probed
 
-- **WHEN** a read-only probe runs against the private alpha in the spike area
-- **THEN** the probe is permitted
-- **AND** it does not create an export snapshot
-- **AND** its results stay outside published content
+- **WHEN** a probe or export runs against the current main game
+- **THEN** the operation is permitted, including snapshot and release creation
+- **AND** persisted results retain the main-game identity
 
 #### Scenario: Repository guidance states the publication boundary
 
 - **WHEN** an agent reads the root repository guidance
-- **THEN** it states that only Demo-derived artifacts may be published
+- **THEN** it states that the main game is the only supported source
 - **AND** it points live extraction work to the scoped skill
