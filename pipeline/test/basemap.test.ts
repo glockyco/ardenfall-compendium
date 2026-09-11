@@ -99,6 +99,72 @@ describe("basemap ingest", () => {
     }
   });
 
+  it("stitches north-up cells without changing world axes", async () => {
+    const root = mkdtempSync(join(tmpdir(), "basemap-axis-"));
+    roots.push(root);
+    mkdirSync(join(root, "assets", "map", "overworld"), { recursive: true });
+    const colors = [
+      { cellX: 0, cellY: 0, color: { r: 220, g: 20, b: 20, alpha: 1 } },
+      { cellX: 1, cellY: 0, color: { r: 20, g: 220, b: 20, alpha: 1 } },
+      { cellX: 0, cellY: 1, color: { r: 20, g: 20, b: 220, alpha: 1 } },
+      { cellX: 1, cellY: 1, color: { r: 220, g: 220, b: 20, alpha: 1 } },
+    ];
+    const tiles = [];
+    for (const entry of colors) {
+      const png = await sharp({
+        create: { width: 64, height: 64, channels: 4, background: entry.color },
+      })
+        .png()
+        .toBuffer();
+      const hash = createHash("sha256").update(png).digest("hex");
+      const path = `assets/map/overworld/${hash}.png`;
+      writeFileSync(join(root, path), png);
+      tiles.push({ ...entry, hash, path, bytes: png.length, empty: false, authored: true });
+    }
+    writeFileSync(
+      join(root, "map-capture-overworld.json"),
+      JSON.stringify({
+        inputs: {
+          mapId: "overworld",
+          gameVersion: "demo-build",
+          gridOffsetX: 0,
+          gridOffsetY: 0,
+          gridSizeX: 2,
+          gridSizeY: 2,
+          cellSize: 64,
+          pixelsPerCell: 64,
+          pixelsPerUnit: 1,
+          minCellX: 0,
+          minCellY: 0,
+          maxCellX: 1,
+          maxCellY: 1,
+        },
+        tiles,
+      }),
+    );
+
+    const output = await ingestBasemaps(root, "demo-build");
+    const parent = output.basemaps[0]!.tiles.find((tile) => tile.zoom === -1)!;
+    const asset = output.assets.find((candidate) => candidate.hash === parent.assetHash)!;
+    const { data, info } = await sharp(asset.bytes)
+      .removeAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const pixel = (x: number, y: number) => [
+      ...data.subarray((y * info.width + x) * 3, (y * info.width + x) * 3 + 3),
+    ];
+
+    const expectPixel = (actual: number[], expected: number[]) => {
+      for (let channel = 0; channel < 3; channel++) {
+        expect(Math.abs(actual[channel]! - expected[channel]!)).toBeLessThanOrEqual(3);
+      }
+    };
+    expectPixel(pixel(8, 8), [20, 20, 220]);
+    expectPixel(pixel(56, 8), [220, 220, 20]);
+    expectPixel(pixel(8, 56), [220, 20, 20]);
+    expectPixel(pixel(56, 56), [20, 220, 20]);
+  });
+
   it("terminates the pyramid across the global negative-coordinate boundary", async () => {
     const root = await captureFixture({ gridOffset: -1 });
     const output = await ingestBasemaps(root, "demo-build");

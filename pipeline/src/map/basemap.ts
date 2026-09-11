@@ -106,10 +106,9 @@ async function makeParent(
         top: child.top,
       })),
     )
-    .resize(tileSize, tileSize)
-    .webp({ quality: 82 })
+    .png()
     .toBuffer();
-  return composed;
+  return sharp(composed).resize(tileSize, tileSize).webp({ quality: 82 }).toBuffer();
 }
 
 function addEmptyPositions(
