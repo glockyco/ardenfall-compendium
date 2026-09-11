@@ -200,13 +200,38 @@ Three findings from the capture spike belong in the implementation rather than i
 
 The pairing is not a choice between the two. A tile pyramid may be sparse at its finest level: the full grid captured at 512 pixels per cell, 3.41 pixels per unit, costs about 3,070 files across its pyramid, and adding the 1,024-pixel level over the 24 authored cells only costs 384 more. A viewer that finds no tile at the finest level falls back to the coarser one, which deck.gl's `TileLayer` does without configuration. That is about 3,450 files, so the honest option below, full coverage with a per-cell authored flag, fits the budget with higher fidelity exactly where the game holds an authored scene. The measurement still missing is task 1.4: the same cell at 512 and 1,024 pixels, read at map zoom in a browser, so the coarse level is known to be legible before it is chosen.
 
-**Interior ceilings.** An interior captured from above shows its roof. Options: exclude a ceiling layer if one exists, disable renderers tagged by `InteriorFilterVolume` for the duration of a capture and accept a mutation that must be undone, or capture interiors from a height below the ceiling. The first is preferred and its feasibility is unmeasured.
+**Interior ceilings. Closed 2026-09-11: the question does not arise in this build.** The preferred
+option is infeasible and unnecessary. There is no ceiling layer: the 32 Unity layers hold no such
+name, and the geometry above an interior room sits on `Default` like everything else. There is no
+`InteriorFilterVolume` in the loaded world either, so the second option has nothing to act on.
+Capturing `cell_interior_-6.6` from 800, 120 and 95 units changed the plate only marginally, because
+nothing roofs it.
+
+What an interior capture does face is darkness, not occlusion. Parts of the cell render as unlit
+black regions, and raising ambient to 1.6 with a near-white colour does not lift them. Against a
+600-unit cell where 105 of 108 grid cells hold nothing, an interior basemap buys little: the
+recommendation is to ship the overworld basemap first and treat interiors as a later question with
+its own evidence.
 
 **The game's own imagery.** It exists at 1.667 pixels per unit with placement and scale arrays, is evenly lit, needs no capture, and aligns exactly with the grid and with our own capture. Against this build it also covers every marker, while a capture covers one cluster of three.
 
 Options: publish the imagery as the basemap for a build whose cell scenes cover little of the world, and let a capture supersede it per cell as authored coverage grows; publish it as an alternative layer beside a captured basemap; or use it only as an alignment reference. The first is the measured recommendation and the decision is the reader's to make, because the second and third ship a basemap with terrain under a fifth of the markers.
 
-**Cells without an authored scene.** 24 of 575 overworld cells ship a scene, and only 83 of 373 placements sit inside one. Distant-cell prefabs cover the rest at lower detail, and the marker overlay shows that the two largest clusters lie outside every authored cell. Options: capture the full grid and accept two fidelity levels in one plate, capture only authored cells and leave the remainder blank, or capture the full grid and record which cells were authored so the map can mark the difference. A reader who sees terrain expects it to be real, so the third option is the honest one and it costs a flag per cell.
+**Cells without an authored scene. Closed 2026-09-11: capture the full grid, and mark it.** 24 of
+575 overworld cells ship a scene, and only 83 of 373 placements sit inside one. The distant coverage
+is now measured rather than assumed: the build holds **548** `celldistant_overworld_*` prefabs, each
+instantiating exactly onto its cell rectangle, with **7,446 renderers between them, a mean of 13 per
+cell**. The spread is what decides the presentation. An inland cell such as `3.-5` holds two
+renderers and captures as a flat green plate; `-1.1`, the richest at 1,541 renderers, captures with
+legible buildings and terrain shading. So the two fidelity levels are real, they are not uniform
+across the unauthored cells, and a reader who sees a flat green square must not read it as terrain.
+The third option stands: capture the full grid, record the authored flag per cell, and let the map
+mark the difference.
+
+One constraint on the implementation follows from the same probe. With a save loaded inside an
+interior, no overworld geometry is streamed at all: every mesh renderer in the world sits within
+`x -3266..-3085`, and a capture of an unauthored cell returns an empty plate. A distant cell must be
+instantiated from its prefab for the capture and destroyed afterwards, rather than waited for.
 
 ## Risks and trade-offs
 
