@@ -514,11 +514,11 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["name-set"] = nameSetRows.Count,
                 ["npc"] = npcRows.Count,
                 ["quest"] = questRows.Count,
-                ["placed-plant"] = walkedRows["placed-plant"].Count,
-                ["placed-item"] = walkedRows["placed-item"].Count,
-                ["placed-container"] = walkedRows["placed-container"].Count,
-                ["world-spawn"] = walkedRows["world-spawn"].Count,
             };
+            // Every walked family reports a count, including a family that harvested nothing. A
+            // hand-written list here published a file without its count, and the export failed
+            // validation rather than saying which family was new.
+            foreach (var pair in walkedRows) counts[pair.Key] = pair.Value.Count;
             var availability = new Dictionary<string, IDictionary<string, int>>
             {
                 ["location"] = new Dictionary<string, int>
