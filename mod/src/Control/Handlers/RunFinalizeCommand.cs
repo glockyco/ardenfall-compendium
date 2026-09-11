@@ -861,7 +861,11 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             var target = Path.Combine(stagingDir, targetRelative.Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
             var bytes = File.ReadAllBytes(source);
-            File.WriteAllBytes(target, bytes);
+            using (var stream = new FileStream(target, FileMode.Create, FileAccess.Write, FileShare.Read))
+            {
+                stream.Write(bytes, 0, bytes.Length);
+                stream.Flush(flushToDisk: true);
+            }
             hashes[targetRelative] = SpriteAssetExporter.Sha256Hex(bytes);
         }
     }

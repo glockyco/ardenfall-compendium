@@ -346,7 +346,7 @@ public sealed class CellCapture
             plate = new Texture2D(pixels, pixels, TextureFormat.RGBA32, false);
             plate.ReadPixels(new Rect(0, 0, pixels, pixels), 0, 0);
             plate.Apply();
-            return SpriteAssetExporter.EncodeRgbaPng(plate.GetRawTextureData(), pixels, pixels);
+            return ImageConversion.EncodeToPNG(plate);
         }
         finally
         {
@@ -363,7 +363,16 @@ public sealed class CellCapture
         {
             var fullPath = Path.Combine(captureDir, relativePath.Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-            if (!File.Exists(fullPath)) File.WriteAllBytes(fullPath, bytes);
+            if (!File.Exists(fullPath))
+            {
+                using var stream = new FileStream(
+                    fullPath,
+                    FileMode.CreateNew,
+                    FileAccess.Write,
+                    FileShare.Read);
+                stream.Write(bytes, 0, bytes.Length);
+                stream.Flush(flushToDisk: true);
+            }
             return relativePath;
         };
 }
