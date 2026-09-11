@@ -8,6 +8,10 @@ public sealed class MapCaptureResult
 
     [JsonProperty("tiles")] public int Tiles { get; set; }
 
+    [JsonProperty("requestedCells")] public int RequestedCells { get; set; }
+
+    [JsonProperty("capturedCells")] public int CapturedCells { get; set; }
+
     /// <summary>Tiles whose cell ships an authored scene, as against a distant prefab.</summary>
     [JsonProperty("authoredTiles")] public int AuthoredTiles { get; set; }
 

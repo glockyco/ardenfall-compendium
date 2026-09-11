@@ -17,9 +17,9 @@
 
 ## 3. Controller phase
 
-- [ ] 3.1 Add a capture phase to `controller/src/export-orchestrator.ts` after the world is ready and before finalize, and expose it as its own command so an export can run without a capture.
-- [ ] 3.2 Fail the phase when the capture reports a mutation it could not restore.
-- [ ] 3.3 Add controller tests for the phase order and for a capture that reports a partial cell inventory.
+- [x] 3.1 Add a capture phase to `controller/src/export-orchestrator.ts` after the world is ready and before finalize, and expose it as its own command so an export can run without a capture.
+- [x] 3.2 Fail the phase when the capture reports a mutation it could not restore.
+- [x] 3.3 Add controller tests for the phase order and for a capture that reports a partial cell inventory.
 
 ## 4. Pipeline ingest
 

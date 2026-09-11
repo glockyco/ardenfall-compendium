@@ -106,6 +106,8 @@ public sealed class MapCaptureCommand : IControlCommandHandler<MapCaptureArgs, M
         {
             MapId = args.MapId,
             Tiles = snapshot.Tiles.Count,
+            RequestedCells = (args.MaxCellX - args.MinCellX + 1) * (args.MaxCellY - args.MinCellY + 1),
+            CapturedCells = snapshot.Tiles.Count,
             AuthoredTiles = snapshot.Tiles.Count(tile => tile.Authored),
             Bytes = snapshot.Tiles.Sum(tile => (long)tile.Bytes),
             PixelsPerUnit = snapshot.Inputs.PixelsPerUnit,

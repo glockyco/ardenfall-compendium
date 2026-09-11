@@ -72,11 +72,23 @@ export interface ExportOptions {
   connectTimeoutMs?: number;
   finalizeTimeoutMs?: number;
   jobTimeoutMs?: number;
+  /** Capture is opt-in so ordinary exports do not pay the rendering cost. */
+  capture?: MapCaptureExportOptions;
 }
 
 export interface ExportResult {
   runId: string;
   publishedDir: string;
+}
+
+export interface MapCaptureExportOptions {
+  mapId: string;
+  minCellX: number;
+  minCellY: number;
+  maxCellX: number;
+  maxCellY: number;
+  pixelsPerCell: number;
+  authoredOnly?: boolean;
 }
 
 const REQUIRED_COMMANDS = new Map<string, "sync" | "job">([
@@ -143,6 +155,7 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
     }),
     options.noQuit === true,
     shouldWaitForWorld,
+    options.capture !== undefined,
   );
 
   if (shouldWaitForWorld) {
@@ -184,6 +197,7 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
 
   let succeeded = false;
   let activeJobId: string | undefined;
+  let activeJobPhase = "entity.exportBatch";
   try {
     const plan = await options.client.call(
       "entity.plan",
@@ -229,6 +243,43 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
       log({ phase: "world.walkBatch", status: "completed", runId, offset });
     }
 
+    if (options.capture !== undefined) {
+      const capture = options.capture;
+      log({ phase: "map.capture", status: "started", runId, mapId: capture.mapId });
+      const accepted = await options.client.startJob(
+        "map.capture",
+        { runId, ...capture },
+        { timeoutMs: CONTROLLER_TIMEOUTS.batchStartMs },
+      );
+      activeJobId = accepted.jobId;
+      activeJobPhase = "map.capture";
+      const captured = await waitForJob(options.client, accepted.jobId, options.jobTimeoutMs);
+      activeJobId = undefined;
+      const restored = captured.output.restored;
+      if (restored !== true)
+        throw new Error("map.capture did not restore the game state it changed.");
+      const requestedCells = requireNumber(
+        captured.output.requestedCells,
+        "map.capture output.requestedCells",
+      );
+      const capturedCells = requireNumber(
+        captured.output.capturedCells,
+        "map.capture output.capturedCells",
+      );
+      if (capturedCells !== requestedCells)
+        throw new Error(
+          `map.capture returned a partial cell inventory: captured ${capturedCells} of ${requestedCells}.`,
+        );
+      log({
+        phase: "map.capture",
+        status: "completed",
+        runId,
+        mapId: capture.mapId,
+        requestedCells,
+        capturedCells,
+      });
+    }
+
     log({ phase: "run.finalize", status: "started", runId });
 
     const finalized = await options.client.call(
@@ -266,7 +317,14 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
     return { runId, publishedDir };
   } finally {
     if (!succeeded)
-      await cleanupFailedRun(options.client, runId, activeJobId, availableCommands, log);
+      await cleanupFailedRun(
+        options.client,
+        runId,
+        activeJobId,
+        activeJobPhase,
+        availableCommands,
+        log,
+      );
     if (options.noQuit !== true) await quitGame(options.client, log);
   }
 }
@@ -275,9 +333,12 @@ function assertRequiredCommands(
   commands: ControlCommandDescriptor[],
   noQuit: boolean,
   waitForWorld: boolean,
+  captureEnabled: boolean,
 ): Set<string> {
   const byName = new Map(commands.map((command) => [command.name, command]));
-  for (const [name, kind] of REQUIRED_COMMANDS) {
+  const required = new Map(REQUIRED_COMMANDS);
+  if (captureEnabled) required.set("map.capture", "job");
+  for (const [name, kind] of required) {
     if (noQuit && name === "game.quit") continue;
     if (!waitForWorld && name === "compendium.continueFromMenu") continue;
     const command = byName.get(name);
@@ -294,11 +355,12 @@ async function cleanupFailedRun(
   client: ControllerClient,
   runId: string,
   activeJobId: string | undefined,
+  activeJobPhase: string,
   availableCommands: Set<string>,
   log: (event: ExportEvent) => void,
 ): Promise<void> {
   if (activeJobId !== undefined) {
-    log({ phase: "entity.exportBatch", status: "cancelling", jobId: activeJobId, runId });
+    log({ phase: activeJobPhase, status: "cancelling", jobId: activeJobId, runId });
     try {
       const result = await client.cancelJob(activeJobId, {
         timeoutMs: CONTROLLER_TIMEOUTS.commandMs,

@@ -42,6 +42,11 @@ class FakeClient implements ControllerClient {
   readonly jobs: Array<{ name: string; args: Record<string, unknown> }> = [];
   readonly jobPolls: string[] = [];
   describeOptions: Record<string, unknown> | undefined;
+  captureResult: Record<string, unknown> = {
+    restored: true,
+    requestedCells: 4,
+    capturedCells: 4,
+  };
   commands = [
     command("compendium.preflight"),
     command("compendium.continueFromMenu", "sync", true),
@@ -142,7 +147,12 @@ class FakeClient implements ControllerClient {
   async jobStatus(jobId: string) {
     this.jobPolls.push(jobId);
     if (this.jobNeverCompletes) return { jobId, state: "running" as const };
-    return { status: "ok", output: { jobId }, artifacts: {} };
+    const job = this.jobs[Number(jobId.slice(4)) - 1];
+    return {
+      status: "ok",
+      output: job?.name === "map.capture" ? this.captureResult : { jobId },
+      artifacts: {},
+    };
   }
   async cancelJob(jobId: string) {
     this.cancelledJobs.push(jobId);
@@ -206,6 +216,101 @@ describe("exportCompendium", () => {
         publishedDir: "/tmp/snapshot",
       }),
     );
+  });
+
+  it("runs an optional capture after the world walk and before finalize", async () => {
+    const client = new FakeClient();
+    client.commands.push(command("map.capture", "job", true));
+
+    await exportCompendium({
+      client,
+      url: "ws://127.0.0.1:19612",
+      listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+      pluginsDir: PLUGIN.dir,
+      outputBaseDir: "/tmp/out",
+      pipelineOutDir: "/tmp/pipeline",
+      capture: {
+        mapId: "overworld",
+        minCellX: -3,
+        minCellY: -9,
+        maxCellX: -2,
+        maxCellY: -8,
+        pixelsPerCell: 512,
+      },
+      validate: async () => ({ itemCount: 150 }),
+      runPipeline: async () => undefined,
+    });
+
+    expect(client.jobs.at(-1)).toEqual({
+      name: "map.capture",
+      args: {
+        runId: "run-1",
+        mapId: "overworld",
+        minCellX: -3,
+        minCellY: -9,
+        maxCellX: -2,
+        maxCellY: -8,
+        pixelsPerCell: 512,
+      },
+    });
+    expect(client.calls.map((call) => call.name)).toContain("run.finalize");
+    expect(client.jobPolls).toEqual(["job-1", "job-2", "job-3", "job-4", "job-5"]);
+  });
+
+  it("fails a capture that reports a partial cell inventory", async () => {
+    const client = new FakeClient();
+    client.commands.push(command("map.capture", "job", true));
+    client.captureResult = { restored: true, requestedCells: 4, capturedCells: 3 };
+
+    await expect(
+      exportCompendium({
+        client,
+        url: "ws://127.0.0.1:19612",
+        listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        pluginsDir: PLUGIN.dir,
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+        capture: {
+          mapId: "overworld",
+          minCellX: -3,
+          minCellY: -9,
+          maxCellX: -2,
+          maxCellY: -8,
+          pixelsPerCell: 512,
+        },
+        validate: async () => ({ itemCount: 150 }),
+        runPipeline: async () => undefined,
+      }),
+    ).rejects.toThrow("partial cell inventory");
+
+    expect(client.calls.map((call) => call.name)).toContain("run.discard");
+  });
+
+  it("rejects a capture that did not restore game state", async () => {
+    const client = new FakeClient();
+    client.commands.push(command("map.capture", "job", true));
+    client.captureResult = { restored: false, requestedCells: 4, capturedCells: 4 };
+
+    await expect(
+      exportCompendium({
+        client,
+        url: "ws://127.0.0.1:19612",
+        listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        pluginsDir: PLUGIN.dir,
+        outputBaseDir: "/tmp/out",
+        pipelineOutDir: "/tmp/pipeline",
+        capture: {
+          mapId: "overworld",
+          minCellX: -3,
+          minCellY: -9,
+          maxCellX: -2,
+          maxCellY: -8,
+          pixelsPerCell: 512,
+        },
+        validate: async () => ({ itemCount: 150 }),
+        runPipeline: async () => undefined,
+      }),
+    ).rejects.toThrow("did not restore");
   });
 
   it("exports against a host that exposes no operator command", async () => {
