@@ -271,6 +271,7 @@ public static class DialogueNodeReaders
                 break;
             case DialogueRoles.Branch:
                 snapshot.Gate = ReadCondition(node, authoredType);
+                ReadBranches(node, snapshot);
                 break;
             case DialogueRoles.Effect:
                 snapshot.Effects.Add(ReadEffect(node, authoredType));
@@ -447,6 +448,22 @@ public static class DialogueNodeReaders
         }
 
         return condition;
+    }
+
+    /// <summary>The check the game reads before it takes each output of a branch.</summary>
+    private static void ReadBranches(Node node, DialogueNodeSnapshot snapshot)
+    {
+        var tasks = GraphFields.Read<List<ConditionTask>>(node, "conditionTasks");
+        if (tasks == null) return;
+        for (var index = 0; index < tasks.Count; index++)
+        {
+            var task = tasks[index];
+            snapshot.Branches.Add(new DialogueBranchSnapshot
+            {
+                Port = index.ToString(),
+                Gate = task == null ? null : ReadTask(task, 0),
+            });
+        }
     }
 
     private static DialogueConditionSnapshot ReadCondition(Node node, string authoredType)

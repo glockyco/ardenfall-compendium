@@ -111,6 +111,15 @@ public sealed class DialogueConditionSnapshot
     [JsonProperty("childMode")] public string? ChildMode { get; set; }
 }
 
+/// <summary>One output of a branch, and the check the game reads before it takes that output.</summary>
+public sealed class DialogueBranchSnapshot
+{
+    /// <summary>The output port the edge leaves from, which is the branch's index or `ELSE`.</summary>
+    [JsonProperty("port")] public string Port { get; set; } = "";
+
+    [JsonProperty("gate")] public DialogueConditionSnapshot? Gate { get; set; }
+}
+
 /// <summary>Something a conversation does to the world.</summary>
 public sealed class DialogueEffectSnapshot
 {
@@ -155,6 +164,16 @@ public sealed class DialogueNodeSnapshot
 
     /// <summary>The gate on this node, for an opener or a condition node.</summary>
     [JsonProperty("gate")] public DialogueConditionSnapshot? Gate { get; set; }
+
+    /// <summary>
+    /// The check behind each output of a branch.
+    /// </summary>
+    /// <remarks>
+    /// A `MultiBranchNode` holds one condition task per output and falls through to an else output.
+    /// Without them a fork reads as "if 0" and "if else", which names nothing: one quest graph
+    /// forks 17 identical questions this way, once per witness.
+    /// </remarks>
+    [JsonProperty("branches")] public List<DialogueBranchSnapshot> Branches { get; set; } = new();
 
     /// <summary>The outcomes of an effect node.</summary>
     [JsonProperty("effects")] public List<DialogueEffectSnapshot> Effects { get; set; } = new();

@@ -24,7 +24,8 @@
             "gate": null,
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 2,
@@ -52,7 +53,8 @@
             },
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 3,
@@ -127,7 +129,8 @@
             "gate": null,
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 4,
@@ -149,7 +152,8 @@
             "gate": null,
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 5,
@@ -168,7 +172,8 @@
             "gate": null,
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 6,
@@ -186,7 +191,8 @@
             "gate": null,
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 7,
@@ -208,7 +214,8 @@
               }
             ],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 8,
@@ -235,7 +242,8 @@
               }
             ],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 9,
@@ -248,7 +256,8 @@
             "gate": null,
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 10,
@@ -280,7 +289,8 @@
             },
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 11,
@@ -298,7 +308,8 @@
             "gate": null,
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 12,
@@ -316,7 +327,8 @@
             "gate": null,
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 13,
@@ -329,7 +341,8 @@
             "gate": null,
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           },
           {
             "id": 14,
@@ -340,6 +353,85 @@
             "singleScreen": false,
             "options": [],
             "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null,
+            "branches": []
+          },
+          {
+            "id": 15,
+            "role": "branch",
+            "authoredType": "MultiBranchNode",
+            "importance": null,
+            "statements": [],
+            "singleScreen": false,
+            "options": [],
+            "gate": {
+              "kind": "branch-on-checks",
+              "compare": null,
+              "value": null,
+              "invert": false,
+              "subjects": [],
+              "participants": [],
+              "authoredType": "MultiBranchNode",
+              "children": [],
+              "childMode": null
+            },
+            "branches": [
+              {
+                "port": "0",
+                "gate": {
+                  "kind": "quest-state",
+                  "compare": null,
+                  "value": "started",
+                  "invert": false,
+                  "subjects": [
+                    {
+                      "kind": "namedAsset",
+                      "entity": "quest",
+                      "name": "quest_fixture_ashes"
+                    }
+                  ],
+                  "participants": [],
+                  "authoredType": "CheckQuestState",
+                  "children": [],
+                  "childMode": null
+                }
+              }
+            ],
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 16,
+            "role": "speech",
+            "authoredType": "SpeakFlowNode",
+            "importance": null,
+            "statements": [
+              {
+                "screenOrdinal": 0,
+                "text": "The keeper already told you."
+              }
+            ],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "branches": [],
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 17,
+            "role": "end",
+            "authoredType": "FinishDialogFlowNode",
+            "importance": null,
+            "statements": [],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "branches": [],
             "effects": [],
             "speaker": null,
             "jumpTarget": null
@@ -429,6 +521,24 @@
             "to": 3,
             "ordinal": 0,
             "port": null
+          },
+          {
+            "from": 1,
+            "to": 15,
+            "ordinal": 9,
+            "port": ""
+          },
+          {
+            "from": 15,
+            "to": 16,
+            "ordinal": 0,
+            "port": "0"
+          },
+          {
+            "from": 15,
+            "to": 17,
+            "ordinal": 1,
+            "port": "ELSE"
           }
         ],
         "entryNodes": [1, 2],
@@ -472,7 +582,8 @@
             "gate": null,
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           }
         ],
         "edges": [],
@@ -513,7 +624,8 @@
             "gate": null,
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           }
         ],
         "edges": [],
@@ -553,7 +665,8 @@
             "gate": null,
             "effects": [],
             "speaker": null,
-            "jumpTarget": null
+            "jumpTarget": null,
+            "branches": []
           }
         ],
         "edges": [],

@@ -91,6 +91,8 @@ interface ScriptOption {
 }
 
 interface ScriptAlternative {
+  /** The check behind this output, when the branch names one. */
+  gate?: GateView | null;
   label: string | null;
   next: ScriptStep[];
 }
@@ -324,10 +326,15 @@ function buildStep(
         nodeId,
         authoredType: node.authoredType,
         gate: node.gate === null ? null : gateView(node.gate, context),
-        alternatives: outgoing.map((edge) => ({
-          label: edge.port,
-          next: followEdges([edge], nextPath, context),
-        })),
+        alternatives: outgoing.map((edge) => {
+          // The branch names its own outputs: output i is taken when condition task i passes.
+          const branch = (node.branches ?? []).find((candidate) => candidate.port === edge.port);
+          return {
+            label: edge.port,
+            gate: branch?.gate ? gateView(branch.gate, context) : null,
+            next: followEdges([edge], nextPath, context),
+          };
+        }),
       };
     case "condition":
       return {

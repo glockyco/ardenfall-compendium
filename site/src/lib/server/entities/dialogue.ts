@@ -50,6 +50,8 @@ export interface DialogueScriptOption {
 }
 
 export interface DialogueScriptAlternative {
+  /** The check behind this output, when the branch names one. */
+  gate?: DialogueGate | null;
   label: string | null;
   next: DialogueScriptStep[];
 }

@@ -712,6 +712,12 @@ export interface DialogueOptionSnapshot {
   gate: DialogueConditionSnapshot | null;
 }
 
+/** One output of a branch, and the check the game reads before it takes that output. */
+export interface DialogueBranchSnapshot {
+  port: string;
+  gate: DialogueConditionSnapshot | null;
+}
+
 /** One node of a dialogue graph, in the shape a reader needs. */
 export interface DialogueNodeSnapshot {
   id: number;
@@ -723,6 +729,7 @@ export interface DialogueNodeSnapshot {
   singleScreen: boolean;
   options: DialogueOptionSnapshot[];
   gate: DialogueConditionSnapshot | null;
+  branches: DialogueBranchSnapshot[];
   effects: DialogueEffectSnapshot[];
   speaker: DialogueParticipantSnapshot | null;
   jumpTarget: number | null;

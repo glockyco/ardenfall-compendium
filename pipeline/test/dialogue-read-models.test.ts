@@ -63,6 +63,24 @@ describe("conversations", () => {
     }
   });
 
+  it("names each output of a branch by the check the game reads", async () => {
+    const { db, dispose } = await buildFixtureDatabase();
+    try {
+      const script = db
+        .query<{ script_json: string }, []>(
+          `SELECT script_json FROM dialogue_presentation_rows WHERE id = 'named;dialog;dia_fixture_harbour-watch'`,
+        )
+        .get();
+      const branch = JSON.stringify(JSON.parse(script?.script_json ?? "{}"));
+
+      // The branch's first output carries its own check; the fall-through carries none.
+      expect(branch).toContain('"kind":"branch-on-checks"');
+      expect(branch).toContain('"authoredType":"CheckQuestState"');
+    } finally {
+      dispose();
+    }
+  });
+
   it("publishes the checks a composite gate holds", async () => {
     const { db, dispose } = await buildFixtureDatabase();
     try {

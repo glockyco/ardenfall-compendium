@@ -68,9 +68,16 @@
     <p class="text-muted-foreground text-sm">{forkNote(step.gate?.kind)}</p>
     {#each step.alternatives as alternative, index (index)}
       <div class="border-border rounded-md border p-3">
-        <p class="text-muted-foreground text-xs uppercase">
-          {alternative.label ? `If ${alternative.label}` : "Otherwise"}
-        </p>
+        {#if alternative.gate}
+          <!-- The branch names its own outputs, so the reader sees the check, not an index. -->
+          <GateNote gate={alternative.gate} />
+        {:else}
+          <p class="text-muted-foreground text-xs uppercase">
+            {alternative.label && alternative.label !== "ELSE"
+              ? `If ${alternative.label}`
+              : "Otherwise"}
+          </p>
+        {/if}
         {#each alternative.next as next, nextIndex (nextIndex)}
           <ScriptStep step={next} depth={depth + 1} />
         {/each}
