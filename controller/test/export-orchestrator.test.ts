@@ -223,6 +223,38 @@ describe("exportCompendium", () => {
     );
   });
 
+  it("passes a game-drive output through and maps the published C: path onto the Wine prefix", async () => {
+    const client = new FakeClient();
+    client.publishedDir = "C:\\live\\snapshots\\0.0.10-run-1";
+    const previousGameDir = process.env.ARDENFALL_GAME_DIR;
+    process.env.ARDENFALL_GAME_DIR = "/prefix/drive_c/Program Files/Ardenfall";
+    const validated: string[] = [];
+    try {
+      const result = await exportCompendium({
+        client,
+        url: "ws://127.0.0.1:19612",
+        listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+        pluginsDir: PLUGIN.dir,
+        outputBaseDir: "C:\\live",
+        pipelineOutDir: "/tmp/pipeline",
+        validate: async (dir) => {
+          validated.push(dir);
+          return { itemCount: 150 };
+        },
+        runPipeline: async () => undefined,
+      });
+
+      expect(client.calls.find((call) => call.name === "run.begin")?.args).toEqual({
+        outputBaseDir: "C:\\live",
+      });
+      expect(result.publishedDir).toBe("/prefix/drive_c/live/snapshots/0.0.10-run-1");
+      expect(validated).toEqual(["/prefix/drive_c/live/snapshots/0.0.10-run-1"]);
+    } finally {
+      if (previousGameDir === undefined) delete process.env.ARDENFALL_GAME_DIR;
+      else process.env.ARDENFALL_GAME_DIR = previousGameDir;
+    }
+  });
+
   it("runs an optional capture after the world walk and before finalize", async () => {
     const client = new FakeClient();
     client.commands.push(command("map.capture", "job", true));

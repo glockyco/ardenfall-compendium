@@ -25,7 +25,8 @@ public sealed record SpellAsset(
     bool IsIllegal,
     SnapshotRef? IconRef,
     string? TooltipSource = null,
-    IReadOnlyList<SpellEffectAsset>? SpellEffects = null);
+    IReadOnlyList<SpellEffectAsset>? SpellEffects = null,
+    string? TooltipError = null);
 
 public interface ISpellAssetSource
 {

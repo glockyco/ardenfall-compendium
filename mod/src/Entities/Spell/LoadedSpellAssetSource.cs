@@ -73,6 +73,20 @@ public sealed class LoadedSpellAssetSource : ISpellAssetSource, IIconAssetPlanSi
             _assetPlan.Slots.Add(new IconAssetSlot("spell", id, "iconRef", sprite, "spell", "SpellData.icon"));
         }
 
+        // The game renders the tooltip from the asset's own fields, and an authored variable that
+        // names a field the asset does not hold throws inside the game. One spell's tooltip is not
+        // worth the snapshot, so the failure becomes a diagnostic on that spell.
+        string? tooltipSource = null;
+        string? tooltipError = null;
+        try
+        {
+            tooltipSource = NullIfEmpty(asset.tooltip?.GetTooltip(1f, 1f, asset));
+        }
+        catch (Exception exception)
+        {
+            tooltipError = $"{exception.GetType().Name}: {exception.Message}";
+        }
+
         return new SpellAsset(
             Guid: null,
             AssetName: _assetName(asset),
@@ -83,8 +97,9 @@ public sealed class LoadedSpellAssetSource : ISpellAssetSource, IIconAssetPlanSi
             ManaCost: 0f,
             IsIllegal: asset.isIlligal,
             IconRef: icon == null ? null : SnapshotRef.Missing("engineResource", "SpellData.icon"),
-            TooltipSource: NullIfEmpty(asset.tooltip?.GetTooltip(1f, 1f, asset)),
-            SpellEffects: ReadSpellEffects(asset));
+            TooltipSource: tooltipSource,
+            SpellEffects: ReadSpellEffects(asset),
+            TooltipError: tooltipError);
     }
 
     private static List<SpellEffectAsset> ReadSpellEffects(Ardenfall.SpellData spell)

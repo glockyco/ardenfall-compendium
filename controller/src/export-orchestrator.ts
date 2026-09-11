@@ -543,17 +543,17 @@ function assertSingleHotReplProcess(port: number, processes: HotReplProcess[]): 
 }
 
 function normalizeControllerPath(path: string): string {
-  const normalized = path.replaceAll("\\\\", "/");
+  const normalized = path.replaceAll("\\", "/");
   if (/^z:\//i.test(normalized)) return normalized.replace(/^z:\//i, "/");
   if (/^c:\//i.test(normalized)) {
-    const gameDir = process.env.ARDENFALL_GAME_DIR;
-    if (gameDir) {
-      const driveRoot = gameDir.slice(
-        0,
-        gameDir.toLowerCase().indexOf("/drive_c") + "/drive_c".length,
+    // The game writes to its own C: drive, which is the Wine prefix's drive_c on the host.
+    const gameDir = (process.env.ARDENFALL_GAME_DIR ?? "").replaceAll("\\", "/");
+    const driveIndex = gameDir.toLowerCase().indexOf("/drive_c/");
+    if (driveIndex < 0)
+      throw new Error(
+        `Cannot map ${path} to the host: ARDENFALL_GAME_DIR must point inside a Wine prefix drive_c.`,
       );
-      return `${driveRoot}${normalized.slice(2)}`;
-    }
+    return `${gameDir.slice(0, driveIndex + "/drive_c".length)}${normalized.slice(2)}`;
   }
   return normalized;
 }

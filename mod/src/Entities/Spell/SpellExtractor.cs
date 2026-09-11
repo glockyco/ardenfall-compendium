@@ -49,6 +49,17 @@ public sealed class SpellExtractor : WalkerBase<SpellSnapshotRow>
                     });
                 }
 
+                if (asset.TooltipError != null)
+                {
+                    Diagnostics.Add(new Diagnostic
+                    {
+                        Severity = "diagnostic",
+                        Code = "spellTooltipRenderFailed",
+                        Field = "tooltipSource",
+                        Message = $"SpellData '{id}' tooltip failed to render: {asset.TooltipError}",
+                    });
+                }
+
                 var statTypeRef = asset.StatTypeRef;
                 var iconRef = asset.IconRef;
                 var spellEffects = BuildSpellEffects(asset.SpellEffects, id);

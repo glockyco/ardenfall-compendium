@@ -120,6 +120,30 @@ public sealed class SpellExtractorTests
     }
 
     [Fact]
+    public void TooltipRenderFailureKeepsRowAndRecordsDiagnostic()
+    {
+        var source = new FakeSpellAssetSource(new[]
+        {
+            Build("spell_broken-tooltip", "Broken") with
+            {
+                TooltipSource = null,
+                TooltipError = "NullReferenceException: Object reference not set to an instance of an object",
+            },
+        });
+        var extractor = new SpellExtractor(source);
+
+        var row = Assert.Single(extractor.Walk().ToList());
+
+        Assert.Equal("Broken", row.Fields.SpellName);
+        Assert.Null(row.Fields.TooltipSource);
+        var diagnostic = Assert.Single(extractor.Diagnostics);
+        Assert.Equal("diagnostic", diagnostic.Severity);
+        Assert.Equal("spellTooltipRenderFailed", diagnostic.Code);
+        Assert.Equal("tooltipSource", diagnostic.Field);
+        Assert.Contains("NullReferenceException", diagnostic.Message);
+    }
+
+    [Fact]
     public void EmitsSelfStatusEffectWithSampleValues()
     {
         var extractor = new SpellExtractor(new FakeSpellAssetSource(new[]
