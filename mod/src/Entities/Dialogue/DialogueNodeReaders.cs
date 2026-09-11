@@ -204,6 +204,7 @@ public static class DialogueNodeReaders
         ["FactionCheck"] = "faction",
         ["RaceCheck"] = "race",
         ["RelationshipCheck"] = "character-relationship",
+        ["BranchRelationship"] = "character-relationship",
         ["CheckQuestVariable"] = "quest-variable",
         ["CheckQuestState"] = "quest-state",
         ["CheckQuestPhase"] = "quest-phase",
@@ -226,7 +227,7 @@ public static class DialogueNodeReaders
         ["StatCheck"] = "stat-check",
         ["ReadNoteCheck"] = "note-read",
         ["CheckStatusEffectSimple"] = "status-effect",
-        ["InHome"] = "at-home",
+        ["InHomeCheck"] = "at-home",
         ["WithinDistanceOfQuestObject"] = "near-quest-object",
         ["RefuseToSpeakFlow"] = "refuses-to-speak",
         // Composites and blackboard checks, which a task list holds.
@@ -407,7 +408,7 @@ public static class DialogueNodeReaders
 
     private static DialogueConditionSnapshot? ReadTaskCondition(Node node)
     {
-        var task = GraphFields.Read<ConditionTask>(node, "condition");
+        var task = WrappedTask(node);
         return task == null ? null : ReadTask(task, 0);
     }
 
@@ -520,7 +521,7 @@ public static class DialogueNodeReaders
         };
 
         // A node that wraps a task carries no check of its own; the task it holds is the check.
-        var task = GraphFields.Read<ConditionTask>(node, "condition");
+        var task = WrappedTask(node);
         if (task != null)
         {
             var inner = ReadTask(task, 0);
@@ -611,6 +612,18 @@ public static class DialogueNodeReaders
         var container = GraphFields.Read<object>(source, "comparedRelationshipAmount");
         return container == null ? null : GraphFields.ReadEnumName(container, "amount");
     }
+
+    /// <summary>
+    /// The condition task a node holds.
+    /// </summary>
+    /// <remarks>
+    /// `DialogConditionTaskFlowNode` exposes it as `condition`, while FlowCanvas's `TaskCondition`
+    /// keeps it in `_condition` behind a property. Reading only the first name left 160 gates of
+    /// this build published as the wrapper's own type name, which tells a reader nothing.
+    /// </remarks>
+    private static ConditionTask? WrappedTask(Node node) =>
+        GraphFields.Read<ConditionTask>(node, "condition")
+            ?? GraphFields.Read<ConditionTask>(node, "_condition");
 
     /// <summary>
     /// The graph a check lives in, which resolves a reference to "this quest".
