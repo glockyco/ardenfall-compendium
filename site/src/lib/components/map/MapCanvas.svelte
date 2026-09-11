@@ -329,10 +329,13 @@
                 getPolygon: (d: { ring: [number, number][] }) => d.ring,
                 filled: true,
                 stroked: true,
-                getFillColor: [spec.fillColor[0], spec.fillColor[1], spec.fillColor[2], 60],
-                getLineColor: spec.fillColor,
+                // A volume is a region, not a point: a faint tint says where it is, and a solid
+                // rim in the layer colour says where it ends, whatever terrain it covers.
+                getFillColor: [spec.fillColor[0], spec.fillColor[1], spec.fillColor[2], 40],
+                getLineColor: [spec.fillColor[0], spec.fillColor[1], spec.fillColor[2], 255],
+                getLineWidth: 2.5,
                 lineWidthUnits: "pixels",
-                lineWidthMinPixels: 1,
+                lineWidthMinPixels: 2,
               }),
         );
 
