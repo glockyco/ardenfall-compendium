@@ -58,6 +58,15 @@
       <li class="border-border rounded-md border p-3">
         <details open={depth < 3}>
           <summary class="cursor-pointer font-medium">{option.text || "Say nothing"}</summary>
+          {#if (step.copies ?? 1) > 1}
+            <!--
+              The author copied the topic once per member of the quest's group. The copies read
+              alike and continue differently, so the page says how many there are.
+            -->
+            <p class="text-muted-foreground text-xs">
+              The graph holds {step.copies} copies of this topic, one per character, each continuing below.
+            </p>
+          {/if}
           {#if option.gate}
             <GateNote gate={option.gate} />
           {/if}

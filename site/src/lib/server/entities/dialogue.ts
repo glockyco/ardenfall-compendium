@@ -80,6 +80,8 @@ export type DialogueScriptStep =
       nodeId: number;
       /** The topic's own requirement, which often separates two topics of one text. */
       gate: DialogueGate | null;
+      /** How many identical copies of this topic the graph holds. Absent means one. */
+      copies?: number;
       options: DialogueScriptOption[];
     }
   | {

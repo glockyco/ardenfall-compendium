@@ -74,7 +74,14 @@ type ScriptStep =
       gate: GateView | null;
       next: ScriptStep[];
     }
-  | { kind: "choice"; nodeId: number; gate: GateView | null; options: ScriptOption[] }
+  | {
+      kind: "choice";
+      nodeId: number;
+      gate: GateView | null;
+      /** How many identical copies of this topic the graph holds. Absent means one. */
+      copies?: number;
+      options: ScriptOption[];
+    }
   | {
       kind: "branch";
       nodeId: number;
@@ -272,7 +279,47 @@ function buildScript(entryNodes: number[], context: ScriptContext): Script {
     else starts.push(step);
   }
 
-  return { openers, topics, starts };
+  return { openers, topics: mergeAuthoredCopies(topics), starts };
+}
+
+/**
+ * Folds topics the author copied into one entry.
+ *
+ * A quest graph authors one topic per group member: the witness conversation of `Like Moths to a
+ * Flame` holds 17 copies of "Did you see anything out of the ordinary…" that are identical apart
+ * from their node id and their position on the canvas, each continuing into a different reply. A
+ * reader learns nothing from 17 identical headings, so the copies publish as one topic whose
+ * continuations are listed together, with the count of copies the graph holds.
+ */
+function mergeAuthoredCopies(topics: ScriptStep[]): ScriptStep[] {
+  const merged: ScriptStep[] = [];
+  const byShape = new Map<string, ScriptStep & { kind: "choice" }>();
+
+  for (const topic of topics) {
+    if (topic.kind !== "choice") {
+      merged.push(topic);
+      continue;
+    }
+
+    const shape = JSON.stringify([
+      topic.options.map((option) => [option.text, option.gate]),
+      topic.gate,
+    ]);
+    const first = byShape.get(shape);
+    if (first === undefined) {
+      byShape.set(shape, topic);
+      merged.push(topic);
+      continue;
+    }
+
+    first.copies = (first.copies ?? 1) + 1;
+    topic.options.forEach((option, index) => {
+      const target = first.options[index];
+      if (target !== undefined) target.next.push(...option.next);
+    });
+  }
+
+  return merged;
 }
 
 const isOpener = (node: DialogueNodeSnapshot): boolean =>
