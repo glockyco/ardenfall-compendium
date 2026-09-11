@@ -51,7 +51,8 @@ public sealed class SpriteAssetExporter
         return sb.ToString();
     }
 
-    private static byte[] EncodeRgbaPng(byte[] rgba, int width, int height)
+    /// <summary>Encodes raw RGBA rows as a PNG. The map capture writes its plates through this too.</summary>
+    public static byte[] EncodeRgbaPng(byte[] rgba, int width, int height)
     {
         using var output = new MemoryStream();
         output.Write(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }, 0, 8);

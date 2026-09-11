@@ -9,11 +9,11 @@
 
 ## 2. Capture command in the mod
 
-- [ ] 2.1 Add a capture handler to the mod's command registry beside the existing entity commands, taking a map, a cell range, and a pixels-per-unit value.
-- [ ] 2.2 Render each cell with an orthographic camera whose bounds come from the declared grid, using a culling mask for suppression. Mutate no world state.
-- [ ] 2.3 Write each tile as a PNG named by the hash of its content, in the staging layout the icon exporter already uses.
-- [ ] 2.4 Record the capture inputs and the loaded cell inventory in the capture output.
-- [ ] 2.5 Add mod tests for bounds derivation, tile positioning, and the recorded inputs. Do not test the render itself.
+- [x] 2.1 Add a capture handler to the mod's command registry beside the existing entity commands, taking a map, a cell range, and a pixels-per-unit value.
+- [x] 2.2 Render each cell with an orthographic camera whose bounds come from the declared grid, using a culling mask for suppression. Mutate no world state.
+- [x] 2.3 Write each tile as a PNG named by the hash of its content, in the staging layout the icon exporter already uses.
+- [x] 2.4 Record the capture inputs and the loaded cell inventory in the capture output.
+- [x] 2.5 Add mod tests for bounds derivation, tile positioning, and the recorded inputs. Do not test the render itself.
 
 ## 3. Controller phase
 

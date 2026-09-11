@@ -196,6 +196,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         try
         {
             var hashes = new Dictionary<string, string>();
+            CopyCaptureWorkspace(run, stagingDir, hashes);
 
             phaseStopwatch.Restart();
             var itemEnvelope = new ItemSnapshotEnvelope { Rows = rows };
@@ -845,6 +846,29 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
 
     private static string ChunkPath(string chunksDir, int offset) =>
         Path.Combine(chunksDir, $"{offset:D6}.json");
+
+    private static void CopyCaptureWorkspace(
+        CompendiumRun run,
+        string stagingDir,
+        IDictionary<string, string> hashes)
+    {
+        var captureRoot = Path.Combine(run.WorkspaceDir, "capture");
+        if (!Directory.Exists(captureRoot)) return;
+        foreach (var source in Directory.GetFiles(captureRoot, "*", SearchOption.AllDirectories))
+        {
+            var relativeToCapture = Path.GetRelativePath(captureRoot, source);
+            var mapId = relativeToCapture.Split(Path.DirectorySeparatorChar)[0];
+            var relativeInMap = Path.GetRelativePath(
+                Path.Combine(captureRoot, mapId),
+                source);
+            var targetRelative = relativeInMap.Replace(Path.DirectorySeparatorChar, '/');
+            var target = Path.Combine(stagingDir, targetRelative.Replace('/', Path.DirectorySeparatorChar));
+            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+            var bytes = File.ReadAllBytes(source);
+            File.WriteAllBytes(target, bytes);
+            hashes[targetRelative] = SpriteAssetExporter.Sha256Hex(bytes);
+        }
+    }
 
     private static void WriteJson(string dir, string fileName, object value, IDictionary<string, string> hashes)
     {
