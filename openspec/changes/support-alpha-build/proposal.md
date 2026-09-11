@@ -1,31 +1,31 @@
 ## Why
 
-Readers need to inspect the non-demo Ardenfall world with its own terrain and placed content, but the current build, export, and publication contracts accept only the Demo. Ad hoc scene captures cannot produce a trustworthy interactive map because they bypass the canonical marker pipeline and cannot prove that the basemap and markers came from the same game build.
+Readers need to inspect the current main Ardenfall game with its own terrain and placed content, but the compendium targets the discontinued Demo build. Supporting both builds would preserve duplicate extraction code, commands, artifacts, and verification for a source the project no longer needs.
 
 ## What Changes
 
-- Treat the Demo and Alpha as explicit, supported Ardenfall source profiles rather than accepting one hard-coded Unity product name.
-- Build the mod against the selected install without replacing another profile's reference set or relying on temporary scripts.
-- Export snapshots for either supported profile while preserving product name, build profile, build identifier, and plugin digest provenance.
-- Publish release artifacts for either supported profile and make their identity visible to the site and deployment checks.
-- Build and open the interactive `/map` route from an Alpha release so its markers and basemap come from the same snapshot.
-- Remove the repository guidance and evidence contract that prohibit Alpha snapshots and publication. Keep rejection for unknown games, missing identity, plugin mismatches, and ambiguous HotRepl ports.
-- Add no entity descriptor, public route, or relationship predicate. The existing `/map` route and descriptor-owned layers remain unchanged.
+- **BREAKING:** Make the main `Ardenfall` game the compendium's only supported source and remove Demo extraction and publication support.
+- Port the typed extraction mod to the main game's current assemblies and APIs.
+- Replace Demo product checks with strict main-game identity checks while preserving plugin-digest and HotRepl port verification.
+- Export canonical snapshots, basemap tiles, releases, and the site from the main game through the normal first-class commands.
+- Build and open `/map` with main-game markers and terrain from the same release artifact.
+- Remove Demo-specific environment examples, policies, tests, compatibility paths, and obsolete retail capture scripts.
+- Add no entity descriptor, public route, or relationship predicate. Existing descriptors, canonical tables, and `/map` remain the only public contracts.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `build-profile-publication`: Defines supported game profiles, profile-specific mod builds, provenance, release selection, and the reader-visible source identity.
+- `build-profile-publication`: Defines the main game as the sole supported source across extractor builds, snapshots, releases, staging, and reader-visible provenance.
 
 ### Modified Capabilities
 
-- `evidence-standard`: Replaces the Demo-only publication boundary with an explicit allowlist for supported Ardenfall products while retaining fail-fast identity checks.
-- `entity-extraction`: Requires the deployed extractor to be built for the same supported source profile as the running game.
+- `evidence-standard`: Replaces the Demo-only boundary with a main-game-only boundary while retaining fail-fast identity checks.
+- `entity-extraction`: Requires the deployed extractor and running main game to match by product identity and plugin digest.
 
 ## Impact
 
-- Affected code: `mod/ArdenfallCompendium.csproj`, mod build/deploy scripts, `controller/src/export-orchestrator.ts`, `pipeline/src/publication-identity.ts`, release staging and site metadata.
-- Affected guidance: `AGENTS.md` and `.omp/skills/live-extraction/SKILL.md`.
-- Affected tests: profile selection and incompatible-build failures in mod tooling, controller identity tests, pipeline publication tests, artifact staging checks, and browser verification of an Alpha map release.
-- Compatibility risk: the Demo and Alpha expose different `Assembly-CSharp` APIs. Profile support must isolate those differences at compile-time or behind profile adapters; weakening type checking or reflection-based fallbacks is not acceptable.
+- Affected code: the mod's game API calls and references, `controller/src/export-orchestrator.ts`, `pipeline/src/publication-identity.ts`, snapshot and artifact provenance, and site source metadata.
+- Affected guidance: `AGENTS.md`, `.omp/skills/live-extraction/SKILL.md`, `.env.example`, package commands, and the verification gate.
+- Affected tests: mod extraction contracts, controller identity checks, pipeline publication, artifact staging, and live browser verification.
+- Migration: existing Demo snapshots and releases are obsolete and receive no compatibility alias or fallback.

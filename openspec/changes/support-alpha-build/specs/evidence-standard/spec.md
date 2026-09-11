@@ -2,17 +2,15 @@
 
 ### Requirement: An export proves which game answered it
 
-An export SHALL name the build and the mod that produced it. An export SHALL fail when more than one instrumented game can answer.
+An export SHALL name the game build and mod that produced it. An export SHALL fail when more than one instrumented game can answer.
 
-An export SHALL confirm that the answering game matches the selected supported source profile. The snapshot SHALL record that identity, and publication SHALL refuse a snapshot whose identity is absent, unsupported, or inconsistent with the requested release profile.
+The current main game, whose Unity product is `Ardenfall`, is the only published game. The discontinued Demo is not a supported fallback. An export SHALL confirm the answering product before it writes entity data. The snapshot SHALL record that identity, and publication SHALL refuse a snapshot whose identity is absent or names another product.
 
-The Demo and Alpha are separate supported source profiles. Their snapshots, extractor builds, release artifacts, and site staging slots SHALL remain distinguishable. Measurements and published content SHALL identify which profile produced them.
-
-Two instrumented games on one HotRepl port report no error. The connection reaches the game that bound first. During the identity slice a stale instance answered an export. The snapshot then lacked fields that the deployed mod emits, and the absence looked like a data defect.
+Two instrumented games on one HotRepl port report no error. The connection reaches the game that bound first. Product identity, port ownership, and the deployed plugin digest therefore remain independent required checks.
 
 #### Scenario: Two instrumented games run at once
 
-- **WHEN** an export starts and more than one process holds the selected profile's HotRepl port
+- **WHEN** an export starts and more than one process holds the HotRepl port
 - **THEN** the export fails and names the port and the processes
 - **AND** the export does not use the instance that answers first
 
@@ -25,21 +23,20 @@ Two instrumented games on one HotRepl port report no error. The connection reach
 
 #### Scenario: The answering game is not the published one
 
-- **WHEN** an export connects to a supported or unsupported install other than the selected profile
+- **WHEN** an export connects to the Demo or any product other than `Ardenfall`
 - **THEN** the export fails before extraction
-- **AND** the failure names the selected profile and answering product
+- **AND** the failure states that the main game is required
 
 #### Scenario: A snapshot records its source
 
 - **WHEN** an export produces a snapshot
-- **THEN** the snapshot records the source profile and identity of the game that answered
+- **THEN** the snapshot records the identity of the main game that answered
 - **AND** that identity can be read from the artifact without the session that produced it
 
 #### Scenario: Publication checks the artifact
 
 - **WHEN** publication runs against a snapshot
-- **THEN** it proceeds only when the recorded identity names a supported profile
-- **AND** that profile matches the requested release profile
+- **THEN** it proceeds only when the recorded identity names `Ardenfall`
 
 #### Scenario: A snapshot carries no identity
 
@@ -48,12 +45,12 @@ Two instrumented games on one HotRepl port report no error. The connection reach
 
 #### Scenario: The alpha is probed
 
-- **WHEN** a probe or export runs with the Alpha profile selected and the answering game and extractor match it
-- **THEN** the operation is permitted, including creation of an Alpha snapshot and release artifact
-- **AND** every persisted result remains identified as Alpha content
+- **WHEN** a probe or export runs against the current main game
+- **THEN** the operation is permitted, including snapshot and release creation
+- **AND** persisted results retain the main-game identity
 
 #### Scenario: Repository guidance states the publication boundary
 
 - **WHEN** an agent reads the root repository guidance
-- **THEN** it states that Demo and Alpha are supported, distinct source profiles
+- **THEN** it states that the main game is the only supported source
 - **AND** it points live extraction work to the scoped skill
