@@ -5,14 +5,24 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } 
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { stageArtifact, type ArtifactManifest } from "../scripts/stage-artifact";
+import { stagePaths } from "../stage-paths.mjs";
 
 const fixtureArtifact = resolve(import.meta.dir, "../../pipeline/artifacts/fixtures/synthetic");
 
-function copyArtifact(): { artifactDir: string; targetDir: string; root: string } {
+/**
+ * Stages into a throwaway site directory, so a test never writes the repository's own slots.
+ */
+function copyArtifact(mode: "fixture" | "release"): {
+  artifactDir: string;
+  siteDir: string;
+  targetDir: string;
+  root: string;
+} {
   const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-artifact-"));
   const artifactDir = join(root, "artifact");
   cpSync(fixtureArtifact, artifactDir, { recursive: true });
-  return { artifactDir, targetDir: join(root, "static"), root };
+  const siteDir = join(root, "site");
+  return { artifactDir, siteDir, targetDir: stagePaths(mode, siteDir).staticDir, root };
 }
 
 function setDirtyProvenance(artifactDir: string): void {
@@ -59,10 +69,10 @@ function cleanup(root: string): void {
 
 describe("stage artifact provenance", () => {
   it("refuses a dirty release and identifies the recorded commit", async () => {
-    const { artifactDir, targetDir, root } = copyArtifact();
+    const { artifactDir, siteDir, targetDir, root } = copyArtifact("release");
     const manifest = setReleaseProvenance(artifactDir, true);
     try {
-      await expect(stageArtifact({ artifactDir, targetDir, mode: "release" })).rejects.toThrow(
+      await expect(stageArtifact({ artifactDir, siteDir, mode: "release" })).rejects.toThrow(
         `cannot stage release artifact: recorded commit ${manifest.git.commit}, but the tree was dirty. Build from a clean tree and stage the new artifact again.`,
       );
       expect(existsSync(targetDir)).toBe(false);
@@ -72,10 +82,10 @@ describe("stage artifact provenance", () => {
   });
 
   it("stages a clean release", async () => {
-    const { artifactDir, targetDir, root } = copyArtifact();
+    const { artifactDir, siteDir, targetDir, root } = copyArtifact("release");
     setReleaseProvenance(artifactDir, false);
     try {
-      const result = await stageArtifact({ artifactDir, targetDir, mode: "release" });
+      const result = await stageArtifact({ artifactDir, siteDir, mode: "release" });
       expect(result.manifest.git.dirty).toBe(false);
       expect(readFileSync(join(targetDir, "_release.json"), "utf8")).toContain('"dirty": false');
     } finally {
@@ -84,14 +94,42 @@ describe("stage artifact provenance", () => {
   });
 
   it("still stages a dirty fixture artifact", async () => {
-    const { artifactDir, targetDir, root } = copyArtifact();
+    const { artifactDir, siteDir, targetDir, root } = copyArtifact("fixture");
     setDirtyProvenance(artifactDir);
     try {
-      const result = await stageArtifact({ artifactDir, targetDir, mode: "fixture" });
+      const result = await stageArtifact({ artifactDir, siteDir, mode: "fixture" });
       expect(result.manifest.artifactKind).toBe("fixture");
       expect(result.manifest.git.dirty).toBe(true);
+      expect(result.targetDir).toBe(targetDir);
     } finally {
       cleanup(root);
+    }
+  });
+
+  it("keeps a fixture and a release in slots that cannot overwrite each other", async () => {
+    const fixture = copyArtifact("fixture");
+    const release = copyArtifact("release");
+    setReleaseProvenance(release.artifactDir, false);
+    try {
+      // One site directory, both kinds staged: the second must not disturb the first.
+      const siteDir = fixture.siteDir;
+      await stageArtifact({ artifactDir: fixture.artifactDir, siteDir, mode: "fixture" });
+      const fixtureDb = stagePaths("fixture", siteDir).database;
+      const before = readFileSync(fixtureDb);
+
+      await stageArtifact({ artifactDir: release.artifactDir, siteDir, mode: "release" });
+
+      expect(existsSync(stagePaths("release", siteDir).database)).toBe(true);
+      expect(readFileSync(fixtureDb).equals(before)).toBe(true);
+      expect(
+        readFileSync(join(stagePaths("fixture", siteDir).staticDir, "_release.json"), "utf8"),
+      ).toContain('"artifactKind": "fixture"');
+      expect(
+        readFileSync(join(stagePaths("release", siteDir).staticDir, "_release.json"), "utf8"),
+      ).toContain('"artifactKind": "release"');
+    } finally {
+      cleanup(fixture.root);
+      cleanup(release.root);
     }
   });
 });

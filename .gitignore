@@ -28,11 +28,7 @@ site/.wrangler/
 # Pipeline outputs
 pipeline/dist/*.mjs.tmp
 pipeline/artifacts/
-site/.data/data.sqlite
-site/static/_release.json
-site/.data/data.sqlite-wal
-site/.data/data.sqlite-shm
-site/static/assets/
+site/.stage/
 site/static/tiles/
 
 # C# / BepInEx mod

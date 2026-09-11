@@ -1,10 +1,11 @@
 import { describe, expect, it } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { currentStagePaths } from "../stage-paths.mjs";
 
 const builtItemsPage = [
-  join(import.meta.dir, "../.svelte-kit/cloudflare/items/index.html"),
-  join(import.meta.dir, "../.svelte-kit/cloudflare/items.html"),
+  join(currentStagePaths(join(import.meta.dir, "..")).outputDir, "items/index.html"),
+  join(currentStagePaths(join(import.meta.dir, "..")).outputDir, "items.html"),
 ].find(existsSync);
 if (!builtItemsPage) throw new Error("missing built item overview page");
 const detailHeaderSource = readFileSync(

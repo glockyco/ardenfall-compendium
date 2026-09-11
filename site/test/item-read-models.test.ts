@@ -2,14 +2,15 @@ import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { stagePaths } from "../stage-paths.mjs";
 
 const richText = JSON.stringify({ schemaVersion: 1, sourceHash: "", nodes: [], diagnostics: [] });
 
 const seed = () => {
   const root = mkdtempSync(join(tmpdir(), "ardenfall-site-item-models-"));
-  mkdirSync(join(root, ".data"), { recursive: true });
-  const db = new Database(join(root, ".data", "data.sqlite"));
+  mkdirSync(dirname(stagePaths("fixture", root).database), { recursive: true });
+  const db = new Database(stagePaths("fixture", root).database);
   db.exec(`
     CREATE TABLE item_presentation_rows (
       id TEXT PRIMARY KEY,
@@ -147,7 +148,7 @@ describe("item effect read-model accessors", () => {
     const originalCwd = process.cwd();
     const root = seed();
     try {
-      const db = new Database(join(root, ".data", "data.sqlite"));
+      const db = new Database(stagePaths("fixture", root).database);
       db.run("UPDATE item_presentation_rows SET description_rich_text_json = ? WHERE id = ?", [
         "{}",
         "item-sword",
@@ -168,7 +169,7 @@ describe("item effect read-model accessors", () => {
     const originalCwd = process.cwd();
     const root = seed();
     try {
-      const db = new Database(join(root, ".data", "data.sqlite"));
+      const db = new Database(stagePaths("fixture", root).database);
       db.run("UPDATE item_presentation_rows SET effect_facts_json = ? WHERE id = ?", [
         '[{"kind":"spell"}]',
         "item-sword",
@@ -189,7 +190,7 @@ describe("item effect read-model accessors", () => {
     const originalCwd = process.cwd();
     const root = seed();
     try {
-      const db = new Database(join(root, ".data", "data.sqlite"));
+      const db = new Database(stagePaths("fixture", root).database);
       db.run("UPDATE item_presentation_rows SET render_context = ? WHERE id = ?", [
         "item-presentation-v9",
         "item-sword",

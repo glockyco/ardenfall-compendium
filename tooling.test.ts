@@ -10,8 +10,9 @@ import {
 } from "node:fs";
 import { describe, expect, it } from "bun:test";
 import { Database } from "bun:sqlite";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { stagePaths } from "./site/stage-paths.mjs";
 
 type DecompileOptionsInput = {
   assembly: string;
@@ -44,7 +45,7 @@ type DecompilePlan = DecompileOptions & { commands: DecompileCommand[] };
 type StageArtifactModule = {
   stageArtifact(options: {
     artifactDir: string;
-    targetDir: string;
+    siteDir?: string;
     mode: "fixture" | "release";
   }): Promise<{ manifest: object; targetDir: string }>;
 };
@@ -295,7 +296,7 @@ describe("site deployment tooling", () => {
     expect(sitePackageJson.scripts["stage:artifact"]).toBe("bun run scripts/stage-artifact.ts");
     expect(sitePackageJson.scripts["build:prepared"]).toBe("vite build && bun run build:pagefind");
     expect(sitePackageJson.scripts["build:fixture"]).toBe(
-      "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
+      "SITE_STAGE=fixture bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && SITE_STAGE=fixture bun run build:prepared",
     );
     // The default build verb must not stage fixture data, because wrangler uploads
     // whatever sits in the build directory.
@@ -317,7 +318,7 @@ describe("site deployment tooling", () => {
     expect(sitePackageJson.scripts["stage:artifact"]).toBe("bun run scripts/stage-artifact.ts");
     expect(sitePackageJson.scripts["build:prepared"]).toBe("vite build && bun run build:pagefind");
     expect(sitePackageJson.scripts["build:fixture"]).toBe(
-      "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
+      "SITE_STAGE=fixture bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && SITE_STAGE=fixture bun run build:prepared",
     );
     // The default build verb must not stage fixture data, because wrangler uploads
     // whatever sits in the build directory.
@@ -331,7 +332,7 @@ describe("site deployment tooling", () => {
     const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-fixture-"));
     try {
       const artifact = join(root, "artifact");
-      const target = join(root, "static");
+      const siteDir = join(root, "site");
       mkdirSync(join(artifact, "assets"), { recursive: true });
       writeFileSync(
         join(artifact, "data.sqlite"),
@@ -385,7 +386,7 @@ describe("site deployment tooling", () => {
       );
 
       await expect(
-        stageArtifact({ artifactDir: artifact, targetDir: target, mode: "release" }),
+        stageArtifact({ artifactDir: artifact, siteDir, mode: "release" }),
       ).rejects.toThrow(/release staging requires artifactKind release/);
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -396,7 +397,8 @@ describe("site deployment tooling", () => {
     const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-private-database-"));
     try {
       const artifact = join(root, "artifact");
-      const target = join(root, "static");
+      const siteDir = join(root, "site");
+      const target = stagePaths("fixture", siteDir).staticDir;
       const source = {
         kind: "synthetic-fixture",
         fixtureName: "synthetic",
@@ -479,14 +481,14 @@ describe("site deployment tooling", () => {
       );
 
       await expect(
-        stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),
+        stageArtifact({ artifactDir: artifact, siteDir, mode: "fixture" }),
       ).resolves.toMatchObject({ manifest: { artifactKind: "fixture" } });
-      // The database is a build-time input, so it is staged beside the public
-      // directory rather than inside it, and a copy left there by an earlier
-      // layout is removed instead of being served.
+      // The database is a build-time input, so it is staged beside the static root inside the
+      // slot rather than inside the served directory, and a copy left there by an earlier layout
+      // is removed instead of being served.
       expect(existsSync(join(target, "data.sqlite"))).toBe(false);
       expect(existsSync(join(target, "assets", "stale.webp"))).toBe(false);
-      expect(readFileSync(join(dirname(target), ".data", "data.sqlite"))).toEqual(sqliteBytes);
+      expect(readFileSync(stagePaths("fixture", siteDir).database)).toEqual(sqliteBytes);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -496,8 +498,8 @@ describe("site deployment tooling", () => {
     const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-no-route-output-"));
     try {
       const artifact = join(root, "artifact");
-      const projectRoot = join(root, "site");
-      const target = join(projectRoot, "static");
+      const siteDir = join(root, "site");
+      const target = stagePaths("fixture", siteDir).staticDir;
       const source = {
         kind: "synthetic-fixture",
         fixtureName: "synthetic",
@@ -577,10 +579,10 @@ describe("site deployment tooling", () => {
         "./site/scripts/stage-artifact.ts",
       );
 
-      await stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" });
+      await stageArtifact({ artifactDir: artifact, siteDir, mode: "fixture" });
 
       expect(existsSync(join(target, "_release.json"))).toBe(true);
-      expect(existsSync(join(projectRoot, ".data", "data.sqlite"))).toBe(true);
+      expect(existsSync(stagePaths("fixture", siteDir).database)).toBe(true);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -590,7 +592,7 @@ describe("site deployment tooling", () => {
     const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-missing-stat-counts-"));
     try {
       const artifact = join(root, "artifact");
-      const target = join(root, "site", "static");
+      const siteDir = join(root, "site");
       const source = {
         kind: "synthetic-fixture",
         fixtureName: "synthetic",
@@ -670,7 +672,7 @@ describe("site deployment tooling", () => {
       );
 
       await expect(
-        stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),
+        stageArtifact({ artifactDir: artifact, siteDir, mode: "fixture" }),
       ).rejects.toThrow(/missing required count statTypeOverviewRows/);
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -681,7 +683,7 @@ describe("site deployment tooling", () => {
     const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-missing-stat-tables-"));
     try {
       const artifact = join(root, "artifact");
-      const target = join(root, "site", "static");
+      const siteDir = join(root, "site");
       const source = {
         kind: "synthetic-fixture",
         fixtureName: "synthetic",
@@ -754,7 +756,7 @@ describe("site deployment tooling", () => {
       );
 
       await expect(
-        stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),
+        stageArtifact({ artifactDir: artifact, siteDir, mode: "fixture" }),
       ).rejects.toThrow(/missing sqlite table stat_type_overview_rows/);
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -765,7 +767,7 @@ describe("site deployment tooling", () => {
     const root = mkdtempSync(join(tmpdir(), "ardenfall-stage-stat-counts-"));
     try {
       const artifact = join(root, "artifact");
-      const target = join(root, "site", "static");
+      const siteDir = join(root, "site");
       const source = {
         kind: "synthetic-fixture",
         fixtureName: "synthetic",
@@ -849,7 +851,7 @@ describe("site deployment tooling", () => {
       );
 
       await expect(
-        stageArtifact({ artifactDir: artifact, targetDir: target, mode: "fixture" }),
+        stageArtifact({ artifactDir: artifact, siteDir, mode: "fixture" }),
       ).rejects.toThrow(/statTypeOverviewRows mismatch/);
     } finally {
       rmSync(root, { recursive: true, force: true });
@@ -883,7 +885,7 @@ describe("site prerender architecture", () => {
     // A Worker used to sit here and could only fail, because its bundle pulled in the server
     // modules that read the build database. It answered 500 for any address that matched no file.
     expect(siteSvelteConfig).toContain("@sveltejs/adapter-static");
-    expect(siteWranglerConfig).toContain('directory = ".svelte-kit/cloudflare"');
+    expect(siteWranglerConfig).toContain('directory = ".stage/release/output"');
     expect(siteWranglerConfig).not.toMatch(/^main\s*=/m);
     expect(siteWranglerConfig).not.toMatch(/^run_worker_first\s*=/m);
   });
@@ -1182,7 +1184,8 @@ describe("site prerender architecture", () => {
     expect(existsSync("site/src/lib/server/read-models.ts")).toBe(true);
     expect(existsSync("site/src/lib/server/db.ts")).toBe(true);
     expect(siteServerDb).toContain("better-sqlite3");
-    expect(siteServerDb).toContain('".data", "data.sqlite"');
+    // The build database lives in the staging slot, which is outside the served static root.
+    expect(siteServerDb).toContain("currentStagePaths(process.cwd()).database");
     expect(siteReadModels).not.toContain("$app/environment");
     expect(siteServerDb).not.toContain("$app/environment");
     expect(siteReadModels).not.toContain("@sqlite.org/sqlite-wasm");

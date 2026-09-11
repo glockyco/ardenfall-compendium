@@ -2,16 +2,17 @@ import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
 import type * as ReadModels from "../src/lib/server/read-models";
+import { stagePaths } from "../stage-paths.mjs";
 
 const femaleSetId = "named;name-set;nset_mystelf_female";
 const maleSetId = "named;name-set;nset_mystelf_male";
 
 const seed = ({ publishMaleSet = true }: { publishMaleSet?: boolean } = {}) => {
   const root = mkdtempSync(join(tmpdir(), "ardenfall-site-character-race-models-"));
-  mkdirSync(join(root, ".data"), { recursive: true });
-  const db = new Database(join(root, ".data", "data.sqlite"));
+  mkdirSync(dirname(stagePaths("fixture", root).database), { recursive: true });
+  const db = new Database(stagePaths("fixture", root).database);
   db.exec(`
     CREATE TABLE character_race_overview_rows (
       id TEXT PRIMARY KEY, name TEXT NOT NULL, variant_count INTEGER NOT NULL

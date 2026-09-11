@@ -10,7 +10,8 @@ command = "bun run scripts/assert-release-metadata.ts"
 pattern = "ardenfall.compendiums.org"
 custom_domain = true
 
-# The site is files only. Every route prerenders, and the build database lives in site/.data and is
+# The site is files only. Every route prerenders, and the build database lives in the staging slot
+# (site/.stage/<kind>/data.sqlite) and is
 # never deployed, so nothing can be rendered at request time. There is therefore no `main` and no
 # Worker: Cloudflare serves these assets directly.
 #
@@ -18,5 +19,5 @@ custom_domain = true
 # the build database, so it threw on load and answered 500 for any address that matched no file,
 # instead of 404. `not_found_handling` now serves the prerendered 404.html for a miss.
 [assets]
-directory = ".svelte-kit/cloudflare"
+directory = ".stage/release/output"
 not_found_handling = "404-page"

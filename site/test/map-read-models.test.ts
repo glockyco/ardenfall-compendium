@@ -2,7 +2,8 @@ import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { stagePaths } from "../stage-paths.mjs";
 
 /**
  * Seeds a throwaway SQLite database under a fresh root and returns that root.
@@ -17,8 +18,8 @@ function withDb(seed: (db: Database) => void): string {
     tmpdir(),
     `ardenfall-map-models-${process.pid}-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
   );
-  mkdirSync(join(root, ".data"), { recursive: true });
-  const db = new Database(join(root, ".data", "data.sqlite"));
+  mkdirSync(dirname(stagePaths("fixture", root).database), { recursive: true });
+  const db = new Database(stagePaths("fixture", root).database);
   seed(db);
   db.close();
   return root;

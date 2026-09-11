@@ -28,9 +28,9 @@
     "dev": "vite dev",
     "build": "bun run build:prepared",
     "build:prepared": "vite build && bun run build:pagefind",
-    "build:fixture": "bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && bun run build:prepared",
+    "build:fixture": "SITE_STAGE=fixture bun run stage:artifact ../pipeline/artifacts/fixtures/synthetic --mode fixture && SITE_STAGE=fixture bun run build:prepared",
     "build:pagefind": "bun run scripts/build-pagefind.ts",
-    "preview": "vite preview",
+    "preview": "bun run scripts/preview.ts",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "smoke:error-route": "bun run scripts/smoke-error-route.ts",
     "smoke:prerender": "bun run scripts/smoke-prerender-output.ts",
@@ -38,7 +38,8 @@
     "smoke:map": "bun run scripts/smoke-map-route.ts",
     "smoke:accessibility": "bun run scripts/smoke-accessibility.ts",
     "stage:artifact": "bun run scripts/stage-artifact.ts",
-    "deploy:production": "bun run scripts/deploy-production.ts"
+    "deploy:production": "bun run scripts/deploy-production.ts",
+    "build:release": "SITE_STAGE=release bun run build:prepared"
   },
   "type": "module"
 }

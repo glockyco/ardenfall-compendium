@@ -2,7 +2,8 @@ import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { stagePaths } from "../stage-paths.mjs";
 
 const richText = JSON.stringify({
   schemaVersion: 1,
@@ -13,8 +14,8 @@ const richText = JSON.stringify({
 
 const seed = () => {
   const root = mkdtempSync(join(tmpdir(), "ardenfall-site-status-effect-models-"));
-  mkdirSync(join(root, ".data"), { recursive: true });
-  const db = new Database(join(root, ".data", "data.sqlite"));
+  mkdirSync(dirname(stagePaths("fixture", root).database), { recursive: true });
+  const db = new Database(stagePaths("fixture", root).database);
   db.exec(`
     CREATE TABLE status_effect_overview_rows (
       id TEXT PRIMARY KEY,

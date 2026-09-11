@@ -1,8 +1,9 @@
 import { Database } from "bun:sqlite";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { currentStagePaths } from "../stage-paths.mjs";
 
-const out = join(process.cwd(), ".svelte-kit", "cloudflare", "map.html");
+const out = join(currentStagePaths(process.cwd()).outputDir, "map.html");
 const html = readFileSync(out, "utf8");
 
 /**
@@ -12,7 +13,7 @@ const html = readFileSync(out, "utf8");
  * without WebGL still reaches every marked place.
  */
 function firstMarkerLabel(): string {
-  const db = new Database(join(process.cwd(), ".data", "data.sqlite"), {
+  const db = new Database(currentStagePaths(process.cwd()).database, {
     readonly: true,
     create: false,
   });

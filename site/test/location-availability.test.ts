@@ -2,7 +2,8 @@ import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { stagePaths } from "../stage-paths.mjs";
 
 const source = (relativePath: string) => readFileSync(join(import.meta.dir, relativePath), "utf8");
 const detailSource = source("../src/lib/components/locations/LocationDetail.svelte");
@@ -10,8 +11,8 @@ const mapDetailsSource = source("../src/lib/components/map/DetailsPanel.svelte")
 
 const seed = () => {
   const root = mkdtempSync(join(tmpdir(), "ardenfall-site-location-availability-"));
-  mkdirSync(join(root, ".data"), { recursive: true });
-  const db = new Database(join(root, ".data", "data.sqlite"));
+  mkdirSync(dirname(stagePaths("fixture", root).database), { recursive: true });
+  const db = new Database(stagePaths("fixture", root).database);
   db.exec(`
     CREATE TABLE locations (
       id TEXT PRIMARY KEY,

@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { currentStagePaths } from "../../stage-paths.mjs";
+
 import {
   listCharacters,
   listCharacterTypes,
@@ -8,6 +10,7 @@ import {
   listFactions,
   listLocations,
   listContainers,
+  listSceneDialogue,
   listWorldSpawns,
   listPlacedItems,
   listPlacedPlants,
@@ -75,6 +78,7 @@ export interface SiteChrome {
   placedItemRoute: string;
   containerRoute: string;
   worldSpawnRoute: string;
+  sceneDialogueRoute: string;
   factionRoute: string;
 }
 
@@ -86,7 +90,7 @@ interface PublicReleaseManifest {
   git: { commit: string; dirty: boolean };
 }
 
-const releasePath = (): string => join(process.cwd(), "static", "_release.json");
+const releasePath = (): string => join(currentStagePaths(process.cwd()).staticDir, "_release.json");
 
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
@@ -137,7 +141,7 @@ function loadRelease(): { release: ReleaseProvenance | null; releaseError: strin
   if (!existsSync(path)) {
     return {
       release: null,
-      releaseError: "Build provenance is unavailable, static/_release.json was not staged.",
+      releaseError: "Build provenance is unavailable, no artifact is staged for this build.",
     };
   }
 
@@ -223,6 +227,7 @@ function buildLayoutData(): SiteChrome {
   const placedItem = entitySection("placed-item", listPlacedItems().length);
   const container = entitySection("placed-container", listContainers().length);
   const worldSpawn = entitySection("world-spawn", listWorldSpawns().length);
+  const sceneDialogue = entitySection("scene-dialogue", listSceneDialogue().length);
   const faction = entitySection("faction", listFactions().length);
   const map = mapSection();
 
@@ -246,6 +251,7 @@ function buildLayoutData(): SiteChrome {
       placedItem,
       container,
       worldSpawn,
+      sceneDialogue,
       faction,
       map,
     ],
@@ -269,6 +275,7 @@ function buildLayoutData(): SiteChrome {
     placedItemRoute: placedItem.href,
     containerRoute: container.href,
     worldSpawnRoute: worldSpawn.href,
+    sceneDialogueRoute: sceneDialogue.href,
     factionRoute: faction.href,
   };
 }

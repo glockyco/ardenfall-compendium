@@ -3,6 +3,7 @@ import { Database } from "bun:sqlite";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { listingRoutePaths } from "../src/lib/server/sitemap-routes";
+import { currentStagePaths } from "../stage-paths.mjs";
 
 interface ReleaseProbe {
   id: string;
@@ -60,7 +61,7 @@ interface CharacterProbeRow {
   character_type_route_path: string | null;
 }
 
-const outputDir = join(import.meta.dirname, "..", ".svelte-kit", "cloudflare");
+const outputDir = currentStagePaths(join(import.meta.dirname, "..")).outputDir;
 const releasePath = join(import.meta.dirname, "..", "static", "_release.json");
 const outputReleasePath = join(outputDir, "_release.json");
 const overviewPath = firstExisting([
@@ -300,7 +301,7 @@ if (!tagDetail.includes(tagProbe.item_name)) {
 }
 
 function readExpectedRoutes(): string[] {
-  const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
+  const db = new Database(currentStagePaths(join(import.meta.dirname, "..")).database, {
     readonly: true,
     create: false,
   });
@@ -409,7 +410,7 @@ function readCharacterProbes(): {
   race: CharacterProbeRow;
   none: CharacterProbeRow | null;
 } {
-  const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
+  const db = new Database(currentStagePaths(join(import.meta.dirname, "..")).database, {
     readonly: true,
     create: false,
   });
@@ -457,7 +458,7 @@ function countOccurrences(value: string, needle: string): number {
  * disabled quests and 11 hidden from its quest UI.
  */
 function readQuestProbe(disabled: boolean): QuestProbeRow {
-  const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
+  const db = new Database(currentStagePaths(join(import.meta.dirname, "..")).database, {
     readonly: true,
     create: false,
   });
@@ -487,7 +488,7 @@ function readQuestProbe(disabled: boolean): QuestProbeRow {
 }
 
 function readStatProbe(): StatProbeRow {
-  const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
+  const db = new Database(currentStagePaths(join(import.meta.dirname, "..")).database, {
     readonly: true,
     create: false,
   });
@@ -513,7 +514,7 @@ function readStatProbe(): StatProbeRow {
 }
 
 function readItemCategoryProbe(): ItemCategoryProbeRow {
-  const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
+  const db = new Database(currentStagePaths(join(import.meta.dirname, "..")).database, {
     readonly: true,
     create: false,
   });
@@ -553,7 +554,7 @@ function readItemCategoryProbe(): ItemCategoryProbeRow {
 }
 
 function readItemTagProbe(): ItemTagProbeRow {
-  const db = new Database(join(import.meta.dirname, "..", ".data", "data.sqlite"), {
+  const db = new Database(currentStagePaths(join(import.meta.dirname, "..")).database, {
     readonly: true,
     create: false,
   });

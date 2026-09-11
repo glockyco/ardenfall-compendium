@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { extname, join, relative, resolve } from "node:path";
+import { currentStagePaths } from "../stage-paths.mjs";
 
 /**
  * This check uses the built HTML instead of a browser or a DOM dependency.
@@ -8,7 +9,7 @@ import { extname, join, relative, resolve } from "node:path";
  * It cannot inspect client-side updates, focus behavior, or final browser layout.
  */
 const outputDir = resolve(
-  process.env.A11Y_OUTPUT_DIR ?? join(import.meta.dirname, "..", ".svelte-kit", "cloudflare"),
+  process.env.A11Y_OUTPUT_DIR ?? currentStagePaths(join(import.meta.dirname, "..")).outputDir,
 );
 if (!existsSync(outputDir)) {
   throw new Error(`missing built site output: ${outputDir}`);

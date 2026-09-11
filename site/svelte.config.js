@@ -1,5 +1,9 @@
 import adapter from "@sveltejs/adapter-static";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+import { currentStagePaths } from "./stage-paths.mjs";
+
+// A fixture build and a live build write their own directories, so neither overwrites the other.
+const stage = currentStagePaths(import.meta.dirname);
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -15,11 +19,13 @@ const config = {
     // prerenders through `entries()`. The guard that matters is each route's own `prerender = true`,
     // which fails the build when a page stops being prerenderable.
     adapter: adapter({
-      pages: ".svelte-kit/cloudflare",
-      assets: ".svelte-kit/cloudflare",
+      pages: stage.outputDir,
+      assets: stage.outputDir,
       strict: false,
     }),
     alias: { $lib: "src/lib" },
+    // The staged static root: the tracked files plus this artifact's assets and `_release.json`.
+    files: { assets: stage.staticDir },
   },
 };
 

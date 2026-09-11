@@ -2,7 +2,8 @@ import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { stagePaths } from "../stage-paths.mjs";
 
 const iconHash = "d".repeat(64);
 const defaultIconHash = "e".repeat(64);
@@ -13,8 +14,8 @@ describe("item-category read-model accessors", () => {
   it("lists category routes, resolves presentations, and lists category items", async () => {
     const originalCwd = process.cwd();
     const root = mkdtempSync(join(tmpdir(), "ardenfall-site-category-models-"));
-    mkdirSync(join(root, ".data"), { recursive: true });
-    const db = new Database(join(root, ".data", "data.sqlite"));
+    mkdirSync(dirname(stagePaths("fixture", root).database), { recursive: true });
+    const db = new Database(stagePaths("fixture", root).database);
     db.exec(`
       CREATE TABLE item_category_overview_rows (
         id TEXT PRIMARY KEY,

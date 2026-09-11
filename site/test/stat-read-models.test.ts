@@ -2,7 +2,8 @@ import { Database } from "bun:sqlite";
 import { describe, expect, it } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { stagePaths } from "../stage-paths.mjs";
 
 const iconHash = "c".repeat(64);
 
@@ -10,8 +11,8 @@ describe("stat read-model accessors", () => {
   it("lists stat routes and resolves presentation rows by canonical slug", async () => {
     const originalCwd = process.cwd();
     const root = mkdtempSync(join(tmpdir(), "ardenfall-site-stat-models-"));
-    mkdirSync(join(root, ".data"), { recursive: true });
-    const db = new Database(join(root, ".data", "data.sqlite"));
+    mkdirSync(dirname(stagePaths("fixture", root).database), { recursive: true });
+    const db = new Database(stagePaths("fixture", root).database);
     db.exec(`
       CREATE TABLE stat_type_overview_rows (
         id TEXT PRIMARY KEY,
@@ -102,8 +103,8 @@ describe("stat read-model accessors", () => {
   it("fails on malformed generated color JSON", async () => {
     const originalCwd = process.cwd();
     const root = mkdtempSync(join(tmpdir(), "ardenfall-site-stat-color-"));
-    mkdirSync(join(root, ".data"), { recursive: true });
-    const db = new Database(join(root, ".data", "data.sqlite"));
+    mkdirSync(dirname(stagePaths("fixture", root).database), { recursive: true });
+    const db = new Database(stagePaths("fixture", root).database);
     db.exec(`
       CREATE TABLE stat_type_overview_rows (
         id TEXT PRIMARY KEY,

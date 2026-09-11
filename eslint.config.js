@@ -11,6 +11,8 @@ export default tseslint.config(
       ".worktrees/",
       "worktrees/",
       "**/.svelte-kit/",
+      // Built sites, one directory per staged artifact kind.
+      "site/.stage/",
       "site/build/",
       "pipeline/dist/",
       "mod/bin/",

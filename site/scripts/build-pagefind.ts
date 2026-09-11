@@ -2,9 +2,10 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, rmSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { currentStagePaths } from "../stage-paths.mjs";
 
 const siteDir = resolve(import.meta.dirname, "..");
-const outputDir = join(siteDir, ".svelte-kit", "cloudflare");
+const outputDir = currentStagePaths(siteDir).outputDir;
 const pagefindDir = join(outputDir, "pagefind");
 
 if (!existsSync(outputDir)) {

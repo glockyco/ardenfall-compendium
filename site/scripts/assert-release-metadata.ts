@@ -1,7 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { stagePaths } from "../stage-paths.mjs";
 
-const releasePath = join(import.meta.dirname, "..", "static", "_release.json");
+const releasePath = join(
+  stagePaths("release", join(import.meta.dirname, "..")).staticDir,
+  "_release.json",
+);
 const releaseStageCommand =
   "bun run --cwd site stage:artifact ../pipeline/artifacts/releases/<snapshot-id> --mode release";
 
@@ -9,17 +13,17 @@ let metadata: Record<string, unknown> | null = null;
 let readFailure: string | null = null;
 
 if (!existsSync(releasePath)) {
-  readFailure = "static/_release.json is missing";
+  readFailure = `${releasePath} is missing`;
 } else {
   try {
     const parsed: unknown = JSON.parse(readFileSync(releasePath, "utf8"));
     if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
       metadata = parsed as Record<string, unknown>;
     } else {
-      readFailure = "static/_release.json does not contain a JSON object";
+      readFailure = `${releasePath} does not contain a JSON object`;
     }
   } catch {
-    readFailure = "static/_release.json is not valid JSON";
+    readFailure = `${releasePath} is not valid JSON`;
   }
 }
 

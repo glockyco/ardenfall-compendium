@@ -12,6 +12,7 @@ import {
 } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import validateArtifactManifest from "../../pipeline/dist/validate-artifact-manifest.mjs";
+import { stagePaths } from "../stage-paths.mjs";
 
 /**
  * Hand-written declaration for the JavaScript staging script.
@@ -26,10 +27,12 @@ import validateArtifactManifest from "../../pipeline/dist/validate-artifact-mani
 export interface StageArtifactOptions {
   /** Directory holding `artifact-manifest.json`, `data.sqlite`, assets, and static files. */
   artifactDir: string;
-  /** Destination the validated public asset files are copied into. */
-  targetDir: string;
-  /** Which artifact kind the caller expects. A mismatch is rejected. */
+  /** Which artifact kind the caller expects. A mismatch is rejected, and it selects the slot. */
   mode: "fixture" | "release";
+  /** The site directory whose `.stage/<mode>` slot receives the artifact. */
+  siteDir?: string;
+  /** The tracked static files copied into the slot beside the artifact's own. */
+  trackedStaticDir?: string;
 }
 
 export interface ArtifactManifest {
@@ -116,8 +119,11 @@ export interface StageArtifactResult {
 }
 
 /**
- * Validates an artifact and copies its public assets to `targetDir` and its
- * build-time SQLite database to the sibling `.data` directory.
+ * Validates an artifact and stages it into the slot its kind owns.
+ *
+ * A slot holds the build database, the static root and, after a build, the pages. Keeping fixture
+ * and live data in separate slots is what stops a fixture gate from destroying a live build and a
+ * preview from serving one kind's pages against the other kind's rows.
  *
  * Throws when the manifest is missing or invalid, the artifact kind does not
  * match `mode`, a recorded file hash or byte size disagrees with the file on
@@ -126,9 +132,13 @@ export interface StageArtifactResult {
  */
 export async function stageArtifact({
   artifactDir,
-  targetDir,
   mode,
+  siteDir = resolve(import.meta.dirname, ".."),
+  trackedStaticDir,
 }: StageArtifactOptions): Promise<StageArtifactResult> {
+  const stage = stagePaths(mode, siteDir);
+  const targetDir = stage.staticDir;
+  const tracked = trackedStaticDir ?? join(siteDir, "static");
   const manifestPath = join(artifactDir, "artifact-manifest.json");
   if (!existsSync(manifestPath)) throw new Error(`missing artifact manifest: ${manifestPath}`);
   const manifest: unknown = JSON.parse(readFileSync(manifestPath, "utf8"));
@@ -166,21 +176,16 @@ export async function stageArtifact({
   assertSqliteCounts(sqlitePath, manifest.counts);
   assertArtifactMetadata(sqlitePath, manifest);
 
-  const projectRoot = dirname(targetDir);
-  const dataDir = join(projectRoot, ".data");
+  // The slot is rebuilt from scratch, so nothing from an earlier artifact of the same kind
+  // survives into this one.
+  rmSync(targetDir, { recursive: true, force: true });
+  rmSync(stage.database, { force: true });
+  rmSync(`${stage.database}-wal`, { force: true });
+  rmSync(`${stage.database}-shm`, { force: true });
+  mkdirSync(dirname(stage.database), { recursive: true });
+  copyTree(tracked, targetDir);
 
-  mkdirSync(targetDir, { recursive: true });
-  mkdirSync(dataDir, { recursive: true });
-  rmSync(join(targetDir, "data.sqlite"), { force: true });
-  rmSync(join(targetDir, "data.sqlite-wal"), { force: true });
-  rmSync(join(targetDir, "data.sqlite-shm"), { force: true });
-  rmSync(join(dataDir, "data.sqlite"), { force: true });
-  rmSync(join(dataDir, "data.sqlite-wal"), { force: true });
-  rmSync(join(dataDir, "data.sqlite-shm"), { force: true });
-  rmSync(join(targetDir, "_release.json"), { force: true });
-  rmSync(join(targetDir, "assets"), { recursive: true, force: true });
-
-  copyFileSync(sqlitePath, join(dataDir, "data.sqlite"));
+  copyFileSync(sqlitePath, stage.database);
   copyTree(assetsDir, join(targetDir, "assets"));
   writeFileSync(
     join(targetDir, "_release.json"),
@@ -346,12 +351,8 @@ if (import.meta.main) {
   if (!artifactDir || (modeArg !== "fixture" && modeArg !== "release")) {
     throw new Error("usage: stage-artifact <artifactDir> --mode <fixture|release>");
   }
-  const result = await stageArtifact({
-    artifactDir,
-    targetDir: resolve(import.meta.dirname, "../static"),
-    mode: modeArg,
-  });
+  const result = await stageArtifact({ artifactDir, mode: modeArg });
   process.stdout.write(
-    `staged ${result.manifest.artifactKind} artifact ${result.manifest.artifactId}\n`,
+    `staged ${result.manifest.artifactKind} artifact ${result.manifest.artifactId} into ${result.targetDir}\n`,
   );
 }

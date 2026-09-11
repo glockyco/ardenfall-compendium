@@ -2,6 +2,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { currentStagePaths } from "../stage-paths.mjs";
 
 type PagefindModule = {
   options(options: { baseUrl: string }): void;
@@ -10,7 +11,7 @@ type PagefindModule = {
   }>;
 };
 
-const outputDir = resolve(import.meta.dirname, "..", ".svelte-kit", "cloudflare");
+const outputDir = currentStagePaths(resolve(import.meta.dirname, "..")).outputDir;
 const pagefindDir = join(outputDir, "pagefind");
 const entryPath = join(pagefindDir, "pagefind-entry.json");
 const pagefindPath = join(pagefindDir, "pagefind.js");

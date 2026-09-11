@@ -1,10 +1,12 @@
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
-import { join } from "node:path";
+
+import { currentStagePaths } from "../../../stage-paths.mjs";
 
 import { isColorObject, parseGeneratedJson } from "./json";
 
-const dbPath = () => join(process.cwd(), ".data", "data.sqlite");
+// The build database of the slot this build works in: a fixture build never reads live rows.
+const dbPath = () => currentStagePaths(process.cwd()).database;
 // `createRequire` runs only when a query needs a driver. At module scope it throws inside a
 // Cloudflare Worker, and this module reaches the Worker bundle because it is a server module, so
 // every request failed to boot and answered 500 instead of 404.

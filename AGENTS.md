@@ -43,8 +43,8 @@ Git hooks run their tools through `nix develop`, so a commit works from a GUI cl
   - Run `bun run --cwd site smoke:prerender`.
   - Run `bun run check:entity-fields`.
   - Run `bun run check:fixtures`. A shell that exports `CI=true` makes this check reject a local
-    checkout that holds live outputs, such as `snapshots`, `site/.data/data.sqlite`, and
-    `site/static/assets`. Run it with `CI=false` in that shell; never delete live outputs to pass it.
+    checkout that holds live outputs, such as `snapshots` and `site/.stage`. Run it with
+    `CI=false` in that shell; never delete live outputs to pass it.
   - Run `bun run check:validators`.
   - Run `bun run lint` and `bun run format:check`.
   - Run `git diff --check`.
@@ -59,7 +59,7 @@ Git hooks run their tools through `nix develop`, so a commit works from a GUI cl
 The gate above proves the fixture path. It does not prove the compendium, because the fixture is a set of shapes we chose and the game is not. Every defect listed in the roadmap's Slice 8.5 evidence was found by one of the three steps below and by none of the tests.
 
 - **Export from the running game.** Two whole families were missing from every live snapshot while every test passed, and a family that reaches no map layer was silent. `bun run hotrepl:export` costs about two minutes; `--no-quit` exports twice in one session, which is how reproducibility is checked.
-- **Build the site from a release artifact.** Staging refuses a dirty tree, so this also proves the artifact's provenance. Live data carries shapes no fixture had: two items under one name, 95 races with no name, a variant referencing one name set twice.
+- **Build the site from a release artifact.** Live and fixture builds occupy separate staging slots (one directory per kind under `site/.stage`, selected by `SITE_STAGE`), so a gate run never destroys the live build you are verifying. Staging refuses a dirty tree, so this also proves the artifact's provenance. Live data carries shapes no fixture had: two items under one name, 95 races with no name, a variant referencing one name set twice.
 - **Open the result in a browser.** Prerendered HTML hides hydration errors. A keyed `{#each}` with duplicate keys crashed a published race page while its HTML looked correct and every smoke passed.
 
 When live data exposes a shape the fixture lacks, add it to `fixtures/synthetic/snapshot` in the same change, so the next regression is caught by CI rather than by a browser.

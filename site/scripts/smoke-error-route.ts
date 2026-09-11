@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { currentStagePaths } from "../stage-paths.mjs";
 
 const sourcePath = join(import.meta.dirname, "..", "src", "routes", "+error.svelte");
 const source = readFileSync(sourcePath, "utf8");
@@ -27,11 +28,9 @@ for (const snippet of requiredSnippets) {
 // reaches it, so Cloudflare must serve a 404 asset instead. Check that the asset exists, that it
 // carries the compendium's own page rather than the adapter's plaintext placeholder, and that the
 // setting which makes Cloudflare serve it is still present.
-const fallbackPath = join(import.meta.dirname, "..", ".svelte-kit", "cloudflare", "404.html");
+const fallbackPath = join(currentStagePaths(join(import.meta.dirname, "..")).outputDir, "404.html");
 if (!existsSync(fallbackPath)) {
-  throw new Error(
-    "missing .svelte-kit/cloudflare/404.html, so an unmatched address reaches the Worker",
-  );
+  throw new Error(`missing ${fallbackPath}, so an unmatched address reaches the Worker`);
 }
 const fallback = readFileSync(fallbackPath, "utf8");
 if (!fallback.includes("Page not found")) {

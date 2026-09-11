@@ -2,9 +2,10 @@ import { describe, expect, it } from "bun:test";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { listingRoutePaths, sitemapRoutePaths } from "../src/lib/server/sitemap-routes";
+import { currentStagePaths } from "../stage-paths.mjs";
 
 const routesRoot = join(import.meta.dir, "../src/routes");
-const builtOutputRoot = join(import.meta.dir, "../.svelte-kit/cloudflare");
+const builtOutputRoot = currentStagePaths(join(import.meta.dir, "..")).outputDir;
 
 const builtPageRoutes = (): string[] => {
   const routes = new Set<string>();
