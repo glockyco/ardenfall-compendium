@@ -285,6 +285,7 @@ describe("snapshot provenance", () => {
       "git",
       "diagnostics",
       "counts",
+      "basemaps",
       "outputs",
       "probes",
     ]);
@@ -363,6 +364,7 @@ describe("site deployment tooling", () => {
             dirty: false,
           },
           diagnostics: { fatal: 0, diagnostic: 0 },
+          basemaps: [],
           counts: {},
           outputs: {
             sqlite: { path: "data.sqlite", bytes: 48, sha256: "c".repeat(64) },
@@ -443,6 +445,7 @@ describe("site deployment tooling", () => {
           source,
           git,
           diagnostics: { fatal: 0, diagnostic: 0 },
+          basemaps: [],
           counts: {
             itemOverviewRows: 0,
             itemPresentationRows: 0,
@@ -542,6 +545,7 @@ describe("site deployment tooling", () => {
           source,
           git,
           diagnostics: { fatal: 0, diagnostic: 0 },
+          basemaps: [],
           counts: {
             itemOverviewRows: 0,
             itemPresentationRows: 0,
@@ -640,6 +644,7 @@ describe("site deployment tooling", () => {
           source,
           git,
           diagnostics: { fatal: 0, diagnostic: 0 },
+          basemaps: [],
           counts: {
             itemOverviewRows: 0,
             itemPresentationRows: 0,
@@ -722,6 +727,7 @@ describe("site deployment tooling", () => {
           source,
           git,
           diagnostics: { fatal: 0, diagnostic: 0 },
+          basemaps: [],
           counts: {
             itemOverviewRows: 0,
             itemPresentationRows: 0,
@@ -817,6 +823,7 @@ describe("site deployment tooling", () => {
           source,
           git,
           diagnostics: { fatal: 0, diagnostic: 0 },
+          basemaps: [],
           counts: {
             itemOverviewRows: 0,
             itemPresentationRows: 0,

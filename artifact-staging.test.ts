@@ -125,6 +125,7 @@ async function createValidArtifact(root: string) {
         },
       ],
       itemIconMetadata: [],
+      basemaps: [],
     },
   });
 
