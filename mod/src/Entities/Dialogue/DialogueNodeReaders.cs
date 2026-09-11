@@ -543,6 +543,13 @@ public static class DialogueNodeReaders
                 AddSubject(condition, GraphFields.Read<UnityObject>(source, "singleItem"), $"{authoredType}.singleItem");
                 condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(source, "character"), $"{authoredType}.character"));
                 break;
+            case "CheckBoolean":
+                // A blackboard check names the flag it reads; the flag's name is the only thing a
+                // reader can hold onto, because its value lives in a running conversation.
+                condition.Value ??= GraphFields.Read<object>(source, "valueA") is { } flag
+                    ? GraphFields.Read<string>(flag, "_name")
+                    : null;
+                break;
             case "WeatherCheck":
                 AddSubjects(condition, GraphFields.Read<List<Ardenfall.Sky.Weather>>(source, "weathers"), $"{authoredType}.weathers");
                 break;

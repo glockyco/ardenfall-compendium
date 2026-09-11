@@ -75,7 +75,7 @@
           <GateNote gate={alternative.gate} />
         {:else}
           <p class="text-muted-foreground text-xs uppercase">
-            {alternative.label && alternative.label !== "ELSE"
+            {alternative.label && alternative.label.toUpperCase() !== "ELSE"
               ? `If ${alternative.label}`
               : "Otherwise"}
           </p>

@@ -121,6 +121,12 @@
         return "Only the first time";
       case "detection":
         return `Only when the player is ${negated ? "unseen" : "seen"}`;
+      case "graph-variable":
+        return gate.value
+          ? `Only when the conversation's own flag ${gate.value} is set`
+          : "Only when the conversation's own flag is set";
+      case "chance":
+        return "Sometimes, by chance";
       case "package-flag":
         return "Only when the speaker's routine sets the authored flag";
       default:
