@@ -282,8 +282,6 @@
         "unityType": { "type": ["string", "null"] },
         "entity": { "type": ["string", "null"] },
         "name": { "type": ["string", "null"] },
-        "table": { "type": ["string", "null"] },
-        "subtable": { "type": ["string", "null"] },
         "id": { "type": ["string", "null"] },
         "recordType": { "type": ["string", "null"] },
         "extractionId": { "type": ["string", "null"] },

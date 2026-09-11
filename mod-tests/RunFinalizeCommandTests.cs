@@ -648,14 +648,14 @@ public sealed class RunFinalizeCommandTests
         {
             new PortalSnapshotRow
             {
-                Id = "world;portals;portal-a",
+                Id = "portal-a",
                 Fields = new PortalSnapshot(
-                    Id: "world;portals;portal-a",
-                    RecordRef: SnapshotRef.Record("world", "portals", "portal-a", "PortalRecord"),
+                    Id: "portal-a",
+                    RecordRef: SnapshotRef.Record("portal-a", "PortalRecord"),
                     FriendlyName: "Harbor Gate",
                     MapId: "ardenfall",
                     Position: new PortalVector3Snapshot(12f, 3f, -8f),
-                    ConnectedPortalRef: SnapshotRef.Record("world", "portals", "portal-b", "PortalRecord"))
+                    ConnectedPortalRef: SnapshotRef.Record("portal-b", "PortalRecord"))
             }
         });
         var command = new RunFinalizeCommand(

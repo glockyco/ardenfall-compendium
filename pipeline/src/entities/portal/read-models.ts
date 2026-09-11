@@ -110,7 +110,7 @@ export function emitPortalReadModels(db: Database, routeBase = "/portals"): Pipe
         });
         continue;
       }
-      const targetId = `${ref.table};${ref.subtable};${ref.id}`;
+      const targetId = ref.id;
       if (!portalIds.has(targetId)) {
         // Skipping keeps one unresolvable reference from failing the whole
         // artifact through the graph audit, but the gap stays counted and named.

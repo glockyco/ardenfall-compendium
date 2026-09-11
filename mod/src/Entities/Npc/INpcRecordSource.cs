@@ -4,8 +4,6 @@ using ArdenfallCompendium.Dtos;
 namespace ArdenfallCompendium.Entities.Npc;
 
 public sealed record NpcRecordSourceRow(
-    string? Table,
-    string? Subtable,
     string? Id,
     string? DisplayName,
     string DisplayNameProvenance,
@@ -35,8 +33,6 @@ public sealed record NpcRecordSourceRow(
     string? MerchantCategoriesOwner)
 {
     public static NpcRecordSourceRow Build(
-        string? table,
-        string? subtable,
         string? id,
         string? displayName,
         string displayNameProvenance,
@@ -64,7 +60,7 @@ public sealed record NpcRecordSourceRow(
         IReadOnlyList<SnapshotRef>? merchantCategories = null,
         string merchantCategoriesProvenance = "absent",
         string? merchantCategoriesOwner = null) =>
-        new(table, subtable, id, displayName, displayNameProvenance, displayNameOwner,
+        new(id, displayName, displayNameProvenance, displayNameOwner,
             authoringLabel, characterRef, mapId, position,
             containingLocationRefs ?? new List<SnapshotRef>(),
             dropRefs ?? new List<SnapshotRef>(), dropRefsProvenance, dropRefsOwner,

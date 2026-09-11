@@ -6,8 +6,6 @@ import type { QuestSnapshotFields, SnapshotEnvelope } from "../src/types.ts";
 
 const characterRef = {
   kind: "record",
-  table: "instances",
-  subtable: "characters",
   id: "11111111111111111111111111111111",
   recordType: "CharacterRecord",
 } as const;

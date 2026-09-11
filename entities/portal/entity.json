@@ -9,11 +9,7 @@
   "extraction": {
     "source": "record",
     "file": "portals.json",
-    "root": "Ardenfall.RecordSystem.PortalRecord",
-    "options": {
-      "table": "world",
-      "subtable": "portals"
-    }
+    "root": "Ardenfall.RecordSystem.PortalRecord"
   },
   "canonicalTable": "portals",
   "presentationContext": {

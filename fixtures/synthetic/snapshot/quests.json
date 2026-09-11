@@ -17,8 +17,6 @@
         "requiredCharacterRefs": [
           {
             "kind": "record",
-            "table": "instances",
-            "subtable": "characters",
             "id": "11111111111111111111111111111111",
             "recordType": "CharacterRecord"
           }
@@ -72,8 +70,6 @@
             "category": "Giver",
             "characterRef": {
               "kind": "record",
-              "table": "instances",
-              "subtable": "characters",
               "id": "4b1c9e07a2d3418fb6ce5710dd93a284",
               "recordType": "CharacterRecord"
             },
@@ -104,8 +100,6 @@
             "category": null,
             "characterRef": {
               "kind": "record",
-              "table": "instances",
-              "subtable": "characters",
               "id": "4b1c9e07a2d3418fb6ce5710dd93a284",
               "recordType": "CharacterRecord"
             },
@@ -124,8 +118,6 @@
             "category": "Character",
             "characterRef": {
               "kind": "record",
-              "table": "instances",
-              "subtable": "characters",
               "id": "9f3a2c58e71d4b6a83cf10924eab7d55",
               "recordType": "CharacterRecord"
             },

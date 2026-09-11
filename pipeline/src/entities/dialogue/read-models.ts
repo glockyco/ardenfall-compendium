@@ -644,9 +644,7 @@ export function prepareEntityResolver(db: Database): EntityResolver {
       candidates.push(`named;${ref.entity};${ref.name}`);
     }
 
-    if (ref.kind === "record" && typeof ref.table === "string") {
-      candidates.push(`${ref.table};${ref.subtable};${ref.id}`);
-    }
+    if (ref.kind === "record" && typeof ref.id === "string") candidates.push(ref.id);
 
     for (const candidate of candidates) {
       const node = byGuid.get(candidate) ?? byId.get(candidate);

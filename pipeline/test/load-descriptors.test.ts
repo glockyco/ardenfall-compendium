@@ -219,7 +219,6 @@ describe("loadDescriptors", () => {
       source: "record",
       root: "Ardenfall.RecordSystem.PortalRecord",
       file: "portals.json",
-      options: { table: "world", subtable: "portals" },
     });
     expect(portal.definition).toBeUndefined();
     expect(portal.placement).toEqual({ kind: "point", from: "transform" });

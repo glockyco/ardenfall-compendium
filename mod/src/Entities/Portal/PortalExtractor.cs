@@ -34,9 +34,7 @@ public sealed class PortalExtractor : WalkerBase<PortalSnapshotRow>
             },
             record =>
             {
-                if (string.IsNullOrWhiteSpace(record.Table) ||
-                    string.IsNullOrWhiteSpace(record.Subtable) ||
-                    string.IsNullOrWhiteSpace(record.Id))
+                if (string.IsNullOrWhiteSpace(record.Id))
                 {
                     return ExtractorIdentity.Invalid(new Diagnostic
                     {
@@ -46,7 +44,7 @@ public sealed class PortalExtractor : WalkerBase<PortalSnapshotRow>
                         Message = "PortalRecord has no complete RecordID",
                     });
                 }
-                var rowId = $"{record.Table};{record.Subtable};{record.Id}";
+                var rowId = record.Id;
                 if (record.Position == null)
                 {
                     return ExtractorIdentity.Invalid(new Diagnostic
@@ -99,7 +97,7 @@ public sealed class PortalExtractor : WalkerBase<PortalSnapshotRow>
                     Id = rowId,
                     Fields = new PortalSnapshot(
                         Id: rowId,
-                        RecordRef: SnapshotRef.Record(record.Table!, record.Subtable!, record.Id!, "PortalRecord"),
+                        RecordRef: SnapshotRef.Record(rowId, "PortalRecord"),
                         FriendlyName: friendlyName,
                         MapId: NullIfEmpty(record.MapId),
                         Position: record.Position!,

@@ -14,29 +14,25 @@ public sealed class PortalExtractorTests
         var source = new FakePortalRecordSource(new[]
         {
             PortalRecordSourceRow.Build(
-                table: "world",
-                subtable: "portals",
                 id: "portal-a",
                 friendlyName: "Harbor Gate",
                 mapId: "ardenfall",
                 position: new PortalVector3Snapshot(12f, 3f, -8f),
-                connectedPortalRef: SnapshotRef.Record("world", "portals", "portal-b", "PortalRecord"),
+                connectedPortalRef: SnapshotRef.Record("portal-b", "PortalRecord"),
                 connectedPortalResolved: true),
         });
         var extractor = new PortalExtractor(source);
 
         var row = Assert.Single(extractor.Walk());
 
-        Assert.Equal("world;portals;portal-a", row.Id);
-        Assert.Equal("world;portals;portal-a", row.Fields.Id);
+        Assert.Equal("portal-a", row.Id);
+        Assert.Equal("portal-a", row.Fields.Id);
         Assert.Equal("Harbor Gate", row.Fields.FriendlyName);
         Assert.Equal("ardenfall", row.Fields.MapId);
         Assert.Equal(12f, row.Fields.Position.X);
         Assert.Equal(3f, row.Fields.Position.Y);
         Assert.Equal(-8f, row.Fields.Position.Z);
         Assert.Equal("record", row.Fields.RecordRef.Kind);
-        Assert.Equal("world", row.Fields.RecordRef.Table);
-        Assert.Equal("portals", row.Fields.RecordRef.Subtable);
         Assert.Equal("portal-a", row.Fields.RecordRef.Id);
         Assert.Equal("portal-b", row.Fields.ConnectedPortalRef!.Id);
         Assert.Empty(row.Diagnostics);
@@ -48,8 +44,6 @@ public sealed class PortalExtractorTests
         var source = new FakePortalRecordSource(new[]
         {
             PortalRecordSourceRow.Build(
-                table: "world",
-                subtable: "portals",
                 id: "",
                 friendlyName: "Broken Portal",
                 mapId: "ardenfall",
@@ -69,13 +63,11 @@ public sealed class PortalExtractorTests
         var source = new FakePortalRecordSource(new[]
         {
             PortalRecordSourceRow.Build(
-                table: "world",
-                subtable: "portals",
                 id: "portal-a",
                 friendlyName: "Broken Portal",
                 mapId: null,
                 position: new PortalVector3Snapshot(0f, 0f, 0f),
-                connectedPortalRef: SnapshotRef.Record("world", "portals", "missing", "PortalRecord"),
+                connectedPortalRef: SnapshotRef.Record("missing", "PortalRecord"),
                 connectedPortalResolved: false),
         });
         var extractor = new PortalExtractor(source);
@@ -95,8 +87,6 @@ public sealed class PortalExtractorTests
         var source = new FakePortalRecordSource(new[]
         {
             PortalRecordSourceRow.Build(
-                table: "world",
-                subtable: "portals",
                 id: "portal-a",
                 friendlyName: friendlyName,
                 mapId: "overworld",
@@ -122,8 +112,6 @@ public sealed class PortalExtractorTests
         var source = new FakePortalRecordSource(new[]
         {
             PortalRecordSourceRow.Build(
-                table: "world",
-                subtable: "portals",
                 id: "portal-a",
                 friendlyName: "Harbor Gate",
                 mapId: "overworld",

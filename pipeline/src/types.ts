@@ -931,7 +931,7 @@ export interface ArtifactManifest {
 export type SnapshotRef =
   | { kind: "lookupAsset"; guid: string; unityType?: string; name?: string }
   | { kind: "namedAsset"; entity: string; name: string }
-  | { kind: "record"; table: string; subtable: string; id: string; recordType?: string | null }
+  | { kind: "record"; id: string; recordType?: string | null }
   | { kind: "runtimeObject"; extractionId: string; unityType?: string; stable: false }
   | { kind: "missing"; reason: string; source: string };
 
@@ -950,7 +950,7 @@ export function snapshotRefKey(ref: SnapshotRef): string {
     case "namedAsset":
       return `namedAsset:${ref.entity}:${ref.name}`;
     case "record":
-      return `record:${ref.table}:${ref.subtable}:${ref.id}`;
+      return `record:${ref.id}`;
     case "runtimeObject":
       return `runtimeObject:${ref.extractionId}`;
     case "missing":

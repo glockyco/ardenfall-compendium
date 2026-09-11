@@ -74,13 +74,11 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
     schemaVersion: 1,
     rows: [
       {
-        id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+        id: "4b1c9e07a2d3418fb6ce5710dd93a284",
         fields: {
-          id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+          id: "4b1c9e07a2d3418fb6ce5710dd93a284",
           recordRef: {
             kind: "record",
-            table: "world",
-            subtable: "characters",
             id: "00000000000000000000000000000001",
           },
           displayName: "Saya Sako",
@@ -112,13 +110,11 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
         },
       },
       {
-        id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
+        id: "9f3a2c58e71d4b6a83cf10924eab7d55",
         fields: {
-          id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
+          id: "9f3a2c58e71d4b6a83cf10924eab7d55",
           recordRef: {
             kind: "record",
-            table: "world",
-            subtable: "characters",
             id: "00000000000000000000000000000002",
           },
           displayName: "Fishermen",
@@ -150,13 +146,11 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
         },
       },
       {
-        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        id: "c7e08b41d9a24f37b15ce6208af391dc",
         fields: {
-          id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+          id: "c7e08b41d9a24f37b15ce6208af391dc",
           recordRef: {
             kind: "record",
-            table: "world",
-            subtable: "characters",
             id: "00000000000000000000000000000003",
           },
           displayName: "Grain Thief",
@@ -191,13 +185,11 @@ function envelope(): SnapshotEnvelope<NPCSnapshotFields> {
         },
       },
       {
-        id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
+        id: "2d6f47b30c8e41a59fbd73e15c0a869b",
         fields: {
-          id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
+          id: "2d6f47b30c8e41a59fbd73e15c0a869b",
           recordRef: {
             kind: "record",
-            table: "world",
-            subtable: "characters",
             id: "00000000000000000000000000000004",
           },
           displayName: null,
@@ -301,7 +293,7 @@ describe("NPC pipeline", () => {
         .all(),
     ).toEqual([
       {
-        id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
+        id: "2d6f47b30c8e41a59fbd73e15c0a869b",
         display_name: null,
         authoring_label: "unnamed-character-label",
         character_ref_json: '{"kind":"namedAsset","entity":"character","name":"UnnamedCharacter"}',
@@ -312,7 +304,7 @@ describe("NPC pipeline", () => {
         merchant_categories_json: "[]",
       },
       {
-        id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+        id: "4b1c9e07a2d3418fb6ce5710dd93a284",
         display_name: "Saya Sako",
         authoring_label: "Grainery Owner",
         character_ref_json: '{"kind":"namedAsset","entity":"character","name":"GraineryOwner"}',
@@ -323,7 +315,7 @@ describe("NPC pipeline", () => {
         merchant_categories_json: "[]",
       },
       {
-        id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
+        id: "9f3a2c58e71d4b6a83cf10924eab7d55",
         display_name: "Fishermen",
         authoring_label: "fishermen-label",
         character_ref_json: '{"kind":"namedAsset","entity":"character","name":"Fisherman"}',
@@ -334,7 +326,7 @@ describe("NPC pipeline", () => {
         merchant_categories_json: "[]",
       },
       {
-        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        id: "c7e08b41d9a24f37b15ce6208af391dc",
         display_name: "Grain Thief",
         authoring_label: "grain-thief-label",
         character_ref_json: '{"kind":"namedAsset","entity":"character","name":"GrainThief"}',
@@ -365,53 +357,53 @@ describe("NPC pipeline", () => {
         .query(
           "SELECT id, npc_id, field_name, provenance, owner FROM npc_value_provenance WHERE npc_id = ? ORDER BY field_name",
         )
-        .all("instances;characters;c7e08b41d9a24f37b15ce6208af391dc"),
+        .all("c7e08b41d9a24f37b15ce6208af391dc"),
     ).toEqual([
       {
-        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:displayName",
-        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        id: "c7e08b41d9a24f37b15ce6208af391dc:provenance:displayName",
+        npc_id: "c7e08b41d9a24f37b15ce6208af391dc",
         field_name: "displayName",
         provenance: "own",
         owner: null,
       },
       {
-        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:dropRefs",
-        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        id: "c7e08b41d9a24f37b15ce6208af391dc:provenance:dropRefs",
+        npc_id: "c7e08b41d9a24f37b15ce6208af391dc",
         field_name: "dropRefs",
         provenance: "own",
         owner: null,
       },
       {
-        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:merchantCategories",
-        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        id: "c7e08b41d9a24f37b15ce6208af391dc:provenance:merchantCategories",
+        npc_id: "c7e08b41d9a24f37b15ce6208af391dc",
         field_name: "merchantCategories",
         provenance: "own",
         owner: null,
       },
       {
-        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:merchantGold",
-        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        id: "c7e08b41d9a24f37b15ce6208af391dc:provenance:merchantGold",
+        npc_id: "c7e08b41d9a24f37b15ce6208af391dc",
         field_name: "merchantGold",
         provenance: "own",
         owner: null,
       },
       {
-        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:merchantRefs",
-        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        id: "c7e08b41d9a24f37b15ce6208af391dc:provenance:merchantRefs",
+        npc_id: "c7e08b41d9a24f37b15ce6208af391dc",
         field_name: "merchantRefs",
         provenance: "own",
         owner: null,
       },
       {
-        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:startingFactions",
-        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        id: "c7e08b41d9a24f37b15ce6208af391dc:provenance:startingFactions",
+        npc_id: "c7e08b41d9a24f37b15ce6208af391dc",
         field_name: "startingFactions",
         provenance: "own",
         owner: null,
       },
       {
-        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:provenance:startingLevel",
-        npc_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        id: "c7e08b41d9a24f37b15ce6208af391dc:provenance:startingLevel",
+        npc_id: "c7e08b41d9a24f37b15ce6208af391dc",
         field_name: "startingLevel",
         provenance: "own",
         owner: null,
@@ -421,14 +413,14 @@ describe("NPC pipeline", () => {
       db.query("SELECT id, target_faction_id FROM npc_faction_refs ORDER BY id").all(),
     ).toEqual([
       {
-        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:starting-faction:0",
+        id: "c7e08b41d9a24f37b15ce6208af391dc:starting-faction:0",
         target_faction_id: "thief-faction",
       },
     ]);
     expect(db.query("SELECT id FROM npc_location_refs ORDER BY id").all()).toEqual([
-      { id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284:location:0" },
-      { id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55:location:0" },
-      { id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55:location:1" },
+      { id: "4b1c9e07a2d3418fb6ce5710dd93a284:location:0" },
+      { id: "9f3a2c58e71d4b6a83cf10924eab7d55:location:0" },
+      { id: "9f3a2c58e71d4b6a83cf10924eab7d55:location:1" },
     ]);
     db.close();
   });
@@ -446,7 +438,7 @@ describe("NPC pipeline", () => {
       >(
         "SELECT has_page, label, route_path, short_id FROM entity_nodes WHERE entity_type = ? AND entity_id = ?",
       )
-      .get("npc", "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284");
+      .get("npc", "4b1c9e07a2d3418fb6ce5710dd93a284");
     expect(node).toEqual({
       has_page: 1,
       label: "Saya Sako",
@@ -458,7 +450,7 @@ describe("NPC pipeline", () => {
       .query<{ has_page: number; label: string | null; route_path: string }, [string, string]>(
         "SELECT has_page, label, route_path FROM entity_nodes WHERE entity_type = ? AND entity_id = ?",
       )
-      .get("npc", "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b");
+      .get("npc", "2d6f47b30c8e41a59fbd73e15c0a869b");
     expect(namelessNode).toEqual({
       has_page: 1,
       label: "Character 2d6f47b3",
@@ -501,9 +493,9 @@ describe("NPC pipeline", () => {
                   render_context, map_id, map_x, map_y, elevation, location_ids_json
            FROM npc_presentation_rows WHERE id = ?`,
         )
-        .get("instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284"),
+        .get("4b1c9e07a2d3418fb6ce5710dd93a284"),
     ).toEqual({
-      id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+      id: "4b1c9e07a2d3418fb6ce5710dd93a284",
       name: "Saya Sako",
       display_name_provenance: "own",
       display_name_owner: null,
@@ -534,7 +526,7 @@ describe("NPC pipeline", () => {
         .all(),
     ).toEqual([
       {
-        id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
+        id: "2d6f47b30c8e41a59fbd73e15c0a869b",
         name: "Character 2d6f47b3",
         display_name_provenance: "absent",
         display_name_owner: null,
@@ -542,7 +534,7 @@ describe("NPC pipeline", () => {
           '[{"name":"stock","provenance":"absent","owner":null},{"name":"drops","provenance":"absent","owner":null},{"name":"factions","provenance":"absent","owner":null},{"name":"level","provenance":"absent","owner":null}]',
       },
       {
-        id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+        id: "4b1c9e07a2d3418fb6ce5710dd93a284",
         name: "Saya Sako",
         display_name_provenance: "own",
         display_name_owner: null,
@@ -550,7 +542,7 @@ describe("NPC pipeline", () => {
           '[{"name":"stock","provenance":"absent","owner":null},{"name":"drops","provenance":"absent","owner":null},{"name":"factions","provenance":"absent","owner":null},{"name":"level","provenance":"absent","owner":null}]',
       },
       {
-        id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
+        id: "9f3a2c58e71d4b6a83cf10924eab7d55",
         name: "Fishermen",
         display_name_provenance: "inherited",
         display_name_owner: "Fisherman",
@@ -558,7 +550,7 @@ describe("NPC pipeline", () => {
           '[{"name":"stock","provenance":"absent","owner":null},{"name":"drops","provenance":"inherited","owner":"Fisherman"},{"name":"factions","provenance":"inherited","owner":"Fisherman"},{"name":"level","provenance":"inherited","owner":"Fisherman"}]',
       },
       {
-        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        id: "c7e08b41d9a24f37b15ce6208af391dc",
         name: "Grain Thief",
         display_name_provenance: "own",
         display_name_owner: null,
@@ -588,24 +580,24 @@ describe("NPC pipeline", () => {
     ).toEqual([
       {
         source_type: "npc",
-        source_id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+        source_id: "4b1c9e07a2d3418fb6ce5710dd93a284",
         target_type: "location",
         target_id: "town",
-        edge_id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284:found_at:location:town",
+        edge_id: "4b1c9e07a2d3418fb6ce5710dd93a284:found_at:location:town",
       },
       {
         source_type: "npc",
-        source_id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
+        source_id: "9f3a2c58e71d4b6a83cf10924eab7d55",
         target_type: "location",
         target_id: "cave",
-        edge_id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55:found_at:location:cave",
+        edge_id: "9f3a2c58e71d4b6a83cf10924eab7d55:found_at:location:cave",
       },
       {
         source_type: "npc",
-        source_id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
+        source_id: "9f3a2c58e71d4b6a83cf10924eab7d55",
         target_type: "location",
         target_id: "town",
-        edge_id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55:found_at:location:town",
+        edge_id: "9f3a2c58e71d4b6a83cf10924eab7d55:found_at:location:town",
       },
     ]);
     expect(
@@ -619,32 +611,31 @@ describe("NPC pipeline", () => {
         .all(),
     ).toEqual([
       {
-        source_id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
+        source_id: "2d6f47b30c8e41a59fbd73e15c0a869b",
         target_id: "named;character;UnnamedCharacter",
         predicate: "instance_of",
         edge_id:
-          "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b:instance_of:character:named;character;UnnamedCharacter",
+          "2d6f47b30c8e41a59fbd73e15c0a869b:instance_of:character:named;character;UnnamedCharacter",
       },
       {
-        source_id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+        source_id: "4b1c9e07a2d3418fb6ce5710dd93a284",
         target_id: "named;character;GraineryOwner",
         predicate: "instance_of",
         edge_id:
-          "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284:instance_of:character:named;character;GraineryOwner",
+          "4b1c9e07a2d3418fb6ce5710dd93a284:instance_of:character:named;character;GraineryOwner",
       },
       {
-        source_id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
+        source_id: "9f3a2c58e71d4b6a83cf10924eab7d55",
         target_id: "named;character;Fisherman",
         predicate: "instance_of",
-        edge_id:
-          "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55:instance_of:character:named;character;Fisherman",
+        edge_id: "9f3a2c58e71d4b6a83cf10924eab7d55:instance_of:character:named;character;Fisherman",
       },
       {
-        source_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        source_id: "c7e08b41d9a24f37b15ce6208af391dc",
         target_id: "named;character;GrainThief",
         predicate: "instance_of",
         edge_id:
-          "instances;characters;c7e08b41d9a24f37b15ce6208af391dc:instance_of:character:named;character;GrainThief",
+          "c7e08b41d9a24f37b15ce6208af391dc:instance_of:character:named;character;GrainThief",
       },
     ]);
     const evidence = db
@@ -660,7 +651,7 @@ describe("NPC pipeline", () => {
         containmentTest: "LocationAsset.IsInside",
         containmentSource: "game's own test",
       });
-      expect(entry.npcRecordId).toMatch(/^instances;characters;[0-9a-f]{32}$/);
+      expect(entry.npcRecordId).toMatch(/^[0-9a-f]{32}$/);
     }
     db.close();
   });
@@ -683,7 +674,7 @@ describe("NPC pipeline", () => {
     ).toEqual([
       {
         source_type: "npc",
-        source_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        source_id: "c7e08b41d9a24f37b15ce6208af391dc",
         target_type: "item",
         target_id: "named;item;ThiefLoot",
         predicate: "can_drop",
@@ -692,14 +683,14 @@ describe("NPC pipeline", () => {
         source_type: "item",
         source_id: "named;item;ThiefStock",
         target_type: "npc",
-        target_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        target_id: "c7e08b41d9a24f37b15ce6208af391dc",
         predicate: "sold_by",
       },
       {
         source_type: "item",
         source_id: "named;item;ThiefStockTwo",
         target_type: "npc",
-        target_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        target_id: "c7e08b41d9a24f37b15ce6208af391dc",
         predicate: "sold_by",
       },
     ]);
@@ -716,7 +707,7 @@ describe("NPC pipeline", () => {
         evidence: {
           source: "npcs.drop_refs_json",
           provenance: "own",
-          owner: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+          owner: "c7e08b41d9a24f37b15ce6208af391dc",
           ownerType: "placement",
         },
       },
@@ -725,7 +716,7 @@ describe("NPC pipeline", () => {
         evidence: {
           source: "npcs.merchant_refs_json",
           provenance: "own",
-          owner: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+          owner: "c7e08b41d9a24f37b15ce6208af391dc",
           ownerType: "placement",
         },
       },
@@ -734,7 +725,7 @@ describe("NPC pipeline", () => {
         evidence: {
           source: "npcs.merchant_refs_json",
           provenance: "own",
-          owner: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+          owner: "c7e08b41d9a24f37b15ce6208af391dc",
           ownerType: "placement",
         },
       },
@@ -770,9 +761,9 @@ describe("NPC pipeline", () => {
         source: "relationship-graph",
         code: "npcDropUnresolved",
         message:
-          "NPC 'instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b' has an unresolvable drop item reference: reference does not identify a published item.",
+          "NPC '2d6f47b30c8e41a59fbd73e15c0a869b' has an unresolvable drop item reference: reference does not identify a published item.",
         entityType: "npc",
-        entityId: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
+        entityId: "2d6f47b30c8e41a59fbd73e15c0a869b",
         field: "npcs.drop_refs_json",
         evidence: { reason: "reference does not identify a published item" },
       },
@@ -786,7 +777,7 @@ describe("NPC pipeline", () => {
         .all(),
     ).toEqual([
       {
-        source_id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        source_id: "c7e08b41d9a24f37b15ce6208af391dc",
         target_id: "named;item;ThiefLoot",
       },
     ]);
@@ -819,22 +810,22 @@ describe("NPC pipeline", () => {
       db.query(`SELECT id, name, name_is_description FROM npc_presentation_rows ORDER BY id`).all(),
     ).toEqual([
       {
-        id: "instances;characters;2d6f47b30c8e41a59fbd73e15c0a869b",
+        id: "2d6f47b30c8e41a59fbd73e15c0a869b",
         name: "Character 2d6f47b3",
         name_is_description: 1,
       },
       {
-        id: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+        id: "4b1c9e07a2d3418fb6ce5710dd93a284",
         name: "Saya Sako",
         name_is_description: 0,
       },
       {
-        id: "instances;characters;9f3a2c58e71d4b6a83cf10924eab7d55",
+        id: "9f3a2c58e71d4b6a83cf10924eab7d55",
         name: "Fisherman in Cave",
         name_is_description: 1,
       },
       {
-        id: "instances;characters;c7e08b41d9a24f37b15ce6208af391dc",
+        id: "c7e08b41d9a24f37b15ce6208af391dc",
         name: "GrainThief",
         name_is_description: 1,
       },
@@ -871,10 +862,9 @@ describe("NPC pipeline", () => {
         severity: "diagnostic",
         source: "relationship-graph",
         code: "npcCharacterReferenceUnresolved",
-        message:
-          "NPC 'instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284' has an unresolvable character reference.",
+        message: "NPC '4b1c9e07a2d3418fb6ce5710dd93a284' has an unresolvable character reference.",
         entityType: "npc",
-        entityId: "instances;characters;4b1c9e07a2d3418fb6ce5710dd93a284",
+        entityId: "4b1c9e07a2d3418fb6ce5710dd93a284",
         field: "npcs.character_ref_json",
         evidence: {
           characterRefJson: '{"kind":"namedAsset","entity":"character","name":"MissingCharacter"}',

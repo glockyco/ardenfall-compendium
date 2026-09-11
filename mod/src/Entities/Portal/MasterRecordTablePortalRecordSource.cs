@@ -40,8 +40,6 @@ public sealed class MasterRecordTablePortalRecordSource : IPortalRecordSource
         var transform = record.transform;
         var connected = ConnectedPortalRef(record.connectedPortal, out var connectedResolved);
         return new PortalRecordSourceRow(
-            Table: "",
-            Subtable: "",
             Id: id.id,
             FriendlyName: record.friendlyName,
             MapId: transform?.mapID,

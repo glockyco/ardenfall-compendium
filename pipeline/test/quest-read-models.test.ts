@@ -5,13 +5,11 @@ import { ENTITY_GRAPH_DDL } from "../src/relationships/relationship-graph.ts";
 import { QUEST_DDL } from "../src/sql/quest-ddl.ts";
 
 const questId = "named;quest;alpha";
-const npcId = "instances;characters;11111111111111111111111111111111";
+const npcId = "11111111111111111111111111111111";
 const factionId = "named;faction;faction_guard";
 const itemId = "named;item;item_sword";
 const recordRef = {
   kind: "record",
-  table: "instances",
-  subtable: "characters",
   id: "11111111111111111111111111111111",
 };
 
@@ -382,7 +380,7 @@ describe("quest read models", () => {
   it("diagnoses one unresolvable character reference", () => {
     const db = seedDatabase();
     db.run(`UPDATE quest_characters SET character_ref_json = ? WHERE quest_id = ?`, [
-      JSON.stringify({ kind: "record", table: "instances", subtable: "characters", id: "missing" }),
+      JSON.stringify({ kind: "record", id: "missing" }),
       questId,
     ]);
     const diagnostics = emitQuestReadModels(db);

@@ -583,15 +583,8 @@ function normalizeRewardKind(kind: string): RewardPresentation["kind"] {
 
 function resolveCharacterId(value: string): string | null {
   const ref = parseReference(value);
-  if (
-    ref.kind !== "record" ||
-    ref.table !== "instances" ||
-    ref.subtable !== "characters" ||
-    ref.id.trim() === ""
-  ) {
-    return null;
-  }
-  return `instances;characters;${ref.id}`;
+  if (ref.kind !== "record" || ref.id.trim() === "") return null;
+  return ref.id;
 }
 
 function parseReference(value: string): SnapshotRef {

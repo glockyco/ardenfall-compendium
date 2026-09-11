@@ -8,15 +8,15 @@ export function kebab(input: string): string {
 }
 
 /**
- * Derives a short id from a lookup-asset id (`<8hex>[.suffix]`), a record id
- * (`<table>;<subtable>;<recordId>`, where `recordId` is a GUID written as 32 hex
- * characters with or without hyphens), or a named-asset id
- * (`named;<entityId>;<assetName>`), whose full id is hashed. The asset name is
+ * Derives a short id from a lookup-asset id (`<8hex>[.suffix]`), a record id (a
+ * GUID written as 32 hex characters with or without hyphens), a scene id
+ * (`scene;<cell>;<guid>`), or a named-asset id (`named;<entityId>;<assetName>`),
+ * whose full id is hashed. The asset name is
  * validated but never used as a public URL identifier.
  *
- * The game authors both hyphenated and bare record GUIDs. Portal records use the
- * bare form and NPC records use the hyphenated form. Hyphens are removed before
- * the short id is taken, so one GUID gives one short id in either form.
+ * The game authors both hyphenated and bare record GUIDs. The first eight
+ * characters precede the first hyphen, so one GUID gives one short id in either
+ * form.
  */
 export function deriveShortId(id: string): string {
   if (id.startsWith("named;")) {
@@ -37,15 +37,15 @@ export function deriveShortId(id: string): string {
     }
   } else if (id.includes(";")) {
     const parts = id.split(";");
-    const recordId = parts.length === 3 ? parts[2]?.replaceAll("-", "") : undefined;
+    const guid = parts.length === 3 ? parts[2]?.replaceAll("-", "") : undefined;
     if (
       parts.length === 3 &&
       parts[0] !== "" &&
       parts[1] !== "" &&
-      recordId !== undefined &&
-      /^[0-9a-fA-F]{32}$/.test(recordId)
+      guid !== undefined &&
+      /^[0-9a-fA-F]{32}$/.test(guid)
     ) {
-      return recordId.slice(0, 8).toLowerCase();
+      return guid.slice(0, 8).toLowerCase();
     }
   } else {
     const head = id.split(".", 1)[0] ?? "";
@@ -55,7 +55,7 @@ export function deriveShortId(id: string): string {
   }
 
   throw new Error(
-    `cannot derive short_id from id '${id}': need lookup-asset id '<8hex>[.suffix]', record id '<table>;<subtable>;<recordId>' where recordId is a 32-character hex GUID with or without hyphens, or named-asset id 'named;<entityId>;<assetName>'`,
+    `cannot derive short_id from id '${id}': need lookup-asset id '<8hex>[.suffix]', record id (a 32-character hex GUID with or without hyphens), scene id 'scene;<cell>;<guid>', or named-asset id 'named;<entityId>;<assetName>'`,
   );
 }
 

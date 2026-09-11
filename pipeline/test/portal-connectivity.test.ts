@@ -28,8 +28,6 @@ function canonicalPortalRows(source: SnapshotEnvelope) {
 const recordRef = (id: string) =>
   JSON.stringify({
     kind: "record",
-    table: "instances",
-    subtable: "portals",
     id,
     recordType: "PortalRecord",
   });
@@ -54,7 +52,7 @@ function seed(
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
   );
   portals.forEach((p, index) => {
-    const id = `instances;portals;${p.key}`;
+    const id = `${p.key}`;
     portalInsert.run(
       id,
       recordRef(p.key),
@@ -75,13 +73,11 @@ describe("portal connectivity", () => {
       schemaVersion: 1,
       rows: [
         {
-          id: "instances;portals;bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          id: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
           fields: {
-            id: "instances;portals;bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            id: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
             recordRef: {
               kind: "record",
-              table: "instances",
-              subtable: "portals",
               id: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
             },
             friendlyName: "Cliff Stair",
@@ -91,13 +87,11 @@ describe("portal connectivity", () => {
           },
         },
         {
-          id: "instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           fields: {
-            id: "instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             recordRef: {
               kind: "record",
-              table: "instances",
-              subtable: "portals",
               id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             },
             friendlyName: "Harbor Gate",
@@ -144,7 +138,7 @@ describe("portal connectivity", () => {
           `SELECT route_path, has_page FROM entity_nodes
            WHERE entity_type = 'portal' AND entity_id = ?`,
         )
-        .get("instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+        .get("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
     ).toEqual({
       route_path: "/portals/harbor-gate--aaaaaaaa",
       has_page: 1,
@@ -167,14 +161,14 @@ describe("portal connectivity", () => {
                   connected_portal_id, connected_portal_name
            FROM portal_presentation_rows WHERE id = ?`,
         )
-        .get("instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+        .get("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
     ).toEqual({
       name: "Harbor Gate",
       map_id: "ardenfall",
       map_x: 0,
       map_y: 0,
       elevation: 0,
-      connected_portal_id: "instances;portals;bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      connected_portal_id: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       connected_portal_name: "Cliff Stair",
     });
 
@@ -189,13 +183,13 @@ describe("portal connectivity", () => {
     // return path for them.
     expect(edges).toEqual([
       {
-        source_id: "instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        target_id: "instances;portals;bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        source_id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        target_id: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         label: "Leads to",
       },
       {
-        source_id: "instances;portals;bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        target_id: "instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        source_id: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        target_id: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         label: "Leads to",
       },
     ]);
@@ -249,7 +243,7 @@ describe("portal connectivity", () => {
     expect(diagnostics).toHaveLength(1);
     expect(diagnostics[0]?.code).toBe("portalConnectionUnresolved");
     expect(diagnostics[0]?.severity).toBe("diagnostic");
-    expect(diagnostics[0]?.message).toContain("instances;portals;99999999999999999999999999999999");
+    expect(diagnostics[0]?.message).toContain("99999999999999999999999999999999");
     // No edge was written, so the graph audit stays clean: an unresolvable
     // reference is reported once, not escalated into a fatal missing target.
     expect(db.query(`SELECT COUNT(*) AS c FROM entity_edges`).get()).toEqual({ c: 0 });
@@ -270,7 +264,7 @@ describe("portal connectivity", () => {
     ).toHaveLength(1);
     expect(diagnostics[0]).toMatchObject({
       code: "portalNameLooksInternal",
-      entityId: "instances;portals;aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      entityId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     });
   });
 

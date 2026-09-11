@@ -487,8 +487,6 @@
                       "role": "named",
                       "ref": {
                         "kind": "record",
-                        "table": "characters",
-                        "subtable": null,
                         "id": "aaa",
                         "recordType": "CharacterRecord"
                       }

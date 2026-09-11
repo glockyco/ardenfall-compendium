@@ -36,9 +36,7 @@ public sealed class NpcExtractor : WalkerBase<NpcSnapshotRow>
             },
             record =>
             {
-                if (string.IsNullOrWhiteSpace(record.Table) ||
-                    string.IsNullOrWhiteSpace(record.Subtable) ||
-                    string.IsNullOrWhiteSpace(record.Id))
+                if (string.IsNullOrWhiteSpace(record.Id))
                 {
                     return ExtractorIdentity.Invalid(new Diagnostic
                     {
@@ -49,7 +47,7 @@ public sealed class NpcExtractor : WalkerBase<NpcSnapshotRow>
                     });
                 }
 
-                var rowId = $"{record.Table};{record.Subtable};{record.Id}";
+                var rowId = record.Id;
                 if (record.Position == null)
                 {
                     return ExtractorIdentity.Invalid(new Diagnostic
@@ -93,7 +91,7 @@ public sealed class NpcExtractor : WalkerBase<NpcSnapshotRow>
                     Id = rowId,
                     Fields = new NpcSnapshot(
                         Id: rowId,
-                        RecordRef: SnapshotRef.Record(record.Table!, record.Subtable!, record.Id!, "NPCRecord"),
+                        RecordRef: SnapshotRef.Record(rowId, "NPCRecord"),
                         DisplayName: displayName,
                         DisplayNameProvenance: record.DisplayNameProvenance,
                         DisplayNameOwner: NullIfEmpty(record.DisplayNameOwner),

@@ -167,7 +167,7 @@ public sealed class QuestExtractorTests
                     3,
                     "Quest giver",
                     "Character",
-                    SnapshotRef.Record("instances", "characters", "0123456789abcdef0123456789abcdef", "CharacterRecord")),
+                    SnapshotRef.Record("0123456789abcdef0123456789abcdef", "CharacterRecord")),
             }),
         });
         var extractor = new QuestExtractor(source);
@@ -175,8 +175,6 @@ public sealed class QuestExtractorTests
         var character = Assert.Single(row.Fields.Characters);
 
         Assert.Equal("record", character.CharacterRef.Kind);
-        Assert.Equal("instances", character.CharacterRef.Table);
-        Assert.Equal("characters", character.CharacterRef.Subtable);
         Assert.Empty(extractor.Diagnostics);
     }
 
@@ -210,7 +208,7 @@ public sealed class QuestExtractorTests
                     3,
                     "Quest giver",
                     "Character",
-                    SnapshotRef.Record("instances", "characters", "0123456789abcdef0123456789abcdef", "CharacterRecord"),
+                    SnapshotRef.Record("0123456789abcdef0123456789abcdef", "CharacterRecord"),
                     CharacterRefResolved: false),
             }),
         });
@@ -220,7 +218,6 @@ public sealed class QuestExtractorTests
 
         var characterRef = Assert.Single(row.Fields.Characters).CharacterRef;
         Assert.Equal("record", characterRef.Kind);
-        Assert.Equal("instances", characterRef.Table);
         var diagnostic = Assert.Single(extractor.Diagnostics, item => item.Code == "questCharacterReferenceUnresolved");
         Assert.Equal("diagnostic", diagnostic.Severity);
     }
@@ -266,7 +263,7 @@ public sealed class QuestExtractorTests
             3,
             "Quest giver",
             "Character",
-            SnapshotRef.Record("instances", "characters", "0123456789abcdef0123456789abcdef", "CharacterRecord"),
+            SnapshotRef.Record("0123456789abcdef0123456789abcdef", "CharacterRecord"),
             DialogueIds: dialogueIds);
 
     [Fact]

@@ -116,8 +116,6 @@
           "characterRefs": [
             {
               "kind": "record",
-              "table": "instances",
-              "subtable": "characters",
               "id": "ffffffffffffffffffffffffffffffff",
               "recordType": "CharacterRecord"
             }

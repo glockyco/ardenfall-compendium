@@ -9,8 +9,6 @@ public sealed class SnapshotRef
     [JsonProperty("unityType")] public string? UnityType { get; init; }
     [JsonProperty("entity", NullValueHandling = NullValueHandling.Ignore)] public string? Entity { get; init; }
     [JsonProperty("name")] public string? Name { get; init; }
-    [JsonProperty("table")] public string? Table { get; init; }
-    [JsonProperty("subtable")] public string? Subtable { get; init; }
     [JsonProperty("id")] public string? Id { get; init; }
     [JsonProperty("recordType")] public string? RecordType { get; init; }
     [JsonProperty("extractionId")] public string? ExtractionId { get; init; }
@@ -27,9 +25,7 @@ public sealed class SnapshotRef
     public static SnapshotRef Missing(string reason, string source) =>
         new() { Kind = "missing", Reason = reason, Source = source };
 
-    public static SnapshotRef Record(string table, string subtable, string id, string? recordType = null) =>
-        new() { Kind = "record", Table = table, Subtable = subtable, Id = id, RecordType = recordType };
-
+    /// <summary>A game record, identified by the GUID its <c>RecordID</c> carries.</summary>
     public static SnapshotRef Record(string id, string? recordType = null) =>
         new() { Kind = "record", Id = id, RecordType = recordType };
 }

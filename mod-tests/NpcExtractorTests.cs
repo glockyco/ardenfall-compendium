@@ -18,8 +18,6 @@ public sealed class NpcExtractorTests
         var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
         {
             NpcRecordSourceRow.Build(
-                table: "world",
-                subtable: "npcs",
                 id: "npc-a",
                 displayName: "Grainery Owner",
                 displayNameProvenance: "own",
@@ -33,7 +31,7 @@ public sealed class NpcExtractorTests
 
         var row = Assert.Single(extractor.Walk());
 
-        Assert.Equal("world;npcs;npc-a", row.Id);
+        Assert.Equal("npc-a", row.Id);
         Assert.Equal("NPCRecord", row.Fields.RecordRef.RecordType);
         Assert.Equal("Grainery Owner", row.Fields.DisplayName);
         Assert.Equal("own", row.Fields.DisplayNameProvenance);
@@ -53,8 +51,6 @@ public sealed class NpcExtractorTests
         var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
         {
             NpcRecordSourceRow.Build(
-                table: "world",
-                subtable: "npcs",
                 id: "npc-inherited",
                 displayName: "Prototype Sapper",
                 displayNameProvenance: "inherited",
@@ -79,8 +75,6 @@ public sealed class NpcExtractorTests
         var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
         {
             NpcRecordSourceRow.Build(
-                table: "world",
-                subtable: "npcs",
                 id: "npc-nested",
                 displayName: "Nested NPC",
                 displayNameProvenance: "own",
@@ -108,8 +102,6 @@ public sealed class NpcExtractorTests
         var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
         {
             NpcRecordSourceRow.Build(
-                table: "world",
-                subtable: "npcs",
                 id: "npc-open",
                 displayName: "Open NPC",
                 displayNameProvenance: "own",
@@ -132,8 +124,6 @@ public sealed class NpcExtractorTests
         var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
         {
             NpcRecordSourceRow.Build(
-                table: "world",
-                subtable: "npcs",
                 id: "npc-no-name",
                 displayName: " \t",
                 displayNameProvenance: "absent",
@@ -173,8 +163,6 @@ public sealed class NpcExtractorTests
         var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
         {
             NpcRecordSourceRow.Build(
-                table: "world",
-                subtable: "npcs",
                 id: "npc-clone",
                 displayName: "Clone Named NPC",
                 displayNameProvenance: "own",
@@ -199,7 +187,7 @@ public sealed class NpcExtractorTests
         var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
         {
             NpcRecordSourceRow.Build(
-                "world", "npcs", "merchant-own", "Merchant", "own", null, null, null,
+                "merchant-own", "Merchant", "own", null, null, null,
                 "overworld", new NpcVector3Snapshot(0f, 0f, 0f),
                 merchantRefs: new[] { stock }, merchantRefsProvenance: "own"),
         }));
@@ -218,7 +206,7 @@ public sealed class NpcExtractorTests
         var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
         {
             NpcRecordSourceRow.Build(
-                "world", "npcs", "faction-own", "Faction NPC", "own", null, null, null,
+                "faction-own", "Faction NPC", "own", null, null, null,
                 "overworld", new NpcVector3Snapshot(0f, 0f, 0f),
                 startingFactions: new[] { faction }, startingFactionsProvenance: "own"),
         }));
@@ -236,7 +224,7 @@ public sealed class NpcExtractorTests
         var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
         {
             NpcRecordSourceRow.Build(
-                "world", "npcs", "inherited-values", "Inherited NPC", "inherited", "preset_vendor", null, null,
+                "inherited-values", "Inherited NPC", "inherited", "preset_vendor", null, null,
                 "overworld", new NpcVector3Snapshot(0f, 0f, 0f),
                 startingFactions: new[] { SnapshotRef.LookupAsset("faction-inherited") },
                 startingFactionsProvenance: "inherited", startingFactionsOwner: "preset_vendor",
@@ -258,7 +246,7 @@ public sealed class NpcExtractorTests
         var extractor = new NpcExtractor(new FakeNpcRecordSource(new[]
         {
             NpcRecordSourceRow.Build(
-                "world", "npcs", "no-stock", "No Stock NPC", "own", null, null, null,
+                "no-stock", "No Stock NPC", "own", null, null, null,
                 "overworld", new NpcVector3Snapshot(0f, 0f, 0f)),
         }));
 

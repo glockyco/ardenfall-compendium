@@ -26,10 +26,8 @@ describe("deriveShortId", () => {
   });
 
   it("derives the first 8 hex characters from bare and hyphenated record ids", () => {
-    expect(deriveShortId("instances;portals;398213e43a41b4c47bffe4ef1998e782")).toBe("398213e4");
-    expect(deriveShortId("instances;portals;398213e4-3a41-b4c4-7bff-e4ef1998e782")).toBe(
-      "398213e4",
-    );
+    expect(deriveShortId("398213e43a41b4c47bffe4ef1998e782")).toBe("398213e4");
+    expect(deriveShortId("398213e4-3a41-b4c4-7bff-e4ef1998e782")).toBe("398213e4");
   });
 
   it("hashes the full named asset id instead of exposing its asset name", () => {
@@ -45,9 +43,7 @@ describe("deriveShortId", () => {
 
   it("rejects ids matching neither accepted format", () => {
     expect(() => deriveShortId("abc")).toThrow(/short_id/);
-    expect(() => deriveShortId("world;portals;portal-a")).toThrow(
-      /world;portals;portal-a.*<8hex>.*<table>;<subtable>;<recordId>/,
-    );
+    expect(() => deriveShortId("portal-a")).toThrow(/portal-a.*<8hex>.*32-character hex GUID/);
   });
 });
 

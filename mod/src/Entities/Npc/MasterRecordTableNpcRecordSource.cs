@@ -98,8 +98,6 @@ public sealed class MasterRecordTableNpcRecordSource : INpcRecordSource
         if (spawnPoint == null)
         {
             return new NpcRecordSourceRow(
-                Table: "",
-                Subtable: "",
                 Id: id.id,
                 DisplayName: nameResolution.Name,
                 DisplayNameProvenance: nameResolution.Provenance,
@@ -139,8 +137,6 @@ public sealed class MasterRecordTableNpcRecordSource : INpcRecordSource
         }
 
         return new NpcRecordSourceRow(
-            Table: "",
-            Subtable: "",
             Id: id.id,
             DisplayName: nameResolution.Name,
             DisplayNameProvenance: nameResolution.Provenance,

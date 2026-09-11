@@ -270,10 +270,5 @@ function definitionId(ref: Partial<SnapshotRef>): string | null {
 }
 
 function recordId(ref: Partial<SnapshotRef>): string | null {
-  if (ref.kind !== "record") return null;
-  const { table, subtable, id } = ref;
-  if (typeof table !== "string" || typeof subtable !== "string" || typeof id !== "string") {
-    return null;
-  }
-  return `${table};${subtable};${id}`;
+  return ref.kind === "record" && typeof ref.id === "string" ? ref.id : null;
 }
