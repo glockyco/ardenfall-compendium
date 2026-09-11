@@ -4,3 +4,4 @@ export const locationFieldNames = ["id", "name", "enabled", "mapId", "mapRef", "
 export const portalFieldNames = ["id", "recordRef", "friendlyName", "position", "mapId", "connectedPortalRef"];
 export const placedPlantFieldNames = ["id", "cell", "map", "position", "itemRef", "itemCount", "regrowDays", "harvestXp", "interactionText"];
 export const placedItemFieldNames = ["id", "cell", "map", "position", "itemRef", "stackCount", "durability", "durabilityRuined", "enchantments", "owners"];
+export const placedContainerFieldNames = ["id", "cell", "map", "position", "containerName", "interactionText", "lootLists", "additionalItems", "possibleItemRefs", "level", "lock", "owners"];

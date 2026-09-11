@@ -76,3 +76,25 @@ export type PlacedItemSnapshotFields = Pick<
   SourcePlacedItemSnapshotFields,
   Extract<PlacedItemFieldName, keyof SourcePlacedItemSnapshotFields>
 >;
+
+import type { PlacedContainerSnapshotFields as SourcePlacedContainerSnapshotFields } from "../src/types.ts";
+
+export declare const placedContainerFieldNames: readonly [
+  "id",
+  "cell",
+  "map",
+  "position",
+  "containerName",
+  "interactionText",
+  "lootLists",
+  "additionalItems",
+  "possibleItemRefs",
+  "level",
+  "lock",
+  "owners"
+];
+export type PlacedContainerFieldName = (typeof placedContainerFieldNames)[number];
+export type PlacedContainerSnapshotFields = Pick<
+  SourcePlacedContainerSnapshotFields,
+  Extract<PlacedContainerFieldName, keyof SourcePlacedContainerSnapshotFields>
+>;

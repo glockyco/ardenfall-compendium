@@ -17,10 +17,10 @@
 
 ## 3. Containers
 
-- [ ] 3.1 Add a container descriptor with the `sceneObject` identity mechanism and a map layer.
-- [ ] 3.2 Extract `StaticContainer` with its name, item lists, additional items, level, lock and owner.
-- [ ] 3.3 Canonicalise containers, project placements and map points, and resolve their loot to items.
-- [ ] 3.4 Add the container page, and name containers as a source on each item page.
+- [x] 3.1 Add a container descriptor with the `sceneObject` identity mechanism and a map layer.
+- [x] 3.2 Extract `StaticContainer` with its name, item lists, additional items, level, lock and owner.
+- [x] 3.3 Canonicalise containers, project placements and map points, and resolve their loot to items.
+- [x] 3.4 Add the container page, and name containers as a source on each item page.
 
 ## 4. Ownership
 

@@ -28,6 +28,7 @@ describe("loadDescriptors", () => {
       "location",
       "name-set",
       "npc",
+      "placed-container",
       "placed-item",
       "placed-plant",
       "portal",

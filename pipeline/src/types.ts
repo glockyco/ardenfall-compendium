@@ -615,6 +615,51 @@ export interface PlacedItemSnapshotFields {
   owners: PlacedOwnersSnapshot;
 }
 
+/** A loot list a container draws from. */
+export interface PlacedLootListSnapshot {
+  listRef: SnapshotRef;
+  count: number;
+}
+
+/** An item a container holds outright. */
+export interface PlacedCountedItemSnapshot {
+  itemRef: SnapshotRef;
+  count: number;
+}
+
+/** How a container is locked, as authored. */
+export interface PlacedLockSnapshot {
+  mode: string;
+  level: string;
+  allowLockpick: boolean;
+  allowDestroy: boolean;
+  keyRefs: SnapshotRef[];
+}
+
+/** An authored level the game either derives or fixes. */
+export interface PlacedLevelSnapshot {
+  automatic: boolean;
+  value: number;
+  addValue: number;
+}
+
+/** One container the world places, as the cell walk harvested it. */
+export interface PlacedContainerSnapshotFields {
+  id: string;
+  cell: string;
+  map: string | null;
+  position: SnapshotVector3;
+  containerName: string;
+  interactionText: string;
+  lootLists: PlacedLootListSnapshot[];
+  additionalItems: PlacedCountedItemSnapshot[];
+  /** Every distinct item the authored lists can yield, flattened without rolling weights. */
+  possibleItemRefs: SnapshotRef[];
+  level: PlacedLevelSnapshot;
+  lock: PlacedLockSnapshot;
+  owners: PlacedOwnersSnapshot;
+}
+
 export interface NpcLevelSnapshot {
   automatic: boolean;
   addValue: number;

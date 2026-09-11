@@ -1,0 +1,95 @@
+{
+  "entityId": "placed-container",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "scene;cell_fixture_0.0;c1d2e3f4-0001-4a00-9c00-000000000001",
+      "fields": {
+        "id": "scene;cell_fixture_0.0;c1d2e3f4-0001-4a00-9c00-000000000001",
+        "cell": "cell_fixture_0.0",
+        "map": "ardenfall",
+        "position": { "x": 10, "y": 3, "z": -14 },
+        "containerName": "Harbor Strongbox",
+        "interactionText": "Open",
+        "lootLists": [
+          {
+            "listRef": {
+              "kind": "lookupAsset",
+              "guid": "l1570001.fixture-harbor-loot",
+              "unityType": "Ardenfall.Item.ItemListAsset",
+              "name": "fixture-harbor-loot"
+            },
+            "count": 2
+          }
+        ],
+        "additionalItems": [
+          {
+            "itemRef": {
+              "kind": "lookupAsset",
+              "guid": "4ed20218.fixture-iron-sword",
+              "unityType": "Ardenfall.Item.MeleeItemData",
+              "name": "fixture-iron-sword"
+            },
+            "count": 2
+          }
+        ],
+        "possibleItemRefs": [
+          {
+            "kind": "lookupAsset",
+            "guid": "6a71c0de.fixture-stamina-draught",
+            "unityType": "Ardenfall.Item.ConsumableItemData",
+            "name": "fixture-stamina-draught"
+          },
+          {
+            "kind": "lookupAsset",
+            "guid": "4ed20218.fixture-iron-sword",
+            "unityType": "Ardenfall.Item.MeleeItemData",
+            "name": "fixture-iron-sword"
+          }
+        ],
+        "level": { "automatic": false, "value": 4, "addValue": 0 },
+        "lock": {
+          "mode": "FullyLocked",
+          "level": "Medium",
+          "allowLockpick": true,
+          "allowDestroy": false,
+          "keyRefs": [
+            {
+              "kind": "lookupAsset",
+              "guid": "5ea7beef.fixture-leather-tunic",
+              "unityType": "Ardenfall.Item.ArmorItemData",
+              "name": "fixture-leather-tunic"
+            }
+          ]
+        },
+        "owners": {
+          "factionRefs": [],
+          "characterRefs": []
+        }
+      }
+    },
+    {
+      "id": "scene;cell_fixture_0.1;d2e3f4a5-0002-4a00-9c00-000000000002",
+      "fields": {
+        "id": "scene;cell_fixture_0.1;d2e3f4a5-0002-4a00-9c00-000000000002",
+        "cell": "cell_fixture_0.1",
+        "map": "ardenfall",
+        "position": { "x": -2, "y": 1, "z": 4 },
+        "containerName": "Container",
+        "interactionText": "Open",
+        "lootLists": [],
+        "additionalItems": [],
+        "possibleItemRefs": [],
+        "level": { "automatic": true, "value": 1, "addValue": 0 },
+        "lock": {
+          "mode": "Unlocked",
+          "level": "None",
+          "allowLockpick": true,
+          "allowDestroy": true,
+          "keyRefs": []
+        },
+        "owners": { "factionRefs": [], "characterRefs": [] }
+      }
+    }
+  ]
+}

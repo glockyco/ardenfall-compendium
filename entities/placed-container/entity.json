@@ -1,0 +1,142 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "placed-container",
+  "kind": "instance",
+  "label": {
+    "singular": "Container",
+    "plural": "Containers"
+  },
+  "extraction": {
+    "source": "scene",
+    "file": "placed-containers.json",
+    "root": "Ardenfall.StaticContainer",
+    "options": {
+      "component": "StaticContainer"
+    }
+  },
+  "canonicalTable": "placed_containers",
+  "presentationContext": {
+    "renderContext": "placed-container-presentation-v1"
+  },
+  "site": {
+    "route": "/containers",
+    "overview": {
+      "columns": ["containerName", "cell"],
+      "search": ["containerName", "cell"]
+    },
+    "detail": {
+      "sections": [
+        {
+          "id": "overview",
+          "kind": "fieldList",
+          "title": "Overview",
+          "fields": [
+            "containerName",
+            "interactionText",
+            "lootLists",
+            "additionalItems",
+            "possibleItemRefs",
+            "level",
+            "lock",
+            "owners",
+            "cell",
+            "map",
+            "position"
+          ]
+        }
+      ]
+    }
+  },
+  "placement": {
+    "kind": "point",
+    "from": "transform"
+  },
+  "fields": [
+    {
+      "name": "id",
+      "type": "id",
+      "from": "id",
+      "missingPolicy": "fatal"
+    },
+    {
+      "name": "cell",
+      "type": "string",
+      "from": "cell",
+      "column": "cell",
+      "missingPolicy": "fatal"
+    },
+    {
+      "name": "map",
+      "type": "string",
+      "from": "map",
+      "column": "map_id",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "position",
+      "type": "json",
+      "from": "position",
+      "column": "source_position_json",
+      "projects": "map_points"
+    },
+    {
+      "name": "containerName",
+      "type": "string",
+      "from": "containerName",
+      "column": "container_name",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "interactionText",
+      "type": "string",
+      "from": "interactionText",
+      "column": "interaction_text"
+    },
+    {
+      "name": "lootLists",
+      "type": "json",
+      "from": "lootLists",
+      "column": "loot_lists_json"
+    },
+    {
+      "name": "additionalItems",
+      "type": "json",
+      "from": "additionalItems",
+      "column": "additional_items_json"
+    },
+    {
+      "name": "possibleItemRefs",
+      "type": "json",
+      "from": "possibleItemRefs",
+      "column": "possible_item_refs_json"
+    },
+    {
+      "name": "level",
+      "type": "json",
+      "from": "level",
+      "column": "level_json"
+    },
+    {
+      "name": "lock",
+      "type": "json",
+      "from": "lock",
+      "column": "lock_json"
+    },
+    {
+      "name": "owners",
+      "type": "json",
+      "from": "owners",
+      "column": "owners_json"
+    }
+  ],
+  "map": {
+    "layer": "containers",
+    "renderKind": "point",
+    "icon": "container",
+    "color": [180, 140, 90],
+    "radius": 3,
+    "tooltip": ["containerName"],
+    "legendLabel": "Containers",
+    "zOrder": 50
+  }
+}

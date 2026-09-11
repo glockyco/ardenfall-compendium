@@ -23,6 +23,11 @@ const targets = [
     typeName: "PlacedItemFieldName",
     sourceTypeName: "PlacedItemSnapshotFields",
   },
+  {
+    entity: "placed-container",
+    typeName: "PlacedContainerFieldName",
+    sourceTypeName: "PlacedContainerSnapshotFields",
+  },
 ] as const;
 
 function readFields(entity: string): string[] {

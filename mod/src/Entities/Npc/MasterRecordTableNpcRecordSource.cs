@@ -178,22 +178,7 @@ public sealed class MasterRecordTableNpcRecordSource : INpcRecordSource
     private static IReadOnlyList<SnapshotRef> FlattenItemRefs(
         IReadOnlyList<CountedItemListAsset>? lists)
     {
-        var items = ItemListWalker.Flatten<
-            ItemListAsset,
-            object,
-            BaseWeightedItemData,
-            ItemData>(
-                roots: RootLists(lists),
-                listGroups: ListGroups,
-                groupEntries: GroupEntries,
-                isGroup: entry => entry is WeightedItemData weighted && weighted.isGroup,
-                entryGroups: EntryGroups,
-                isList: entry => entry.isList,
-                entryList: entry => entry.listAsset,
-                entryItem: entry => entry.singleItem,
-                listComparer: UnityObjectReferenceComparer<ItemListAsset>.Instance,
-                itemComparer: UnityObjectReferenceComparer<ItemData>.Instance);
-        return ToAssetRefs(items, "CharacterData.itemLists");
+        return ToAssetRefs(ItemLists.Flatten(lists), "CharacterData.itemLists");
     }
 
     private static IReadOnlyList<SnapshotRef> FlattenMerchantItemRefs(
@@ -275,40 +260,9 @@ public sealed class MasterRecordTableNpcRecordSource : INpcRecordSource
     private static SnapshotRef? ToOptionalAssetRef(UnityEngine.Object? asset, string source) =>
         asset == null ? null : ToAssetRef(asset, source);
 
-    private static IEnumerable<ItemListAsset> RootLists(IReadOnlyList<CountedItemListAsset>? lists)
-    {
-        foreach (var counted in lists ?? Array.Empty<CountedItemListAsset>())
-        {
-            if (counted?.list != null) yield return counted.list;
-        }
-    }
 
-    private static IEnumerable<object> ListGroups(ItemListAsset list)
-    {
-        if (list.itemGroups == null) yield break;
-        foreach (var group in list.itemGroups)
-        {
-            if (group != null) yield return group;
-        }
-    }
 
-    private static IEnumerable<BaseWeightedItemData> GroupEntries(object group) => group switch
-    {
-        ItemGroup itemGroup => itemGroup.items is null ? Array.Empty<BaseWeightedItemData>() : itemGroup.items,
-        BaseItemGroup baseGroup => baseGroup.items is null ? Array.Empty<BaseWeightedItemData>() : baseGroup.items,
-        _ => Array.Empty<BaseWeightedItemData>(),
-    };
 
-    private static IEnumerable<object> EntryGroups(BaseWeightedItemData entry)
-    {
-        if (entry is not WeightedItemData weighted) yield break;
-        if (weighted.group != null) yield return weighted.group;
-        if (weighted.groups == null) yield break;
-        foreach (var group in weighted.groups)
-        {
-            if (group != null) yield return group;
-        }
-    }
 
     private static (string? Name, string Provenance, string? Owner) ResolveDisplayName(
         CharacterData storedCharacterData)

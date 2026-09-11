@@ -184,6 +184,9 @@ export { getPlacedPlantPresentation, listPlacedPlants } from "./entities/placed-
 export type { PlacedItemOverviewRow, PlacedItemPresentationRow } from "./entities/placed-item";
 export { getPlacedItemPresentation, listPlacedItems } from "./entities/placed-item";
 
+export type { ContainerOverviewRow, ContainerPresentationRow } from "./entities/placed-container";
+export { getContainerPresentation, listContainers } from "./entities/placed-container";
+
 export type { FactionOverviewRow, FactionPresentationRow } from "./entities/faction";
 export { getFactionPresentation, listFactions } from "./entities/faction";
 export type {

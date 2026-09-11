@@ -9,7 +9,7 @@ The roadmap defers container loot, item spawners, scene dialogue and world spawn
 | component                   | count | what it holds                                                                            |
 | --------------------------- | ----: | ---------------------------------------------------------------------------------------- |
 | `ItemSpawner`               |   560 | a direct `ItemData` reference, enchantments, durability, stack count, owner              |
-| `StaticContainer`           |   135 | `itemLists`, `additionalItems`, level, owner, lock, and a player-visible `containerName` |
+| `StaticContainer`           |   154 | `itemLists`, `additionalItems`, level, owner, lock, and a player-visible `containerName` |
 | `SimpleUtilityInteractable` |   140 | world interactables                                                                      |
 | `RecordNPCSpawner`          |    62 | a `RecordReference` to a record we already extract                                       |
 | `LocalNPCSpawner`           |    55 | a direct `CharacterData` reference                                                       |

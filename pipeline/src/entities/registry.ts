@@ -12,6 +12,7 @@ import { NAME_SET_DDL } from "../sql/name-set-ddl";
 import { LOCATION_DDL } from "../sql/location-ddl";
 import { FACTION_DDL } from "../sql/faction-ddl";
 import { CHARACTER_DDL } from "../sql/character-ddl";
+import { PLACED_CONTAINER_DDL } from "../sql/placed-container-ddl";
 import { PLACED_ITEM_DDL } from "../sql/placed-item-ddl";
 import { PLACED_PLANT_DDL } from "../sql/placed-plant-ddl";
 import { PORTAL_DDL } from "../sql/portal-ddl";
@@ -49,6 +50,8 @@ import { canonicaliseCharacters } from "./character/canonicaliser";
 import { canonicaliseLocations } from "./location/canonicaliser";
 import { emitLocationReadModels, locationProjection } from "./location/read-models";
 import { emitCharacterReadModels } from "./character/read-models";
+import { canonicalisePlacedContainers } from "./placed-container/canonicaliser";
+import { emitPlacedContainerReadModels } from "./placed-container/read-models";
 import { canonicalisePlacedItems } from "./placed-item/canonicaliser";
 import { emitPlacedItemReadModels } from "./placed-item/read-models";
 import { canonicalisePlacedPlants } from "./placed-plant/canonicaliser";
@@ -118,39 +121,62 @@ const portalProjection: MapProjection = {
     `,
 };
 
-const placedItemProjection: MapProjection = {
-  sourceTable: "placed_items",
+const placedContainerProjection: MapProjection = {
+  sourceTable: "placed_containers",
+  // Names come from canonical rows rather than from presentation rows: this projection runs in
+  // the map phase, and a family whose read model runs after the map has no presentation row yet.
   points: `
       INSERT INTO map_points (
         id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
         enabled, show_on_map_debug_only, allow_fast_travel
       )
-      SELECT 'placed-item:' || i.id, 'placed-item', i.id, r.name,
+      SELECT 'placed-container:' || c.id, 'placed-container', c.id, c.container_name,
              pl.map_id, pl.map_x, pl.map_y, pl.elevation,
-             1, 0, 0 -- a placed item has no authored availability flag; it is there
+             1, 0, 0 -- authored scene content carries no availability flag; it is there
+
+      FROM placed_containers c
+      JOIN placements pl ON pl.entity_id = 'placed-container' AND pl.instance_id = c.id
+      ORDER BY c.id;
+    `,
+};
+
+const placedItemProjection: MapProjection = {
+  sourceTable: "placed_items",
+  // Names come from canonical rows rather than from presentation rows: this projection runs in
+  // the map phase, and a family whose read model runs after the map has no presentation row yet.
+  points: `
+      INSERT INTO map_points (
+        id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
+        enabled, show_on_map_debug_only, allow_fast_travel
+      )
+      SELECT 'placed-item:' || i.id, 'placed-item', i.id, COALESCE(it.name, 'Unnamed item'),
+             pl.map_id, pl.map_x, pl.map_y, pl.elevation,
+             1, 0, 0 -- authored scene content carries no availability flag; it is there
 
       FROM placed_items i
-      JOIN placed_item_presentation_rows r ON r.id = i.id
+      LEFT JOIN items it ON it.id = json_extract(i.item_ref_json, '$.guid')
       JOIN placements pl ON pl.entity_id = 'placed-item' AND pl.instance_id = i.id
-      ORDER BY r.name, i.id;
+      ORDER BY i.id;
     `,
 };
 
 const placedPlantProjection: MapProjection = {
   sourceTable: "placed_plants",
+  // Names come from canonical rows rather than from presentation rows: this projection runs in
+  // the map phase, and a family whose read model runs after the map has no presentation row yet.
   points: `
       INSERT INTO map_points (
         id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
         enabled, show_on_map_debug_only, allow_fast_travel
       )
-      SELECT 'placed-plant:' || p.id, 'placed-plant', p.id, r.name,
+      SELECT 'placed-plant:' || p.id, 'placed-plant', p.id, COALESCE(it.name, 'Unnamed plant'),
              pl.map_id, pl.map_x, pl.map_y, pl.elevation,
-             1, 0, 0 -- a plant has no authored availability flag; it is there
+             1, 0, 0 -- authored scene content carries no availability flag; it is there
 
       FROM placed_plants p
-      JOIN placed_plant_presentation_rows r ON r.id = p.id
+      LEFT JOIN items it ON it.id = json_extract(p.item_ref_json, '$.guid')
       JOIN placements pl ON pl.entity_id = 'placed-plant' AND pl.instance_id = p.id
-      ORDER BY r.name, p.id;
+      ORDER BY p.id;
     `,
 };
 
@@ -288,6 +314,13 @@ export const entityRegistry: Record<string, EntityModule> = {
       return emitNpcReadModels(db, entity.site.route);
     },
     mapProjection: npcProjection,
+  },
+  "placed-container": {
+    ddl: PLACED_CONTAINER_DDL,
+    canonicalise: ({ db, envelope }) => canonicalisePlacedContainers(db, envelope),
+    readModelPhase: "after-map",
+    readModel: ({ db, entity }) => emitPlacedContainerReadModels(db, entity.site?.route),
+    mapProjection: placedContainerProjection,
   },
   "placed-item": {
     ddl: PLACED_ITEM_DDL,

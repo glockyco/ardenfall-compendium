@@ -516,6 +516,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["quest"] = questRows.Count,
                 ["placed-plant"] = walkedRows["placed-plant"].Count,
                 ["placed-item"] = walkedRows["placed-item"].Count,
+                ["placed-container"] = walkedRows["placed-container"].Count,
             };
             var availability = new Dictionary<string, IDictionary<string, int>>
             {
@@ -623,6 +624,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["quests"] = CompendiumCommandResults.FileArtifact("quests", Path.Combine(publishedDir, "quests.json"), "application/json", hashes["quests.json"]),
                 ["placed-plants"] = CompendiumCommandResults.FileArtifact("placed-plants", Path.Combine(publishedDir, "placed-plants.json"), "application/json", hashes["placed-plants.json"]),
                 ["placed-items"] = CompendiumCommandResults.FileArtifact("placed-items", Path.Combine(publishedDir, "placed-items.json"), "application/json", hashes["placed-items.json"]),
+                ["placed-containers"] = CompendiumCommandResults.FileArtifact("placed-containers", Path.Combine(publishedDir, "placed-containers.json"), "application/json", hashes["placed-containers.json"]),
                 ["finalize-timings"] = CompendiumCommandResults.FileArtifact("finalize-timings", Path.Combine(publishedDir, "finalize-timings.json"), "application/json", hashes["finalize-timings.json"]),
             };
             if (hashes.TryGetValue("diagnostics.json", out var diagnosticsHash))

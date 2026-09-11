@@ -16,6 +16,7 @@ public static class SceneFamilies
     {
         ["placed-plant"] = "placed-plants.json",
         ["placed-item"] = "placed-items.json",
+        ["placed-container"] = "placed-containers.json",
     };
 
     public static IEnumerable<string> EntityIds => FileByEntityId.Keys;

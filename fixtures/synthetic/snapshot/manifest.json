@@ -52,7 +52,8 @@
     "potion-recipe": 2,
     "enchantment": 2,
     "placed-plant": 3,
-    "placed-item": 2
+    "placed-item": 2,
+    "placed-container": 2
   },
   "diagnostics": {
     "fatal": 0,

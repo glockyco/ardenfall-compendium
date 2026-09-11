@@ -152,6 +152,16 @@ export const relationshipRegistry = {
     inverseTitle: "Lies in the world",
     sortOrder: 139,
   },
+  holds_item: {
+    forwardTitle: "Holds",
+    inverseTitle: "Found in containers",
+    sortOrder: 141,
+  },
+  opened_by_item: {
+    forwardTitle: "Opened by",
+    inverseTitle: "Opens",
+    sortOrder: 142,
+  },
   yields_item: {
     forwardTitle: "Yields",
     inverseTitle: "Grows in the world",
