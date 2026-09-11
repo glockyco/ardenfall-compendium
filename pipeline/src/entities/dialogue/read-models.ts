@@ -74,7 +74,7 @@ type ScriptStep =
       gate: GateView | null;
       next: ScriptStep[];
     }
-  | { kind: "choice"; nodeId: number; options: ScriptOption[] }
+  | { kind: "choice"; nodeId: number; gate: GateView | null; options: ScriptOption[] }
   | {
       kind: "branch";
       nodeId: number;
@@ -314,6 +314,9 @@ function buildStep(
       return {
         kind: "choice",
         nodeId,
+        // A topic carries its own requirement, which is often the only thing separating two topics
+        // whose text is identical.
+        gate: node.gate === null ? null : gateView(node.gate, context),
         options: node.options.map((option) => ({
           port: option.port,
           text: option.text,

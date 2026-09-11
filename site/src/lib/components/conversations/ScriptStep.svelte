@@ -20,11 +20,13 @@
       ? "The conversation forks on how the speaker feels about the player:"
       : kind === "faction-relationship"
         ? "The conversation forks on the player's standing with the faction:"
-        : kind === "branch-on-checks"
-          ? "The conversation forks on what the game checks, in this order:"
-          : kind === undefined || kind === "unread"
-            ? "The conversation forks on state the compendium cannot name:"
-            : `The conversation forks on the ${kind} check:`;
+        : kind === "character-group"
+          ? "The conversation forks on who the player is speaking to:"
+          : kind === "branch-on-checks"
+            ? "The conversation forks on what the game checks, in this order:"
+            : kind === undefined || kind === "unread"
+              ? "The conversation forks on state the compendium cannot name:"
+              : `The conversation forks on the ${kind} check:`;
 </script>
 
 <!--
@@ -44,6 +46,13 @@
     {/each}
   </div>
 {:else if step.kind === "choice"}
+  <!--
+    A topic carries its own requirement, and it is often the only thing that separates two topics
+    whose text is identical: one quest graph asks the same question 26 times, once per objective.
+  -->
+  {#if step.gate}
+    <GateNote gate={step.gate} />
+  {/if}
   <ul class="mt-3 grid gap-2" id={`node-${step.nodeId}`}>
     {#each step.options as option, index (`${option.port}-${index}`)}
       <li class="border-border rounded-md border p-3">

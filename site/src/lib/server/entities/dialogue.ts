@@ -75,7 +75,13 @@ export type DialogueScriptStep =
       gate: DialogueGate | null;
       next: DialogueScriptStep[];
     }
-  | { kind: "choice"; nodeId: number; options: DialogueScriptOption[] }
+  | {
+      kind: "choice";
+      nodeId: number;
+      /** The topic's own requirement, which often separates two topics of one text. */
+      gate: DialogueGate | null;
+      options: DialogueScriptOption[];
+    }
   | {
       kind: "branch";
       nodeId: number;

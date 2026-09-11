@@ -240,6 +240,7 @@ public static class DialogueNodeReaders
         ["SingleBranchQuestState"] = "quest-state",
         ["SingleBranchQuestPhase"] = "quest-phase",
         ["CharacterGroupDialogSwitch"] = "character-group",
+        ["CharacterGroupDialogBranch"] = "character-group",
         ["PresetHasGold"] = "money-held",
     };
 
