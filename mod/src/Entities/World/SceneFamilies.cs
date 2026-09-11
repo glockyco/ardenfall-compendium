@@ -19,6 +19,7 @@ public static class SceneFamilies
         ["placed-container"] = "placed-containers.json",
         ["world-spawn"] = "world-spawns.json",
         ["scene-dialogue"] = "scene-dialogue.json",
+        ["dialogue"] = "dialogues.json",
     };
 
     public static IEnumerable<string> EntityIds => FileByEntityId.Keys;

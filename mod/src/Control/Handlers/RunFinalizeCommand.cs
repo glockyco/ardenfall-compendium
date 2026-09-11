@@ -58,6 +58,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     private readonly IMasterTooltipSnapshotSource _masterTooltip;
     private readonly IGameIdentitySource _gameIdentity;
     private readonly IPluginIdentitySource _pluginIdentity;
+    private readonly Entities.Dialogue.IDialogueAssetSource _dialogue;
     private readonly Func<PreflightReport> _preflight;
 
     public RunFinalizeCommand(
@@ -81,7 +82,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         IPotionRecipeExtractionCache? potionRecipes = null,
         IEnchantmentExtractionCache? enchantments = null,
         Func<PreflightReport>? preflight = null,
-        IPluginIdentitySource? pluginIdentity = null
+        IPluginIdentitySource? pluginIdentity = null,
+        Entities.Dialogue.IDialogueAssetSource? dialogue = null
     )
     {
         _runs = runs;
@@ -106,6 +108,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         _masterTooltip = masterTooltip;
         _gameIdentity = gameIdentity;
         _pluginIdentity = pluginIdentity ?? new AssemblyPluginIdentitySource();
+        _dialogue = dialogue ?? Entities.Dialogue.EmptyDialogueAssetSource.Instance;
         _preflight = preflight ?? PreflightRunner.Run;
     }
 
@@ -281,9 +284,19 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             // The walk writes one chunk per batch of cells, so the snapshot's file is their
             // concatenation. A run with no walk publishes an empty family rather than no file.
             var walkedRows = new Dictionary<string, List<Entities.World.SceneRow>>(StringComparer.Ordinal);
+            // The conversations the loaded assets hold join the ones the walk found. A graph two
+            // holders reach arrives twice, and the canonicaliser merges the pair on its shared id.
+            var dialogueAssets = _dialogue.Read();
             foreach (var entityId in Entities.World.SceneFamilies.EntityIds)
             {
                 var walked = ReadWalkedRows(run, entityId);
+                if (entityId == "dialogue")
+                {
+                    walked.AddRange(
+                        dialogueAssets.Conversations.Select(
+                            conversation => new Entities.World.SceneRow(conversation.Id, conversation)));
+                }
+
                 walkedRows[entityId] = walked;
                 WriteJson(
                     stagingDir,
@@ -294,6 +307,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             RecordTiming(timings, "metadata.write", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
+            foreach (var diagnostic in dialogueAssets.Diagnostics)
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
             foreach (var diagnostic in ReadWalkDiagnostics(run))
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
@@ -535,6 +552,16 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                     ["disabled"] = questRows.Count(row => row.Fields.Disabled),
                     ["hiddenInQuestUi"] = questRows.Count(row => row.Fields.HiddenInQuestUi),
                 },
+                // Coverage per dialogue holder, so a holder that stops yielding conversations shows
+                // as a number rather than as a smaller corpus nobody notices.
+                ["dialogue-holder"] = new Dictionary<string, int>(dialogueAssets.HoldersByKind, StringComparer.Ordinal)
+                {
+                    ["scene-placement"] = SceneDialogueHolders(walkedRows),
+                },
+                // The node types the walk does not read, so the next build's new type arrives as a
+                // count rather than as silence.
+                ["dialogue-unmodelled"] = new Dictionary<string, int>(dialogueAssets.UnmodelledTypes, StringComparer.Ordinal),
+                ["dialogue-role"] = DialogueRoleCounts(walkedRows),
             };
             var manifest = ManifestBuilder.Build(
                 preflight,
@@ -739,6 +766,34 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     /// <summary>
     /// Reads the chunks the cell walk wrote for one family in this run, in batch order.
     /// </summary>
+    /// <summary>How many scene placements reach a conversation.</summary>
+    private static int SceneDialogueHolders(
+        IReadOnlyDictionary<string, List<Entities.World.SceneRow>> walkedRows) =>
+        walkedRows.TryGetValue("dialogue", out var rows)
+            ? rows
+                .Select(row => row.Fields)
+                .OfType<Entities.Dialogue.DialogueFields>()
+                .Sum(fields => fields.Holders.Count(holder => holder.Kind == "scene-placement"))
+            : 0;
+
+    /// <summary>How many published nodes carry each role.</summary>
+    private static IDictionary<string, int> DialogueRoleCounts(
+        IReadOnlyDictionary<string, List<Entities.World.SceneRow>> walkedRows)
+    {
+        var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+        if (!walkedRows.TryGetValue("dialogue", out var rows)) return counts;
+        foreach (var node in rows
+            .Select(row => row.Fields)
+            .OfType<Entities.Dialogue.DialogueFields>()
+            .SelectMany(fields => fields.Nodes))
+        {
+            counts.TryGetValue(node.Role, out var seen);
+            counts[node.Role] = seen + 1;
+        }
+
+        return counts;
+    }
+
     /// <summary>
     /// The diagnostics the cell walk recorded, which say why a scene object was not published.
     /// </summary>

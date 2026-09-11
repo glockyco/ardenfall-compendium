@@ -1,0 +1,496 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Ardenfall;
+using Ardenfall.Dialog;
+using Ardenfall.Dialog.Nodes;
+using NodeCanvas.Framework;
+using UnityObject = UnityEngine.Object;
+
+namespace ArdenfallCompendium.Entities.Dialogue;
+
+/// <summary>
+/// Maps an authored node type to the role a reader needs, and reads that role's payload.
+/// </summary>
+/// <remarks>
+/// The table is keyed by the authored type name rather than by <c>typeof</c>. The dialogue graphs of
+/// this build carry 147 node types, most of them with private serialized fields, and several of them
+/// are generic FlowCanvas wrappers whose names carry backticks. A name-keyed table reads the same way
+/// for all of them and is testable without a Unity object.
+///
+/// A type the table does not name publishes as <see cref="DialogueRoles.Unmodelled"/> with its
+/// authored name, and the export counts it. A misspelled name therefore surfaces as an unmodelled
+/// count in the manifest rather than as a missing node.
+/// </remarks>
+public static class DialogueNodeReaders
+{
+    /// <summary>
+    /// Types that carry no text, no gate and no outcome. The walk joins their inbound edges to their
+    /// outbound edges, so a published edge always joins two nodes a reader cares about.
+    /// </summary>
+    private static readonly HashSet<string> ControlTypes = new(StringComparer.Ordinal)
+    {
+        // Routing and wires.
+        "GoToStatement", "GoToLabel", "Reroute`1", "Return", "Finish", "Dummy", "ForLoop",
+        "ForEach`1", "MacroNodeWrapper", "SimplexNodeWrapper`1", "ReflectedMethodNodeWrapper",
+        "ReflectedFieldNodeWrapper", "SetRerouteValue`1", "GetRerouteValueNode",
+        // Blackboard plumbing.
+        "SetVariable`1", "GetVariable`1", "GenerateSeedNode",
+        // Value readers whose result a condition or an effect already reports.
+        "GetCharacterNode", "GetCharacterObject", "GetDateTime", "GetBountyTowardsNode",
+        // Graph entry events. The node the event starts becomes the entry node.
+        "CustomFunctionEvent", "CustomFunctionCall", "OnDialogAddToNPC", "OnQuestEventNode",
+        "OnQuestStateChange", "OnReadNoteNode", "OnEnterQuestLocation",
+        "OnCountedCharacterGroupDeath",
+        // Presentation and timing the compendium does not publish.
+        "WaitTimeNode", "WaitUnscaledTime", "WaitUntilDateTimeNode", "PlayAnimationNode",
+        "OverrideDialogFocusNode", "OverrideDialogFocusLocationNode", "ClearSpeechNode",
+        "SetDialogArgumentNode", "DevNoteNode", "ToDoNode", "FilterBarkAssetNode",
+    };
+
+    private static readonly Dictionary<string, string> RoleByType = new(StringComparer.Ordinal)
+    {
+        ["SpeakFlowNode"] = DialogueRoles.Speech,
+        ["GreetingFlowNode"] = DialogueRoles.Speech,
+        ["ShowMessageNode"] = DialogueRoles.Speech,
+        ["ShowGenericMessageNode"] = DialogueRoles.Speech,
+        ["TopicFlowNode"] = DialogueRoles.Choice,
+        ["GoodbyeFlowNode"] = DialogueRoles.Choice,
+        ["MultiTopicFlowNode"] = DialogueRoles.Choice,
+        ["MultipleChoiceFlowNode"] = DialogueRoles.Choice,
+        ["GoToLastMultipleChoice"] = DialogueRoles.Jump,
+        ["FinishDialogFlowNode"] = DialogueRoles.End,
+        ["BranchRelationshipNode"] = DialogueRoles.Branch,
+        ["CharacterGroupDialogBranchNode"] = DialogueRoles.Branch,
+        ["MultiBranchNode"] = DialogueRoles.Branch,
+        ["SwitchBool"] = DialogueRoles.Branch,
+        ["SwitchConditionTask"] = DialogueRoles.Branch,
+        ["SwitchSeededRandom"] = DialogueRoles.Branch,
+        ["Random"] = DialogueRoles.Branch,
+        ["SingleBranchQuestStateNode"] = DialogueRoles.Branch,
+        ["SingleBranchQuestPhaseNode"] = DialogueRoles.Branch,
+        ["MultiANDNode"] = DialogueRoles.Condition,
+        ["TaskCondition"] = DialogueRoles.Condition,
+        ["FactionCheck"] = DialogueRoles.Condition,
+        ["RaceCheck"] = DialogueRoles.Condition,
+        ["RelationshipCheck"] = DialogueRoles.Condition,
+        ["CheckQuestVariable"] = DialogueRoles.Condition,
+        ["CheckQuestStateNode"] = DialogueRoles.Condition,
+        ["CheckQuestPhaseNode"] = DialogueRoles.Condition,
+        ["CheckQuestObjectiveStateNode"] = DialogueRoles.Condition,
+        ["CheckPackageDialogFlagNode"] = DialogueRoles.Condition,
+        ["CheckIsDetected"] = DialogueRoles.Condition,
+        ["QuestLocationCheck"] = DialogueRoles.Condition,
+        ["DiscoveredLocationCheck"] = DialogueRoles.Condition,
+        ["ContainsItemNode"] = DialogueRoles.Condition,
+        ["HasInteractedWithNode"] = DialogueRoles.Condition,
+        ["IsDeadNode"] = DialogueRoles.Condition,
+        ["IsNullNode"] = DialogueRoles.Condition,
+        ["PresetHasGoldNode"] = DialogueRoles.Condition,
+        ["SingleUseNode"] = DialogueRoles.Condition,
+        ["XPNode"] = DialogueRoles.Effect,
+        ["ModifyMoneyNode"] = DialogueRoles.Effect,
+        ["AddItemListNode"] = DialogueRoles.Effect,
+        ["SetQuestVariable"] = DialogueRoles.Effect,
+        ["SetQuestStateNode"] = DialogueRoles.Effect,
+        ["SetQuestPhaseNode"] = DialogueRoles.Effect,
+        ["SetQuestObjectiveStateNode"] = DialogueRoles.Effect,
+        ["SetRewardSetEnabledNode"] = DialogueRoles.Effect,
+        ["TriggerQuestEventNode"] = DialogueRoles.Effect,
+        ["TriggerSteamAchievementNode"] = DialogueRoles.Effect,
+        ["ModifyRelationshipWith"] = DialogueRoles.Effect,
+        ["ModifyFactionRelationshipWith"] = DialogueRoles.Effect,
+        ["ModifyInterfactionFactionRelationship"] = DialogueRoles.Effect,
+        ["TeleportCharacterToLocationNode"] = DialogueRoles.Effect,
+        ["TeleportCharacterNode"] = DialogueRoles.Effect,
+        ["TeleportToPreviousPointCharacterNode"] = DialogueRoles.Effect,
+        ["CloseAndStartCombat"] = DialogueRoles.Effect,
+        ["DeleteCharacterNode"] = DialogueRoles.Effect,
+        ["DespawnNPCNode"] = DialogueRoles.Effect,
+        ["SendToPrisonNode"] = DialogueRoles.Effect,
+        ["AddLocationMapMarker"] = DialogueRoles.Effect,
+        ["AddQuestMarker"] = DialogueRoles.Effect,
+        ["RemoveQuestMarker"] = DialogueRoles.Effect,
+        ["AddPackageNode"] = DialogueRoles.Effect,
+        ["RemovePackageNode"] = DialogueRoles.Effect,
+        ["AddDialogMemberNode"] = DialogueRoles.Effect,
+        ["MerchantDialogFlowNode"] = DialogueRoles.Effect,
+        ["NPCRepairMenuNode"] = DialogueRoles.Effect,
+        ["OpenTrainUINode"] = DialogueRoles.Effect,
+    };
+
+    /// <summary>The outcome each effect type states, in the words a reader needs.</summary>
+    private static readonly Dictionary<string, string> EffectKindByType = new(StringComparer.Ordinal)
+    {
+        ["XPNode"] = "experience",
+        ["ModifyMoneyNode"] = "money",
+        ["AddItemListNode"] = "item",
+        ["SetQuestVariable"] = "quest-variable",
+        ["SetQuestStateNode"] = "quest-state",
+        ["SetQuestPhaseNode"] = "quest-phase",
+        ["SetQuestObjectiveStateNode"] = "quest-objective",
+        ["SetRewardSetEnabledNode"] = "quest-reward-set",
+        ["TriggerQuestEventNode"] = "quest-event",
+        ["TriggerSteamAchievementNode"] = "achievement",
+        ["ModifyRelationshipWith"] = "character-relationship",
+        ["ModifyFactionRelationshipWith"] = "faction-relationship",
+        ["ModifyInterfactionFactionRelationship"] = "faction-relationship",
+        ["TeleportCharacterToLocationNode"] = "teleport",
+        ["TeleportCharacterNode"] = "teleport",
+        ["TeleportToPreviousPointCharacterNode"] = "teleport",
+        ["CloseAndStartCombat"] = "combat-start",
+        ["DeleteCharacterNode"] = "character-death",
+        ["DespawnNPCNode"] = "character-despawn",
+        ["SendToPrisonNode"] = "imprisonment",
+        ["AddLocationMapMarker"] = "map-marker",
+        ["AddQuestMarker"] = "map-marker",
+        ["RemoveQuestMarker"] = "map-marker",
+        ["AddPackageNode"] = "package",
+        ["RemovePackageNode"] = "package",
+        ["AddDialogMemberNode"] = "dialogue-member",
+        ["MerchantDialogFlowNode"] = "merchant",
+        ["NPCRepairMenuNode"] = "repair",
+        ["OpenTrainUINode"] = "training",
+    };
+
+    /// <summary>What a condition type reads, in the words a reader needs.</summary>
+    private static readonly Dictionary<string, string> ConditionKindByType = new(StringComparer.Ordinal)
+    {
+        ["FactionCheck"] = "faction",
+        ["RaceCheck"] = "race",
+        ["RelationshipCheck"] = "character-relationship",
+        ["CheckQuestVariable"] = "quest-variable",
+        ["CheckQuestStateNode"] = "quest-state",
+        ["CheckQuestPhaseNode"] = "quest-phase",
+        ["CheckQuestObjectiveStateNode"] = "quest-objective",
+        ["CheckPackageDialogFlagNode"] = "package-flag",
+        ["CheckIsDetected"] = "detection",
+        ["QuestLocationCheck"] = "quest-location",
+        ["DiscoveredLocationCheck"] = "location-discovered",
+        ["ContainsItemNode"] = "item-held",
+        ["HasInteractedWithNode"] = "already-spoken",
+        ["IsDeadNode"] = "death",
+        ["SingleUseNode"] = "once",
+    };
+
+    public static bool IsControl(string authoredType) => ControlTypes.Contains(authoredType);
+
+    public static string RoleOf(string authoredType) =>
+        RoleByType.TryGetValue(authoredType, out var role) ? role : DialogueRoles.Unmodelled;
+
+    /// <summary>Reads the payload of one node, whatever its role.</summary>
+    public static DialogueNodeSnapshot Read(Node node)
+    {
+        var authoredType = node.GetType().Name;
+        var snapshot = new DialogueNodeSnapshot
+        {
+            Id = node.ID,
+            AuthoredType = authoredType,
+            Role = RoleOf(authoredType),
+        };
+
+        switch (snapshot.Role)
+        {
+            case DialogueRoles.Speech:
+                ReadSpeech(node, snapshot);
+                break;
+            case DialogueRoles.Choice:
+                ReadChoice(node, authoredType, snapshot);
+                break;
+            case DialogueRoles.Condition:
+                snapshot.Gate = ReadCondition(node, authoredType);
+                break;
+            case DialogueRoles.Branch:
+                snapshot.Gate = ReadCondition(node, authoredType);
+                break;
+            case DialogueRoles.Effect:
+                snapshot.Effects.Add(ReadEffect(node, authoredType));
+                break;
+        }
+
+        return snapshot;
+    }
+
+    private static void ReadSpeech(Node node, DialogueNodeSnapshot snapshot)
+    {
+        AddStatement(snapshot, GraphFields.Read<Statement>(node, "statement"));
+        var others = GraphFields.Read<List<Statement>>(node, "otherStatements");
+        if (others != null)
+        {
+            foreach (var statement in others) AddStatement(snapshot, statement);
+        }
+
+        snapshot.SingleScreen = GraphFields.ReadBool(node, "singleScreen");
+        if (GraphFields.TryRead<int>(node, "importance", out var importance))
+        {
+            snapshot.Importance = importance;
+        }
+
+        // A greeting is an opener the game chooses between, so its own gate belongs to it.
+        snapshot.Gate = ReadTaskCondition(node);
+    }
+
+    private static void ReadChoice(Node node, string authoredType, DialogueNodeSnapshot snapshot)
+    {
+        if (GraphFields.TryRead<int>(node, "importance", out var importance))
+        {
+            snapshot.Importance = importance;
+        }
+
+        var choices = GraphFields.Read<List<Choice>>(node, "availableChoices")
+            ?? GraphFields.Read<List<Choice>>(node, "choices");
+        if (choices != null)
+        {
+            // The game names each option's output port after the option's id, or after its index when
+            // it has none, which is how an edge finds the option it leaves from.
+            for (var index = 0; index < choices.Count; index++)
+            {
+                var choice = choices[index];
+                if (choice == null) continue;
+                var port = (choice.id != -1 ? choice.id : index).ToString();
+                snapshot.Options.Add(new DialogueOptionSnapshot
+                {
+                    Port = port,
+                    Text = choice.statement?.text ?? "",
+                    Gate = choice.enableCheck ? ReadChoiceCheck(choice.choiceCheck, authoredType) : null,
+                });
+            }
+
+            if (GraphFields.ReadBool(node, "enableNpcSpeak"))
+            {
+                AddStatement(snapshot, GraphFields.Read<Statement>(node, "npcSpeakStatement"));
+            }
+
+            return;
+        }
+
+        // A topic is one option on its own node, and its output is the node's single flow output.
+        var text = GraphFields.Read<Statement>(node, "statement")?.text ?? "";
+        var enableCheck = GraphFields.ReadBool(node, "enableCheck");
+        var check = GraphFields.Read<ChoiceCheck>(node, "check");
+        snapshot.Options.Add(new DialogueOptionSnapshot
+        {
+            Port = "",
+            Text = text,
+            Gate = enableCheck ? ReadChoiceCheck(check, authoredType) : null,
+        });
+        snapshot.Gate = ReadTaskCondition(node);
+    }
+
+    private static void AddStatement(DialogueNodeSnapshot snapshot, Statement? statement)
+    {
+        var text = statement?.text;
+        if (string.IsNullOrEmpty(text)) return;
+        snapshot.Statements.Add(new DialogueStatementSnapshot
+        {
+            ScreenOrdinal = snapshot.Statements.Count,
+            Text = text!,
+        });
+    }
+
+    /// <summary>The gate a stat, race, faction or relationship check on an option declares.</summary>
+    private static DialogueConditionSnapshot? ReadChoiceCheck(ChoiceCheck? check, string authoredType)
+    {
+        if (check == null) return null;
+        var condition = new DialogueConditionSnapshot
+        {
+            AuthoredType = authoredType,
+            Kind = check.category switch
+            {
+                ChoiceCheck.ChoiceCheckCategory.StatCheck => "stat-check",
+                ChoiceCheck.ChoiceCheckCategory.RaceCheck => "race",
+                ChoiceCheck.ChoiceCheckCategory.TraitCheck => "trait",
+                ChoiceCheck.ChoiceCheckCategory.FactionCheck => "faction",
+                ChoiceCheck.ChoiceCheckCategory.RelationshipCheck => "character-relationship",
+                ChoiceCheck.ChoiceCheckCategory.FactionRelationshipCheck => "faction-relationship",
+                _ => "unread",
+            },
+            Compare = check.comparisonOperator.ToString(),
+        };
+
+        switch (check.category)
+        {
+            case ChoiceCheck.ChoiceCheckCategory.StatCheck:
+                condition.Value = check.statCheckDifficulty.ToString();
+                AddSubject(condition, check.statCheck, "ChoiceCheck.statCheck");
+                break;
+            case ChoiceCheck.ChoiceCheckCategory.RaceCheck:
+                condition.Value = check.raceCheck != null ? check.raceCheck.name : null;
+                AddSubject(condition, check.raceCheck, "ChoiceCheck.raceCheck");
+                break;
+            case ChoiceCheck.ChoiceCheckCategory.RelationshipCheck:
+            case ChoiceCheck.ChoiceCheckCategory.FactionRelationshipCheck:
+                condition.Value = check.relationshipCheck.ToString();
+                break;
+            default:
+                condition.Value = check.customValue.ToString();
+                break;
+        }
+
+        return condition;
+    }
+
+    /// <summary>The gate a node inherits from `DialogConditionTaskFlowNode`.</summary>
+    private static DialogueConditionSnapshot? ReadTaskCondition(Node node)
+    {
+        var task = GraphFields.Read<ConditionTask>(node, "condition");
+        if (task == null) return null;
+        return new DialogueConditionSnapshot
+        {
+            Kind = ConditionKindByType.TryGetValue(task.GetType().Name, out var kind) ? kind : "unread",
+            AuthoredType = task.GetType().Name,
+        };
+    }
+
+    private static DialogueConditionSnapshot ReadCondition(Node node, string authoredType)
+    {
+        var condition = new DialogueConditionSnapshot
+        {
+            AuthoredType = authoredType,
+            Kind = ConditionKindByType.TryGetValue(authoredType, out var kind) ? kind : "unread",
+            Invert = GraphFields.ReadBool(node, "invert"),
+            Compare = GraphFields.ReadEnumName(node, "compareMethod")
+                ?? GraphFields.ReadEnumName(node, "comparisonOperator"),
+        };
+
+        switch (authoredType)
+        {
+            case "FactionCheck":
+                AddSubjects(condition, GraphFields.Read<List<Ardenfall.Faction>>(node, "factionGroups"), "FactionCheck.factionGroups");
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "character"), "FactionCheck.character"));
+                break;
+            case "RaceCheck":
+                AddSubjects(condition, GraphFields.Read<List<RaceGroup>>(node, "raceGroups"), "RaceCheck.raceGroups");
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "character"), "RaceCheck.character"));
+                break;
+            case "RelationshipCheck":
+            case "BranchRelationshipNode":
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "sourceCharacter"), $"{authoredType}.sourceCharacter"));
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "targetCharacter"), $"{authoredType}.targetCharacter"));
+                break;
+            case "CheckQuestVariable":
+            case "CheckQuestStateNode":
+            case "CheckQuestPhaseNode":
+            case "CheckQuestObjectiveStateNode":
+            case "QuestLocationCheck":
+                AddQuestSubject(condition, node, authoredType);
+                break;
+            case "HasInteractedWithNode":
+            case "IsDeadNode":
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "characterReference"), $"{authoredType}.characterReference"));
+                break;
+            case "ContainsItemNode":
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "character"), "ContainsItemNode.character"));
+                break;
+        }
+
+        return condition;
+    }
+
+    private static DialogueEffectSnapshot ReadEffect(Node node, string authoredType)
+    {
+        var effect = new DialogueEffectSnapshot
+        {
+            AuthoredType = authoredType,
+            Kind = EffectKindByType.TryGetValue(authoredType, out var kind) ? kind : "unread",
+        };
+
+        switch (authoredType)
+        {
+            case "XPNode":
+                effect.AmountLabel = GraphFields.ReadEnumName(node, "amount");
+                effect.Amount = ReadBlackboardInt(node, "addAmount");
+                break;
+            case "ModifyMoneyNode":
+                effect.Amount = ReadBlackboardInt(node, "addAmount");
+                if (GraphFields.ReadBool(node, "invertCost") && effect.Amount.HasValue)
+                {
+                    effect.Amount = -effect.Amount.Value;
+                }
+
+                break;
+            case "AddItemListNode":
+                if (GraphFields.ReadBool(node, "isSingleItem"))
+                {
+                    effect.Amount = GraphFields.ReadInt(node, "singleItemCount");
+                    effect.Target = DialogueRefs.Asset(GraphFields.Read<UnityObject>(node, "singleItem"), "AddItemListNode.singleItem");
+                }
+                else
+                {
+                    effect.Target = DialogueRefs.Asset(GraphFields.Read<UnityObject>(node, "itemList"), "AddItemListNode.itemList");
+                }
+
+                break;
+            case "SetQuestStateNode":
+                effect.AmountLabel = GraphFields.ReadEnumName(node, "state");
+                effect.Target = DialogueRefs.Quest(GraphFields.Read<object>(node, "quest"), "SetQuestStateNode.quest");
+                break;
+            case "SetQuestObjectiveStateNode":
+                effect.AmountLabel = GraphFields.ReadEnumName(node, "state");
+                effect.Target = DialogueRefs.Quest(GraphFields.Read<object>(node, "objectiveReference"), "SetQuestObjectiveStateNode.objectiveReference");
+                break;
+            case "SetQuestPhaseNode":
+                effect.Target = DialogueRefs.Quest(GraphFields.Read<object>(node, "phase"), "SetQuestPhaseNode.phase");
+                break;
+            case "SetQuestVariable":
+                effect.Target = DialogueRefs.Quest(GraphFields.Read<object>(node, "customVariableQuest"), "SetQuestVariable.customVariableQuest");
+                break;
+            case "TriggerQuestEventNode":
+                effect.Target = DialogueRefs.Quest(GraphFields.Read<object>(node, "questEvent"), "TriggerQuestEventNode.questEvent");
+                break;
+            case "ModifyRelationshipWith":
+                effect.Participant = DialogueRefs.Participant(GraphFields.Read<object>(node, "targetCharacter"), "ModifyRelationshipWith.targetCharacter");
+                break;
+            case "ModifyFactionRelationshipWith":
+                effect.Target = DialogueRefs.Asset(GraphFields.Read<UnityObject>(node, "faction"), "ModifyFactionRelationshipWith.faction");
+                effect.Participant = DialogueRefs.Participant(GraphFields.Read<object>(node, "targetCharacter"), "ModifyFactionRelationshipWith.targetCharacter");
+                break;
+            case "TeleportCharacterToLocationNode":
+                effect.Target = DialogueRefs.Quest(GraphFields.Read<object>(node, "location"), "TeleportCharacterToLocationNode.location");
+                effect.Participant = DialogueRefs.Participant(GraphFields.Read<object>(node, "character"), "TeleportCharacterToLocationNode.character");
+                break;
+            case "DeleteCharacterNode":
+            case "DespawnNPCNode":
+                effect.Participant = DialogueRefs.Participant(GraphFields.Read<object>(node, "character"), $"{authoredType}.character");
+                break;
+        }
+
+        return effect;
+    }
+
+    private static void AddQuestSubject(DialogueConditionSnapshot condition, Node node, string authoredType)
+    {
+        var quest = DialogueRefs.Quest(GraphFields.Read<object>(node, "quest"), $"{authoredType}.quest")
+            ?? DialogueRefs.Quest(GraphFields.Read<object>(node, "customVariableQuest"), $"{authoredType}.customVariableQuest")
+            ?? DialogueRefs.Quest(GraphFields.Read<object>(node, "variableRef"), $"{authoredType}.variableRef");
+        if (quest != null) condition.Subjects.Add(quest);
+    }
+
+    private static void AddSubject(DialogueConditionSnapshot condition, UnityObject? asset, string source)
+    {
+        var reference = DialogueRefs.Asset(asset, source);
+        if (reference != null) condition.Subjects.Add(reference);
+    }
+
+    private static void AddSubjects<T>(
+        DialogueConditionSnapshot condition,
+        List<T>? assets,
+        string source)
+        where T : UnityObject
+    {
+        if (assets == null) return;
+        foreach (var asset in assets.Where(asset => asset != null))
+        {
+            AddSubject(condition, asset, source);
+        }
+    }
+
+    /// <summary>A `BBParameter&lt;int&gt;` holds its authored number in a public value property.</summary>
+    private static int? ReadBlackboardInt(Node node, string field)
+    {
+        var parameter = GraphFields.Read<object>(node, field);
+        if (parameter == null) return null;
+        var property = parameter.GetType().GetProperty("value");
+        return property?.GetValue(parameter) is int value ? value : null;
+    }
+}

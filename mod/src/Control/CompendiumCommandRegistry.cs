@@ -73,7 +73,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
         Register(new Handlers.WorldWalkBatchCommand(runs, scenes, walk.WalkAsync, walk.EntityIds));
         Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs, items));
-        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, potionRecipes: potionRecipes, enchantments: enchantments, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals, factions: factions, npcs: npcs, quests: quests, characterRaces: characterRaces, nameSets: nameSets, gameIdentity: gameIdentity, pluginIdentity: pluginIdentity));
+        Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, potionRecipes: potionRecipes, enchantments: enchantments, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals, factions: factions, npcs: npcs, quests: quests, characterRaces: characterRaces, nameSets: nameSets, gameIdentity: gameIdentity, pluginIdentity: pluginIdentity, dialogue: new Entities.Dialogue.LoadedDialogueAssetSource()));
         Register(new Handlers.RunDiscardCommand(runs, new IExtractionCache[]
         {
             items,

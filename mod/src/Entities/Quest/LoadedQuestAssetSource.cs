@@ -79,15 +79,14 @@ public sealed class LoadedQuestAssetSource : IQuestAssetSource
             if (questObject is CharacterQuestObject character)
             {
                 var characterRef = RecordReferenceSnapshot(character.characterRecord?.record, out var characterRefResolved);
-                var dialogue = WalkDialogue(character, out var dialogueGraphWalked);
+                var dialogueIds = DialogueIdsOf(character);
                 characters.Add(new QuestCharacterAsset(
                     ObjectGameId: character.objectID,
                     ObjectName: objectName,
                     Category: NullIfEmpty(character.category),
                     CharacterRef: characterRef,
                     CharacterRefResolved: characterRefResolved,
-                    Dialogue: dialogue,
-                    DialogueGraphWalked: dialogueGraphWalked));
+                    DialogueIds: dialogueIds));
             }
             else if (questObject is JournalQuestObject journal)
             {
@@ -274,34 +273,21 @@ public sealed class LoadedQuestAssetSource : IQuestAssetSource
     }
 
     /// <summary>
-    /// Reads the authored dialogue a quest attaches to one of its character objects.
+    /// Names the conversations a quest's character object holds.
     /// </summary>
     /// <remarks>
-    /// This reads one dialogue holder: <c>CharacterQuestObject.dialogGraph.flowGraph</c>.
-    ///
-    /// It is not the only authored dialogue in a build. <c>SimpleDialogInteractable</c> holds the
-    /// dialogue a scene places, which the cell walk harvests as its own family.
-    /// <c>CharacterData.characterGraphs</c> holds containers whose graph may be a
-    /// <c>DialogFlowGraph</c>, and <c>CharacterGroupQuestObject</c> and
-    /// <c>SimpleDialogSceneQuestObject</c> each hold a graph of their own. This walk covers none of
-    /// them, so a line authored there reaches no reader.
-    ///
-    /// How many lines each holder carries is a property of the build, so it belongs in the export's
-    /// own counts rather than in this comment.
+    /// The quest holds a graph reference and the `dialogue` family publishes the conversation, so the
+    /// quest carries an id rather than a copy of the prose. A quest reaches one holder,
+    /// <c>CharacterQuestObject.dialogGraph</c>; <c>CharacterGroupQuestObject</c> and
+    /// <c>SimpleDialogSceneQuestObject</c> hold graphs of their own, which the dialogue asset source
+    /// reads from the same quest objects.
     /// </remarks>
-    private static IReadOnlyList<QuestCharacterDialogueAsset> WalkDialogue(
-        CharacterQuestObject character,
-        out bool walked)
+    private static IReadOnlyList<string> DialogueIdsOf(CharacterQuestObject character)
     {
         var graph = character.dialogGraph?.flowGraph?.graph as DialogFlowGraph;
-        return DialogueGraphWalk
-            .Walk(graph, out walked)
-            .Select(line => new QuestCharacterDialogueAsset(
-                line.LineOrdinal,
-                line.Kind,
-                line.Text,
-                line.Importance))
-            .ToList();
+        return graph == null
+            ? Array.Empty<string>()
+            : new[] { DialogueIds.Conversation(graph.name) };
     }
 
     private static SnapshotRef? RecordReferenceSnapshot(RecordReference? reference)

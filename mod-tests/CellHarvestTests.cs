@@ -61,13 +61,14 @@ public sealed class CellHarvestTests
     public void NamesOneSnapshotFilePerPublishedFamily()
     {
         Assert.Equal(
-            new[] { "placed-plant", "placed-item", "placed-container", "world-spawn", "scene-dialogue" },
+            new[] { "placed-plant", "placed-item", "placed-container", "world-spawn", "scene-dialogue", "dialogue" },
             SceneFamilies.EntityIds.ToArray());
         Assert.Equal("placed-plants.json", SceneFamilies.SnapshotFile("placed-plant"));
         Assert.Equal("placed-items.json", SceneFamilies.SnapshotFile("placed-item"));
         Assert.Equal("placed-containers.json", SceneFamilies.SnapshotFile("placed-container"));
         Assert.Equal("world-spawns.json", SceneFamilies.SnapshotFile("world-spawn"));
         Assert.Equal("scene-dialogue.json", SceneFamilies.SnapshotFile("scene-dialogue"));
+        Assert.Equal("dialogues.json", SceneFamilies.SnapshotFile("dialogue"));
     }
 
     private static SceneRow Row(string id) => new(id, new PlacedPlantFields { Id = id });

@@ -7,20 +7,7 @@ using Newtonsoft.Json;
 
 namespace ArdenfallCompendium.Entities.World;
 
-/// <summary>One authored line a dialogue graph holds.</summary>
-public sealed class SceneDialogueLineFields
-{
-    [JsonProperty("lineOrdinal")] public int LineOrdinal { get; set; }
-
-    /// <summary>`greeting` is spoken; `topic` is something a reader can ask about.</summary>
-    [JsonProperty("kind")] public string Kind { get; set; } = "";
-
-    [JsonProperty("text")] public string Text { get; set; } = "";
-
-    [JsonProperty("importance")] public int Importance { get; set; }
-}
-
-/// <summary>One place a reader can start a dialogue.</summary>
+/// <summary>One place a reader can start a conversation.</summary>
 public sealed class SceneDialoguePlacementFields
 {
     [JsonProperty("cell")] public string Cell { get; set; } = "";
@@ -36,14 +23,15 @@ public sealed class SceneDialoguePlacementFields
     [JsonProperty("interactionText")] public string? InteractionText { get; set; }
 }
 
-/// <summary>One authored dialogue a scene places, with every placement that starts it.</summary>
+/// <summary>Where a scene lets a reader start one conversation.</summary>
 public sealed class SceneDialogueFields
 {
     [JsonProperty("id")] public string Id { get; set; } = "";
 
-    [JsonProperty("graphName")] public string GraphName { get; set; } = "";
+    /// <summary>The conversation these placements start.</summary>
+    [JsonProperty("dialogueId")] public string DialogueId { get; set; } = "";
 
-    [JsonProperty("lines")] public List<SceneDialogueLineFields> Lines { get; set; } = new();
+    [JsonProperty("graphName")] public string GraphName { get; set; } = "";
 
     [JsonProperty("placements")]
     public List<SceneDialoguePlacementFields> Placements { get; set; } =
@@ -54,17 +42,16 @@ public sealed class SceneDialogueFields
 /// Publishes the dialogue a scene places: the graphs held by `SimpleDialogInteractable`.
 /// </summary>
 /// <remarks>
-/// The graph owns the identity, not the placement. A `SimpleDialogInteractable` is an ordinary
-/// scene prop with a dialogue component, and 8 of this build's 27 placements carry no
-/// `GuidComponent` on themselves or any ancestor, including both signs whose graph holds the demo
-/// teleporter conversation. Keying on the placement dropped exactly those, and it split one
-/// conversation into a page per copy.
+/// The family writes two rows for one object. The conversation goes to the `dialogue` family, which
+/// every holder shares, and the placements stay here, because a placement is a point on a map and a
+/// conversation is not.
 ///
-/// Lines are read through <see cref="DialogueGraphWalk"/>, the traversal quest dialogue uses, so a
-/// reader sees one dialogue contract whichever object owns the graph.
+/// The cell walk is one producer of conversations. A character definition and a quest reach graphs of
+/// their own, which the extraction reads from the loaded assets, so the canonicaliser merges rows
+/// that share a conversation id.
 ///
 /// An interactable that references no graph publishes no dialogue, because it carries no authored
-/// line. It is counted in a diagnostic, so the absence is measured rather than silent.
+/// line. A diagnostic counts it, so the absence is measured rather than silent.
 /// </remarks>
 public sealed class SceneDialogueFamily : ISceneFamily
 {
@@ -74,13 +61,13 @@ public sealed class SceneDialogueFamily : ISceneFamily
 
     public void Harvest(CellScene cell, string? map, CellHarvest harvest)
     {
-        var rows = harvest.RowsFor(EntityId);
+        var placementRows = harvest.RowsFor(EntityId);
+        var dialogueRows = harvest.RowsFor("dialogue");
         var speakers = SceneObjects.InCell<SimpleDialogInteractable>(cell);
         harvest.ObjectsSeen += speakers.Count;
 
-        // One row per graph within this cell. A graph placed in several cells yields a row per
-        // batch, which the canonicaliser merges on the shared id.
-        var byGraph = new Dictionary<string, SceneRow>(StringComparer.Ordinal);
+        var placementsByGraph = new Dictionary<string, SceneRow>(StringComparer.Ordinal);
+        var conversationsByGraph = new Dictionary<string, SceneRow>(StringComparer.Ordinal);
         var withoutGraph = 0;
         var nameless = 0;
 
@@ -101,17 +88,19 @@ public sealed class SceneDialogueFamily : ISceneFamily
 
             foreach (var graph in graphs)
             {
-                var id = DialogueId(graph.name);
-                if (!byGraph.TryGetValue(id, out var row))
+                var id = DialogueIds.Conversation(graph.name);
+                AddConversation(conversationsByGraph, dialogueRows, harvest, graph, speakerName);
+
+                if (!placementsByGraph.TryGetValue(id, out var row))
                 {
                     row = new SceneRow(id, new SceneDialogueFields
                     {
                         Id = id,
+                        DialogueId = id,
                         GraphName = graph.name,
-                        Lines = Lines(graph),
                     });
-                    byGraph[id] = row;
-                    rows.Add(row);
+                    placementsByGraph[id] = row;
+                    placementRows.Add(row);
                 }
 
                 ((SceneDialogueFields)row.Fields).Placements.Add(new SceneDialoguePlacementFields
@@ -145,15 +134,53 @@ public sealed class SceneDialogueFamily : ISceneFamily
             {
                 Severity = "diagnostic",
                 Code = "sceneDialogueSpeakerNameMissing",
-                Field = "dialogName",
+                Field = "speakerName",
                 Message =
                     $"{nameless} dialogue placement in cell '{cell.Name}' carries no authored dialogName.",
             });
         }
     }
 
-    /// <summary>An id that declares the mechanism that produced it, like the named assets do.</summary>
-    public static string DialogueId(string graphName) => $"named;dialog;{graphName}";
+    private static void AddConversation(
+        Dictionary<string, SceneRow> byGraph,
+        List<SceneRow> rows,
+        CellHarvest harvest,
+        DialogFlowGraph graph,
+        string? speakerName)
+    {
+        var id = DialogueIds.Conversation(graph.name);
+        if (byGraph.TryGetValue(id, out var existing))
+        {
+            AddHolder((DialogueFields)existing.Fields, speakerName);
+            return;
+        }
+
+        var walked = DialogueGraphWalk.Walk(graph, out _);
+        var fields = new DialogueFields
+        {
+            Id = id,
+            GraphName = graph.name,
+            Nodes = walked.Nodes,
+            Edges = walked.Edges,
+            EntryNodes = walked.EntryNodes,
+        };
+        AddHolder(fields, speakerName);
+
+        var row = new SceneRow(id, fields);
+        row.Diagnostics.AddRange(walked.Diagnostics);
+        byGraph[id] = row;
+        rows.Add(row);
+        harvest.Diagnostics.AddRange(walked.Diagnostics);
+    }
+
+    private static void AddHolder(DialogueFields fields, string? speakerName)
+    {
+        fields.Holders.Add(new DialogueHolderFields
+        {
+            Kind = "scene-placement",
+            Label = speakerName,
+        });
+    }
 
     private static List<DialogFlowGraph> GraphsOf(SimpleDialogInteractable speaker)
     {
@@ -166,22 +193,5 @@ public sealed class SceneDialogueFamily : ISceneFamily
         }
 
         return graphs;
-    }
-
-    private static List<SceneDialogueLineFields> Lines(DialogFlowGraph graph)
-    {
-        var lines = new List<SceneDialogueLineFields>();
-        foreach (var line in DialogueGraphWalk.Walk(graph, out _))
-        {
-            lines.Add(new SceneDialogueLineFields
-            {
-                LineOrdinal = line.LineOrdinal,
-                Kind = line.Kind,
-                Text = line.Text,
-                Importance = line.Importance,
-            });
-        }
-
-        return lines;
     }
 }
