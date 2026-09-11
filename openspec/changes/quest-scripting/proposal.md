@@ -65,5 +65,5 @@ This change complies with all three rather than changing them.
 - `site/src/lib/components/`: quest, item and location sections that render authored triggers.
 - `fixtures/synthetic/snapshot`: an item grant, a location trigger, an achievement id, and an unmodelled
   node type.
-- `authored-dialogue` proposes the shared graph walk this change reuses. Sequence that change first.
+- `dialogue-flow` shipped the graph walk this change reuses, so no sequencing is left to arrange.
 - The Alpha build is unmeasured. Every count above describes the Demo.

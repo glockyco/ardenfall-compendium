@@ -3,7 +3,7 @@
 - [ ] 1.1 Add the trigger and effect DTOs to the quest snapshot: location-entry trigger,
       item-acquisition trigger, item grant, journal addition, quest-state effect, objective-state
       effect, phase effect, and achievement id.
-- [ ] 1.2 Walk `QuestData.flowGraph` with the shared graph walk from `authored-dialogue`, reading
+- [ ] 1.2 Walk `QuestData.flowGraph` with the shipped graph walk, `DialogueGraphWalk`, reading
       authored fields only.
 - [ ] 1.3 Resolve each subject through the existing reference mechanisms, and emit a missing reference
       with a reason when a subject does not resolve.

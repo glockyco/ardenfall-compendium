@@ -18,7 +18,7 @@ See `proposal.md` - Why for the measurements. Decompiled paths below are relativ
 
 **Goals:**
 
-- One graph walk, shared with `authored-dialogue`, that visits a graph's nodes and reports a census.
+- Reuse of the shipped graph walk, `mod/src/Entities/Dialogue/DialogueGraphWalk.cs`, over quest logic graphs.
 - Authored trigger and effect rows whose subjects resolve to existing entity references.
 - Item grants that reach item pages as inbound relationship edges.
 
@@ -38,6 +38,16 @@ A node's authored value is a serialised field. Evaluating a graph would need liv
 blackboard and a player, which an extraction pass does not have and must not invent. The dialogue walk
 already made this choice for `TopicFlowNode`, reading the authored `statement` rather than calling
 `GetTopicStatements`, and recorded why beside the code.
+
+### Take the walk that ships, and decide the edges separately
+
+`dialogue-flow` shipped the walk this change needs: it reads a graph's nodes into a closed role
+vocabulary through a name-keyed adapter table, contracts the routing nodes, separates the flow plane
+from the value plane, and counts every type it does not read. A quest logic graph is the same
+`FlowGraph` shape, so this change adds adapters rather than a second traversal.
+
+What it does not inherit is the presentation. A conversation publishes its edges because a reader
+follows a conversation; the decision below about a quest's node graph stands on its own.
 
 ### Model the node vocabulary, not the node graph
 
@@ -86,7 +96,7 @@ comment goes stale with the next build, and this repository already carried thre
 
 ## Migration Plan
 
-1. Land `authored-dialogue`, which introduces the shared graph walk.
+1. Reuse the graph walk `dialogue-flow` shipped, in `mod/src/Entities/Dialogue/DialogueGraphWalk.cs`.
 2. Add the trigger and effect DTOs and the walk over `QuestData.flowGraph`, with the census.
 3. Canonicalise the rows, then emit read models and register the predicates.
 4. Add fixtures for a grant, a trigger, an achievement id and an unmodelled node type.

@@ -14,12 +14,19 @@ reader learns the consequence in the place where the choice is made.
 The page MUST NOT present the nodes as a flat list, and MUST NOT imply an order the graph does not
 carry.
 
-#### Scenario: A conversation with openers and choices
+#### Scenario: A conversation with openers and topics
 
-- **WHEN** a reader opens a conversation with two openers and two choices
+- **WHEN** a reader opens a conversation with two openers and two topics
 - **THEN** the openers appear as alternatives, in authored priority order
-- **AND** each choice appears with the text the player reads
-- **AND** each choice carries its reply and its outcomes
+- **AND** the topics appear as what the player can raise, because the game offers every topic whose
+  gate passes rather than reaching them from an opener
+- **AND** each topic carries its reply and its outcomes
+
+#### Scenario: What happens after the conversation closes
+
+- **WHEN** a choice ends the conversation and then acts on the world
+- **THEN** the page states that the conversation ends
+- **AND** it states the outcome that follows, such as the destination a teleport moves the player to
 
 #### Scenario: A conversation with no choice
 

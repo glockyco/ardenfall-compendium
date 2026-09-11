@@ -8,12 +8,22 @@ gates each of those, and what a choice causes.
 ### Requirement: A conversation is the authored graph, not a line list
 
 Each dialogue graph MUST publish its nodes and the authored edges between them. A node MUST carry a
-role from the closed set `speech`, `choice`, `branch`, `condition`, `effect`, `jump`, `unmodelled`.
-An edge MUST carry its authored order and, when the source node names its outputs, the label of the
-output it leaves from.
+role from the closed set `speech`, `choice`, `branch`, `condition`, `effect`, `jump`, `end`,
+`unmodelled`. An edge MUST carry its authored order and, when the source node names its outputs, the
+label of the output it leaves from.
+
+A graph carries two planes of connection, and only one of them is the conversation. A flow
+connection moves the conversation on. A value connection feeds a node's input, which is where a gate
+arrives, so a check MUST attach to the node it gates rather than appear as a step.
 
 The published graph MUST NOT be reduced to a tree. 1,383 nodes in this build have more than one
 inbound edge, so a tree would duplicate or drop them.
+
+#### Scenario: A gate arrives on a value input
+
+- **WHEN** a check feeds an opener through a value connection
+- **THEN** the gate publishes on that opener
+- **AND** the check is not published as a step of the conversation
 
 #### Scenario: A graph is published with its edges
 
@@ -109,11 +119,18 @@ character death MUST each publish as their own kind.
 - **THEN** the node publishes as `unmodelled` with its authored type
 - **AND** the manifest counts it
 
-### Requirement: A conversation states which holder owns it
+### Requirement: Every authored conversation publishes, holder or not
 
-A conversation MUST be identified by its graph asset and MUST name every holder that reaches it:
-a character definition, a character module, a quest character object, a quest character group, a quest
-scene object, or a scene placement. A graph reached from several holders MUST publish once.
+The published population MUST be the authored dialogue graphs of the build, and a conversation MUST
+be identified by its graph asset. A conversation MUST name every holder that reaches it: a character
+definition, a character module, a quest character object, a quest character group, a quest scene
+object, a scene placement, or the quest the graph itself names. A graph reached from several holders
+MUST publish once.
+
+The runtime copies a graph per character that speaks it, and those copies are the same authored
+asset, so the population MUST exclude them. The game also attaches many graphs to a character at
+runtime, so a graph whose holder the extraction cannot read MUST still publish, and the count of
+those MUST reach the export.
 
 #### Scenario: Every holder is opened
 
@@ -121,6 +138,18 @@ scene object, or a scene placement. A graph reached from several holders MUST pu
 - **THEN** the manifest reports the conversations found per holder
 - **AND** the report covers character definitions, character modules, the three quest holders and
   scene placements
+
+#### Scenario: A conversation no holder names
+
+- **WHEN** an authored graph names no holder the extraction can read, currently 131 of 219
+- **THEN** the conversation still publishes with its script
+- **AND** a diagnostic counts them, so the gap is measured rather than hidden
+
+#### Scenario: Runtime copies are not conversations
+
+- **WHEN** a loaded world holds runtime copies of a graph
+- **THEN** one conversation publishes for the authored asset
+- **AND** no conversation is published per copy
 
 #### Scenario: One graph, several holders
 
