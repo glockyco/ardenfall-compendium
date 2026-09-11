@@ -54,6 +54,29 @@ Defines how extracted fields become canonical SQLite rows, generated read models
 - **AND** the site server validates the generated document before returning it
 - **AND** the rich-text component renders its translated nodes
 
+### Requirement: A runtime substitution publishes as data, not as markup
+
+Rich-text translation MUST publish a token the game substitutes at runtime as a typed node rather
+than as literal markup. A conditional token, which `Statement.NameReplace` reads as
+`<subject = value ? "a" : "b">`, MUST publish both alternatives and the state that chooses between
+them, and a page MUST render both.
+
+A brace token MUST publish as authored text when the build ships no tooltip dictionary, because
+`Statement.ApplyModifiers` substitutes no brace and the game renders it as authored. A diagnostic
+MUST NOT blame a dictionary the build does not carry.
+
+#### Scenario: A line that differs by the player
+
+- **WHEN** a statement carries a conditional token
+- **THEN** the document holds both alternatives, the subject and the comparison
+- **AND** the page shows both and names the state that chooses
+
+#### Scenario: A brace in authored prose
+
+- **WHEN** a statement carries a brace token and the build ships no tooltip codes
+- **THEN** the text publishes as authored
+- **AND** no diagnostic is recorded
+
 ### Requirement: Field labels follow game call-site meaning
 
 `pipeline/src/entities/spell/read-models.ts` MUST expose `statTypeRef` as the skill that scales a spell. It MUST emit the `scales_with` relationship rather than label the value as a spell school.

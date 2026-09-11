@@ -17,6 +17,10 @@
               {
                 "screenOrdinal": 0,
                 "text": "Welcome to the fixture harbour."
+              },
+              {
+                "screenOrdinal": 1,
+                "text": "Watch the tide, <player_gender = male ? \"boy\" : \"lass\">. {Jazamae} knows it well."
               }
             ],
             "singleScreen": false,

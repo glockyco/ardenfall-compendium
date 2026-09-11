@@ -39,6 +39,25 @@
   </span>
 {:else if node.type === "sprite"}
   <span class="text-muted-foreground rounded border px-1 text-[0.75em]">{node.name}</span>
+{:else if node.type === "conditionalText"}
+  <!--
+    The game substitutes one of the two authored sides from the player, the speaker or the world,
+    so a page that cannot know the save shows both and names the state that chooses.
+  -->
+  <span
+    class="decoration-dotted underline-offset-2"
+    title={`The game chooses by ${node.subject.replaceAll("_", " ")}${
+      node.compare === "notEquals" ? " (not) " : " "
+    }${node.value}`}
+  >
+    {#each node.whenTrue as child, index (`when-true-${index}`)}
+      <RichTextNode node={child} />
+    {/each}
+    <span class="text-muted-foreground"> / </span>
+    {#each node.whenFalse as child, index (`when-false-${index}`)}
+      <RichTextNode node={child} />
+    {/each}
+  </span>
 {:else if node.type === "termLink"}
   {#if node.targetRoutePath}
     <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- graph route paths are generated from the static read model -->

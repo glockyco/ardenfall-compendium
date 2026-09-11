@@ -140,7 +140,9 @@ describe("translateRichTextV1", () => {
       expect.objectContaining({ type: "color", token: "positive", color: "#6FCF6F" }),
     );
     expect(JSON.stringify(rich.nodes)).toContain("Stamina");
-    expect(translateRichTextV1("{missing_code}").diagnostics).toContainEqual(
+    expect(
+      translateRichTextV1("{missing_code}", { tooltipCodes: { stamina: "Stamina" } }).diagnostics,
+    ).toContainEqual(
       expect.objectContaining({ code: "unresolvedTooltipCode", severity: "diagnostic" }),
     );
   });
@@ -156,13 +158,41 @@ describe("translateRichTextV1", () => {
     expect(positional.diagnostics).not.toContainEqual(
       expect.objectContaining({ code: "unresolvedTooltipCode" }),
     );
-    const named = translateRichTextV1("the town of {viatiru}");
+    const named = translateRichTextV1("the town of {viatiru}", {
+      tooltipCodes: { stamina: "Stamina" },
+    });
     expect(named.diagnostics).toContainEqual(
       expect.objectContaining({ code: "unresolvedTooltipCode" }),
     );
     expect(named.diagnostics).not.toContainEqual(
       expect.objectContaining({ code: "unfilledTooltipVariable" }),
     );
+  });
+
+  it("keeps a brace literal when the build ships no tooltip dictionary", () => {
+    // `Statement.ApplyModifiers` substitutes `[name]` and `<condition?a:b>` and never a brace, so
+    // the game renders `{Jazamae}` as authored. A diagnostic here blamed an absent dictionary for
+    // 783 statements the game itself leaves alone.
+    const literal = translateRichTextV1("{Jazamae} is my lovely wife.");
+
+    expect(literal.diagnostics).toEqual([]);
+    expect(JSON.stringify(literal.nodes)).toContain("{Jazamae}");
+  });
+
+  it("publishes both sides of the game's conditional text", () => {
+    // `Statement.NameReplace` substitutes one side at runtime from the player, the speaker or the
+    // world. A page cannot know the save, so both sides and the deciding state are published.
+    const rich = translateRichTextV1('Come here, <player_gender = male ? "boy" : "lass">.');
+
+    expect(rich.diagnostics).toEqual([]);
+    expect(rich.nodes).toContainEqual({
+      type: "conditionalText",
+      subject: "player_gender",
+      compare: "equals",
+      value: "male",
+      whenTrue: [{ type: "text", text: "boy" }],
+      whenFalse: [{ type: "text", text: "lass" }],
+    });
   });
 
   it("resolves term links through the generated graph contract when a resolver is supplied", () => {

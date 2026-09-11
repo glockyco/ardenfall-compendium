@@ -16,6 +16,18 @@ export type RichTextNode =
   | { type: "strike"; children: RichTextNode[] }
   | { type: "color"; token: string | null; color: string | null; children: RichTextNode[] }
   | { type: "sprite"; name: string }
+  /**
+   * One of two authored alternatives, chosen at runtime from the player, the speaker or the world.
+   * `Statement.NameReplace` reads `<subject = value ? "a" : "b">` and substitutes one side.
+   */
+  | {
+      type: "conditionalText";
+      subject: string;
+      compare: "equals" | "notEquals";
+      value: string;
+      whenTrue: RichTextNode[];
+      whenFalse: RichTextNode[];
+    }
   | ({ type: "termLink"; termId: string; label: string } & Partial<TermResolution>);
 
 export type RichTextDiagnostic = {
@@ -99,6 +111,12 @@ export function translateRichTextV1(source: string, options: RichTextOptions = {
           `Tooltip variable '${key}' was never substituted, so the text carries a template token.`,
         );
         pushText(token);
+      } else if (Object.keys(options.tooltipCodes ?? {}).length === 0) {
+        // This build ships no tooltip codes at all, and a dialogue statement substitutes only
+        // `[name]` and `<condition?a:b]` tokens: `Statement.ApplyModifiers` never touches a brace.
+        // The game therefore renders `{Jazamae}` literally, so publishing it literally is faithful
+        // and blaming an absent dictionary produced 783 diagnostics about nothing.
+        pushText(token);
       } else {
         diagnostic(
           "unresolvedTooltipCode",
@@ -108,6 +126,12 @@ export function translateRichTextV1(source: string, options: RichTextOptions = {
       }
       continue;
     }
+    const conditional = translateConditionalText(token, options);
+    if (conditional) {
+      current().push(conditional);
+      continue;
+    }
+
     handleTag(token, stack, current, pushText, diagnostic, options);
   }
   pushText(source.slice(offset));
@@ -250,6 +274,31 @@ function normalizeAttribute(raw: string): string {
     return trimmed.slice(1, -1);
   }
   return trimmed;
+}
+
+/**
+ * The game's own conditional text, as both alternatives and the state that chooses between them.
+ *
+ * `Statement.NameReplace` substitutes `<player_gender = male ? "boy" : "lass">` at runtime from the
+ * player, the speaker or the world. A page cannot know which side a reader would see, so it shows
+ * both. Publishing the token as an unsupported tag put 79 statements of authored prose on the page
+ * as raw code.
+ */
+function translateConditionalText(token: string, options: RichTextOptions): RichTextNode | null {
+  const match =
+    /^<\s*([A-Za-z_][A-Za-z0-9_]*)\s*(!=|==|=)\s*"?([^"?]*?)"?\s*\?\s*"([\s\S]*)"\s*:\s*"([\s\S]*)"\s*>$/.exec(
+      token,
+    );
+  if (!match) return null;
+
+  return {
+    type: "conditionalText",
+    subject: match[1] ?? "",
+    compare: match[2] === "!=" ? "notEquals" : "equals",
+    value: (match[3] ?? "").trim(),
+    whenTrue: translateRichTextV1(match[4] ?? "", options).nodes,
+    whenFalse: translateRichTextV1(match[5] ?? "", options).nodes,
+  };
 }
 
 function translateTooltipColor(

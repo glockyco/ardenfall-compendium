@@ -112,6 +112,15 @@ export type RichTextNode =
   | { type: "color"; token: string | null; color: string | null; children: RichTextNode[] }
   | { type: "sprite"; name: string }
   | {
+      /** Two authored alternatives the game chooses between at runtime. */
+      type: "conditionalText";
+      subject: string;
+      compare: "equals" | "notEquals";
+      value: string;
+      whenTrue: RichTextNode[];
+      whenFalse: RichTextNode[];
+    }
+  | {
       type: "termLink";
       termId: string;
       label: string;

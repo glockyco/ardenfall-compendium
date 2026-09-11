@@ -131,6 +131,9 @@ function richTextPlainText(document: RichTextDocument): string {
     if (node.type === "lineBreak") return " ";
     if (node.type === "sprite") return node.name;
     if (node.type === "termLink") return node.label;
+    // Both authored sides belong in searchable text: a reader may look for either wording.
+    if (node.type === "conditionalText")
+      return `${node.whenTrue.map(visit).join("")} / ${node.whenFalse.map(visit).join("")}`;
     return node.children.map(visit).join("");
   };
   return document.nodes.map(visit).join("").replace(/\s+/g, " ").trim();

@@ -83,6 +83,17 @@ const isRichTextNode = (value: unknown): boolean => {
       (value.targetHasPage === undefined || typeof value.targetHasPage === "boolean")
     );
   }
+  if (value.type === "conditionalText") {
+    return (
+      typeof value.subject === "string" &&
+      (value.compare === "equals" || value.compare === "notEquals") &&
+      typeof value.value === "string" &&
+      Array.isArray(value.whenTrue) &&
+      value.whenTrue.every(isRichTextNode) &&
+      Array.isArray(value.whenFalse) &&
+      value.whenFalse.every(isRichTextNode)
+    );
+  }
   if (value.type === "color") {
     return (
       isNullableString(value.token) &&
