@@ -4,7 +4,7 @@
 
 An export SHALL name the game build and mod that produced it. An export SHALL fail when more than one instrumented game can answer.
 
-The current main game, whose Unity product is `Ardenfall`, is the only published game. The discontinued Demo is not a supported fallback. An export SHALL confirm the answering product before it writes entity data. The snapshot SHALL record that identity, and publication SHALL refuse a snapshot whose identity is absent or names another product.
+The current main game, whose Unity product is `Ardenfall Alpha`, is the only published game. The discontinued Demo is not a supported fallback. An export SHALL confirm the answering product before it writes entity data. The snapshot SHALL record that identity, and publication SHALL refuse a snapshot whose identity is absent or names another product.
 
 Two instrumented games on one HotRepl port report no error. The connection reaches the game that bound first. Product identity, port ownership, and the deployed plugin digest therefore remain independent required checks.
 
@@ -23,7 +23,7 @@ Two instrumented games on one HotRepl port report no error. The connection reach
 
 #### Scenario: The answering game is not the published one
 
-- **WHEN** an export connects to the Demo or any product other than `Ardenfall`
+- **WHEN** an export connects to the Demo or any product other than `Ardenfall Alpha`
 - **THEN** the export fails before extraction
 - **AND** the failure states that the main game is required
 
@@ -36,7 +36,7 @@ Two instrumented games on one HotRepl port report no error. The connection reach
 #### Scenario: Publication checks the artifact
 
 - **WHEN** publication runs against a snapshot
-- **THEN** it proceeds only when the recorded identity names `Ardenfall`
+- **THEN** it proceeds only when the recorded identity names `Ardenfall Alpha`
 
 #### Scenario: A snapshot carries no identity
 

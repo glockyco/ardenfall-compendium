@@ -2,7 +2,7 @@
 
 ### Requirement: An export proves which plugin answered
 
-`compendium.preflight` MUST report the running plugin assembly's location, the SHA-256 of its bytes, its last write time, and the Unity product name. The digest MUST be read while the assembly loads, because a deploy into a running game replaces that file and a later read would report the deployed build as the running one. The controller MUST compare that digest against the plugin deployed to the main game and MUST fail the export when they differ. It MUST also fail when the answering product is not `Ardenfall`. A comparison MUST NOT rest on a hard-coded plugin version.
+`compendium.preflight` MUST report the running plugin assembly's location, the SHA-256 of its bytes, its last write time, and the Unity product name. The digest MUST be read while the assembly loads, because a deploy into a running game replaces that file and a later read would report the deployed build as the running one. The controller MUST compare that digest against the plugin deployed to the main game and MUST fail the export when they differ. It MUST also fail when the answering product is not `Ardenfall Alpha`. A comparison MUST NOT rest on a hard-coded plugin version.
 
 The digest and product identity MUST reach the snapshot manifest, so a published snapshot names the mod and game that produced it. The manifest MUST NOT carry the plugin path, which is a property of the exporting machine.
 

@@ -6,13 +6,13 @@ Defines how the compendium extracts, publishes, and identifies the current main 
 
 ### Requirement: The main game is the only supported source
 
-The toolchain MUST accept the Unity product `Ardenfall` as its sole live extraction and publication source. It MUST reject the Demo and every unknown product before entity extraction starts.
+The toolchain MUST accept the Unity product `Ardenfall Alpha` as its sole live extraction and publication source. It MUST reject the Demo and every unknown product before entity extraction starts.
 
 The selected installation, game assemblies, plugin deployment, HotRepl endpoint, snapshot output, and release input MUST form one main-game configuration. Missing configuration MUST fail instead of falling back to a Demo path.
 
 #### Scenario: The main game answers
 
-- **WHEN** extraction connects to `Ardenfall` with the configured plugin and endpoint
+- **WHEN** extraction connects to `Ardenfall Alpha` with the configured plugin and endpoint
 - **THEN** preflight permits the run
 - **AND** every output records the main-game identity
 
