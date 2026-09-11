@@ -78,6 +78,7 @@ public sealed class CellCapture
             Fog = false,
             CameraHeight = cameraHeight,
             CullingMask = cullingMask,
+            PinnedTime = "13:00",
         };
     }
 
@@ -121,7 +122,14 @@ public sealed class CellCapture
         var ambientMode = RenderSettings.ambientMode;
         var ambient = RenderSettings.ambientLight;
         var priority = Application.backgroundLoadingPriority;
+        var timeManager = UnityObject.FindObjectOfType<TimeManager>();
+        WorldTime? originalTime = timeManager?.GetWorldTime();
+        var originalTimeMultiplier = timeManager?.timeMultiplier ?? 0f;
+        var sky = Ardenfall.Sky.ArdenfallSkybox.instance;
+        var originalSkyEnabled = sky != null && sky.enabled;
         var loadedByCapture = new List<int>();
+        var preloadedSceneNames = new HashSet<string>(StringComparer.Ordinal);
+        var suppressedRenderers = new List<Renderer>();
         var frames = CellCaptureGeometry.Frames(
             inputs.MinCellX,
             inputs.MinCellY,
@@ -140,6 +148,17 @@ public sealed class CellCapture
         RenderSettings.fog = false;
         RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
         RenderSettings.ambientLight = AmbientColor;
+        if (timeManager != null)
+        {
+            timeManager.timeMultiplier = 0f;
+            timeManager.SetTime(13L * 60L * 60L);
+        }
+        if (sky != null)
+        {
+            sky.enabled = true;
+            sky.ForceUpdate();
+            sky.enabled = false;
+        }
 
         sunObject = new GameObject("compendium_capture_sun");
         var sun = sunObject.AddComponent<Light>();
@@ -164,7 +183,11 @@ public sealed class CellCapture
             var sceneName = $"cell_{inputs.MapId}_{frame.CellX}.{frame.CellY}";
             if (!authoredScenes.TryGetValue(sceneName, out var authoredScene)) continue;
             snapshot.LoadedCells.Add(sceneName);
-            if (SceneManager.GetSceneByBuildIndex(authoredScene.BuildIndex).isLoaded) continue;
+            if (SceneManager.GetSceneByBuildIndex(authoredScene.BuildIndex).isLoaded)
+            {
+                preloadedSceneNames.Add(sceneName);
+                continue;
+            }
             var load = SceneManager.LoadSceneAsync(authoredScene.BuildIndex, LoadSceneMode.Additive);
             if (load == null)
             {
@@ -178,7 +201,25 @@ public sealed class CellCapture
 
         foreach (var sceneName in snapshot.LoadedCells)
         {
+            if (preloadedSceneNames.Contains(sceneName))
+            {
+                var scene = SceneManager.GetSceneByName(sceneName);
+                foreach (var renderer in scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Renderer>(true)))
+                {
+                    if (!renderer.enabled) continue;
+                    renderer.enabled = false;
+                    suppressedRenderers.Add(renderer);
+                }
+                continue;
+            }
             if (distantCells.TryGetValue(sceneName, out var distantCell)) distantCell.SetActive(false);
+        }
+        foreach (var cloud in UnityObject.FindObjectsOfType<ParticleSystemRenderer>())
+        {
+            if (!cloud.enabled) continue;
+            cloud.enabled = false;
+            suppressedRenderers.Add(cloud);
         }
 
         if (failure == null)
@@ -197,7 +238,7 @@ public sealed class CellCapture
                         camera,
                         frame,
                         inputs.CameraHeight,
-                        authoredScene != null,
+                        authoredScene != null && !preloadedSceneNames.Contains(sceneName),
                         distantCell,
                         distantCells.Count > 0));
                 }
@@ -208,6 +249,12 @@ public sealed class CellCapture
                 }
             }
         }
+        foreach (var renderer in suppressedRenderers)
+        {
+            if (renderer != null) renderer.enabled = true;
+        }
+        suppressedRenderers.Clear();
+
         foreach (var buildIndex in loadedByCapture.ToList())
         {
             var unload = SceneManager.UnloadSceneAsync(buildIndex);
@@ -230,12 +277,26 @@ public sealed class CellCapture
         RenderSettings.ambientMode = ambientMode;
         RenderSettings.ambientLight = ambient;
         Application.backgroundLoadingPriority = priority;
+        if (timeManager != null)
+        {
+            timeManager.SetTime(originalTime!.Value.Seconds);
+            timeManager.timeMultiplier = originalTimeMultiplier;
+        }
+        if (sky != null)
+        {
+            sky.enabled = originalSkyEnabled;
+            sky.ForceUpdate();
+        }
 
         snapshot.Restored = loadedByCapture.Count == 0
+            && suppressedRenderers.Count == 0
             && distantCells.Count == 0
             && RenderSettings.fog == fog
             && RenderSettings.ambientMode == ambientMode
-            && RenderSettings.ambientLight == ambient;
+            && RenderSettings.ambientLight == ambient
+            && (timeManager == null || (timeManager.GetWorldTime().Seconds == originalTime!.Value.Seconds
+                && timeManager.timeMultiplier == originalTimeMultiplier))
+            && (sky == null || sky.enabled == originalSkyEnabled);
         if (failure != null)
         {
             snapshot.Diagnostics.Add(new Diagnostic
@@ -296,17 +357,7 @@ public sealed class CellCapture
             };
         }
 
-        var wasActive = ownDistantCell != null && ownDistantCell.activeSelf;
-        if (authored && wasActive) ownDistantCell!.SetActive(false);
-        byte[] png;
-        try
-        {
-            png = Render(camera, frame.Pixels);
-        }
-        finally
-        {
-            if (authored && wasActive && ownDistantCell != null) ownDistantCell.SetActive(true);
-        }
+        var png = Render(camera, frame.Pixels);
         var hash = SpriteAssetExporter.Sha256Hex(png);
         var path = _writePlate($"assets/map/{mapId}/{hash}.png", png);
         return new MapCaptureTileSnapshot
@@ -337,12 +388,16 @@ public sealed class CellCapture
             frame => $"celldistant_{mapId}_{frame.CellX}.{frame.CellY}",
             frame => $"cell_{mapId}_{frame.CellX}.{frame.CellY}",
             StringComparer.Ordinal);
+        var map = Resources.FindObjectsOfTypeAll<WorldData>()
+            .SelectMany(world => world.maps)
+            .FirstOrDefault(candidate => candidate.id == mapId);
+        var prefabs = map?.GeneratedAssetReferences?.distantCellPrefabs
+            ?? new List<GameObject>();
         var result = new Dictionary<string, GameObject>(StringComparer.Ordinal);
-        foreach (var candidate in Resources.FindObjectsOfTypeAll<GameObject>())
+        foreach (var prefab in prefabs)
         {
-            if (candidate == null || !requested.TryGetValue(candidate.name, out var sceneName)
-                || result.ContainsKey(sceneName)) continue;
-            var instance = UnityObject.Instantiate(candidate);
+            if (prefab == null || !requested.TryGetValue(prefab.name, out var sceneName)) continue;
+            var instance = UnityObject.Instantiate(prefab);
             instance.name = $"compendium_capture_distant_{sceneName}";
             result.Add(sceneName, instance);
         }
