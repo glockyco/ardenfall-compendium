@@ -280,12 +280,17 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             WriteJson(stagingDir, "quests.json", questEnvelope, hashes);
             // The walk writes one chunk per batch of cells, so the snapshot's file is their
             // concatenation. A run with no walk publishes an empty family rather than no file.
-            var placedPlantRows = ReadWalkedPlacedPlants(run);
-            WriteJson(
-                stagingDir,
-                "placed-plants.json",
-                new Entities.World.PlacedPlantSnapshotEnvelope { Rows = placedPlantRows },
-                hashes);
+            var walkedRows = new Dictionary<string, List<Entities.World.SceneRow>>(StringComparer.Ordinal);
+            foreach (var entityId in Entities.World.SceneFamilies.EntityIds)
+            {
+                var walked = ReadWalkedRows(run, entityId);
+                walkedRows[entityId] = walked;
+                WriteJson(
+                    stagingDir,
+                    Entities.World.SceneFamilies.SnapshotFile(entityId),
+                    new Entities.World.SceneSnapshotEnvelope(entityId, walked),
+                    hashes);
+            }
             RecordTiming(timings, "metadata.write", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
@@ -509,7 +514,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["name-set"] = nameSetRows.Count,
                 ["npc"] = npcRows.Count,
                 ["quest"] = questRows.Count,
-                ["placed-plant"] = placedPlantRows.Count,
+                ["placed-plant"] = walkedRows["placed-plant"].Count,
+                ["placed-item"] = walkedRows["placed-item"].Count,
             };
             var availability = new Dictionary<string, IDictionary<string, int>>
             {
@@ -566,7 +572,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             run.Counts["name-set"] = nameSetRows.Count;
             run.Counts["npc"] = npcRows.Count;
             run.Counts["quest"] = questRows.Count;
-            run.Counts["placed-plant"] = placedPlantRows.Count;
+            foreach (var pair in walkedRows) run.Counts[pair.Key] = pair.Value.Count;
             phaseStopwatch.Restart();
             _runs.Save(run);
             _runs.ReleaseFinalized(run.RunId);
@@ -616,6 +622,7 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
                 ["name-sets"] = CompendiumCommandResults.FileArtifact("name-sets", Path.Combine(publishedDir, "name-sets.json"), "application/json", hashes["name-sets.json"]),
                 ["quests"] = CompendiumCommandResults.FileArtifact("quests", Path.Combine(publishedDir, "quests.json"), "application/json", hashes["quests.json"]),
                 ["placed-plants"] = CompendiumCommandResults.FileArtifact("placed-plants", Path.Combine(publishedDir, "placed-plants.json"), "application/json", hashes["placed-plants.json"]),
+                ["placed-items"] = CompendiumCommandResults.FileArtifact("placed-items", Path.Combine(publishedDir, "placed-items.json"), "application/json", hashes["placed-items.json"]),
                 ["finalize-timings"] = CompendiumCommandResults.FileArtifact("finalize-timings", Path.Combine(publishedDir, "finalize-timings.json"), "application/json", hashes["finalize-timings.json"]),
             };
             if (hashes.TryGetValue("diagnostics.json", out var diagnosticsHash))
@@ -722,16 +729,16 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     }
 
     /// <summary>
-    /// Reads the chunks the cell walk wrote for this run, in batch order.
+    /// Reads the chunks the cell walk wrote for one family in this run, in batch order.
     /// </summary>
-    private static List<Entities.World.PlacedPlantSnapshotRow> ReadWalkedPlacedPlants(CompendiumRun run)
+    private static List<Entities.World.SceneRow> ReadWalkedRows(CompendiumRun run, string entityId)
     {
-        var rows = new List<Entities.World.PlacedPlantSnapshotRow>();
-        var chunksDir = Path.Combine(run.WorkspaceDir, "entities", "placed-plant", "chunks");
+        var rows = new List<Entities.World.SceneRow>();
+        var chunksDir = Path.Combine(run.WorkspaceDir, "entities", entityId, "chunks");
         if (!Directory.Exists(chunksDir)) return rows;
         foreach (var path in Directory.GetFiles(chunksDir, "*.json").OrderBy(name => name, StringComparer.Ordinal))
         {
-            var envelope = JsonConvert.DeserializeObject<Entities.World.PlacedPlantSnapshotEnvelope>(
+            var envelope = JsonConvert.DeserializeObject<Entities.World.SceneSnapshotEnvelope>(
                 File.ReadAllText(path),
                 JsonSettings.Default);
             if (envelope?.Rows != null) rows.AddRange(envelope.Rows);

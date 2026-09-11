@@ -1,0 +1,128 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "placed-item",
+  "kind": "instance",
+  "label": {
+    "singular": "Placed Item",
+    "plural": "Placed Items"
+  },
+  "extraction": {
+    "source": "scene",
+    "file": "placed-items.json",
+    "root": "Ardenfall.ItemSpawner",
+    "options": {
+      "component": "ItemSpawner"
+    }
+  },
+  "canonicalTable": "placed_items",
+  "presentationContext": {
+    "renderContext": "placed-item-presentation-v1"
+  },
+  "site": {
+    "route": "/placed-items",
+    "overview": {
+      "columns": ["itemRef", "stackCount", "cell"],
+      "search": ["cell"]
+    },
+    "detail": {
+      "sections": [
+        {
+          "id": "overview",
+          "kind": "fieldList",
+          "title": "Overview",
+          "fields": [
+            "itemRef",
+            "stackCount",
+            "durability",
+            "durabilityRuined",
+            "enchantments",
+            "owners",
+            "cell",
+            "map",
+            "position"
+          ]
+        }
+      ]
+    }
+  },
+  "placement": {
+    "kind": "point",
+    "from": "transform"
+  },
+  "fields": [
+    {
+      "name": "id",
+      "type": "id",
+      "from": "id",
+      "missingPolicy": "fatal"
+    },
+    {
+      "name": "cell",
+      "type": "string",
+      "from": "cell",
+      "column": "cell",
+      "missingPolicy": "fatal"
+    },
+    {
+      "name": "map",
+      "type": "string",
+      "from": "map",
+      "column": "map_id",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "position",
+      "type": "json",
+      "from": "position",
+      "column": "source_position_json",
+      "projects": "map_points"
+    },
+    {
+      "name": "itemRef",
+      "type": "ref:asset",
+      "from": "itemRef",
+      "column": "item_ref_json",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "stackCount",
+      "type": "integer",
+      "from": "stackCount",
+      "column": "stack_count"
+    },
+    {
+      "name": "durability",
+      "type": "number",
+      "from": "durability",
+      "column": "durability"
+    },
+    {
+      "name": "durabilityRuined",
+      "type": "boolean",
+      "from": "durabilityRuined",
+      "column": "durability_ruined"
+    },
+    {
+      "name": "enchantments",
+      "type": "json",
+      "from": "enchantments",
+      "column": "enchantments_json"
+    },
+    {
+      "name": "owners",
+      "type": "json",
+      "from": "owners",
+      "column": "owners_json"
+    }
+  ],
+  "map": {
+    "layer": "placed-items",
+    "renderKind": "point",
+    "icon": "item",
+    "color": [230, 200, 120],
+    "radius": 3,
+    "tooltip": ["itemRef"],
+    "legendLabel": "Placed Items",
+    "zOrder": 55
+  }
+}

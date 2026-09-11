@@ -3,3 +3,4 @@
 export const locationFieldNames = ["id", "name", "enabled", "mapId", "mapRef", "showOnMap", "iconRef", "mapPosition", "showOnMapDebugOnly", "allowFastTravel", "fastTravelPosition", "volumes"];
 export const portalFieldNames = ["id", "recordRef", "friendlyName", "position", "mapId", "connectedPortalRef"];
 export const placedPlantFieldNames = ["id", "cell", "map", "position", "itemRef", "itemCount", "regrowDays", "harvestXp", "interactionText"];
+export const placedItemFieldNames = ["id", "cell", "map", "position", "itemRef", "stackCount", "durability", "durabilityRuined", "enchantments", "owners"];

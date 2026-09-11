@@ -31,6 +31,7 @@ public sealed class WorldWalkBatchCommand
         Action<CellWalkBatch>,
         CancellationToken,
         Task<CellWalkBatch>> _walk;
+    private readonly IReadOnlyList<string> _entityIds;
 
     public WorldWalkBatchCommand(
         CompendiumRunManager runs,
@@ -39,11 +40,13 @@ public sealed class WorldWalkBatchCommand
             IReadOnlyList<CellScene>,
             Action<CellWalkBatch>,
             CancellationToken,
-            Task<CellWalkBatch>> walk)
+            Task<CellWalkBatch>> walk,
+        IReadOnlyList<string> entityIds)
     {
         _runs = runs;
         _scenes = scenes;
         _walk = walk;
+        _entityIds = entityIds;
     }
 
     public string Name => "world.walkBatch";
@@ -88,14 +91,8 @@ public sealed class WorldWalkBatchCommand
                 $"Planned cells are no longer in the build: {string.Join(", ", missing)}.");
 
         var cells = names.Select(name => byName[name]).ToList();
-        var path = Path.Combine(
-            run.WorkspaceDir,
-            "entities",
-            "placed-plant",
-            "chunks",
-            $"{args.Offset:D6}.json");
-        var json = string.Empty;
-        var rows = new List<PlacedPlantSnapshotRow>();
+        var written = new Dictionary<string, int>(StringComparer.Ordinal);
+        var artifacts = new Dictionary<string, ArtifactRef>(StringComparer.Ordinal);
         CellWalkBatch batch;
         try
         {
@@ -105,23 +102,35 @@ public sealed class WorldWalkBatchCommand
                 cells,
                 walked =>
                 {
-                    rows = walked.Cells
-                        .SelectMany(cell => cell.Plants)
-                        .Select(plant => new PlacedPlantSnapshotRow
-                        {
-                            Id = plant.Id,
-                            Fields = plant,
-                        })
-                        .ToList();
-                    json = JsonConvert.SerializeObject(
-                        new PlacedPlantSnapshotEnvelope { Rows = rows },
-                        JsonSettings.Default);
-                    AtomicFile.WriteAllText(path, json);
-                    run.WorldPlan.MarkWalked(walked.Cells.Select(cell => cell.Cell));
-                    run.Counts["placed-plant"] =
-                        run.Counts.TryGetValue("placed-plant", out var seen)
+                    var rowsByEntity = walked.RowsByEntity();
+                    foreach (var entityId in _entityIds)
+                    {
+                        var rows = rowsByEntity.TryGetValue(entityId, out var found)
+                            ? found
+                            : new List<SceneRow>();
+                        var path = Path.Combine(
+                            run.WorkspaceDir,
+                            "entities",
+                            entityId,
+                            "chunks",
+                            $"{args.Offset:D6}.json");
+                        var json = JsonConvert.SerializeObject(
+                            new SceneSnapshotEnvelope(entityId, rows),
+                            JsonSettings.Default);
+                        AtomicFile.WriteAllText(path, json);
+                        written[entityId] = rows.Count;
+                        run.Counts[entityId] = run.Counts.TryGetValue(entityId, out var seen)
                             ? seen + rows.Count
                             : rows.Count;
+                        artifacts[$"{entityId}.chunk.{args.Offset:D6}"] =
+                            CompendiumCommandResults.FileArtifact(
+                                $"{entityId}.chunk.{args.Offset:D6}",
+                                path,
+                                "application/json",
+                                ManifestBuilder.Sha256Hex(json));
+                    }
+
+                    run.WorldPlan.MarkWalked(walked.Cells.Select(cell => cell.Cell));
                     _runs.Save(run);
                 },
                 cancellationToken).ConfigureAwait(false);
@@ -142,19 +151,12 @@ public sealed class WorldWalkBatchCommand
                 {
                     Cell = cell.Cell,
                     ObjectsSeen = cell.ObjectsSeen,
-                    Harvested = cell.Plants.Count,
+                    Harvested = cell.RowCount,
                     Diagnostics = cell.Diagnostics.Count,
                 })
                 .ToList(),
+            Written = new Dictionary<string, int>(written, StringComparer.Ordinal),
             UnmodelledTypes = new Dictionary<string, int>(batch.UnmodelledTypes, StringComparer.Ordinal),
-        };
-        var artifacts = new Dictionary<string, ArtifactRef>(StringComparer.Ordinal)
-        {
-            [$"placed-plant.chunk.{args.Offset:D6}"] = CompendiumCommandResults.FileArtifact(
-                $"placed-plant.chunk.{args.Offset:D6}",
-                path,
-                "application/json",
-                ManifestBuilder.Sha256Hex(json)),
         };
         return ControlCommandResult.Ok(result, artifacts);
     }

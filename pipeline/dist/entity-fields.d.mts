@@ -56,3 +56,23 @@ export type PlacedPlantSnapshotFields = Pick<
   SourcePlacedPlantSnapshotFields,
   Extract<PlacedPlantFieldName, keyof SourcePlacedPlantSnapshotFields>
 >;
+
+import type { PlacedItemSnapshotFields as SourcePlacedItemSnapshotFields } from "../src/types.ts";
+
+export declare const placedItemFieldNames: readonly [
+  "id",
+  "cell",
+  "map",
+  "position",
+  "itemRef",
+  "stackCount",
+  "durability",
+  "durabilityRuined",
+  "enchantments",
+  "owners"
+];
+export type PlacedItemFieldName = (typeof placedItemFieldNames)[number];
+export type PlacedItemSnapshotFields = Pick<
+  SourcePlacedItemSnapshotFields,
+  Extract<PlacedItemFieldName, keyof SourcePlacedItemSnapshotFields>
+>;

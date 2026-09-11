@@ -28,6 +28,7 @@ describe("loadDescriptors", () => {
       "location",
       "name-set",
       "npc",
+      "placed-item",
       "placed-plant",
       "portal",
       "potion-recipe",

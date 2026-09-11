@@ -10,10 +10,10 @@
 
 ## 2. Placed items
 
-- [ ] 2.1 Add a placed-item descriptor with the `sceneObject` identity mechanism and a map layer.
-- [ ] 2.2 Extract `ItemSpawner` with its item reference, enchantments, durability, ruined state, stack count and owner.
-- [ ] 2.3 Canonicalise placed items, project their placements and map points, and link each to its item.
-- [ ] 2.4 Add the item-page section listing where copies lie, with map deep links.
+- [x] 2.1 Add a placed-item descriptor with the `sceneObject` identity mechanism and a map layer.
+- [x] 2.2 Extract `ItemSpawner` with its item reference, enchantments, durability, ruined state, stack count and owner.
+- [x] 2.3 Canonicalise placed items, project their placements and map points, and link each to its item.
+- [x] 2.4 Add the item-page section listing where copies lie, with map deep links.
 
 ## 3. Containers
 

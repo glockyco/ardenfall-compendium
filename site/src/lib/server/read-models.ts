@@ -181,6 +181,9 @@ export { getPortalPresentation, listPortals } from "./entities/portal";
 export type { PlacedPlantOverviewRow, PlacedPlantPresentationRow } from "./entities/placed-plant";
 export { getPlacedPlantPresentation, listPlacedPlants } from "./entities/placed-plant";
 
+export type { PlacedItemOverviewRow, PlacedItemPresentationRow } from "./entities/placed-item";
+export { getPlacedItemPresentation, listPlacedItems } from "./entities/placed-item";
+
 export type { FactionOverviewRow, FactionPresentationRow } from "./entities/faction";
 export { getFactionPresentation, listFactions } from "./entities/faction";
 export type {

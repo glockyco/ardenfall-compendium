@@ -115,8 +115,9 @@
   "hashes": {
     "snapshot/spells.json": "4008d7c3dd28d2237b1f5de8cf3580152e11b4509bbe87ae56856307ffdc6f6f",
     "snapshot/status-effects.json": "3dc4c4da66ca4cb94666a112fe0f1e00a21212b8f5d4d031829ff0773af9d6f8",
+    "snapshot/placed-items.json": "0547508188c54f4da768dd2865ad14e3abc4a4691a77b801ce50401415522978",
     "snapshot/placed-plants.json": "294bda98c92c44bd2746f8bcbfc5cf4c0f5e62ed4d96667df0f2a30cfe4e074f",
-    "snapshot/manifest.json": "ffe092aafde86f182e1382c389837ed6c614649fd0012f05b03f40237044fbb3",
+    "snapshot/manifest.json": "a5d262c1564e9d55e35a26c8bac3cf4f62e2925520d1a7f12a0cf8b94117636f",
     "snapshot/potion-recipes.json": "689c1202ed625d1010fc185eb33713a019f3274ab6957560f75bbea17f1fc1ad",
     "snapshot/enchantments.json": "74d06f2c4db42cf743c4b748bfd6df7b423e01d284b57f0b3b98477ed1a021c4",
     "snapshot/items.json": "af4053eb8ad0905efbd81fec5e9bc71fe102e0daea9d17f45cddd97930990e66",

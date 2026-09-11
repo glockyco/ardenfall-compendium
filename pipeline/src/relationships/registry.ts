@@ -147,10 +147,15 @@ export const relationshipRegistry = {
     inverseTitle: "Potion recipes",
     sortOrder: 138,
   },
+  places_item: {
+    forwardTitle: "Places",
+    inverseTitle: "Lies in the world",
+    sortOrder: 139,
+  },
   yields_item: {
     forwardTitle: "Yields",
     inverseTitle: "Grows in the world",
-    sortOrder: 139,
+    sortOrder: 140,
   },
 } satisfies Record<string, RelationshipDescriptor>;
 

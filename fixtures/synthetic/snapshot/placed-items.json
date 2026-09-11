@@ -1,0 +1,67 @@
+{
+  "entityId": "placed-item",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "scene;cell_fixture_0.0;a1b2c3d4-0001-4a00-9c00-000000000001",
+      "fields": {
+        "id": "scene;cell_fixture_0.0;a1b2c3d4-0001-4a00-9c00-000000000001",
+        "cell": "cell_fixture_0.0",
+        "map": "ardenfall",
+        "position": { "x": 8, "y": 3, "z": -12 },
+        "itemRef": {
+          "kind": "lookupAsset",
+          "guid": "4ed20218.fixture-iron-sword",
+          "unityType": "Ardenfall.Item.MeleeItemData",
+          "name": "fixture-iron-sword"
+        },
+        "stackCount": 1,
+        "durability": 0.42,
+        "durabilityRuined": true,
+        "enchantments": [
+          {
+            "enchantmentRef": {
+              "kind": "lookupAsset",
+              "guid": "b17a5ec7.fixture-enchantment",
+              "unityType": "Ardenfall.EnchantmentData",
+              "name": "fixture-enchantment"
+            },
+            "level": 2.5,
+            "hidden": false
+          }
+        ],
+        "owners": {
+          "factionRefs": [
+            {
+              "kind": "lookupAsset",
+              "guid": "fac70001.fixture-harbor-guild",
+              "unityType": "Ardenfall.Faction",
+              "name": "fixture-harbor-guild"
+            }
+          ],
+          "characterRefs": []
+        }
+      }
+    },
+    {
+      "id": "scene;cell_fixture_0.1;b2c3d4e5-0002-4a00-9c00-000000000002",
+      "fields": {
+        "id": "scene;cell_fixture_0.1;b2c3d4e5-0002-4a00-9c00-000000000002",
+        "cell": "cell_fixture_0.1",
+        "map": "ardenfall",
+        "position": { "x": -4, "y": 1, "z": 6 },
+        "itemRef": {
+          "kind": "lookupAsset",
+          "guid": "6a71c0de.fixture-stamina-draught",
+          "unityType": "Ardenfall.Item.ConsumableItemData",
+          "name": "fixture-stamina-draught"
+        },
+        "stackCount": 5,
+        "durability": 1,
+        "durabilityRuined": false,
+        "enchantments": [],
+        "owners": { "factionRefs": [], "characterRefs": [] }
+      }
+    }
+  ]
+}

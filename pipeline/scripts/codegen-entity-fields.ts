@@ -18,6 +18,11 @@ const targets = [
     typeName: "PlacedPlantFieldName",
     sourceTypeName: "PlacedPlantSnapshotFields",
   },
+  {
+    entity: "placed-item",
+    typeName: "PlacedItemFieldName",
+    sourceTypeName: "PlacedItemSnapshotFields",
+  },
 ] as const;
 
 function readFields(entity: string): string[] {

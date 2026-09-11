@@ -26,6 +26,9 @@ public sealed class WorldWalkBatchResult
 
     [JsonProperty("cells")] public List<WorldWalkCellReport> Cells { get; set; } = new();
 
+    /// <summary>Rows written per entity id in this batch.</summary>
+    [JsonProperty("written")] public Dictionary<string, int> Written { get; set; } = new();
+
     /// <summary>Component types seen in a cell that the walk does not publish yet.</summary>
     [JsonProperty("unmodelledTypes")] public Dictionary<string, int> UnmodelledTypes { get; set; } = new();
 }

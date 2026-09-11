@@ -7,6 +7,7 @@ import {
   listCharacterRaces,
   listFactions,
   listLocations,
+  listPlacedItems,
   listPlacedPlants,
   listPortals,
   listQuests,
@@ -69,6 +70,7 @@ export interface SiteChrome {
   locationRoute: string;
   portalRoute: string;
   placedPlantRoute: string;
+  placedItemRoute: string;
   factionRoute: string;
 }
 
@@ -214,6 +216,7 @@ function buildLayoutData(): SiteChrome {
   const location = entitySection("location", listLocations().length);
   const portal = entitySection("portal", listPortals().length);
   const placedPlant = entitySection("placed-plant", listPlacedPlants().length);
+  const placedItem = entitySection("placed-item", listPlacedItems().length);
   const faction = entitySection("faction", listFactions().length);
   const map = mapSection();
 
@@ -234,6 +237,7 @@ function buildLayoutData(): SiteChrome {
       location,
       portal,
       placedPlant,
+      placedItem,
       faction,
       map,
     ],
@@ -254,6 +258,7 @@ function buildLayoutData(): SiteChrome {
     locationRoute: location.href,
     portalRoute: portal.href,
     placedPlantRoute: placedPlant.href,
+    placedItemRoute: placedItem.href,
     factionRoute: faction.href,
   };
 }

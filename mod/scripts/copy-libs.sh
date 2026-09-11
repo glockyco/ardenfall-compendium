@@ -21,6 +21,8 @@ required_managed_dlls=(
   FlowCanvas.dll
   NodeCanvas.dll
   ParadoxNotion.dll
+  # ItemSpawner derives from MonoBehaviourGizmos, which lives here.
+  ALINE.dll
 )
 
 missing=0

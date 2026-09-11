@@ -588,6 +588,33 @@ export interface PlacedPlantSnapshotFields {
   interactionText: string;
 }
 
+/** An enchantment an authored placement carries. */
+export interface PlacedEnchantmentSnapshot {
+  enchantmentRef: SnapshotRef;
+  level: number;
+  hidden: boolean;
+}
+
+/** Faction and character owners an authored scene object declares. */
+export interface PlacedOwnersSnapshot {
+  factionRefs: SnapshotRef[];
+  characterRefs: SnapshotRef[];
+}
+
+/** One item the world places, as the cell walk harvested it. */
+export interface PlacedItemSnapshotFields {
+  id: string;
+  cell: string;
+  map: string | null;
+  position: SnapshotVector3;
+  itemRef: SnapshotRef;
+  stackCount: number;
+  durability: number;
+  durabilityRuined: boolean;
+  enchantments: PlacedEnchantmentSnapshot[];
+  owners: PlacedOwnersSnapshot;
+}
+
 export interface NpcLevelSnapshot {
   automatic: boolean;
   addValue: number;

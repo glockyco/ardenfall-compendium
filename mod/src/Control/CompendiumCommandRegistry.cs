@@ -60,9 +60,14 @@ public sealed class CompendiumCommandRegistry : IDisposable
         var scenes = new Entities.World.UnitySceneTable();
         var walk = new Entities.World.CellWalk(
             startCoroutine,
-            new Entities.World.MasterRecordTableCensus());
+            new Entities.World.MasterRecordTableCensus(),
+            new Entities.World.ISceneFamily[]
+            {
+                new Entities.World.PickablePlantFamily(),
+                new Entities.World.PlacedItemFamily(),
+            });
         Register(new Handlers.WorldPlanCommand(runs, scenes));
-        Register(new Handlers.WorldWalkBatchCommand(runs, scenes, walk.WalkAsync));
+        Register(new Handlers.WorldWalkBatchCommand(runs, scenes, walk.WalkAsync, walk.EntityIds));
         Register(new Handlers.EntityPlanCommand(runs, items));
         Register(new Handlers.EntityExportBatchCommand(runs, items));
         Register(new Handlers.RunFinalizeCommand(runs, items, spells: spells, potionRecipes: potionRecipes, enchantments: enchantments, characters: characters, statusEffects: statusEffects, masterTooltip: MasterTooltip.RuntimeMasterTooltipSnapshotSource.Instance, statTypes: statTypes, itemCategories: itemCategories, itemTags: itemTags, locations: locations, portals: portals, factions: factions, npcs: npcs, quests: quests, characterRaces: characterRaces, nameSets: nameSets, gameIdentity: gameIdentity, pluginIdentity: pluginIdentity));

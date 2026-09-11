@@ -12,6 +12,7 @@ import { NAME_SET_DDL } from "../sql/name-set-ddl";
 import { LOCATION_DDL } from "../sql/location-ddl";
 import { FACTION_DDL } from "../sql/faction-ddl";
 import { CHARACTER_DDL } from "../sql/character-ddl";
+import { PLACED_ITEM_DDL } from "../sql/placed-item-ddl";
 import { PLACED_PLANT_DDL } from "../sql/placed-plant-ddl";
 import { PORTAL_DDL } from "../sql/portal-ddl";
 import { NPC_DDL } from "../sql/npc-ddl";
@@ -48,6 +49,8 @@ import { canonicaliseCharacters } from "./character/canonicaliser";
 import { canonicaliseLocations } from "./location/canonicaliser";
 import { emitLocationReadModels, locationProjection } from "./location/read-models";
 import { emitCharacterReadModels } from "./character/read-models";
+import { canonicalisePlacedItems } from "./placed-item/canonicaliser";
+import { emitPlacedItemReadModels } from "./placed-item/read-models";
 import { canonicalisePlacedPlants } from "./placed-plant/canonicaliser";
 import { emitPlacedPlantReadModels } from "./placed-plant/read-models";
 import { canonicalisePortals } from "./portal/canonicaliser";
@@ -112,6 +115,24 @@ const portalProjection: MapProjection = {
       FROM portals p
       JOIN placements pl ON pl.entity_id = 'portal' AND pl.instance_id = p.id
       ORDER BY COALESCE(p.friendly_name, 'Unnamed portal'), p.id;
+    `,
+};
+
+const placedItemProjection: MapProjection = {
+  sourceTable: "placed_items",
+  points: `
+      INSERT INTO map_points (
+        id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
+        enabled, show_on_map_debug_only, allow_fast_travel
+      )
+      SELECT 'placed-item:' || i.id, 'placed-item', i.id, r.name,
+             pl.map_id, pl.map_x, pl.map_y, pl.elevation,
+             1, 0, 0 -- a placed item has no authored availability flag; it is there
+
+      FROM placed_items i
+      JOIN placed_item_presentation_rows r ON r.id = i.id
+      JOIN placements pl ON pl.entity_id = 'placed-item' AND pl.instance_id = i.id
+      ORDER BY r.name, i.id;
     `,
 };
 
@@ -267,6 +288,13 @@ export const entityRegistry: Record<string, EntityModule> = {
       return emitNpcReadModels(db, entity.site.route);
     },
     mapProjection: npcProjection,
+  },
+  "placed-item": {
+    ddl: PLACED_ITEM_DDL,
+    canonicalise: ({ db, envelope }) => canonicalisePlacedItems(db, envelope),
+    readModelPhase: "after-map",
+    readModel: ({ db, entity }) => emitPlacedItemReadModels(db, entity.site?.route),
+    mapProjection: placedItemProjection,
   },
   "placed-plant": {
     ddl: PLACED_PLANT_DDL,

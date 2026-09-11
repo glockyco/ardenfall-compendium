@@ -20,6 +20,27 @@ public sealed class CellWalkBatch
     public Dictionary<string, int> UnmodelledTypes { get; } = new(StringComparer.Ordinal);
 
     public List<Diagnostic> Diagnostics { get; } = new();
+
+    /// <summary>Rows per entity id across every cell in the batch, in cell order.</summary>
+    public Dictionary<string, List<SceneRow>> RowsByEntity()
+    {
+        var byEntity = new Dictionary<string, List<SceneRow>>(StringComparer.Ordinal);
+        foreach (var cell in Cells)
+        {
+            foreach (var pair in cell.Rows)
+            {
+                if (!byEntity.TryGetValue(pair.Key, out var rows))
+                {
+                    rows = new List<SceneRow>();
+                    byEntity[pair.Key] = rows;
+                }
+
+                rows.AddRange(pair.Value);
+            }
+        }
+
+        return byEntity;
+    }
 }
 
 /// <summary>
@@ -34,12 +55,21 @@ public sealed class CellWalk
 {
     private readonly Action<IEnumerator> _startCoroutine;
     private readonly IRecordCensus _census;
+    private readonly IReadOnlyList<ISceneFamily> _families;
 
-    public CellWalk(Action<IEnumerator> startCoroutine, IRecordCensus census)
+    public CellWalk(
+        Action<IEnumerator> startCoroutine,
+        IRecordCensus census,
+        IReadOnlyList<ISceneFamily> families)
     {
         _startCoroutine = startCoroutine ?? throw new ArgumentNullException(nameof(startCoroutine));
         _census = census ?? throw new ArgumentNullException(nameof(census));
+        _families = families ?? throw new ArgumentNullException(nameof(families));
     }
+
+    /// <summary>Entity ids this walk publishes, in registration order.</summary>
+    public IReadOnlyList<string> EntityIds =>
+        _families.Select(family => family.EntityId).ToList();
 
     /// <summary>
     /// Walks <paramref name="cells"/> and hands the result to <paramref name="commit"/> before the
@@ -176,15 +206,11 @@ public sealed class CellWalk
         completion.TrySetResult(batch);
     }
 
-    private static void Harvest(CellWalkBatch batch, CellScene cell)
+    private void Harvest(CellWalkBatch batch, CellScene cell)
     {
-        var plants = UnityEngine.Object.FindObjectsOfType<PickablePlant>(includeInactive: true)
-            .Where(plant => plant.gameObject.scene.buildIndex == cell.BuildIndex)
-            .ToList();
-
-        var harvest = new CellHarvest(cell.Name, plants.Count);
+        var harvest = new CellHarvest(cell.Name);
         var map = CellMapIndex.MapOfCellScene(cell.Name);
-        PickablePlantHarvester.Harvest(harvest, plants.Select(plant => ToSource(plant, map)));
+        foreach (var family in _families) family.Harvest(cell, map, harvest);
         batch.Cells.Add(harvest);
 
         foreach (var pair in UnmodelledTypes(cell))
@@ -198,46 +224,23 @@ public sealed class CellWalk
     /// Types this walk sees in a cell and does not publish yet, so the next build's new
     /// interactable appears as a number rather than as silence.
     /// </summary>
-    private static IEnumerable<KeyValuePair<string, int>> UnmodelledTypes(CellScene cell)
+    private IEnumerable<KeyValuePair<string, int>> UnmodelledTypes(CellScene cell)
     {
+        var modelled = _families.SelectMany(family => family.ComponentTypes).ToList();
         var counts = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var interactable in UnityEngine.Object.FindObjectsOfType<MonoBehaviour>(includeInactive: true))
+        foreach (var behaviour in
+            UnityEngine.Object.FindObjectsOfType<MonoBehaviour>(includeInactive: true))
         {
-            if (interactable == null) continue;
-            if (interactable.gameObject.scene.buildIndex != cell.BuildIndex) continue;
-            if (interactable is not IInteractable) continue;
-            if (interactable is PickablePlant) continue;
-            var name = interactable.GetType().FullName ?? interactable.GetType().Name;
+            if (behaviour == null) continue;
+            if (behaviour.gameObject.scene.buildIndex != cell.BuildIndex) continue;
+            if (behaviour is not IInteractable) continue;
+            var type = behaviour.GetType();
+            if (modelled.Any(modelledType => modelledType.IsInstanceOfType(behaviour))) continue;
+            var name = type.FullName ?? type.Name;
             counts.TryGetValue(name, out var seen);
             counts[name] = seen + 1;
         }
 
         return counts;
-    }
-
-    private static PickablePlantSource ToSource(PickablePlant plant, string? map)
-    {
-        var guid = plant.GetComponent<GuidComponent>();
-        var position = plant.transform.position;
-        return new PickablePlantSource
-        {
-            Guid = guid == null ? null : guid.GuidString,
-            Position = new ScenePosition(position.x, position.y, position.z),
-            Map = map,
-            ItemRef = ItemRef(plant),
-            ItemCount = plant.itemCount,
-            RegrowDays = plant.regrowDays,
-            HarvestXp = plant.giveXP,
-            InteractionText = plant.pickupText ?? "",
-        };
-    }
-
-    private static SnapshotRef? ItemRef(PickablePlant plant)
-    {
-        if (plant.item == null) return null;
-        var guid = BuiltLookupTable.Instance?.GetGuid(plant.item);
-        return string.IsNullOrWhiteSpace(guid)
-            ? SnapshotRef.Missing("lookupAssetGuidMissing", "PickablePlant.item")
-            : SnapshotRef.LookupAsset(guid!, plant.item.GetType().FullName, plant.item.name);
     }
 }

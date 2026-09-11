@@ -626,6 +626,7 @@ describe("validateSnapshot", () => {
         enchantment: 1,
         faction: 1,
         npc: 1,
+        "placed-item": 1,
         "placed-plant": 1,
         quest: 1,
       },
@@ -940,6 +941,15 @@ describe("validateSnapshot", () => {
         null,
         2,
       ),
+      "placed-items.json": JSON.stringify(
+        {
+          entityId: "placed-item",
+          schemaVersion: 1,
+          rows: emptyEntities.has("placed-item") ? [] : [{ id: "scene;cell_a;item-1" }],
+        },
+        null,
+        2,
+      ),
       "placed-plants.json": JSON.stringify(
         {
           entityId: "placed-plant",
@@ -992,6 +1002,8 @@ describe("validateSnapshot", () => {
       quest: options.countOverrides?.quest ?? (emptyEntities.has("quest") ? 0 : 1),
       "placed-plant":
         options.countOverrides?.["placed-plant"] ?? (emptyEntities.has("placed-plant") ? 0 : 1),
+      "placed-item":
+        options.countOverrides?.["placed-item"] ?? (emptyEntities.has("placed-item") ? 0 : 1),
       ...options.extraCounts,
     };
     for (const entity of options.omitCounts ?? []) delete counts[entity as keyof typeof counts];
