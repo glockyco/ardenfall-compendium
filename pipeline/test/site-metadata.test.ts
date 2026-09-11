@@ -202,7 +202,7 @@ describe("emitSiteMetadata", () => {
       source_tables_json: JSON.stringify(["map_points", "map_volumes"]),
       render_kind: "point-or-polygon",
       icon: "location",
-      color_json: JSON.stringify([120, 170, 255]),
+      color_json: JSON.stringify([40, 120, 255]),
       radius: 6,
       tooltip_fields_json: JSON.stringify(["name"]),
       filters_json: JSON.stringify([]),
