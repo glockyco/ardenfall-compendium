@@ -147,6 +147,15 @@ public sealed class DialogueEffectSnapshot
     /// <summary>What the outcome acts on, when it names a published entity.</summary>
     [JsonProperty("target")] public SnapshotRef? Target { get; set; }
 
+    /// <summary>
+    /// What the outcome acts on, as the game names it, when no entity carries the name.
+    /// </summary>
+    /// <remarks>
+    /// An objective and a phase live inside a quest rather than as entities of their own, so
+    /// without their authored names a quest page reads "Sets an objective's state" twenty times.
+    /// </remarks>
+    [JsonProperty("label")] public string? Label { get; set; }
+
     /// <summary>Who the outcome applies to.</summary>
     [JsonProperty("participant")] public DialogueParticipantSnapshot? Participant { get; set; }
 

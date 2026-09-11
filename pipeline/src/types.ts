@@ -713,6 +713,8 @@ export interface DialogueEffectSnapshot {
   kind: string;
   amount: number | null;
   amountLabel: string | null;
+  /** What the outcome acts on, as the game names it, when no entity carries the name. */
+  label: string | null;
   target: SnapshotRef | null;
   participant: DialogueParticipantSnapshot | null;
   authoredType: string;

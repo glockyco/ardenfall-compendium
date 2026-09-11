@@ -102,6 +102,7 @@
         {#each logic.effects as item, index (index)}
           <li class="border-border border-l-2 pl-3">
             {effect(item.kind)}
+            {#if item.label}<span class="font-medium">{item.label}</span>{/if}
             {#if item.subject}
               {#if item.subject.routePath}
                 <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- route paths come from the static read model -->

@@ -503,6 +503,7 @@ function buildQuestLogic(
         kind: string;
         amount: number | null;
         amountLabel: string | null;
+        label: string | null;
         target: unknown;
       }[];
       for (const effect of effects) {
@@ -510,6 +511,7 @@ function buildQuestLogic(
           kind: effect.kind,
           amount: effect.amount,
           amountLabel: effect.amountLabel,
+          label: effect.label ?? null,
           subject: link(effect.target),
         });
         if (effect.target === null || effect.target === undefined) continue;
@@ -553,6 +555,7 @@ interface QuestLogicPresentation {
     kind: string;
     amount: number | null;
     amountLabel: string | null;
+    label: string | null;
     subject: { label: string; routePath: string | null } | null;
   }[];
   unmodelled: { authoredType: string; count: number }[];

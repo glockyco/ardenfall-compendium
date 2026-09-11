@@ -790,10 +790,14 @@ public static class DialogueNodeReaders
                 break;
             case "SetQuestObjectiveStateNode":
                 effect.AmountLabel = GraphFields.ReadEnumName(node, "state");
+                effect.Label = DialogueRefs.ObjectiveName(
+                    GraphFields.Read<object>(node, "objectiveReference"),
+                    OwningGraph(node));
                 effect.Target = DialogueRefs.Quest(GraphFields.Read<object>(node, "objectiveReference"), "SetQuestObjectiveStateNode.objectiveReference");
                 break;
             case "SetQuestPhaseNode":
                 effect.Target = DialogueRefs.Quest(GraphFields.Read<object>(node, "phase"), "SetQuestPhaseNode.phase");
+                effect.Label = DialogueRefs.PhaseName(GraphFields.Read<object>(node, "phase"), OwningGraph(node));
                 break;
             case "SetQuestVariable":
                 effect.Target = DialogueRefs.Quest(GraphFields.Read<object>(node, "customVariableQuest"), "SetQuestVariable.customVariableQuest");

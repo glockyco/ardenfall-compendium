@@ -95,6 +95,8 @@ export interface QuestLogic {
     kind: string;
     amount: number | null;
     amountLabel: string | null;
+    /** What it acts on, as the game names it, when no entity carries the name. */
+    label: string | null;
     subject: { label: string; routePath: string | null } | null;
   }[];
   /** Node types the walk does not model, so a reader sees the gap rather than a clean lie. */
