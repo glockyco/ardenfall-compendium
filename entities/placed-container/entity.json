@@ -133,7 +133,7 @@
     "layer": "containers",
     "renderKind": "point",
     "icon": "container",
-    "color": [180, 140, 90],
+    "color": [140, 80, 30],
     "radius": 3,
     "tooltip": ["containerName"],
     "legendLabel": "Containers",

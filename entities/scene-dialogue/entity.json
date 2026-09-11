@@ -72,7 +72,7 @@
     "layer": "scene-dialogue",
     "renderKind": "point",
     "icon": "dialogue",
-    "color": [230, 200, 140],
+    "color": [0, 200, 210],
     "radius": 3,
     "tooltip": ["graphName"],
     "legendLabel": "Scene Dialogue",

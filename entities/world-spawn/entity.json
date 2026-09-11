@@ -93,7 +93,7 @@
     "layer": "world-spawns",
     "renderKind": "point",
     "icon": "spawn",
-    "color": [150, 170, 230],
+    "color": [220, 40, 60],
     "radius": 3,
     "tooltip": ["kind"],
     "legendLabel": "World Spawns",

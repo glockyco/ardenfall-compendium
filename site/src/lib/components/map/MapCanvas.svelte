@@ -299,16 +299,18 @@
                 radiusUnits: "pixels",
                 getFillColor: spec.fillColor,
                 stroked: true,
+                // A dark rim keeps a marker legible on sand, water and grass alike; the selected
+                // marker swaps it for a white one.
                 getLineColor: (d: { nodeShortId?: string | null }) =>
                   spec.selectedNodeShortId !== null && d.nodeShortId === spec.selectedNodeShortId
                     ? [255, 255, 255, 255]
-                    : spec.fillColor,
+                    : [20, 20, 30, 230],
                 getLineWidth: (d: { nodeShortId?: string | null }) =>
                   spec.selectedNodeShortId !== null && d.nodeShortId === spec.selectedNodeShortId
                     ? 3
-                    : 0,
+                    : 1.5,
                 lineWidthUnits: "pixels",
-                lineWidthMinPixels: 0,
+                lineWidthMinPixels: 1,
                 autoHighlight: true,
                 updateTriggers: {
                   getRadius: [spec.radius, spec.selectedNodeShortId],

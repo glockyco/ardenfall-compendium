@@ -103,7 +103,7 @@
     "layer": "pickable-plants",
     "renderKind": "point",
     "icon": "plant",
-    "color": [120, 200, 120],
+    "color": [40, 180, 60],
     "radius": 3,
     "tooltip": ["itemRef"],
     "legendLabel": "Pickable Plants",

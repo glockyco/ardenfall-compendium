@@ -273,7 +273,7 @@
     "layer": "npcs",
     "renderKind": "point",
     "icon": "character",
-    "color": [255, 200, 120],
+    "color": [255, 140, 0],
     "radius": 4,
     "tooltip": ["displayName"],
     "legendLabel": "Characters",

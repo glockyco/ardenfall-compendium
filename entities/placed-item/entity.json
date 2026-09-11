@@ -119,7 +119,7 @@
     "layer": "placed-items",
     "renderKind": "point",
     "icon": "item",
-    "color": [230, 200, 120],
+    "color": [255, 220, 0],
     "radius": 3,
     "tooltip": ["itemRef"],
     "legendLabel": "Placed Items",

@@ -89,7 +89,7 @@
     "layer": "locations",
     "renderKind": "point-or-polygon",
     "icon": "location",
-    "color": [120, 170, 255],
+    "color": [40, 120, 255],
     "radius": 6,
     "tooltip": ["name"],
     "legendLabel": "Locations",
