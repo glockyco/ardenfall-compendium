@@ -23,13 +23,12 @@ const seed = () => {
       phases_json TEXT NOT NULL,
       rewards_json TEXT NOT NULL
     );
-    CREATE TABLE quest_character_dialogue_rows (
-      id TEXT PRIMARY KEY,
-      quest_id TEXT NOT NULL,
-      character_id TEXT NOT NULL,
-      quest_ordinal INTEGER NOT NULL,
-      kind TEXT NOT NULL,
-      text_json TEXT NOT NULL
+    CREATE TABLE entity_edges (
+      edge_id TEXT PRIMARY KEY,
+      source_type TEXT NOT NULL, source_id TEXT NOT NULL,
+      target_type TEXT NOT NULL, target_id TEXT NOT NULL,
+      predicate TEXT NOT NULL, label TEXT, weight INTEGER,
+      evidence_json TEXT, anchor TEXT
     );
     CREATE TABLE entity_nodes (
       entity_type TEXT NOT NULL,
@@ -49,11 +48,6 @@ const seed = () => {
        '[{"setOrdinal":0,"setType":"on-success","rewards":[{"kind":"faction-reputation","amount":"+5","targetLabel":"Dawnkeepers","targetRoutePath":"/factions/dawnkeepers--22222222","items":[]},{"kind":"items","amount":null,"targetLabel":null,"targetRoutePath":null,"items":[{"label":"Ash Token","routePath":"/items/ash-token--33333333","count":1}]}]},{"setOrdinal":1,"setType":"on-failure","rewards":[{"kind":"gold","amount":"25","targetLabel":null,"targetRoutePath":null,"items":[]}]}]'),
       ('named;quest;quest-unnamed', 'Unnamed quest', NULL, 'quest-presentation-v1', 0, 1,
        NULL, NULL, NULL, '[]', '[{"setOrdinal":0,"setType":"on-success","rewards":[{"kind":"items","amount":null,"targetLabel":null,"targetRoutePath":null,"items":[{"label":"Ash Token","routePath":"/items/ash-token--33333333","count":5}]}]}]');
-    INSERT INTO quest_character_dialogue_rows VALUES
-      ('r0', 'named;quest;quest-ash', 'instances;characters;aaa', 0, 'greeting', '{"schemaVersion":1,"sourceHash":"h","nodes":[{"type":"text","text":"You reek of booze."}],"diagnostics":[]}'),
-      ('r1', 'named;quest;quest-ash', 'instances;characters;aaa', 1, 'topic', '{"schemaVersion":1,"sourceHash":"h","nodes":[{"type":"text","text":"Who do you guard this port for?"}],"diagnostics":[]}'),
-      ('r2', 'named;quest;quest-ash', 'instances;characters;bbb', 2, 'greeting', '{"schemaVersion":1,"sourceHash":"h","nodes":[{"type":"text","text":"..."}],"diagnostics":[]}'),
-      ('r3', 'named;quest;quest-ember', 'instances;characters;aaa', 0, 'greeting', '{"schemaVersion":1,"sourceHash":"h","nodes":[{"type":"text","text":"The embers fade."}],"diagnostics":[]}');
     INSERT INTO entity_nodes VALUES
       ('quest', 'named;quest;quest-ash', 'Ashes at Dawn', 'Ashes at Dawn', '/quests/ashes-at-dawn--11111111', 'ashes-at-dawn--11111111', '11111111', 1),
       ('quest', 'named;quest;quest-unnamed', 'Unnamed quest', 'Unnamed quest', '/quests/unnamed-quest--44444444', 'unnamed-quest--44444444', '44444444', 1),
@@ -150,65 +144,6 @@ describe("quest read-model accessors", () => {
     }
   });
 
-  it("groups quest dialogue by speaker and keeps a group without a page unlinked", async () => {
-    const root = seed();
-    const originalCwd = process.cwd();
-    try {
-      process.chdir(root);
-      const readModels = await import("../src/lib/server/read-models");
-      const quest = readModels.getQuestPresentation("ashes-at-dawn--11111111");
-      expect(quest?.dialogue).toEqual([
-        {
-          id: "instances;characters;aaa",
-          label: "Harbour Guard",
-          routePath: "/characters/harbour-guard--aaa",
-          lines: [
-            { kind: "greeting", text: expect.objectContaining({ schemaVersion: 1 }) },
-            { kind: "topic", text: expect.objectContaining({ schemaVersion: 1 }) },
-          ],
-        },
-        {
-          id: "instances;characters;bbb",
-          label: "Silent Watcher",
-          // A character the snapshot never gave a page still gets their line shown,
-          // just without a link a reader could follow nowhere.
-          routePath: null,
-          lines: [{ kind: "greeting", text: expect.objectContaining({ schemaVersion: 1 }) }],
-        },
-      ]);
-    } finally {
-      process.chdir(originalCwd);
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  it("orders character dialogue by quest id and disambiguates repeated labels", async () => {
-    const root = seed();
-    const originalCwd = process.cwd();
-    try {
-      process.chdir(root);
-      const dialogue = await import("../src/lib/server/entities/dialogue");
-      expect(
-        dialogue.getCharacterDialogue("instances;characters;aaa").map((group) => ({
-          label: group.label,
-          routePath: group.routePath,
-        })),
-      ).toEqual([
-        {
-          label: "Ashes at Dawn",
-          routePath: "/quests/ashes-at-dawn--11111111",
-        },
-        {
-          label: "Embers at Dusk",
-          routePath: "/quests/ashes-at-dawn--99999999",
-        },
-      ]);
-    } finally {
-      process.chdir(originalCwd);
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
   it("preserves a single reward set and item counts", async () => {
     const root = seed();
     const originalCwd = process.cwd();
@@ -236,13 +171,13 @@ describe("quest read-model accessors", () => {
     }
   });
 
-  it("gives a quest with no dialogue an empty list", async () => {
+  it("gives a quest that holds no conversation an empty list", async () => {
     const root = seed();
     const originalCwd = process.cwd();
     try {
       process.chdir(root);
       const readModels = await import("../src/lib/server/read-models");
-      expect(readModels.getQuestPresentation("unnamed-quest--44444444")?.dialogue).toEqual([]);
+      expect(readModels.getQuestPresentation("unnamed-quest--44444444")?.conversations).toEqual([]);
     } finally {
       process.chdir(originalCwd);
       rmSync(root, { recursive: true, force: true });

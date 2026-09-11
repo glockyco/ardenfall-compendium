@@ -766,26 +766,40 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     /// <summary>
     /// Reads the chunks the cell walk wrote for one family in this run, in batch order.
     /// </summary>
+    /// <summary>
+    /// The conversations of a run, whichever producer wrote them.
+    /// </summary>
+    /// <remarks>
+    /// A row the cell walk wrote comes back from its chunk file as JSON, and a row the asset source
+    /// added is still a typed object. Reading both through the serializer keeps one code path, and
+    /// it is what makes the scene placements appear in the counts rather than read as zero.
+    /// </remarks>
+    private static IEnumerable<Entities.Dialogue.DialogueFields> Conversations(
+        IReadOnlyDictionary<string, List<Entities.World.SceneRow>> walkedRows)
+    {
+        if (!walkedRows.TryGetValue("dialogue", out var rows)) yield break;
+        foreach (var row in rows)
+        {
+            var fields = row.Fields as Entities.Dialogue.DialogueFields
+                ?? JsonConvert.DeserializeObject<Entities.Dialogue.DialogueFields>(
+                    JsonConvert.SerializeObject(row.Fields, JsonSettings.Default),
+                    JsonSettings.Default);
+            if (fields != null) yield return fields;
+        }
+    }
+
     /// <summary>How many scene placements reach a conversation.</summary>
     private static int SceneDialogueHolders(
         IReadOnlyDictionary<string, List<Entities.World.SceneRow>> walkedRows) =>
-        walkedRows.TryGetValue("dialogue", out var rows)
-            ? rows
-                .Select(row => row.Fields)
-                .OfType<Entities.Dialogue.DialogueFields>()
-                .Sum(fields => fields.Holders.Count(holder => holder.Kind == "scene-placement"))
-            : 0;
+        Conversations(walkedRows)
+            .Sum(fields => fields.Holders.Count(holder => holder.Kind == "scene-placement"));
 
     /// <summary>How many published nodes carry each role.</summary>
     private static IDictionary<string, int> DialogueRoleCounts(
         IReadOnlyDictionary<string, List<Entities.World.SceneRow>> walkedRows)
     {
         var counts = new Dictionary<string, int>(StringComparer.Ordinal);
-        if (!walkedRows.TryGetValue("dialogue", out var rows)) return counts;
-        foreach (var node in rows
-            .Select(row => row.Fields)
-            .OfType<Entities.Dialogue.DialogueFields>()
-            .SelectMany(fields => fields.Nodes))
+        foreach (var node in Conversations(walkedRows).SelectMany(fields => fields.Nodes))
         {
             counts.TryGetValue(node.Role, out var seen);
             counts[node.Role] = seen + 1;

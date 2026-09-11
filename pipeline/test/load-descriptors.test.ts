@@ -20,6 +20,7 @@ describe("loadDescriptors", () => {
     expect(Object.keys(result.entities).sort()).toEqual([
       "character",
       "character-race",
+      "dialogue",
       "enchantment",
       "faction",
       "item",

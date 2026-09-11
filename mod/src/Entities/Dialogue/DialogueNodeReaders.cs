@@ -46,6 +46,13 @@ public static class DialogueNodeReaders
         "WaitTimeNode", "WaitUnscaledTime", "WaitUntilDateTimeNode", "PlayAnimationNode",
         "OverrideDialogFocusNode", "OverrideDialogFocusLocationNode", "ClearSpeechNode",
         "SetDialogArgumentNode", "DevNoteNode", "ToDoNode", "FilterBarkAssetNode",
+        // Named from a live export's unmodelled counts: wires, value readers and presentation.
+        "RerouteFlow", "GetRerouteValueNode`1", "ReflectedExtractorNodeWrapper`1", "SetFieldsNode`1",
+        "GetValueFunction`1", "ValueFunctionDefinition`1", "GetQuestVariable",
+        "GetQuestLocationNode", "GetCharacterGroupCharacters", "GetStaticReferenceQuestObjectNode",
+        "SetCharacterDialogExpression", "SetCharacterDialogLookAt", "ClearDialogFocusNode",
+        "HideDialogNode", "PlaySoundNode", "FadeScreenInAndOutNode", "LockInputNode",
+        "AutoSaveNode", "ConsequenceNode",
     };
 
     private static readonly Dictionary<string, string> RoleByType = new(StringComparer.Ordinal)
@@ -88,6 +95,20 @@ public static class DialogueNodeReaders
         ["IsNullNode"] = DialogueRoles.Condition,
         ["PresetHasGoldNode"] = DialogueRoles.Condition,
         ["SingleUseNode"] = DialogueRoles.Condition,
+        ["TimeCheck"] = DialogueRoles.Condition,
+        ["CheckTimePeriod"] = DialogueRoles.Condition,
+        ["WeatherCheck"] = DialogueRoles.Condition,
+        ["FactionRelationshipCheck"] = DialogueRoles.Condition,
+        ["MoneyCheckNode"] = DialogueRoles.Condition,
+        ["TraitCheck"] = DialogueRoles.Condition,
+        ["StatCheck"] = DialogueRoles.Condition,
+        ["ReadNoteCheck"] = DialogueRoles.Condition,
+        ["CheckStatusEffectSimpleNode"] = DialogueRoles.Condition,
+        ["InHomeCheck"] = DialogueRoles.Condition,
+        ["WithinDistanceOfQuestObject"] = DialogueRoles.Condition,
+        ["MultiORNode"] = DialogueRoles.Condition,
+        ["RefuseToSpeakFlowNode"] = DialogueRoles.Condition,
+        ["CharacterGroupDialogSwitchNode"] = DialogueRoles.Branch,
         ["XPNode"] = DialogueRoles.Effect,
         ["ModifyMoneyNode"] = DialogueRoles.Effect,
         ["AddItemListNode"] = DialogueRoles.Effect,
@@ -117,6 +138,15 @@ public static class DialogueNodeReaders
         ["MerchantDialogFlowNode"] = DialogueRoles.Effect,
         ["NPCRepairMenuNode"] = DialogueRoles.Effect,
         ["OpenTrainUINode"] = DialogueRoles.Effect,
+        ["AddJournalEntry"] = DialogueRoles.Effect,
+        ["AddJournalEntryNode"] = DialogueRoles.Effect,
+        ["AddStatusEffectNode"] = DialogueRoles.Effect,
+        ["GiveRewardSetNode"] = DialogueRoles.Effect,
+        ["SetObjectiveHidden"] = DialogueRoles.Effect,
+        ["TradeDiscountNode"] = DialogueRoles.Effect,
+        ["OpenFastTravelNode"] = DialogueRoles.Effect,
+        ["FastTravelNode"] = DialogueRoles.Effect,
+        ["KillCharacterNode"] = DialogueRoles.Effect,
     };
 
     /// <summary>The outcome each effect type states, in the words a reader needs.</summary>
@@ -151,6 +181,15 @@ public static class DialogueNodeReaders
         ["MerchantDialogFlowNode"] = "merchant",
         ["NPCRepairMenuNode"] = "repair",
         ["OpenTrainUINode"] = "training",
+        ["AddJournalEntry"] = "journal",
+        ["AddJournalEntryNode"] = "journal",
+        ["AddStatusEffectNode"] = "status-effect",
+        ["GiveRewardSetNode"] = "quest-reward-set",
+        ["SetObjectiveHidden"] = "quest-objective",
+        ["TradeDiscountNode"] = "trade-discount",
+        ["OpenFastTravelNode"] = "fast-travel",
+        ["FastTravelNode"] = "fast-travel",
+        ["KillCharacterNode"] = "character-death",
     };
 
     /// <summary>What a condition type reads, in the words a reader needs.</summary>
@@ -171,6 +210,18 @@ public static class DialogueNodeReaders
         ["HasInteractedWithNode"] = "already-spoken",
         ["IsDeadNode"] = "death",
         ["SingleUseNode"] = "once",
+        ["TimeCheck"] = "time",
+        ["CheckTimePeriod"] = "time",
+        ["WeatherCheck"] = "weather",
+        ["FactionRelationshipCheck"] = "faction-relationship",
+        ["MoneyCheckNode"] = "money-held",
+        ["TraitCheck"] = "trait",
+        ["StatCheck"] = "stat-check",
+        ["ReadNoteCheck"] = "note-read",
+        ["CheckStatusEffectSimpleNode"] = "status-effect",
+        ["InHomeCheck"] = "at-home",
+        ["WithinDistanceOfQuestObject"] = "near-quest-object",
+        ["RefuseToSpeakFlowNode"] = "refuses-to-speak",
     };
 
     public static bool IsControl(string authoredType) => ControlTypes.Contains(authoredType);
@@ -449,6 +500,17 @@ public static class DialogueNodeReaders
                 effect.Target = DialogueRefs.Quest(GraphFields.Read<object>(node, "location"), "TeleportCharacterToLocationNode.location");
                 effect.Participant = DialogueRefs.Participant(GraphFields.Read<object>(node, "character"), "TeleportCharacterToLocationNode.character");
                 break;
+            case "AddStatusEffectNode":
+                effect.Target = DialogueRefs.Asset(GraphFields.Read<UnityObject>(node, "statusEffect"), "AddStatusEffectNode.statusEffect");
+                effect.Participant = DialogueRefs.Participant(GraphFields.Read<object>(node, "character"), "AddStatusEffectNode.character");
+                break;
+            case "AddJournalEntry":
+            case "AddJournalEntryNode":
+            case "SetObjectiveHidden":
+            case "GiveRewardSetNode":
+                effect.Target = DialogueRefs.Quest(GraphFields.Read<object>(node, "quest"), $"{authoredType}.quest");
+                break;
+            case "KillCharacterNode":
             case "DeleteCharacterNode":
             case "DespawnNPCNode":
                 effect.Participant = DialogueRefs.Participant(GraphFields.Read<object>(node, "character"), $"{authoredType}.character");
@@ -463,13 +525,15 @@ public static class DialogueNodeReaders
         var quest = DialogueRefs.Quest(GraphFields.Read<object>(node, "quest"), $"{authoredType}.quest")
             ?? DialogueRefs.Quest(GraphFields.Read<object>(node, "customVariableQuest"), $"{authoredType}.customVariableQuest")
             ?? DialogueRefs.Quest(GraphFields.Read<object>(node, "variableRef"), $"{authoredType}.variableRef");
-        if (quest != null) condition.Subjects.Add(quest);
+        // A graph that refers to "this quest" names no asset. That is a self reference, not a
+        // subject, and publishing it as one would print a gate about nothing.
+        if (quest != null && quest.Kind != "missing") condition.Subjects.Add(quest);
     }
 
     private static void AddSubject(DialogueConditionSnapshot condition, UnityObject? asset, string source)
     {
         var reference = DialogueRefs.Asset(asset, source);
-        if (reference != null) condition.Subjects.Add(reference);
+        if (reference != null && reference.Kind != "missing") condition.Subjects.Add(reference);
     }
 
     private static void AddSubjects<T>(
@@ -489,8 +553,6 @@ public static class DialogueNodeReaders
     private static int? ReadBlackboardInt(Node node, string field)
     {
         var parameter = GraphFields.Read<object>(node, field);
-        if (parameter == null) return null;
-        var property = parameter.GetType().GetProperty("value");
-        return property?.GetValue(parameter) is int value ? value : null;
+        return parameter == null ? null : GraphFields.ReadProperty<int>(parameter, "value");
     }
 }

@@ -116,12 +116,28 @@ export type WorldSpawnSnapshotFields = Pick<
   Extract<WorldSpawnFieldName, keyof SourceWorldSpawnSnapshotFields>
 >;
 
+import type { DialogueSnapshotFields as SourceDialogueSnapshotFields } from "../src/types.ts";
+
+export declare const dialogueFieldNames: readonly [
+  "id",
+  "graphName",
+  "nodes",
+  "edges",
+  "entryNodes",
+  "holders"
+];
+export type DialogueFieldName = (typeof dialogueFieldNames)[number];
+export type DialogueSnapshotFields = Pick<
+  SourceDialogueSnapshotFields,
+  Extract<DialogueFieldName, keyof SourceDialogueSnapshotFields>
+>;
+
 import type { SceneDialogueSnapshotFields as SourceSceneDialogueSnapshotFields } from "../src/types.ts";
 
 export declare const sceneDialogueFieldNames: readonly [
   "id",
+  "dialogueId",
   "graphName",
-  "lines",
   "placements"
 ];
 export type SceneDialogueFieldName = (typeof sceneDialogueFieldNames)[number];

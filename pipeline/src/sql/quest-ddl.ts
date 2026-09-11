@@ -46,22 +46,10 @@ CREATE TABLE quest_characters (
   object_name        TEXT,
   category           TEXT,
   character_ref_json TEXT NOT NULL,
+  -- The conversations this object holds. The prose belongs to the dialogue family, because the
+  -- same graph is reachable from a character definition and from a scene placement.
+  dialogue_ids_json  TEXT NOT NULL,
   UNIQUE(quest_id, object_ordinal)
-);
--- A quest owns the dialogue it attaches to one of its character objects, so this
--- keys on that object exactly as quest_objectives keys on its phase. The character
--- alone is not the owner: the same character speaks different lines for different
--- quests. Resolving the object to a character page is a mapping concern and happens
--- in the after-map phase, not here.
-CREATE TABLE quest_character_dialogue (
-  id             TEXT PRIMARY KEY NOT NULL,
-  quest_id       TEXT NOT NULL REFERENCES quests(id),
-  object_ordinal INTEGER NOT NULL,
-  line_ordinal   INTEGER NOT NULL,
-  kind           TEXT NOT NULL,
-  text           TEXT NOT NULL,
-  importance     INTEGER NOT NULL,
-  UNIQUE(quest_id, object_ordinal, line_ordinal)
 );
 CREATE TABLE quest_journal_entries (
   id             TEXT PRIMARY KEY NOT NULL,

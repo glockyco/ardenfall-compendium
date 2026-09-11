@@ -67,9 +67,16 @@ public sealed class CellWalk
         _families = families ?? throw new ArgumentNullException(nameof(families));
     }
 
-    /// <summary>Entity ids this walk publishes, in registration order.</summary>
-    public IReadOnlyList<string> EntityIds =>
-        _families.Select(family => family.EntityId).ToList();
+    /// <summary>
+    /// Entity ids this walk publishes.
+    /// </summary>
+    /// <remarks>
+    /// The registry of published families owns this list, not the families themselves. A family can
+    /// write rows for another family, which the dialogue family does: a scene placement and the
+    /// conversation it starts are two rows of two families from one object. Deriving the list from
+    /// the families dropped those conversation rows on the floor.
+    /// </remarks>
+    public IReadOnlyList<string> EntityIds => SceneFamilies.EntityIds.ToList();
 
     /// <summary>
     /// Walks <paramref name="cells"/> and hands the result to <paramref name="commit"/> before the

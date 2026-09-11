@@ -30,7 +30,7 @@
           "id": "overview",
           "kind": "fieldList",
           "title": "Overview",
-          "fields": ["graphName", "placements", "lines"]
+          "fields": ["graphName", "dialogueId", "placements"]
         }
       ]
     }
@@ -47,18 +47,18 @@
       "missingPolicy": "fatal"
     },
     {
+      "name": "dialogueId",
+      "type": "string",
+      "from": "dialogueId",
+      "column": "dialogue_id",
+      "missingPolicy": "fatal"
+    },
+    {
       "name": "graphName",
       "type": "string",
       "from": "graphName",
       "column": "graph_name",
       "missingPolicy": "fatal"
-    },
-    {
-      "name": "lines",
-      "type": "json",
-      "from": "lines",
-      "column": "lines_json",
-      "missingPolicy": "diagnostic"
     },
     {
       "name": "placements",

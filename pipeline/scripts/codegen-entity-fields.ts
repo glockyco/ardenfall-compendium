@@ -34,6 +34,11 @@ const targets = [
     sourceTypeName: "WorldSpawnSnapshotFields",
   },
   {
+    entity: "dialogue",
+    typeName: "DialogueFieldName",
+    sourceTypeName: "DialogueSnapshotFields",
+  },
+  {
     entity: "scene-dialogue",
     typeName: "SceneDialogueFieldName",
     sourceTypeName: "SceneDialogueSnapshotFields",

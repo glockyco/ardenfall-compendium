@@ -5,7 +5,7 @@
   import QuestRewardList from "$lib/components/quests/QuestRewardList.svelte";
   import AvailabilityNotice from "$lib/components/content/AvailabilityNotice.svelte";
   import type { AvailabilityFlag } from "$lib/components/content/availability-flags";
-  import DialogueSection from "$lib/components/content/DialogueSection.svelte";
+  import ConversationList from "$lib/components/conversations/ConversationList.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
 
@@ -81,7 +81,7 @@
 
   <QuestPhaseList phases={quest.phases} />
   <QuestRewardList rewards={quest.rewards} />
-  <DialogueSection groups={quest.dialogue} heading="Dialogue" />
+  <ConversationList conversations={quest.conversations} heading="Conversations" />
 
   {#each data.relationships as section (section.id)}
     <RelationshipSection {section} />

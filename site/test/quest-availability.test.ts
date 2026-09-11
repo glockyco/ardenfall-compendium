@@ -23,15 +23,14 @@ const seed = () => {
       phases_json TEXT NOT NULL,
       rewards_json TEXT NOT NULL
     );
-    CREATE TABLE quest_character_dialogue_rows (
-      id TEXT PRIMARY KEY,
-      quest_id TEXT NOT NULL,
-      character_id TEXT NOT NULL,
-      quest_ordinal INTEGER NOT NULL,
-      kind TEXT NOT NULL,
-      text_json TEXT NOT NULL
-    );
-    CREATE TABLE entity_nodes (
+    CREATE TABLE entity_edges (
+          edge_id TEXT PRIMARY KEY,
+          source_type TEXT NOT NULL, source_id TEXT NOT NULL,
+          target_type TEXT NOT NULL, target_id TEXT NOT NULL,
+          predicate TEXT NOT NULL, label TEXT, weight INTEGER,
+          evidence_json TEXT, anchor TEXT
+        );
+        CREATE TABLE entity_nodes (
       entity_type TEXT NOT NULL,
       entity_id TEXT NOT NULL,
       label TEXT NOT NULL,

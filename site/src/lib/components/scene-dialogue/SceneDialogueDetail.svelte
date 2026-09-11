@@ -1,5 +1,4 @@
 <script lang="ts">
-  import RichText from "$lib/components/content/RichText.svelte";
   import type { SceneDialoguePresentationRow } from "$lib/server/read-models";
 
   let { presentation }: { presentation: SceneDialoguePresentationRow } = $props();
@@ -10,8 +9,19 @@
 <div class="border-border bg-card mt-4 rounded-lg border p-5">
   <dl class="grid gap-4 sm:grid-cols-2">
     <div>
-      <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">Dialogue</dt>
-      <dd class="mt-1">{presentation.graphName}</dd>
+      <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+        Conversation
+      </dt>
+      <dd class="mt-1">
+        {#if presentation.dialogueRoutePath}
+          <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- route paths come from the static read model -->
+          <a class="underline underline-offset-2" href={presentation.dialogueRoutePath}
+            >{presentation.dialogueLabel}</a
+          >
+        {:else}
+          {presentation.dialogueLabel}
+        {/if}
+      </dd>
     </div>
     {#if presentation.mapHref}
       <div>
@@ -19,7 +29,7 @@
         <dd class="mt-1">
           <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- map hrefs come from the static read model -->
           <a class="underline underline-offset-2" href={presentation.mapHref}
-            >Show where this dialogue starts</a
+            >Show where this conversation starts</a
           >
         </dd>
       </div>
@@ -46,26 +56,4 @@
       </li>
     {/each}
   </ul>
-</section>
-
-<section class="border-border mt-6 rounded-lg border p-4" aria-labelledby="lines-heading">
-  <h2 id="lines-heading" class="font-semibold">Lines ({presentation.lines.length})</h2>
-  {#if presentation.lines.length > 0}
-    <ul class="mt-3 grid gap-2 text-sm">
-      {#each presentation.lines as line, index (`${presentation.id}-${index}`)}
-        <li>
-          <!--
-            A topic is what the player can raise; a greeting is what the speaker opens with.
-            Marking which is which keeps a bare line from reading as unprompted speech.
-          -->
-          <span class="text-muted-foreground mr-2 text-xs uppercase">
-            {line.kind === "topic" ? "Topic" : "Greeting"}
-          </span>
-          <RichText richText={line.text} />
-        </li>
-      {/each}
-    </ul>
-  {:else}
-    <p class="text-muted-foreground mt-2">This dialogue publishes no authored line.</p>
-  {/if}
 </section>

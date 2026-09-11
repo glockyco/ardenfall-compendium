@@ -15,6 +15,7 @@ import { CHARACTER_DDL } from "../sql/character-ddl";
 import { PLACED_CONTAINER_DDL } from "../sql/placed-container-ddl";
 import { WORLD_SPAWN_DDL } from "../sql/world-spawn-ddl";
 import { SCENE_DIALOGUE_DDL } from "../sql/scene-dialogue-ddl";
+import { DIALOGUE_ALL_DDL } from "../sql/dialogue-ddl";
 import { PLACED_ITEM_DDL } from "../sql/placed-item-ddl";
 import { PLACED_PLANT_DDL } from "../sql/placed-plant-ddl";
 import { PORTAL_DDL } from "../sql/portal-ddl";
@@ -63,6 +64,8 @@ import { canonicaliseWorldSpawns } from "./world-spawn/canonicaliser";
 import { emitWorldSpawnReadModels } from "./world-spawn/read-models";
 import { canonicaliseSceneDialogue } from "./scene-dialogue/canonicaliser";
 import { emitSceneDialogueReadModels } from "./scene-dialogue/read-models";
+import { canonicaliseDialogues } from "./dialogue/canonicaliser";
+import { emitDialogueReadModels } from "./dialogue/read-models";
 import { emitPortalReadModels } from "./portal/read-models";
 import { canonicaliseNpcs } from "./npc/canonicaliser";
 import { emitNpcReadModels } from "./npc/read-models";
@@ -93,7 +96,7 @@ interface EntityModule {
     envelope: SnapshotEnvelope;
   }) => void;
   readModel?: (context: ReadModelContext) => PipelineDiagnostic[] | void;
-  readModelPhase?: "entity" | "after-map";
+  readModelPhase?: "entity" | "after-map" | "last";
   mapProjection?: MapProjection;
   site?: {
     overviewRenderer?: (field: string) => string;
@@ -158,7 +161,7 @@ const sceneDialogueProjection: MapProjection = {
         id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
         enabled, show_on_map_debug_only, allow_fast_travel
       )
-      SELECT 'scene-dialogue:' || d.id, 'scene-dialogue', d.dialogue_id,
+      SELECT 'scene-dialogue:' || d.id, 'scene-dialogue', d.scene_dialogue_id,
              COALESCE(NULLIF(TRIM(d.speaker_name), ''), 'Unnamed speaker (' || d.cell || ')'),
              pl.map_id, pl.map_x, pl.map_y, pl.elevation,
              1, 0, 0 -- a placement carries no authored availability flag; it is there
@@ -369,10 +372,20 @@ export const entityRegistry: Record<string, EntityModule> = {
     readModel: ({ db, entity }) => emitWorldSpawnReadModels(db, entity.site?.route),
     mapProjection: worldSpawnProjection,
   },
+  dialogue: {
+    ddl: DIALOGUE_ALL_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseDialogues(db, envelope),
+    // A gate or an outcome can name any entity, so conversations resolve after every other family
+    // has written its nodes.
+    readModelPhase: "last",
+    readModel: ({ db, entity }) => emitDialogueReadModels(db, entity.site?.route),
+  },
   "scene-dialogue": {
     ddl: SCENE_DIALOGUE_DDL,
     canonicalise: ({ db, envelope }) => canonicaliseSceneDialogue(db, envelope),
-    readModelPhase: "after-map",
+    // A placement links to its conversation, which the dialogue family publishes in this phase,
+    // and registry order puts that family first.
+    readModelPhase: "last",
     readModel: ({ db, entity }) => emitSceneDialogueReadModels(db, entity.site?.route),
     mapProjection: sceneDialogueProjection,
   },

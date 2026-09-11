@@ -1,4 +1,4 @@
-import { getQuestDialogue, type DialogueGroup } from "./dialogue";
+import { listDialoguesForHolder } from "./dialogue";
 import { all, get } from "../db";
 import { isFiniteNumber, isRecord, parseGeneratedJson, validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
@@ -96,7 +96,8 @@ export interface QuestPresentationRow {
   phases: QuestPhase[];
   rewards: QuestRewardSet[];
   routePath: string;
-  dialogue: DialogueGroup[];
+  /** The conversations this page holds, each with the mechanism that reaches it. */
+  conversations: { id: string; label: string; routePath: string; holderKind: string }[];
 }
 
 const isNullableString = (value: unknown): value is string | null =>
@@ -230,6 +231,6 @@ export const getQuestPresentation = (slug: string): QuestPresentationRow | undef
       isQuestRewardSetArray,
     ),
     routePath: row.route_path,
-    dialogue: getQuestDialogue(row.id),
+    conversations: listDialoguesForHolder("quest", row.id),
   };
 };

@@ -1,6 +1,5 @@
 import { all, get } from "../db";
-import type { DialogueLine } from "./dialogue";
-import { isRichTextDocument, parseGeneratedJson, validateRenderContext } from "../json";
+import { parseGeneratedJson, validateRenderContext } from "../json";
 import { getMapHref } from "../map-href";
 import { getEntityNodeBySlug } from "./item";
 
@@ -8,14 +7,15 @@ interface SceneDialogueOverviewRecord {
   id: string;
   name: string;
   route_path: string;
+  dialogue_id: string;
+  dialogue_label: string;
+  dialogue_route_path: string | null;
   graph_name: string;
-  line_count: number;
   placement_count: number;
 }
 
 interface SceneDialoguePresentationRecord extends SceneDialogueOverviewRecord {
   render_context: string;
-  lines_json: string;
   placements_json: string;
 }
 
@@ -23,13 +23,15 @@ export interface SceneDialogueOverviewRow {
   id: string;
   name: string;
   routePath: string;
-  /** The graph asset's name. An internal identifier, shown only when no speaker name exists. */
+  /** The conversation these placements start. */
+  dialogueId: string;
+  dialogueLabel: string;
+  dialogueRoutePath: string | null;
   graphName: string;
-  lineCount: number;
   placementCount: number;
 }
 
-/** One place a reader can start this dialogue. */
+/** One place a reader can start the conversation. */
 export interface SceneDialoguePlacement {
   id: string;
   cell: string;
@@ -44,23 +46,9 @@ export interface SceneDialoguePlacement {
 
 export interface SceneDialoguePresentationRow extends SceneDialogueOverviewRow {
   renderContext: "scene-dialogue-presentation-v1";
-  lines: DialogueLine[];
   placements: SceneDialoguePlacement[];
-  /** Selects this dialogue on the map, which shows every placement that starts it. */
   mapHref: string | null;
 }
-
-const isDialogueLineArray = (value: unknown): value is DialogueLine[] =>
-  Array.isArray(value) &&
-  value.every(
-    (line) =>
-      typeof line === "object" &&
-      line !== null &&
-      "kind" in line &&
-      (line.kind === "greeting" || line.kind === "topic") &&
-      "text" in line &&
-      isRichTextDocument(line.text),
-  );
 
 const isPlacementArray = (value: unknown): value is SceneDialoguePlacement[] =>
   Array.isArray(value) &&
@@ -74,15 +62,17 @@ const isPlacementArray = (value: unknown): value is SceneDialoguePlacement[] =>
       typeof placement.cell === "string",
   );
 
-const OVERVIEW_COLUMNS = `d.id, n.display_label AS name, n.route_path, d.graph_name,
-   d.line_count, d.placement_count`;
+const OVERVIEW_COLUMNS = `d.id, n.display_label AS name, n.route_path, d.dialogue_id,
+   d.dialogue_label, d.dialogue_route_path, d.graph_name, d.placement_count`;
 
 const toOverviewRow = (row: SceneDialogueOverviewRecord): SceneDialogueOverviewRow => ({
   id: row.id,
   name: row.name,
   routePath: row.route_path,
+  dialogueId: row.dialogue_id,
+  dialogueLabel: row.dialogue_label,
+  dialogueRoutePath: row.dialogue_route_path,
   graphName: row.graph_name,
-  lineCount: row.line_count,
   placementCount: row.placement_count,
 });
 
@@ -102,7 +92,7 @@ export const getSceneDialoguePresentation = (
   const node = getEntityNodeBySlug("scene-dialogue", slug);
   if (!node) return undefined;
   const row = get<SceneDialoguePresentationRecord>(
-    `SELECT ${OVERVIEW_COLUMNS}, d.render_context, d.lines_json, d.placements_json
+    `SELECT ${OVERVIEW_COLUMNS}, d.render_context, d.placements_json
      FROM scene_dialogue_presentation_rows d
      JOIN entity_nodes n
        ON n.entity_type = 'scene-dialogue'
@@ -118,13 +108,6 @@ export const getSceneDialoguePresentation = (
       "scene-dialogue",
       row.id,
       "scene-dialogue-presentation-v1",
-    ),
-    lines: parseGeneratedJson(
-      row.lines_json,
-      "scene-dialogue",
-      "lines_json",
-      row.id,
-      isDialogueLineArray,
     ),
     placements: parseGeneratedJson(
       row.placements_json,

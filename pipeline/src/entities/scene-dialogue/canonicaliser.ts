@@ -14,20 +14,20 @@ export function sceneDialogueField<
 }
 
 /**
- * Writes one row per dialogue and one row per placement.
+ * Writes one row per placed conversation, and one row per placement.
  *
  * The walk writes a row per batch of cells, so a graph placed in two batches arrives as two rows
  * with the same id. They are merged here rather than in the walk, which keeps the walk stateless
- * across batches. A merge that found different lines under one id would mean two graph assets share
- * a name, so it fails rather than picking one.
+ * across batches.
  */
 export function canonicaliseSceneDialogue(db: Database, envelope: SnapshotEnvelope): void {
-  const dialogueInsert = db.prepare(
-    `INSERT INTO scene_dialogue (id, graph_name, lines_json, placements_json) VALUES (?, ?, ?, ?)`,
+  const sceneInsert = db.prepare(
+    `INSERT INTO scene_dialogue (id, dialogue_id, graph_name, placements_json)
+     VALUES (?, ?, ?, ?)`,
   );
   const placementInsert = db.prepare(
     `INSERT INTO scene_dialogue_placements (
-      id, dialogue_id, placement_ordinal, cell, map_id, speaker_name, interaction_text,
+      id, scene_dialogue_id, placement_ordinal, cell, map_id, speaker_name, interaction_text,
       source_position_json
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   );
@@ -39,40 +39,30 @@ export function canonicaliseSceneDialogue(db: Database, envelope: SnapshotEnvelo
 
   const merged = new Map<
     string,
-    { graphName: string; linesJson: string; placements: SceneDialoguePlacementSnapshot[] }
+    { dialogueId: string; graphName: string; placements: SceneDialoguePlacementSnapshot[] }
   >();
 
   for (const row of entityRows<SceneDialogueSnapshotFields>(envelope)) {
     const fields = row.fields;
-    const linesJson = JSON.stringify(sceneDialogueField(fields, "lines") ?? []);
     const existing = merged.get(row.id);
     if (existing === undefined) {
       merged.set(row.id, {
+        dialogueId: sceneDialogueField(fields, "dialogueId"),
         graphName: sceneDialogueField(fields, "graphName"),
-        linesJson,
         placements: [...(sceneDialogueField(fields, "placements") ?? [])],
       });
       continue;
     }
-    if (existing.linesJson !== linesJson) {
-      throw new Error(
-        `scene dialogue '${row.id}' arrived with two different line sets, so two graph assets share the name '${existing.graphName}'`,
-      );
-    }
+
     existing.placements.push(...(sceneDialogueField(fields, "placements") ?? []));
   }
 
   const tx = db.transaction(() => {
     for (const id of [...merged.keys()].sort(compareIds)) {
-      const dialogue = merged.get(id)!;
-      dialogue.placements.sort(comparePlacements);
-      dialogueInsert.run(
-        id,
-        dialogue.graphName,
-        dialogue.linesJson,
-        JSON.stringify(dialogue.placements),
-      );
-      dialogue.placements.forEach((placement, ordinal) => {
+      const scene = merged.get(id)!;
+      scene.placements.sort(comparePlacements);
+      sceneInsert.run(id, scene.dialogueId, scene.graphName, JSON.stringify(scene.placements));
+      scene.placements.forEach((placement, ordinal) => {
         const placementId = `${id}#${ordinal}`;
         placementInsert.run(
           placementId,

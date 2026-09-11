@@ -51,6 +51,27 @@ internal static class GraphFields
         return read is Enum value ? value.ToString() : null;
     }
 
+    /// <summary>
+    /// The authored value of a property, walking the declaration hierarchy.
+    /// </summary>
+    /// <remarks>
+    /// A generic wrapper such as `BBParameter&lt;int&gt;` declares `value` and inherits another
+    /// `value` from its base, so a plain lookup throws `AmbiguousMatchException`. Walking the
+    /// hierarchy takes the most derived declaration, which is the authored one.
+    /// </remarks>
+    public static T? ReadProperty<T>(object owner, string property)
+        where T : struct
+    {
+        for (var current = owner.GetType(); current != null; current = current.BaseType)
+        {
+            var info = current.GetProperty(property, Flags | BindingFlags.DeclaredOnly);
+            if (info == null) continue;
+            return info.GetValue(owner) is T value ? value : null;
+        }
+
+        return null;
+    }
+
     /// <summary>Walks the declaration hierarchy, because a node inherits most of its authored data.</summary>
     private static FieldInfo? Find(Type type, string field)
     {

@@ -191,7 +191,22 @@ export type { WorldSpawnOverviewRow, WorldSpawnPresentationRow } from "./entitie
 export { getWorldSpawnPresentation, listWorldSpawns } from "./entities/world-spawn";
 
 export type {
+  DialogueOverviewRow,
+  DialoguePresentationRow,
+  DialogueScript,
+  DialogueScriptStep,
+  DialogueGate,
+  DialogueOutcome,
+} from "./entities/dialogue";
+export {
+  getDialoguePresentation,
+  listDialogues,
+  listDialoguesForHolder,
+} from "./entities/dialogue";
+
+export type {
   SceneDialogueOverviewRow,
+  SceneDialoguePlacement,
   SceneDialoguePresentationRow,
 } from "./entities/scene-dialogue";
 export { getSceneDialoguePresentation, listSceneDialogue } from "./entities/scene-dialogue";

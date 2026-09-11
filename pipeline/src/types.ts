@@ -467,19 +467,13 @@ export interface QuestPhaseSnapshot {
   objectives: QuestObjectiveSnapshot[];
 }
 
-export interface QuestCharacterDialogueSnapshot {
-  lineOrdinal: number;
-  kind: string;
-  text: string;
-  importance: number;
-}
-
 export interface QuestCharacterSnapshot {
   objectGameId: number;
   objectName: string | null;
   category: string | null;
   characterRef: SnapshotRef;
-  dialogue: QuestCharacterDialogueSnapshot[];
+  /** The conversations this object holds, published by the dialogue family. */
+  dialogueIds: string[];
 }
 
 export interface QuestJournalSnapshot {
@@ -672,29 +666,108 @@ export interface WorldSpawnSnapshotFields {
   recordRef: SnapshotRef | null;
 }
 
-/** One authored line a dialogue graph holds, as the walk read it. */
-export interface SceneDialogueLineSnapshot {
-  lineOrdinal: number;
-  /** `greeting` is spoken; `topic` is something a reader can ask about. */
-  kind: string;
+/** One screen of authored speech. */
+export interface DialogueStatementSnapshot {
+  screenOrdinal: number;
   text: string;
-  importance: number;
 }
 
-/** One place a reader can start a dialogue. */
+/** Who a dialogue node reads or acts on. A role is authored data, not a missing reference. */
+export interface DialogueParticipantSnapshot {
+  /** `player`, `speaker`, `quest-object`, `named`, or `unnamed`. */
+  role: string;
+  ref: SnapshotRef | null;
+}
+
+/** A declaration of authored state a conversation reads. It never carries a result. */
+export interface DialogueConditionSnapshot {
+  kind: string;
+  compare: string | null;
+  value: string | null;
+  invert: boolean;
+  subjects: SnapshotRef[];
+  participants: DialogueParticipantSnapshot[];
+  authoredType: string;
+}
+
+/** Something a conversation does to the world. */
+export interface DialogueEffectSnapshot {
+  kind: string;
+  amount: number | null;
+  amountLabel: string | null;
+  target: SnapshotRef | null;
+  participant: DialogueParticipantSnapshot | null;
+  authoredType: string;
+}
+
+/** One authored option a player can pick at a choice node. */
+export interface DialogueOptionSnapshot {
+  /** The output port the option leaves from, which is how an edge finds its option. */
+  port: string;
+  text: string;
+  gate: DialogueConditionSnapshot | null;
+}
+
+/** One node of a dialogue graph, in the shape a reader needs. */
+export interface DialogueNodeSnapshot {
+  id: number;
+  /** `speech`, `choice`, `branch`, `condition`, `effect`, `jump`, `end`, `unmodelled`. */
+  role: string;
+  authoredType: string;
+  importance: number | null;
+  statements: DialogueStatementSnapshot[];
+  singleScreen: boolean;
+  options: DialogueOptionSnapshot[];
+  gate: DialogueConditionSnapshot | null;
+  effects: DialogueEffectSnapshot[];
+  speaker: DialogueParticipantSnapshot | null;
+  jumpTarget: number | null;
+}
+
+/** One authored edge between two published nodes. */
+export interface DialogueEdgeSnapshot {
+  from: number;
+  to: number;
+  ordinal: number;
+  port: string | null;
+}
+
+/** One object that reaches a conversation. */
+export interface DialogueHolderSnapshot {
+  /**
+   * `character`, `character-module`, `quest-character`, `quest-character-group`,
+   * `quest-scene-object`, or `scene-placement`.
+   */
+  kind: string;
+  ref: SnapshotRef | null;
+  label: string | null;
+}
+
+export interface DialogueSnapshotFields {
+  id: string;
+  graphName: string;
+  nodes: DialogueNodeSnapshot[];
+  edges: DialogueEdgeSnapshot[];
+  /** Nodes no published edge reaches. A conversation starts at one of these. */
+  entryNodes: number[];
+  holders: DialogueHolderSnapshot[];
+}
+
+/** One place a reader can start a conversation. */
 export interface SceneDialoguePlacementSnapshot {
   cell: string;
   map: string | null;
-  position: SnapshotVector3;
   /** The authored speaker name, or null when the game gives the speaker none. */
   speakerName: string | null;
   interactionText: string | null;
+  position: SnapshotVector3;
 }
 
 export interface SceneDialogueSnapshotFields {
   id: string;
+  /** The conversation these placements start. */
+  dialogueId: string;
   graphName: string;
-  lines: SceneDialogueLineSnapshot[];
   placements: SceneDialoguePlacementSnapshot[];
 }
 

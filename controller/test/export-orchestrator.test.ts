@@ -629,6 +629,7 @@ describe("validateSnapshot", () => {
         "placed-container": 1,
         "world-spawn": 1,
         "scene-dialogue": 1,
+        dialogue: 1,
         "placed-item": 1,
         "placed-plant": 1,
         quest: 1,
@@ -944,6 +945,15 @@ describe("validateSnapshot", () => {
         null,
         2,
       ),
+      "dialogues.json": JSON.stringify(
+        {
+          entityId: "dialogue",
+          schemaVersion: 1,
+          rows: emptyEntities.has("dialogue") ? [] : [{ id: "named;dialog;dia_a" }],
+        },
+        null,
+        2,
+      ),
       "scene-dialogue.json": JSON.stringify(
         {
           entityId: "scene-dialogue",
@@ -1039,6 +1049,7 @@ describe("validateSnapshot", () => {
         (emptyEntities.has("placed-container") ? 0 : 1),
       "world-spawn":
         options.countOverrides?.["world-spawn"] ?? (emptyEntities.has("world-spawn") ? 0 : 1),
+      dialogue: options.countOverrides?.dialogue ?? (emptyEntities.has("dialogue") ? 0 : 1),
       "scene-dialogue":
         options.countOverrides?.["scene-dialogue"] ?? (emptyEntities.has("scene-dialogue") ? 0 : 1),
       ...options.extraCounts,

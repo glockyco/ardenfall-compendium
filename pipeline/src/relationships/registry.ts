@@ -157,6 +157,33 @@ export const relationshipRegistry = {
     inverseTitle: "Spawned in the world",
     sortOrder: 144,
   },
+  /**
+   * What a conversation reads before it offers an opener or an option. Reading a state and changing
+   * it say different things about an entity, so they are different predicates.
+   */
+  dialogue_checks: {
+    forwardTitle: "Checks",
+    inverseTitle: "Checked in dialogue",
+    sortOrder: 145,
+  },
+  /** What a conversation changes when a reader picks an option. */
+  dialogue_changes: {
+    forwardTitle: "Changes",
+    inverseTitle: "Changed by dialogue",
+    sortOrder: 146,
+  },
+  /** Where a scene lets a reader start a conversation. */
+  starts_dialogue: {
+    forwardTitle: "Starts",
+    inverseTitle: "Started at",
+    sortOrder: 147,
+  },
+  /** Which conversations an object holds. */
+  holds_dialogue: {
+    forwardTitle: "Conversations",
+    inverseTitle: "Held by",
+    sortOrder: 148,
+  },
   owned_by: {
     forwardTitle: "Owner",
     inverseTitle: "Owns",

@@ -1,7 +1,6 @@
 import type { Database } from "bun:sqlite";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
-import { translateRichTextV1 } from "../../rich-text/rich-text-v1.ts";
 import type { SnapshotRef } from "../../types.ts";
 import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../../relationships/entity-nodes.ts";
 import {
@@ -22,18 +21,6 @@ CREATE TABLE quest_presentation_rows (
   journal_on_failure    TEXT,
   phases_json           TEXT NOT NULL,
   rewards_json          TEXT NOT NULL
-);
--- Dialogue belongs to a (quest, character) pair, so neither page owns it. One row
--- set serves both: the quest page selects by quest_id, the character page by
--- character_id. Line order is baked in per quest, and the character page chooses
--- the order of the quest groups.
-CREATE TABLE quest_character_dialogue_rows (
-  id            TEXT PRIMARY KEY,
-  quest_id      TEXT NOT NULL,
-  character_id  TEXT NOT NULL,
-  quest_ordinal INTEGER NOT NULL,
-  kind          TEXT NOT NULL,
-  text_json     TEXT NOT NULL
 );
 `;
 
@@ -80,6 +67,7 @@ interface QuestCharacterRow {
   object_name: string | null;
   category: string | null;
   character_ref_json: string;
+  dialogue_ids_json: string;
 }
 
 interface QuestRewardRow {
@@ -103,15 +91,6 @@ interface EntityNode {
   entity_id: string;
   label: string | null;
   has_page: number;
-}
-
-interface QuestCharacterDialogueRow {
-  quest_id: string;
-  object_ordinal: number;
-  line_ordinal: number;
-  kind: string;
-  text: string;
-  importance: number;
 }
 
 interface PhasePresentation {
@@ -172,11 +151,6 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
        journal_on_start, journal_on_succeed, journal_on_failure, phases_json, rewards_json
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
-  const dialogueRowInsert = db.prepare(
-    `INSERT INTO quest_character_dialogue_rows (
-       id, quest_id, character_id, quest_ordinal, kind, text_json
-     ) VALUES (?, ?, ?, ?, ?, ?)`,
-  );
   const edgeInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_edges (
        edge_id, source_type, source_id, target_type, target_id, predicate,
@@ -209,17 +183,9 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
     .all();
   const characters = db
     .query<QuestCharacterRow, []>(
-      `SELECT quest_id, object_ordinal, object_game_id, object_name, category, character_ref_json
+      `SELECT quest_id, object_ordinal, object_game_id, object_name, category, character_ref_json,
+              dialogue_ids_json
        FROM quest_characters ORDER BY quest_id, object_ordinal`,
-    )
-    .all();
-  // Presentation order, decided here so every consumer renders the same sequence:
-  // greetings before topics, then the game's own importance descending, then walk order.
-  const dialogue = db
-    .query<QuestCharacterDialogueRow, []>(
-      `SELECT quest_id, object_ordinal, line_ordinal, kind, text, importance
-       FROM quest_character_dialogue
-       ORDER BY quest_id, object_ordinal, kind = 'topic', importance DESC, line_ordinal`,
     )
     .all();
   const rewards = db
@@ -271,13 +237,6 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
     list.push(character);
     charactersByQuest.set(character.quest_id, list);
   }
-  const dialogueByQuestObject = new Map<string, QuestCharacterDialogueRow[]>();
-  for (const line of dialogue) {
-    const key = `${line.quest_id}:${line.object_ordinal}`;
-    const list = dialogueByQuestObject.get(key) ?? [];
-    list.push(line);
-    dialogueByQuestObject.set(key, list);
-  }
   const rewardsByQuest = new Map<string, QuestRewardRow[]>();
   for (const reward of rewards) {
     const list = rewardsByQuest.get(reward.quest_id) ?? [];
@@ -324,7 +283,6 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
       );
 
       const questCharacters = new Map<number, EntityNode>();
-      let dialogueOrdinal = 0;
       for (const character of charactersByQuest.get(quest.id) ?? []) {
         const targetId = resolveCharacterId(character.character_ref_json);
         const node = targetId === null ? undefined : nodesByType.get("npc")?.get(targetId);
@@ -342,33 +300,10 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
         questCharacters.set(character.object_game_id, node);
         if (node.has_page !== 1) continue;
 
-        const lines = dialogueByQuestObject.get(`${quest.id}:${character.object_ordinal}`) ?? [];
-        for (const line of lines) {
-          const text = translateRichTextV1(line.text);
-          dialogueRowInsert.run(
-            `${quest.id}:dialogue:${character.object_ordinal}:${line.line_ordinal}`,
-            quest.id,
-            targetId,
-            dialogueOrdinal++,
-            line.kind,
-            JSON.stringify(text),
-          );
-          for (const diagnostic of text.diagnostics) {
-            diagnostics.push({
-              severity: diagnostic.severity,
-              source: "rich-text",
-              code: diagnostic.code,
-              message: diagnostic.message,
-              entityType: "quest",
-              entityId: quest.id,
-              field: diagnostic.field,
-            });
-          }
-        }
-        if (lines.length > 0) {
-          // One edge per (character, quest) pair. A character can appear as several
-          // quest objects, so per-object counts would describe only whichever object
-          // happened to be walked first.
+        // One edge per (character, quest) pair. A character can appear as several quest
+        // objects, so per-object counts would describe only whichever object was walked first.
+        const dialogueIds = parseDialogueIds(character.dialogue_ids_json);
+        if (dialogueIds.length > 0) {
           edgeInsert.run(
             `${targetId}:speaks_about_quest:quest:${quest.id}`,
             "npc",
@@ -378,10 +313,14 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
             "speaks_about_quest",
             "Dialogue",
             1,
-            JSON.stringify({ source: "quests.objects.CharacterQuestObject.dialogGraph" }),
+            JSON.stringify({
+              source: "quests.objects.CharacterQuestObject.dialogGraph",
+              conversations: dialogueIds.length,
+            }),
             null,
           );
         }
+
         edgeInsert.run(
           `${quest.id}:features_character:npc:${targetId}:${character.object_ordinal}`,
           "quest",
@@ -836,4 +775,10 @@ function readerAmount(reward: QuestRewardRow): string | null {
   if (value === null || value === undefined) return null;
   if (amount === "custom") return `${value > 0 ? "+" : ""}${value}`;
   return `${reward.is_positive === 0 ? "-" : "+"}${value}`;
+}
+
+/** The conversation ids a quest character object holds. */
+function parseDialogueIds(value: string): string[] {
+  const parsed: unknown = JSON.parse(value);
+  return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
 }

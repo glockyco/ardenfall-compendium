@@ -10,6 +10,7 @@ import {
   listFactions,
   listLocations,
   listContainers,
+  listDialogues,
   listSceneDialogue,
   listWorldSpawns,
   listPlacedItems,
@@ -79,6 +80,7 @@ export interface SiteChrome {
   containerRoute: string;
   worldSpawnRoute: string;
   sceneDialogueRoute: string;
+  conversationRoute: string;
   factionRoute: string;
 }
 
@@ -228,6 +230,7 @@ function buildLayoutData(): SiteChrome {
   const container = entitySection("placed-container", listContainers().length);
   const worldSpawn = entitySection("world-spawn", listWorldSpawns().length);
   const sceneDialogue = entitySection("scene-dialogue", listSceneDialogue().length);
+  const conversation = entitySection("dialogue", listDialogues().length);
   const faction = entitySection("faction", listFactions().length);
   const map = mapSection();
 
@@ -252,6 +255,7 @@ function buildLayoutData(): SiteChrome {
       container,
       worldSpawn,
       sceneDialogue,
+      conversation,
       faction,
       map,
     ],
@@ -276,6 +280,7 @@ function buildLayoutData(): SiteChrome {
     containerRoute: container.href,
     worldSpawnRoute: worldSpawn.href,
     sceneDialogueRoute: sceneDialogue.href,
+    conversationRoute: conversation.href,
     factionRoute: faction.href,
   };
 }

@@ -55,7 +55,8 @@
     "placed-item": 2,
     "placed-container": 2,
     "world-spawn": 4,
-    "scene-dialogue": 3
+    "scene-dialogue": 2,
+    "dialogue": 2
   },
   "diagnostics": {
     "fatal": 0,

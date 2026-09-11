@@ -32,7 +32,10 @@ export function emitReadModels(
   // Item read models run first. The remaining per-entity emitters follow the
   // registry order before map read models are emitted.
   for (const [entityId, module] of Object.entries(entityRegistry)) {
-    if (!module.readModel || module.readModelPhase === "after-map") continue;
+    // Only the entity phase here. A later phase runs in its own loop, and a missing check ran
+    // those emitters twice.
+    if (!module.readModel) continue;
+    if (module.readModelPhase !== undefined && module.readModelPhase !== "entity") continue;
     const entity = desc.entities[entityId];
     const envelope = snapshot.envelopes[entityId];
     if (!entity || !envelope) continue;
@@ -59,6 +62,26 @@ export function emitReadModels(
   // after map read models. The graph audit below runs last over everything.
   for (const [entityId, module] of Object.entries(entityRegistry)) {
     if (module.readModelPhase !== "after-map" || !module.readModel) continue;
+    const entity = desc.entities[entityId];
+    const envelope = snapshot.envelopes[entityId];
+    if (!entity || !envelope) continue;
+    readModelDiagnostics.push(
+      ...(module.readModel({
+        db,
+        desc,
+        snapshot,
+        ...(assets === undefined ? {} : { assets }),
+        entity,
+        variants: desc.variants[entityId] ?? [],
+        envelope,
+      }) ?? []),
+    );
+  }
+
+  // Conversations link to the entities their gates and outcomes name, so every other family's
+  // nodes must exist first. A phase says that, where registry order would only imply it.
+  for (const [entityId, module] of Object.entries(entityRegistry)) {
+    if (module.readModelPhase !== "last" || !module.readModel) continue;
     const entity = desc.entities[entityId];
     const envelope = snapshot.envelopes[entityId];
     if (!entity || !envelope) continue;

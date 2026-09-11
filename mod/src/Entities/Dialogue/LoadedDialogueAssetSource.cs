@@ -33,21 +33,41 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
 {
     private readonly Func<IEnumerable<CharacterData>> _loadedCharacters;
     private readonly Func<IEnumerable<QuestData>> _loadedQuests;
+    private readonly Func<IEnumerable<DialogFlowGraph>> _loadedGraphs;
 
     public LoadedDialogueAssetSource()
         : this(
-            () => UnityEngine.Resources.FindObjectsOfTypeAll<CharacterData>(),
-            () => UnityEngine.Resources.FindObjectsOfTypeAll<QuestData>())
+            // The registered assets, which is the set the compendium publishes characters from.
+            // `Resources.FindObjectsOfTypeAll` also returns the runtime clones a loaded world
+            // creates, and a holder named `preset_myst-elf_mercenary(Clone)(Clone)` resolves to no
+            // page and inflates the corpus with copies of one conversation.
+            BuiltLookupTable.GetAssetsOfType<CharacterData>,
+            () => UnityEngine.Resources.FindObjectsOfTypeAll<QuestData>(),
+            AuthoredGraphs)
     {
     }
 
     public LoadedDialogueAssetSource(
         Func<IEnumerable<CharacterData>> loadedCharacters,
-        Func<IEnumerable<QuestData>> loadedQuests)
+        Func<IEnumerable<QuestData>> loadedQuests,
+        Func<IEnumerable<DialogFlowGraph>> loadedGraphs)
     {
         _loadedCharacters = loadedCharacters;
         _loadedQuests = loadedQuests;
+        _loadedGraphs = loadedGraphs;
     }
+
+    /// <summary>
+    /// The authored dialogue graphs of the build.
+    /// </summary>
+    /// <remarks>
+    /// A loaded world holds a runtime copy of a graph per character that speaks it, named with
+    /// `(Clone)`, and those copies are the same authored asset. The lookup table is not the
+    /// population either: it registers 25 of this build's 239 authored graphs.
+    /// </remarks>
+    private static IEnumerable<DialogFlowGraph> AuthoredGraphs() =>
+        UnityEngine.Resources.FindObjectsOfTypeAll<DialogFlowGraph>()
+            .Where(graph => graph != null && !graph.name.Contains("(Clone)"));
 
     public DialogueAssetSourceResult Read()
     {
@@ -93,11 +113,54 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
                 var holder = new DialogueHolderFields
                 {
                     Kind = kind,
-                    Ref = DialogueRefs.Asset(quest, "QuestData"),
+                    Ref = SnapshotRef.NamedAsset("quest", quest.name),
                     Label = label,
                 };
                 Add(conversations, holdersByKind, unmodelled, diagnostics, graph, holder);
             }
+        }
+
+        // Every authored graph publishes, including one no holder names. A quest the graph itself
+        // names is a holder; silence about the rest is measured rather than hidden, because the
+        // game attaches many graphs to a character at runtime and the asset records no owner.
+        var unheld = 0;
+        foreach (var graph in _loadedGraphs())
+        {
+            var id = DialogueIds.Conversation(graph.name);
+            if (conversations.ContainsKey(id)) continue;
+
+            var attached = graph.AttachedQuest;
+            if (attached != null)
+            {
+                Add(
+                    conversations,
+                    holdersByKind,
+                    unmodelled,
+                    diagnostics,
+                    graph,
+                    new DialogueHolderFields
+                    {
+                        Kind = "quest",
+                        Ref = SnapshotRef.NamedAsset("quest", attached.name),
+                        Label = attached.name,
+                    });
+                continue;
+            }
+
+            unheld++;
+            Add(conversations, holdersByKind, unmodelled, diagnostics, graph, null);
+        }
+
+        if (unheld > 0)
+        {
+            diagnostics.Add(new Diagnostic
+            {
+                Severity = "diagnostic",
+                Code = "dialogueHolderUnknown",
+                Field = "holders",
+                Message =
+                    $"{unheld} authored dialogue graph(s) name no holder the extraction can read. The game attaches them to a character at runtime.",
+            });
         }
 
         return new DialogueAssetSourceResult(
@@ -113,15 +176,18 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
         Dictionary<string, int> unmodelled,
         List<Diagnostic> diagnostics,
         DialogFlowGraph graph,
-        DialogueHolderFields holder)
+        DialogueHolderFields? holder)
     {
-        holdersByKind.TryGetValue(holder.Kind, out var holderCount);
-        holdersByKind[holder.Kind] = holderCount + 1;
+        if (holder != null)
+        {
+            holdersByKind.TryGetValue(holder.Kind, out var holderCount);
+            holdersByKind[holder.Kind] = holderCount + 1;
+        }
 
         var id = DialogueIds.Conversation(graph.name);
         if (conversations.TryGetValue(id, out var existing))
         {
-            existing.Holders.Add(holder);
+            if (holder != null) existing.Holders.Add(holder);
             return;
         }
 
@@ -140,7 +206,7 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
             Nodes = walked.Nodes,
             Edges = walked.Edges,
             EntryNodes = walked.EntryNodes,
-            Holders = { holder },
+            Holders = holder == null ? new List<DialogueHolderFields>() : new() { holder },
         };
     }
 

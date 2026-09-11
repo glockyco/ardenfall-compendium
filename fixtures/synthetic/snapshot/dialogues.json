@@ -1,0 +1,460 @@
+{
+  "entityId": "dialogue",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "named;dialog;dia_fixture_harbour-watch",
+      "fields": {
+        "id": "named;dialog;dia_fixture_harbour-watch",
+        "graphName": "dia_fixture_harbour-watch",
+        "nodes": [
+          {
+            "id": 1,
+            "role": "speech",
+            "authoredType": "GreetingFlowNode",
+            "importance": 10,
+            "statements": [
+              {
+                "screenOrdinal": 0,
+                "text": "Welcome to the fixture harbour."
+              }
+            ],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 2,
+            "role": "speech",
+            "authoredType": "GreetingFlowNode",
+            "importance": 1,
+            "statements": [
+              {
+                "screenOrdinal": 0,
+                "text": "Not while the tide is in."
+              }
+            ],
+            "singleScreen": false,
+            "options": [],
+            "gate": {
+              "kind": "quest-state",
+              "compare": "Equal",
+              "value": "active",
+              "invert": false,
+              "subjects": [],
+              "participants": [],
+              "authoredType": "CheckQuestStateNode"
+            },
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 3,
+            "role": "choice",
+            "authoredType": "MultipleChoiceFlowNode",
+            "importance": null,
+            "statements": [],
+            "singleScreen": false,
+            "options": [
+              {
+                "port": "0",
+                "text": "Ask about the pier",
+                "gate": null
+              },
+              {
+                "port": "1",
+                "text": "Ask for the guild's help",
+                "gate": {
+                  "kind": "faction",
+                  "compare": "containsAny",
+                  "value": null,
+                  "invert": false,
+                  "subjects": [
+                    {
+                      "kind": "lookupAsset",
+                      "guid": "a1000002.fixture-mages-guild",
+                      "unityType": "Ardenfall.Faction",
+                      "name": "fixture-mages-guild"
+                    }
+                  ],
+                  "participants": [
+                    {
+                      "role": "player",
+                      "ref": null
+                    }
+                  ],
+                  "authoredType": "FactionCheck"
+                }
+              }
+            ],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 4,
+            "role": "speech",
+            "authoredType": "SpeakFlowNode",
+            "importance": null,
+            "statements": [
+              {
+                "screenOrdinal": 0,
+                "text": "The pier is closed."
+              },
+              {
+                "screenOrdinal": 1,
+                "text": "Come back at dawn."
+              }
+            ],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 5,
+            "role": "choice",
+            "authoredType": "TopicFlowNode",
+            "importance": null,
+            "statements": [],
+            "singleScreen": false,
+            "options": [
+              {
+                "port": "",
+                "text": "Why at dawn?",
+                "gate": null
+              }
+            ],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 6,
+            "role": "speech",
+            "authoredType": "SpeakFlowNode",
+            "importance": null,
+            "statements": [
+              {
+                "screenOrdinal": 0,
+                "text": "Because the watch changes then."
+              }
+            ],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 7,
+            "role": "effect",
+            "authoredType": "XPNode",
+            "importance": null,
+            "statements": [],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [
+              {
+                "kind": "experience",
+                "amount": 200,
+                "amountLabel": "Custom",
+                "target": null,
+                "participant": null,
+                "authoredType": "experience"
+              }
+            ],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 8,
+            "role": "effect",
+            "authoredType": "AddItemListNode",
+            "importance": null,
+            "statements": [],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [
+              {
+                "kind": "item",
+                "amount": 1,
+                "amountLabel": null,
+                "target": {
+                  "kind": "lookupAsset",
+                  "guid": "4ed20218.fixture-iron-sword",
+                  "unityType": "Ardenfall.Item.ItemData",
+                  "name": "fixture-iron-sword"
+                },
+                "participant": null,
+                "authoredType": "item"
+              }
+            ],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 9,
+            "role": "end",
+            "authoredType": "FinishDialogFlowNode",
+            "importance": null,
+            "statements": [],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 10,
+            "role": "branch",
+            "authoredType": "BranchRelationshipNode",
+            "importance": null,
+            "statements": [],
+            "singleScreen": false,
+            "options": [],
+            "gate": {
+              "kind": "character-relationship",
+              "compare": null,
+              "value": null,
+              "invert": false,
+              "subjects": [],
+              "participants": [
+                {
+                  "role": "player",
+                  "ref": null
+                },
+                {
+                  "role": "speaker",
+                  "ref": null
+                }
+              ],
+              "authoredType": "BranchRelationshipNode"
+            },
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 11,
+            "role": "speech",
+            "authoredType": "SpeakFlowNode",
+            "importance": null,
+            "statements": [
+              {
+                "screenOrdinal": 0,
+                "text": "You have my thanks."
+              }
+            ],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 12,
+            "role": "speech",
+            "authoredType": "SpeakFlowNode",
+            "importance": null,
+            "statements": [
+              {
+                "screenOrdinal": 0,
+                "text": "Do not test me."
+              }
+            ],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 13,
+            "role": "unmodelled",
+            "authoredType": "SomeNodeTypeTheFixtureKeeps",
+            "importance": null,
+            "statements": [],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 14,
+            "role": "jump",
+            "authoredType": "GoToLastMultipleChoice",
+            "importance": null,
+            "statements": [],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          }
+        ],
+        "edges": [
+          {
+            "from": 1,
+            "to": 3,
+            "ordinal": 0,
+            "port": null
+          },
+          {
+            "from": 2,
+            "to": 9,
+            "ordinal": 0,
+            "port": null
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "ordinal": 0,
+            "port": "0"
+          },
+          {
+            "from": 3,
+            "to": 7,
+            "ordinal": 1,
+            "port": "1"
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "ordinal": 0,
+            "port": null
+          },
+          {
+            "from": 5,
+            "to": 6,
+            "ordinal": 0,
+            "port": null
+          },
+          {
+            "from": 6,
+            "to": 14,
+            "ordinal": 0,
+            "port": null
+          },
+          {
+            "from": 7,
+            "to": 8,
+            "ordinal": 0,
+            "port": null
+          },
+          {
+            "from": 8,
+            "to": 10,
+            "ordinal": 0,
+            "port": null
+          },
+          {
+            "from": 10,
+            "to": 11,
+            "ordinal": 0,
+            "port": "Honored"
+          },
+          {
+            "from": 10,
+            "to": 12,
+            "ordinal": 1,
+            "port": "Despised"
+          },
+          {
+            "from": 11,
+            "to": 13,
+            "ordinal": 0,
+            "port": null
+          },
+          {
+            "from": 12,
+            "to": 9,
+            "ordinal": 0,
+            "port": null
+          },
+          {
+            "from": 13,
+            "to": 3,
+            "ordinal": 0,
+            "port": null
+          }
+        ],
+        "entryNodes": [1, 2],
+        "holders": [
+          {
+            "kind": "scene-placement",
+            "ref": null,
+            "label": "Harbour Watchman"
+          },
+          {
+            "kind": "character",
+            "ref": {
+              "kind": "namedAsset",
+              "entity": "character",
+              "name": "character_bandit"
+            },
+            "label": "character_bandit"
+          }
+        ]
+      }
+    },
+    {
+      "id": "named;dialog;dia_fixture_silent-effigy",
+      "fields": {
+        "id": "named;dialog;dia_fixture_silent-effigy",
+        "graphName": "dia_fixture_silent-effigy",
+        "nodes": [
+          {
+            "id": 1,
+            "role": "speech",
+            "authoredType": "SpeakFlowNode",
+            "importance": null,
+            "statements": [
+              {
+                "screenOrdinal": 0,
+                "text": "The effigy says nothing you understand."
+              }
+            ],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          }
+        ],
+        "edges": [],
+        "entryNodes": [1],
+        "holders": [
+          {
+            "kind": "scene-placement",
+            "ref": null,
+            "label": "Silent Effigy"
+          },
+          {
+            "kind": "quest-scene-object",
+            "ref": null,
+            "label": "Effigy watcher"
+          }
+        ]
+      }
+    }
+  ]
+}

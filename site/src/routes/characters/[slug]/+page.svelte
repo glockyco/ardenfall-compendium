@@ -2,7 +2,7 @@
   import BackLink from "$lib/components/navigation/BackLink.svelte";
   import CharacterDetail from "$lib/components/characters/CharacterDetail.svelte";
   import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
-  import DialogueSection from "$lib/components/content/DialogueSection.svelte";
+  import ConversationList from "$lib/components/conversations/ConversationList.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -48,7 +48,7 @@
 </p>
 
 <CharacterDetail presentation={character} />
-<DialogueSection groups={character.dialogue} heading="Dialogue" />
+<ConversationList conversations={character.conversations} heading="Conversations" />
 
 <div class="mt-6 grid gap-6">
   {#each data.relationships as section (section.id)}

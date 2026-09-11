@@ -17,17 +17,47 @@ namespace ArdenfallCompendium.Entities.Dialogue;
 /// </remarks>
 internal static class DialogueRefs
 {
+    /// <summary>
+    /// The entity types the compendium publishes under an asset name rather than a lookup guid.
+    /// </summary>
+    /// <remarks>
+    /// A guid reference to one of these resolves to nothing, because its published id is
+    /// `named;&lt;entity&gt;;&lt;asset name&gt;`. The same mapping drives `RefResolver`.
+    /// </remarks>
+    private static readonly System.Collections.Generic.Dictionary<System.Type, string> NamedEntities =
+        new()
+        {
+            [typeof(Ardenfall.StatType)] = "stat-type",
+            [typeof(Ardenfall.ItemCategory)] = "item-category",
+            [typeof(Ardenfall.SpellData)] = "spell",
+            [typeof(Ardenfall.CharacterRace)] = "character-race",
+            [typeof(Ardenfall.CharacterData)] = "character",
+            [typeof(Ardenfall.Questing.QuestData)] = "quest",
+        };
+
     /// <summary>The asset a field holds, or null when the field holds nothing.</summary>
     public static SnapshotRef? Asset(UnityObject? asset, string source)
     {
         if (asset == null) return null;
+        if (NamedEntities.TryGetValue(asset.GetType(), out var entity))
+        {
+            return SnapshotRef.NamedAsset(entity, asset.name);
+        }
+
         var guid = BuiltLookupTable.Instance != null ? BuiltLookupTable.Instance.GetGuid(asset) : null;
         return string.IsNullOrWhiteSpace(guid)
             ? SnapshotRef.Missing("lookupAssetGuidMissing", source)
             : SnapshotRef.LookupAsset(guid, asset.GetType().FullName, asset.name);
     }
 
-    /// <summary>A quest asset, which the compendium publishes by its lookup guid.</summary>
+    /// <summary>
+    /// A quest asset.
+    /// </summary>
+    /// <remarks>
+    /// The compendium publishes a quest under its asset name, not under a lookup guid, so a guid
+    /// reference here would resolve to nothing. A graph that refers to "this quest" carries no asset
+    /// at all, which is a self reference rather than a missing one.
+    /// </remarks>
     public static SnapshotRef? Quest(object? graphRef, string source)
     {
         if (graphRef == null) return null;
@@ -35,7 +65,7 @@ internal static class DialogueRefs
             ?? GraphFields.Read<QuestData>(graphRef, "questAsset");
         return quest == null
             ? SnapshotRef.Missing("dialogueQuestSelfReference", source)
-            : Asset(quest, source);
+            : SnapshotRef.NamedAsset("quest", quest.name);
     }
 
     /// <summary>Who a node acts on or reads.</summary>

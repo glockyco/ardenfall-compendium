@@ -1,4 +1,4 @@
-import { getCharacterDialogue, type DialogueGroup } from "./dialogue";
+import { listDialoguesForHolder } from "./dialogue";
 import { all, get } from "../db";
 import { isStringArray, parseGeneratedJson, validateRenderContext } from "../json";
 import { getEntityNodeBySlug } from "./item";
@@ -87,7 +87,8 @@ export interface CharacterPresentationRow {
   elevation: number;
   mapHref: string | null;
   locations: CharacterLocationLink[];
-  dialogue: DialogueGroup[];
+  /** The conversations this page holds, each with the mechanism that reaches it. */
+  conversations: { id: string; label: string; routePath: string; holderKind: string }[];
 }
 
 const displayMapLabel = (mapId: string | null): string => {
@@ -224,6 +225,6 @@ export const getCharacterPresentation = (slug: string): CharacterPresentationRow
     elevation: row.elevation,
     mapHref: getMapHref("npc", row.id),
     locations,
-    dialogue: getCharacterDialogue(row.id),
+    conversations: listDialoguesForHolder("npc", row.id),
   };
 };
