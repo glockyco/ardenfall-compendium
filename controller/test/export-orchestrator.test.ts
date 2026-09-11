@@ -69,6 +69,7 @@ class FakeClient implements ControllerClient {
 
   finalizeError: Error | null = null;
   jobNeverCompletes = false;
+  jobPollTimeouts = 0;
   cancelledJobs: string[] = [];
   async connect() {}
   async describeCommands(options?: Record<string, unknown>) {
@@ -146,6 +147,10 @@ class FakeClient implements ControllerClient {
   }
   async jobStatus(jobId: string) {
     this.jobPolls.push(jobId);
+    if (this.jobPollTimeouts > 0) {
+      this.jobPollTimeouts--;
+      throw new Error(`HotRepl job '${jobId}' status timed out after 5000 ms.`);
+    }
     if (this.jobNeverCompletes) return { jobId, state: "running" as const };
     const job = this.jobs[Number(jobId.slice(4)) - 1];
     return {
@@ -331,6 +336,25 @@ describe("exportCompendium", () => {
     expect(client.commands.some((entry) => entry.name.startsWith("operator."))).toBe(false);
     expect(client.calls.some((call) => call.name.startsWith("operator."))).toBe(false);
     expect(client.jobs.some((job) => job.name.startsWith("operator."))).toBe(false);
+  });
+
+  it("keeps waiting when one job status request times out", async () => {
+    const client = new FakeClient();
+    client.jobPollTimeouts = 1;
+
+    await exportCompendium({
+      client,
+      url: "ws://127.0.0.1:19612",
+      listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+      pluginsDir: PLUGIN.dir,
+      outputBaseDir: "/tmp/out",
+      pipelineOutDir: "/tmp/pipeline",
+      validate: async () => ({ itemCount: 150 }),
+      runPipeline: async () => undefined,
+    });
+
+    expect(client.jobPolls.slice(0, 2)).toEqual(["job-1", "job-1"]);
+    expect(client.cancelledJobs).toEqual([]);
   });
 
   it("fails a job that never completes and cancels the outstanding job", async () => {

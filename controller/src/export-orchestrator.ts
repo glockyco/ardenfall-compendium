@@ -431,7 +431,17 @@ async function waitForJob(
   const deadline = Date.now() + timeoutMs;
   for (;;) {
     if (Date.now() >= deadline) throw new Error(`Timed out waiting for job ${jobId}.`);
-    const status = await client.jobStatus(jobId, { timeoutMs: CONTROLLER_TIMEOUTS.jobPollMs });
+    let status: JobPollResult | CommandResult;
+    try {
+      status = await client.jobStatus(jobId, { timeoutMs: CONTROLLER_TIMEOUTS.jobPollMs });
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.includes("status timed out")) throw error;
+      const remainingMs = deadline - Date.now();
+      if (remainingMs <= 0)
+        throw new Error(`Timed out waiting for job ${jobId}.`, { cause: error });
+      await Bun.sleep(Math.min(250, remainingMs));
+      continue;
+    }
     if (isCommandResult(status)) return status;
     if (status.state === "failed" || status.state === "cancelled")
       throw new Error(`Job ${jobId} ended in state ${status.state}`);
