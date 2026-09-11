@@ -48,79 +48,35 @@ public sealed class LoadedPotionRecipeAssetSource : IPotionRecipeAssetSource
                 continue;
             }
 
-            var ingredients = (asset.recipe ?? new List<RecipeItem>())
+            var ingredients = (asset.Recipe ?? new List<RecipeItem>())
                 .Where(ingredient => ingredient != null)
                 .Select(ingredient => new PotionRecipeIngredientAsset(
                     ResolveAsset(ingredient.tag, _lookupGuid, _assetName, "PotionRecipe.recipe.tag"),
                     ingredient.count))
                 .ToList();
             var producedRefs = new List<PotionRecipeProductAsset>();
-            foreach (var potion in asset.drinkablePotions ?? new List<ThrowingPotionData>())
+            var potion = asset.GetPotion();
+            if (potion != null)
             {
                 producedRefs.Add(new PotionRecipeProductAsset(
-                    ResolveAsset(potion, _lookupGuid, _assetName, "PotionRecipe.drinkablePotions"),
-                    "drinkable"));
+                    ResolveAsset(potion, _lookupGuid, _assetName, "PotionRecipe.product"),
+                    "product"));
             }
-            foreach (var potion in asset.throwingPotions ?? new List<ThrowingPotionData>())
-            {
-                producedRefs.Add(new PotionRecipeProductAsset(
-                    ResolveAsset(potion, _lookupGuid, _assetName, "PotionRecipe.throwingPotions"),
-                    "throwing"));
-            }
-
-            var statusEffectRef = ResolveRecipeStatusEffect(
-                asset,
-                _lookupGuid,
-                _assetName);
 
             yield return new PotionRecipeAsset(
                 Guid: _lookupGuid(asset),
                 AssetName: _assetName(asset),
-                StatusEffectRef: statusEffectRef,
-                LockedByDefault: asset.lockedByDefault,
-                EnableSkillRequirement: asset.enableSkillRequirement,
-                SkillRequirement: asset.skillRequirement,
-                LevelModifier: asset.levelModifier,
-                SuccessModifier: asset.successModifier,
+                StatusEffectRef: SnapshotRef.Missing("potionRecipeStatusEffectUnavailable", "PotionRecipe.product"),
+                LockedByDefault: false,
+                EnableSkillRequirement: asset.EnableSkillRequirement,
+                SkillRequirement: asset.SkillRequirement,
+                LevelModifier: 0f,
+                SuccessModifier: 0f,
                 Ingredients: ingredients,
                 ProducedRefs: producedRefs);
         }
     }
 
-    private static SnapshotRef ResolveRecipeStatusEffect(
-        ArdenfallPotionRecipe recipe,
-        Func<UnityObject, string?> lookupGuid,
-        Func<UnityObject, string> assetName)
-    {
-        var firstPotion = recipe.drinkablePotions != null && recipe.drinkablePotions.Count > 0
-            ? recipe.drinkablePotions[0]
-            : recipe.throwingPotions != null && recipe.throwingPotions.Count > 0
-                ? recipe.throwingPotions[0]
-                : null;
-        if (firstPotion == null)
-        {
-            return SnapshotRef.Missing(
-                "potionRecipeStatusEffectMissing",
-                "PotionRecipe.product");
-        }
-
-        var areaOfEffect = firstPotion.areaOfEffect?.Get();
-        if (areaOfEffect == null || areaOfEffect.Length == 0 || areaOfEffect[0] == null)
-        {
-            return SnapshotRef.Missing(
-                "potionRecipeStatusEffectMissing",
-                "PotionRecipe.product.areaOfEffect[0]");
-        }
-
-        return ResolveAsset(
-            areaOfEffect[0].StatusEffect,
-            lookupGuid,
-            assetName,
-            "PotionRecipe.product.areaOfEffect[0].StatusEffect")
-            ?? SnapshotRef.Missing(
-                "potionRecipeStatusEffectMissing",
-                "PotionRecipe.product.areaOfEffect[0].StatusEffect");
-    }
 
     private static SnapshotRef? ResolveAsset(
         UnityObject? asset,

@@ -44,11 +44,12 @@ public sealed class MasterRecordTableCensus : IRecordCensus
     public IReadOnlyDictionary<string, int> Count()
     {
         var counts = new Dictionary<string, int>(StringComparer.Ordinal);
-        var tables = Ardenfall.ArdenfallGame.instance?.worldData?.masterRecordTable?.GetTables();
-        if (tables == null) return counts;
-        foreach (var pair in tables)
+        var records = Ardenfall.ArdenfallGame.instance?.worldData?.masterRecordTable?.GetRecords();
+        if (records == null) return counts;
+        foreach (var record in records)
         {
-            counts[pair.Key] = pair.Value == null ? 0 : pair.Value.GetRecords().Count();
+            var key = record?.GetType().FullName ?? "<null>";
+            counts[key] = counts.TryGetValue(key, out var count) ? count + 1 : 1;
         }
 
         return counts;

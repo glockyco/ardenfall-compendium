@@ -77,7 +77,7 @@ public sealed class UnityOperatorTarget : IOperatorTarget
         get
         {
             if (_master == null) _master = UnityObject.FindObjectOfType<ArdenfallMaster>();
-            return _master == null ? null : _master.buildSettings;
+            return _master == null ? null : BuildSettingsFile.Instance;
         }
     }
 

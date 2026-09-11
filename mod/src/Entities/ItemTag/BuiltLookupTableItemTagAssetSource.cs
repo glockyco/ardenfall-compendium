@@ -20,7 +20,7 @@ public sealed class BuiltLookupTableItemTagAssetSource : IItemTagAssetSource
                 Guid: lookup?.GetGuid(asset),
                 AssetName: asset.name ?? "",
                 TagName: asset.tagName,
-                Description: asset.description);
+                Description: null);
         }
     }
 }

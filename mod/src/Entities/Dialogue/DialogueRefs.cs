@@ -157,7 +157,7 @@ internal static class DialogueRefs
         return new DialogueParticipantSnapshot
         {
             Role = "named",
-            Ref = SnapshotRef.Record(id.Value.table, id.Value.subtable, id.Value.id, "CharacterRecord"),
+            Ref = SnapshotRef.Record(id.Value.id, "CharacterRecord"),
         };
     }
 
@@ -178,7 +178,7 @@ internal static class DialogueRefs
                 return new DialogueParticipantSnapshot
                 {
                     Role = "named",
-                    Ref = SnapshotRef.Record(id.table, id.subtable, id.id, "CharacterRecord"),
+                    Ref = SnapshotRef.Record(id.id, "CharacterRecord"),
                 };
             }
         }

@@ -29,4 +29,7 @@ public sealed class SnapshotRef
 
     public static SnapshotRef Record(string table, string subtable, string id, string? recordType = null) =>
         new() { Kind = "record", Table = table, Subtable = subtable, Id = id, RecordType = recordType };
+
+    public static SnapshotRef Record(string id, string? recordType = null) =>
+        new() { Kind = "record", Id = id, RecordType = recordType };
 }

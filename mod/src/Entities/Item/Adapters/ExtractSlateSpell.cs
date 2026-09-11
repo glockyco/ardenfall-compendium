@@ -25,7 +25,7 @@ public static class ExtractSlateSpell
             ["itemTypeTooltip"] = ItemTypeLabel(spellData, spellItemType),
             ["statType"] = RequirementStatTypeLabel(asset.statType.Get(), spellData),
             ["durabilityMax"] = asset.durabilityMax.Get(),
-            ["manaCostMultiplier"] = asset.manaCostMultiplier.Get(),
+            ["manaCostMultiplier"] = asset.manaCost.Get(),
         };
         var provenance = new Dictionary<string, Provenance>(StringComparer.Ordinal)
         {
@@ -35,7 +35,7 @@ public static class ExtractSlateSpell
             ["spawnWhenSheathed"] = ProvenanceCapture.ForParameter<bool>("spawnWhenSheathed.Get()", asset.spawnWhenSheathed.IsSet, inherited: !asset.spawnWhenSheathed.IsSet),
             ["spellItemType"] = ProvenanceCapture.ForParameter<SpellItemType>("spellItemType.Get()", asset.spellItemType.IsSet, inherited: !asset.spellItemType.IsSet),
             ["durabilityMax"] = ProvenanceCapture.ForParameter<int>("durabilityMax.Get()", asset.durabilityMax.IsSet, inherited: !asset.durabilityMax.IsSet),
-            ["manaCostMultiplier"] = ProvenanceCapture.ForParameter<float>("manaCostMultiplier.Get()", asset.manaCostMultiplier.IsSet, inherited: !asset.manaCostMultiplier.IsSet),
+            ["manaCostMultiplier"] = ProvenanceCapture.ForParameter<float>("manaCostMultiplier.Get()", asset.manaCost.IsSet, inherited: !asset.manaCost.IsSet),
         };
         return new ItemAdapterResult(fields, provenance, ItemAdapterHelpers.DrainDiagnostics(refs), ItemAdapterHelpers.EmptyPresentationOnlyFields());
     }

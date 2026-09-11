@@ -80,7 +80,7 @@ public sealed class LoadedSpellAssetSource : ISpellAssetSource, IIconAssetPlanSi
             StatTypeRef: statType == null
                 ? null
                 : SnapshotRef.NamedAsset("stat-type", statType.name ?? ""),
-            ManaCost: asset.manaCost,
+            ManaCost: 0f,
             IsIllegal: asset.isIlligal,
             IconRef: icon == null ? null : SnapshotRef.Missing("engineResource", "SpellData.icon"),
             TooltipSource: NullIfEmpty(asset.tooltip?.GetTooltip(1f, 1f, asset)),

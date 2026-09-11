@@ -80,10 +80,10 @@ public sealed class MasterRecordTableNpcRecordSource : INpcRecordSource
         var additionalDropResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.additionalItems);
         var factionResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.startingFactions);
         var levelResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.startingLevel);
-        var merchantListResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.merchantItemLists);
-        var merchantAdditionalResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.merchantAdditionalItems);
-        var merchantGoldResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.merchantGold);
-        var merchantCategoryResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.merchantCategories);
+        var merchantListResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.itemLists);
+        var merchantAdditionalResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.additionalItems);
+        var merchantGoldResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.startingMoney);
+        var merchantCategoryResolution = ParameterChain.Resolve(storedCharacterData, storedCharacterData.startingFactions);
 
         // itemLists and additionalItems are one reader-facing drop fact, as in CharacterExtractor.
         var dropRefs = MergeRefs(
@@ -91,17 +91,15 @@ public sealed class MasterRecordTableNpcRecordSource : INpcRecordSource
             ToItemRefs(additionalDropResolution.Value, "CharacterData.additionalItems"));
         var dropOwnership = MergeOwnership(dropResolution.Ownership, additionalDropResolution.Ownership);
         // merchantItemLists and merchantAdditionalItems are one reader-facing stock fact.
-        var merchantRefs = MergeRefs(
-            FlattenMerchantItemRefs(merchantListResolution.Value),
-            ToItemRefs(merchantAdditionalResolution.Value, "CharacterData.merchantAdditionalItems"));
-        var merchantOwnership = MergeOwnership(merchantListResolution.Ownership, merchantAdditionalResolution.Ownership);
+        var merchantRefs = ToItemRefs(merchantAdditionalResolution.Value, "CharacterData.additionalItems");
+        var merchantOwnership = additionalDropResolution.Ownership;
         var spawnPoint = ReadSpawnPoint(record);
         var characterRef = ResolveParentRef(storedCharacterData.parent);
         if (spawnPoint == null)
         {
             return new NpcRecordSourceRow(
-                Table: id.table,
-                Subtable: id.subtable,
+                Table: "",
+                Subtable: "",
                 Id: id.id,
                 DisplayName: nameResolution.Name,
                 DisplayNameProvenance: nameResolution.Provenance,
@@ -121,14 +119,14 @@ public sealed class MasterRecordTableNpcRecordSource : INpcRecordSource
                 StartingLevelProvenance: Provenance(levelResolution.Ownership),
                 StartingLevelOwner: Owner(levelResolution.Ownership),
                 MerchantRefs: merchantRefs,
-                MerchantRefsProvenance: merchantOwnership.Provenance,
-                MerchantRefsOwner: merchantOwnership.Owner,
-                MerchantGold: ToOptionalAssetRef(merchantGoldResolution.Value, "CharacterData.merchantGold"),
-                MerchantGoldProvenance: Provenance(merchantGoldResolution.Ownership),
-                MerchantGoldOwner: Owner(merchantGoldResolution.Ownership),
-                MerchantCategories: ToAssetRefs(merchantCategoryResolution.Value, "CharacterData.merchantCategories"),
-                MerchantCategoriesProvenance: Provenance(merchantCategoryResolution.Ownership),
-                MerchantCategoriesOwner: Owner(merchantCategoryResolution.Ownership));
+                MerchantRefsProvenance: "absent",
+                MerchantRefsOwner: null,
+                MerchantGold: null,
+                MerchantGoldProvenance: "absent",
+                MerchantGoldOwner: null,
+                MerchantCategories: new List<SnapshotRef>(),
+                MerchantCategoriesProvenance: "absent",
+                MerchantCategoriesOwner: null);
         }
 
         var containingLocations = new List<SnapshotRef>();
@@ -141,8 +139,8 @@ public sealed class MasterRecordTableNpcRecordSource : INpcRecordSource
         }
 
         return new NpcRecordSourceRow(
-            Table: id.table,
-            Subtable: id.subtable,
+            Table: "",
+            Subtable: "",
             Id: id.id,
             DisplayName: nameResolution.Name,
             DisplayNameProvenance: nameResolution.Provenance,
@@ -165,14 +163,14 @@ public sealed class MasterRecordTableNpcRecordSource : INpcRecordSource
             StartingLevelProvenance: Provenance(levelResolution.Ownership),
             StartingLevelOwner: Owner(levelResolution.Ownership),
             MerchantRefs: merchantRefs,
-            MerchantRefsProvenance: merchantOwnership.Provenance,
-            MerchantRefsOwner: merchantOwnership.Owner,
-            MerchantGold: ToOptionalAssetRef(merchantGoldResolution.Value, "CharacterData.merchantGold"),
-            MerchantGoldProvenance: Provenance(merchantGoldResolution.Ownership),
-            MerchantGoldOwner: Owner(merchantGoldResolution.Ownership),
-            MerchantCategories: ToAssetRefs(merchantCategoryResolution.Value, "CharacterData.merchantCategories"),
-            MerchantCategoriesProvenance: Provenance(merchantCategoryResolution.Ownership),
-            MerchantCategoriesOwner: Owner(merchantCategoryResolution.Ownership));
+            MerchantRefsProvenance: "absent",
+            MerchantRefsOwner: null,
+            MerchantGold: null,
+            MerchantGoldProvenance: "absent",
+            MerchantGoldOwner: null,
+            MerchantCategories: new List<SnapshotRef>(),
+            MerchantCategoriesProvenance: "absent",
+            MerchantCategoriesOwner: null);
     }
 
     private static IReadOnlyList<SnapshotRef> FlattenItemRefs(

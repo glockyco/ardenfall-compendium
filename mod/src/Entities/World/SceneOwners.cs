@@ -31,7 +31,7 @@ public static class SceneOwners
             var id = character.RecordID;
             if (id.IsNull()) continue;
             owners.CharacterRefs.Add(
-                SnapshotRef.Record(id.table, id.subtable, id.id, "CharacterRecord"));
+                SnapshotRef.Record(id.id, "CharacterRecord"));
         }
 
         return owners;

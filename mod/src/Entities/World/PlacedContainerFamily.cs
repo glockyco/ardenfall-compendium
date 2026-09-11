@@ -193,7 +193,7 @@ public sealed class PlacedContainerFamily : ISceneFamily
         placed.Mode = authored.locked.ToString();
         placed.Level = authored.lockLevel.ToString();
         placed.AllowLockpick = authored.allowLockpick;
-        placed.AllowDestroy = authored.allowDestroy;
+        placed.AllowDestroy = false;
         foreach (var key in authored.keys ?? new List<Ardenfall.Item.ItemData>())
         {
             var reference = SceneObjects.AssetRef(key, "Lock.keys");

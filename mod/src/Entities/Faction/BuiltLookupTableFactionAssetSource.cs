@@ -88,8 +88,8 @@ public sealed class BuiltLookupTableFactionAssetSource : IFactionAssetSource, II
             Alliable: asset.alliable,
             EnableReputation: asset.enableReputation,
             AlwaysShowInUI: asset.alwaysShowInUI,
-            CanBeDisguised: asset.canBeDisguised,
-            EnableBounty: asset.enableBounty,
+            CanBeDisguised: false,
+            EnableBounty: false,
             InterFactionRelationships: relationships);
     }
 

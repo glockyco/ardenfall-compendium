@@ -38,7 +38,7 @@ Alternative rejected: retain the dual-profile design. It doubles build and verif
 
 ### 2. Port shared extraction code directly to the current API
 
-Copy main-game assemblies into the existing ignored `mod/libs/` directory and compile the existing project output. Categorize the 64 compiler failures, then update each extraction boundary to the current typed member or signature.
+Copy main-game assemblies into the existing ignored `mod/libs/` directory and compile the existing project output. The 64 failures grouped into removed record-table fields, renamed or removed parameter fields, and changed value types. Update each extraction boundary to the current typed member or signature.
 
 The canonical DTOs, descriptor registry, command names, completeness checks, SQLite tables, and public routes do not change. If a current-game concept genuinely disappeared, the extractor must prove that through a live census and update the canonical contract explicitly; it must not return an empty value merely to compile.
 

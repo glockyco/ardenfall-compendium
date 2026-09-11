@@ -115,6 +115,6 @@ public sealed class WorldSpawnFamily : ISceneFamily
         var id = reference.RecordID;
         return id.IsNull()
             ? SnapshotRef.Missing("spawnRecordMissing", "RecordNPCSpawner.recordReference")
-            : SnapshotRef.Record(id.table, id.subtable, id.id, "CharacterRecord");
+            : SnapshotRef.Record(id.id, "CharacterRecord");
     }
 }

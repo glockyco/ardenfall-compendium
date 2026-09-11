@@ -296,7 +296,6 @@ public sealed class SpellExtractorTests
     {
         var spell = (SpellData)RuntimeHelpers.GetUninitializedObject(typeof(SpellData));
         spell.spellName = name;
-        spell.manaCost = 1f;
         spell.isIlligal = false;
         return spell;
     }

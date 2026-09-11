@@ -40,8 +40,8 @@ public sealed class MasterRecordTablePortalRecordSource : IPortalRecordSource
         var transform = record.transform;
         var connected = ConnectedPortalRef(record.connectedPortal, out var connectedResolved);
         return new PortalRecordSourceRow(
-            Table: id.table,
-            Subtable: id.subtable,
+            Table: "",
+            Subtable: "",
             Id: id.id,
             FriendlyName: record.friendlyName,
             MapId: transform?.mapID,
@@ -57,7 +57,7 @@ public sealed class MasterRecordTablePortalRecordSource : IPortalRecordSource
         var id = reference.RecordID;
         if (id.IsNull()) return null;
         resolved = !reference.IsNull;
-        return SnapshotRef.Record(id.table, id.subtable, id.id, "PortalRecord");
+        return SnapshotRef.Record(id.id, "PortalRecord");
     }
 
     private static PortalVector3Snapshot FromVector3(Vector3 value) => new(value.x, value.y, value.z);

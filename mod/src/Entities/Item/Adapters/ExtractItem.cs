@@ -75,7 +75,7 @@ public static class ExtractItem
                 source: "ParameterizedObject.parent",
                 diagnosticCode: "itemParentRefMissing");
 
-        var quickslotIconResolved = asset.quickslotIcon.Get();
+        var quickslotIconResolved = asset.icon.Get();
         fields["quickslotIconRef"] = quickslotIconResolved == null
             ? null
             : refs.ResolveAsset(
@@ -205,6 +205,5 @@ public static class ExtractItem
     }
 
     private static bool HasPotionNameSource(ArdenfallPotionRecipe recipe) =>
-        (recipe.drinkablePotions != null && recipe.drinkablePotions.Count > 0 && !ReferenceEquals(recipe.drinkablePotions[0], null)) ||
-        (recipe.throwingPotions != null && recipe.throwingPotions.Count > 0 && !ReferenceEquals(recipe.throwingPotions[0], null));
+        recipe.GetPotion() != null;
 }

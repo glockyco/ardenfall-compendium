@@ -24,10 +24,7 @@ public sealed class RuntimeMasterTooltipSnapshotSource : IMasterTooltipSnapshotS
 
     public MasterTooltipVocabularySnapshot BuildSnapshot()
     {
-        var potionRecipeDescription = WorldSingleton<PotionRecipeManager>.Instance != null
-            ? WorldSingleton<PotionRecipeManager>.Instance.potionRecipeDescription
-            : "";
-        return MasterTooltipExtractor.Build(ArdenfallMasterData.Instance, potionRecipeDescription);
+        return MasterTooltipExtractor.Build(ArdenfallMasterData.Instance, null);
     }
 }
 

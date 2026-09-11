@@ -171,7 +171,7 @@ public static class ItemAdapterHelpers
             settings.launchPointLerpTime,
             settings.enableSpawnFallback,
             settings.spawnFallbackOffset,
-            settings.enableBounce,
+            false,
             settings.enableDestructable,
             settings.destructableHealth,
             settings.enableDeflect,

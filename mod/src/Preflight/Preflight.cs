@@ -39,11 +39,9 @@ public static class Preflight
         });
         Check(report, "masterRecordTable", () =>
         {
-            // MasterRecordTable exposes a public `tables` Dictionary; the live DLL has no
-            // GetTables() method despite the plan literal suggesting one.
             var m = ArdenfallGame.instance?.worldData?.masterRecordTable;
-            var nonEmpty = m != null && m.tables != null && m.tables.Count > 0;
-            return (nonEmpty, nonEmpty ? null : "masterRecordTable.tables empty");
+            var nonEmpty = m != null && m.GetRecords().Any();
+            return (nonEmpty, nonEmpty ? null : "masterRecordTable contains no records");
         });
 
         report.Passed = report.Checks.All(c => c.Ok);

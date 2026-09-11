@@ -88,7 +88,7 @@ public sealed class LoadedEnchantmentAssetSource : IEnchantmentAssetSource
                 Guid: _lookupGuid(asset),
                 AssetName: _assetName(asset),
                 EnchantmentName: asset.enchantmentName,
-                MoneyValue: asset.moneyValue,
+                MoneyValue: 0f,
                 HideEffectTooltips: asset.hideEffectTooltips,
                 TooltipSource: assembledTooltipDependsOnItem || effectTooltipDependsOnItem || asset.tooltip == null
                     ? null

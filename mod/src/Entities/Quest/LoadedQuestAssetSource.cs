@@ -305,7 +305,7 @@ public sealed class LoadedQuestAssetSource : IQuestAssetSource
         if (reference == null || reference.RecordID.IsNull()) return null;
         var id = reference.RecordID;
         resolved = !reference.IsNull;
-        return SnapshotRef.Record(id.table, id.subtable, id.id, "CharacterRecord");
+        return SnapshotRef.Record(id.id, "CharacterRecord");
     }
 
     private static string? NullIfEmpty(string? value) =>
