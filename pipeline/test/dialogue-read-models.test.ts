@@ -127,6 +127,31 @@ describe("conversations", () => {
     }
   });
 
+  it("keeps an option the graph leaves unconnected", async () => {
+    const { db, dispose } = await buildFixtureDatabase();
+    try {
+      const script =
+        db
+          .query<{ script_json: string }, []>(
+            `SELECT script_json FROM dialogue_presentation_rows WHERE id = 'named;dialog;dia_fixture_harbour-watch'`,
+          )
+          .get()?.script_json ?? "";
+      const parsed = JSON.parse(script) as {
+        openers: { kind: string; options?: { text: string; next: unknown[] }[] }[];
+      };
+
+      const options = JSON.stringify(parsed);
+      expect(options).toContain("Ask about the tide charts");
+      // It publishes with no continuation, which is what the graph authors.
+      const match = /\{"port":"9","text":"Ask about the tide charts"[^}]*,"next":\[\]/.test(
+        options.replace(/"gate":null,/g, ""),
+      );
+      expect(match).toBe(true);
+    } finally {
+      dispose();
+    }
+  });
+
   it("publishes the checks a composite gate holds", async () => {
     const { db, dispose } = await buildFixtureDatabase();
     try {
