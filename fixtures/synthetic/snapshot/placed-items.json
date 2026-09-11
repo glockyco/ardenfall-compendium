@@ -8,7 +8,11 @@
         "id": "scene;cell_fixture_0.0;a1b2c3d4-0001-4a00-9c00-000000000001",
         "cell": "cell_fixture_0.0",
         "map": "ardenfall",
-        "position": { "x": 8, "y": 3, "z": -12 },
+        "position": {
+          "x": 8,
+          "y": 3,
+          "z": -12
+        },
         "itemRef": {
           "kind": "lookupAsset",
           "guid": "4ed20218.fixture-iron-sword",
@@ -49,7 +53,11 @@
         "id": "scene;cell_fixture_0.1;b2c3d4e5-0002-4a00-9c00-000000000002",
         "cell": "cell_fixture_0.1",
         "map": "ardenfall",
-        "position": { "x": -4, "y": 1, "z": 6 },
+        "position": {
+          "x": -4,
+          "y": 1,
+          "z": 6
+        },
         "itemRef": {
           "kind": "lookupAsset",
           "guid": "6a71c0de.fixture-stamina-draught",
@@ -60,7 +68,18 @@
         "durability": 1,
         "durabilityRuined": false,
         "enchantments": [],
-        "owners": { "factionRefs": [], "characterRefs": [] }
+        "owners": {
+          "factionRefs": [],
+          "characterRefs": [
+            {
+              "kind": "record",
+              "table": "instances",
+              "subtable": "characters",
+              "id": "2d6f47b30c8e41a59fbd73e15c0a869b",
+              "recordType": "CharacterRecord"
+            }
+          ]
+        }
       }
     }
   ]

@@ -1,6 +1,7 @@
 import type { Database } from "bun:sqlite";
 import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../../relationships/entity-nodes.ts";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
+import { emitOwnershipEdges } from "../ownership.ts";
 import type { PlacedEnchantmentSnapshot, SnapshotRef } from "../../types.ts";
 
 interface PlacedItemRow {
@@ -134,6 +135,8 @@ export function emitPlacedItemReadModels(
     }
   });
   tx();
+
+  diagnostics.push(...emitOwnershipEdges(db, "placed-item", "placed_items"));
 
   return diagnostics;
 }

@@ -8,7 +8,11 @@
         "id": "scene;cell_fixture_0.0;c1d2e3f4-0001-4a00-9c00-000000000001",
         "cell": "cell_fixture_0.0",
         "map": "ardenfall",
-        "position": { "x": 10, "y": 3, "z": -14 },
+        "position": {
+          "x": 10,
+          "y": 3,
+          "z": -14
+        },
         "containerName": "Harbor Strongbox",
         "interactionText": "Open",
         "lootLists": [
@@ -47,7 +51,11 @@
             "name": "fixture-iron-sword"
           }
         ],
-        "level": { "automatic": false, "value": 4, "addValue": 0 },
+        "level": {
+          "automatic": false,
+          "value": 4,
+          "addValue": 0
+        },
         "lock": {
           "mode": "FullyLocked",
           "level": "Medium",
@@ -63,7 +71,14 @@
           ]
         },
         "owners": {
-          "factionRefs": [],
+          "factionRefs": [
+            {
+              "kind": "lookupAsset",
+              "guid": "a1000001.fixture-black-moth",
+              "unityType": "Ardenfall.Faction",
+              "name": "fixture-black-moth"
+            }
+          ],
           "characterRefs": []
         }
       }
@@ -74,13 +89,21 @@
         "id": "scene;cell_fixture_0.1;d2e3f4a5-0002-4a00-9c00-000000000002",
         "cell": "cell_fixture_0.1",
         "map": "ardenfall",
-        "position": { "x": -2, "y": 1, "z": 4 },
+        "position": {
+          "x": -2,
+          "y": 1,
+          "z": 4
+        },
         "containerName": "Container",
         "interactionText": "Open",
         "lootLists": [],
         "additionalItems": [],
         "possibleItemRefs": [],
-        "level": { "automatic": true, "value": 1, "addValue": 0 },
+        "level": {
+          "automatic": true,
+          "value": 1,
+          "addValue": 0
+        },
         "lock": {
           "mode": "Unlocked",
           "level": "None",
@@ -88,7 +111,18 @@
           "allowDestroy": true,
           "keyRefs": []
         },
-        "owners": { "factionRefs": [], "characterRefs": [] }
+        "owners": {
+          "factionRefs": [],
+          "characterRefs": [
+            {
+              "kind": "record",
+              "table": "instances",
+              "subtable": "characters",
+              "id": "ffffffffffffffffffffffffffffffff",
+              "recordType": "CharacterRecord"
+            }
+          ]
+        }
       }
     }
   ]
