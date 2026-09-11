@@ -87,7 +87,7 @@ export interface MapCaptureExportOptions {
   minCellY: number;
   maxCellX: number;
   maxCellY: number;
-  pixelsPerCell: number;
+  pixelsPerUnit: number;
   authoredOnly?: boolean;
 }
 

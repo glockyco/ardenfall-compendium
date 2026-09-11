@@ -856,12 +856,8 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
         if (!Directory.Exists(captureRoot)) return;
         foreach (var source in Directory.GetFiles(captureRoot, "*", SearchOption.AllDirectories))
         {
-            var relativeToCapture = Path.GetRelativePath(captureRoot, source);
-            var mapId = relativeToCapture.Split(Path.DirectorySeparatorChar)[0];
-            var relativeInMap = Path.GetRelativePath(
-                Path.Combine(captureRoot, mapId),
-                source);
-            var targetRelative = relativeInMap.Replace(Path.DirectorySeparatorChar, '/');
+            var targetRelative = Path.GetRelativePath(captureRoot, source)
+                .Replace(Path.DirectorySeparatorChar, '/');
             var target = Path.Combine(stagingDir, targetRelative.Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
             var bytes = File.ReadAllBytes(source);

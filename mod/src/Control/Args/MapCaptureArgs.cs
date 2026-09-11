@@ -25,11 +25,11 @@ public sealed class MapCaptureArgs
     public int MaxCellY { get; set; }
 
     /// <summary>
-    /// Plate size per cell. 512 over a 150-unit cell is 3.41 pixels per unit, which the resolution
-    /// comparison settled as legible for the basemap; 1,024 is the detail level over authored cells.
+    /// Requested plate density. 512 pixels over a 150-unit cell is 3.41 pixels per unit, which the
+    /// comparison settled as legible for the basemap.
     /// </summary>
-    [JsonProperty("pixelsPerCell")]
-    public int PixelsPerCell { get; set; } = 512;
+    [JsonProperty("pixelsPerUnit")]
+    public float PixelsPerUnit { get; set; } = 512f / 150f;
 
     /// <summary>When true, omit declared cells that have no authored scene.</summary>
     [JsonProperty("authoredOnly")]

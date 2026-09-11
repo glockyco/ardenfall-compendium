@@ -55,9 +55,9 @@ public sealed class MapCaptureCommand : IControlCommandHandler<MapCaptureArgs, M
         if (!_runs.TryGet(args.RunId, out var run))
             return CompendiumCommandResults.Validation(
                 context, "unknownRun", $"Run '{args.RunId}' is not open.");
-        if (args.PixelsPerCell <= 0)
+        if (args.PixelsPerUnit <= 0 || float.IsNaN(args.PixelsPerUnit) || float.IsInfinity(args.PixelsPerUnit))
             return CompendiumCommandResults.Validation(
-                context, "invalidPixels", "pixelsPerCell must be positive.");
+                context, "invalidPixels", "pixelsPerUnit must be finite and positive.");
 
         var grid = _gridOf(args.MapId);
         if (grid == null)
@@ -73,16 +73,25 @@ public sealed class MapCaptureCommand : IControlCommandHandler<MapCaptureArgs, M
                 "invalidCellRange",
                 $"Cell range [{args.MinCellX},{args.MinCellY}]..[{args.MaxCellX},{args.MaxCellY}] is outside the declared grid.");
 
+        var pixelsPerCell = (int)Math.Round(
+            args.PixelsPerUnit * grid.CellSize,
+            MidpointRounding.AwayFromZero);
+        if (pixelsPerCell <= 0 || pixelsPerCell > 4096)
+            return CompendiumCommandResults.Validation(
+                context,
+                "invalidPixels",
+                $"pixelsPerUnit produces unsupported {pixelsPerCell} pixel cell plates.");
+
         var authored = CellSceneInventory.Plan(_scenes).Cells
             .Where(cell => cell.Name.StartsWith($"cell_{args.MapId}_", StringComparison.Ordinal))
             .ToDictionary(cell => cell.Name, StringComparer.Ordinal);
-        var captureDir = Path.Combine(run.WorkspaceDir, "capture", args.MapId);
+        var captureDir = Path.Combine(run.WorkspaceDir, "capture");
         Directory.CreateDirectory(captureDir);
         var inputs = CellCapture.Inputs(
             args.MapId,
             run.GameVersion,
             grid,
-            args.PixelsPerCell,
+            pixelsPerCell,
             args.MinCellX,
             args.MinCellY,
             args.MaxCellX,
@@ -97,7 +106,9 @@ public sealed class MapCaptureCommand : IControlCommandHandler<MapCaptureArgs, M
             args.AuthoredOnly,
             result =>
             {
-                var path = Path.Combine(captureDir, $"map-capture-{args.MapId}.json");
+                var path = Path.Combine(
+                    captureDir,
+                    $"map-capture-{args.MapId}-{pixelsPerCell}-{args.MinCellX}.{args.MinCellY}-{args.MaxCellX}.{args.MaxCellY}.json");
                 File.WriteAllText(path, JsonConvert.SerializeObject(result, Formatting.Indented));
             },
             cancellationToken).ConfigureAwait(false);
