@@ -696,6 +696,28 @@ describe("exportCompendium", () => {
     expect(validated).toEqual([`${resolve("snapshots")}/snapshots/0.0.10.91-20260507`]);
     expect(result.publishedDir).toBe(`${resolve("snapshots")}/snapshots/0.0.10.91-20260507`);
   });
+  it("retries a transient hash mismatch after finalization", async () => {
+    const client = new FakeClient();
+    let validations = 0;
+
+    await exportCompendium({
+      client,
+      url: "ws://127.0.0.1:19612",
+      listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
+      pluginsDir: PLUGIN.dir,
+      outputBaseDir: "/tmp/out",
+      pipelineOutDir: "/tmp/pipeline",
+      validate: async () => {
+        validations++;
+        if (validations === 1) throw new Error("capture tile hash mismatch");
+        return { itemCount: 150 };
+      },
+      runPipeline: async () => undefined,
+    });
+
+    expect(validations).toBe(2);
+  });
+
   it("refuses to run when a required command is missing", async () => {
     const client = new FakeClient();
     client.commands = client.commands.filter((descriptor) => descriptor.name !== "run.finalize");

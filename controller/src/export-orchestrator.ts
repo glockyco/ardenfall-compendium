@@ -301,7 +301,7 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
 
     const validate = options.validate ?? validateSnapshot;
     log({ phase: "validate", status: "started", publishedDir });
-    await validate(publishedDir);
+    await validateSettledSnapshot(validate, publishedDir);
     log({ phase: "validate", status: "completed", publishedDir });
 
     if (options.runPipeline) await options.runPipeline(publishedDir, options.pipelineOutDir);
@@ -420,6 +420,28 @@ async function quitGame(
       status: "failed",
       error: error instanceof Error ? error.message : String(error),
     });
+  }
+}
+
+async function validateSettledSnapshot(
+  validate: (snapshotDir: string) => Promise<unknown>,
+  snapshotDir: string,
+): Promise<void> {
+  const deadline = Date.now() + 10_000;
+  for (;;) {
+    try {
+      await validate(snapshotDir);
+      return;
+    } catch (error) {
+      if (
+        !(error instanceof Error) ||
+        !error.message.includes("hash mismatch") ||
+        Date.now() >= deadline
+      ) {
+        throw error;
+      }
+      await Bun.sleep(250);
+    }
   }
 }
 
