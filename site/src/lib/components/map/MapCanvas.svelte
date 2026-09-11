@@ -281,8 +281,11 @@
           return object ? { text: object.tooltip ?? object.name ?? "" } : null;
         },
         onClick: (info: PickingInfo) => {
-          const object = info.object as { nodeShortId?: string | null } | null;
-          store.select(object?.nodeShortId ?? null);
+          // A click that hits nothing is almost always a missed marker or a stopped drag, so it
+          // leaves the selection alone. The details panel carries the one control that clears it.
+          if (!info.object) return;
+          const picked = info.object as { nodeShortId?: string | null };
+          if (picked.nodeShortId) store.select(picked.nodeShortId);
         },
       });
       // A hidden canvas is worse than a distorted frame, so the wait is bounded: if deck reports
