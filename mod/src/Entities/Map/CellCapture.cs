@@ -8,14 +8,26 @@ using System.Threading.Tasks;
 using Ardenfall;
 using ArdenfallCompendium.Assets;
 using ArdenfallCompendium.Dtos;
-using ArdenfallCompendium.Entities.World;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityObject = UnityEngine.Object;
 
 namespace ArdenfallCompendium.Entities.Map;
 
-/// <summary>Renders a map's declared cells from an orthographic top-down camera.</summary>
+/// <summary>
+/// Renders a map's declared cells from an orthographic top-down camera.
+/// </summary>
+/// <remarks>
+/// The game already knows how to put a fully lit, water-filled world around one point: that is
+/// what <see cref="WorldStreamer"/> does for the player. The capture moves the streamer's focus to
+/// each cell centre, waits for its queue to drain, and renders one frame from the game's own state.
+/// It loads no scene of its own and disables no renderer, so the cell the player stands in is one
+/// more focus position rather than a special case. When it is done it hands the focus back to the
+/// camera and lets the streamer put the player's world back.
+///
+/// What the capture does own is lighting and time: a plate depends on the sun and the clock only
+/// through the values it records, never through where the player happened to be.
+/// </remarks>
 public sealed class CellCapture
 {
     public const float DefaultCameraHeight = 800f;
@@ -23,12 +35,25 @@ public sealed class CellCapture
     public const string SunEulerText = "(50.0, 330.0, 0.0)";
     public const string AmbientText = "(1.200, 1.200, 1.250, 1.000)";
 
+    /// <summary>Frames the renderer gets after the streamer drains, so terrain and foliage settle.</summary>
+    private const int SettleFrames = 3;
+
+    /// <summary>How long one cell may stream before the capture gives up on the map.</summary>
+    private static readonly TimeSpan StreamTimeout = TimeSpan.FromSeconds(120);
+
     private static readonly Vector3 SunEuler = new(50f, 330f, 0f);
     private static readonly Color AmbientColor = new(1.2f, 1.2f, 1.25f);
+    /// <summary>
+    /// Layers a map plate leaves out: what the reader gets as a marker instead, what only the
+    /// first-person view should draw, and what is no geometry at all.
+    /// </summary>
+    /// <remarks>
+    /// The ground and the water share the <c>NoInteriorLight</c> layer, so a plate must keep it.
+    /// </remarks>
     private static readonly string[] ExcludedLayers =
     {
-        "UI", "postProcess", "NoInteriorLight", "Item", "Damagable", "Player", "NPC",
-        "WeatherCollision", "Element",
+        "UI", "Post Process Volumes", "FirstPersonRender", "SkyboxRender", "EDITOR", "Navmesh",
+        "Player", "NPC", "Ragdoll", "Items", "Damagable", "Elements", "Projectile",
     };
 
     private readonly Action<IEnumerator> _startCoroutine;
@@ -41,7 +66,18 @@ public sealed class CellCapture
     }
 
     /// <summary>The camera mask that suppresses transient content without changing any object.</summary>
-    public static int CaptureCullingMask() => ~LayerMask.GetMask(ExcludedLayers);
+    /// <exception cref="InvalidOperationException">
+    /// A named layer is not in this build. <c>LayerMask.GetMask</c> would count it as nothing and
+    /// the plate would silently carry what the name meant to leave out.
+    /// </exception>
+    public static int CaptureCullingMask()
+    {
+        var missing = ExcludedLayers.Where(name => LayerMask.NameToLayer(name) < 0).ToList();
+        if (missing.Count > 0)
+            throw new InvalidOperationException(
+                $"This build has no layer named {string.Join(", ", missing)}; the capture mask must name its layers.");
+        return ~LayerMask.GetMask(ExcludedLayers);
+    }
 
     /// <summary>Builds the recorded inputs without reading Unity state.</summary>
     public static MapCaptureInputs Inputs(
@@ -82,24 +118,20 @@ public sealed class CellCapture
         };
     }
 
-    /// <summary>Runs the frame-spanning load, render, and unload operation on Unity's main thread.</summary>
+    /// <summary>Runs the frame-spanning stream-and-render operation on Unity's main thread.</summary>
     public Task<MapCaptureSnapshot> CaptureAsync(
         MapCaptureInputs inputs,
-        IReadOnlyDictionary<string, CellScene> authoredScenes,
-        bool authoredOnly,
         Action<MapCaptureSnapshot> commit,
         CancellationToken cancellationToken)
     {
         if (inputs is null) throw new ArgumentNullException(nameof(inputs));
-        if (authoredScenes is null) throw new ArgumentNullException(nameof(authoredScenes));
         if (commit is null) throw new ArgumentNullException(nameof(commit));
 
         var completion = new TaskCompletionSource<MapCaptureSnapshot>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         try
         {
-            _startCoroutine(Capture(
-                inputs, authoredScenes, authoredOnly, commit, completion, cancellationToken));
+            _startCoroutine(Capture(inputs, commit, completion, cancellationToken));
         }
         catch (Exception error)
         {
@@ -111,13 +143,27 @@ public sealed class CellCapture
 
     private IEnumerator Capture(
         MapCaptureInputs inputs,
-        IReadOnlyDictionary<string, CellScene> authoredScenes,
-        bool authoredOnly,
         Action<MapCaptureSnapshot> commit,
         TaskCompletionSource<MapCaptureSnapshot> completion,
         CancellationToken cancellationToken)
     {
         var snapshot = new MapCaptureSnapshot { Inputs = inputs };
+        var streamer = WorldStreamer.instance;
+        var world = WorldManager.instance;
+        var map = world?.loadedMap;
+        if (streamer == null || world == null || map == null || map.id != inputs.MapId)
+        {
+            snapshot.Diagnostics.Add(new Diagnostic
+            {
+                Severity = "fatal",
+                Code = "mapCaptureMapNotLoaded",
+                Field = "tiles",
+                Message = $"The game is not streaming map '{inputs.MapId}'; it holds '{map?.id ?? "none"}'.",
+            });
+            Finish(snapshot, commit, completion);
+            yield break;
+        }
+
         var fog = RenderSettings.fog;
         var ambientMode = RenderSettings.ambientMode;
         var ambient = RenderSettings.ambientLight;
@@ -127,8 +173,7 @@ public sealed class CellCapture
         var originalTimeMultiplier = timeManager?.timeMultiplier ?? 0f;
         var sky = Ardenfall.Sky.ArdenfallSkybox.instance;
         var originalSkyEnabled = sky != null && sky.enabled;
-        var loadedByCapture = new List<Scene>();
-        var suppressedRenderers = new List<Renderer>();
+        var suppressedClouds = new List<Renderer>();
         var frames = CellCaptureGeometry.Frames(
             inputs.MinCellX,
             inputs.MinCellY,
@@ -136,9 +181,6 @@ public sealed class CellCapture
             inputs.MaxCellY,
             inputs.CellSize,
             inputs.PixelsPerCell);
-        var distantCells = authoredOnly
-            ? new Dictionary<string, GameObject>(StringComparer.Ordinal)
-            : InstantiateDistantCells(inputs.MapId, frames);
         GameObject? sunObject = null;
         GameObject? cameraObject = null;
         Exception? failure = null;
@@ -157,6 +199,18 @@ public sealed class CellCapture
             sky.enabled = true;
             sky.ForceUpdate();
             sky.enabled = false;
+        }
+
+        // Clouds are particles above the terrain on a layer the terrain shares, so a culling mask
+        // cannot leave them out. Their renderers are the one thing the capture switches off.
+        foreach (var particleRenderer in UnityObject.FindObjectsOfType<ParticleSystemRenderer>())
+        {
+            var isCloud = particleRenderer.name.IndexOf("cloud", StringComparison.OrdinalIgnoreCase) >= 0
+                || particleRenderer.sharedMaterials.Any(material => material != null
+                    && material.name.IndexOf("cloud", StringComparison.OrdinalIgnoreCase) >= 0);
+            if (!isCloud || !particleRenderer.enabled) continue;
+            particleRenderer.enabled = false;
+            suppressedClouds.Add(particleRenderer);
         }
 
         sunObject = new GameObject("compendium_capture_sun");
@@ -179,120 +233,49 @@ public sealed class CellCapture
 
         foreach (var frame in frames)
         {
-            var sceneName = $"cell_{inputs.MapId}_{frame.CellX}.{frame.CellY}";
-            if (!authoredScenes.TryGetValue(sceneName, out var authoredScene)) continue;
-            snapshot.LoadedCells.Add(sceneName);
-
-            var existingHandles = new HashSet<int>();
-            for (var index = 0; index < SceneManager.sceneCount; index++)
+            if (cancellationToken.IsCancellationRequested) break;
+            var focus = new Vector3(frame.CenterX, 0f, frame.CenterZ);
+            streamer.OverrideUpdateStreamer(focus, null);
+            var started = DateTime.UtcNow;
+            while (streamer.streamQueue.HasTasks())
             {
-                var existingScene = SceneManager.GetSceneAt(index);
-                existingHandles.Add(existingScene.handle);
-                if (existingScene.buildIndex != authoredScene.BuildIndex) continue;
-                foreach (var renderer in existingScene.GetRootGameObjects()
-                    .SelectMany(root => root.GetComponentsInChildren<Renderer>(true)))
+                if (DateTime.UtcNow - started > StreamTimeout)
                 {
-                    if (!renderer.enabled) continue;
-                    renderer.enabled = false;
-                    suppressedRenderers.Add(renderer);
-                }
-            }
-
-            var load = SceneManager.LoadSceneAsync(authoredScene.BuildIndex, LoadSceneMode.Additive);
-            if (load == null)
-            {
-                failure = new InvalidOperationException(
-                    $"The engine refused to load cell scene '{sceneName}'.");
-                break;
-            }
-            while (!load.isDone) yield return null;
-
-            Scene? loadedScene = null;
-            for (var index = 0; index < SceneManager.sceneCount; index++)
-            {
-                var candidate = SceneManager.GetSceneAt(index);
-                if (candidate.buildIndex == authoredScene.BuildIndex
-                    && !existingHandles.Contains(candidate.handle)) loadedScene = candidate;
-            }
-            if (loadedScene == null)
-            {
-                failure = new InvalidOperationException(
-                    $"The engine did not expose the isolated copy of cell scene '{sceneName}'.");
-                break;
-            }
-            loadedByCapture.Add(loadedScene.Value);
-        }
-        foreach (var particleRenderer in UnityObject.FindObjectsOfType<ParticleSystemRenderer>())
-        {
-            var isCloud = particleRenderer.name.IndexOf("cloud", StringComparison.OrdinalIgnoreCase) >= 0
-                || particleRenderer.sharedMaterials.Any(material => material != null
-                    && material.name.IndexOf("cloud", StringComparison.OrdinalIgnoreCase) >= 0);
-            if (!isCloud || !particleRenderer.enabled) continue;
-            particleRenderer.enabled = false;
-            suppressedRenderers.Add(particleRenderer);
-        }
-
-        if (failure == null)
-        {
-            foreach (var frame in frames)
-            {
-                if (cancellationToken.IsCancellationRequested) break;
-                var sceneName = $"cell_{inputs.MapId}_{frame.CellX}.{frame.CellY}";
-                authoredScenes.TryGetValue(sceneName, out var authoredScene);
-                if (authoredOnly && authoredScene == null)
-                {
-                    // The record names every position of the range, so the pipeline can tell a
-                    // cell this run chose not to render from one it lost.
-                    snapshot.Tiles.Add(new MapCaptureTileSnapshot
-                    {
-                        CellX = frame.CellX,
-                        CellY = frame.CellY,
-                        Authored = false,
-                        Renderers = 0,
-                        Empty = true,
-                    });
-                    continue;
-                }
-                try
-                {
-                    distantCells.TryGetValue(sceneName, out var distantCell);
-                    snapshot.Tiles.Add(CaptureFrame(
-                        inputs.MapId,
-                        camera,
-                        frame,
-                        inputs.CameraHeight,
-                        authoredScene != null,
-                        distantCell,
-                        distantCells.Count > 0));
-                }
-                catch (Exception error)
-                {
-                    failure = error;
+                    failure = new TimeoutException(
+                        $"The streamer did not settle around cell {frame.CellX}.{frame.CellY} within {StreamTimeout.TotalSeconds:0}s.");
                     break;
                 }
+                yield return null;
+            }
+            if (failure != null) break;
+            for (var settle = 0; settle < SettleFrames; settle++) yield return null;
+
+            try
+            {
+                snapshot.Tiles.Add(CaptureFrame(inputs, camera, frame));
+            }
+            catch (Exception error)
+            {
+                failure = error;
+                break;
             }
         }
-        foreach (var renderer in suppressedRenderers)
+
+        // Hand the focus back to the camera and let the streamer restore the player's world, so
+        // the session that follows sees the cells the player had, not the last cell captured.
+        streamer.ClearOverrideUpdate();
+        streamer.UpdateStreamer(force: true);
+        var restoreStarted = DateTime.UtcNow;
+        while (streamer.streamQueue.HasTasks() && DateTime.UtcNow - restoreStarted < StreamTimeout)
+        {
+            yield return null;
+        }
+
+        foreach (var renderer in suppressedClouds)
         {
             if (renderer != null) renderer.enabled = true;
         }
-        suppressedRenderers.Clear();
-
-        foreach (var loadedScene in loadedByCapture.ToList())
-        {
-            var unload = SceneManager.UnloadSceneAsync(loadedScene);
-            if (unload != null)
-            {
-                while (!unload.isDone) yield return null;
-            }
-            loadedByCapture.Remove(loadedScene);
-        }
-
-        foreach (var distantCell in distantCells.Values)
-        {
-            if (distantCell != null) UnityObject.DestroyImmediate(distantCell);
-        }
-        distantCells.Clear();
+        suppressedClouds.Clear();
 
         if (cameraObject != null) UnityObject.DestroyImmediate(cameraObject);
         if (sunObject != null) UnityObject.DestroyImmediate(sunObject);
@@ -311,9 +294,7 @@ public sealed class CellCapture
             sky.ForceUpdate();
         }
 
-        snapshot.Restored = loadedByCapture.Count == 0
-            && suppressedRenderers.Count == 0
-            && distantCells.Count == 0
+        snapshot.Restored = !streamer.streamQueue.HasTasks()
             && RenderSettings.fog == fog
             && RenderSettings.ambientMode == ambientMode
             && RenderSettings.ambientLight == ambient
@@ -341,6 +322,14 @@ public sealed class CellCapture
             });
         }
 
+        Finish(snapshot, commit, completion);
+    }
+
+    private static void Finish(
+        MapCaptureSnapshot snapshot,
+        Action<MapCaptureSnapshot> commit,
+        TaskCompletionSource<MapCaptureSnapshot> completion)
+    {
         try
         {
             commit(snapshot);
@@ -353,36 +342,23 @@ public sealed class CellCapture
     }
 
     private MapCaptureTileSnapshot CaptureFrame(
-        string mapId,
+        MapCaptureInputs inputs,
         Camera camera,
-        CellCaptureFrame frame,
-        float cameraHeight,
-        bool authored,
-        GameObject? ownDistantCell,
-        bool hasDistantWorld)
+        CellCaptureFrame frame)
     {
         camera.orthographicSize = frame.OrthographicSize;
-        camera.transform.position = new Vector3(frame.CenterX, cameraHeight, frame.CenterZ);
+        camera.transform.position = new Vector3(frame.CenterX, inputs.CameraHeight, frame.CenterZ);
         camera.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
+        var scene = SceneManager.GetSceneByName($"cell_{inputs.MapId}_{frame.CellX}.{frame.CellY}");
+        var authored = scene.IsValid() && scene.isLoaded;
         var renderers = authored
-            ? CountSceneRenderers($"cell_{mapId}_{frame.CellX}.{frame.CellY}")
-            : ownDistantCell == null ? 0 : ownDistantCell.GetComponentsInChildren<Renderer>(true).Length;
-        if (renderers == 0 && !hasDistantWorld)
-        {
-            return new MapCaptureTileSnapshot
-            {
-                CellX = frame.CellX,
-                CellY = frame.CellY,
-                Authored = authored,
-                Renderers = 0,
-                Empty = true,
-            };
-        }
+            ? scene.GetRootGameObjects().Sum(root => root.GetComponentsInChildren<Renderer>(true).Length)
+            : 0;
 
         var png = Render(camera, frame.Pixels);
         var hash = SpriteAssetExporter.Sha256Hex(png);
-        var path = _writePlate($"assets/map/{mapId}/{hash}.png", png);
+        var path = _writePlate($"assets/map/{inputs.MapId}/{hash}.png", png);
         return new MapCaptureTileSnapshot
         {
             CellX = frame.CellX,
@@ -393,38 +369,6 @@ public sealed class CellCapture
             Authored = authored,
             Renderers = renderers,
         };
-    }
-
-    private static int CountSceneRenderers(string sceneName)
-    {
-        var scene = SceneManager.GetSceneByName(sceneName);
-        if (!scene.IsValid() || !scene.isLoaded) return 0;
-        return scene.GetRootGameObjects()
-            .Sum(root => root.GetComponentsInChildren<Renderer>(true).Length);
-    }
-
-    private static Dictionary<string, GameObject> InstantiateDistantCells(
-        string mapId,
-        IReadOnlyList<CellCaptureFrame> frames)
-    {
-        var requested = frames.ToDictionary(
-            frame => $"celldistant_{mapId}_{frame.CellX}.{frame.CellY}",
-            frame => $"cell_{mapId}_{frame.CellX}.{frame.CellY}",
-            StringComparer.Ordinal);
-        var map = Resources.FindObjectsOfTypeAll<WorldData>()
-            .SelectMany(world => world.maps)
-            .FirstOrDefault(candidate => candidate.id == mapId);
-        var prefabs = map?.GeneratedAssetReferences?.distantCellPrefabs
-            ?? new List<GameObject>();
-        var result = new Dictionary<string, GameObject>(StringComparer.Ordinal);
-        foreach (var prefab in prefabs)
-        {
-            if (prefab == null || !requested.TryGetValue(prefab.name, out var sceneName)) continue;
-            var instance = UnityObject.Instantiate(prefab);
-            instance.name = $"compendium_capture_distant_{sceneName}";
-            result.Add(sceneName, instance);
-        }
-        return result;
     }
 
     private static byte[] Render(Camera camera, int pixels)

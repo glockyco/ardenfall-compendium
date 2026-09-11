@@ -108,16 +108,13 @@ public sealed class MapCaptureSnapshot
 
     [JsonProperty("tiles")] public List<MapCaptureTileSnapshot> Tiles { get; set; } = new();
 
-    /// <summary>The cell scenes loaded while the capture ran, in load order.</summary>
-    [JsonProperty("loadedCells")] public List<string> LoadedCells { get; set; } = new();
-
     /// <summary>
     /// True when the capture restored everything it changed.
     /// </summary>
     /// <remarks>
-    /// A capture creates a light, clears fog, and instantiates a distant prefab for a cell with no
-    /// authored scene, because with a save loaded elsewhere no overworld geometry streams at all.
-    /// Each is undone. The controller fails the phase when this is false.
+    /// A capture creates a light, clears fog, pins the clock, silences the clouds, and moves the
+    /// streamer's focus. Each is undone, and the streamer is drained around the camera again. The controller fails the phase when this is
+    /// false.
     /// </remarks>
     [JsonProperty("restored")] public bool Restored { get; set; } = true;
 

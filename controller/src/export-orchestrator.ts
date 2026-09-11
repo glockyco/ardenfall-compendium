@@ -88,7 +88,6 @@ export interface MapCaptureExportOptions {
   maxCellX: number;
   maxCellY: number;
   pixelsPerUnit: number;
-  authoredOnly?: boolean;
 }
 
 const REQUIRED_COMMANDS = new Map<string, "sync" | "job">([

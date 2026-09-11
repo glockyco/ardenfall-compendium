@@ -15,7 +15,7 @@ async function main(argv: string[]): Promise<void> {
   const [command, ...args] = argv;
   if (command !== "export")
     throw new Error(
-      "Usage: controller export --url <ws-url> --output <dir> --pipeline-out <dir> --plugins <dir> [--capture-map <id> --capture-min-x <n> --capture-min-y <n> --capture-max-x <n> --capture-max-y <n> --capture-pixels-per-unit <n> [--capture-authored-only]] [--no-wait-for-world] [--no-quit]",
+      "Usage: controller export --url <ws-url> --output <dir> --pipeline-out <dir> --plugins <dir> [--capture-map <id> --capture-min-x <n> --capture-min-y <n> --capture-max-x <n> --capture-max-y <n> --capture-pixels-per-unit <n>] [--no-wait-for-world] [--no-quit]",
     );
   const options = parseArgs(args);
   const client = new SdkControllerClient(options.url);
@@ -45,7 +45,6 @@ function parseArgs(args: string[]): CliOptions {
   // Leaving the game running is what lets one session produce two exports, which is
   // how the reproducibility check compares counts without a reload in between.
   let noQuit = false;
-  let captureAuthoredOnly = false;
   for (let i = 0; i < args.length;) {
     const key = args[i];
     if (!key?.startsWith("--")) throw new Error(`Invalid argument near ${key ?? "<end>"}`);
@@ -56,11 +55,6 @@ function parseArgs(args: string[]): CliOptions {
     }
     if (key === "--no-quit") {
       noQuit = true;
-      i += 1;
-      continue;
-    }
-    if (key === "--capture-authored-only") {
-      captureAuthoredOnly = true;
       i += 1;
       continue;
     }
@@ -89,7 +83,7 @@ function parseArgs(args: string[]): CliOptions {
     "--capture-max-y",
     "--capture-pixels-per-unit",
   ] as const;
-  const captureRequested = captureAuthoredOnly || captureKeys.some((key) => values.has(key));
+  const captureRequested = captureKeys.some((key) => values.has(key));
   let capture: MapCaptureExportOptions | undefined;
   if (captureRequested) {
     for (const key of captureKeys) {
@@ -107,7 +101,6 @@ function parseArgs(args: string[]): CliOptions {
       maxCellX: number("--capture-max-x"),
       maxCellY: number("--capture-max-y"),
       pixelsPerUnit: number("--capture-pixels-per-unit"),
-      ...(captureAuthoredOnly ? { authoredOnly: true } : {}),
     };
   }
   return {

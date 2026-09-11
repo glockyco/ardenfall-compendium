@@ -30,8 +30,4 @@ public sealed class MapCaptureArgs
     /// </summary>
     [JsonProperty("pixelsPerUnit")]
     public float PixelsPerUnit { get; set; } = 512f / 150f;
-
-    /// <summary>When true, omit declared cells that have no authored scene.</summary>
-    [JsonProperty("authoredOnly")]
-    public bool AuthoredOnly { get; set; }
 }

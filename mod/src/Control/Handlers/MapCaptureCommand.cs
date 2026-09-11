@@ -8,7 +8,6 @@ using Ardenfall;
 using ArdenfallCompendium.Control.Args;
 using ArdenfallCompendium.Control.Results;
 using ArdenfallCompendium.Entities.Map;
-using ArdenfallCompendium.Entities.World;
 using HotRepl.Control;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -19,18 +18,15 @@ namespace ArdenfallCompendium.Control.Handlers;
 public sealed class MapCaptureCommand : IControlCommandHandler<MapCaptureArgs, MapCaptureResult>
 {
     private readonly CompendiumRunManager _runs;
-    private readonly ISceneTable _scenes;
     private readonly Action<System.Collections.IEnumerator> _startCoroutine;
     private readonly Func<string, MapCaptureGrid?> _gridOf;
 
     public MapCaptureCommand(
         CompendiumRunManager runs,
-        ISceneTable scenes,
         Action<System.Collections.IEnumerator> startCoroutine,
         Func<string, MapCaptureGrid?>? gridOf = null)
     {
         _runs = runs ?? throw new ArgumentNullException(nameof(runs));
-        _scenes = scenes ?? throw new ArgumentNullException(nameof(scenes));
         _startCoroutine = startCoroutine ?? throw new ArgumentNullException(nameof(startCoroutine));
         _gridOf = gridOf ?? DeclaredGrid;
     }
@@ -82,9 +78,6 @@ public sealed class MapCaptureCommand : IControlCommandHandler<MapCaptureArgs, M
                 "invalidPixels",
                 $"pixelsPerUnit produces unsupported {pixelsPerCell} pixel cell plates.");
 
-        var authored = CellSceneInventory.Plan(_scenes).Cells
-            .Where(cell => cell.Name.StartsWith($"cell_{args.MapId}_", StringComparison.Ordinal))
-            .ToDictionary(cell => cell.Name, StringComparer.Ordinal);
         var captureDir = Path.Combine(run.WorkspaceDir, "capture");
         Directory.CreateDirectory(captureDir);
         var inputs = CellCapture.Inputs(
@@ -102,8 +95,6 @@ public sealed class MapCaptureCommand : IControlCommandHandler<MapCaptureArgs, M
         var capture = new CellCapture(_startCoroutine, CellCapture.FileWriter(captureDir));
         var snapshot = await capture.CaptureAsync(
             inputs,
-            authored,
-            args.AuthoredOnly,
             result =>
             {
                 var path = Path.Combine(
