@@ -50,4 +50,4 @@
 - [x] 7.2 Confirm alignment against the game's own imagery, which shares the grid, and record the result. (The southern coastline, coral basin, purple ridge, roads, and settlement footprints align at equal scale and orientation.)
 - [x] 7.3 Run the full gate in `AGENTS.md`. (Passed 2026-09-11: all tests, type checks, fixture build and smokes, schema checks, lint, formatting, and diff checks.)
 - [x] 7.4 Decide whether to publish the game's imagery as an alternative layer, and either open a change for it or record the rejection. (Rejected. The generated game texture remains a calibration reference and is not a published compendium asset.)
-- [ ] 7.5 Archive this change after the gate passes.
+- [x] 7.5 Archive this change after the gate passes.
