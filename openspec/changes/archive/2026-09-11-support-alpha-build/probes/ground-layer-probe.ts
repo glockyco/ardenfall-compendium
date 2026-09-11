@@ -1,5 +1,5 @@
 // What draws the ground of a streamed cell, on which layer, with which shader.
-import { connect } from "../../../../controller/node_modules/@hotrepl/sdk/dist/index.js";
+import { connect } from "../../../../../controller/node_modules/@hotrepl/sdk/dist/index.js";
 
 const session = await connect({ url: process.env["HOTREPL_URL"] ?? "ws://127.0.0.1:18590" });
 const ev = async (code: string) => {

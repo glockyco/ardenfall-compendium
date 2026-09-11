@@ -3,7 +3,7 @@
 Question: why does a streamed cell's ground render black from the capture camera while the
 player sees it lit?
 
-Run with the world loaded: `scripts/with-env.sh bun run openspec/changes/support-alpha-build/probes/ground-layer-probe.ts`.
+Run with the world loaded: `scripts/with-env.sh bun run openspec/changes/archive/2026-09-11-support-alpha-build/probes/ground-layer-probe.ts`.
 
 Result on 2026-09-11 against Ardenfall Alpha 0.0.10.136, centre cell `overworld_-3.-8`:
 
