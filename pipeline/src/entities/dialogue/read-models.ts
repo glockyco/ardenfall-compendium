@@ -37,6 +37,8 @@ interface GateView {
   authoredType: string;
   subjects: EntityLink[];
   participants: DialogueParticipantSnapshot[];
+  children: GateView[];
+  childMode: string | null;
 }
 
 interface EffectView {
@@ -131,9 +133,9 @@ export function emitDialogueReadModels(
   const writeNode = prepareEntityNodeWriter(db);
   const presentationInsert = db.prepare(
     `INSERT INTO dialogue_presentation_rows (
-      id, render_context, graph_name, label, statement_count, node_count, option_count,
-      script_json, holders_json
-    ) VALUES (?, 'dialogue-presentation-v1', ?, ?, ?, ?, ?, ?, ?)`,
+      id, render_context, graph_name, label, context_label, statement_count, node_count,
+      option_count, script_json, holders_json
+    ) VALUES (?, 'dialogue-presentation-v1', ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const edgeInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_edges (
@@ -161,6 +163,7 @@ export function emitDialogueReadModels(
       const holders = JSON.parse(row.holders_json) as DialogueHolderSnapshot[];
 
       const label = dialogueLabel(row, holders, resolve);
+      const resolvedHolders = resolveHolders(holders, resolve);
       const slug = deriveEntityNodeSlug(label, row.id);
       writeNode({
         entityType: "dialogue",
@@ -189,16 +192,17 @@ export function emitDialogueReadModels(
         row.id,
         row.graph_name,
         label,
+        dialogueContext(label, resolvedHolders),
         [...nodes.values()].reduce((total, node) => total + node.statements.length, 0),
         nodes.size,
         [...nodes.values()].reduce((total, node) => total + node.options.length, 0),
         JSON.stringify(script),
-        JSON.stringify(resolveHolders(holders, resolve)),
+        JSON.stringify(resolvedHolders),
       );
 
       // The holder reaches the conversation, so its own page can name it. A scene placement has
       // no entity of its own here: its page comes from the scene dialogue family.
-      for (const holder of resolveHolders(holders, resolve)) {
+      for (const holder of resolvedHolders) {
         if (holder.link === null) continue;
         holderEdgeInsert.run(
           `${holder.link.entityType}:${holder.link.entityId}:holds_dialogue:${row.id}`,
@@ -413,6 +417,8 @@ const emptyGate = (authoredType: string): DialogueConditionSnapshot => ({
   subjects: [],
   participants: [],
   authoredType,
+  children: [],
+  childMode: null,
 });
 
 function gateView(gate: DialogueConditionSnapshot, context: ScriptContext): GateView {
@@ -426,6 +432,10 @@ function gateView(gate: DialogueConditionSnapshot, context: ScriptContext): Gate
     // sentence: dropping it would leave a gate that reads as a requirement with no object.
     subjects: gate.subjects.map((subject) => context.resolve(subject) ?? unresolvedLink(subject)),
     participants: gate.participants,
+    // A composite carries no check of its own. Its children are the requirement a reader needs,
+    // and without them 17 topics of one quest graph read as the same unexplained question.
+    childMode: gate.childMode,
+    children: (gate.children ?? []).map((child) => gateView(child, context)),
   };
 }
 
@@ -454,6 +464,12 @@ function resolveHolders(
   }));
 }
 
+/** A gate and every check nested inside it. */
+function* flattenGate(gate: DialogueConditionSnapshot): Generator<DialogueConditionSnapshot> {
+  yield gate;
+  for (const child of gate.children ?? []) yield* flattenGate(child);
+}
+
 /** The predicates a conversation emits, and the entity each one reaches. */
 function* touchedEntities(
   nodes: Iterable<DialogueNodeSnapshot>,
@@ -464,8 +480,10 @@ function* touchedEntities(
       (gate): gate is DialogueConditionSnapshot => gate !== null && gate !== undefined,
     );
     for (const gate of gates) {
-      for (const subject of gate.subjects) {
-        yield ["dialogue_checks", resolve(subject), { nodeId: node.id, kind: gate.kind }];
+      for (const check of flattenGate(gate)) {
+        for (const subject of check.subjects) {
+          yield ["dialogue_checks", resolve(subject), { nodeId: node.id, kind: check.kind }];
+        }
       }
     }
 
@@ -546,6 +564,23 @@ function prepareEntityResolver(db: Database): EntityResolver {
 }
 
 /**
+ * What a list needs beside the name.
+ *
+ * A holder name is not unique: three quests each hold a "Quest Giver", and two hold a "Weaver". The
+ * entity the holder belongs to separates them, and it is the same entity the page already links.
+ */
+function dialogueContext(
+  label: string,
+  holders: { label: string | null; link: EntityLink | null }[],
+): string | null {
+  for (const holder of holders) {
+    const name = holder.link?.label ?? null;
+    if (name !== null && name.trim().length > 0 && name !== label) return name;
+  }
+  return null;
+}
+
+/**
  * The name a reader knows the conversation by.
  *
  * A graph asset name is an internal identifier, so a holder's authored name is better when the
@@ -570,8 +605,11 @@ function dialogueLabel(
   ];
   for (const kind of order) {
     for (const holder of holders.filter((candidate) => candidate.kind === kind)) {
+      // The holder's own authored name comes first. A quest holder's reference points at the quest
+      // that owns it, not at the holder, so resolving it named four conversations of one quest
+      // "Dying Light" instead of naming the lighthouse keeper, the two mercenaries and the pump.
       const resolved = holder.ref === null ? null : resolve(holder.ref);
-      const name = resolved?.label ?? holder.label;
+      const name = holder.label ?? resolved?.label;
       if (name !== null && name !== undefined && name.trim().length > 0) return name;
     }
   }

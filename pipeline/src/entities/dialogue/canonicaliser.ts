@@ -83,8 +83,8 @@ export function canonicaliseDialogues(db: Database, envelope: SnapshotEnvelope):
   const conditionInsert = db.prepare(
     `INSERT INTO dialogue_conditions (
       id, dialogue_id, node_id, option_port, kind, compare, value, invert, authored_type,
-      subjects_json, participants_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      subjects_json, participants_json, child_mode, children_json
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const effectInsert = db.prepare(
     `INSERT INTO dialogue_effects (
@@ -157,6 +157,8 @@ export function canonicaliseDialogues(db: Database, envelope: SnapshotEnvelope):
               option.gate.authoredType,
               JSON.stringify(option.gate.subjects),
               JSON.stringify(option.gate.participants),
+              option.gate.childMode,
+              JSON.stringify(option.gate.children),
             );
           }
         });
@@ -174,6 +176,8 @@ export function canonicaliseDialogues(db: Database, envelope: SnapshotEnvelope):
             node.gate.authoredType,
             JSON.stringify(node.gate.subjects),
             JSON.stringify(node.gate.participants),
+            node.gate.childMode,
+            JSON.stringify(node.gate.children),
           );
         }
 

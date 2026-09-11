@@ -14,6 +14,9 @@
         <a class="block underline-offset-4 hover:underline" href={conversation.routePath}>
           <span class="block font-medium">{conversation.name}</span>
         </a>
+        {#if conversation.context}
+          <p class="text-muted-foreground text-xs">{conversation.context}</p>
+        {/if}
         <p class="text-muted-foreground mt-1 text-sm">
           {count(conversation.statementCount, "line", "lines")} · {count(
             conversation.optionCount,

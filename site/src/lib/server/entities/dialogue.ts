@@ -26,6 +26,10 @@ export interface DialogueGate {
   authoredType: string;
   subjects: DialogueEntityLink[];
   participants: DialogueParticipant[];
+  /** The checks a composite holds. A composite carries no check of its own. */
+  children: DialogueGate[];
+  /** `all` or `any` for a composite, and null for a leaf. */
+  childMode: string | null;
 }
 
 /** What a conversation changes when a reader takes this path. */
@@ -103,6 +107,8 @@ export interface DialogueOverviewRow {
   routePath: string;
   /** The graph asset's name. An internal identifier, shown when no holder names the speaker. */
   graphName: string;
+  /** What the name alone does not say, such as the quest whose "Quest Giver" this is. */
+  context: string | null;
   statementCount: number;
   optionCount: number;
   nodeCount: number;
@@ -119,6 +125,7 @@ interface DialogueOverviewRecord {
   name: string;
   route_path: string;
   graph_name: string;
+  context_label: string | null;
   statement_count: number;
   option_count: number;
   node_count: number;
@@ -131,13 +138,14 @@ interface DialoguePresentationRecord extends DialogueOverviewRecord {
 }
 
 const OVERVIEW_COLUMNS = `d.id, n.display_label AS name, n.route_path, d.graph_name,
-   d.statement_count, d.option_count, d.node_count`;
+   d.context_label, d.statement_count, d.option_count, d.node_count`;
 
 const toOverviewRow = (row: DialogueOverviewRecord): DialogueOverviewRow => ({
   id: row.id,
   name: row.name,
   routePath: row.route_path,
   graphName: row.graph_name,
+  context: row.context_label,
   statementCount: row.statement_count,
   optionCount: row.option_count,
   nodeCount: row.node_count,

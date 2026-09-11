@@ -287,7 +287,7 @@ public sealed class LoadedQuestAssetSource : IQuestAssetSource
         var graph = character.dialogGraph?.flowGraph?.graph as DialogFlowGraph;
         return graph == null
             ? Array.Empty<string>()
-            : new[] { DialogueIds.Conversation(graph.name) };
+            : new[] { DialogueIds.Conversation(graph.name, graph.AttachedQuest == null ? null : graph.AttachedQuest.name) };
     }
 
     private static SnapshotRef? RecordReferenceSnapshot(RecordReference? reference)

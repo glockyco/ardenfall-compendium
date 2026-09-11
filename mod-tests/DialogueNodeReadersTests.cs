@@ -46,3 +46,29 @@ public class DialogueNodeReadersTests
         Assert.False(DialogueNodeReaders.IsControl("FinishDialogFlowNode"));
     }
 }
+
+public class ConditionKeyTests
+{
+    [Theory]
+    [InlineData("RaceCheckCondition", "RaceCheck")]
+    [InlineData("RaceCheck", "RaceCheck")]
+    [InlineData("CheckQuestStateNode", "CheckQuestState")]
+    [InlineData("CheckQuestState", "CheckQuestState")]
+    [InlineData("ContainsItemNode", "ContainsItem")]
+    [InlineData("ContainsItemCondition", "ContainsItem")]
+    public void BothSpellingsOfACheckShareOneKey(string authored, string key) =>
+        Assert.Equal(key, DialogueNodeReaders.CheckKey(authored));
+}
+
+public class DialogueIdTests
+{
+    [Fact]
+    public void TwoGraphsOfOneNameSeparateByTheirOwner()
+    {
+        var first = DialogueIds.Conversation("questdialog_quest-giver", "quest_akaga_dying-light");
+        var second = DialogueIds.Conversation("questdialog_quest-giver", "quest_gan_family-ties");
+        Assert.NotEqual(first, second);
+        Assert.Equal("named;dialog;quest_akaga_dying-light/questdialog_quest-giver", first);
+        Assert.Equal("named;dialog;questdialog_quest-giver", DialogueIds.Conversation("questdialog_quest-giver", null));
+    }
+}

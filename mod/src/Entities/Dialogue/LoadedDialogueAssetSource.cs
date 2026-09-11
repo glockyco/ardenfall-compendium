@@ -73,6 +73,7 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
     {
         var conversations = new Dictionary<string, DialogueFields>(StringComparer.Ordinal);
         var holdersByKind = new Dictionary<string, int>(StringComparer.Ordinal);
+        var empty = new SortedSet<string>(StringComparer.Ordinal);
         var unmodelled = new Dictionary<string, int>(StringComparer.Ordinal);
         var diagnostics = new List<Diagnostic>();
 
@@ -87,7 +88,7 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
             };
             foreach (var graph in CharacterGraphs(character))
             {
-                Add(conversations, holdersByKind, unmodelled, diagnostics, graph, holder);
+                Add(conversations, holdersByKind, unmodelled, diagnostics, empty, graph, holder);
             }
 
             foreach (var module in Modules(character))
@@ -100,7 +101,7 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
                 };
                 foreach (var graph in ModuleGraphs(module))
                 {
-                    Add(conversations, holdersByKind, unmodelled, diagnostics, graph, moduleHolder);
+                    Add(conversations, holdersByKind, unmodelled, diagnostics, empty, graph, moduleHolder);
                 }
             }
         }
@@ -116,7 +117,7 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
                     Ref = SnapshotRef.NamedAsset("quest", quest.name),
                     Label = label,
                 };
-                Add(conversations, holdersByKind, unmodelled, diagnostics, graph, holder);
+                Add(conversations, holdersByKind, unmodelled, diagnostics, empty, graph, holder);
             }
         }
 
@@ -126,7 +127,7 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
         var unheld = 0;
         foreach (var graph in _loadedGraphs())
         {
-            var id = DialogueIds.Conversation(graph.name);
+            var id = DialogueIds.Conversation(graph.name, OwnerOf(graph));
             if (conversations.ContainsKey(id)) continue;
 
             var attached = graph.AttachedQuest;
@@ -137,6 +138,7 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
                     holdersByKind,
                     unmodelled,
                     diagnostics,
+                    empty,
                     graph,
                     new DialogueHolderFields
                     {
@@ -147,8 +149,21 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
                 continue;
             }
 
-            unheld++;
-            Add(conversations, holdersByKind, unmodelled, diagnostics, graph, null);
+            var before = conversations.Count;
+            Add(conversations, holdersByKind, unmodelled, diagnostics, empty, graph, null);
+            if (conversations.Count > before) unheld++;
+        }
+
+        if (empty.Count > 0)
+        {
+            diagnostics.Add(new Diagnostic
+            {
+                Severity = "diagnostic",
+                Code = "dialogueGraphEmpty",
+                Field = "nodes",
+                Message =
+                    $"{empty.Count} authored dialogue graph(s) hold no nodes, so they publish no conversation: {string.Join(", ", empty)}.",
+            });
         }
 
         if (unheld > 0)
@@ -175,6 +190,7 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
         Dictionary<string, int> holdersByKind,
         Dictionary<string, int> unmodelled,
         List<Diagnostic> diagnostics,
+        SortedSet<string> empty,
         DialogFlowGraph graph,
         DialogueHolderFields? holder)
     {
@@ -184,7 +200,7 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
             holdersByKind[holder.Kind] = holderCount + 1;
         }
 
-        var id = DialogueIds.Conversation(graph.name);
+        var id = DialogueIds.Conversation(graph.name, OwnerOf(graph));
         if (conversations.TryGetValue(id, out var existing))
         {
             if (holder != null) existing.Holders.Add(holder);
@@ -192,6 +208,14 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
         }
 
         var walked = DialogueGraphWalk.Walk(graph, out _);
+        if (walked.Nodes.Count == 0)
+        {
+            // An authored asset the game ships with no nodes at all. Its serialized payload reads
+            // `"nodes":[]`, so there is no conversation to publish and nothing a reader could open.
+            empty.Add(graph.name);
+            return;
+        }
+
         diagnostics.AddRange(walked.Diagnostics);
         foreach (var pair in walked.UnmodelledTypes)
         {
@@ -269,5 +293,12 @@ public sealed class LoadedDialogueAssetSource : IDialogueAssetSource
                     break;
             }
         }
+    }
+
+    /// <summary>The quest the graph names as its owner, which separates two graphs of one name.</summary>
+    private static string? OwnerOf(DialogFlowGraph graph)
+    {
+        var quest = graph.AttachedQuest;
+        return quest == null ? null : quest.name;
     }
 }

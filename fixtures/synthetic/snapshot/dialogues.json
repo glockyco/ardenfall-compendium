@@ -46,7 +46,9 @@
               "invert": false,
               "subjects": [],
               "participants": [],
-              "authoredType": "CheckQuestStateNode"
+              "authoredType": "CheckQuestStateNode",
+              "children": [],
+              "childMode": null
             },
             "effects": [],
             "speaker": null,
@@ -69,25 +71,56 @@
                 "port": "1",
                 "text": "Ask for the guild's help",
                 "gate": {
-                  "kind": "faction",
-                  "compare": "containsAny",
+                  "kind": "all-of",
+                  "compare": null,
                   "value": null,
                   "invert": false,
-                  "subjects": [
+                  "subjects": [],
+                  "participants": [],
+                  "authoredType": "ConditionList",
+                  "childMode": "all",
+                  "children": [
                     {
-                      "kind": "lookupAsset",
-                      "guid": "a1000002.fixture-mages-guild",
-                      "unityType": "Ardenfall.Faction",
-                      "name": "fixture-mages-guild"
-                    }
-                  ],
-                  "participants": [
+                      "kind": "faction",
+                      "compare": "containsAny",
+                      "value": null,
+                      "invert": false,
+                      "subjects": [
+                        {
+                          "kind": "lookupAsset",
+                          "guid": "a1000002.fixture-mages-guild",
+                          "unityType": "Ardenfall.Faction",
+                          "name": "fixture-mages-guild"
+                        }
+                      ],
+                      "participants": [
+                        {
+                          "role": "player",
+                          "ref": null
+                        }
+                      ],
+                      "authoredType": "FactionCheck",
+                      "children": [],
+                      "childMode": null
+                    },
                     {
-                      "role": "player",
-                      "ref": null
+                      "kind": "quest-state",
+                      "compare": "Equal",
+                      "value": "started",
+                      "invert": false,
+                      "subjects": [
+                        {
+                          "kind": "namedAsset",
+                          "entity": "quest",
+                          "name": "quest_fixture_ashes"
+                        }
+                      ],
+                      "participants": [],
+                      "authoredType": "CheckQuestState",
+                      "children": [],
+                      "childMode": null
                     }
-                  ],
-                  "authoredType": "FactionCheck"
+                  ]
                 }
               }
             ],
@@ -241,7 +274,9 @@
                   "ref": null
                 }
               ],
-              "authoredType": "BranchRelationshipNode"
+              "authoredType": "BranchRelationshipNode",
+              "children": [],
+              "childMode": null
             },
             "effects": [],
             "speaker": null,
@@ -452,6 +487,86 @@
             "kind": "quest-scene-object",
             "ref": null,
             "label": "Effigy watcher"
+          }
+        ]
+      }
+    },
+    {
+      "id": "named;dialog;quest_fixture_ashes/questdialog_quest-giver",
+      "fields": {
+        "id": "named;dialog;quest_fixture_ashes/questdialog_quest-giver",
+        "graphName": "questdialog_quest-giver",
+        "nodes": [
+          {
+            "id": 1,
+            "role": "speech",
+            "authoredType": "SpeakFlowNode",
+            "importance": null,
+            "statements": [
+              {
+                "screenOrdinal": 0,
+                "text": "The ashes are still warm."
+              }
+            ],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          }
+        ],
+        "edges": [],
+        "entryNodes": [1],
+        "holders": [
+          {
+            "kind": "quest-character",
+            "label": "Ember Keeper",
+            "ref": {
+              "kind": "namedAsset",
+              "entity": "quest",
+              "name": "quest_fixture_ashes"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "named;dialog;quest_fixture_tide/questdialog_quest-giver",
+      "fields": {
+        "id": "named;dialog;quest_fixture_tide/questdialog_quest-giver",
+        "graphName": "questdialog_quest-giver",
+        "nodes": [
+          {
+            "id": 1,
+            "role": "speech",
+            "authoredType": "SpeakFlowNode",
+            "importance": null,
+            "statements": [
+              {
+                "screenOrdinal": 0,
+                "text": "The tide took the pier."
+              }
+            ],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          }
+        ],
+        "edges": [],
+        "entryNodes": [1],
+        "holders": [
+          {
+            "kind": "quest-character",
+            "label": "Tide Warden",
+            "ref": {
+              "kind": "namedAsset",
+              "entity": "quest",
+              "name": "quest_fixture_tide"
+            }
           }
         ]
       }

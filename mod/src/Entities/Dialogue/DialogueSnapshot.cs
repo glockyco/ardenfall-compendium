@@ -100,6 +100,15 @@ public sealed class DialogueConditionSnapshot
 
     /// <summary>The authored node or task type, so an unread kind still names itself.</summary>
     [JsonProperty("authoredType")] public string AuthoredType { get; set; } = "";
+
+    /// <summary>
+    /// The conditions a composite holds. A `ConditionList` gate is the only thing that tells two
+    /// otherwise identical topics apart, so the children carry the gate's meaning, not the parent.
+    /// </summary>
+    [JsonProperty("children")] public List<DialogueConditionSnapshot> Children { get; set; } = new();
+
+    /// <summary>`all` or `any` for a composite, and null for a leaf.</summary>
+    [JsonProperty("childMode")] public string? ChildMode { get; set; }
 }
 
 /// <summary>Something a conversation does to the world.</summary>

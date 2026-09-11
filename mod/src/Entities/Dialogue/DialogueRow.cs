@@ -43,8 +43,15 @@ public sealed class DialogueFields
 /// The graph asset owns it. A placement carries no `GuidComponent` in 8 of this build's 27 scene
 /// placements, and a graph the game reaches from two holders is one conversation, so neither the
 /// placement nor the holder can be the identity.
+///
+/// A graph name is not unique. This build ships 231 authored graphs under 211 names, because a
+/// quest reuses a generic name such as `questdialog_quest-giver` for its own graph. The quest the
+/// graph names as its owner separates them, and makes all 231 distinct.
 /// </remarks>
 public static class DialogueIds
 {
-    public static string Conversation(string graphName) => $"named;dialog;{graphName}";
+    public static string Conversation(string graphName, string? ownerName) =>
+        string.IsNullOrEmpty(ownerName)
+            ? $"named;dialog;{graphName}"
+            : $"named;dialog;{ownerName}/{graphName}";
 }

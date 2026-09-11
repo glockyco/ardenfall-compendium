@@ -70,7 +70,11 @@ CREATE TABLE dialogue_conditions (
   invert        INTEGER NOT NULL,
   authored_type TEXT NOT NULL,
   subjects_json TEXT NOT NULL,
-  participants_json TEXT NOT NULL
+  participants_json TEXT NOT NULL,
+  -- all or any for a composite check, and null for a leaf.
+  child_mode    TEXT,
+  -- The checks a composite holds. A condition list carries no meaning of its own.
+  children_json TEXT NOT NULL
 );
 -- An outcome: what a conversation does to the world.
 CREATE TABLE dialogue_effects (
@@ -104,6 +108,9 @@ CREATE TABLE dialogue_presentation_rows (
   render_context  TEXT NOT NULL,
   graph_name      TEXT NOT NULL,
   label           TEXT NOT NULL,
+  -- What the label alone does not say. Three quests each hold a "Quest Giver", so a list needs
+  -- the quest to tell them apart. Null when the label is enough.
+  context_label   TEXT,
   statement_count INTEGER NOT NULL,
   node_count      INTEGER NOT NULL,
   option_count    INTEGER NOT NULL,

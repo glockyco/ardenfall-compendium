@@ -688,6 +688,10 @@ export interface DialogueConditionSnapshot {
   subjects: SnapshotRef[];
   participants: DialogueParticipantSnapshot[];
   authoredType: string;
+  /** The checks a composite holds. A `ConditionList` carries no meaning of its own. */
+  children: DialogueConditionSnapshot[];
+  /** `all` or `any` for a composite, and null for a leaf. */
+  childMode: string | null;
 }
 
 /** Something a conversation does to the world. */

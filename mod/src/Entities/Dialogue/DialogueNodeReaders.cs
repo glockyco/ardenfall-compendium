@@ -192,36 +192,54 @@ public static class DialogueNodeReaders
         ["KillCharacterNode"] = "character-death",
     };
 
-    /// <summary>What a condition type reads, in the words a reader needs.</summary>
+    /// <summary>
+    /// What a check reads, in the words a reader needs.
+    /// </summary>
+    /// <remarks>
+    /// Keyed by <see cref="CheckKey"/>, so one entry serves both the node spelling and the task
+    /// spelling of the same check.
+    /// </remarks>
     private static readonly Dictionary<string, string> ConditionKindByType = new(StringComparer.Ordinal)
     {
         ["FactionCheck"] = "faction",
         ["RaceCheck"] = "race",
         ["RelationshipCheck"] = "character-relationship",
         ["CheckQuestVariable"] = "quest-variable",
-        ["CheckQuestStateNode"] = "quest-state",
-        ["CheckQuestPhaseNode"] = "quest-phase",
-        ["CheckQuestObjectiveStateNode"] = "quest-objective",
-        ["CheckPackageDialogFlagNode"] = "package-flag",
+        ["CheckQuestState"] = "quest-state",
+        ["CheckQuestPhase"] = "quest-phase",
+        ["CheckQuestObjectiveState"] = "quest-objective",
+        ["CheckPackageDialogFlag"] = "package-flag",
         ["CheckIsDetected"] = "detection",
         ["QuestLocationCheck"] = "quest-location",
         ["DiscoveredLocationCheck"] = "location-discovered",
-        ["ContainsItemNode"] = "item-held",
-        ["HasInteractedWithNode"] = "already-spoken",
-        ["IsDeadNode"] = "death",
-        ["SingleUseNode"] = "once",
+        ["ContainsItem"] = "item-held",
+        ["HasInteractedWith"] = "already-spoken",
+        ["IsDead"] = "death",
+        ["SingleUse"] = "once",
         ["TimeCheck"] = "time",
         ["CheckTimePeriod"] = "time",
         ["WeatherCheck"] = "weather",
         ["FactionRelationshipCheck"] = "faction-relationship",
-        ["MoneyCheckNode"] = "money-held",
+        ["MoneyCheck"] = "money-held",
         ["TraitCheck"] = "trait",
         ["StatCheck"] = "stat-check",
         ["ReadNoteCheck"] = "note-read",
-        ["CheckStatusEffectSimpleNode"] = "status-effect",
-        ["InHomeCheck"] = "at-home",
+        ["CheckStatusEffectSimple"] = "status-effect",
+        ["InHome"] = "at-home",
         ["WithinDistanceOfQuestObject"] = "near-quest-object",
-        ["RefuseToSpeakFlowNode"] = "refuses-to-speak",
+        ["RefuseToSpeakFlow"] = "refuses-to-speak",
+        // Composites and blackboard checks, which a task list holds.
+        ["ConditionList"] = "all-of",
+        ["CheckBoolean"] = "graph-variable",
+        ["SwitchBool"] = "graph-variable",
+        ["Random"] = "chance",
+        ["MultiAND"] = "all-of",
+        ["MultiOR"] = "any-of",
+        ["MultiBranch"] = "branch-on-checks",
+        ["SingleBranchQuestState"] = "quest-state",
+        ["SingleBranchQuestPhase"] = "quest-phase",
+        ["CharacterGroupDialogSwitch"] = "character-group",
+        ["PresetHasGold"] = "money-held",
     };
 
     public static bool IsControl(string authoredType) => ControlTypes.Contains(authoredType);
@@ -382,15 +400,53 @@ public static class DialogueNodeReaders
     }
 
     /// <summary>The gate a node inherits from `DialogConditionTaskFlowNode`.</summary>
+    private const int MaxConditionDepth = 4;
+
     private static DialogueConditionSnapshot? ReadTaskCondition(Node node)
     {
         var task = GraphFields.Read<ConditionTask>(node, "condition");
-        if (task == null) return null;
-        return new DialogueConditionSnapshot
+        return task == null ? null : ReadTask(task, 0);
+    }
+
+    /// <summary>
+    /// One condition task, and the tasks it holds.
+    /// </summary>
+    /// <remarks>
+    /// A `ConditionList` is the most common gate in this build, and it carries no meaning of its own:
+    /// the checks it holds are the only thing that tells two otherwise identical topics apart. One
+    /// quest graph asks "Did you see anything out of the ordinary?" 17 times, once per witness, and
+    /// each copy is separated by its list. Reading the parent alone published 17 identical questions.
+    ///
+    /// The depth limit is a guard against an authored cycle, which the game itself would not survive,
+    /// rather than a shape this build holds: its deepest list nests once.
+    /// </remarks>
+    private static DialogueConditionSnapshot ReadTask(ConditionTask task, int depth)
+    {
+        var authoredType = task.GetType().Name;
+        var condition = new DialogueConditionSnapshot
         {
-            Kind = ConditionKindByType.TryGetValue(task.GetType().Name, out var kind) ? kind : "unread",
-            AuthoredType = task.GetType().Name,
+            AuthoredType = authoredType,
+            Kind = KindOf(authoredType),
+            Invert = task.invert,
+            Compare = GraphFields.ReadEnumName(task, "compareMethod")
+                ?? GraphFields.ReadEnumName(task, "comparisonOperator"),
         };
+
+        ReadCheckPayload(task, authoredType, condition);
+
+        var children = GraphFields.Read<List<ConditionTask>>(task, "conditions");
+        if (children != null && depth < MaxConditionDepth)
+        {
+            condition.ChildMode =
+                GraphFields.ReadEnumName(task, "checkMode") == "AnyTrueSuffice" ? "any" : "all";
+            foreach (var child in children)
+            {
+                if (child == null) continue;
+                condition.Children.Add(ReadTask(child, depth + 1));
+            }
+        }
+
+        return condition;
     }
 
     private static DialogueConditionSnapshot ReadCondition(Node node, string authoredType)
@@ -398,45 +454,99 @@ public static class DialogueNodeReaders
         var condition = new DialogueConditionSnapshot
         {
             AuthoredType = authoredType,
-            Kind = ConditionKindByType.TryGetValue(authoredType, out var kind) ? kind : "unread",
+            Kind = KindOf(authoredType),
             Invert = GraphFields.ReadBool(node, "invert"),
             Compare = GraphFields.ReadEnumName(node, "compareMethod")
                 ?? GraphFields.ReadEnumName(node, "comparisonOperator"),
         };
 
-        switch (authoredType)
+        // A node that wraps a task carries no check of its own; the task it holds is the check.
+        var task = GraphFields.Read<ConditionTask>(node, "condition");
+        if (task != null)
         {
-            case "FactionCheck":
-                AddSubjects(condition, GraphFields.Read<List<Ardenfall.Faction>>(node, "factionGroups"), "FactionCheck.factionGroups");
-                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "character"), "FactionCheck.character"));
-                break;
-            case "RaceCheck":
-                AddSubjects(condition, GraphFields.Read<List<RaceGroup>>(node, "raceGroups"), "RaceCheck.raceGroups");
-                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "character"), "RaceCheck.character"));
-                break;
-            case "RelationshipCheck":
-            case "BranchRelationshipNode":
-                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "sourceCharacter"), $"{authoredType}.sourceCharacter"));
-                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "targetCharacter"), $"{authoredType}.targetCharacter"));
-                break;
-            case "CheckQuestVariable":
-            case "CheckQuestStateNode":
-            case "CheckQuestPhaseNode":
-            case "CheckQuestObjectiveStateNode":
-            case "QuestLocationCheck":
-                AddQuestSubject(condition, node, authoredType);
-                break;
-            case "HasInteractedWithNode":
-            case "IsDeadNode":
-                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "characterReference"), $"{authoredType}.characterReference"));
-                break;
-            case "ContainsItemNode":
-                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "character"), "ContainsItemNode.character"));
-                break;
+            var inner = ReadTask(task, 0);
+            inner.Invert ^= condition.Invert;
+            return inner;
         }
 
+        ReadCheckPayload(node, authoredType, condition);
         return condition;
     }
+
+    /// <summary>
+    /// What one check reads, whether a node or a task declares it.
+    /// </summary>
+    /// <remarks>
+    /// The game authors each check twice: `RaceCheck` as a node and `RaceCheckCondition` as a task,
+    /// with the same field names. Normalising the two names onto one key reads both with one table,
+    /// so a check published from a node and the same check published from a list read alike.
+    /// </remarks>
+    private static void ReadCheckPayload(object source, string authoredType, DialogueConditionSnapshot condition)
+    {
+        switch (CheckKey(authoredType))
+        {
+            case "FactionCheck":
+                AddSubjects(condition, GraphFields.Read<List<Ardenfall.Faction>>(source, "factionGroups"), $"{authoredType}.factionGroups");
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(source, "character"), $"{authoredType}.character"));
+                break;
+            case "RaceCheck":
+                AddSubjects(condition, GraphFields.Read<List<RaceGroup>>(source, "raceGroups"), $"{authoredType}.raceGroups");
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(source, "character"), $"{authoredType}.character"));
+                break;
+            case "RelationshipCheck":
+            case "BranchRelationship":
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(source, "sourceCharacter"), $"{authoredType}.sourceCharacter"));
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(source, "targetCharacter"), $"{authoredType}.targetCharacter"));
+                break;
+            case "FactionRelationshipCheck":
+                AddSubject(condition, GraphFields.Read<Ardenfall.Faction>(source, "faction"), $"{authoredType}.faction");
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(source, "targetCharacter"), $"{authoredType}.targetCharacter"));
+                break;
+            case "StatCheck":
+                AddSubject(condition, GraphFields.Read<UnityObject>(source, "stat"), $"{authoredType}.stat");
+                condition.Value ??= GraphFields.ReadEnumName(source, "statCheckDifficulty");
+                break;
+            case "CheckQuestVariable":
+            case "CheckQuestState":
+            case "CheckQuestPhase":
+            case "CheckQuestObjectiveState":
+            case "QuestLocationCheck":
+                AddQuestSubject(condition, source, authoredType);
+                condition.Value ??= GraphFields.ReadEnumName(source, "stage")
+                    ?? GraphFields.ReadEnumName(source, "questState")
+                    ?? GraphFields.ReadEnumName(source, "state");
+                break;
+            case "HasInteractedWith":
+            case "IsDead":
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(source, "characterReference"), $"{authoredType}.characterReference"));
+                break;
+            case "ContainsItem":
+                AddSubject(condition, GraphFields.Read<UnityObject>(source, "singleItem"), $"{authoredType}.singleItem");
+                condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(source, "character"), $"{authoredType}.character"));
+                break;
+            case "WeatherCheck":
+                AddSubjects(condition, GraphFields.Read<List<Ardenfall.Sky.Weather>>(source, "weathers"), $"{authoredType}.weathers");
+                break;
+        }
+    }
+
+    /// <summary>
+    /// The key both spellings of a check share.
+    /// </summary>
+    /// <remarks>
+    /// The game names a check `RaceCheck` when a node declares it and `RaceCheckCondition` when a
+    /// task does, and adds `Node` to several node names. Trimming both suffixes gives one key.
+    /// </remarks>
+    public static string CheckKey(string authoredType)
+    {
+        var key = authoredType;
+        if (key.EndsWith("Condition", StringComparison.Ordinal)) key = key.Substring(0, key.Length - "Condition".Length);
+        if (key.EndsWith("Node", StringComparison.Ordinal)) key = key.Substring(0, key.Length - "Node".Length);
+        return key;
+    }
+
+    private static string KindOf(string authoredType) =>
+        ConditionKindByType.TryGetValue(CheckKey(authoredType), out var kind) ? kind : "unread";
 
     private static DialogueEffectSnapshot ReadEffect(Node node, string authoredType)
     {
@@ -520,7 +630,7 @@ public static class DialogueNodeReaders
         return effect;
     }
 
-    private static void AddQuestSubject(DialogueConditionSnapshot condition, Node node, string authoredType)
+    private static void AddQuestSubject(DialogueConditionSnapshot condition, object node, string authoredType)
     {
         var quest = DialogueRefs.Quest(GraphFields.Read<object>(node, "quest"), $"{authoredType}.quest")
             ?? DialogueRefs.Quest(GraphFields.Read<object>(node, "customVariableQuest"), $"{authoredType}.customVariableQuest")

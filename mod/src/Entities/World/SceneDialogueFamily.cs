@@ -88,7 +88,7 @@ public sealed class SceneDialogueFamily : ISceneFamily
 
             foreach (var graph in graphs)
             {
-                var id = DialogueIds.Conversation(graph.name);
+                var id = DialogueIds.Conversation(graph.name, OwnerOf(graph));
                 AddConversation(conversationsByGraph, dialogueRows, harvest, graph, speakerName);
 
                 if (!placementsByGraph.TryGetValue(id, out var row))
@@ -148,7 +148,7 @@ public sealed class SceneDialogueFamily : ISceneFamily
         DialogFlowGraph graph,
         string? speakerName)
     {
-        var id = DialogueIds.Conversation(graph.name);
+        var id = DialogueIds.Conversation(graph.name, OwnerOf(graph));
         if (byGraph.TryGetValue(id, out var existing))
         {
             AddHolder((DialogueFields)existing.Fields, speakerName);
@@ -193,5 +193,12 @@ public sealed class SceneDialogueFamily : ISceneFamily
         }
 
         return graphs;
+    }
+
+    /// <summary>The quest the graph names as its owner, which separates two graphs of one name.</summary>
+    private static string? OwnerOf(DialogFlowGraph graph)
+    {
+        var quest = graph.AttachedQuest;
+        return quest == null ? null : quest.name;
     }
 }
