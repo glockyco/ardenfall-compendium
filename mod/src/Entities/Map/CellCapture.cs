@@ -21,10 +21,10 @@ public sealed class CellCapture
     public const float DefaultCameraHeight = 800f;
     public const float SunIntensity = 1.2f;
     public const string SunEulerText = "(50.0, 330.0, 0.0)";
-    public const string AmbientText = "(0.450, 0.450, 0.500, 1.000)";
+    public const string AmbientText = "(1.200, 1.200, 1.250, 1.000)";
 
     private static readonly Vector3 SunEuler = new(50f, 330f, 0f);
-    private static readonly Color AmbientColor = new(0.45f, 0.45f, 0.5f);
+    private static readonly Color AmbientColor = new(1.2f, 1.2f, 1.25f);
     private static readonly string[] ExcludedLayers =
     {
         "UI", "postProcess", "NoInteriorLight", "Item", "Damagable", "Player", "NPC",
@@ -127,8 +127,7 @@ public sealed class CellCapture
         var originalTimeMultiplier = timeManager?.timeMultiplier ?? 0f;
         var sky = Ardenfall.Sky.ArdenfallSkybox.instance;
         var originalSkyEnabled = sky != null && sky.enabled;
-        var loadedByCapture = new List<int>();
-        var preloadedSceneNames = new HashSet<string>(StringComparer.Ordinal);
+        var loadedByCapture = new List<Scene>();
         var suppressedRenderers = new List<Renderer>();
         var frames = CellCaptureGeometry.Frames(
             inputs.MinCellX,
@@ -183,11 +182,22 @@ public sealed class CellCapture
             var sceneName = $"cell_{inputs.MapId}_{frame.CellX}.{frame.CellY}";
             if (!authoredScenes.TryGetValue(sceneName, out var authoredScene)) continue;
             snapshot.LoadedCells.Add(sceneName);
-            if (SceneManager.GetSceneByBuildIndex(authoredScene.BuildIndex).isLoaded)
+
+            var existingHandles = new HashSet<int>();
+            for (var index = 0; index < SceneManager.sceneCount; index++)
             {
-                preloadedSceneNames.Add(sceneName);
-                continue;
+                var existingScene = SceneManager.GetSceneAt(index);
+                existingHandles.Add(existingScene.handle);
+                if (existingScene.buildIndex != authoredScene.BuildIndex) continue;
+                foreach (var renderer in existingScene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Renderer>(true)))
+                {
+                    if (!renderer.enabled) continue;
+                    renderer.enabled = false;
+                    suppressedRenderers.Add(renderer);
+                }
             }
+
             var load = SceneManager.LoadSceneAsync(authoredScene.BuildIndex, LoadSceneMode.Additive);
             if (load == null)
             {
@@ -196,30 +206,30 @@ public sealed class CellCapture
                 break;
             }
             while (!load.isDone) yield return null;
-            loadedByCapture.Add(authoredScene.BuildIndex);
-        }
 
-        foreach (var sceneName in snapshot.LoadedCells)
-        {
-            if (preloadedSceneNames.Contains(sceneName))
+            Scene? loadedScene = null;
+            for (var index = 0; index < SceneManager.sceneCount; index++)
             {
-                var scene = SceneManager.GetSceneByName(sceneName);
-                foreach (var renderer in scene.GetRootGameObjects()
-                    .SelectMany(root => root.GetComponentsInChildren<Renderer>(true)))
-                {
-                    if (!renderer.enabled) continue;
-                    renderer.enabled = false;
-                    suppressedRenderers.Add(renderer);
-                }
-                continue;
+                var candidate = SceneManager.GetSceneAt(index);
+                if (candidate.buildIndex == authoredScene.BuildIndex
+                    && !existingHandles.Contains(candidate.handle)) loadedScene = candidate;
             }
-            if (distantCells.TryGetValue(sceneName, out var distantCell)) distantCell.SetActive(false);
+            if (loadedScene == null)
+            {
+                failure = new InvalidOperationException(
+                    $"The engine did not expose the isolated copy of cell scene '{sceneName}'.");
+                break;
+            }
+            loadedByCapture.Add(loadedScene.Value);
         }
-        foreach (var cloud in UnityObject.FindObjectsOfType<ParticleSystemRenderer>())
+        foreach (var particleRenderer in UnityObject.FindObjectsOfType<ParticleSystemRenderer>())
         {
-            if (!cloud.enabled) continue;
-            cloud.enabled = false;
-            suppressedRenderers.Add(cloud);
+            var isCloud = particleRenderer.name.IndexOf("cloud", StringComparison.OrdinalIgnoreCase) >= 0
+                || particleRenderer.sharedMaterials.Any(material => material != null
+                    && material.name.IndexOf("cloud", StringComparison.OrdinalIgnoreCase) >= 0);
+            if (!isCloud || !particleRenderer.enabled) continue;
+            particleRenderer.enabled = false;
+            suppressedRenderers.Add(particleRenderer);
         }
 
         if (failure == null)
@@ -238,7 +248,7 @@ public sealed class CellCapture
                         camera,
                         frame,
                         inputs.CameraHeight,
-                        authoredScene != null && !preloadedSceneNames.Contains(sceneName),
+                        authoredScene != null,
                         distantCell,
                         distantCells.Count > 0));
                 }
@@ -255,14 +265,14 @@ public sealed class CellCapture
         }
         suppressedRenderers.Clear();
 
-        foreach (var buildIndex in loadedByCapture.ToList())
+        foreach (var loadedScene in loadedByCapture.ToList())
         {
-            var unload = SceneManager.UnloadSceneAsync(buildIndex);
+            var unload = SceneManager.UnloadSceneAsync(loadedScene);
             if (unload != null)
             {
                 while (!unload.isDone) yield return null;
             }
-            loadedByCapture.Remove(buildIndex);
+            loadedByCapture.Remove(loadedScene);
         }
 
         foreach (var distantCell in distantCells.Values)
