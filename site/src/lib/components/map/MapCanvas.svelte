@@ -11,7 +11,17 @@
   let { store }: { store: MapStore } = $props();
 
   let container: HTMLDivElement;
+  let canvas: HTMLCanvasElement;
   let loading = $state(true);
+  /**
+   * Whether deck has drawn a frame at the canvas's real size.
+   *
+   * deck.gl creates its canvas at the HTML default size and resizes it on its first frames, so the
+   * frames before that are the map stretched to the wrong aspect ratio. The canvas stays hidden
+   * until its backing store matches its layout box, which is what makes that distortion
+   * unobservable rather than merely brief.
+   */
+  let canvasSized = $state(false);
   let error = $state<string | null>(null);
 
   // deck handles live in closure scope, never module scope (HMR/leak safety).
@@ -127,6 +137,37 @@
     });
   }
 
+  /** Matches the canvas backing store to its layout box, in device pixels. */
+  function sizeCanvas(): void {
+    const box = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    const width = Math.max(1, Math.floor(box.width * ratio));
+    const height = Math.max(1, Math.floor(box.height * ratio));
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
+  }
+
+  /**
+   * Reveals the canvas once deck has drawn a frame at the canvas's real size.
+   *
+   * Sizing the backing store before the first frame covers the ordinary case. A reader who resizes
+   * the window mid-load, or a device-pixel ratio deck disagrees with, can still put a smaller
+   * backing store behind a larger box, and that frame is the distorted one. `force` bounds the
+   * wait: a hidden map is worse than a brief flash.
+   */
+  function revealWhenCanvasSized(force = false): void {
+    if (canvasSized) return;
+    const box = canvas.getBoundingClientRect();
+    const sized =
+      box.width > 0 &&
+      box.height > 0 &&
+      canvas.width >= Math.floor(box.width) &&
+      canvas.height >= Math.floor(box.height);
+    if (!force && !sized) return;
+    canvasSized = true;
+    loading = false;
+  }
+
   function currentSpecs(): LayerSpec[] {
     const ui = {
       hiddenLayers: store.ui.hiddenLayers,
@@ -146,6 +187,7 @@
 
   onMount(() => {
     let alive = true;
+    let revealTimer: ReturnType<typeof setTimeout> | null = null;
 
     void (async () => {
       // deck.gl is a browser-only WebGL module; static import would execute it
@@ -211,8 +253,12 @@
               }),
         );
 
+      // deck.gl adopts a canvas it is given and creates one at the HTML default 300x150 otherwise,
+      // which CSS then stretches across the map box until deck's own resize catches up. Sizing the
+      // backing store before the first frame is what removes the distorted flash at load.
+      sizeCanvas();
       deck = new Deck({
-        parent: container,
+        canvas,
         // GPU device; deck.gl 9 defaults powerPreference to 'high-performance'.
         deviceProps: { type: "webgl" },
         views: new OrthographicView({ id: "map", flipY: false, controller: true }),
@@ -228,6 +274,8 @@
           container.dataset.deckDevice = device.type;
           syncCanvasLabel();
         },
+        onLoad: () => revealWhenCanvasSized(),
+        onAfterRender: () => revealWhenCanvasSized(),
         getTooltip: (info: PickingInfo) => {
           const object = info.object as { tooltip?: string; name?: string } | null;
           return object ? { text: object.tooltip ?? object.name ?? "" } : null;
@@ -237,7 +285,9 @@
           store.select(object?.nodeShortId ?? null);
         },
       });
-      loading = false;
+      // A hidden canvas is worse than a distorted frame, so the wait is bounded: if deck reports
+      // no frame at the right size, the map is shown anyway.
+      revealTimer = setTimeout(() => revealWhenCanvasSized(true), 2000);
     })().catch((cause: unknown) => {
       if (!alive) return;
       loading = false;
@@ -246,6 +296,7 @@
 
     return () => {
       alive = false;
+      if (revealTimer !== null) clearTimeout(revealTimer);
       deck?.finalize();
       deck = null;
       makeLayers = null;
@@ -272,7 +323,17 @@
   class="absolute inset-0"
   role="region"
   aria-label={mapAccessibleName(activeMapLabel, visibleMarkers.length)}
-></div>
+>
+  <!--
+    The reveal is a style on the canvas, not a class on the container: deck.gl writes the
+    container's class attribute when it mounts its widget root, which drops a class set here.
+  -->
+  <canvas
+    bind:this={canvas}
+    class="block h-full w-full transition-opacity duration-150"
+    style:opacity={canvasSized ? 1 : 0}
+  ></canvas>
+</div>
 <details
   class="bg-card absolute top-4 right-4 z-10 max-h-[50%] max-w-sm overflow-auto rounded border p-3"
 >
