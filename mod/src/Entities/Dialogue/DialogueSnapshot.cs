@@ -28,6 +28,16 @@ public static class DialogueRoles
     /// <summary>Authored state is read. Carries a declaration, never a result.</summary>
     public const string Condition = "condition";
 
+    /// <summary>
+    /// The game watches for something and starts this branch of the graph when it happens.
+    /// </summary>
+    /// <remarks>
+    /// A quest's logic graph opens on a trigger: entering a location, acquiring an item, a
+    /// character dying, a quest variable changing. A conversation has no trigger, because a player
+    /// starts it, which is why the role arrived with the quest graphs.
+    /// </remarks>
+    public const string Trigger = "trigger";
+
     /// <summary>Something happens to the world. Carries outcomes.</summary>
     public const string Effect = "effect";
 

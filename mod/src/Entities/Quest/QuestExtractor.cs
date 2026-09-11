@@ -114,7 +114,8 @@ public sealed class QuestExtractor : WalkerBase<QuestSnapshotRow>
                         Phases: BuildPhases(asset.Phases),
                         Characters: characters,
                         JournalEntries: BuildJournalEntries(asset.JournalEntries),
-                        RewardSets: BuildRewardSets(asset.RewardSets, id)),
+                        RewardSets: BuildRewardSets(asset.RewardSets, id),
+                        Logic: asset.Logic),
                 };
             });
     }

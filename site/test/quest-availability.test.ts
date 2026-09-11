@@ -21,7 +21,8 @@ const seed = () => {
       journal_on_succeed TEXT,
       journal_on_failure TEXT,
       phases_json TEXT NOT NULL,
-      rewards_json TEXT NOT NULL
+      rewards_json TEXT NOT NULL,
+      logic_json TEXT NOT NULL
     );
     CREATE TABLE entity_edges (
           edge_id TEXT PRIMARY KEY,
@@ -43,13 +44,17 @@ const seed = () => {
     );
     INSERT INTO quest_presentation_rows VALUES
       ('quest-disabled', 'Disabled quest', NULL, 'quest-presentation-v1', 1, 0,
-       NULL, NULL, NULL, '[]', '[]'),
+       NULL, NULL, NULL, '[]', '[]',
+       '{"triggers":[],"effects":[],"unmodelled":[]}'),
       ('quest-hidden', 'Hidden quest', NULL, 'quest-presentation-v1', 0, 1,
-       NULL, NULL, NULL, '[]', '[]'),
+       NULL, NULL, NULL, '[]', '[]',
+       '{"triggers":[],"effects":[],"unmodelled":[]}'),
       ('quest-both', 'Disabled hidden quest', NULL, 'quest-presentation-v1', 1, 1,
-       NULL, NULL, NULL, '[]', '[]'),
+       NULL, NULL, NULL, '[]', '[]',
+       '{"triggers":[],"effects":[],"unmodelled":[]}'),
       ('quest-available', 'Available quest', NULL, 'quest-presentation-v1', 0, 0,
-       NULL, NULL, NULL, '[]', '[]');
+       NULL, NULL, NULL, '[]', '[]',
+       '{"triggers":[],"effects":[],"unmodelled":[]}');
     INSERT INTO entity_nodes VALUES
       ('quest', 'quest-disabled', 'Disabled quest', 'Disabled quest',
        '/quests/disabled-quest--11111111', 'disabled-quest--11111111', '11111111', 1),

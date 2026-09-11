@@ -138,6 +138,20 @@ export function canonicaliseQuests(db: Database, envelope: SnapshotEnvelope): vo
      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
+  const logicNodeInsert = db.prepare(
+    `INSERT INTO quest_logic_nodes (
+       id, quest_id, node_id, role, authored_type, is_entry, gate_json, effects_json
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
+  const logicEdgeInsert = db.prepare(
+    `INSERT INTO quest_logic_edges (id, quest_id, from_node, to_node, ordinal, port)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+  );
+  const logicCensusInsert = db.prepare(
+    `INSERT INTO quest_logic_census (id, quest_id, authored_type, node_count, modelled)
+     VALUES (?, ?, ?, ?, ?)`,
+  );
+
   const tx = db.transaction(() => {
     const rows = [...entityRows<QuestSnapshotFields>(envelope)].sort((left, right) =>
       compareStrings(left.id, right.id),
@@ -156,6 +170,50 @@ export function canonicaliseQuests(db: Database, envelope: SnapshotEnvelope): vo
         fields.journalOnFailure ?? null,
         jsonOrNull(sortedRefs(fields.requiredCharacterRefs)),
       );
+
+      const logic = fields.logic;
+      if (logic) {
+        const entries = new Set(logic.entryNodes);
+        const modelled = new Set(logic.nodes.map((node) => node.authoredType));
+        for (const node of logic.nodes) {
+          logicNodeInsert.run(
+            `${row.id}#${node.id}`,
+            row.id,
+            node.id,
+            node.role,
+            node.authoredType,
+            entries.has(node.id) ? 1 : 0,
+            node.gate === null ? null : JSON.stringify(node.gate),
+            JSON.stringify(node.effects),
+          );
+        }
+
+        logic.edges.forEach((edge, ordinal) => {
+          logicEdgeInsert.run(
+            `${row.id}#${edge.from}->${edge.to}:${ordinal}`,
+            row.id,
+            edge.from,
+            edge.to,
+            edge.ordinal,
+            edge.port,
+          );
+        });
+
+        // The census counts every authored type, including the control nodes the walk contracts
+        // away and the types it does not model, so a build change surfaces here rather than as a
+        // silent gap in the published nodes.
+        for (const [authoredType, count] of Object.entries(logic.census).sort(([left], [right]) =>
+          compareStrings(left, right),
+        )) {
+          logicCensusInsert.run(
+            `${row.id}:census:${authoredType}`,
+            row.id,
+            authoredType,
+            count,
+            modelled.has(authoredType) ? 1 : 0,
+          );
+        }
+      }
 
       // Phases use phaseGameId because it is the game's intrinsic phase key.
       const phases = [...fields.phases].sort(comparePhases);

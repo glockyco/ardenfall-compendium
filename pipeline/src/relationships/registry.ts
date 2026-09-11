@@ -178,6 +178,18 @@ export const relationshipRegistry = {
     inverseTitle: "Started at",
     sortOrder: 147,
   },
+  /** What a quest's logic watches for before it advances. */
+  quest_watches: {
+    forwardTitle: "Watches for",
+    inverseTitle: "Watched by quest",
+    sortOrder: 149,
+  },
+  /** What a quest's logic does to the world. */
+  quest_changes: {
+    forwardTitle: "Changes",
+    inverseTitle: "Changed by quest",
+    sortOrder: 150,
+  },
   /** Which conversations an object holds. */
   holds_dialogue: {
     forwardTitle: "Conversations",

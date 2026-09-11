@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities.Dialogue;
 using Newtonsoft.Json;
 
 namespace ArdenfallCompendium.Entities.Quest;
@@ -55,6 +56,23 @@ public sealed record QuestRewardSetSnapshot(
     [property: JsonProperty("setType")] string SetType,
     [property: JsonProperty("rewards")] IReadOnlyList<QuestRewardSnapshot> Rewards);
 
+/// <summary>
+/// The authored logic of one quest, read as published data.
+/// </summary>
+/// <remarks>
+/// A quest's logic graph is the same shape as a conversation, and this build's quest graphs hold the
+/// node vocabulary the dialogue readers already name: `SetQuestObjectiveStateNode`,
+/// `OnEnterQuestLocation`, `AddItemListNode`, `TriggerSteamAchievementNode` and the rest. The walk is
+/// shared, so a node kind reads the same on a quest page as it does in a conversation.
+/// </remarks>
+public sealed record QuestLogicSnapshot(
+    [property: JsonProperty("graphName")] string GraphName,
+    [property: JsonProperty("nodes")] IReadOnlyList<DialogueNodeSnapshot> Nodes,
+    [property: JsonProperty("edges")] IReadOnlyList<DialogueEdgeSnapshot> Edges,
+    [property: JsonProperty("entryNodes")] IReadOnlyList<int> EntryNodes,
+    /// <summary>Every node type the graph holds, counted, whether the walk models it or not.</summary>
+    [property: JsonProperty("census")] IReadOnlyDictionary<string, int> Census);
+
 public sealed record QuestSnapshotFields(
     [property: JsonProperty("id")] string Id,
     [property: JsonProperty("questGameId")] string QuestGameId,
@@ -69,7 +87,9 @@ public sealed record QuestSnapshotFields(
     [property: JsonProperty("phases")] IReadOnlyList<QuestPhaseSnapshot> Phases,
     [property: JsonProperty("characters")] IReadOnlyList<QuestCharacterSnapshot> Characters,
     [property: JsonProperty("journalEntries")] IReadOnlyList<QuestJournalSnapshot> JournalEntries,
-    [property: JsonProperty("rewardSets")] IReadOnlyList<QuestRewardSetSnapshot> RewardSets);
+    [property: JsonProperty("rewardSets")] IReadOnlyList<QuestRewardSetSnapshot> RewardSets,
+    /// <summary>Null when the quest holds no logic graph, which is a fact rather than a failure.</summary>
+    [property: JsonProperty("logic")] QuestLogicSnapshot? Logic);
 
 public sealed class QuestSnapshotRow
 {

@@ -1,5 +1,6 @@
 using Ardenfall;
 using Ardenfall.Dialog;
+using FlowCanvas;
 using Ardenfall.Questing;
 using Ardenfall.RecordSystem;
 using ArdenfallCompendium.Dtos;
@@ -77,10 +78,10 @@ internal static class DialogueRefs
     /// against the graph it lives in. An asset-time read does the same lookup by hand, because the
     /// runtime resolver needs a live flow graph.
     /// </remarks>
-    public static CharacterGroupQuestObject? CharacterGroup(object? graphRef, DialogFlowGraph? graph)
+    public static CharacterGroupQuestObject? CharacterGroup(object? graphRef, FlowGraph? graph)
     {
         if (graphRef == null) return null;
-        var quest = GraphFields.Read<QuestData>(graphRef, "questAsset") ?? graph?.AttachedQuest;
+        var quest = GraphFields.Read<QuestData>(graphRef, "questAsset") ?? AttachedQuest(graph);
         if (quest?.objects == null) return null;
 
         var objectId = GraphFields.ReadInt(graphRef, "questObjectID");
@@ -103,15 +104,46 @@ internal static class DialogueRefs
     /// is the difference between "the authored objective" and "Question Ein": one quest graph gates
     /// 26 topics on nothing else, so the objective name is what separates two identical questions.
     /// </remarks>
-    public static string? ObjectiveName(object? graphRef, DialogFlowGraph? graph)
+    public static string? ObjectiveName(object? graphRef, FlowGraph? graph)
     {
         if (graphRef == null) return null;
-        var quest = GraphFields.Read<QuestData>(graphRef, "questAsset") ?? graph?.AttachedQuest;
+        var quest = GraphFields.Read<QuestData>(graphRef, "questAsset") ?? AttachedQuest(graph);
         var phase = quest?.GetPhase(GraphFields.ReadInt(graphRef, "questPhaseID"));
         var objective = phase?.GetObjectiveById(GraphFields.ReadInt(graphRef, "questObjectiveID"));
         var name = objective?.objectiveName;
         return string.IsNullOrWhiteSpace(name) ? null : name;
     }
+
+    /// <summary>The phase a check or a trigger watches, as the quest names it.</summary>
+    public static string? PhaseName(object? graphRef, FlowGraph? graph)
+    {
+        if (graphRef == null) return null;
+        var quest = GraphFields.Read<QuestData>(graphRef, "questAsset") ?? AttachedQuest(graph);
+        var phase = quest?.GetPhase(GraphFields.ReadInt(graphRef, "questPhaseID"));
+        return string.IsNullOrWhiteSpace(phase?.phaseName) ? null : phase!.phaseName;
+    }
+
+    /// <summary>The quest object a trigger watches, such as the location a player enters.</summary>
+    public static string? QuestObjectName(object? graphRef, FlowGraph? graph)
+    {
+        if (graphRef == null) return null;
+        var quest = GraphFields.Read<QuestData>(graphRef, "questAsset") ?? AttachedQuest(graph);
+        if (quest?.objects == null) return null;
+
+        var objectId = GraphFields.ReadInt(graphRef, "questObjectID");
+        foreach (var questObject in quest.objects)
+        {
+            if (questObject != null && questObject.objectID == objectId)
+            {
+                return string.IsNullOrWhiteSpace(questObject.objectName) ? null : questObject.objectName;
+            }
+        }
+
+        return null;
+    }
+
+    private static QuestData? AttachedQuest(FlowGraph? graph) =>
+        graph is IQuestOwnedGraph owned ? owned.AttachedQuest : null;
 
     /// <summary>One character the game names by its record.</summary>
     public static DialogueParticipantSnapshot RecordParticipant(RecordReference? reference)

@@ -611,7 +611,13 @@ type EntityResolver = (ref: SnapshotRef) => EntityLink | null;
  * per entity type. A reference that resolves to nothing yields null, and the caller emits no edge
  * rather than inventing one.
  */
-function prepareEntityResolver(db: Database): EntityResolver {
+/**
+ * Resolves a snapshot reference to a published entity, whatever names it.
+ *
+ * Shared with the quest logic read model, because a quest graph and a conversation graph name their
+ * subjects the same way: one resolver keeps one answer for both.
+ */
+export function prepareEntityResolver(db: Database): EntityResolver {
   const nodes = db
     .query<
       {

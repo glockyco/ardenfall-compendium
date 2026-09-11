@@ -224,7 +224,81 @@
               }
             ]
           }
-        ]
+        ],
+        "logic": {
+          "graphName": "quest_fixture_supply-run",
+          "nodes": [
+            {
+              "id": 1,
+              "role": "trigger",
+              "authoredType": "OnGetItemNode",
+              "importance": null,
+              "statements": [],
+              "singleScreen": false,
+              "options": [],
+              "gate": {
+                "kind": "acquires-item",
+                "compare": null,
+                "value": null,
+                "label": null,
+                "invert": false,
+                "subjects": [
+                  {
+                    "kind": "lookupAsset",
+                    "guid": "4ed20218.fixture-iron-sword",
+                    "unityType": "Ardenfall.Item.ItemData",
+                    "name": "Iron Sword"
+                  }
+                ],
+                "participants": [],
+                "authoredType": "OnGetItemNode",
+                "children": [],
+                "childMode": null
+              },
+              "branches": [],
+              "effects": [],
+              "speaker": null,
+              "jumpTarget": null
+            },
+            {
+              "id": 2,
+              "role": "effect",
+              "authoredType": "SetQuestObjectiveStateNode",
+              "importance": null,
+              "statements": [],
+              "singleScreen": false,
+              "options": [],
+              "gate": null,
+              "branches": [],
+              "effects": [
+                {
+                  "kind": "quest-objective",
+                  "amount": null,
+                  "amountLabel": "succeeded",
+                  "authoredType": "SetQuestObjectiveStateNode",
+                  "target": null,
+                  "participant": null
+                }
+              ],
+              "speaker": null,
+              "jumpTarget": null
+            }
+          ],
+          "edges": [
+            {
+              "from": 1,
+              "to": 2,
+              "ordinal": 0,
+              "port": ""
+            }
+          ],
+          "entryNodes": [1],
+          "census": {
+            "OnGetItemNode": 1,
+            "SetQuestObjectiveStateNode": 1,
+            "QuestDebugPointNode": 3
+          }
+        }
       }
     },
     {
@@ -243,7 +317,8 @@
         "phases": [],
         "characters": [],
         "journalEntries": [],
-        "rewardSets": []
+        "rewardSets": [],
+        "logic": null
       }
     }
   ]

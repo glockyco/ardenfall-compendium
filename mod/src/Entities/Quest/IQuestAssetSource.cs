@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities.Dialogue;
 
 namespace ArdenfallCompendium.Entities.Quest;
 
@@ -70,7 +71,11 @@ public sealed record QuestAsset(
     IReadOnlyList<QuestPhaseAsset> Phases,
     IReadOnlyList<QuestCharacterAsset> Characters,
     IReadOnlyList<QuestJournalAsset> JournalEntries,
-    IReadOnlyList<QuestRewardSetAsset> RewardSets);
+    IReadOnlyList<QuestRewardSetAsset> RewardSets,
+    /// <summary>The walked logic graph, or null when the quest holds none.</summary>
+    QuestLogicSnapshot? Logic = null,
+    /// <summary>False when the quest holds no logic graph at all.</summary>
+    bool LogicGraphWalked = false);
 
 public interface IQuestAssetSource
 {

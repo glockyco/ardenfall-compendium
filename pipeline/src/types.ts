@@ -520,6 +520,18 @@ export interface QuestSnapshotFields {
   characters: QuestCharacterSnapshot[];
   journalEntries: QuestJournalSnapshot[];
   rewardSets: QuestRewardSetSnapshot[];
+  /** The walked logic graph, or null when the quest holds none. */
+  logic: QuestLogicSnapshot | null;
+}
+
+/** One quest's authored logic, read by the same walk a conversation uses. */
+export interface QuestLogicSnapshot {
+  graphName: string;
+  nodes: DialogueNodeSnapshot[];
+  edges: DialogueEdgeSnapshot[];
+  entryNodes: number[];
+  /** Every node type the graph holds, counted, whether the walk models it or not. */
+  census: Record<string, number>;
 }
 
 export interface FactionSnapshotRelationship {

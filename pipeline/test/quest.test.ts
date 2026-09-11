@@ -89,6 +89,7 @@ function envelope(): SnapshotEnvelope<QuestSnapshotFields> {
             },
           ],
           journalEntries: [{ objectGameId: 9, objectName: "Journal", journalEntry: "Entry" }],
+          logic: null,
           rewardSets: [
             {
               setGameId: 1,
@@ -126,6 +127,7 @@ function envelope(): SnapshotEnvelope<QuestSnapshotFields> {
           phases: [],
           characters: [],
           journalEntries: [],
+          logic: null,
           rewardSets: [],
         },
       },
@@ -196,6 +198,7 @@ describe("Quest canonicaliser", () => {
           requiredCharacterRefs: [...row.fields.requiredCharacterRefs].reverse(),
           characters: [...row.fields.characters].reverse(),
           journalEntries: [...row.fields.journalEntries].reverse(),
+          logic: null,
           rewardSets: [...row.fields.rewardSets].reverse().map((rewardSet) => ({
             ...rewardSet,
             rewards: [...rewardSet.rewards].reverse(),

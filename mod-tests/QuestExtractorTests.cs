@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using ArdenfallCompendium.Dtos;
+using ArdenfallCompendium.Entities.Dialogue;
 using ArdenfallCompendium.Entities.Quest;
 using Xunit;
 
@@ -268,10 +269,46 @@ public sealed class QuestExtractorTests
             SnapshotRef.Record("instances", "characters", "0123456789abcdef0123456789abcdef", "CharacterRecord"),
             DialogueIds: dialogueIds);
 
+    [Fact]
+    public void PublishesAQuestsLogicWithItsCensus()
+    {
+        var logic = new QuestLogicSnapshot(
+            GraphName: "quest_akaga_dying-light",
+            Nodes: new List<DialogueNodeSnapshot>
+            {
+                new() { Id = 1, AuthoredType = "SetQuestObjectiveStateNode", Role = DialogueRoles.Effect },
+            },
+            Edges: new List<DialogueEdgeSnapshot>(),
+            EntryNodes: new List<int> { 1 },
+            Census: new Dictionary<string, int>
+            {
+                ["SetQuestObjectiveStateNode"] = 1,
+                ["QuestDebugPointNode"] = 2,
+            });
+
+        var extracted = Assert.Single(new QuestExtractor(new FakeQuestAssetSource(new[] { BuildQuest(logic: logic) })).Walk());
+
+        var published = Assert.IsType<QuestLogicSnapshot>(extracted.Fields.Logic);
+        Assert.Equal("quest_akaga_dying-light", published.GraphName);
+        // The census counts a type the walk does not publish as a node, so a build change shows up.
+        Assert.Equal(2, published.Census["QuestDebugPointNode"]);
+        Assert.Equal("SetQuestObjectiveStateNode", Assert.Single(published.Nodes).AuthoredType);
+    }
+
+    [Fact]
+    public void AQuestWithNoLogicGraphIsNotAFailure()
+    {
+        var extracted = Assert.Single(new QuestExtractor(new FakeQuestAssetSource(new[] { BuildQuest() })).Walk());
+
+        Assert.Null(extracted.Fields.Logic);
+        Assert.Empty(extracted.Diagnostics);
+    }
+
     private static QuestAsset BuildQuest(
         IReadOnlyList<QuestPhaseAsset>? phases = null,
         IReadOnlyList<QuestCharacterAsset>? characters = null,
-        IReadOnlyList<QuestRewardSetAsset>? rewardSets = null) => new(
+        IReadOnlyList<QuestRewardSetAsset>? rewardSets = null,
+        QuestLogicSnapshot? logic = null) => new(
         AssetName: "quest_phases",
         QuestGameId: "quest-game-id",
         QuestName: "Test quest",
@@ -285,7 +322,9 @@ public sealed class QuestExtractorTests
         Phases: phases ?? new List<QuestPhaseAsset>(),
         Characters: characters ?? new List<QuestCharacterAsset>(),
         JournalEntries: new List<QuestJournalAsset>(),
-        RewardSets: rewardSets ?? new List<QuestRewardSetAsset>());
+        RewardSets: rewardSets ?? new List<QuestRewardSetAsset>(),
+        Logic: logic,
+        LogicGraphWalked: logic != null);
 
     private sealed class FakeQuestAssetSource : IQuestAssetSource
     {

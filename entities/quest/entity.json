@@ -124,6 +124,15 @@
       "storage": "unstored",
       "reason": "Expanded into quest_rewards rows.",
       "projects": "quest_rewards"
+    },
+    {
+      "name": "logic",
+      "type": "json",
+      "from": "flowGraph",
+      "missingPolicy": "optional-empty",
+      "storage": "unstored",
+      "reason": "Expanded into quest_logic_nodes, quest_logic_edges and quest_logic_census rows.",
+      "projects": "quest_logic_nodes"
     }
   ],
   "map": null

@@ -36,7 +36,16 @@ public static class DialogueGraphWalk
     /// True when a graph was present and its nodes were enumerated, whatever the walk yielded.
     /// Distinguishes "this object has no dialogue" from "a graph produced no nodes".
     /// </param>
-    public static DialogueGraphSnapshot Walk(DialogFlowGraph? graph, out bool walked)
+    /// <summary>
+    /// Reads one graph as published data.
+    /// </summary>
+    /// <remarks>
+    /// A quest's logic graph is the same shape as a conversation: `QuestFlowGraph` and
+    /// `DialogFlowGraph` both derive from `FlowGraph`, and this build's quest graphs hold the node
+    /// vocabulary the dialogue tables already name, such as `SetQuestObjectiveStateNode` and
+    /// `AddItemListNode`. The walk therefore takes the base type.
+    /// </remarks>
+    public static DialogueGraphSnapshot Walk(FlowGraph? graph, out bool walked)
     {
         walked = false;
         var snapshot = new DialogueGraphSnapshot();

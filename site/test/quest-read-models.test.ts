@@ -21,7 +21,8 @@ const seed = () => {
       journal_on_succeed TEXT,
       journal_on_failure TEXT,
       phases_json TEXT NOT NULL,
-      rewards_json TEXT NOT NULL
+      rewards_json TEXT NOT NULL,
+      logic_json TEXT NOT NULL
     );
     CREATE TABLE entity_edges (
       edge_id TEXT PRIMARY KEY,
@@ -45,9 +46,11 @@ const seed = () => {
       ('named;quest;quest-ash', 'Ashes at Dawn', 'A first task', 'quest-presentation-v1', 1, 0,
        'Begin at dawn.', 'The ashes settle.', NULL,
        '[{"phaseGameId":10,"name":"Arrival","journalEntry":"Reach the gate.","completedJournalEntry":"The gate opens.","objectives":[{"objectiveGameId":20,"name":"Find the gate","info":"Follow the road.","journalEntry":"The road is quiet.","successJournalEntry":"You found it.","failureJournalEntry":null,"objectiveType":"Reach","hidden":false,"attachedObjectGameId":null,"enableMapMarker":true}]},{"phaseGameId":30,"name":"Return","journalEntry":null,"completedJournalEntry":null,"objectives":[]}]',
-       '[{"setOrdinal":0,"setType":"on-success","rewards":[{"kind":"faction-reputation","amount":"+5","targetLabel":"Dawnkeepers","targetRoutePath":"/factions/dawnkeepers--22222222","items":[]},{"kind":"items","amount":null,"targetLabel":null,"targetRoutePath":null,"items":[{"label":"Ash Token","routePath":"/items/ash-token--33333333","count":1}]}]},{"setOrdinal":1,"setType":"on-failure","rewards":[{"kind":"gold","amount":"25","targetLabel":null,"targetRoutePath":null,"items":[]}]}]'),
+       '[{"setOrdinal":0,"setType":"on-success","rewards":[{"kind":"faction-reputation","amount":"+5","targetLabel":"Dawnkeepers","targetRoutePath":"/factions/dawnkeepers--22222222","items":[]},{"kind":"items","amount":null,"targetLabel":null,"targetRoutePath":null,"items":[{"label":"Ash Token","routePath":"/items/ash-token--33333333","count":1}]}]},{"setOrdinal":1,"setType":"on-failure","rewards":[{"kind":"gold","amount":"25","targetLabel":null,"targetRoutePath":null,"items":[]}]}]',
+       '{"triggers":[],"effects":[],"unmodelled":[]}'),
       ('named;quest;quest-unnamed', 'Unnamed quest', NULL, 'quest-presentation-v1', 0, 1,
-       NULL, NULL, NULL, '[]', '[{"setOrdinal":0,"setType":"on-success","rewards":[{"kind":"items","amount":null,"targetLabel":null,"targetRoutePath":null,"items":[{"label":"Ash Token","routePath":"/items/ash-token--33333333","count":5}]}]}]');
+       NULL, NULL, NULL, '[]', '[{"setOrdinal":0,"setType":"on-success","rewards":[{"kind":"items","amount":null,"targetLabel":null,"targetRoutePath":null,"items":[{"label":"Ash Token","routePath":"/items/ash-token--33333333","count":5}]}]}]',
+       '{"triggers":[],"effects":[],"unmodelled":[]}');
     INSERT INTO entity_nodes VALUES
       ('quest', 'named;quest;quest-ash', 'Ashes at Dawn', 'Ashes at Dawn', '/quests/ashes-at-dawn--11111111', 'ashes-at-dawn--11111111', '11111111', 1),
       ('quest', 'named;quest;quest-unnamed', 'Unnamed quest', 'Unnamed quest', '/quests/unnamed-quest--44444444', 'unnamed-quest--44444444', '44444444', 1),

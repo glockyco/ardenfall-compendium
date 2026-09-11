@@ -25,6 +25,7 @@ interface QuestPresentationRecord {
   journal_on_failure: string | null;
   phases_json: string;
   rewards_json: string;
+  logic_json: string;
   route_path: string;
 }
 
@@ -83,6 +84,33 @@ export interface QuestRewardSet {
   rewards: QuestReward[];
 }
 
+/** What a quest's logic declares: the states it watches for, and what it changes. */
+export interface QuestLogic {
+  triggers: {
+    kind: string;
+    label: string | null;
+    subjects: { label: string; routePath: string | null }[];
+  }[];
+  effects: {
+    kind: string;
+    amount: number | null;
+    amountLabel: string | null;
+    subject: { label: string; routePath: string | null } | null;
+  }[];
+  /** Node types the walk does not model, so a reader sees the gap rather than a clean lie. */
+  unmodelled: { authoredType: string; count: number }[];
+}
+
+const isQuestLogic = (value: unknown): value is QuestLogic => {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as QuestLogic;
+  return (
+    Array.isArray(candidate.triggers) &&
+    Array.isArray(candidate.effects) &&
+    Array.isArray(candidate.unmodelled)
+  );
+};
+
 export interface QuestPresentationRow {
   id: string;
   name: string;
@@ -95,6 +123,8 @@ export interface QuestPresentationRow {
   journalOnFailure: string | null;
   phases: QuestPhase[];
   rewards: QuestRewardSet[];
+  /** What the quest's logic declares. */
+  logic: QuestLogic;
   routePath: string;
   /** The conversations this page holds, each with the mechanism that reaches it. */
   conversations: { id: string; label: string; routePath: string; holderKind: string }[];
@@ -197,7 +227,7 @@ export const getQuestPresentation = (slug: string): QuestPresentationRow | undef
   const row = get<QuestPresentationRecord>(
     `SELECT p.id, n.display_label AS name, p.subname, p.render_context, p.disabled, p.hidden_in_quest_ui,
             p.journal_on_start, p.journal_on_succeed, p.journal_on_failure,
-            p.phases_json, p.rewards_json, n.route_path
+            p.phases_json, p.rewards_json, p.logic_json, n.route_path
      FROM quest_presentation_rows p
      JOIN entity_nodes n
        ON n.entity_type = 'quest'
@@ -230,6 +260,7 @@ export const getQuestPresentation = (slug: string): QuestPresentationRow | undef
       row.id,
       isQuestRewardSetArray,
     ),
+    logic: parseGeneratedJson(row.logic_json, "quest", "logic_json", row.id, isQuestLogic),
     routePath: row.route_path,
     conversations: listDialoguesForHolder("quest", row.id),
   };

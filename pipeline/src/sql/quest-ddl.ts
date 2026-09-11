@@ -78,4 +78,33 @@ CREATE TABLE quest_rewards (
   target_object_game_id INTEGER,
   UNIQUE(quest_id, set_ordinal, reward_ordinal)
 );
+
+-- The authored logic of a quest: what the game watches for, and what it then does.
+CREATE TABLE quest_logic_nodes (
+  id            TEXT PRIMARY KEY NOT NULL,
+  quest_id      TEXT NOT NULL REFERENCES quests(id),
+  node_id       INTEGER NOT NULL,
+  role          TEXT NOT NULL,
+  authored_type TEXT NOT NULL,
+  is_entry      INTEGER NOT NULL,
+  gate_json     TEXT,
+  effects_json  TEXT NOT NULL,
+  UNIQUE(quest_id, node_id)
+);
+CREATE TABLE quest_logic_edges (
+  id        TEXT PRIMARY KEY NOT NULL,
+  quest_id  TEXT NOT NULL REFERENCES quests(id),
+  from_node INTEGER NOT NULL,
+  to_node   INTEGER NOT NULL,
+  ordinal   INTEGER NOT NULL,
+  port      TEXT
+);
+-- Every node type the graph holds, whether the walk models it or not, so a build change is visible.
+CREATE TABLE quest_logic_census (
+  id            TEXT PRIMARY KEY NOT NULL,
+  quest_id      TEXT NOT NULL REFERENCES quests(id),
+  authored_type TEXT NOT NULL,
+  node_count    INTEGER NOT NULL,
+  modelled      INTEGER NOT NULL
+);
 `;

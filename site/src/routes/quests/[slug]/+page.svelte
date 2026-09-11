@@ -2,6 +2,7 @@
   import BackLink from "$lib/components/navigation/BackLink.svelte";
   import EntityDetailHeader from "$lib/components/EntityDetailHeader.svelte";
   import QuestPhaseList from "$lib/components/quests/QuestPhaseList.svelte";
+  import QuestLogicSection from "$lib/components/quests/QuestLogicSection.svelte";
   import QuestRewardList from "$lib/components/quests/QuestRewardList.svelte";
   import AvailabilityNotice from "$lib/components/content/AvailabilityNotice.svelte";
   import type { AvailabilityFlag } from "$lib/components/content/availability-flags";
@@ -81,6 +82,7 @@
 
   <QuestPhaseList phases={quest.phases} />
   <QuestRewardList rewards={quest.rewards} />
+  <QuestLogicSection logic={quest.logic} />
   <ConversationList conversations={quest.conversations} heading="Conversations" />
 
   {#each data.relationships as section (section.id)}

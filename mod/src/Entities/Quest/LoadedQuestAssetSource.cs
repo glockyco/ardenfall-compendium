@@ -97,6 +97,8 @@ public sealed class LoadedQuestAssetSource : IQuestAssetSource
             }
         }
 
+        var logic = WalkLogic(quest, out var walked);
+
         return new QuestAsset(
             AssetName: _assetName(quest),
             QuestGameId: NullIfEmpty(quest.questID),
@@ -111,7 +113,9 @@ public sealed class LoadedQuestAssetSource : IQuestAssetSource
             Phases: ReadPhases(quest.phases),
             Characters: characters,
             JournalEntries: journalEntries,
-            RewardSets: ReadRewardSets(quest.rewardSets));
+            RewardSets: ReadRewardSets(quest.rewardSets),
+            Logic: logic,
+            LogicGraphWalked: walked);
     }
 
     private IReadOnlyList<SnapshotRef> RequiredCharacterRefs(
@@ -332,5 +336,38 @@ public sealed class LoadedQuestAssetSource : IQuestAssetSource
         if (lookup == null) return null;
         var guid = lookup.GetGuid(asset);
         return string.IsNullOrWhiteSpace(guid) ? null : guid;
+    }
+
+    /// <summary>
+    /// The quest's logic graph, read by the walk a conversation already uses.
+    /// </summary>
+    /// <remarks>
+    /// A quest that holds no graph is a fact rather than a failure, so the caller learns whether a
+    /// graph was walked as well as what the walk found. The census counts every node type the graph
+    /// holds, including the ones the walk publishes as control or as unmodelled, so a build that
+    /// introduces a type becomes visible in the export rather than in a silent gap.
+    /// </remarks>
+    private static QuestLogicSnapshot? WalkLogic(QuestData quest, out bool walked)
+    {
+        walked = false;
+        var graph = quest.flowGraph?.graph;
+        if (graph?.allNodes == null) return null;
+
+        var census = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        foreach (var node in graph.allNodes)
+        {
+            if (node == null) continue;
+            var authoredType = node.GetType().Name;
+            census.TryGetValue(authoredType, out var seen);
+            census[authoredType] = seen + 1;
+        }
+
+        var snapshot = DialogueGraphWalk.Walk(graph, out walked);
+        return new QuestLogicSnapshot(
+            GraphName: graph.name,
+            Nodes: snapshot.Nodes,
+            Edges: snapshot.Edges,
+            EntryNodes: snapshot.EntryNodes,
+            Census: census);
     }
 }

@@ -1,5 +1,6 @@
 import type { Database } from "bun:sqlite";
 import type { PipelineDiagnostic } from "../../relationships/relationship-graph.ts";
+import { prepareEntityResolver } from "../dialogue/read-models.ts";
 import { ENTITY_GRAPH_DDL } from "../../relationships/relationship-graph.ts";
 import type { SnapshotRef } from "../../types.ts";
 import { deriveEntityNodeSlug, prepareEntityNodeWriter } from "../../relationships/entity-nodes.ts";
@@ -20,7 +21,9 @@ CREATE TABLE quest_presentation_rows (
   journal_on_succeed    TEXT,
   journal_on_failure    TEXT,
   phases_json           TEXT NOT NULL,
-  rewards_json          TEXT NOT NULL
+  rewards_json          TEXT NOT NULL,
+  -- What the quest's logic watches for, what it changes, and the node types the walk does not model.
+  logic_json            TEXT NOT NULL
 );
 `;
 
@@ -148,8 +151,9 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
   const presentationInsert = db.prepare(
     `INSERT INTO quest_presentation_rows (
        id, name, subname, render_context, disabled, hidden_in_quest_ui,
-       journal_on_start, journal_on_succeed, journal_on_failure, phases_json, rewards_json
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       journal_on_start, journal_on_succeed, journal_on_failure, phases_json, rewards_json,
+       logic_json
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const edgeInsert = db.prepare(
     `INSERT OR IGNORE INTO entity_edges (
@@ -245,6 +249,8 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
   }
 
   const diagnostics: PipelineDiagnostic[] = [];
+  const logicByQuest = buildQuestLogic(db, prepareEntityResolver(db), edgeInsert);
+
   const tx = db.transaction(() => {
     for (const quest of questRows) {
       const label = quest.name?.trim() || "Unnamed quest";
@@ -412,11 +418,144 @@ export function emitQuestReadModels(db: Database, routeBase = "/quests"): Pipeli
         quest.journal_on_failure,
         JSON.stringify(phasePresentation),
         JSON.stringify([...rewardSets.values()]),
+        JSON.stringify(logicByQuest.get(quest.id) ?? { triggers: [], effects: [], unmodelled: [] }),
       );
     }
   });
   tx();
   return diagnostics;
+}
+
+/**
+ * What a quest's logic declares: the states it watches for, and what it then changes.
+ *
+ * A trigger and an effect are authored facts. Neither states that a reader can reach anything, and
+ * the page words them as declarations, because the walk reads fields and never runs a graph.
+ */
+function buildQuestLogic(
+  db: Database,
+  resolveRef: ReturnType<typeof prepareEntityResolver>,
+  edgeInsert: ReturnType<Database["prepare"]>,
+): Map<string, QuestLogicPresentation> {
+  const byQuest = new Map<string, QuestLogicPresentation>();
+  const nodes = db
+    .query<
+      {
+        quest_id: string;
+        node_id: number;
+        role: string;
+        authored_type: string;
+        gate_json: string | null;
+        effects_json: string;
+      },
+      []
+    >(
+      `SELECT quest_id, node_id, role, authored_type, gate_json, effects_json
+       FROM quest_logic_nodes ORDER BY quest_id, node_id`,
+    )
+    .all();
+
+  const view = (questId: string): QuestLogicPresentation => {
+    const existing = byQuest.get(questId);
+    if (existing) return existing;
+    const created: QuestLogicPresentation = { triggers: [], effects: [], unmodelled: [] };
+    byQuest.set(questId, created);
+    return created;
+  };
+
+  const link = (ref: unknown): { label: string; routePath: string | null } | null => {
+    if (ref === null || ref === undefined) return null;
+    const resolved = resolveRef(ref as Parameters<typeof resolveRef>[0]);
+    return resolved ? { label: resolved.label, routePath: resolved.routePath } : null;
+  };
+
+  for (const node of nodes) {
+    const target = view(node.quest_id);
+    if (node.role === "trigger" && node.gate_json) {
+      const gate = JSON.parse(node.gate_json) as {
+        kind: string;
+        label: string | null;
+        subjects: unknown[];
+      };
+      const subjects = gate.subjects.map(link).filter((entry) => entry !== null);
+      target.triggers.push({ kind: gate.kind, label: gate.label ?? null, subjects });
+      for (const subject of gate.subjects) {
+        if (subject === null || subject === undefined) continue;
+        const resolved = resolveRef(subject as Parameters<typeof resolveRef>[0]);
+        if (!resolved?.entityType) continue;
+        edgeInsert.run(
+          `${node.quest_id}:quest_watches:${resolved.entityType}:${resolved.entityId}:${node.node_id}`,
+          "quest",
+          node.quest_id,
+          resolved.entityType,
+          resolved.entityId,
+          "quest_watches",
+          "Watches for",
+          1,
+          JSON.stringify({ source: "quest_logic_nodes", nodeId: node.node_id, kind: gate.kind }),
+          null,
+        );
+      }
+    }
+
+    if (node.role === "effect") {
+      const effects = JSON.parse(node.effects_json) as {
+        kind: string;
+        amount: number | null;
+        amountLabel: string | null;
+        target: unknown;
+      }[];
+      for (const effect of effects) {
+        target.effects.push({
+          kind: effect.kind,
+          amount: effect.amount,
+          amountLabel: effect.amountLabel,
+          subject: link(effect.target),
+        });
+        if (effect.target === null || effect.target === undefined) continue;
+        const resolved = resolveRef(effect.target as Parameters<typeof resolveRef>[0]);
+        if (!resolved?.entityType) continue;
+        edgeInsert.run(
+          `${node.quest_id}:quest_changes:${resolved.entityType}:${resolved.entityId}:${node.node_id}`,
+          "quest",
+          node.quest_id,
+          resolved.entityType,
+          resolved.entityId,
+          "quest_changes",
+          "Changes",
+          1,
+          JSON.stringify({ source: "quest_logic_nodes", nodeId: node.node_id, kind: effect.kind }),
+          null,
+        );
+      }
+    }
+  }
+
+  for (const row of db
+    .query<{ quest_id: string; authored_type: string; node_count: number }, []>(
+      `SELECT quest_id, authored_type, node_count FROM quest_logic_census
+       WHERE modelled = 0 ORDER BY quest_id, authored_type`,
+    )
+    .all()) {
+    view(row.quest_id).unmodelled.push({ authoredType: row.authored_type, count: row.node_count });
+  }
+
+  return byQuest;
+}
+
+interface QuestLogicPresentation {
+  triggers: {
+    kind: string;
+    label: string | null;
+    subjects: { label: string; routePath: string | null }[];
+  }[];
+  effects: {
+    kind: string;
+    amount: number | null;
+    amountLabel: string | null;
+    subject: { label: string; routePath: string | null } | null;
+  }[];
+  unmodelled: { authoredType: string; count: number }[];
 }
 
 function normalizeRewardSetType(setType: string): RewardSetPresentation["setType"] {

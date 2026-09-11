@@ -4,6 +4,7 @@ using System.Linq;
 using Ardenfall;
 using Ardenfall.Dialog;
 using Ardenfall.Dialog.Nodes;
+using FlowCanvas;
 using NodeCanvas.Framework;
 using UnityObject = UnityEngine.Object;
 
@@ -109,6 +110,19 @@ public static class DialogueNodeReaders
         ["MultiORNode"] = DialogueRoles.Condition,
         ["RefuseToSpeakFlowNode"] = DialogueRoles.Condition,
         ["CharacterGroupDialogSwitchNode"] = DialogueRoles.Branch,
+        // Quest triggers. A quest graph opens on one of these.
+        ["OnEnterQuestLocation"] = DialogueRoles.Trigger,
+        ["OnGetItemNode"] = DialogueRoles.Trigger,
+        ["OnCharacterDeath"] = DialogueRoles.Trigger,
+        ["OnCharacterDamage"] = DialogueRoles.Trigger,
+        ["OnCharacterGroupSpawn"] = DialogueRoles.Trigger,
+        ["OnQuestVariableChangeNode"] = DialogueRoles.Trigger,
+        ["OnQuestPhaseChange"] = DialogueRoles.Trigger,
+        ["OnSheathItemNode"] = DialogueRoles.Trigger,
+        ["OnPickpocketCharacterNode"] = DialogueRoles.Trigger,
+        ["QuestStartFlowNode"] = DialogueRoles.Trigger,
+        ["PhaseStateFlowNode"] = DialogueRoles.Trigger,
+        ["QuestObjectiveNode"] = DialogueRoles.Trigger,
         ["XPNode"] = DialogueRoles.Effect,
         ["ModifyMoneyNode"] = DialogueRoles.Effect,
         ["AddItemListNode"] = DialogueRoles.Effect,
@@ -275,6 +289,9 @@ public static class DialogueNodeReaders
             case DialogueRoles.Branch:
                 snapshot.Gate = ReadCondition(node, authoredType);
                 ReadBranches(node, snapshot);
+                break;
+            case DialogueRoles.Trigger:
+                snapshot.Gate = ReadTrigger(node, authoredType);
                 break;
             case DialogueRoles.Effect:
                 snapshot.Effects.Add(ReadEffect(node, authoredType));
@@ -509,6 +526,81 @@ public static class DialogueNodeReaders
         }
     }
 
+    /// <summary>
+    /// What the game watches for before it runs this branch of a quest graph.
+    /// </summary>
+    /// <remarks>
+    /// A trigger publishes as a declaration, like a gate: the subjects it names and nothing about
+    /// whether a player reaches them. `OnGetItemNode` names an item filter, `OnEnterQuestLocation`
+    /// a quest location, `OnCharacterDeath` a character, and the quest scope nodes name the quest,
+    /// the phase or the objective they watch.
+    /// </remarks>
+    private static DialogueConditionSnapshot ReadTrigger(Node node, string authoredType)
+    {
+        var trigger = new DialogueConditionSnapshot
+        {
+            AuthoredType = authoredType,
+            Kind = TriggerKindByType.TryGetValue(authoredType, out var kind) ? kind : "unread",
+        };
+
+        switch (authoredType)
+        {
+            case "OnGetItemNode":
+            case "OnSheathItemNode":
+                var filter = GraphFields.Read<object>(node, "itemFilterList");
+                if (filter != null)
+                {
+                    AddSubjects(condition: trigger, GraphFields.Read<List<Ardenfall.Item.ItemData>>(filter, "itemWhitelist"), $"{authoredType}.itemFilterList.itemWhitelist");
+                }
+
+                break;
+            case "OnEnterQuestLocation":
+                AddQuestSubject(trigger, node, authoredType);
+                trigger.Label ??= DialogueRefs.QuestObjectName(
+                    GraphFields.Read<object>(node, "locationObject"),
+                    OwningGraph(node));
+                break;
+            case "OnCharacterDeath":
+            case "OnCharacterDamage":
+            case "OnPickpocketCharacterNode":
+                trigger.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(node, "character"), $"{authoredType}.character"));
+                break;
+            case "OnQuestVariableChangeNode":
+            case "QuestStartFlowNode":
+                AddQuestSubject(trigger, node, authoredType);
+                break;
+            case "QuestObjectiveNode":
+                trigger.Label ??= DialogueRefs.ObjectiveName(
+                    GraphFields.Read<object>(node, "objectiveReference"),
+                    OwningGraph(node));
+                break;
+            case "PhaseStateFlowNode":
+                trigger.Label ??= DialogueRefs.PhaseName(
+                    GraphFields.Read<object>(node, "phase"),
+                    OwningGraph(node));
+                break;
+        }
+
+        return trigger;
+    }
+
+    /// <summary>What each trigger watches for, in the words a reader needs.</summary>
+    private static readonly Dictionary<string, string> TriggerKindByType = new(StringComparer.Ordinal)
+    {
+        ["OnEnterQuestLocation"] = "enters-location",
+        ["OnGetItemNode"] = "acquires-item",
+        ["OnSheathItemNode"] = "sheathes-item",
+        ["OnCharacterDeath"] = "character-dies",
+        ["OnCharacterDamage"] = "character-damaged",
+        ["OnCharacterGroupSpawn"] = "group-spawns",
+        ["OnQuestVariableChangeNode"] = "quest-variable-changes",
+        ["OnQuestPhaseChange"] = "quest-phase-changes",
+        ["OnPickpocketCharacterNode"] = "character-pickpocketed",
+        ["QuestStartFlowNode"] = "quest-starts",
+        ["PhaseStateFlowNode"] = "phase-active",
+        ["QuestObjectiveNode"] = "objective-active",
+    };
+
     private static DialogueConditionSnapshot ReadCondition(Node node, string authoredType)
     {
         var condition = new DialogueConditionSnapshot
@@ -632,11 +724,11 @@ public static class DialogueNodeReaders
     /// A node knows its graph; a task knows the system that owns it. Both are the flow graph the
     /// reference resolves against at runtime.
     /// </remarks>
-    private static DialogFlowGraph? OwningGraph(object source) =>
+    private static FlowGraph? OwningGraph(object source) =>
         source switch
         {
-            Node node => node.graph as DialogFlowGraph,
-            Task task => task.ownerSystem as DialogFlowGraph,
+            Node node => node.graph as FlowGraph,
+            Task task => task.ownerSystem as FlowGraph,
             _ => null,
         };
 
