@@ -16,8 +16,8 @@ This repository is for maintainers of the compendium. If you only want to read t
 
 - Bun 1.3.13 or newer.
 - .NET SDK for the BepInEx mod build and tests.
-- Ardenfall Demo installed locally for live exports.
-- BepInEx 5 installed in the Ardenfall Demo game directory for live exports.
+- Ardenfall installed locally for live exports.
+- BepInEx 5 installed in the Ardenfall game directory for live exports.
 - A HotRepl checkout when running the HotRepl smoke/export flow.
 
 ## Quickstart by task
@@ -43,7 +43,7 @@ Fixture artifacts are safe for development and tests. They are never valid produ
 
 ```bash
 cp .env.example .env
-# Edit .env for your Ardenfall Demo install and HotRepl checkout.
+# Edit .env for your Ardenfall install and HotRepl checkout.
 
 bun run mod:copy-libs
 bun run mod:build
@@ -95,7 +95,7 @@ Production deploys require a release artifact with `artifact-manifest.json`. `si
 ## Architecture
 
 ```text
-Ardenfall Demo + BepInEx mod
+Ardenfall + BepInEx mod
   ↓ live extraction
 snapshots/<snapshot-id>/*.json
   ↓ Bun validation and canonicalization

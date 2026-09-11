@@ -19,7 +19,7 @@ public sealed class CompendiumPreflightCommandTests
     public async Task ReportsLiveGameIdentityAlongsideReadiness()
     {
         var command = new CompendiumPreflightCommand(
-            new FakeGameIdentitySource("Ardenfall Demo 2025", "0.0.10.91"),
+            new FakeGameIdentitySource("Ardenfall", "0.0.10.91"),
             () => new PreflightReport
             {
                 Passed = true,
@@ -39,14 +39,14 @@ public sealed class CompendiumPreflightCommandTests
         Assert.True(result.Succeeded);
         Assert.True(result.Output!.Ready);
         Assert.True(result.Output.Passed);
-        Assert.Equal("Ardenfall Demo 2025", result.Output.ProductName);
+        Assert.Equal("Ardenfall", result.Output.ProductName);
         Assert.Equal("0.0.10.91", result.Output.GameVersion);
         Assert.Equal("/plugins/ArdenfallCompendium.dll", result.Output.PluginPath);
         Assert.Equal(new string('a', 64), result.Output.PluginSha256);
         Assert.Equal("2026-09-10T18:00:00.0000000Z", result.Output.PluginModifiedAt);
 
         var json = JObject.Parse(JsonConvert.SerializeObject(result.Output));
-        Assert.Equal("Ardenfall Demo 2025", json["productName"]?.Value<string>());
+        Assert.Equal("Ardenfall", json["productName"]?.Value<string>());
         Assert.Equal("0.0.10.91", json["gameVersion"]?.Value<string>());
         Assert.Equal(new string('a', 64), json["pluginSha256"]?.Value<string>());
         Assert.Equal("/plugins/ArdenfallCompendium.dll", json["pluginPath"]?.Value<string>());
@@ -56,7 +56,7 @@ public sealed class CompendiumPreflightCommandTests
     public async Task RefusesToReportReadinessWithoutAPluginDigest()
     {
         var command = new CompendiumPreflightCommand(
-            new FakeGameIdentitySource("Ardenfall Demo 2025", "0.0.10.91"),
+            new FakeGameIdentitySource("Ardenfall", "0.0.10.91"),
             () => new PreflightReport { Passed = true },
             new FakePluginIdentitySource(sha256: string.Empty));
 

@@ -339,7 +339,7 @@ public sealed class RunFinalizeCommandTests
         Assert.Single(assetManifest.ItemIconMetadata);
         Assert.Contains("asset-manifest", result.Artifacts.Keys);
         var manifest = JsonConvert.DeserializeObject<Manifest>(File.ReadAllText(manifestPath), JsonSettings.Default)!;
-        Assert.Equal("Ardenfall Demo 2025", manifest.ProductName);
+        Assert.Equal("Ardenfall", manifest.ProductName);
         Assert.Equal("release", manifest.BuildProfile);
         Assert.Equal(ManifestBuilder.Sha256Hex(File.ReadAllText(assetManifestPath)), manifest.Hashes["asset-manifest.json"]);
     }
@@ -1141,7 +1141,7 @@ public sealed class RunFinalizeCommandTests
 
     private sealed class TestGameIdentitySource : IGameIdentitySource
     {
-        public string ProductName => "Ardenfall Demo 2025";
+        public string ProductName => "Ardenfall";
 
         public string GameVersion => "test-version";
 

@@ -3,7 +3,7 @@
 # Usage: copy-libs.sh [ardenfall-managed-dir] [hotrepl-core-output-dir]
 set -euo pipefail
 
-SRC=${1:-"$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Ardenfall Demo/Ardenfall_Data/Managed"}
+SRC=${1:-"$HOME/Library/Application Support/CrossOver/Bottles/Steam/drive_c/Program Files (x86)/Steam/steamapps/common/Ardenfall/Ardenfall_Data/Managed"}
 HOTREPL_OUT=${2:-"$HOME/Projects/HotRepl/src/HotRepl.Core/bin/Debug/netstandard2.1"}
 DEST="$(dirname "$0")/../libs"
 

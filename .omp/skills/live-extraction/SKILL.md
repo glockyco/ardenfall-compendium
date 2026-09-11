@@ -115,22 +115,18 @@ the source that builds it.
 
 ### Two installs
 
-Steam holds two Ardenfall installs, and they are different games. The Demo is public. The other is a
-private alpha, and **nothing extracted from it may be published**. A reader of the compendium must
-never meet a fact that came from the alpha.
+Steam holds separate Ardenfall installs, and the compendium uses the main `Ardenfall` product only.
+The controller asserts the Unity product name before it exports, and a snapshot records the product
+name and build profile of the game that answered. Demo and unknown products fail before extraction.
 
-- `Ardenfall Demo` reports `buildProfile: Demo2025`. The compendium publishes it, and only it.
-- `Ardenfall` reports `buildProfile: Alpha`. It ships 97 cell scenes against the Demo's 27, so it
-  answers a question about world coverage. Read it, and publish nothing from it.
+- `Ardenfall` reports `buildProfile: Alpha` and is the sole publication source.
+- Any other Unity product is rejected before a snapshot can be written.
 
-The embargo is why the controller asserts the Unity product name `Ardenfall Demo 2025` before it
-exports, and why a snapshot records the product name and the build profile of the game that answered.
-An export against the alpha fails by design, and a release refuses a snapshot whose recorded identity
-names another game or names none at all: an unproven source is not a proven one.
+A release refuses a snapshot whose recorded identity names another game or names none at all: an
+unproven source is not a proven one.
 
-A read-only probe against the alpha is legitimate and is not an export. Keep it in `spikes/`, let it
-write no snapshot, and quote its numbers as measurements of that install rather than as compendium
-content.
+Use read-only probes only to diagnose the main-game export path. They do not replace a complete
+snapshot export or its provenance checks.
 
 Each install root holds a `buildsettings.txt`, and the game reads it at startup through
 `BuildSettingsFile.ReadBuildSettingsFromFile`. `enableDebugTools` in that file survives a restart, while
@@ -165,7 +161,7 @@ Four behaviours are worth knowing before you rely on them.
 End a session with `operator.setPhotoMode {"enabled":false}` and `operator.status`. An empty `changed`
 list means the session holds nothing.
 
-### Gotchas measured against Ardenfall Demo `0.0.10.91`
+### Gotchas measured against main Ardenfall Alpha
 
 - Identify the backend before you trust an ad-hoc probe. `hotrepl --json info` reports the loader,
   and Ardenfall answers with `BepInEx` on `Unity Mono`. A `MelonLoader` host on `Unity IL2CPP` is
