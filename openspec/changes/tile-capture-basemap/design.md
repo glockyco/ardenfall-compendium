@@ -101,6 +101,15 @@ One render also hid 146 of 146 `ParticleSystemRenderer` components and restored 
 - Capturing transient content: characters, effects, weather, or the player.
 - Building a world loader. `world-cell-content` owns cell traversal.
 
+**What cell traversal already settles, and what it does not.** The walk in `world-cell-content`
+loads a cell scene additively, reads it, and unloads it, so the streaming mechanism a capture needs
+is shipped and measured: 27 cell scenes in an export that takes about 150 seconds from launch, with
+finalization dominated by asset writing rather than by the traversal. Its cost does not price this
+change. That walk reads components out of a loaded scene, while a capture waits for terrain,
+vegetation and lighting to settle and then renders a frame per tile, so the per-cell cost is set by
+resolution and settle time, not by the load. Take the mechanism from it and measure the capture on
+its own.
+
 ## Decisions
 
 ### 1. Bounds come from the declared grid

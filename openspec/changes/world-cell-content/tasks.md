@@ -50,13 +50,13 @@
 
 ## 8. Fixtures and gate
 
-- [ ] 8.1 Extend the synthetic snapshot with a cell holding a placed item, a container with loot and a lock, an owned object, a local spawner, a scene dialogue owner, and two plants of one species whose harvest XP differs, so a species-level constant cannot pass the gate.
-- [ ] 8.2 Update pipeline, site and fixture tests for the new families, layers and relationship sections.
-- [ ] 8.3 Run the full gate in `AGENTS.md`, then a live export including the walk, and record per-cell counts, diagnostics and walk duration.
-- [ ] 8.4 Verify the walk is side-effect free by exporting twice in one session and asserting equal counts.
+- [x] 8.1 Extend the synthetic snapshot with a cell holding a placed item, a container with loot and a lock, an owned object, a local spawner, a scene dialogue owner, and two plants of one species whose harvest XP differs, so a species-level constant cannot pass the gate.
+- [x] 8.2 Update pipeline, site and fixture tests for the new families, layers and relationship sections.
+- [x] 8.3 Run the full gate in `AGENTS.md`, then a live export including the walk, and record per-cell counts, diagnostics and walk duration.
+- [x] 8.4 Verify the walk is side-effect free by exporting twice in one session and asserting equal counts.
 
 ## 9. Documentation and cleanup
 
-- [ ] 9.1 Record the measured walk cost in this change, so a later change prices its own traversal against a measurement rather than an estimate.
-- [ ] 9.2 State in `tile-capture-basemap` that content harvesting and tile capture share the streaming mechanism and not the traversal cost.
+- [x] 9.1 Record the measured walk cost in this change, so a later change prices its own traversal against a measurement rather than an estimate.
+- [x] 9.2 State in `tile-capture-basemap` that content harvesting and tile capture share the streaming mechanism and not the traversal cost.
 - [ ] 9.3 Archive this change after the gate passes.
