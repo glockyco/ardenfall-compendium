@@ -32,7 +32,7 @@ The site is already artifact-driven. Its basemap, marker layers, search rows, an
 
 `ARDENFALL_GAME_DIR` and its derived managed and plugin paths now identify the main `Ardenfall` installation. Existing setup, launch, export, release, and staging commands remain the single first-class path. No `--profile` option, profile registry, command aliases, or parallel artifact tree is added.
 
-The controller's expected Unity product becomes `Ardenfall`. The pipeline publication guard accepts `Ardenfall` and rejects the Demo, unknown products, and missing identity. Snapshot and artifact manifests continue carrying product name, game version, build identifier, and plugin digest, so no second source-profile field is needed.
+The controller's expected Unity product becomes `Ardenfall Alpha`. The pipeline publication guard accepts `Ardenfall Alpha` and rejects the Demo, unknown products, and missing identity. Snapshot and artifact manifests continue carrying product name, game version, build identifier, and plugin digest, so no second source-profile field is needed.
 
 Alternative rejected: retain the dual-profile design. It doubles build and verification boundaries for a source the user no longer wants.
 
