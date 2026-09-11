@@ -239,7 +239,20 @@ public sealed class CellCapture
                 if (cancellationToken.IsCancellationRequested) break;
                 var sceneName = $"cell_{inputs.MapId}_{frame.CellX}.{frame.CellY}";
                 authoredScenes.TryGetValue(sceneName, out var authoredScene);
-                if (authoredOnly && authoredScene == null) continue;
+                if (authoredOnly && authoredScene == null)
+                {
+                    // The record names every position of the range, so the pipeline can tell a
+                    // cell this run chose not to render from one it lost.
+                    snapshot.Tiles.Add(new MapCaptureTileSnapshot
+                    {
+                        CellX = frame.CellX,
+                        CellY = frame.CellY,
+                        Authored = false,
+                        Renderers = 0,
+                        Empty = true,
+                    });
+                    continue;
+                }
                 try
                 {
                     distantCells.TryGetValue(sceneName, out var distantCell);
