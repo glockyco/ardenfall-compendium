@@ -54,7 +54,8 @@
     "placed-plant": 3,
     "placed-item": 2,
     "placed-container": 2,
-    "world-spawn": 4
+    "world-spawn": 4,
+    "scene-dialogue": 3
   },
   "diagnostics": {
     "fatal": 0,

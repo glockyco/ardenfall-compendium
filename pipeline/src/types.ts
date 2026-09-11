@@ -672,6 +672,32 @@ export interface WorldSpawnSnapshotFields {
   recordRef: SnapshotRef | null;
 }
 
+/** One authored line a dialogue graph holds, as the walk read it. */
+export interface SceneDialogueLineSnapshot {
+  lineOrdinal: number;
+  /** `greeting` is spoken; `topic` is something a reader can ask about. */
+  kind: string;
+  text: string;
+  importance: number;
+}
+
+/** One place a reader can start a dialogue. */
+export interface SceneDialoguePlacementSnapshot {
+  cell: string;
+  map: string | null;
+  position: SnapshotVector3;
+  /** The authored speaker name, or null when the game gives the speaker none. */
+  speakerName: string | null;
+  interactionText: string | null;
+}
+
+export interface SceneDialogueSnapshotFields {
+  id: string;
+  graphName: string;
+  lines: SceneDialogueLineSnapshot[];
+  placements: SceneDialoguePlacementSnapshot[];
+}
+
 export interface NpcLevelSnapshot {
   automatic: boolean;
   addValue: number;

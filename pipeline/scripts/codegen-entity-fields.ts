@@ -33,6 +33,11 @@ const targets = [
     typeName: "WorldSpawnFieldName",
     sourceTypeName: "WorldSpawnSnapshotFields",
   },
+  {
+    entity: "scene-dialogue",
+    typeName: "SceneDialogueFieldName",
+    sourceTypeName: "SceneDialogueSnapshotFields",
+  },
 ] as const;
 
 function readFields(entity: string): string[] {

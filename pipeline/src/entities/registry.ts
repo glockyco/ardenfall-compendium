@@ -14,6 +14,7 @@ import { FACTION_DDL } from "../sql/faction-ddl";
 import { CHARACTER_DDL } from "../sql/character-ddl";
 import { PLACED_CONTAINER_DDL } from "../sql/placed-container-ddl";
 import { WORLD_SPAWN_DDL } from "../sql/world-spawn-ddl";
+import { SCENE_DIALOGUE_DDL } from "../sql/scene-dialogue-ddl";
 import { PLACED_ITEM_DDL } from "../sql/placed-item-ddl";
 import { PLACED_PLANT_DDL } from "../sql/placed-plant-ddl";
 import { PORTAL_DDL } from "../sql/portal-ddl";
@@ -60,6 +61,8 @@ import { emitPlacedPlantReadModels } from "./placed-plant/read-models";
 import { canonicalisePortals } from "./portal/canonicaliser";
 import { canonicaliseWorldSpawns } from "./world-spawn/canonicaliser";
 import { emitWorldSpawnReadModels } from "./world-spawn/read-models";
+import { canonicaliseSceneDialogue } from "./scene-dialogue/canonicaliser";
+import { emitSceneDialogueReadModels } from "./scene-dialogue/read-models";
 import { emitPortalReadModels } from "./portal/read-models";
 import { canonicaliseNpcs } from "./npc/canonicaliser";
 import { emitNpcReadModels } from "./npc/read-models";
@@ -143,6 +146,25 @@ const worldSpawnProjection: MapProjection = {
         ON c.id = 'named;character;' || json_extract(s.character_ref_json, '$.name')
       JOIN placements pl ON pl.entity_id = 'world-spawn' AND pl.instance_id = s.id
       ORDER BY s.id;
+    `,
+};
+
+const sceneDialogueProjection: MapProjection = {
+  sourceTable: "scene_dialogue_placements",
+  // A marker per placement, named by the speaker the game authored there. A placement the game
+  // leaves nameless is marked by its cell rather than by an invented name.
+  points: `
+      INSERT INTO map_points (
+        id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
+        enabled, show_on_map_debug_only, allow_fast_travel
+      )
+      SELECT 'scene-dialogue:' || d.id, 'scene-dialogue', d.dialogue_id,
+             COALESCE(NULLIF(TRIM(d.speaker_name), ''), 'Unnamed speaker (' || d.cell || ')'),
+             pl.map_id, pl.map_x, pl.map_y, pl.elevation,
+             1, 0, 0 -- a placement carries no authored availability flag; it is there
+      FROM scene_dialogue_placements d
+      JOIN placements pl ON pl.entity_id = 'scene-dialogue' AND pl.instance_id = d.id
+      ORDER BY d.id;
     `,
 };
 
@@ -346,6 +368,13 @@ export const entityRegistry: Record<string, EntityModule> = {
     readModelPhase: "after-map",
     readModel: ({ db, entity }) => emitWorldSpawnReadModels(db, entity.site?.route),
     mapProjection: worldSpawnProjection,
+  },
+  "scene-dialogue": {
+    ddl: SCENE_DIALOGUE_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseSceneDialogue(db, envelope),
+    readModelPhase: "after-map",
+    readModel: ({ db, entity }) => emitSceneDialogueReadModels(db, entity.site?.route),
+    mapProjection: sceneDialogueProjection,
   },
   "placed-container": {
     ddl: PLACED_CONTAINER_DDL,

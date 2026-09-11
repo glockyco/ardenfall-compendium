@@ -34,6 +34,7 @@ describe("loadDescriptors", () => {
       "portal",
       "potion-recipe",
       "quest",
+      "scene-dialogue",
       "spell",
       "stat-type",
       "status-effect",

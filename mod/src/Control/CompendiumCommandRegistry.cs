@@ -67,6 +67,7 @@ public sealed class CompendiumCommandRegistry : IDisposable
                 new Entities.World.PlacedItemFamily(),
                 new Entities.World.PlacedContainerFamily(),
                 new Entities.World.WorldSpawnFamily(),
+                new Entities.World.SceneDialogueFamily(),
             });
         Register(new Handlers.WorldPlanCommand(runs, scenes));
         Register(new Handlers.WorldWalkBatchCommand(runs, scenes, walk.WalkAsync, walk.EntityIds));

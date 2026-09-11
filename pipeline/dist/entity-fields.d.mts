@@ -115,3 +115,17 @@ export type WorldSpawnSnapshotFields = Pick<
   SourceWorldSpawnSnapshotFields,
   Extract<WorldSpawnFieldName, keyof SourceWorldSpawnSnapshotFields>
 >;
+
+import type { SceneDialogueSnapshotFields as SourceSceneDialogueSnapshotFields } from "../src/types.ts";
+
+export declare const sceneDialogueFieldNames: readonly [
+  "id",
+  "graphName",
+  "lines",
+  "placements"
+];
+export type SceneDialogueFieldName = (typeof sceneDialogueFieldNames)[number];
+export type SceneDialogueSnapshotFields = Pick<
+  SourceSceneDialogueSnapshotFields,
+  Extract<SceneDialogueFieldName, keyof SourceSceneDialogueSnapshotFields>
+>;

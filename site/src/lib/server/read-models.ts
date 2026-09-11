@@ -190,6 +190,12 @@ export { getContainerPresentation, listContainers } from "./entities/placed-cont
 export type { WorldSpawnOverviewRow, WorldSpawnPresentationRow } from "./entities/world-spawn";
 export { getWorldSpawnPresentation, listWorldSpawns } from "./entities/world-spawn";
 
+export type {
+  SceneDialogueOverviewRow,
+  SceneDialoguePresentationRow,
+} from "./entities/scene-dialogue";
+export { getSceneDialoguePresentation, listSceneDialogue } from "./entities/scene-dialogue";
+
 export type { FactionOverviewRow, FactionPresentationRow } from "./entities/faction";
 export { getFactionPresentation, listFactions } from "./entities/faction";
 export type {

@@ -31,6 +31,7 @@ export const listingRoutePaths = [
   "/placed-items",
   "/containers",
   "/world-spawns",
+  "/scene-dialogue",
   "/factions",
   "/map",
   "/search",

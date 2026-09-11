@@ -1,0 +1,81 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "scene-dialogue",
+  "kind": "instance",
+  "label": {
+    "singular": "Scene Dialogue",
+    "plural": "Scene Dialogue"
+  },
+  "extraction": {
+    "source": "scene",
+    "file": "scene-dialogue.json",
+    "root": "Ardenfall.Dialog.DialogFlowGraph",
+    "options": {
+      "components": "SimpleDialogInteractable"
+    }
+  },
+  "canonicalTable": "scene_dialogue",
+  "presentationContext": {
+    "renderContext": "scene-dialogue-presentation-v1"
+  },
+  "site": {
+    "route": "/scene-dialogue",
+    "overview": {
+      "columns": ["graphName"],
+      "search": ["graphName"]
+    },
+    "detail": {
+      "sections": [
+        {
+          "id": "overview",
+          "kind": "fieldList",
+          "title": "Overview",
+          "fields": ["graphName", "placements", "lines"]
+        }
+      ]
+    }
+  },
+  "placement": {
+    "kind": "point",
+    "from": "fields"
+  },
+  "fields": [
+    {
+      "name": "id",
+      "type": "id",
+      "from": "id",
+      "missingPolicy": "fatal"
+    },
+    {
+      "name": "graphName",
+      "type": "string",
+      "from": "graphName",
+      "column": "graph_name",
+      "missingPolicy": "fatal"
+    },
+    {
+      "name": "lines",
+      "type": "json",
+      "from": "lines",
+      "column": "lines_json",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "placements",
+      "type": "json",
+      "from": "placements",
+      "column": "placements_json",
+      "projects": "map_points"
+    }
+  ],
+  "map": {
+    "layer": "scene-dialogue",
+    "renderKind": "point",
+    "icon": "dialogue",
+    "color": [230, 200, 140],
+    "radius": 3,
+    "tooltip": ["graphName"],
+    "legendLabel": "Scene Dialogue",
+    "zOrder": 80
+  }
+}

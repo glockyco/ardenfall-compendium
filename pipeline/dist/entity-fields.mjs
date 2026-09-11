@@ -6,3 +6,4 @@ export const placedPlantFieldNames = ["id", "cell", "map", "position", "itemRef"
 export const placedItemFieldNames = ["id", "cell", "map", "position", "itemRef", "stackCount", "durability", "durabilityRuined", "enchantments", "owners"];
 export const placedContainerFieldNames = ["id", "cell", "map", "position", "containerName", "interactionText", "lootLists", "additionalItems", "possibleItemRefs", "level", "lock", "owners"];
 export const worldSpawnFieldNames = ["id", "cell", "map", "position", "kind", "characterRef", "recordRef"];
+export const sceneDialogueFieldNames = ["id", "graphName", "lines", "placements"];

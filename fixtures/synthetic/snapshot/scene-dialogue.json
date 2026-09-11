@@ -1,0 +1,74 @@
+{
+  "entityId": "scene-dialogue",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "named;dialog;dia_fixture_harbour-watch",
+      "fields": {
+        "id": "named;dialog;dia_fixture_harbour-watch",
+        "graphName": "dia_fixture_harbour-watch",
+        "lines": [
+          {
+            "lineOrdinal": 0,
+            "kind": "greeting",
+            "text": "Keep clear of the <b>west pier</b>.",
+            "importance": 2
+          },
+          { "lineOrdinal": 1, "kind": "topic", "text": "The pier", "importance": 1 }
+        ],
+        "placements": [
+          {
+            "cell": "cell_fixture_0.0",
+            "map": "ardenfall",
+            "position": { "x": 12.5, "y": 1.0, "z": -4.25 },
+            "speakerName": "Harbour Watchman",
+            "interactionText": "Talk"
+          },
+          {
+            "cell": "cell_fixture_0.1",
+            "map": "ardenfall",
+            "position": { "x": -3.0, "y": 0.5, "z": 8.0 },
+            "speakerName": "Harbour Watchman",
+            "interactionText": "Talk"
+          }
+        ]
+      }
+    },
+    {
+      "id": "named;dialog;dia_fixture_unnamed-voice",
+      "fields": {
+        "id": "named;dialog;dia_fixture_unnamed-voice",
+        "graphName": "dia_fixture_unnamed-voice",
+        "lines": [
+          { "lineOrdinal": 0, "kind": "greeting", "text": "Who goes there?", "importance": 0 }
+        ],
+        "placements": [
+          {
+            "cell": "cell_fixture_0.1",
+            "map": "ardenfall",
+            "position": { "x": 20.0, "y": 0.0, "z": 20.0 },
+            "speakerName": null,
+            "interactionText": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "named;dialog;dia_fixture_silent-effigy",
+      "fields": {
+        "id": "named;dialog;dia_fixture_silent-effigy",
+        "graphName": "dia_fixture_silent-effigy",
+        "lines": [],
+        "placements": [
+          {
+            "cell": "cell_fixture_0.0",
+            "map": "ardenfall",
+            "position": { "x": 4.0, "y": 0.0, "z": 4.0 },
+            "speakerName": "Silent Effigy",
+            "interactionText": "Inspect"
+          }
+        ]
+      }
+    }
+  ]
+}
