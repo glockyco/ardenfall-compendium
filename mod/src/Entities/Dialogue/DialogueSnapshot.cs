@@ -89,6 +89,9 @@ public sealed class DialogueConditionSnapshot
     /// <summary>The compared value as the game authors it, such as a relationship tier.</summary>
     [JsonProperty("value")] public string? Value { get; set; }
 
+    /// <summary>What the check reads, as the game names it, such as a quest objective.</summary>
+    [JsonProperty("label")] public string? Label { get; set; }
+
     /// <summary>True when the node inverts its own result.</summary>
     [JsonProperty("invert")] public bool Invert { get; set; }
 

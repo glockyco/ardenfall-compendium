@@ -1,4 +1,5 @@
 using Ardenfall;
+using Ardenfall.Dialog;
 using Ardenfall.Questing;
 using Ardenfall.RecordSystem;
 using ArdenfallCompendium.Dtos;
@@ -66,6 +67,66 @@ internal static class DialogueRefs
         return quest == null
             ? SnapshotRef.Missing("dialogueQuestSelfReference", source)
             : SnapshotRef.NamedAsset("quest", quest.name);
+    }
+
+    /// <summary>
+    /// The character group a branch reads, whether the graph names the quest or belongs to it.
+    /// </summary>
+    /// <remarks>
+    /// `QuestObjectGraphRef` holds the quest asset and the object's id, and resolves "this quest"
+    /// against the graph it lives in. An asset-time read does the same lookup by hand, because the
+    /// runtime resolver needs a live flow graph.
+    /// </remarks>
+    public static CharacterGroupQuestObject? CharacterGroup(object? graphRef, DialogFlowGraph? graph)
+    {
+        if (graphRef == null) return null;
+        var quest = GraphFields.Read<QuestData>(graphRef, "questAsset") ?? graph?.AttachedQuest;
+        if (quest?.objects == null) return null;
+
+        var objectId = GraphFields.ReadInt(graphRef, "questObjectID");
+        foreach (var questObject in quest.objects)
+        {
+            if (questObject is CharacterGroupQuestObject group && group.objectID == objectId)
+            {
+                return group;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The objective a check reads, as the quest names it.
+    /// </summary>
+    /// <remarks>
+    /// `QuestObjectiveGraphRef` holds the quest asset, a phase id and an objective id. Reading them
+    /// is the difference between "the authored objective" and "Question Ein": one quest graph gates
+    /// 26 topics on nothing else, so the objective name is what separates two identical questions.
+    /// </remarks>
+    public static string? ObjectiveName(object? graphRef, DialogFlowGraph? graph)
+    {
+        if (graphRef == null) return null;
+        var quest = GraphFields.Read<QuestData>(graphRef, "questAsset") ?? graph?.AttachedQuest;
+        var phase = quest?.GetPhase(GraphFields.ReadInt(graphRef, "questPhaseID"));
+        var objective = phase?.GetObjectiveById(GraphFields.ReadInt(graphRef, "questObjectiveID"));
+        var name = objective?.objectiveName;
+        return string.IsNullOrWhiteSpace(name) ? null : name;
+    }
+
+    /// <summary>One character the game names by its record.</summary>
+    public static DialogueParticipantSnapshot RecordParticipant(RecordReference? reference)
+    {
+        var id = reference?.RecordID;
+        if (id == null || id.Value.IsNull())
+        {
+            return new DialogueParticipantSnapshot { Role = "unnamed" };
+        }
+
+        return new DialogueParticipantSnapshot
+        {
+            Role = "named",
+            Ref = SnapshotRef.Record(id.Value.table, id.Value.subtable, id.Value.id, "CharacterRecord"),
+        };
     }
 
     /// <summary>Who a node acts on or reads.</summary>

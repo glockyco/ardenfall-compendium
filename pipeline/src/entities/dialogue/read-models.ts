@@ -29,14 +29,21 @@ interface EntityLink {
   routePath: string | null;
 }
 
+interface GateParticipantView {
+  role: string;
+  /** The character the check names, when the game names one. */
+  link: EntityLink | null;
+}
+
 interface GateView {
   kind: string;
   compare: string | null;
   value: string | null;
+  label: string | null;
   invert: boolean;
   authoredType: string;
   subjects: EntityLink[];
-  participants: DialogueParticipantSnapshot[];
+  participants: GateParticipantView[];
   children: GateView[];
   childMode: string | null;
 }
@@ -423,6 +430,7 @@ const emptyGate = (authoredType: string): DialogueConditionSnapshot => ({
   kind: "unread",
   compare: null,
   value: null,
+  label: null,
   invert: false,
   subjects: [],
   participants: [],
@@ -436,12 +444,17 @@ function gateView(gate: DialogueConditionSnapshot, context: ScriptContext): Gate
     kind: gate.kind,
     compare: gate.compare,
     value: gate.value,
+    label: gate.label ?? null,
     invert: gate.invert,
     authoredType: gate.authoredType,
     // A subject the compendium does not publish, such as a race group, still belongs in the
     // sentence: dropping it would leave a gate that reads as a requirement with no object.
     subjects: gate.subjects.map((subject) => context.resolve(subject) ?? unresolvedLink(subject)),
-    participants: gate.participants,
+    // A branch that names the character it speaks to is only useful if that character links.
+    participants: gate.participants.map((participant) => ({
+      role: participant.role,
+      link: participant.ref === null ? null : context.resolve(participant.ref),
+    })),
     // A composite carries no check of its own. Its children are the requirement a reader needs,
     // and without them 17 topics of one quest graph read as the same unexplained question.
     childMode: gate.childMode,

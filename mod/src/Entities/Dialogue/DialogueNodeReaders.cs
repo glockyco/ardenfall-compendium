@@ -207,6 +207,7 @@ public static class DialogueNodeReaders
         ["CheckQuestVariable"] = "quest-variable",
         ["CheckQuestState"] = "quest-state",
         ["CheckQuestPhase"] = "quest-phase",
+        ["CheckQuestObjective"] = "quest-objective",
         ["CheckQuestObjectiveState"] = "quest-objective",
         ["CheckPackageDialogFlag"] = "package-flag",
         ["CheckIsDetected"] = "detection",
@@ -453,6 +454,8 @@ public static class DialogueNodeReaders
     /// <summary>The check the game reads before it takes each output of a branch.</summary>
     private static void ReadBranches(Node node, DialogueNodeSnapshot snapshot)
     {
+        ReadCharacterGroupBranches(node, snapshot);
+
         var tasks = GraphFields.Read<List<ConditionTask>>(node, "conditionTasks");
         if (tasks == null) return;
         for (var index = 0; index < tasks.Count; index++)
@@ -462,6 +465,44 @@ public static class DialogueNodeReaders
             {
                 Port = index.ToString(),
                 Gate = task == null ? null : ReadTask(task, 0),
+            });
+        }
+    }
+
+    /// <summary>
+    /// Who each output of a character-group branch speaks to.
+    /// </summary>
+    /// <remarks>
+    /// `CharacterGroupDialogBranchNode` adds one output per character record of the quest's group
+    /// and names it `value_i`, so the index is the only thing an edge carries. The records are the
+    /// witnesses of the quest, and without them one conversation printed 26 copies of the same
+    /// question and a fork whose branches read `value_0` through `value_16`.
+    /// </remarks>
+    private static void ReadCharacterGroupBranches(Node node, DialogueNodeSnapshot snapshot)
+    {
+        var group = DialogueRefs.CharacterGroup(
+            GraphFields.Read<object>(node, "characterGroup"),
+            node.graph as DialogFlowGraph);
+        if (group == null) return;
+
+        var records = GraphFields.Read<System.Collections.IList>(group, "characterRecords");
+        if (records == null) return;
+
+        for (var index = 0; index < records.Count; index++)
+        {
+            var container = records[index];
+            var record = container == null
+                ? null
+                : GraphFields.Read<Ardenfall.RecordSystem.RecordReference>(container, "record");
+            snapshot.Branches.Add(new DialogueBranchSnapshot
+            {
+                Port = $"value_{index}",
+                Gate = new DialogueConditionSnapshot
+                {
+                    Kind = "speaking-to",
+                    AuthoredType = node.GetType().Name,
+                    Participants = { DialogueRefs.RecordParticipant(record) },
+                },
             });
         }
     }
@@ -525,10 +566,17 @@ public static class DialogueNodeReaders
                 AddSubject(condition, GraphFields.Read<UnityObject>(source, "stat"), $"{authoredType}.stat");
                 condition.Value ??= GraphFields.ReadEnumName(source, "statCheckDifficulty");
                 break;
+            case "CheckQuestObjective":
+            case "CheckQuestObjectiveState":
+                AddQuestSubject(condition, source, authoredType);
+                condition.Value ??= GraphFields.ReadEnumName(source, "state");
+                condition.Label ??= DialogueRefs.ObjectiveName(
+                    GraphFields.Read<object>(source, "objectiveReference"),
+                    OwningGraph(source));
+                break;
             case "CheckQuestVariable":
             case "CheckQuestState":
             case "CheckQuestPhase":
-            case "CheckQuestObjectiveState":
             case "QuestLocationCheck":
                 AddQuestSubject(condition, source, authoredType);
                 condition.Value ??= GraphFields.ReadEnumName(source, "stage")
@@ -562,6 +610,21 @@ public static class DialogueNodeReaders
         var container = GraphFields.Read<object>(source, "comparedRelationshipAmount");
         return container == null ? null : GraphFields.ReadEnumName(container, "amount");
     }
+
+    /// <summary>
+    /// The graph a check lives in, which resolves a reference to "this quest".
+    /// </summary>
+    /// <remarks>
+    /// A node knows its graph; a task knows the system that owns it. Both are the flow graph the
+    /// reference resolves against at runtime.
+    /// </remarks>
+    private static DialogFlowGraph? OwningGraph(object source) =>
+        source switch
+        {
+            Node node => node.graph as DialogFlowGraph,
+            Task task => task.ownerSystem as DialogFlowGraph,
+            _ => null,
+        };
 
     /// <summary>
     /// The key both spellings of a check share.
@@ -666,6 +729,7 @@ public static class DialogueNodeReaders
     private static void AddQuestSubject(DialogueConditionSnapshot condition, object node, string authoredType)
     {
         var quest = DialogueRefs.Quest(GraphFields.Read<object>(node, "quest"), $"{authoredType}.quest")
+            ?? DialogueRefs.Quest(GraphFields.Read<object>(node, "objectiveReference"), $"{authoredType}.objectiveReference")
             ?? DialogueRefs.Quest(GraphFields.Read<object>(node, "customVariableQuest"), $"{authoredType}.customVariableQuest")
             ?? DialogueRefs.Quest(GraphFields.Read<object>(node, "variableRef"), $"{authoredType}.variableRef");
         // A graph that refers to "this quest" names no asset. That is a self reference, not a

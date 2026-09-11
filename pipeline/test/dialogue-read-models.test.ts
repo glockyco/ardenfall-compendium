@@ -81,6 +81,52 @@ describe("conversations", () => {
     }
   });
 
+  it("says which character a group branch speaks to, and which objective gates a topic", async () => {
+    const { db, dispose } = await buildFixtureDatabase();
+    try {
+      const script =
+        db
+          .query<{ script_json: string }, []>(
+            `SELECT script_json FROM dialogue_presentation_rows WHERE id = 'named;dialog;dia_fixture_harbour-watch'`,
+          )
+          .get()?.script_json ?? "";
+
+      expect(script).toContain('"kind":"speaking-to"');
+      expect(script).toContain('"label":"Question the harbour watch"');
+    } finally {
+      dispose();
+    }
+  });
+
+  it("does not open a conversation with a node that has no flow edge", async () => {
+    const { db, dispose } = await buildFixtureDatabase();
+    try {
+      const entries = db
+        .query<{ entry_nodes_json: string }, []>(
+          `SELECT entry_nodes_json FROM dialogues WHERE id = 'named;dialog;dia_fixture_harbour-watch'`,
+        )
+        .get();
+      const nodes = db
+        .query<{ nodes_json: string }, []>(
+          `SELECT nodes_json FROM dialogues WHERE id = 'named;dialog;dia_fixture_harbour-watch'`,
+        )
+        .get();
+      const byId = new Map(
+        (JSON.parse(nodes?.nodes_json ?? "[]") as { id: number; authoredType: string }[]).map(
+          (node) => [node.id, node.authoredType],
+        ),
+      );
+      const types = (JSON.parse(entries?.entry_nodes_json ?? "[]") as number[]).map((id) =>
+        byId.get(id),
+      );
+
+      // The value-plane check feeds another node's input; it starts nothing.
+      expect(types).not.toContain("HasInteractedWithNode");
+    } finally {
+      dispose();
+    }
+  });
+
   it("publishes the checks a composite gate holds", async () => {
     const { db, dispose } = await buildFixtureDatabase();
     try {

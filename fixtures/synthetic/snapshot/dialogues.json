@@ -49,7 +49,8 @@
               "participants": [],
               "authoredType": "CheckQuestStateNode",
               "children": [],
-              "childMode": null
+              "childMode": null,
+              "label": null
             },
             "effects": [],
             "speaker": null,
@@ -103,7 +104,8 @@
                       ],
                       "authoredType": "FactionCheck",
                       "children": [],
-                      "childMode": null
+                      "childMode": null,
+                      "label": null
                     },
                     {
                       "kind": "quest-state",
@@ -120,9 +122,11 @@
                       "participants": [],
                       "authoredType": "CheckQuestState",
                       "children": [],
-                      "childMode": null
+                      "childMode": null,
+                      "label": null
                     }
-                  ]
+                  ],
+                  "label": null
                 }
               }
             ],
@@ -285,7 +289,8 @@
               ],
               "authoredType": "BranchRelationshipNode",
               "children": [],
-              "childMode": null
+              "childMode": null,
+              "label": null
             },
             "effects": [],
             "speaker": null,
@@ -375,15 +380,17 @@
               "participants": [],
               "authoredType": "MultiBranchNode",
               "children": [],
-              "childMode": null
+              "childMode": null,
+              "label": null
             },
             "branches": [
               {
                 "port": "0",
                 "gate": {
-                  "kind": "quest-state",
+                  "kind": "quest-objective",
                   "compare": null,
                   "value": "started",
+                  "label": "Question the harbour watch",
                   "invert": false,
                   "subjects": [
                     {
@@ -393,7 +400,7 @@
                     }
                   ],
                   "participants": [],
-                  "authoredType": "CheckQuestState",
+                  "authoredType": "CheckQuestObjective",
                   "children": [],
                   "childMode": null
                 }
@@ -431,6 +438,126 @@
             "singleScreen": false,
             "options": [],
             "gate": null,
+            "branches": [],
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 18,
+            "role": "branch",
+            "authoredType": "CharacterGroupDialogBranchNode",
+            "importance": null,
+            "statements": [],
+            "singleScreen": false,
+            "options": [],
+            "gate": {
+              "kind": "character-group",
+              "compare": null,
+              "value": null,
+              "label": null,
+              "invert": false,
+              "subjects": [],
+              "participants": [],
+              "authoredType": "CharacterGroupDialogBranchNode",
+              "children": [],
+              "childMode": null
+            },
+            "branches": [
+              {
+                "port": "value_0",
+                "gate": {
+                  "kind": "speaking-to",
+                  "compare": null,
+                  "value": null,
+                  "label": null,
+                  "invert": false,
+                  "subjects": [],
+                  "participants": [
+                    {
+                      "role": "named",
+                      "ref": {
+                        "kind": "record",
+                        "table": "characters",
+                        "subtable": null,
+                        "id": "aaa",
+                        "recordType": "CharacterRecord"
+                      }
+                    }
+                  ],
+                  "authoredType": "CharacterGroupDialogBranchNode",
+                  "children": [],
+                  "childMode": null
+                }
+              }
+            ],
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 19,
+            "role": "speech",
+            "authoredType": "SpeakFlowNode",
+            "importance": null,
+            "statements": [
+              {
+                "screenOrdinal": 0,
+                "text": "I saw the boat leave at dusk."
+              }
+            ],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "branches": [],
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 20,
+            "role": "speech",
+            "authoredType": "SpeakFlowNode",
+            "importance": null,
+            "statements": [
+              {
+                "screenOrdinal": 0,
+                "text": "I saw nothing."
+              }
+            ],
+            "singleScreen": false,
+            "options": [],
+            "gate": null,
+            "branches": [],
+            "effects": [],
+            "speaker": null,
+            "jumpTarget": null
+          },
+          {
+            "id": 21,
+            "role": "condition",
+            "authoredType": "HasInteractedWithNode",
+            "importance": null,
+            "statements": [],
+            "singleScreen": false,
+            "options": [],
+            "gate": {
+              "kind": "already-spoken",
+              "compare": null,
+              "value": null,
+              "label": null,
+              "invert": false,
+              "subjects": [],
+              "participants": [
+                {
+                  "role": "speaker",
+                  "ref": null
+                }
+              ],
+              "authoredType": "HasInteractedWithNode",
+              "children": [],
+              "childMode": null
+            },
             "branches": [],
             "effects": [],
             "speaker": null,
@@ -539,6 +666,24 @@
             "to": 17,
             "ordinal": 1,
             "port": "ELSE"
+          },
+          {
+            "from": 1,
+            "to": 18,
+            "ordinal": 10,
+            "port": ""
+          },
+          {
+            "from": 18,
+            "to": 19,
+            "ordinal": 0,
+            "port": "value_0"
+          },
+          {
+            "from": 18,
+            "to": 20,
+            "ordinal": 1,
+            "port": "else"
           }
         ],
         "entryNodes": [1, 2],

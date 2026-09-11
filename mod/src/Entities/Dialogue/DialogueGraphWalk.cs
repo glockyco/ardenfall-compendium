@@ -93,8 +93,32 @@ public static class DialogueGraphWalk
 
         snapshot.Nodes.AddRange(published.Values.OrderBy(node => node.Id));
         var reached = new HashSet<int>(snapshot.Edges.Select(edge => edge.To));
+        var leaves = new HashSet<int>(snapshot.Edges.Select(edge => edge.From));
+
+        // A node with no flow edge at all starts nothing: it is a check wired into another node's
+        // value input, such as a `HasInteractedWithNode` feeding a topic's condition list. Listing
+        // it as an entry published 21 openings that held no line in one quest graph.
+        var stranded = snapshot.Nodes
+            .Where(node => !reached.Contains(node.Id) && !leaves.Contains(node.Id)
+                && node.Statements.Count == 0 && node.Options.Count == 0)
+            .Select(node => node.Id)
+            .ToList();
         snapshot.EntryNodes.AddRange(
-            snapshot.Nodes.Where(node => !reached.Contains(node.Id)).Select(node => node.Id));
+            snapshot.Nodes
+                .Where(node => !reached.Contains(node.Id) && !stranded.Contains(node.Id))
+                .Select(node => node.Id));
+
+        if (stranded.Count > 0)
+        {
+            snapshot.Diagnostics.Add(new Diagnostic
+            {
+                Severity = "diagnostic",
+                Code = "dialogueValueNodeStranded",
+                Field = "entryNodes",
+                Message =
+                    $"Dialogue graph '{graph.name}' holds {stranded.Count} node(s) with no flow edge, which feed another node's value input and start nothing.",
+            });
+        }
 
         foreach (var pair in snapshot.UnmodelledTypes)
         {

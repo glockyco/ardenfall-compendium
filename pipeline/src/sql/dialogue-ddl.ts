@@ -67,6 +67,8 @@ CREATE TABLE dialogue_conditions (
   kind          TEXT NOT NULL,
   compare       TEXT,
   value         TEXT,
+  -- What the check reads, as the game names it, such as a quest objective.
+  label         TEXT,
   invert        INTEGER NOT NULL,
   authored_type TEXT NOT NULL,
   subjects_json TEXT NOT NULL,

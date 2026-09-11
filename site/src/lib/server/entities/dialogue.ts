@@ -15,6 +15,8 @@ export interface DialogueEntityLink {
 export interface DialogueParticipant {
   /** `player`, `speaker`, `quest-object`, `named`, or `unnamed`. */
   role: string;
+  /** The character the check names, when the game names one. */
+  link?: DialogueEntityLink | null;
 }
 
 /** What the game reads before it offers an opener or an option. Never a result. */
@@ -22,6 +24,8 @@ export interface DialogueGate {
   kind: string;
   compare: string | null;
   value: string | null;
+  /** What the check reads, as the game names it, such as a quest objective. */
+  label: string | null;
   invert: boolean;
   authoredType: string;
   subjects: DialogueEntityLink[];

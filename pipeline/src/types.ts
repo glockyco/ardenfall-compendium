@@ -684,6 +684,8 @@ export interface DialogueConditionSnapshot {
   kind: string;
   compare: string | null;
   value: string | null;
+  /** What the check reads, as the game names it, such as a quest objective. */
+  label: string | null;
   invert: boolean;
   subjects: SnapshotRef[];
   participants: DialogueParticipantSnapshot[];

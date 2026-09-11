@@ -25,6 +25,10 @@
 
   const subject = $derived(gate.participants[0]?.role);
 
+  /** A branch output that names one character names it through its participant. */
+  const participant = $derived(gate.participants[0]);
+  const participantName = $derived(participant?.link?.label ?? null);
+
   /**
    * The half of the sentence that follows the subject.
    *
@@ -63,7 +67,9 @@
       case "quest-phase":
         return "is at the authored phase";
       case "quest-objective":
-        return "is at the authored objective";
+        return gate.label
+          ? `objective ${gate.label} is ${gate.value ?? "at the authored state"}`
+          : `is at the authored objective`;
       case "quest-variable":
         return "holds the authored value";
       case "faction-relationship":
@@ -121,6 +127,10 @@
         return "Only the first time";
       case "detection":
         return `Only when the player is ${negated ? "unseen" : "seen"}`;
+      case "speaking-to":
+        return participantName
+          ? "When the player is speaking to"
+          : "When the player is speaking to a character the data does not name";
       case "graph-variable":
         return gate.value
           ? `Only when the conversation's own flag ${gate.value} is set`
@@ -157,6 +167,14 @@
     {:else}
       {lead()}
       {#if fallbackSubject}{fallbackSubject}{/if}
+      {#if participantName}
+        {#if participant?.link?.routePath}
+          <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- route paths come from the static read model -->
+          <a class="underline underline-offset-2" href={participant.link.routePath}
+            >{participantName}</a
+          >
+        {:else}{participantName}{/if}
+      {/if}
       {#each gate.subjects as subject, index (subject.entityId)}
         {#if index > 0},
         {/if}
