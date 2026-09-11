@@ -122,6 +122,16 @@ public sealed class CellCapture
         var ambient = RenderSettings.ambientLight;
         var priority = Application.backgroundLoadingPriority;
         var loadedByCapture = new List<int>();
+        var frames = CellCaptureGeometry.Frames(
+            inputs.MinCellX,
+            inputs.MinCellY,
+            inputs.MaxCellX,
+            inputs.MaxCellY,
+            inputs.CellSize,
+            inputs.PixelsPerCell);
+        var distantCells = authoredOnly
+            ? new Dictionary<string, GameObject>(StringComparer.Ordinal)
+            : InstantiateDistantCells(inputs.MapId, frames);
         GameObject? sunObject = null;
         GameObject? cameraObject = null;
         Exception? failure = null;
@@ -149,63 +159,54 @@ public sealed class CellCapture
         camera.cullingMask = inputs.CullingMask;
         camera.enabled = false;
 
-        foreach (var frame in CellCaptureGeometry.Frames(
-                     inputs.MinCellX,
-                     inputs.MinCellY,
-                     inputs.MaxCellX,
-                     inputs.MaxCellY,
-                     inputs.CellSize,
-                     inputs.PixelsPerCell))
+        foreach (var frame in frames)
         {
-            if (cancellationToken.IsCancellationRequested) break;
             var sceneName = $"cell_{inputs.MapId}_{frame.CellX}.{frame.CellY}";
-            authoredScenes.TryGetValue(sceneName, out var authoredScene);
-            if (authoredOnly && authoredScene == null) continue;
-
-            var loadedHere = false;
-            if (authoredScene != null
-                && !SceneManager.GetSceneByBuildIndex(authoredScene.BuildIndex).isLoaded)
+            if (!authoredScenes.TryGetValue(sceneName, out var authoredScene)) continue;
+            snapshot.LoadedCells.Add(sceneName);
+            if (SceneManager.GetSceneByBuildIndex(authoredScene.BuildIndex).isLoaded) continue;
+            var load = SceneManager.LoadSceneAsync(authoredScene.BuildIndex, LoadSceneMode.Additive);
+            if (load == null)
             {
-                var load = SceneManager.LoadSceneAsync(authoredScene.BuildIndex, LoadSceneMode.Additive);
-                if (load == null)
+                failure = new InvalidOperationException(
+                    $"The engine refused to load cell scene '{sceneName}'.");
+                break;
+            }
+            while (!load.isDone) yield return null;
+            loadedByCapture.Add(authoredScene.BuildIndex);
+        }
+
+        foreach (var sceneName in snapshot.LoadedCells)
+        {
+            if (distantCells.TryGetValue(sceneName, out var distantCell)) distantCell.SetActive(false);
+        }
+
+        if (failure == null)
+        {
+            foreach (var frame in frames)
+            {
+                if (cancellationToken.IsCancellationRequested) break;
+                var sceneName = $"cell_{inputs.MapId}_{frame.CellX}.{frame.CellY}";
+                authoredScenes.TryGetValue(sceneName, out var authoredScene);
+                if (authoredOnly && authoredScene == null) continue;
+                try
                 {
-                    snapshot.Diagnostics.Add(new Diagnostic
-                    {
-                        Severity = "fatal",
-                        Code = "mapCellLoadRefused",
-                        Field = "loadedCells",
-                        Message = $"The engine refused to load cell scene '{sceneName}'.",
-                    });
-                    continue;
+                    distantCells.TryGetValue(sceneName, out var distantCell);
+                    snapshot.Tiles.Add(CaptureFrame(
+                        inputs.MapId,
+                        camera,
+                        frame,
+                        inputs.CameraHeight,
+                        authoredScene != null,
+                        distantCell,
+                        distantCells.Count > 0));
                 }
-
-                while (!load.isDone) yield return null;
-                loadedByCapture.Add(authoredScene.BuildIndex);
-                loadedHere = true;
-            }
-
-            if (authoredScene != null) snapshot.LoadedCells.Add(sceneName);
-            try
-            {
-                snapshot.Tiles.Add(CaptureFrame(
-                    inputs.MapId, camera, frame, inputs.CameraHeight, authoredScene != null));
-            }
-            catch (Exception error)
-            {
-                failure = error;
-            }
-
-            if (loadedHere)
-            {
-                var unload = SceneManager.UnloadSceneAsync(authoredScene!.BuildIndex);
-                if (unload != null)
+                catch (Exception error)
                 {
-                    while (!unload.isDone) yield return null;
+                    failure = error;
+                    break;
                 }
-                loadedByCapture.Remove(authoredScene.BuildIndex);
             }
-
-            if (failure != null) break;
         }
         foreach (var buildIndex in loadedByCapture.ToList())
         {
@@ -217,6 +218,12 @@ public sealed class CellCapture
             loadedByCapture.Remove(buildIndex);
         }
 
+        foreach (var distantCell in distantCells.Values)
+        {
+            if (distantCell != null) UnityObject.DestroyImmediate(distantCell);
+        }
+        distantCells.Clear();
+
         if (cameraObject != null) UnityObject.DestroyImmediate(cameraObject);
         if (sunObject != null) UnityObject.DestroyImmediate(sunObject);
         RenderSettings.fog = fog;
@@ -225,6 +232,7 @@ public sealed class CellCapture
         Application.backgroundLoadingPriority = priority;
 
         snapshot.Restored = loadedByCapture.Count == 0
+            && distantCells.Count == 0
             && RenderSettings.fog == fog
             && RenderSettings.ambientMode == ambientMode
             && RenderSettings.ambientLight == ambient;
@@ -265,50 +273,52 @@ public sealed class CellCapture
         Camera camera,
         CellCaptureFrame frame,
         float cameraHeight,
-        bool authored)
+        bool authored,
+        GameObject? ownDistantCell,
+        bool hasDistantWorld)
     {
-        GameObject? distant = null;
-        if (!authored) distant = InstantiateDistantCell(mapId, frame);
+        camera.orthographicSize = frame.OrthographicSize;
+        camera.transform.position = new Vector3(frame.CenterX, cameraHeight, frame.CenterZ);
+        camera.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
-        try
+        var renderers = authored
+            ? CountSceneRenderers($"cell_{mapId}_{frame.CellX}.{frame.CellY}")
+            : ownDistantCell == null ? 0 : ownDistantCell.GetComponentsInChildren<Renderer>(true).Length;
+        if (renderers == 0 && !hasDistantWorld)
         {
-            camera.orthographicSize = frame.OrthographicSize;
-            camera.transform.position = new Vector3(frame.CenterX, cameraHeight, frame.CenterZ);
-            camera.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-
-            var renderers = authored
-                ? CountSceneRenderers($"cell_{mapId}_{frame.CellX}.{frame.CellY}")
-                : distant == null ? 0 : distant.GetComponentsInChildren<Renderer>(true).Length;
-            if (renderers == 0)
-            {
-                return new MapCaptureTileSnapshot
-                {
-                    CellX = frame.CellX,
-                    CellY = frame.CellY,
-                    Authored = authored,
-                    Renderers = 0,
-                    Empty = true,
-                };
-            }
-
-            var png = Render(camera, frame.Pixels);
-            var hash = SpriteAssetExporter.Sha256Hex(png);
-            var path = _writePlate($"assets/map/{mapId}/{hash}.png", png);
             return new MapCaptureTileSnapshot
             {
                 CellX = frame.CellX,
                 CellY = frame.CellY,
-                Hash = hash,
-                Path = path,
-                Bytes = png.Length,
                 Authored = authored,
-                Renderers = renderers,
+                Renderers = 0,
+                Empty = true,
             };
+        }
+
+        var wasActive = ownDistantCell != null && ownDistantCell.activeSelf;
+        if (authored && wasActive) ownDistantCell!.SetActive(false);
+        byte[] png;
+        try
+        {
+            png = Render(camera, frame.Pixels);
         }
         finally
         {
-            if (distant != null) UnityObject.DestroyImmediate(distant);
+            if (authored && wasActive && ownDistantCell != null) ownDistantCell.SetActive(true);
         }
+        var hash = SpriteAssetExporter.Sha256Hex(png);
+        var path = _writePlate($"assets/map/{mapId}/{hash}.png", png);
+        return new MapCaptureTileSnapshot
+        {
+            CellX = frame.CellX,
+            CellY = frame.CellY,
+            Hash = hash,
+            Path = path,
+            Bytes = png.Length,
+            Authored = authored,
+            Renderers = renderers,
+        };
     }
 
     private static int CountSceneRenderers(string sceneName)
@@ -319,18 +329,24 @@ public sealed class CellCapture
             .Sum(root => root.GetComponentsInChildren<Renderer>(true).Length);
     }
 
-    private static GameObject? InstantiateDistantCell(string mapId, CellCaptureFrame frame)
+    private static Dictionary<string, GameObject> InstantiateDistantCells(
+        string mapId,
+        IReadOnlyList<CellCaptureFrame> frames)
     {
-        var prefabName = $"celldistant_{mapId}_{frame.CellX}.{frame.CellY}";
+        var requested = frames.ToDictionary(
+            frame => $"celldistant_{mapId}_{frame.CellX}.{frame.CellY}",
+            frame => $"cell_{mapId}_{frame.CellX}.{frame.CellY}",
+            StringComparer.Ordinal);
+        var result = new Dictionary<string, GameObject>(StringComparer.Ordinal);
         foreach (var candidate in Resources.FindObjectsOfTypeAll<GameObject>())
         {
-            if (candidate == null || candidate.name != prefabName) continue;
+            if (candidate == null || !requested.TryGetValue(candidate.name, out var sceneName)
+                || result.ContainsKey(sceneName)) continue;
             var instance = UnityObject.Instantiate(candidate);
-            instance.name = "compendium_capture_distant";
-            return instance;
+            instance.name = $"compendium_capture_distant_{sceneName}";
+            result.Add(sceneName, instance);
         }
-
-        return null;
+        return result;
     }
 
     private static byte[] Render(Camera camera, int pixels)
