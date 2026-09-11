@@ -164,7 +164,7 @@ The invariant the earlier plan defended still holds, and it is worth restating b
 
 ### 7. Resolution is the cost driver
 
-File count grows with the square of pixels per unit. Tiles are 256 pixels. The deploy gate fails above 20,000 files, and the live build currently ships 7,373.
+File count grows with the square of pixels per unit. Tiles are 256 pixels. The deploy gate fails above 20,000 files, and the live build ships 11,084 as of 2026-09-11, up from 7,373 when this plan was written: conversations, quest logic and 2,548 item pages took the difference. The remaining headroom is about 8,900 files.
 
 | pixels per unit                              | overworld files | interior files | total | share of remaining budget |
 | -------------------------------------------- | --------------- | -------------- | ----- | ------------------------- |
@@ -179,7 +179,9 @@ Two further constraints belong to this decision. The pyramid's finest level shou
 
 ### 8. Open decisions
 
-**Capture resolution.** The spike settles legibility: 6.83 pixels per unit resolves detail the shipped imagery loses, and capturing only the authored cells at that resolution costs about 512 files. Capturing the full grid at that resolution costs about 12,300 files, which exceeds the deploy headroom and buys nothing where no cell scene exists. The open part is the pairing rather than the number: high resolution over authored cells, and what covers the rest.
+**Capture resolution.** The spike settles legibility: 6.83 pixels per unit resolves detail the shipped imagery loses, and capturing only the authored cells at that resolution costs about 512 files. Capturing the full grid at that resolution costs about 12,300 files, which exceeds the remaining headroom of about 8,900 and buys nothing where no cell scene exists.
+
+The pairing is not a choice between the two. A tile pyramid may be sparse at its finest level: the full grid captured at 512 pixels per cell, 3.41 pixels per unit, costs about 3,070 files across its pyramid, and adding the 1,024-pixel level over the 24 authored cells only costs 384 more. A viewer that finds no tile at the finest level falls back to the coarser one, which deck.gl's `TileLayer` does without configuration. That is about 3,450 files, so the honest option below, full coverage with a per-cell authored flag, fits the budget with higher fidelity exactly where the game holds an authored scene. The measurement still missing is task 1.4: the same cell at 512 and 1,024 pixels, read at map zoom in a browser, so the coarse level is known to be legible before it is chosen.
 
 **Interior ceilings.** An interior captured from above shows its roof. Options: exclude a ceiling layer if one exists, disable renderers tagged by `InteriorFilterVolume` for the duration of a capture and accept a mutation that must be undone, or capture interiors from a height below the ceiling. The first is preferred and its feasibility is unmeasured.
 
@@ -191,7 +193,7 @@ Options: publish the imagery as the basemap for a build whose cell scenes cover 
 
 ## Risks and trade-offs
 
-- The capture depends on `world-cell-content`. Until that walk exists, no overworld geometry can be reached, and this change cannot start.
+- The capture depends on the cell walk `world-cell-content` shipped, archived on 2026-09-11: `world.plan` and `world.walkBatch` load and unload cells and are the commands this change calls.
 - Distant-cell geometry differs in detail from authored geometry, so a full-grid plate is not uniform. Decision 8 addresses it.
 - Lighting is set by us, so the basemap will not match a screenshot a player takes. That is intended: a map is not a screenshot.
 - Interior maps share one coordinate plane while occupying three separate patches of it. The tile index is sparse, and the map must not imply terrain between them.

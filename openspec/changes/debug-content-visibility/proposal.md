@@ -46,3 +46,21 @@ The proposal does not select an option for any finding.
 ### New Capabilities
 
 - `debug-content-visibility`: Decide how debug-only locations, vestigial skills, and unresolved item labels appear to readers.
+
+## Evidence recorded on 2026-09-11
+
+Measured against the release export `0.0.10.91-20260911-1300226367980`, which changes what the three
+decisions rest on.
+
+- Debug-only locations: **0 of 1,380** map points carry `showOnMapDebugOnly`. The client toggle in
+  `MapSidebar.svelte` guards nothing the Demo ships. The honest resolution is to remove the toggle
+  and count the flag in the pipeline as a diagnostic, so a build that ships one surfaces in the
+  manifest rather than behind a checkbox.
+- `sk_unarmed` still publishes a page at `/stat-types/...`. Nothing new was learned; the decision is
+  a policy one. `openspec/specs/entity-identity/spec.md` forbids withholding a page without evidence
+  from game behaviour, and `HandItem.CalculateDamage` returning zero is that evidence, so the page
+  may be marked vestigial but the withholding must be recorded in the descriptor if chosen.
+- `Recipe of {0}`: one item carries the literal name. `Statement.ApplyModifiers` never substitutes
+  a brace, but a recipe name is formatted by the recipe UI rather than by a statement, so the label
+  is bound at runtime and no asset-time read can complete it. The `entity-identity` rule applies:
+  publish, mark, and keep the source label in provenance. Task 4.2 is the resolution.

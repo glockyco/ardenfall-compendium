@@ -2,7 +2,7 @@
 
 The 2026-08-02 program survey found that the item index sends a large hydration payload to the browser.
 
-The survey measured the built `items.html` payload at about 488 kilobytes.
+The survey measured the built `items.html` payload at about 488 kilobytes. The release build of 2026-09-11 measures 605 kilobytes over 2,548 item pages, so the payload has grown by a quarter since the survey.
 
 The measurement predates the current item routes and their pagination behaviour.
 

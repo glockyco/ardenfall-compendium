@@ -1,6 +1,6 @@
 ## 1. Prove the capture against real terrain
 
-- [ ] 1.1 Confirm that `world-cell-content` delivers a walk this change can call. State in this change which of its commands loads a map and a cell, and which unloads them. Do not start until that walk exists.
+- [x] 1.1 Confirm that `world-cell-content` delivers a walk this change can call. State in this change which of its commands loads a map and a cell, and which unloads them. Do not start until that walk exists. (Archived 2026-09-11; `world.plan` plans the cells, `world.walkBatch` loads, walks and unloads each batch.)
 - [ ] 1.2 Reach one authored overworld cell through that walk, and record the loaded scene list and the sun intensity the session reports.
 - [ ] 1.3 Establish capture lighting explicitly: sun direction, sun intensity, ambient value, fog off, post-processing off. Capture one cell and read the plate in this session. A dark plate fails this task.
 - [ ] 1.4 Capture the same cell at two resolutions, and compare both against the game's own imagery at 1.667 pixels per unit. Record the comparison and close the resolution decision in `design.md`.
