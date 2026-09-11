@@ -31,6 +31,31 @@
    * A quest check names the quest it reads, so the state belongs after the quest's name: "Only
    * while Ashes at Dawn is started" rather than "Only while the quest is started Ashes at Dawn".
    */
+  /**
+   * The game's own comparison word, in a reader's words.
+   *
+   * `CompareMethod` names read as code on a page: "is LessOrEqualTo Akaga" says less than
+   * "is at most Neutral with Akaga".
+   */
+  const comparison = (compare: string | null): string => {
+    switch (compare) {
+      case "LessOrEqualTo":
+        return "at most";
+      case "GreaterOrEqualTo":
+        return "at least";
+      case "LessThan":
+        return "below";
+      case "GreaterThan":
+        return "above";
+      case "Equal":
+        return "exactly";
+      case "NotEqual":
+        return "anything but";
+      default:
+        return compare ?? "";
+    }
+  };
+
   const tail = (): string => {
     switch (gate.kind) {
       case "quest-state":
@@ -41,6 +66,8 @@
         return "is at the authored objective";
       case "quest-variable":
         return "holds the authored value";
+      case "faction-relationship":
+        return `is ${comparison(gate.compare)} ${gate.value ?? "the authored tier"}`;
       default:
         return "";
     }
@@ -48,7 +75,11 @@
 
   /** A quest check with no named subject still states which state it reads. */
   const fallbackSubject = $derived(
-    gate.subjects.length === 0 && tail() !== "" ? "the quest" : null,
+    gate.subjects.length === 0 && tail() !== ""
+      ? gate.kind === "faction-relationship"
+        ? "the faction"
+        : "the quest"
+      : null,
   );
   const negated = $derived(
     gate.invert || gate.compare === "notContainsAny" || gate.compare === "notContainsAll",
@@ -69,7 +100,7 @@
       case "character-relationship":
         return `Only when ${who(subject)} stands ${gate.compare ?? ""} ${gate.value ?? ""} with the speaker`.trim();
       case "faction-relationship":
-        return `Only when standing with the faction is ${gate.compare ?? ""} ${gate.value ?? ""}`.trim();
+        return "Only when standing with";
       case "stat-check":
         return `Requires a ${gate.value ?? ""} check of`.trim();
       case "quest-state":

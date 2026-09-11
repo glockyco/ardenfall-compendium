@@ -329,9 +329,12 @@ function buildStep(
         alternatives: outgoing.map((edge) => {
           // The branch names its own outputs: output i is taken when condition task i passes.
           const branch = (node.branches ?? []).find((candidate) => candidate.port === edge.port);
+          // A branch that names its outputs but leaves one task empty still reads something the
+          // extraction cannot see. Saying so beats printing the output's index.
+          const gate = branch === undefined ? null : (branch.gate ?? emptyGate(node.authoredType));
           return {
             label: edge.port,
-            gate: branch?.gate ? gateView(branch.gate, context) : null,
+            gate: gate === null ? null : gateView(gate, context),
             next: followEdges([edge], nextPath, context),
           };
         }),

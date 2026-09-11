@@ -514,10 +514,12 @@ public static class DialogueNodeReaders
             case "BranchRelationship":
                 condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(source, "sourceCharacter"), $"{authoredType}.sourceCharacter"));
                 condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(source, "targetCharacter"), $"{authoredType}.targetCharacter"));
+                condition.Value ??= RelationshipAmount(source);
                 break;
             case "FactionRelationshipCheck":
                 AddSubject(condition, GraphFields.Read<Ardenfall.Faction>(source, "faction"), $"{authoredType}.faction");
                 condition.Participants.Add(DialogueRefs.Participant(GraphFields.Read<object>(source, "targetCharacter"), $"{authoredType}.targetCharacter"));
+                condition.Value ??= RelationshipAmount(source);
                 break;
             case "StatCheck":
                 AddSubject(condition, GraphFields.Read<UnityObject>(source, "stat"), $"{authoredType}.stat");
@@ -545,6 +547,13 @@ public static class DialogueNodeReaders
                 AddSubjects(condition, GraphFields.Read<List<Ardenfall.Sky.Weather>>(source, "weathers"), $"{authoredType}.weathers");
                 break;
         }
+    }
+
+    /// <summary>The tier a relationship check compares against, as the game names it.</summary>
+    private static string? RelationshipAmount(object source)
+    {
+        var container = GraphFields.Read<object>(source, "comparedRelationshipAmount");
+        return container == null ? null : GraphFields.ReadEnumName(container, "amount");
     }
 
     /// <summary>

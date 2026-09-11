@@ -20,9 +20,11 @@
       ? "The conversation forks on how the speaker feels about the player:"
       : kind === "faction-relationship"
         ? "The conversation forks on the player's standing with the faction:"
-        : kind === undefined || kind === "unread"
-          ? "The conversation forks on state the compendium cannot name:"
-          : `The conversation forks on the ${kind} check:`;
+        : kind === "branch-on-checks"
+          ? "The conversation forks on what the game checks, in this order:"
+          : kind === undefined || kind === "unread"
+            ? "The conversation forks on state the compendium cannot name:"
+            : `The conversation forks on the ${kind} check:`;
 </script>
 
 <!--
