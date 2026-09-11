@@ -30,6 +30,29 @@ public sealed class CellHarvestTests
     }
 
     [Fact]
+    public void KeepsTheFirstOfTwoObjectsThatShareOneId()
+    {
+        // The live overworld holds two spawners with one authored guid in one cell. A second row
+        // with the same id fails the canonical primary key and takes the whole snapshot with it.
+        var harvest = new CellHarvest("cell_overworld_-4.-7");
+        harvest.RowsFor("world-spawn").Add(Row("scene;cell_overworld_-4.-7;guid-1"));
+        harvest.RowsFor("world-spawn").Add(Row("scene;cell_overworld_-4.-7;guid-1"));
+        harvest.RowsFor("world-spawn").Add(Row("scene;cell_overworld_-4.-7;guid-2"));
+        harvest.RowsFor("placed-item").Add(Row("scene;cell_overworld_-4.-7;guid-1"));
+
+        harvest.DropDuplicateIds();
+
+        Assert.Equal(
+            new[] { "scene;cell_overworld_-4.-7;guid-1", "scene;cell_overworld_-4.-7;guid-2" },
+            harvest.RowsFor("world-spawn").Select(row => row.Id));
+        Assert.Single(harvest.RowsFor("placed-item"));
+        var diagnostic = Assert.Single(harvest.Diagnostics);
+        Assert.Equal("sceneObjectIdDuplicate", diagnostic.Code);
+        Assert.Contains("world-spawn", diagnostic.Message);
+        Assert.Contains("guid-1", diagnostic.Message);
+    }
+
+    [Fact]
     public void WritesRowsAsIdAndFields()
     {
         // The pipeline reads every entity envelope as { id, fields }. A flat row passed the

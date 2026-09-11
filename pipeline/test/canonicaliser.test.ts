@@ -31,7 +31,7 @@ describe("canonicaliseItems", () => {
       name: string;
       variant: string;
     }[];
-    expect(items.length).toBe(10);
+    expect(items.length).toBe(11);
     expect(items.find((r) => r.id === "4ed20218.fixture-iron-sword")?.variant).toBe("melee-weapon");
 
     const equipRows = db.query("SELECT id, equipSlot FROM item_equipment").all() as {

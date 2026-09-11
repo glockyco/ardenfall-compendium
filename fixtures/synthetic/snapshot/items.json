@@ -1271,6 +1271,206 @@
         "weight": 3.5,
         "diagnostics": []
       }
+    },
+    {
+      "id": "AssetExampleMod.KawamokuItem",
+      "variant": "basic",
+      "fields": {
+        "id": "AssetExampleMod.KawamokuItem",
+        "name": "Kawamoku Plush",
+        "weight": 0.1,
+        "value": 1,
+        "description": "",
+        "stackable": true,
+        "hideInGui": false,
+        "questItem": false,
+        "notLootableChance": 0.0,
+        "cannotBeOwned": false,
+        "parentRef": {
+          "kind": "lookupAsset",
+          "guid": "f7e839cb08435be4d96f3766500416e3.11400000",
+          "unityType": "Ardenfall.Item.ItemData",
+          "name": "base_misc",
+          "id": null,
+          "recordType": null,
+          "extractionId": null,
+          "stable": null,
+          "reason": null,
+          "source": null
+        },
+        "quickslotIconRef": {
+          "kind": "missing",
+          "guid": null,
+          "unityType": null,
+          "name": null,
+          "id": null,
+          "recordType": null,
+          "extractionId": null,
+          "stable": null,
+          "reason": "engineResource",
+          "source": "ItemData.quickslotIcon"
+        },
+        "categoryName": "Misc",
+        "categoryRef": {
+          "kind": "namedAsset",
+          "guid": null,
+          "unityType": null,
+          "entity": "item-category",
+          "name": "itemcat_misc",
+          "id": null,
+          "recordType": null,
+          "extractionId": null,
+          "stable": null,
+          "reason": null,
+          "source": null
+        },
+        "isIllegal": false,
+        "iconRef": {
+          "kind": "missing",
+          "guid": null,
+          "unityType": null,
+          "name": null,
+          "id": null,
+          "recordType": null,
+          "extractionId": null,
+          "stable": null,
+          "reason": "engineResource",
+          "source": "ItemData.icon"
+        }
+      },
+      "tags": [],
+      "presentation": {
+        "schemaVersion": 1,
+        "renderContext": "item-presentation-v1",
+        "displayName": "Kawamoku Plush",
+        "displayNameSourceMethod": "GetItemName()",
+        "itemType": "Basic",
+        "itemTypeSourceMethod": "variant:basic",
+        "descriptionSource": "",
+        "effectsSource": "",
+        "effects": [],
+        "statRows": [],
+        "requirements": [],
+        "durability": null,
+        "stateFacts": [
+          {
+            "kind": "stacking",
+            "label": "Stackable",
+            "description": "Multiple copies can stack in inventory."
+          }
+        ],
+        "value": 1,
+        "weight": 0.1,
+        "diagnostics": []
+      },
+      "provenance": {
+        "name": {
+          "kind": "parameter",
+          "source": "GetItemName()",
+          "isSet": true,
+          "inherited": false,
+          "parent": null
+        },
+        "weight": {
+          "kind": "parameter",
+          "source": "weight.Get()",
+          "isSet": false,
+          "inherited": true,
+          "parent": null
+        },
+        "value": {
+          "kind": "parameter",
+          "source": "moneyValue.Get()",
+          "isSet": false,
+          "inherited": true,
+          "parent": null
+        },
+        "description": {
+          "kind": "parameter",
+          "source": "description.Get()",
+          "isSet": false,
+          "inherited": true,
+          "parent": null
+        },
+        "stackable": {
+          "kind": "parameter",
+          "source": "stackable.Get()",
+          "isSet": false,
+          "inherited": true,
+          "parent": null
+        },
+        "hideInGui": {
+          "kind": "parameter",
+          "source": "hideInGUI.Get()",
+          "isSet": false,
+          "inherited": true,
+          "parent": null
+        },
+        "questItem": {
+          "kind": "parameter",
+          "source": "questItem.Get()",
+          "isSet": false,
+          "inherited": true,
+          "parent": null
+        },
+        "notLootableChance": {
+          "kind": "parameter",
+          "source": "notLootableChance.Get()",
+          "isSet": false,
+          "inherited": true,
+          "parent": null
+        },
+        "cannotBeOwned": {
+          "kind": "parameter",
+          "source": "cannotBeOwned.Get()",
+          "isSet": false,
+          "inherited": true,
+          "parent": null
+        },
+        "quickslotIconRef": {
+          "kind": "missing",
+          "source": "ItemData.quickslotIcon",
+          "isSet": false,
+          "inherited": false,
+          "parent": null
+        },
+        "categoryRef": {
+          "kind": "lookupAsset",
+          "source": "ItemData.category",
+          "isSet": true,
+          "inherited": false,
+          "parent": null
+        },
+        "categoryName": {
+          "kind": "parameter",
+          "source": "ItemData.category.Get().categoryName",
+          "isSet": true,
+          "inherited": false,
+          "parent": null
+        },
+        "isIllegal": {
+          "kind": "parameter",
+          "source": "isIllegal.Get()",
+          "isSet": false,
+          "inherited": true,
+          "parent": null
+        },
+        "iconRef": {
+          "kind": "missing",
+          "source": "ItemData.icon",
+          "isSet": false,
+          "inherited": false,
+          "parent": null
+        },
+        "tags": {
+          "kind": "smartListParameter",
+          "source": "tags.Get()",
+          "isSet": false,
+          "inherited": true,
+          "parent": null
+        }
+      },
+      "diagnostics": []
     }
   ]
 }

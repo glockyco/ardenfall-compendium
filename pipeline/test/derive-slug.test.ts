@@ -30,6 +30,13 @@ describe("deriveShortId", () => {
     expect(deriveShortId("398213e4-3a41-b4c4-7bff-e4ef1998e782")).toBe("398213e4");
   });
 
+  it("hashes a modded asset id registered under <Mod>.<Asset>", () => {
+    expect(deriveShortId("AssetExampleMod.KawamokuItem")).toMatch(/^[0-9a-f]{8}$/);
+    expect(deriveShortId("AssetExampleMod.KawamokuItem")).not.toBe(
+      deriveShortId("AssetExampleMod.WeaponItem"),
+    );
+  });
+
   it("hashes the full named asset id instead of exposing its asset name", () => {
     expect(deriveShortId("named;stat-type;att_strength")).toBe("e3cd234d");
     expect(deriveShortId("named;item-category;itemcat_weapons")).toBe("d58e048c");

@@ -171,7 +171,7 @@ describe("emitItemReadModels", () => {
       display_icon_hash: string | null;
       display_icon_color: string | null;
     }[];
-    expect(overview).toHaveLength(10);
+    expect(overview).toHaveLength(11);
     expect(overview.map(({ id, name }) => ({ id, name }))).toEqual([
       { id: "4ed20218.fixture-iron-sword", name: "Iron Sword" },
       { id: "5ea7beef.fixture-leather-tunic", name: "Leather Tunic" },
@@ -179,13 +179,14 @@ describe("emitItemReadModels", () => {
       { id: "6a71c0df.fixture-stamina-draught-twin", name: "Stamina Draught" },
       { id: "7ab10c55.fixture-slate-spell", name: "Spark Slate" },
       { id: "8c0ffee0.fixture-throwing-potion", name: "Fire Flask" },
+      { id: "AssetExampleMod.KawamokuItem", name: "Kawamoku Plush" },
       { id: "a7000001.fixture-base-weapon", name: "Unnamed item — Melee weapon" },
       { id: "a7000002.fixture-base-weapon-child", name: "Training Blade" },
       { id: "a7000003.fixture-base-weapon-grandchild", name: "Grandchild Blade" },
       { id: "a7000005.fixture-placeholder-leaf", name: "Unnamed item — Melee weapon" },
     ]);
     expect(db.query("SELECT COUNT(*) AS count FROM item_presentation_rows").get()).toEqual({
-      count: 10,
+      count: 11,
     });
     expect(
       db
@@ -204,6 +205,7 @@ describe("emitItemReadModels", () => {
       { id: "6a71c0df.fixture-stamina-draught-twin" },
       { id: "7ab10c55.fixture-slate-spell" },
       { id: "8c0ffee0.fixture-throwing-potion" },
+      { id: "AssetExampleMod.KawamokuItem" },
       { id: "a7000001.fixture-base-weapon" },
       { id: "a7000002.fixture-base-weapon-child" },
       { id: "a7000003.fixture-base-weapon-grandchild" },
@@ -546,7 +548,7 @@ describe("emitItemReadModels", () => {
           "SELECT count(*) AS count FROM pipeline_diagnostics WHERE source = 'relationship-graph'",
         )
         .get(),
-    ).toEqual({ count: 1 });
+    ).toEqual({ count: 2 });
 
     const categories = db
       .query(
@@ -558,6 +560,12 @@ describe("emitItemReadModels", () => {
         category_id: "armor",
         label: "Armor",
         href: "/objects/variant/armor",
+        item_count: 1,
+      },
+      {
+        category_id: "basic",
+        label: "Basic",
+        href: "/objects/variant/basic",
         item_count: 1,
       },
       {
@@ -596,6 +604,7 @@ describe("emitItemReadModels", () => {
     expect(variantFilter.kind).toBe("multi-select");
     expect(JSON.parse(variantFilter.options_json)).toEqual([
       { value: "armor", label: "Armor", count: 1 },
+      { value: "basic", label: "Basic", count: 1 },
       { value: "consumable", label: "Consumable", count: 2 },
       { value: "melee-weapon", label: "Melee Weapon", count: 5 },
       { value: "slate-spell", label: "Slate Spell", count: 1 },

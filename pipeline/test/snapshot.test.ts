@@ -127,7 +127,7 @@ describe("loadSnapshot", () => {
     expect(out.manifest.preflight.passed).toBe(true);
     const items = out.envelopes["item"];
     if (!items) throw new Error("item envelope not loaded");
-    expect(items.rows.length).toBe(10);
+    expect(items.rows.length).toBe(11);
   });
 
   it("accepts a complete snapshot when every extraction family has a file and count", async () => {

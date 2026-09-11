@@ -218,6 +218,7 @@ public sealed class CellWalk
         var harvest = new CellHarvest(cell.Name);
         var map = CellMapIndex.MapOfCellScene(cell.Name);
         foreach (var family in _families) family.Harvest(cell, map, harvest);
+        harvest.DropDuplicateIds();
         batch.Cells.Add(harvest);
 
         foreach (var pair in UnmodelledTypes(cell))

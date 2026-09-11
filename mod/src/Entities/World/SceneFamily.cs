@@ -64,6 +64,41 @@ public sealed class CellHarvest
         return rows;
     }
 
+    /// <summary>
+    /// Keeps the first row of each id in this cell and names the rest.
+    /// </summary>
+    /// <remarks>
+    /// A scene can hold two objects that share one authored guid, which a copied prefab leaves
+    /// behind. The row id is the canonical key downstream, so a second row with the same id would
+    /// fail the whole snapshot rather than describe one object twice.
+    /// </remarks>
+    public void DropDuplicateIds()
+    {
+        foreach (var pair in Rows)
+        {
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var rows = pair.Value;
+            for (var index = 0; index < rows.Count;)
+            {
+                var row = rows[index];
+                if (seen.Add(row.Id))
+                {
+                    index++;
+                    continue;
+                }
+
+                Diagnostics.Add(new Dtos.Diagnostic
+                {
+                    Code = "sceneObjectIdDuplicate",
+                    Severity = "diagnostic",
+                    Field = "id",
+                    Message = $"Cell '{Cell}' holds more than one {pair.Key} object with id '{row.Id}'; only the first is published.",
+                });
+                rows.RemoveAt(index);
+            }
+        }
+    }
+
     public int RowCount
     {
         get

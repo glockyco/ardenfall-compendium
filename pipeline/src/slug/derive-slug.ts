@@ -10,9 +10,9 @@ export function kebab(input: string): string {
 /**
  * Derives a short id from a lookup-asset id (`<8hex>[.suffix]`), a record id (a
  * GUID written as 32 hex characters with or without hyphens), a scene id
- * (`scene;<cell>;<guid>`), or a named-asset id (`named;<entityId>;<assetName>`),
- * whose full id is hashed. The asset name is
- * validated but never used as a public URL identifier.
+ * (`scene;<cell>;<guid>`), a modded asset id (`<Mod>.<Asset>`, hashed), or a
+ * named-asset id (`named;<entityId>;<assetName>`), whose full id is hashed. The
+ * asset name is validated but never used as a public URL identifier.
  *
  * The game authors both hyphenated and bare record GUIDs. The first eight
  * characters precede the first hyphen, so one GUID gives one short id in either
@@ -52,10 +52,15 @@ export function deriveShortId(id: string): string {
     if (head.length >= 8 && /^[0-9a-fA-F]+$/.test(head.slice(0, 8))) {
       return head.slice(0, 8).toLowerCase();
     }
+    // A mod registers its asset under `<Mod>.<Asset>` instead of a guid. The shipped build
+    // bundles an example mod, so its items are game data and get an opaque hashed id.
+    if (/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(id)) {
+      return createHash("sha256").update(id).digest("hex").slice(0, 8);
+    }
   }
 
   throw new Error(
-    `cannot derive short_id from id '${id}': need lookup-asset id '<8hex>[.suffix]', record id (a 32-character hex GUID with or without hyphens), scene id 'scene;<cell>;<guid>', or named-asset id 'named;<entityId>;<assetName>'`,
+    `cannot derive short_id from id '${id}': need lookup-asset id '<8hex>[.suffix]', modded asset id '<Mod>.<Asset>', record id (a 32-character hex GUID with or without hyphens), scene id 'scene;<cell>;<guid>', or named-asset id 'named;<entityId>;<assetName>'`,
   );
 }
 
