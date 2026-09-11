@@ -89,13 +89,42 @@
     };
   }
 
-  function initialViewState(): {
+  type MapViewState = {
     target: [number, number, number];
     zoom: number;
     minZoom: number;
     maxZoom: number;
-  } {
-    return viewStateForBounds(visibleBounds());
+  };
+
+  /**
+   * The camera the reader is looking through. deck.gl is driven as a controlled view, so this is
+   * the single copy of that state: a pan or zoom writes it, and a layer or selection change reads
+   * it back unchanged. Refitting on those would throw away where the reader had navigated to.
+   */
+  let viewState: MapViewState | null = null;
+
+  /** The map the camera was last fitted to, so switching maps refits and nothing else does. */
+  let fittedMapId: string | null = null;
+
+  function fitToVisible(): MapViewState {
+    viewState = viewStateForBounds(visibleBounds());
+    fittedMapId = store.activeMapId;
+    publishCamera();
+    return viewState;
+  }
+
+  /**
+   * Publishes the camera on the container, the way the device type is published. A WebGL canvas
+   * carries no readable camera, so this is what lets a test assert that panning survives a layer
+   * toggle or a selection instead of asserting on the source that sets it.
+   */
+  function publishCamera(): void {
+    if (!container || !viewState) return;
+    container.dataset.deckView = JSON.stringify({
+      x: Number(viewState.target[0].toFixed(3)),
+      y: Number(viewState.target[1].toFixed(3)),
+      zoom: Number(viewState.zoom.toFixed(4)),
+    });
   }
 
   function currentSpecs(): LayerSpec[] {
@@ -187,8 +216,10 @@
         // GPU device; deck.gl 9 defaults powerPreference to 'high-performance'.
         deviceProps: { type: "webgl" },
         views: new OrthographicView({ id: "map", flipY: false, controller: true }),
-        initialViewState: initialViewState(),
-        onViewStateChange: ({ viewState }) => {
+        viewState: fitToVisible(),
+        onViewStateChange: ({ viewState: next }) => {
+          viewState = next as MapViewState;
+          publishCamera();
           deck?.setProps({ viewState });
         },
         layers: makeLayers(currentSpecs()),
@@ -221,21 +252,18 @@
     };
   });
 
-  // Re-apply layers when visibility or active-map state changes.
+  // Re-apply layers when layer visibility, the active map, or the selection changes. The camera
+  // moves only when the reader moves it, or when the active map changes and the old camera points
+  // at coordinates the new map does not use.
   $effect(() => {
-    void [store.ui.hiddenLayers, store.ui.showDebug, store.ui.mapId, visibleMarkers.length];
+    const specs = currentSpecs();
     syncCanvasLabel();
-    if (deck && makeLayers) {
-      deck.setProps({
-        layers: makeLayers(currentSpecs()),
-        viewState: viewStateForBounds(visibleBounds()),
-      });
-    }
-  });
-
-  $effect(() => {
-    void store.ui.selected;
-    if (deck && makeLayers) deck.setProps({ layers: makeLayers(currentSpecs()) });
+    if (!deck || !makeLayers) return;
+    const mapChanged = store.activeMapId !== fittedMapId;
+    deck.setProps({
+      layers: makeLayers(specs),
+      viewState: mapChanged ? fitToVisible() : viewState,
+    });
   });
 </script>
 
