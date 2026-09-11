@@ -80,6 +80,8 @@
     "npcs.json": "7194bd6153140250f52e5037871328344578f6db676ca25f29c3e09972de1a8b",
     "quests.json": "259e5eacb132353b4f951ce174985aa450a75c183e546365b4213c41620ebb88",
     "potion-recipes.json": "689c1202ed625d1010fc185eb33713a019f3274ab6957560f75bbea17f1fc1ad",
-    "enchantments.json": "74d06f2c4db42cf743c4b748bfd6df7b423e01d284b57f0b3b98477ed1a021c4"
+    "enchantments.json": "74d06f2c4db42cf743c4b748bfd6df7b423e01d284b57f0b3b98477ed1a021c4",
+    "map-capture-ardenfall-16--2.-2-1.1.json": "45cb3bb921a3d45430dae44741136580d1e35f374d4e10b0a1caaa5ad6715358",
+    "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8"
   }
 }

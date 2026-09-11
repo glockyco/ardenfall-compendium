@@ -1,0 +1,190 @@
+{
+  "inputs": {
+    "mapId": "ardenfall",
+    "gameVersion": "Demo2025-test",
+    "gridOffsetX": -2,
+    "gridOffsetY": -2,
+    "gridSizeX": 4,
+    "gridSizeY": 4,
+    "cellSize": 50,
+    "pixelsPerCell": 16,
+    "pixelsPerUnit": 0.32,
+    "minCellX": -2,
+    "minCellY": -2,
+    "maxCellX": 1,
+    "maxCellY": 1,
+    "sunIntensity": 1.2,
+    "sunEuler": "(50.0, 330.0, 0.0)",
+    "ambient": "(0.450, 0.450, 0.500, 1.000)",
+    "fog": false,
+    "cameraHeight": 800,
+    "cullingMask": -925729,
+    "pinnedTime": "not-changed",
+    "pinnedWeather": "not-changed"
+  },
+  "tiles": [
+    {
+      "cellX": -2,
+      "cellY": -2,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": -1,
+      "cellY": -2,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": 0,
+      "cellY": -2,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": 1,
+      "cellY": -2,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": -2,
+      "cellY": -1,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": -1,
+      "cellY": -1,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": 0,
+      "cellY": -1,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": 1,
+      "cellY": -1,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": -2,
+      "cellY": 0,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": -1,
+      "cellY": 0,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": 0,
+      "cellY": 0,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": 1,
+      "cellY": 0,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": -2,
+      "cellY": 1,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": -1,
+      "cellY": 1,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": 0,
+      "cellY": 1,
+      "hash": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
+      "path": "assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png",
+      "bytes": 107,
+      "empty": false,
+      "authored": false,
+      "renderers": 1
+    },
+    {
+      "cellX": 1,
+      "cellY": 1,
+      "hash": "",
+      "path": "",
+      "bytes": 0,
+      "empty": true,
+      "authored": false,
+      "renderers": 0
+    }
+  ],
+  "loadedCells": [],
+  "restored": true,
+  "diagnostics": []
+}

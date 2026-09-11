@@ -27,7 +27,8 @@
     "Enchantment rows for status effect and non-status effect kinds, plus an enchantment with no applicable items",
     "ItemData parentRef inheritance with two-level chains and prototype publication gating",
     "Enchantment prototype whitelist fan-out and loot prototype diagnostic",
-    "derives_from relation for item and character parents"
+    "derives_from relation for item and character parents",
+    "captured basemap tiles, one empty tile, and generated parent levels"
   ],
   "selection": [
     {
@@ -121,7 +122,9 @@
     "snapshot/placed-containers.json": "0f7be12c91442c68383116699788773f576f319bd77f6c6f84f05ee2d4de254e",
     "snapshot/placed-items.json": "965c3683b65331de1fb3ccd2b77263a476d229141fdad6226c270a0e585b40d4",
     "snapshot/placed-plants.json": "294bda98c92c44bd2746f8bcbfc5cf4c0f5e62ed4d96667df0f2a30cfe4e074f",
-    "snapshot/manifest.json": "90d3495e57e13f428df6050b97ecbb2146880da510e85e7fe210184c52087cfa",
+    "snapshot/manifest.json": "42decd01d8c67a2a53503a8faeb7263992b306b0a39e393470f1e1faa17c2842",
+    "snapshot/map-capture-ardenfall-16--2.-2-1.1.json": "45cb3bb921a3d45430dae44741136580d1e35f374d4e10b0a1caaa5ad6715358",
+    "snapshot/assets/map/ardenfall/52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8.png": "52a583eefddff5e9891c57fc87d768cdc4cfd39b47c8443fbb910e03bc3150e8",
     "snapshot/potion-recipes.json": "689c1202ed625d1010fc185eb33713a019f3274ab6957560f75bbea17f1fc1ad",
     "snapshot/enchantments.json": "74d06f2c4db42cf743c4b748bfd6df7b423e01d284b57f0b3b98477ed1a021c4",
     "snapshot/items.json": "af4053eb8ad0905efbd81fec5e9bc71fe102e0daea9d17f45cddd97930990e66",
