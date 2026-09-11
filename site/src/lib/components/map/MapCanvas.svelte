@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { SvelteMap } from "svelte/reactivity";
   import { buildMapLayerSpecs, type LayerSpec } from "$lib/map/layer-spec";
   import { mapAccessibleName, visibleMapMarkers } from "$lib/map/map-accessibility";
   import { composeMapLayers, visibleBasemapTiles } from "$lib/map/basemap";
@@ -28,7 +29,8 @@
   // deck handles live in closure scope, never module scope (HMR/leak safety).
   let deck: Deck<OrthographicView> | null = null;
   let makeLayers: ((specs: LayerSpec[]) => Layer[]) | null = null;
-  let makeBasemapLayers: (() => Layer[]) | null = null;
+  let refreshBasemapLayers: (() => void) | null = null;
+  let basemapLayers: Layer[] = [];
   let markerLayers: Layer[] = [];
 
   const activeMapLabel = $derived(
@@ -195,6 +197,7 @@
   onMount(() => {
     let alive = true;
     let revealTimer: ReturnType<typeof setTimeout> | null = null;
+    let disposeBasemapImages = () => {};
 
     void (async () => {
       // deck.gl is a browser-only WebGL module; static import would execute it
@@ -207,24 +210,75 @@
       const { Deck, OrthographicView, COORDINATE_SYSTEM } = core;
       const { BitmapLayer, ScatterplotLayer, PolygonLayer } = layersMod;
 
-      makeBasemapLayers = () => {
+      let basemapGeneration = 0;
+      const imageCache = new SvelteMap<string, Promise<ImageBitmap>>();
+      disposeBasemapImages = () => {
+        for (const image of imageCache.values()) {
+          void image.then(
+            (bitmap) => bitmap.close(),
+            () => {},
+          );
+        }
+        imageCache.clear();
+      };
+
+      const loadBasemapImage = (assetUrl: string): Promise<ImageBitmap> => {
+        const cached = imageCache.get(assetUrl);
+        if (cached) return cached;
+        const loadingImage = fetch(assetUrl)
+          .then((response) => {
+            if (!response.ok) throw new Error(`Basemap tile request failed: ${response.status}`);
+            return response.blob();
+          })
+          .then((blob) => createImageBitmap(blob))
+          .catch((cause: unknown) => {
+            imageCache.delete(assetUrl);
+            throw cause;
+          });
+        imageCache.set(assetUrl, loadingImage);
+        return loadingImage;
+      };
+
+      const updateBasemapLayers = async (): Promise<void> => {
+        const generation = ++basemapGeneration;
+        const mapId = store.activeMapId;
         const basemap = activeBasemap();
-        if (basemap === null || viewState === null) return [];
-        return visibleBasemapTiles(basemap, {
-          target: viewState.target,
-          zoom: viewState.zoom,
+        const camera = viewState;
+        if (mapId === null || basemap === null || camera === null) {
+          basemapLayers = [];
+          deck?.setProps({ layers: composeMapLayers(basemapLayers, markerLayers) });
+          return;
+        }
+        const visibleTiles = visibleBasemapTiles(basemap, {
+          target: camera.target,
+          zoom: camera.zoom,
           width: container.clientWidth || 800,
           height: container.clientHeight || 480,
-        }).map(
-          ({ tile, bounds }) =>
+        });
+        const images = await Promise.all(
+          visibleTiles.map(({ tile }) => loadBasemapImage(tile.assetUrl!)),
+        );
+        if (!alive || generation !== basemapGeneration || mapId !== store.activeMapId) return;
+
+        basemapLayers = visibleTiles.map(
+          ({ tile, bounds }, index) =>
             new BitmapLayer({
-              id: `basemap::${store.activeMapId}::${tile.zoom}/${tile.x}/${tile.y}`,
-              image: tile.assetUrl!,
+              id: `basemap::${mapId}::${tile.zoom}/${tile.x}/${tile.y}`,
+              image: images[index]!,
               bounds,
               coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
               pickable: false,
             }),
         );
+        deck?.setProps({ layers: composeMapLayers(basemapLayers, markerLayers) });
+      };
+
+      refreshBasemapLayers = () => {
+        void updateBasemapLayers().catch((cause: unknown) => {
+          if (!alive) return;
+          loading = false;
+          error = cause instanceof Error ? cause.message : "Unknown basemap loading error";
+        });
       };
 
       makeLayers = (specs) =>
@@ -297,10 +351,11 @@
           publishCamera();
           deck?.setProps({
             viewState,
-            layers: composeMapLayers(makeBasemapLayers?.() ?? [], markerLayers),
+            layers: composeMapLayers(basemapLayers, markerLayers),
           });
+          refreshBasemapLayers?.();
         },
-        layers: composeMapLayers(makeBasemapLayers?.() ?? [], markerLayers),
+        layers: composeMapLayers(basemapLayers, markerLayers),
         // Expose the resolved GPU device type for the browser smoke assertion.
         onDeviceInitialized: (device) => {
           container.dataset.deckDevice = device.type;
@@ -320,6 +375,7 @@
           if (picked.nodeShortId) store.select(picked.nodeShortId);
         },
       });
+      refreshBasemapLayers();
       // A hidden canvas is worse than a distorted frame, so the wait is bounded: if deck reports
       // no frame at the right size, the map is shown anyway.
       revealTimer = setTimeout(() => revealWhenCanvasSized(true), 2000);
@@ -335,8 +391,10 @@
       deck?.finalize();
       deck = null;
       makeLayers = null;
-      makeBasemapLayers = null;
+      refreshBasemapLayers = null;
+      basemapLayers = [];
       markerLayers = [];
+      disposeBasemapImages();
     };
   });
 
@@ -350,10 +408,12 @@
     const mapChanged = store.activeMapId !== fittedMapId;
     const nextViewState = mapChanged ? fitToVisible() : viewState;
     markerLayers = makeLayers(specs);
+    if (mapChanged) basemapLayers = [];
     deck.setProps({
-      layers: composeMapLayers(makeBasemapLayers?.() ?? [], markerLayers),
+      layers: composeMapLayers(basemapLayers, markerLayers),
       viewState: nextViewState,
     });
+    if (mapChanged) refreshBasemapLayers?.();
   });
 </script>
 
