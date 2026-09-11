@@ -315,7 +315,9 @@ function mergeAuthoredCopies(topics: ScriptStep[]): ScriptStep[] {
     first.copies = (first.copies ?? 1) + 1;
     topic.options.forEach((option, index) => {
       const target = first.options[index];
-      if (target !== undefined) target.next.push(...option.next);
+      if (target === undefined) return;
+      // Copies often continue into the same place, and one link says what seven identical ones said.
+      target.next = dropRepeatedReferences([...target.next, ...option.next]);
     });
   }
 
@@ -334,6 +336,23 @@ function byOpenerOrder(left: DialogueNodeSnapshot, right: DialogueNodeSnapshot):
     (right.importance ?? 0) - (left.importance ?? 0) ||
     left.id - right.id
   );
+}
+
+/**
+ * Drops a sibling reference that repeats one already listed.
+ *
+ * Seven of the 17 copies of the witness topic continue into the same random pick, so the page
+ * stacked seven identical "continues where this conversation already went" links. One link says
+ * everything the seven said.
+ */
+function dropRepeatedReferences(steps: ScriptStep[]): ScriptStep[] {
+  const seen = new Set<number>();
+  return steps.filter((step) => {
+    if (step.kind !== "reference" && step.kind !== "loop") return true;
+    if (seen.has(step.targetNodeId)) return false;
+    seen.add(step.targetNodeId);
+    return true;
+  });
 }
 
 function buildStep(
@@ -442,9 +461,11 @@ function followEdges(
   path: ReadonlySet<number>,
   context: ScriptContext,
 ): ScriptStep[] {
-  return edges
-    .map((edge) => buildStep(edge.to, path, context))
-    .filter((step): step is ScriptStep => step !== null);
+  return dropRepeatedReferences(
+    edges
+      .map((edge) => buildStep(edge.to, path, context))
+      .filter((step): step is ScriptStep => step !== null),
+  );
 }
 
 function groupEdges(edges: DialogueEdgeSnapshot[]): Map<number, DialogueEdgeSnapshot[]> {

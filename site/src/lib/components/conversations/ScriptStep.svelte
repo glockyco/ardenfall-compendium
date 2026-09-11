@@ -22,11 +22,13 @@
         ? "The conversation forks on the player's standing with the faction:"
         : kind === "character-group"
           ? "The conversation forks on who the player is speaking to:"
-          : kind === "branch-on-checks"
-            ? "The conversation forks on what the game checks, in this order:"
-            : kind === undefined || kind === "unread"
-              ? "The conversation forks on state the compendium cannot name:"
-              : `The conversation forks on the ${kind} check:`;
+          : kind === "chance"
+            ? "The game picks one of these replies at random:"
+            : kind === "branch-on-checks"
+              ? "The conversation forks on what the game checks, in this order:"
+              : kind === undefined || kind === "unread"
+                ? "The conversation forks on state the compendium cannot name:"
+                : `The conversation forks on the ${kind} check:`;
 </script>
 
 <!--
@@ -93,9 +95,15 @@
           <GateNote gate={alternative.gate} />
         {:else}
           <p class="text-muted-foreground text-xs uppercase">
-            {alternative.label && alternative.label.toUpperCase() !== "ELSE"
-              ? `If ${alternative.label}`
-              : "Otherwise"}
+            <!--
+              A random pick names its outputs by index, and an index is not a requirement: the
+              alternatives are equally likely, so the page says so instead of printing "if 0".
+            -->
+            {step.gate?.kind === "chance"
+              ? "One of the random replies"
+              : alternative.label && alternative.label.toUpperCase() !== "ELSE"
+                ? `If ${alternative.label}`
+                : "Otherwise"}
           </p>
         {/if}
         {#each alternative.next as next, nextIndex (nextIndex)}
