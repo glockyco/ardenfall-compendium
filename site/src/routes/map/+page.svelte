@@ -14,6 +14,7 @@
   // because url.searchParams is not available during prerendering.
   const store = untrack(() => new MapStore(data.mapView));
   let ready = $state(false);
+  const hasBasemap = $derived(data.mapView.maps.some((map) => map.basemap !== null));
 
   // afterNavigate runs after the client router is ready (post-hydration), which
   // is when programmatic navigation is safe to call.
@@ -53,8 +54,12 @@
     <h1 class="text-2xl font-semibold tracking-tight">Ardenfall map</h1>
     <p class="text-muted-foreground mt-2 max-w-2xl">
       Explore what the game places across the world: characters, locations, portals, containers,
-      loose items, pickable plants, world spawns and scene dialogue. The map currently has no
-      basemap, so markers show spatial relationships without terrain or roads.
+      loose items, pickable plants, world spawns and scene dialogue.
+      {#if hasBasemap}
+        Captured terrain appears below the markers when the selected map publishes it.
+      {:else}
+        This build has no basemap, so markers show spatial relationships without terrain or roads.
+      {/if}
     </p>
   </header>
 

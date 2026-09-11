@@ -56,10 +56,31 @@ export interface MapBounds {
   maxY: number;
 }
 
+export interface MapBasemapTile {
+  zoom: number;
+  x: number;
+  y: number;
+  assetUrl: string | null;
+  byteSize: number;
+  empty: boolean;
+}
+
+export interface MapBasemap {
+  bounds: MapBounds;
+  pixelsPerUnit: number;
+  cellSize: number;
+  minZoom: number;
+  maxZoom: number;
+  tileSize: number;
+  indexRef: string;
+  tiles: MapBasemapTile[];
+}
+
 export interface MapSummary {
   mapId: string | null;
   label: string;
   bounds: MapBounds | null;
+  basemap: MapBasemap | null;
 }
 
 export interface MapView {

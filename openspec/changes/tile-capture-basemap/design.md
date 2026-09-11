@@ -162,6 +162,16 @@ The basemap therefore belongs to the map's own metadata, emitted per map id besi
 
 The invariant the earlier plan defended still holds, and it is worth restating because both reference projects lost it. Adding a marker type here costs one `map` block in one descriptor. Ancient Kingdoms has a generic `createEntityLayer` helper in `layers.ts` and then calls it once per hardcoded type; the helper existed and the architecture defeated it. No map component may branch on layer identity, and that includes the basemap.
 
+### 6a. The installed `BitmapLayer` renders selected tiles
+
+The renderer uses a viewport tile selector over the installed `BitmapLayer`. It does not add `@deck.gl/geo-layers`.
+
+A fixture build on 2026-09-11 measured the current implementation against commit `44f2525`. The map route chunk increased from 16.10 kB to 17.54 kB, and from 6.37 kB to 6.89 kB compressed. The existing deck.gl core and layer chunks stayed at 620,244 bytes and 160,354 bytes.
+
+The `TileLayer` trial transformed 2,135 client modules instead of 1,124. It also failed because Bun resolved `@luma.gl/gltf` 9.4.1 beside `@luma.gl/engine` 9.3.3. Direct peer pins and an override did not make that graph build. The custom selector avoids the incompatible dependency graph and adds 0.52 kB compressed to the route.
+
+The selector uses the generated global tile lattice. It selects only tiles that intersect the viewport. An empty finest tile resolves to its nearest non-empty parent. The renderer places each image at its generated world bounds and paints it before marker layers.
+
 ### 7. Resolution is the cost driver
 
 File count grows with the square of pixels per unit. Tiles are 256 pixels. The deploy gate fails above 20,000 files, and the live build ships 11,084 as of 2026-09-11, up from 7,373 when this plan was written: conversations, quest logic and 2,548 item pages took the difference. The remaining headroom is about 8,900 files.

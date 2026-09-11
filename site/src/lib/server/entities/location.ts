@@ -3,6 +3,7 @@ import { getMapHref } from "../map-href";
 import { isColorArray, isGeometry, isStringArray, parseGeneratedJson } from "../json";
 import { getEntityNodeBySlug } from "./item";
 import type {
+  MapBasemap,
   MapBounds,
   MapLayerConfig,
   MapPointRow,
@@ -13,6 +14,30 @@ import type {
 } from "../../map/types";
 
 const KNOWN_KINDS: RenderKind[] = ["point-or-polygon", "point", "polygon"];
+
+interface MapBasemapRecord {
+  map_id: string;
+  min_x: number;
+  min_y: number;
+  max_x: number;
+  max_y: number;
+  pixels_per_unit: number;
+  cell_size: number;
+  min_zoom: number;
+  max_zoom: number;
+  tile_size: number;
+  index_ref: string;
+}
+
+interface MapTileRecord {
+  map_id: string;
+  zoom: number;
+  tile_x: number;
+  tile_y: number;
+  asset_hash: string | null;
+  byte_size: number;
+  empty: number;
+}
 
 interface MapLayerRecord {
   layer_id: string;
@@ -285,13 +310,54 @@ function readVolumes(layer: MapLayerConfig): MapVolumeRow[] {
   return rows;
 }
 
+function readBasemaps(): Map<string, MapBasemap> {
+  if (!tableExists("map_basemaps") || !tableExists("map_tiles")) return new Map();
+  const tilesByMap = new Map<string, MapTileRecord[]>();
+  for (const tile of all<MapTileRecord>(
+    `SELECT map_id, zoom, tile_x, tile_y, asset_hash, byte_size, empty
+       FROM map_tiles ORDER BY map_id, zoom, tile_y, tile_x`,
+  )) {
+    const values = tilesByMap.get(tile.map_id) ?? [];
+    values.push(tile);
+    tilesByMap.set(tile.map_id, values);
+  }
+
+  return new Map(
+    all<MapBasemapRecord>(`SELECT * FROM map_basemaps ORDER BY map_id`).map((row) => [
+      row.map_id,
+      {
+        bounds: { minX: row.min_x, minY: row.min_y, maxX: row.max_x, maxY: row.max_y },
+        pixelsPerUnit: row.pixels_per_unit,
+        cellSize: row.cell_size,
+        minZoom: row.min_zoom,
+        maxZoom: row.max_zoom,
+        tileSize: row.tile_size,
+        indexRef: row.index_ref,
+        tiles: (tilesByMap.get(row.map_id) ?? []).map((tile) => ({
+          zoom: tile.zoom,
+          x: tile.tile_x,
+          y: tile.tile_y,
+          assetUrl: tile.asset_hash === null ? null : `/assets/${tile.asset_hash}.webp`,
+          byteSize: tile.byte_size,
+          empty: tile.empty === 1,
+        })),
+      },
+    ]),
+  );
+}
+
 function displayMapLabel(mapId: string | null): string {
   if (mapId === null) return "Unknown";
   return mapId.replace(/[-_]+/g, " ").replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function computeMaps(points: MapPointRow[], volumes: MapVolumeRow[]): MapSummary[] {
+function computeMaps(
+  points: MapPointRow[],
+  volumes: MapVolumeRow[],
+  basemaps: ReadonlyMap<string, MapBasemap>,
+): MapSummary[] {
   const byMap = new Map<string | null, { bounds: MapBounds | null; contentCount: number }>();
+  for (const mapId of basemaps.keys()) byMap.set(mapId, { bounds: null, contentCount: 0 });
   const addContent = (mapId: string | null): void => {
     const previous = byMap.get(mapId);
     byMap.set(mapId, {
@@ -334,6 +400,7 @@ function computeMaps(points: MapPointRow[], volumes: MapVolumeRow[]): MapSummary
       mapId,
       label: displayMapLabel(mapId),
       bounds: aggregate.bounds,
+      basemap: mapId === null ? null : (basemaps.get(mapId) ?? null),
     }));
 }
 
@@ -423,5 +490,6 @@ export function getMapView(): MapView {
   const layers = readLayers();
   const points = layers.flatMap(readPoints);
   const volumes = layers.flatMap(readVolumes);
-  return { maps: computeMaps(points, volumes), layers, points, volumes };
+  const basemaps = readBasemaps();
+  return { maps: computeMaps(points, volumes, basemaps), layers, points, volumes };
 }

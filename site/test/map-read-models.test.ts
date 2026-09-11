@@ -26,6 +26,17 @@ function withDb(seed: (db: Database) => void): string {
 }
 
 const baseSchema = `
+  CREATE TABLE map_basemaps (
+    map_id TEXT PRIMARY KEY, min_x REAL NOT NULL, min_y REAL NOT NULL,
+    max_x REAL NOT NULL, max_y REAL NOT NULL, pixels_per_unit REAL NOT NULL,
+    cell_size REAL NOT NULL, min_zoom INTEGER NOT NULL, max_zoom INTEGER NOT NULL,
+    tile_size INTEGER NOT NULL, index_ref TEXT NOT NULL, game_version TEXT NOT NULL
+  );
+  CREATE TABLE map_tiles (
+    map_id TEXT NOT NULL, zoom INTEGER NOT NULL, tile_x INTEGER NOT NULL,
+    tile_y INTEGER NOT NULL, asset_hash TEXT, byte_size INTEGER NOT NULL,
+    empty INTEGER NOT NULL, PRIMARY KEY (map_id, zoom, tile_x, tile_y)
+  );
   CREATE TABLE map_layers (
     layer_id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, source_table TEXT NOT NULL,
     source_tables_json TEXT NOT NULL, render_kind TEXT NOT NULL, icon TEXT,
@@ -61,6 +72,11 @@ describe("getMapView", () => {
     const root = withDb((db) => {
       db.exec(baseSchema);
       db.exec(`
+        INSERT INTO map_basemaps VALUES
+          ('ardenfall', 0, 0, 300, 300, 3.4, 150, -1, 2, 512, 'map_tiles', 'demo-build');
+        INSERT INTO map_tiles VALUES
+          ('ardenfall', 2, 0, 0, '${"a".repeat(64)}', 1234, 0),
+          ('ardenfall', 2, 1, 0, NULL, 0, 1);
         INSERT INTO map_layers VALUES
           ('locations', 'location', 'map_points',
            '["map_points","map_volumes"]', 'point-or-polygon', 'location',
@@ -133,6 +149,26 @@ describe("getMapView", () => {
           mapId: "ardenfall",
           label: "Ardenfall",
           bounds: { minX: 10, minY: 6, maxX: 14, maxY: 10 },
+          basemap: {
+            bounds: { minX: 0, minY: 0, maxX: 300, maxY: 300 },
+            pixelsPerUnit: 3.4,
+            cellSize: 150,
+            minZoom: -1,
+            maxZoom: 2,
+            tileSize: 512,
+            indexRef: "map_tiles",
+            tiles: [
+              {
+                zoom: 2,
+                x: 0,
+                y: 0,
+                assetUrl: `/assets/${"a".repeat(64)}.webp`,
+                byteSize: 1234,
+                empty: false,
+              },
+              { zoom: 2, x: 1, y: 0, assetUrl: null, byteSize: 0, empty: true },
+            ],
+          },
         },
       ]);
     } finally {

@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { buildMapLayerSpecs, type LayerSpec } from "$lib/map/layer-spec";
   import { mapAccessibleName, visibleMapMarkers } from "$lib/map/map-accessibility";
+  import { composeMapLayers, visibleBasemapTiles } from "$lib/map/basemap";
   import type { MapStore } from "$lib/map/map-store.svelte";
   import type { MapBounds } from "$lib/map/types";
   // Type-only imports are erased at build time, so they do not pull deck.gl into
@@ -27,6 +28,8 @@
   // deck handles live in closure scope, never module scope (HMR/leak safety).
   let deck: Deck<OrthographicView> | null = null;
   let makeLayers: ((specs: LayerSpec[]) => Layer[]) | null = null;
+  let makeBasemapLayers: (() => Layer[]) | null = null;
+  let markerLayers: Layer[] = [];
 
   const activeMapLabel = $derived(
     store.view.maps.find((map) => map.mapId === store.activeMapId)?.label ?? "Unknown map",
@@ -180,6 +183,10 @@
     return buildMapLayerSpecs(store.view.layers, points, volumes, ui);
   }
 
+  function activeBasemap() {
+    return store.view.maps.find((map) => map.mapId === store.activeMapId)?.basemap ?? null;
+  }
+
   function syncCanvasLabel(): void {
     const canvas = container?.querySelector("canvas");
     canvas?.setAttribute("aria-label", mapAccessibleName(activeMapLabel, visibleMarkers.length));
@@ -198,7 +205,27 @@
       ]);
       if (!alive) return;
       const { Deck, OrthographicView, COORDINATE_SYSTEM } = core;
-      const { ScatterplotLayer, PolygonLayer } = layersMod;
+      const { BitmapLayer, ScatterplotLayer, PolygonLayer } = layersMod;
+
+      makeBasemapLayers = () => {
+        const basemap = activeBasemap();
+        if (basemap === null || viewState === null) return [];
+        return visibleBasemapTiles(basemap, {
+          target: viewState.target,
+          zoom: viewState.zoom,
+          width: container.clientWidth || 800,
+          height: container.clientHeight || 480,
+        }).map(
+          ({ tile, bounds }) =>
+            new BitmapLayer({
+              id: `basemap::${store.activeMapId}::${tile.zoom}/${tile.x}/${tile.y}`,
+              image: tile.assetUrl!,
+              bounds,
+              coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+              pickable: false,
+            }),
+        );
+      };
 
       makeLayers = (specs) =>
         specs.map((spec) =>
@@ -253,6 +280,8 @@
               }),
         );
 
+      markerLayers = makeLayers(currentSpecs());
+
       // deck.gl adopts a canvas it is given and creates one at the HTML default 300x150 otherwise,
       // which CSS then stretches across the map box until deck's own resize catches up. Sizing the
       // backing store before the first frame is what removes the distorted flash at load.
@@ -266,9 +295,12 @@
         onViewStateChange: ({ viewState: next }) => {
           viewState = next as MapViewState;
           publishCamera();
-          deck?.setProps({ viewState });
+          deck?.setProps({
+            viewState,
+            layers: composeMapLayers(makeBasemapLayers?.() ?? [], markerLayers),
+          });
         },
-        layers: makeLayers(currentSpecs()),
+        layers: composeMapLayers(makeBasemapLayers?.() ?? [], markerLayers),
         // Expose the resolved GPU device type for the browser smoke assertion.
         onDeviceInitialized: (device) => {
           container.dataset.deckDevice = device.type;
@@ -303,6 +335,8 @@
       deck?.finalize();
       deck = null;
       makeLayers = null;
+      makeBasemapLayers = null;
+      markerLayers = [];
     };
   });
 
@@ -314,9 +348,11 @@
     syncCanvasLabel();
     if (!deck || !makeLayers) return;
     const mapChanged = store.activeMapId !== fittedMapId;
+    const nextViewState = mapChanged ? fitToVisible() : viewState;
+    markerLayers = makeLayers(specs);
     deck.setProps({
-      layers: makeLayers(specs),
-      viewState: mapChanged ? fitToVisible() : viewState,
+      layers: composeMapLayers(makeBasemapLayers?.() ?? [], markerLayers),
+      viewState: nextViewState,
     });
   });
 </script>
