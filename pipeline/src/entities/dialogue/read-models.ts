@@ -96,7 +96,14 @@ interface ScriptAlternative {
 interface Script {
   /** Greetings, in the order the game prefers them. They are alternatives, not a sequence. */
   openers: ScriptStep[];
-  /** Every other entry point of the graph. */
+  /**
+   * What the player can raise once the conversation is open.
+   *
+   * A topic is an entry point of the graph rather than something a greeting points at: the game
+   * offers every topic whose gate passes, so they are the conversation's menu.
+   */
+  topics: ScriptStep[];
+  /** Every other entry point: a quest event, or another conversation. */
   starts: ScriptStep[];
 }
 
@@ -234,6 +241,7 @@ interface ScriptContext {
 
 function buildScript(entryNodes: number[], context: ScriptContext): Script {
   const openers: ScriptStep[] = [];
+  const topics: ScriptStep[] = [];
   const starts: ScriptStep[] = [];
 
   // A greeting is an opener, and the game prefers the one with the highest importance. Ordering
@@ -247,20 +255,25 @@ function buildScript(entryNodes: number[], context: ScriptContext): Script {
     const step = buildStep(entry.id, new Set<number>(), context);
     if (step === null) continue;
     if (isOpener(entry)) openers.push(step);
+    else if (entry.role === "choice") topics.push(step);
     else starts.push(step);
   }
 
-  return { openers, starts };
+  return { openers, topics, starts };
 }
 
 const isOpener = (node: DialogueNodeSnapshot): boolean =>
   node.role === "speech" && node.importance !== null;
 
+/** Openers first, then topics, each in the order the game prefers them. */
 function byOpenerOrder(left: DialogueNodeSnapshot, right: DialogueNodeSnapshot): number {
-  const leftOpener = isOpener(left) ? 0 : 1;
-  const rightOpener = isOpener(right) ? 0 : 1;
-  if (leftOpener !== rightOpener) return leftOpener - rightOpener;
-  return (right.importance ?? 0) - (left.importance ?? 0) || left.id - right.id;
+  const rank = (node: DialogueNodeSnapshot): number =>
+    isOpener(node) ? 0 : node.role === "choice" ? 1 : 2;
+  return (
+    rank(left) - rank(right) ||
+    (right.importance ?? 0) - (left.importance ?? 0) ||
+    left.id - right.id
+  );
 }
 
 function buildStep(

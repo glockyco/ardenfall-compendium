@@ -64,6 +64,22 @@
   {/if}
 </section>
 
+{#if presentation.script.topics.length > 0}
+  <section class="border-border mt-6 rounded-lg border p-4" aria-labelledby="topics-heading">
+    <h2 id="topics-heading" class="font-semibold">
+      What the player can raise ({presentation.script.topics.length})
+    </h2>
+    <p class="text-muted-foreground mt-1 text-sm">
+      The game offers every topic whose requirement is met, in the order it prefers them.
+    </p>
+    <div class="mt-3 grid gap-4">
+      {#each presentation.script.topics as topic, index (index)}
+        <ScriptStep step={topic} />
+      {/each}
+    </div>
+  </section>
+{/if}
+
 {#if presentation.script.starts.length > 0}
   <section class="border-border mt-6 rounded-lg border p-4" aria-labelledby="starts-heading">
     <h2 id="starts-heading" class="font-semibold">

@@ -84,7 +84,9 @@ export type DialogueScriptStep =
 export interface DialogueScript {
   /** Greetings, in the order the game prefers them. They are alternatives, not a sequence. */
   openers: DialogueScriptStep[];
-  /** Every other entry point of the graph. */
+  /** What the player can raise once the conversation is open. */
+  topics: DialogueScriptStep[];
+  /** Every other entry point: a quest event, or another conversation. */
   starts: DialogueScriptStep[];
 }
 
@@ -146,6 +148,8 @@ const isScript = (value: unknown): value is DialogueScript =>
   value !== null &&
   "openers" in value &&
   Array.isArray(value.openers) &&
+  "topics" in value &&
+  Array.isArray(value.topics) &&
   "starts" in value &&
   Array.isArray(value.starts);
 
