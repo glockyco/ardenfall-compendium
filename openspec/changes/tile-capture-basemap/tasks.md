@@ -42,12 +42,12 @@
 
 - [x] 6.1 Add a small captured tile set to `fixtures/synthetic/snapshot`, including one empty position and one map without a basemap, so CI exercises both paths.
 - [x] 6.2 Extend the map smoke to assert that a basemap tile reaches the built page, selected by state rather than by a fixture name.
-- [ ] 6.3 Report the deploy file count against the 20,000 limit after the first full capture, and record it.
+- [x] 6.3 Report the deploy file count against the 20,000 limit after the first full capture, and record it. (The final live release contains 11,541 deploy files, leaving 8,459 below the limit.)
 
 ## 7. Verification
 
-- [ ] 7.1 Run a live export with a capture, build a release, and open the map in a browser. Read the plate under the markers at three zoom levels.
-- [ ] 7.2 Confirm alignment against the game's own imagery, which shares the grid, and record the result.
-- [ ] 7.3 Run the full gate in `AGENTS.md`.
-- [ ] 7.4 Decide whether to publish the game's imagery as an alternative layer, and either open a change for it or record the rejection.
+- [x] 7.1 Run a live export with a capture, build a release, and open the map in a browser. Read the plate under the markers at three zoom levels. (Verified release `0.0.10.91-20260911-1742153217290`; tiles remained present across three zoom levels.)
+- [x] 7.2 Confirm alignment against the game's own imagery, which shares the grid, and record the result. (The southern coastline, coral basin, purple ridge, roads, and settlement footprints align at equal scale and orientation.)
+- [x] 7.3 Run the full gate in `AGENTS.md`. (Passed 2026-09-11: all tests, type checks, fixture build and smokes, schema checks, lint, formatting, and diff checks.)
+- [x] 7.4 Decide whether to publish the game's imagery as an alternative layer, and either open a change for it or record the rejection. (Rejected. The generated game texture remains a calibration reference and is not a published compendium asset.)
 - [ ] 7.5 Archive this change after the gate passes.

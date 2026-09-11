@@ -223,9 +223,9 @@ black regions, and raising ambient to 1.6 with a near-white colour does not lift
 recommendation is to ship the overworld basemap first and treat interiors as a later question with
 its own evidence.
 
-**The game's own imagery.** It exists at 1.667 pixels per unit with placement and scale arrays, is evenly lit, needs no capture, and aligns exactly with the grid and with our own capture. Against this build it also covers every marker, while a capture covers one cluster of three.
+**The game's own imagery. Closed 2026-09-11: use it only as a reference.** It exists at 1.667 pixels per unit with placement and scale arrays, is evenly lit, and aligns with the declared grid and the capture. It is not a published compendium asset or an alternative map layer.
 
-Options: publish the imagery as the basemap for a build whose cell scenes cover little of the world, and let a capture supersede it per cell as authored coverage grows; publish it as an alternative layer beside a captured basemap; or use it only as an alignment reference. The first is the measured recommendation and the decision is the reader's to make, because the second and third ship a basemap with terrain under a fifth of the markers.
+The final capture covers the full grid with distant terrain and layers isolated authored scenes above it. This keeps one published basemap producer while preserving the game's texture as a calibration source for scale, orientation, landmark alignment, and colour. The accepted trade-off is lower foliage fidelity than the baked texture.
 
 **Cells without an authored scene. Closed 2026-09-11: capture the full grid, and mark it.** 24 of
 575 overworld cells ship a scene, and only 83 of 373 placements sit inside one. The distant coverage
