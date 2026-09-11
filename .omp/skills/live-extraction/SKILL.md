@@ -115,13 +115,22 @@ the source that builds it.
 
 ### Two installs
 
-Steam holds two Ardenfall installs, and they are different games.
+Steam holds two Ardenfall installs, and they are different games. The Demo is public. The other is a
+private alpha, and **nothing extracted from it may be published**. A reader of the compendium must
+never meet a fact that came from the alpha.
 
-- `Ardenfall Demo` reports `buildProfile: Demo2025`. The compendium targets it, and the controller
-  asserts the Unity product name `Ardenfall Demo 2025`, so an export against the other install fails by
-  design.
-- `Ardenfall` reports `buildProfile: Alpha`. It ships 97 cell scenes against the Demo's 27, so it is the
-  install to measure when a question is about world coverage.
+- `Ardenfall Demo` reports `buildProfile: Demo2025`. The compendium publishes it, and only it.
+- `Ardenfall` reports `buildProfile: Alpha`. It ships 97 cell scenes against the Demo's 27, so it
+  answers a question about world coverage. Read it, and publish nothing from it.
+
+The embargo is why the controller asserts the Unity product name `Ardenfall Demo 2025` before it
+exports, and why a snapshot records the product name and the build profile of the game that answered.
+An export against the alpha fails by design, and a release refuses a snapshot whose recorded identity
+names another game or names none at all: an unproven source is not a proven one.
+
+A read-only probe against the alpha is legitimate and is not an export. Keep it in `spikes/`, let it
+write no snapshot, and quote its numbers as measurements of that install rather than as compendium
+content.
 
 Each install root holds a `buildsettings.txt`, and the game reads it at startup through
 `BuildSettingsFile.ReadBuildSettingsFromFile`. `enableDebugTools` in that file survives a restart, while

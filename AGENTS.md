@@ -53,6 +53,11 @@ Git hooks run their tools through `nix develop`, so a commit works from a GUI cl
 ## Live data and game logic
 
 - For live extraction, use `skill://live-extraction`.
+- Only Demo-derived artifacts may be published. Steam holds a public Demo and a private alpha, and
+  nothing extracted from the alpha may reach the site. The controller asserts the Unity product name
+  before it exports, a snapshot records the identity of the game that answered, and a release refuses
+  a snapshot that cannot prove it came from the Demo. Read-only probes against the alpha are allowed,
+  stay in `spikes/`, and write no snapshot.
 
 ## What counts as verified
 

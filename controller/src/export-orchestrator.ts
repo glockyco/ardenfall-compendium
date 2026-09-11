@@ -481,9 +481,10 @@ function assertExpectedProductName(result: Record<string, unknown>): void {
   if (actual !== EXPECTED_PRODUCT_NAME) {
     throw new Error(
       `Publication embargo: expected Unity product name "${EXPECTED_PRODUCT_NAME}", ` +
-        `but HotRepl reported "${actual}". This usually indicates a port collision with ` +
-        "another instrumented game. Content from that install must not be published; stop it and " +
-        "reconnect to Ardenfall Demo before exporting.",
+        `but HotRepl reported "${actual}". Only Demo-derived content may be published, and ` +
+        "content from another install must not reach the site. A port collision with another " +
+        "instrumented game is the usual cause; stop it and reconnect to Ardenfall Demo before " +
+        "exporting.",
     );
   }
 }

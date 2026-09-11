@@ -477,7 +477,7 @@ describe("exportCompendium", () => {
         pipelineOutDir: "/tmp/pipeline",
       }),
     ).rejects.toThrow(
-      /publication embargo.*expected Unity product name "Ardenfall Demo 2025".*reported "Vespera".*port collision.*must not be published/i,
+      /publication embargo.*expected Unity product name "Ardenfall Demo 2025".*reported "Vespera".*only Demo-derived content may be published.*port collision/i,
     );
 
     expect(client.calls.map((call) => call.name)).toEqual(["compendium.preflight"]);
