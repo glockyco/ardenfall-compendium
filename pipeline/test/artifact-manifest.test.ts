@@ -23,7 +23,12 @@ describe("artifact manifest emission", () => {
           artifactDir: root,
           snapshot,
           sqliteOutput: { outputPath: join(root, "data.sqlite"), byteSize: 1 },
-          assetsOutput: { assetsDir: join(root, "assets"), refs: [], itemIconMetadata: [] },
+          assetsOutput: {
+            assetsDir: join(root, "assets"),
+            refs: [],
+            itemIconMetadata: [],
+            basemaps: [],
+          },
         }),
       ).rejects.toThrow(/release artifacts require live-game-export snapshots/);
     } finally {
@@ -98,6 +103,7 @@ describe("artifact manifest emission", () => {
             },
           ],
           itemIconMetadata: [],
+          basemaps: [],
         },
       });
 

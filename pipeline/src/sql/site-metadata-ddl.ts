@@ -43,6 +43,31 @@ CREATE TABLE asset_refs (
   asset_hash       TEXT NOT NULL,
   PRIMARY KEY (entity_id, entity_row_id, slot)
 );
+CREATE TABLE map_basemaps (
+  map_id             TEXT PRIMARY KEY,
+  min_x              REAL NOT NULL,
+  min_y              REAL NOT NULL,
+  max_x              REAL NOT NULL,
+  max_y              REAL NOT NULL,
+  pixels_per_unit    REAL NOT NULL,
+  cell_size          REAL NOT NULL,
+  min_zoom           INTEGER NOT NULL,
+  max_zoom           INTEGER NOT NULL,
+  tile_size          INTEGER NOT NULL,
+  index_ref          TEXT NOT NULL,
+  game_version       TEXT NOT NULL
+);
+CREATE TABLE map_tiles (
+  map_id             TEXT NOT NULL,
+  zoom               INTEGER NOT NULL,
+  tile_x             INTEGER NOT NULL,
+  tile_y             INTEGER NOT NULL,
+  asset_hash         TEXT,
+  byte_size          INTEGER NOT NULL,
+  empty              INTEGER NOT NULL,
+  PRIMARY KEY (map_id, zoom, tile_x, tile_y),
+  FOREIGN KEY (map_id) REFERENCES map_basemaps(map_id)
+);
 CREATE TABLE map_layers (
   layer_id             TEXT PRIMARY KEY,
   entity_id            TEXT NOT NULL,

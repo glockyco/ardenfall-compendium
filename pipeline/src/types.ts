@@ -904,6 +904,14 @@ export interface ArtifactManifest {
   toolchain?: Record<string, string>;
   diagnostics: { fatal: number; diagnostic: number };
   counts: Record<string, number>;
+  basemaps: {
+    mapId: string;
+    tileCount: number;
+    totalBytes: number;
+    bounds: { minX: number; minY: number; maxX: number; maxY: number };
+    pixelsPerUnit: number;
+    gameVersion: string;
+  }[];
   outputs: {
     sqlite: { path: "data.sqlite"; bytes: number; sha256: string };
     assets: { path: "assets"; count: number; treeSha256: string };

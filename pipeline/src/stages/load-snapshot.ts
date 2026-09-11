@@ -80,7 +80,8 @@ export const loadSnapshot: Stage<unknown, LoadSnapshotOutput> = {
         fileName === "diagnostics.json" ||
         fileName === "asset-manifest.json" ||
         fileName === "master-tooltip.json" ||
-        fileName === "finalize-timings.json"
+        fileName === "finalize-timings.json" ||
+        fileName.startsWith("map-capture-")
       ) {
         continue;
       }

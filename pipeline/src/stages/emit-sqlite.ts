@@ -11,6 +11,7 @@ import type { LoadDescriptorsOutput } from "./load-descriptors.ts";
 import type { LoadSnapshotOutput } from "./load-snapshot.ts";
 import type { EmitAssetsOutput } from "./emit-assets.ts";
 import type { ValidateOutput } from "./validate.ts";
+import { emitBasemapReadModels } from "../map/basemap.ts";
 
 export class SnapshotValidationError extends Error {
   constructor(public readonly validation: ValidateOutput) {
@@ -145,6 +146,7 @@ export const emitSqlite: Stage<EmitSqliteInputs, EmitSqliteOutput> = {
         assetRefInsert.run(ref.entityId, ref.entityRowId, ref.slot, ref.assetKind, ref.assetHash);
       }
       emitReadModels(db, desc, inputs["load-snapshot"], inputs["emit-assets"]);
+      emitBasemapReadModels(db, inputs["emit-assets"]?.basemaps ?? []);
       db.exec(`CREATE TABLE artifact_metadata (key TEXT PRIMARY KEY, value TEXT NOT NULL);`);
       const metadataInsert = db.prepare("INSERT INTO artifact_metadata (key, value) VALUES (?, ?)");
       metadataInsert.run("schemaVersion", "1");

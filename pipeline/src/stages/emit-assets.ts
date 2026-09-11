@@ -4,6 +4,7 @@ import { join } from "node:path";
 import sharp from "sharp";
 import type { EmittedAssetRef, SnapshotItemIconMetadata, Stage } from "../types.ts";
 import type { LoadSnapshotOutput } from "./load-snapshot.ts";
+import { ingestBasemaps, type BasemapMetadata } from "../map/basemap.ts";
 
 export interface EmitAssetsInputs {
   "load-snapshot": LoadSnapshotOutput;
@@ -13,6 +14,7 @@ export interface EmitAssetsOutput {
   assetsDir: string;
   refs: EmittedAssetRef[];
   itemIconMetadata: SnapshotItemIconMetadata[];
+  basemaps: BasemapMetadata[];
 }
 
 function sha256Hex(bytes: Uint8Array): string {
@@ -76,6 +78,20 @@ export const emitAssets: Stage<EmitAssetsInputs, EmitAssetsOutput> = {
       });
     }
 
-    return { assetsDir, refs, itemIconMetadata: manifest.itemIconMetadata };
+    const basemapOutput = await ingestBasemaps(
+      ctx.snapshotDir,
+      inputs["load-snapshot"].manifest.gameVersion,
+    );
+    for (const asset of basemapOutput.assets) {
+      const outputPath = join(assetsDir, `${asset.hash}.webp`);
+      if (!existsSync(outputPath)) writeFileSync(outputPath, asset.bytes);
+    }
+
+    return {
+      assetsDir,
+      refs,
+      itemIconMetadata: manifest.itemIconMetadata,
+      basemaps: basemapOutput.basemaps,
+    };
   },
 };

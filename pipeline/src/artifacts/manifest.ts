@@ -33,7 +33,12 @@ export async function buildArtifactManifest(
   const sqlitePath = join(input.artifactDir, "data.sqlite");
   const assetsDir = join(input.artifactDir, "assets");
   const probes = readItemProbes(sqlitePath);
-  const uniqueAssetHashes = new Set(input.assetsOutput.refs.map((ref) => ref.assetHash));
+  const uniqueAssetHashes = new Set([
+    ...input.assetsOutput.refs.map((ref) => ref.assetHash),
+    ...input.assetsOutput.basemaps.flatMap((map) =>
+      map.tiles.flatMap((tile) => (tile.assetHash === null ? [] : [tile.assetHash])),
+    ),
+  ]);
   const git = readGitIdentity();
   const snapshotId = `${input.snapshot.manifest.gameVersion ?? "unknown"}-${input.snapshot.manifest.buildIdentifier ?? "unknown"}`;
   writeArtifactMetadata(sqlitePath, {
@@ -92,6 +97,14 @@ export async function buildArtifactManifest(
       assetRefs: input.assetsOutput.refs.length,
       webpAssets: uniqueAssetHashes.size,
     },
+    basemaps: input.assetsOutput.basemaps.map((map) => ({
+      mapId: map.mapId,
+      tileCount: map.tiles.filter((tile) => !tile.empty).length,
+      totalBytes: map.tiles.reduce((sum, tile) => sum + tile.byteSize, 0),
+      bounds: { minX: map.minX, minY: map.minY, maxX: map.maxX, maxY: map.maxY },
+      pixelsPerUnit: map.pixelsPerUnit,
+      gameVersion: map.gameVersion,
+    })),
     outputs: {
       sqlite: {
         path: "data.sqlite",

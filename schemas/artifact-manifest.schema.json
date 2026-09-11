@@ -13,6 +13,7 @@
     "git",
     "diagnostics",
     "counts",
+    "basemaps",
     "outputs",
     "probes"
   ],
@@ -73,6 +74,32 @@
     "counts": {
       "type": "object",
       "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "basemaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["mapId", "tileCount", "totalBytes", "bounds", "pixelsPerUnit", "gameVersion"],
+        "properties": {
+          "mapId": { "type": "string", "minLength": 1 },
+          "tileCount": { "type": "integer", "minimum": 0 },
+          "totalBytes": { "type": "integer", "minimum": 0 },
+          "bounds": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["minX", "minY", "maxX", "maxY"],
+            "properties": {
+              "minX": { "type": "number" },
+              "minY": { "type": "number" },
+              "maxX": { "type": "number" },
+              "maxY": { "type": "number" }
+            }
+          },
+          "pixelsPerUnit": { "type": "number", "exclusiveMinimum": 0 },
+          "gameVersion": { "type": "string", "minLength": 1 }
+        }
+      }
     },
     "outputs": {
       "type": "object",
