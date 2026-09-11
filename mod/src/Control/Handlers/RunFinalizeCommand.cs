@@ -294,6 +294,10 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
             RecordTiming(timings, "metadata.write", phaseStopwatch, totalStopwatch);
 
             phaseStopwatch.Restart();
+            foreach (var diagnostic in ReadWalkDiagnostics(run))
+            {
+                AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
+            }
             foreach (var diagnostic in _items.GetWalkerDiagnostics(run))
             {
                 AddDiagnostic(diagnosticTotals, diagnostics, rowId: null, diagnostic);
@@ -735,6 +739,25 @@ public sealed class RunFinalizeCommand : IControlCommandHandler<RunIdArgs, RunFi
     /// <summary>
     /// Reads the chunks the cell walk wrote for one family in this run, in batch order.
     /// </summary>
+    /// <summary>
+    /// The diagnostics the cell walk recorded, which say why a scene object was not published.
+    /// </summary>
+    private static List<Diagnostic> ReadWalkDiagnostics(CompendiumRun run)
+    {
+        var diagnostics = new List<Diagnostic>();
+        var dir = Path.Combine(run.WorkspaceDir, "walk", "diagnostics");
+        if (!Directory.Exists(dir)) return diagnostics;
+        foreach (var path in Directory.GetFiles(dir, "*.json").OrderBy(name => name, StringComparer.Ordinal))
+        {
+            var batch = JsonConvert.DeserializeObject<List<Diagnostic>>(
+                File.ReadAllText(path),
+                JsonSettings.Default);
+            if (batch != null) diagnostics.AddRange(batch);
+        }
+
+        return diagnostics;
+    }
+
     private static List<Entities.World.SceneRow> ReadWalkedRows(CompendiumRun run, string entityId)
     {
         var rows = new List<Entities.World.SceneRow>();

@@ -130,6 +130,27 @@ public sealed class WorldWalkBatchCommand
                                 ManifestBuilder.Sha256Hex(json));
                     }
 
+                    // Walk diagnostics travel with the walk's rows. Reporting only their count in
+                    // the batch result discarded the reasons, so a skipped object left no trace in
+                    // the snapshot and looked like an object the scene does not hold.
+                    var walkDiagnostics = walked.Cells
+                        .SelectMany(cell => cell.Diagnostics)
+                        .Concat(walked.Diagnostics)
+                        .ToList();
+                    var diagnosticsPath = Path.Combine(
+                        run.WorkspaceDir,
+                        "walk",
+                        "diagnostics",
+                        $"{args.Offset:D6}.json");
+                    var diagnosticsJson = JsonConvert.SerializeObject(walkDiagnostics, JsonSettings.Default);
+                    AtomicFile.WriteAllText(diagnosticsPath, diagnosticsJson);
+                    artifacts[$"walk.diagnostics.{args.Offset:D6}"] =
+                        CompendiumCommandResults.FileArtifact(
+                            $"walk.diagnostics.{args.Offset:D6}",
+                            diagnosticsPath,
+                            "application/json",
+                            ManifestBuilder.Sha256Hex(diagnosticsJson));
+
                     run.WorldPlan.MarkWalked(walked.Cells.Select(cell => cell.Cell));
                     _runs.Save(run);
                 },
