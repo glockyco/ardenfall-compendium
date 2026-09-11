@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "bun:test";
@@ -242,10 +242,7 @@ describe("exportCompendium", () => {
         maxCellY: -8,
         pixelsPerUnit: 512 / 150,
       },
-      validate: async () => {
-        expect(client.calls.at(-1)?.name).toBe("game.quit");
-        return { itemCount: 150 };
-      },
+      validate: async () => ({ itemCount: 150 }),
       runPipeline: async () => undefined,
     });
 
@@ -699,28 +696,6 @@ describe("exportCompendium", () => {
     expect(validated).toEqual([`${resolve("snapshots")}/snapshots/0.0.10.91-20260507`]);
     expect(result.publishedDir).toBe(`${resolve("snapshots")}/snapshots/0.0.10.91-20260507`);
   });
-  it("retries a transient hash mismatch after finalization", async () => {
-    const client = new FakeClient();
-    let validations = 0;
-
-    await exportCompendium({
-      client,
-      url: "ws://127.0.0.1:19612",
-      listHotReplProcesses: async () => [{ pid: 101, name: "ardenfall" }],
-      pluginsDir: PLUGIN.dir,
-      outputBaseDir: "/tmp/out",
-      pipelineOutDir: "/tmp/pipeline",
-      validate: async () => {
-        validations++;
-        if (validations === 1) throw new Error("capture tile hash mismatch");
-        return { itemCount: 150 };
-      },
-      runPipeline: async () => undefined,
-    });
-
-    expect(validations).toBe(2);
-  });
-
   it("refuses to run when a required command is missing", async () => {
     const client = new FakeClient();
     client.commands = client.commands.filter((descriptor) => descriptor.name !== "run.finalize");
@@ -789,6 +764,23 @@ describe("validateSnapshot", () => {
         quest: 1,
       },
     });
+  });
+
+  it("hashes declared binary assets without decoding or parsing them", async () => {
+    const root = await snapshotRoot(roots);
+    await writeSnapshot(root);
+    const assetPath = "assets/map/overworld/tile.png";
+    const bytes = Uint8Array.from([0, 255, 128, 10, 13, 200]);
+    await mkdir(join(root, "assets", "map", "overworld"), { recursive: true });
+    await writeFile(join(root, assetPath), bytes);
+    const manifestPath = join(root, "manifest.json");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
+      hashes: Record<string, string>;
+    };
+    manifest.hashes[assetPath] = new Bun.CryptoHasher("sha256").update(bytes).digest("hex");
+    await writeFile(manifestPath, JSON.stringify(manifest));
+
+    await expect(validateSnapshot(root)).resolves.toMatchObject({ itemCount: 2 });
   });
 
   it("rejects an envelope that is absent from manifest counts", async () => {

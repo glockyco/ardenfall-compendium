@@ -196,7 +196,6 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
   log({ phase: "run", status: "begun", runId });
 
   let succeeded = false;
-  let gameQuit = false;
   let activeJobId: string | undefined;
   let activeJobPhase = "entity.exportBatch";
   try {
@@ -300,14 +299,9 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
       timings: finalized.output.timings,
     });
 
-    if (options.capture !== undefined && options.noQuit !== true) {
-      await quitGame(options.client, log);
-      gameQuit = true;
-    }
-
     const validate = options.validate ?? validateSnapshot;
     log({ phase: "validate", status: "started", publishedDir });
-    await validateSettledSnapshot(validate, publishedDir);
+    await validate(publishedDir);
     log({ phase: "validate", status: "completed", publishedDir });
 
     if (options.runPipeline) await options.runPipeline(publishedDir, options.pipelineOutDir);
@@ -322,7 +316,7 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
     succeeded = true;
     return { runId, publishedDir };
   } finally {
-    if (!succeeded && !gameQuit)
+    if (!succeeded)
       await cleanupFailedRun(
         options.client,
         runId,
@@ -331,7 +325,7 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
         availableCommands,
         log,
       );
-    if (options.noQuit !== true && !gameQuit) await quitGame(options.client, log);
+    if (options.noQuit !== true) await quitGame(options.client, log);
   }
 }
 
@@ -426,29 +420,6 @@ async function quitGame(
       status: "failed",
       error: error instanceof Error ? error.message : String(error),
     });
-  }
-}
-
-async function validateSettledSnapshot(
-  validate: (snapshotDir: string) => Promise<unknown>,
-  snapshotDir: string,
-): Promise<void> {
-  // CrossOver can keep final writes transient for tens of seconds after game.quit acknowledges.
-  const deadline = Date.now() + 60_000;
-  for (;;) {
-    try {
-      await validate(snapshotDir);
-      return;
-    } catch (error) {
-      if (
-        !(error instanceof Error) ||
-        !error.message.includes("hash mismatch") ||
-        Date.now() >= deadline
-      ) {
-        throw error;
-      }
-      await Bun.sleep(1_000);
-    }
   }
 }
 

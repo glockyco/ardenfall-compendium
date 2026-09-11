@@ -61,11 +61,12 @@ export async function validateSnapshot(snapshotDir: string): Promise<SnapshotVal
     Object.entries(hashes).map(async ([file, expectedHash]) => {
       if (typeof expectedHash !== "string" || expectedHash.length === 0)
         throw new Error(`manifest has invalid ${file} hash`);
-      const text = await readRequiredText(snapshotDir, file);
-      const actualHash = new Bun.CryptoHasher("sha256").update(text).digest("hex");
+      const bytes = await readRequiredBytes(snapshotDir, file);
+      const actualHash = new Bun.CryptoHasher("sha256").update(bytes).digest("hex");
       if (actualHash !== expectedHash)
         throw new Error(`${file} hash mismatch: expected ${expectedHash}, got ${actualHash}`);
-      parsedArtifacts.set(file, parseJson(file, text));
+      if (file.endsWith(".json"))
+        parsedArtifacts.set(file, parseJson(file, bytes.toString("utf8")));
     }),
   );
 
@@ -155,6 +156,16 @@ async function readExtractionDescriptors(): Promise<{ id: string; file: string }
     }
   }
   return descriptors.sort((left, right) => left.id.localeCompare(right.id));
+}
+
+async function readRequiredBytes(snapshotDir: string, file: string): Promise<Buffer> {
+  try {
+    return await readFile(join(snapshotDir, file));
+  } catch (error) {
+    if (isNodeError(error) && error.code === "ENOENT")
+      throw new Error(`${file} is missing`, { cause: error });
+    throw error;
+  }
 }
 
 async function readRequiredText(snapshotDir: string, file: string): Promise<string> {

@@ -363,16 +363,7 @@ public sealed class CellCapture
         {
             var fullPath = Path.Combine(captureDir, relativePath.Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-            if (!File.Exists(fullPath))
-            {
-                using var stream = new FileStream(
-                    fullPath,
-                    FileMode.CreateNew,
-                    FileAccess.Write,
-                    FileShare.Read);
-                stream.Write(bytes, 0, bytes.Length);
-                stream.Flush(flushToDisk: true);
-            }
+            if (!File.Exists(fullPath)) File.WriteAllBytes(fullPath, bytes);
             return relativePath;
         };
 }
