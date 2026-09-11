@@ -55,4 +55,4 @@
 - [x] 8.1 Remove the `authored-dialogue` and `dialogue-conditions` changes, whose decisions this change supersedes.
 - [x] 8.2 State in `quest-scripting` that it reuses this walk for quest logic graphs.
 - [x] 8.3 Carry the probes that measured the corpus into this change, and record the measured node roles and graph shapes beside them.
-- [ ] 8.4 Archive this change after the gate passes.
+- [x] 8.4 Archive this change after the gate passes.
