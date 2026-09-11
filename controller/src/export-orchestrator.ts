@@ -433,7 +433,8 @@ async function validateSettledSnapshot(
   validate: (snapshotDir: string) => Promise<unknown>,
   snapshotDir: string,
 ): Promise<void> {
-  const deadline = Date.now() + 10_000;
+  // CrossOver can keep final writes transient for tens of seconds after game.quit acknowledges.
+  const deadline = Date.now() + 60_000;
   for (;;) {
     try {
       await validate(snapshotDir);
@@ -446,7 +447,7 @@ async function validateSettledSnapshot(
       ) {
         throw error;
       }
-      await Bun.sleep(250);
+      await Bun.sleep(1_000);
     }
   }
 }
