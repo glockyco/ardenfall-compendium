@@ -62,7 +62,10 @@ interface CharacterProbeRow {
 }
 
 const outputDir = currentStagePaths(join(import.meta.dirname, "..")).outputDir;
-const releasePath = join(import.meta.dirname, "..", "static", "_release.json");
+const releasePath = join(
+  currentStagePaths(join(import.meta.dirname, "..")).staticDir,
+  "_release.json",
+);
 const outputReleasePath = join(outputDir, "_release.json");
 const overviewPath = firstExisting([
   join(outputDir, "items", "index.html"),

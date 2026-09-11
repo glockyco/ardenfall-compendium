@@ -151,7 +151,7 @@ function loadRelease(): { release: ReleaseProvenance | null; releaseError: strin
   } catch {
     return {
       release: null,
-      releaseError: "Build provenance is unavailable, static/_release.json is not valid JSON.",
+      releaseError: "Build provenance is unavailable, the staged _release.json is not valid JSON.",
     };
   }
 
@@ -159,7 +159,7 @@ function loadRelease(): { release: ReleaseProvenance | null; releaseError: strin
     return {
       release: null,
       releaseError:
-        "Build provenance is unavailable, static/_release.json is missing its source identity.",
+        "Build provenance is unavailable, the staged _release.json is missing its source identity.",
     };
   }
 
