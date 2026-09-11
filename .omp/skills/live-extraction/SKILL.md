@@ -21,7 +21,10 @@ Use this procedure when a configured game installation must produce a live snaps
 If another HotRepl-instrumented game holds the default port, set `HOTREPL_PORT` and the matching `HOTREPL_URL` in `.env`. Do not hand-edit the generated config. Each deploy overwrites that file.
 
 Two instrumented games on one port answer without an error. The game that binds first wins.
-An export that ends with a quit prevents a second measurement. Pass `--no-quit` to keep the session alive.
+An export that ends with a quit prevents a second measurement. Pass it through the script:
+`bun run hotrepl:export -- --no-quit`. The script forwards its arguments to the controller; a
+version that did not forward them dropped the flag in silence, so the game quit and the second
+export failed to connect. A run that honoured the flag prints no `game.quit` phase.
 
 ## Probe a running game
 

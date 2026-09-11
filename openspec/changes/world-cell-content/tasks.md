@@ -44,9 +44,9 @@
 
 ## 7. Scene dialogue
 
-- [ ] 7.1 Add a scene-dialogue-owner descriptor with the `sceneObject` identity mechanism and a map layer.
-- [ ] 7.2 Extract `SimpleDialogInteractable` with its name, interaction text and dialogue graphs, reusing the quest dialogue read models.
-- [ ] 7.3 Render a scene dialogue owner page with its lines through the shared rich-text contract.
+- [x] 7.1 Add a scene-dialogue descriptor identified by the dialogue graph asset, with a map layer per placement. A placement carries no `GuidComponent` in 8 of 27 cases, so it cannot own the identity.
+- [x] 7.2 Extract the graphs `SimpleDialogInteractable` holds, with every placement that starts one, reusing the quest dialogue graph walk and read models.
+- [x] 7.3 Render a scene dialogue page with its lines through the shared rich-text contract, and with the places a reader can start it.
 
 ## 8. Fixtures and gate
 
