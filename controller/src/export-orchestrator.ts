@@ -196,6 +196,7 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
   log({ phase: "run", status: "begun", runId });
 
   let succeeded = false;
+  let gameQuit = false;
   let activeJobId: string | undefined;
   let activeJobPhase = "entity.exportBatch";
   try {
@@ -299,6 +300,11 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
       timings: finalized.output.timings,
     });
 
+    if (options.capture !== undefined && options.noQuit !== true) {
+      await quitGame(options.client, log);
+      gameQuit = true;
+    }
+
     const validate = options.validate ?? validateSnapshot;
     log({ phase: "validate", status: "started", publishedDir });
     await validateSettledSnapshot(validate, publishedDir);
@@ -316,7 +322,7 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
     succeeded = true;
     return { runId, publishedDir };
   } finally {
-    if (!succeeded)
+    if (!succeeded && !gameQuit)
       await cleanupFailedRun(
         options.client,
         runId,
@@ -325,7 +331,7 @@ export async function exportCompendium(options: ExportOptions): Promise<ExportRe
         availableCommands,
         log,
       );
-    if (options.noQuit !== true) await quitGame(options.client, log);
+    if (options.noQuit !== true && !gameQuit) await quitGame(options.client, log);
   }
 }
 

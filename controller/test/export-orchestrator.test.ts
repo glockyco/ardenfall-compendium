@@ -242,7 +242,10 @@ describe("exportCompendium", () => {
         maxCellY: -8,
         pixelsPerUnit: 512 / 150,
       },
-      validate: async () => ({ itemCount: 150 }),
+      validate: async () => {
+        expect(client.calls.at(-1)?.name).toBe("game.quit");
+        return { itemCount: 150 };
+      },
       runPipeline: async () => undefined,
     });
 
