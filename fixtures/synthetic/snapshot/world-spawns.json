@@ -1,0 +1,88 @@
+{
+  "entityId": "world-spawn",
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "scene;cell_fixture_0.0;e1f2a3b4-0001-4a00-9c00-000000000001",
+      "fields": {
+        "id": "scene;cell_fixture_0.0;e1f2a3b4-0001-4a00-9c00-000000000001",
+        "cell": "cell_fixture_0.0",
+        "map": "ardenfall",
+        "position": {
+          "x": 6,
+          "y": 2,
+          "z": -9
+        },
+        "kind": "local",
+        "characterRef": {
+          "kind": "namedAsset",
+          "entity": "character",
+          "name": "character_bandit"
+        },
+        "recordRef": null
+      }
+    },
+    {
+      "id": "scene;cell_fixture_0.1;f2a3b4c5-0002-4a00-9c00-000000000002",
+      "fields": {
+        "id": "scene;cell_fixture_0.1;f2a3b4c5-0002-4a00-9c00-000000000002",
+        "cell": "cell_fixture_0.1",
+        "map": "ardenfall",
+        "position": {
+          "x": -8,
+          "y": 2,
+          "z": 11
+        },
+        "kind": "record",
+        "characterRef": null,
+        "recordRef": {
+          "kind": "record",
+          "table": "instances",
+          "subtable": "characters",
+          "id": "2d6f47b30c8e41a59fbd73e15c0a869b",
+          "recordType": "CharacterRecord"
+        }
+      }
+    },
+    {
+      "id": "scene;cell_fixture_0.1;a3b4c5d6-0003-4a00-9c00-000000000003",
+      "fields": {
+        "id": "scene;cell_fixture_0.1;a3b4c5d6-0003-4a00-9c00-000000000003",
+        "cell": "cell_fixture_0.1",
+        "map": "ardenfall",
+        "position": {
+          "x": -9,
+          "y": 2,
+          "z": 12
+        },
+        "kind": "local",
+        "characterRef": {
+          "kind": "missing",
+          "reason": "spawnDefinitionMissing",
+          "source": "LocalNPCSpawner.characterDataAsset"
+        },
+        "recordRef": null
+      }
+    },
+    {
+      "id": "scene;cell_fixture_0.1;c4d5e6f7-0004-4a00-9c00-000000000004",
+      "fields": {
+        "id": "scene;cell_fixture_0.1;c4d5e6f7-0004-4a00-9c00-000000000004",
+        "cell": "cell_fixture_0.1",
+        "map": "ardenfall",
+        "position": {
+          "x": 30.0,
+          "y": 4.0,
+          "z": -10.0
+        },
+        "kind": "local",
+        "characterRef": {
+          "kind": "namedAsset",
+          "entity": "character",
+          "name": "character_spawned_only"
+        },
+        "recordRef": null
+      }
+    }
+  ]
+}

@@ -43,7 +43,7 @@
     "item-tag": 2,
     "location": 2,
     "portal": 3,
-    "character": 4,
+    "character": 6,
     "character-race": 2,
     "name-set": 2,
     "faction": 2,
@@ -53,7 +53,8 @@
     "enchantment": 2,
     "placed-plant": 3,
     "placed-item": 2,
-    "placed-container": 2
+    "placed-container": 2,
+    "world-spawn": 4
   },
   "diagnostics": {
     "fatal": 0,

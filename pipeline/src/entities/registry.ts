@@ -13,6 +13,7 @@ import { LOCATION_DDL } from "../sql/location-ddl";
 import { FACTION_DDL } from "../sql/faction-ddl";
 import { CHARACTER_DDL } from "../sql/character-ddl";
 import { PLACED_CONTAINER_DDL } from "../sql/placed-container-ddl";
+import { WORLD_SPAWN_DDL } from "../sql/world-spawn-ddl";
 import { PLACED_ITEM_DDL } from "../sql/placed-item-ddl";
 import { PLACED_PLANT_DDL } from "../sql/placed-plant-ddl";
 import { PORTAL_DDL } from "../sql/portal-ddl";
@@ -57,6 +58,8 @@ import { emitPlacedItemReadModels } from "./placed-item/read-models";
 import { canonicalisePlacedPlants } from "./placed-plant/canonicaliser";
 import { emitPlacedPlantReadModels } from "./placed-plant/read-models";
 import { canonicalisePortals } from "./portal/canonicaliser";
+import { canonicaliseWorldSpawns } from "./world-spawn/canonicaliser";
+import { emitWorldSpawnReadModels } from "./world-spawn/read-models";
 import { emitPortalReadModels } from "./portal/read-models";
 import { canonicaliseNpcs } from "./npc/canonicaliser";
 import { emitNpcReadModels } from "./npc/read-models";
@@ -118,6 +121,28 @@ const portalProjection: MapProjection = {
       FROM portals p
       JOIN placements pl ON pl.entity_id = 'portal' AND pl.instance_id = p.id
       ORDER BY COALESCE(p.friendly_name, 'Unnamed portal'), p.id;
+    `,
+};
+
+const worldSpawnProjection: MapProjection = {
+  sourceTable: "world_spawns",
+  // The name comes from canonical rows, like every other scene family: this projection runs in the
+  // map phase, before the family's own read model.
+  points: `
+      INSERT INTO map_points (
+        id, entity_id, instance_id, name, map_id, map_x, map_y, elevation,
+        enabled, show_on_map_debug_only, allow_fast_travel
+      )
+      SELECT 'world-spawn:' || s.id, 'world-spawn', s.id,
+             COALESCE(c.character_name, 'World spawn'),
+             pl.map_id, pl.map_x, pl.map_y, pl.elevation,
+             1, 0, 0 -- a spawner carries no authored availability flag; it is there
+
+      FROM world_spawns s
+      LEFT JOIN characters c
+        ON c.id = 'named;character;' || json_extract(s.character_ref_json, '$.name')
+      JOIN placements pl ON pl.entity_id = 'world-spawn' AND pl.instance_id = s.id
+      ORDER BY s.id;
     `,
 };
 
@@ -314,6 +339,13 @@ export const entityRegistry: Record<string, EntityModule> = {
       return emitNpcReadModels(db, entity.site.route);
     },
     mapProjection: npcProjection,
+  },
+  "world-spawn": {
+    ddl: WORLD_SPAWN_DDL,
+    canonicalise: ({ db, envelope }) => canonicaliseWorldSpawns(db, envelope),
+    readModelPhase: "after-map",
+    readModel: ({ db, entity }) => emitWorldSpawnReadModels(db, entity.site?.route),
+    mapProjection: worldSpawnProjection,
   },
   "placed-container": {
     ddl: PLACED_CONTAINER_DDL,

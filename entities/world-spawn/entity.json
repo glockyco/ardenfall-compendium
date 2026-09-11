@@ -1,0 +1,102 @@
+{
+  "$schema": "../../schemas/entity.schema.json",
+  "id": "world-spawn",
+  "kind": "instance",
+  "label": {
+    "singular": "World Spawn",
+    "plural": "World Spawns"
+  },
+  "extraction": {
+    "source": "scene",
+    "file": "world-spawns.json",
+    "root": "Ardenfall.LocalNPCSpawner",
+    "options": {
+      "components": "LocalNPCSpawner,RecordNPCSpawner"
+    }
+  },
+  "canonicalTable": "world_spawns",
+  "presentationContext": {
+    "renderContext": "world-spawn-presentation-v1"
+  },
+  "site": {
+    "route": "/world-spawns",
+    "overview": {
+      "columns": ["kind", "cell"],
+      "search": ["cell"]
+    },
+    "detail": {
+      "sections": [
+        {
+          "id": "overview",
+          "kind": "fieldList",
+          "title": "Overview",
+          "fields": ["kind", "characterRef", "recordRef", "cell", "map", "position"]
+        }
+      ]
+    }
+  },
+  "placement": {
+    "kind": "point",
+    "from": "transform"
+  },
+  "fields": [
+    {
+      "name": "id",
+      "type": "id",
+      "from": "id",
+      "missingPolicy": "fatal"
+    },
+    {
+      "name": "cell",
+      "type": "string",
+      "from": "cell",
+      "column": "cell",
+      "missingPolicy": "fatal"
+    },
+    {
+      "name": "map",
+      "type": "string",
+      "from": "map",
+      "column": "map_id",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "position",
+      "type": "json",
+      "from": "position",
+      "column": "source_position_json",
+      "projects": "map_points"
+    },
+    {
+      "name": "kind",
+      "type": "string",
+      "from": "kind",
+      "column": "kind",
+      "missingPolicy": "fatal"
+    },
+    {
+      "name": "characterRef",
+      "type": "ref:asset",
+      "from": "characterRef",
+      "column": "character_ref_json",
+      "missingPolicy": "diagnostic"
+    },
+    {
+      "name": "recordRef",
+      "type": "ref:record",
+      "from": "recordRef",
+      "column": "record_ref_json",
+      "missingPolicy": "diagnostic"
+    }
+  ],
+  "map": {
+    "layer": "world-spawns",
+    "renderKind": "point",
+    "icon": "spawn",
+    "color": [150, 170, 230],
+    "radius": 3,
+    "tooltip": ["kind"],
+    "legendLabel": "World Spawns",
+    "zOrder": 45
+  }
+}

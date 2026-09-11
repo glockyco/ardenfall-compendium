@@ -24,9 +24,9 @@
 
 ## 4. Ownership
 
-- [ ] 4.1 Extract `OwnedObject` faction and character owners for placed items and containers.
-- [ ] 4.2 Register the ownership predicate, project edges, and render owner sections on character and faction pages.
-- [ ] 4.3 Diagnose an owner reference that does not resolve, and emit no edge for it.
+- [x] 4.1 Extract `OwnedObject` faction and character owners for placed items and containers.
+- [x] 4.2 Register the ownership predicate, project edges, and render owner sections on character and faction pages.
+- [x] 4.3 Diagnose an owner reference that does not resolve, and emit no edge for it.
 
 ## 5. Pickable plants
 
@@ -38,9 +38,9 @@
 
 ## 6. World spawns
 
-- [ ] 6.1 Extract `LocalNPCSpawner` with its character definition reference and position.
-- [ ] 6.2 Extract `RecordNPCSpawner` and resolve it to the record it refers to.
-- [ ] 6.3 State on a character definition page how the world reaches it, and report the counts per category in the manifest.
+- [x] 6.1 Extract `LocalNPCSpawner` with its character definition reference and position.
+- [x] 6.2 Extract `RecordNPCSpawner` and resolve it to the record it refers to.
+- [x] 6.3 State on a character definition page how the world reaches it, and report the counts per category in the manifest.
 
 ## 7. Scene dialogue
 

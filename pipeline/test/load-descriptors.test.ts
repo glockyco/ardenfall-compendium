@@ -37,6 +37,7 @@ describe("loadDescriptors", () => {
       "spell",
       "stat-type",
       "status-effect",
+      "world-spawn",
     ]);
   });
 

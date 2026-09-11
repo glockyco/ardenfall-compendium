@@ -627,6 +627,7 @@ describe("validateSnapshot", () => {
         faction: 1,
         npc: 1,
         "placed-container": 1,
+        "world-spawn": 1,
         "placed-item": 1,
         "placed-plant": 1,
         quest: 1,
@@ -942,6 +943,15 @@ describe("validateSnapshot", () => {
         null,
         2,
       ),
+      "world-spawns.json": JSON.stringify(
+        {
+          entityId: "world-spawn",
+          schemaVersion: 1,
+          rows: emptyEntities.has("world-spawn") ? [] : [{ id: "scene;cell_a;spawn-1" }],
+        },
+        null,
+        2,
+      ),
       "placed-containers.json": JSON.stringify(
         {
           entityId: "placed-container",
@@ -1017,6 +1027,8 @@ describe("validateSnapshot", () => {
       "placed-container":
         options.countOverrides?.["placed-container"] ??
         (emptyEntities.has("placed-container") ? 0 : 1),
+      "world-spawn":
+        options.countOverrides?.["world-spawn"] ?? (emptyEntities.has("world-spawn") ? 0 : 1),
       ...options.extraCounts,
     };
     for (const entity of options.omitCounts ?? []) delete counts[entity as keyof typeof counts];

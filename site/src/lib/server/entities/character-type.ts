@@ -61,6 +61,8 @@ export interface CharacterTypePresentationRow {
   displayName: string;
   drops: CharacterDrop[];
   placements: CharacterPlacementLink[];
+  /** How the authored scenes reach this definition: by placement, by spawner, both, or neither. */
+  worldReach: "placement" | "spawner" | "both" | "none";
   routePath: string;
 }
 
@@ -90,6 +92,29 @@ const getCharacterTypePlacements = (characterTypeId: string): CharacterPlacement
     routePath: row.route_path,
     mapHref: getMapHref("npc", row.id),
   }));
+
+const getWorldReach = (characterTypeId: string): CharacterTypePresentationRow["worldReach"] => {
+  const row = get<{ reach: string }>(
+    `SELECT reach FROM character_world_reach WHERE character_id = ?`,
+    [characterTypeId],
+  );
+  if (row === undefined) {
+    throw new Error(
+      `character_world_reach has no row for definition '${characterTypeId}', so the page cannot state how the world reaches it`,
+    );
+  }
+  if (
+    row.reach === "placement" ||
+    row.reach === "spawner" ||
+    row.reach === "both" ||
+    row.reach === "none"
+  ) {
+    return row.reach;
+  }
+  throw new Error(
+    `character_world_reach has unknown reach '${row.reach}' for definition '${characterTypeId}'`,
+  );
+};
 
 export const listCharacterTypes = (): CharacterTypeOverviewRow[] => {
   const rows = all<CharacterTypeOverviewRecord>(
@@ -146,6 +171,7 @@ export const getCharacterTypePresentation = (
       isCharacterDropArray,
     ),
     placements: getCharacterTypePlacements(row.id),
+    worldReach: getWorldReach(row.id),
     routePath: row.route_path,
   };
 };

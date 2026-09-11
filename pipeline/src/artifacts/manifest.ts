@@ -3,6 +3,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import validateArtifactManifest from "../../dist/validate-artifact-manifest.mjs";
 import { sha256File, sha256Json, sha256Tree } from "./hash";
+import { countDefinitionReachability } from "../entities/world-spawn/read-models";
 import { validateDeployableSqlite } from "./sqlite-validation";
 import type { ArtifactKind, ArtifactManifest } from "../types";
 import type { EmitAssetsOutput } from "../stages/emit-assets";
@@ -44,6 +45,7 @@ export async function buildArtifactManifest(
   });
   validateDeployableSqlite(sqlitePath);
   const sqliteBytes = Bun.file(sqlitePath).size;
+  const reachability = readDefinitionReachability(sqlitePath);
   const manifest: ArtifactManifest = {
     schemaVersion: 1,
     artifactKind: input.artifactKind,
@@ -83,6 +85,10 @@ export async function buildArtifactManifest(
       itemPresentationDiagnostics: countItemPresentationDiagnostics(sqlitePath),
       relationshipDiagnostics: countPipelineDiagnostics(sqlitePath, "relationship-graph"),
       richTextDiagnostics: countPipelineDiagnostics(sqlitePath, "rich-text"),
+      definitionsReachedByPlacement: reachability.byPlacement,
+      definitionsReachedBySpawner: reachability.bySpawner,
+      definitionsReachedByBoth: reachability.byBoth,
+      definitionsReachedByNeither: reachability.byNeither,
       assetRefs: input.assetsOutput.refs.length,
       webpAssets: uniqueAssetHashes.size,
     },
@@ -128,6 +134,21 @@ function readItemProbes(sqlitePath: string): ArtifactManifest["probes"]["items"]
          LIMIT 3`,
       )
       .all() as ArtifactManifest["probes"]["items"];
+  } finally {
+    db.close();
+  }
+}
+
+/** Definition reachability, read from the emitted database rather than recomputed from the snapshot. */
+function readDefinitionReachability(sqlitePath: string): {
+  byPlacement: number;
+  bySpawner: number;
+  byBoth: number;
+  byNeither: number;
+} {
+  const db = new Database(sqlitePath, { readonly: true });
+  try {
+    return countDefinitionReachability(db);
   } finally {
     db.close();
   }

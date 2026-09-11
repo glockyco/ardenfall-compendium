@@ -48,6 +48,9 @@ const seed = () => {
     CREATE TABLE map_volumes (
       id TEXT PRIMARY KEY, entity_id TEXT NOT NULL, instance_id TEXT NOT NULL, map_id TEXT
     );
+    CREATE TABLE character_world_reach (
+      character_id TEXT PRIMARY KEY NOT NULL, reach TEXT NOT NULL
+    );
     INSERT INTO character_overview_rows VALUES
       ('character-zed', 'Zed', 0),
       ('character-ada', 'Ada', 0),
@@ -70,6 +73,10 @@ const seed = () => {
        '/characters/unmapped-placement--bbbb2222', 'unmapped-placement--bbbb2222', 'bbbb2222', 1);
     INSERT INTO map_points (id, entity_id, instance_id, map_id)
       VALUES ('npc:npc-mapped', 'npc', 'npc-mapped', 'overworld');
+    INSERT INTO character_world_reach (character_id, reach) VALUES
+      ('character-zed', 'placement'),
+      ('character-ada', 'spawner'),
+      ('character-nameless', 'none');
     INSERT INTO entity_edges (source_type, source_id, target_type, target_id, predicate) VALUES
       ('npc', 'npc-mapped', 'character', 'character-zed', 'instance_of'),
       ('npc', 'npc-unmapped', 'character', 'character-zed', 'instance_of');
@@ -162,6 +169,7 @@ describe("character type read-model accessors", () => {
         nameIsDescription: false,
         renderContext: "character-type-presentation-v1",
         displayName: "Ada",
+        worldReach: "spawner",
         drops: [],
         placements: [],
         routePath: "/character-types/ada--22222222",

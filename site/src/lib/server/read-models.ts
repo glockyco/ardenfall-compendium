@@ -187,6 +187,9 @@ export { getPlacedItemPresentation, listPlacedItems } from "./entities/placed-it
 export type { ContainerOverviewRow, ContainerPresentationRow } from "./entities/placed-container";
 export { getContainerPresentation, listContainers } from "./entities/placed-container";
 
+export type { WorldSpawnOverviewRow, WorldSpawnPresentationRow } from "./entities/world-spawn";
+export { getWorldSpawnPresentation, listWorldSpawns } from "./entities/world-spawn";
+
 export type { FactionOverviewRow, FactionPresentationRow } from "./entities/faction";
 export { getFactionPresentation, listFactions } from "./entities/faction";
 export type {

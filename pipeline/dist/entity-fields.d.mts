@@ -98,3 +98,20 @@ export type PlacedContainerSnapshotFields = Pick<
   SourcePlacedContainerSnapshotFields,
   Extract<PlacedContainerFieldName, keyof SourcePlacedContainerSnapshotFields>
 >;
+
+import type { WorldSpawnSnapshotFields as SourceWorldSpawnSnapshotFields } from "../src/types.ts";
+
+export declare const worldSpawnFieldNames: readonly [
+  "id",
+  "cell",
+  "map",
+  "position",
+  "kind",
+  "characterRef",
+  "recordRef"
+];
+export type WorldSpawnFieldName = (typeof worldSpawnFieldNames)[number];
+export type WorldSpawnSnapshotFields = Pick<
+  SourceWorldSpawnSnapshotFields,
+  Extract<WorldSpawnFieldName, keyof SourceWorldSpawnSnapshotFields>
+>;

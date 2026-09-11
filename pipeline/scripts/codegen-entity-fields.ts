@@ -28,6 +28,11 @@ const targets = [
     typeName: "PlacedContainerFieldName",
     sourceTypeName: "PlacedContainerSnapshotFields",
   },
+  {
+    entity: "world-spawn",
+    typeName: "WorldSpawnFieldName",
+    sourceTypeName: "WorldSpawnSnapshotFields",
+  },
 ] as const;
 
 function readFields(entity: string): string[] {

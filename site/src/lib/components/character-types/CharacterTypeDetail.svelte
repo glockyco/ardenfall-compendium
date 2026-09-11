@@ -3,6 +3,14 @@
 
   let { presentation }: { presentation: CharacterTypePresentationRow } = $props();
   const pageName = $derived(presentation.name);
+  // What the authored scenes reference. "none" is an absence of references, not a claim that a
+  // player cannot meet this character: a random spawner group can select one at runtime.
+  const worldReachText = (reach: CharacterTypePresentationRow["worldReach"]): string => {
+    if (reach === "both") return "The world places this character and spawns it.";
+    if (reach === "placement") return "The world places this character.";
+    if (reach === "spawner") return "The world spawns this character rather than placing it.";
+    return "No authored placement or spawner in the scenes references this character.";
+  };
 </script>
 
 <div class="border-border bg-card mt-4 rounded-lg border p-5">
@@ -12,6 +20,12 @@
         {presentation.nameIsDescription ? "Description" : "Name"}
       </dt>
       <dd class="mt-1">{pageName}</dd>
+    </div>
+    <div class="mt-4">
+      <dt class="text-muted-foreground text-sm font-medium tracking-wide uppercase">
+        In the world
+      </dt>
+      <dd class="mt-1">{worldReachText(presentation.worldReach)}</dd>
     </div>
   </dl>
 

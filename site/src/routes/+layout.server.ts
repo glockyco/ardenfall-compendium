@@ -8,6 +8,7 @@ import {
   listFactions,
   listLocations,
   listContainers,
+  listWorldSpawns,
   listPlacedItems,
   listPlacedPlants,
   listPortals,
@@ -73,6 +74,7 @@ export interface SiteChrome {
   placedPlantRoute: string;
   placedItemRoute: string;
   containerRoute: string;
+  worldSpawnRoute: string;
   factionRoute: string;
 }
 
@@ -220,6 +222,7 @@ function buildLayoutData(): SiteChrome {
   const placedPlant = entitySection("placed-plant", listPlacedPlants().length);
   const placedItem = entitySection("placed-item", listPlacedItems().length);
   const container = entitySection("placed-container", listContainers().length);
+  const worldSpawn = entitySection("world-spawn", listWorldSpawns().length);
   const faction = entitySection("faction", listFactions().length);
   const map = mapSection();
 
@@ -242,6 +245,7 @@ function buildLayoutData(): SiteChrome {
       placedPlant,
       placedItem,
       container,
+      worldSpawn,
       faction,
       map,
     ],
@@ -264,6 +268,7 @@ function buildLayoutData(): SiteChrome {
     placedPlantRoute: placedPlant.href,
     placedItemRoute: placedItem.href,
     containerRoute: container.href,
+    worldSpawnRoute: worldSpawn.href,
     factionRoute: faction.href,
   };
 }

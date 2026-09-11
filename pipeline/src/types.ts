@@ -660,6 +660,18 @@ export interface PlacedContainerSnapshotFields {
   owners: PlacedOwnersSnapshot;
 }
 
+/** One place the authored scenes instantiate a character. */
+export interface WorldSpawnSnapshotFields {
+  id: string;
+  cell: string;
+  map: string | null;
+  position: SnapshotVector3;
+  /** `local` spawns a definition; `record` instantiates an existing record. */
+  kind: string;
+  characterRef: SnapshotRef | null;
+  recordRef: SnapshotRef | null;
+}
+
 export interface NpcLevelSnapshot {
   automatic: boolean;
   addValue: number;
