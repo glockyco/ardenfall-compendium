@@ -63,8 +63,9 @@
     >
       {#if data.release}
         <p>
-          Generated from Ardenfall
+          Generated from {data.release.productName}
           <span class="text-foreground font-medium">{data.release.gameVersion}</span>
+          <span>({data.release.buildProfile})</span>
         </p>
         {#if data.release.snapshotDate}
           <p>

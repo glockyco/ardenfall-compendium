@@ -41,6 +41,8 @@ export interface NavSection {
 }
 
 export interface ReleaseProvenance {
+  productName: string;
+  buildProfile: string;
   gameVersion: string;
   buildIdentifier: string;
   snapshotId: string;
@@ -88,7 +90,13 @@ export interface SiteChrome {
 interface PublicReleaseManifest {
   artifactKind: string;
   createdAt?: string;
-  source: { snapshotId: string; gameVersion: string; buildIdentifier: string };
+  source: {
+    snapshotId: string;
+    productName: string;
+    buildProfile: string;
+    gameVersion: string;
+    buildIdentifier: string;
+  };
   git: { commit: string; dirty: boolean };
 }
 
@@ -104,10 +112,15 @@ function isReleaseManifest(value: unknown): value is PublicReleaseManifest {
   if (createdAt !== undefined && !isNonEmptyString(createdAt)) return false;
   if (typeof source !== "object" || source === null) return false;
   if (typeof git !== "object" || git === null) return false;
-  const { snapshotId, gameVersion, buildIdentifier } = source as Record<string, unknown>;
+  const { snapshotId, productName, buildProfile, gameVersion, buildIdentifier } = source as Record<
+    string,
+    unknown
+  >;
   const { commit, dirty } = git as Record<string, unknown>;
   return (
     isNonEmptyString(snapshotId) &&
+    isNonEmptyString(productName) &&
+    isNonEmptyString(buildProfile) &&
     isNonEmptyString(gameVersion) &&
     isNonEmptyString(buildIdentifier) &&
     isNonEmptyString(commit) &&
@@ -167,6 +180,8 @@ function loadRelease(): { release: ReleaseProvenance | null; releaseError: strin
 
   return {
     release: {
+      productName: parsed.source.productName,
+      buildProfile: parsed.source.buildProfile,
       gameVersion: parsed.source.gameVersion,
       buildIdentifier: parsed.source.buildIdentifier,
       snapshotId: parsed.source.snapshotId,
