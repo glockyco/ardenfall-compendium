@@ -1016,22 +1016,32 @@ describe("site prerender architecture", () => {
       ],
     } as const;
 
+    // A cited build output such as `site/.stage` exists only after a build. Git ignores build
+    // outputs, so an ignored path is a generated location, not a stale reference. The path is
+    // missing, so ask git about it both as a file and as a directory.
+    const isIgnoredByGit = (path: string) =>
+      [path, `${path}/`].some(
+        (candidate) => Bun.spawnSync(["git", "check-ignore", "--quiet", candidate]).exitCode === 0,
+      );
+
     const validate = (file: string, source: string) => {
       for (const pair of expectedPairs[file as keyof typeof expectedPairs] ?? []) {
         expect(source).toContain(`### ${pair}`);
       }
       for (const path of source.matchAll(/`((?:pipeline|site)\/[^`]+)`/g)) {
         const citedPath = path[1];
-        if (citedPath && !existsSync(citedPath)) {
+        if (citedPath && !existsSync(citedPath) && !isIgnoredByGit(citedPath)) {
           throw new Error(`${file} cites missing repository path: ${citedPath}`);
         }
       }
     };
 
     for (const file of Object.keys(expectedPairs)) validate(file, readFileSync(file, "utf8"));
-    expect(() =>
-      validate("site/AGENTS.md", "`site/src/lib/components/missing/Nope.svelte`"),
-    ).toThrow("site/src/lib/components/missing/Nope.svelte");
+    // A guide without decision pairs isolates the path rule in these self-checks.
+    expect(() => validate("guide.md", "`site/src/lib/components/missing/Nope.svelte`")).toThrow(
+      "guide.md cites missing repository path: site/src/lib/components/missing/Nope.svelte",
+    );
+    expect(() => validate("guide.md", "`site/.stage/unbuilt`")).not.toThrow();
   });
 
   // A rule whose regex stops matching is silently dead, so each one carries a sample of
