@@ -931,7 +931,7 @@ describe("site prerender architecture", () => {
     expect(readme).toContain("bun run artifact:fixture synthetic fixtures/synthetic/snapshot");
     expect(readme).toContain("bun run artifact:release snapshots/snapshots/<snapshot-id>");
     expect(readme).toContain(
-      "bun run --cwd site deploy:production ../pipeline/artifacts/releases/<snapshot-id>",
+      "bun run --cwd site deploy:production ../pipeline/artifacts/releases/<game-version>-<build-identifier>",
     );
   });
 
