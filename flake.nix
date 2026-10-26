@@ -44,6 +44,34 @@
         { pkgs }:
         let
           dotnetSdk = pkgs.dotnetCorePackages.sdk_10_0-bin;
+          # Lockfile v2 needs the same Bun release used by dependency automation.
+          bunVersion = "1.4.4";
+          bunSources = {
+            aarch64-darwin = {
+              archive = "bun-darwin-aarch64";
+              hash = "sha256-wkDX8My5DCY6hJ/NsJt+5iYw2SE0jtaq/ahrnVd7xRA=";
+            };
+            aarch64-linux = {
+              archive = "bun-linux-aarch64";
+              hash = "sha256-uqa7NvUdblhWHgK76oJQOKnfRU9nPW13bou/hvjHhQ4=";
+            };
+            x86_64-darwin = {
+              archive = "bun-darwin-x64-baseline";
+              hash = "sha256-1KFVrfv9CRVes7oFyeOlRPOSl9emhhbTx3WfZ6tcR9w=";
+            };
+            x86_64-linux = {
+              archive = "bun-linux-x64";
+              hash = "sha256-v4zL+ysLgBWeD5ptFcVTF63YB3U028YTCj7bUvzLOVw=";
+            };
+          };
+          bunSource = bunSources.${pkgs.stdenv.hostPlatform.system};
+          bun = pkgs.bun.overrideAttrs {
+            version = bunVersion;
+            src = pkgs.fetchurl {
+              url = "https://github.com/oven-sh/bun/releases/download/bun-v${bunVersion}/${bunSource.archive}.zip";
+              hash = bunSource.hash;
+            };
+          };
           ilspycmd = pkgs.buildDotnetGlobalTool {
             pname = "ilspycmd";
             version = "11.0.0.9375";
@@ -57,11 +85,7 @@
         {
           default = pkgs.mkShellNoCC {
             packages = [
-              # Every workspace script runs under Bun. package.json requires
-              # >=1.3.13, this release ships 1.3.13, and
-              # .github/workflows/ci.yml pins 1.3.14. Keep the three in step
-              # when any of them moves.
-              pkgs.bun
+              bun
 
               # `vite build` spawns Node, so SvelteKit prerendering loads the
               # better-sqlite3 branch of site/src/lib/server/db.ts there rather
