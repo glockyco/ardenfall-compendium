@@ -8,15 +8,24 @@ Defines the evidence that a behaviour claim needs. The rules apply to the game a
 
 ### Requirement: A claim about the game needs a measurement
 
-A statement about game behaviour or game data shape SHALL become a design input only after a spike answers it. The evidence is a citation of the decompiled source with a file and a line, or a probe with its output.
-
-Prior documentation is not evidence. Runtime intuition is not evidence. A plausible reading of a field name is not evidence. Three plan documents claimed 683 cells until a spike found 27 loadable cell scenes. A chain-walk rule looked correct until a spike showed that a variant re-authors the name of its parent.
+A statement about game behaviour or data shape SHALL become a design input only after a spike answers it with a decompiled-source file and line citation or a probe and its output.
 
 #### Scenario: A design decision rests on game behaviour
 
 - **WHEN** the design of a change states how the game behaves
 - **THEN** the statement cites the decompiled source with a file and a line, or a probe and its output
 - **AND** a reader can run that probe again from the record
+
+### Requirement: Plausibility is not game evidence
+
+Prior documentation, runtime intuition and plausible readings of field names SHALL NOT count as evidence.
+
+#### Scenario: A plausible plan has no measurement
+
+- WHEN a plan relies on an unmeasured game claim
+- THEN documentation and intuition do not establish that claim
+- AND a spike is required, as when three plans claimed 683 cells before a spike found 27 loadable cell scenes
+- AND a chain-walk rule needs measurement, as when a spike showed a variant re-authoring its parent's name
 
 #### Scenario: A measurement contradicts an earlier document
 
@@ -26,11 +35,7 @@ Prior documentation is not evidence. Runtime intuition is not evidence. A plausi
 
 ### Requirement: A claim about this repository needs the same evidence
 
-An artefact that describes behaviour is a hypothesis. A comment, a document, a test name, a variable name, a plan, a report from another agent, and code that exists all describe intent. None of them shows what runs.
-
-A statement about the behaviour of this repository SHALL rest on the line that does the work, or on an observed result. The observation wins when the two disagree.
-
-Three failures in the identity slice show the cost. A window of one file showed an entry without a phase field, and the diff showed the field. A query read a field name that does not exist, and its empty result became a defect report. Work extended the redirect mechanism before anyone saw that the mechanism had never written a row.
+A statement about repository behaviour SHALL rest on the line that does the work or an observed result. The observation SHALL win when they disagree. Comments, documents, test names, variable names, plans, other agents' reports and the existence of code describe intent rather than what runs.
 
 #### Scenario: A statement rests on a comment or a document
 
@@ -49,6 +54,12 @@ Three failures in the identity slice show the cost. A window of one file showed 
 - **WHEN** a conclusion depends on the object or scope that holds a line
 - **THEN** work confirms the scope against the parsed structure or the diff
 - **AND** work does not accept an adjacent line as proof of the scope
+
+#### Scenario: An identity-slice hypothesis needs direct evidence
+
+- WHEN a conclusion relies on a one-file window, a query, or an existing mechanism
+- THEN work checks the relevant diff, actual field and observed output
+- AND this covers the identity-slice failures where a diff contained an omitted phase field, a query used a nonexistent field and its empty result became a defect report, and work extended redirects before observing that they had never written a row
 
 ### Requirement: A negative result needs a positive control
 
@@ -79,11 +90,25 @@ Code that exists does not show that the code works. Work SHALL observe the outpu
 
 ### Requirement: Each measurement goes to the producer that owns it
 
-A spike is a probe that answers one question. Probes live in a directory that git ignores, because each probe targets one game build and decays with it. The result SHALL then go to one owner. The repository holds no separate ledger, because a ledger would copy values that already have producers.
+A spike's result SHALL go to one owning producer rather than a separate repository ledger, because a ledger would copy values that already have producers. A spike is a probe answering one question.
 
-- A count, an availability figure, and a diagnostic total belong to the release `artifact-manifest.json` and the snapshot `diagnostics.json`. The pipeline emits both.
-- A game mechanism belongs to the spec requirement that it justifies, in one sentence.
-- The probe and its output belong to the change that used them, and stay in the archived change.
+#### Scenario: A spike result is recorded
+
+- WHEN a spike answers a question
+- THEN its result goes to its owning producer rather than a separate ledger
+
+### Requirement: Build-specific probes stay out of tracked working files
+
+Probes SHALL live in a git-ignored directory because each targets one game build and decays with it.
+
+#### Scenario: A probe is created
+
+- WHEN work creates a build-specific probe
+- THEN its working directory is ignored by git
+
+### Requirement: Measurements use emitted artifacts
+
+Counts, availability figures and diagnostic totals SHALL belong to the pipeline-emitted release `artifact-manifest.json` and snapshot `diagnostics.json`.
 
 #### Scenario: A spike measures a count
 
@@ -97,11 +122,19 @@ A spike is a probe that answers one question. Probes live in a directory that gi
 - **THEN** a test asserts that count against the emitted artifact
 - **AND** the test fails when the game changes the count
 
+### Requirement: Mechanism evidence stays with its owners
+
+A game mechanism SHALL belong to the spec requirement it justifies in one sentence. A probe and its output SHALL belong to the change that used them and remain in its archive.
+
 #### Scenario: A spike explains a mechanism
 
 - **WHEN** a spike explains how the game behaves
 - **THEN** the spec requirement that depends on the mechanism states it in one sentence
 - **AND** the archived change keeps the probe and its output
+
+### Requirement: Changed extraction requires a fresh measurement
+
+Work SHALL repeat a measurement after extraction code changes before claiming completion, because the earlier export ran earlier code.
 
 #### Scenario: Extraction code changes after a measurement
 
@@ -111,17 +144,17 @@ A spike is a probe that answers one question. Probes live in a directory that gi
 
 ### Requirement: An export proves which game answered it
 
-An export SHALL name the game build and mod that produced it. An export SHALL fail when more than one instrumented game can answer.
-
-The current main game, whose Unity product is `Ardenfall Alpha`, is the only published game. The discontinued Demo is not a supported fallback. An export SHALL confirm the answering product before it writes entity data. The snapshot SHALL record that identity, and publication SHALL refuse a snapshot whose identity is absent or names another product.
-
-Two instrumented games on one HotRepl port report no error. The connection reaches the game that bound first. Product identity, port ownership, and the deployed plugin digest therefore remain independent required checks.
+An export SHALL name the game build and mod that produced it and fail when more than one instrumented game can answer. Product identity, port ownership and deployed plugin digest SHALL remain independent checks, because two games on one HotRepl port report no error and the connection reaches whichever bound first.
 
 #### Scenario: Two instrumented games run at once
 
 - **WHEN** an export starts and more than one process holds the HotRepl port
 - **THEN** the export fails and names the port and the processes
 - **AND** the export does not use the instance that answers first
+
+### Requirement: Session exports remain reproducible
+
+Two exports in one loaded session SHALL have matching family counts, filtered runtime-created counts and artifact hashes. Only timing records may differ, and a mismatch SHALL fail the reproducibility check.
 
 #### Scenario: One session produces two exports
 
@@ -130,17 +163,29 @@ Two instrumented games on one HotRepl port report no error. The connection reach
 - **AND** timing records are the only permitted difference
 - **AND** a mismatch fails the reproducibility check
 
+### Requirement: Only the main game is a supported source
+
+The current main game, whose Unity product is `Ardenfall Alpha`, SHALL be the only published game. The discontinued Demo SHALL NOT be a fallback. An export SHALL confirm the answering product before writing entity data.
+
 #### Scenario: The answering game is not the published one
 
 - **WHEN** an export connects to the Demo or any product other than `Ardenfall Alpha`
 - **THEN** the export fails before extraction
 - **AND** the failure states that the main game is required
 
+### Requirement: Snapshots record the answering game
+
+The snapshot SHALL record the answering game's identity.
+
 #### Scenario: A snapshot records its source
 
 - **WHEN** an export produces a snapshot
 - **THEN** the snapshot records the identity of the main game that answered
 - **AND** that identity can be read from the artifact without the session that produced it
+
+### Requirement: Publication requires main-game identity
+
+Publication SHALL refuse a snapshot whose identity is absent or names a product other than `Ardenfall Alpha`.
 
 #### Scenario: Publication checks the artifact
 
@@ -152,11 +197,19 @@ Two instrumented games on one HotRepl port report no error. The connection reach
 - **WHEN** publication runs against a snapshot that records no identity
 - **THEN** it refuses, because an unproven source is not a proven one
 
+### Requirement: Main-game operations preserve source identity
+
+Probes, exports, snapshot creation and release creation against the current main game SHALL be permitted, with persisted results retaining the main-game identity.
+
 #### Scenario: The alpha is probed
 
 - **WHEN** a probe or export runs against the current main game
 - **THEN** the operation is permitted, including snapshot and release creation
 - **AND** persisted results retain the main-game identity
+
+### Requirement: Guidance states the supported source
+
+Root repository guidance SHALL state that the main game is the only supported source and point live extraction work to the scoped skill.
 
 #### Scenario: Repository guidance states the publication boundary
 

@@ -36,7 +36,7 @@ The extractor MUST publish each race asset's parent reference and the provenance
 
 ### Requirement: Nameless creature races are retained but not published
 
-The pipeline MUST retain every extracted race record in canonical storage for references and diagnostics. A race chain that resolves no player-visible name and has no name-set vocabulary MUST have no public race page. This is evidence-based: 95 of the 112 race records resolve no name in the live export, and 93 of 96 creature definitions carry their own authored names; those definitions, rather than internal race assets, provide reader-facing identity. The remaining three creature definitions are the documented raceless omission chain. The live export therefore yields three reader-facing race pages, `Karu Elf` with five variants, `Obsidian Dwarf` with five, and `Sand Elf` with six.
+The pipeline SHALL retain every extracted race record in canonical storage for references and diagnostics. A race chain that resolves no player-visible name and has no name-set vocabulary SHALL have no public race page.
 
 #### Scenario: A nameless record is not a page
 
@@ -50,6 +50,18 @@ The pipeline MUST retain every extracted race record in canonical storage for re
 - **WHEN** a race chain resolves a player-visible name such as `Karu Elf`, `Obsidian Dwarf`, or `Sand Elf`
 - **THEN** its canonical root has a public page
 - **AND** the page names the race and lists its variants
+
+### Requirement: Race publication reflects the measured population
+
+The live export SHALL yield three reader-facing race pages: `Karu Elf` with five variants, `Obsidian Dwarf` with five, and `Sand Elf` with six.
+
+#### Scenario: The live race population is published
+
+- WHEN the live export publishes its race pages
+- THEN it yields `Karu Elf` with five variants, `Obsidian Dwarf` with five, and `Sand Elf` with six
+- AND 95 of 112 race records resolve no name
+- AND 93 of 96 creature definitions carry their own authored names rather than relying on internal race assets
+- AND the remaining three creature definitions are the documented raceless omission chain
 
 ### Requirement: Name sets are published as vocabulary
 

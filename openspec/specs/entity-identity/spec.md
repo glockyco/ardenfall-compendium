@@ -121,9 +121,7 @@ A published page address MUST carry a reader-facing title and an opaque stable 8
 
 ### Requirement: Reference identity preserves its concrete domain
 
-`mod/src/Dtos/SnapshotRef.cs` MUST preserve lookup-asset, named-asset, and record references as distinct kinds. `mod/src/Walker/RefResolver.cs` MUST keep engine resources outside the catalogue.
-
-A game record MUST be identified by the guid its `RecordID` carries and by nothing else. A record reference MUST be `{ kind: "record", id, recordType }`, and a record row id MUST be that guid. The main game's `RecordID` holds one `id`; the table and subtable of the discontinued Demo do not exist and MUST NOT be carried as empty strings. A record whose guid is empty MUST fail its family with a fatal diagnostic rather than publish under a synthetic id.
+`mod/src/Dtos/SnapshotRef.cs` SHALL preserve lookup-asset, named-asset, and record references as distinct kinds. `mod/src/Walker/RefResolver.cs` SHALL keep engine resources outside the catalogue.
 
 #### Scenario: A lookup asset resolves
 
@@ -136,6 +134,10 @@ A game record MUST be identified by the guid its `RecordID` carries and by nothi
 - **WHEN** a registered named-asset type has a non-empty asset name
 - **THEN** `NamedAssetIdentity.TryCreate` emits `named;<entity>;<asset>` as its canonical identity
 - **AND** `SnapshotRef.NamedAsset` preserves the entity and asset name
+
+### Requirement: Records use only their guid as identity
+
+A game record SHALL be identified only by the guid its `RecordID` carries. A reference SHALL be `{ kind: "record", id, recordType }` and a row id SHALL be that guid. The main game's `RecordID` holds one `id`, so the discontinued Demo's table and subtable SHALL NOT be carried as empty strings. An empty guid SHALL fail its family with a fatal diagnostic rather than publish a synthetic id.
 
 #### Scenario: A record resolves
 
@@ -154,6 +156,10 @@ A game record MUST be identified by the guid its `RecordID` carries and by nothi
 - **WHEN** a record's `RecordID` is empty
 - **THEN** the family emits a fatal diagnostic naming the record type
 - **AND** the snapshot fails the completeness gate
+
+### Requirement: Engine resources stay outside the catalogue
+
+`mod/src/Walker/RefResolver.cs` SHALL keep engine resources outside the catalogue.
 
 #### Scenario: An engine resource resolves
 

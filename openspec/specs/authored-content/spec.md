@@ -48,7 +48,11 @@ Two exports of the same build and save MUST produce the same row counts for ever
 
 Extraction MUST read authored backing data rather than accessors that generate values or write caches. Where an accessor has such an effect, the extractor MUST read the underlying field and the reason MUST be recorded next to the code.
 
-The `CharName` getter is `if (Application.isPlaying && charName.Get().name == "") charName.Set(new CharacterRandomName(Race)); return charName?.Get()?.name ?? "Missing Name";`. In play mode, it generates a name from the race and writes it into the definition when the stored name is empty. Extraction MUST read the backing `charName` field because calling `CharName` mutates the data being read.
+#### Scenario: A position is read without writing a cache
+
+- **WHEN** extraction reads a placement's spawn point
+- **THEN** it reads the backing field, and falls back to the record transform when that field is empty
+- **AND** it does not call the public accessor that populates the cache
 
 #### Scenario: A name is read without generating one
 
@@ -57,8 +61,12 @@ The `CharName` getter is `if (Application.isPlaying && charName.Get().name == ""
 - **AND** it does not call the accessor that assigns a generated name during play
 - **AND** it does not publish the game's `Missing Name` fallback as a player-facing name
 
-#### Scenario: A position is read without writing a cache
+### Requirement: Character names come from backing data
 
-- **WHEN** extraction reads a placement's spawn point
-- **THEN** it reads the backing field, and falls back to the record transform when that field is empty
-- **AND** it does not call the public accessor that populates the cache
+Extraction SHALL read the backing `charName` field rather than `CharName`, because in play mode the getter generates a name from the race and writes it into an empty stored name.
+
+#### Scenario: An empty stored name remains unchanged
+
+- WHEN extraction reads an empty stored character name
+- THEN it does not invoke `if (Application.isPlaying && charName.Get().name == "") charName.Set(new CharacterRandomName(Race)); return charName?.Get()?.name ?? "Missing Name";`
+- AND the stored name remains unchanged
