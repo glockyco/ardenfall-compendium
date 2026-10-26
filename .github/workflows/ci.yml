@@ -27,6 +27,7 @@ jobs:
             mod:
               - 'mod/**'
               - 'mod-tests/**'
+              - '.github/workflows/ci.yml'
             fixtures:
               - 'fixtures/**'
               - 'pipeline/scripts/check-fixtures.ts'
@@ -111,7 +112,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
-        with: { dotnet-version: "10.0.x" }
+        # Exact SDK versions avoid aka.ms channel redirects to private release blobs.
+        with: { dotnet-version: "10.0.403" }
       - name: format-check
         run: dotnet format mod/ArdenfallCompendium.csproj --verify-no-changes
       # The mod compiles against Assembly-CSharp.dll and the game's Unity, Odin and

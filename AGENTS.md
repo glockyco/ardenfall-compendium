@@ -20,7 +20,7 @@ A requirement about the compendium lives in a spec. A measurement lives in the c
 
 Node is separate from Bun on purpose. `vite build` spawns Node, so SvelteKit prerendering uses the `better-sqlite3` branch of `site/src/lib/server/db.ts` instead of the `bun:sqlite` one.
 
-The dev shell and `.github/workflows/ci.yml` pin their versions independently. Keep both sides in step when either moves.
+The dev shell and `.github/workflows/ci.yml` pin their versions independently. Keep both sides compatible when either moves. CI selects an exact SDK release to avoid the channel installer's unstable download redirect, and Renovate maintains that pin.
 
 Git hooks run their tools through `nix develop`, so a commit works from a GUI client or an agent shell that has no toolchain on PATH. Never put machine-specific paths in `lefthook.yml`.
 

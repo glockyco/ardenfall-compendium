@@ -214,6 +214,19 @@ describe("format tooling", () => {
     expect(prettierIgnore).toContain("mod-tests/bin/");
     expect(prettierIgnore).toContain("mod-tests/obj/");
   });
+
+  it("pins a Renovate-managed CI SDK instead of using an aka.ms channel lookup", () => {
+    expect(ciWorkflow).toMatch(/dotnet-version: "\d+\.\d+\.\d+"/);
+    const renovate = JSON.parse(readFileSync("renovate.json", "utf8")) as {
+      customManagers: { datasourceTemplate: string; depNameTemplate: string }[];
+    };
+    expect(renovate.customManagers).toContainEqual(
+      expect.objectContaining({
+        datasourceTemplate: "dotnet-version",
+        depNameTemplate: "dotnet-sdk",
+      }),
+    );
+  });
 });
 
 describe("ci site build tooling", () => {
