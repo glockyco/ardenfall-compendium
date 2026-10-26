@@ -8,20 +8,44 @@ Defines the home of each kind of instruction to an agent. Defines which instruct
 
 ### Requirement: One home per kind of statement
 
-Each instruction has one home. The kind of statement selects the home.
-
-- `.omp/RULES.md` holds hard requirements about this repository. The file is sticky, so its requirements stay in force through a long session.
-- `AGENTS.md` and the subsystem guides hold orientation, commands, and the definition of verified work.
-- The user-level rules hold working style. Working style applies to every repository.
-- `openspec/config.yaml` holds planning-time artifact rules and a pointer to `AGENTS.md`.
-
-A requirement MUST NOT appear in two homes. Two copies drift apart. `omp` also drops an always-apply rule when a loaded context file already contains its content, so a duplicated requirement can lose its sticky copy.
+Each instruction SHALL have one home selected by its kind. A requirement SHALL NOT appear in two homes because copies drift apart and `omp` can drop an always-apply duplicate of loaded context, losing its sticky copy.
 
 #### Scenario: A requirement appears twice
 
 - **WHEN** one requirement sentence appears in `.omp/RULES.md` and in `openspec/config.yaml`
 - **THEN** a test fails and names the sentence and both files
 - **AND** the failure names the home that owns the requirement
+
+### Requirement: Repository requirements remain sticky
+
+`.omp/RULES.md` SHALL hold hard repository requirements so they stay in force through a long session.
+
+#### Scenario: A session needs a repository requirement
+
+- WHEN an agent works through a long session
+- THEN hard repository requirements remain in the sticky `.omp/RULES.md` file
+
+### Requirement: Orientation lives in repository guidance
+
+`AGENTS.md` and subsystem guides SHALL hold orientation, commands, and the definition of verified work.
+
+#### Scenario: An agent needs repository orientation
+
+- WHEN an agent needs commands or the definition of verified work
+- THEN it finds them in `AGENTS.md` or the subsystem guides
+
+### Requirement: Working style lives in user rules
+
+User-level rules SHALL hold working style that applies to every repository.
+
+#### Scenario: Working style applies across repositories
+
+- WHEN an instruction defines working style
+- THEN its home is the user-level rules
+
+### Requirement: Planning context points to repository guidance
+
+`openspec/config.yaml` SHALL hold planning-time artifact rules and a pointer to `AGENTS.md`.
 
 #### Scenario: A planning artifact needs repository context
 

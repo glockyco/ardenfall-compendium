@@ -9,23 +9,7 @@ gates each of those, and what a choice causes.
 
 ### Requirement: A conversation is the authored graph, not a line list
 
-Each dialogue graph MUST publish its nodes and the authored edges between them. A node MUST carry a
-role from the closed set `speech`, `choice`, `branch`, `condition`, `effect`, `jump`, `end`,
-`unmodelled`. An edge MUST carry its authored order and, when the source node names its outputs, the
-label of the output it leaves from.
-
-A graph carries two planes of connection, and only one of them is the conversation. A flow
-connection moves the conversation on. A value connection feeds a node's input, which is where a gate
-arrives, so a check MUST attach to the node it gates rather than appear as a step.
-
-The published graph MUST NOT be reduced to a tree. 1,383 nodes in this build have more than one
-inbound edge, so a tree would duplicate or drop them.
-
-#### Scenario: A gate arrives on a value input
-
-- **WHEN** a check feeds an opener through a value connection
-- **THEN** the gate publishes on that opener
-- **AND** the check is not published as a step of the conversation
+Each dialogue graph SHALL publish its nodes and authored edges. A node SHALL carry a role from the closed set `speech`, `choice`, `branch`, `condition`, `effect`, `jump`, `end`, `unmodelled`. An edge SHALL carry authored order and, when the source names its outputs, the label of the output it leaves from. The graph SHALL NOT be reduced to a tree, because 1,383 nodes in this build have multiple inbound edges.
 
 #### Scenario: A graph is published with its edges
 
@@ -40,6 +24,16 @@ inbound edge, so a tree would duplicate or drop them.
 - **THEN** the node publishes with the role `unmodelled` and its authored type name
 - **AND** the manifest counts the unmodelled nodes per type
 - **AND** the conversation keeps the edges that pass through it
+
+### Requirement: Value connections attach gates rather than advance flow
+
+A check SHALL attach to the node it gates rather than appear as a conversation step, because a flow connection advances the conversation while a value connection feeds a node's input.
+
+#### Scenario: A gate arrives on a value input
+
+- **WHEN** a check feeds an opener through a value connection
+- **THEN** the gate publishes on that opener
+- **AND** the check is not published as a step of the conversation
 
 ### Requirement: Control nodes are contracted, and jumps are named
 
@@ -76,21 +70,7 @@ renders it as one block.
 
 ### Requirement: A gate is published as a declaration
 
-A condition MUST publish its subject, its comparison and its compared value as data, and MUST resolve
-its subject to a published entity when the game names one. The extraction MUST NOT evaluate a
-condition and MUST NOT choose a branch.
-
-A gate MUST attach to the node or the edge it guards, so a reader learns what a choice or an opener
-requires.
-
-A check MUST publish alike whether a node or a task declares it: the game authors each one twice,
-`RaceCheck` as a node and `RaceCheckCondition` as a task, so one adapter MUST serve both spellings. A
-composite check MUST publish the checks it holds and whether all or any of them must pass, because
-the composite carries no meaning of its own: one quest graph asks the same question 17 times, once
-per witness, and only the checks separate them.
-
-A branch that holds one check per output MUST publish the check behind each output. An output whose
-check the extraction cannot read MUST say so rather than publish the output's index alone.
+A condition SHALL publish its subject, comparison and compared value as data and resolve its subject to a published entity when the game names one. Extraction SHALL NOT evaluate a condition or choose a branch. A gate SHALL attach to the node or edge it guards so readers learn what a choice or opener requires.
 
 #### Scenario: A choice behind a faction check
 
@@ -98,6 +78,19 @@ check the extraction cannot read MUST say so rather than publish the output's in
 - **THEN** the published condition names the factions, the comparison and the guarded choice
 - **AND** each faction resolves to its faction page
 - **AND** no condition row states whether a player passes it
+
+### Requirement: Node and task checks share an adapter
+
+A check SHALL publish alike whether a node or task declares it. One adapter SHALL serve both spellings, because the game authors each check twice, such as `RaceCheck` and `RaceCheckCondition`.
+
+#### Scenario: Equivalent node and task checks
+
+- WHEN a node and a task declare the same check
+- THEN one adapter publishes the same check data for both spellings
+
+### Requirement: Branch outputs publish their checks
+
+A branch that holds one check per output SHALL publish the check behind each output. An output whose check extraction cannot read SHALL say so rather than publish only its index.
 
 #### Scenario: A branch with named outputs
 
@@ -111,11 +104,24 @@ check the extraction cannot read MUST say so rather than publish the output's in
 - **THEN** each output publishes the check behind it
 - **AND** the fall-through output publishes none
 
+### Requirement: Composite checks publish their members
+
+A composite check SHALL publish the checks it holds and whether all or any must pass, because the composite carries no meaning of its own.
+
 #### Scenario: A check inside a list
 
 - **WHEN** a gate is a list of checks
 - **THEN** the published condition carries each check it holds
 - **AND** it states whether all or any of them must pass
+
+#### Scenario: Repeated composite questions remain distinguishable
+
+- WHEN one quest graph asks the same question 17 times, once per witness
+- THEN each composite publishes the checks that distinguish those questions
+
+### Requirement: Unresolved gate subjects remain explicit
+
+A condition that reads runtime state naming no published entity SHALL retain its authored node type without an invented subject and SHALL record a diagnostic.
 
 #### Scenario: A gate the model cannot resolve
 
@@ -144,19 +150,17 @@ character death MUST each publish as their own kind.
 
 ### Requirement: Every authored conversation publishes, holder or not
 
-The published population MUST be the authored dialogue graphs of the build that hold nodes, and a
-conversation MUST be identified by its graph asset together with the quest the graph names as its
-owner. A graph name alone is not an identity: this build ships 231 authored graphs under 211 names,
-because a quest reuses a generic name such as `questdialog_quest-giver`. A graph that holds no nodes
-MUST publish no conversation, and the export MUST count it. A conversation MUST name every holder that reaches it: a character
-definition, a character module, a quest character object, a quest character group, a quest scene
-object, a scene placement, or the quest the graph itself names. A graph reached from several holders
-MUST publish once.
+The published population SHALL be authored dialogue graphs of the build that hold nodes. A conversation SHALL be identified by its graph asset and owning quest, because this build ships 231 graphs under 211 names and quests reuse names such as `questdialog_quest-giver`.
 
-The runtime copies a graph per character that speaks it, and those copies are the same authored
-asset, so the population MUST exclude them. The game also attaches many graphs to a character at
-runtime, so a graph whose holder the extraction cannot read MUST still publish, and the count of
-those MUST reach the export.
+#### Scenario: Two graphs of one name
+
+- **WHEN** two quests each hold a graph named `questdialog_quest-giver`
+- **THEN** two conversations publish, one per quest
+- **AND** neither overwrites the other
+
+### Requirement: Conversations name all holders
+
+A conversation SHALL name every holder that reaches it: a character definition, character module, quest character object, quest character group, quest scene object, scene placement, or the quest the graph names.
 
 #### Scenario: Every holder is opened
 
@@ -165,17 +169,19 @@ those MUST reach the export.
 - **AND** the report covers character definitions, character modules, the three quest holders and
   scene placements
 
+### Requirement: Conversations without readable holders remain published
+
+An authored graph whose holder extraction cannot read SHALL still publish and its count SHALL reach the export, because the game attaches many graphs to characters at runtime.
+
 #### Scenario: A conversation no holder names
 
 - **WHEN** an authored graph names no holder the extraction can read, currently 131 of 225
 - **THEN** the conversation still publishes with its script
 - **AND** a diagnostic counts them, so the gap is measured rather than hidden
 
-#### Scenario: Two graphs of one name
+### Requirement: Empty dialogue graphs are counted but not published
 
-- **WHEN** two quests each hold a graph named `questdialog_quest-giver`
-- **THEN** two conversations publish, one per quest
-- **AND** neither overwrites the other
+A graph holding no nodes SHALL publish no conversation, and the export SHALL count it.
 
 #### Scenario: A graph with no nodes
 
@@ -183,11 +189,19 @@ those MUST reach the export.
 - **THEN** no conversation publishes for it
 - **AND** a diagnostic counts it
 
+### Requirement: Runtime graph copies are excluded
+
+The conversation population SHALL exclude runtime graph copies, because the game copies the same authored asset per speaking character.
+
 #### Scenario: Runtime copies are not conversations
 
 - **WHEN** a loaded world holds runtime copies of a graph
 - **THEN** one conversation publishes for the authored asset
 - **AND** no conversation is published per copy
+
+### Requirement: Shared graphs publish once
+
+A graph reached from several holders SHALL publish once with all holders named.
 
 #### Scenario: One graph, several holders
 

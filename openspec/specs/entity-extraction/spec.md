@@ -65,9 +65,16 @@ Defines how the live game produces structured snapshot data and how the pipeline
 
 ### Requirement: An export proves which plugin answered
 
-`compendium.preflight` MUST report the running plugin assembly's location, the SHA-256 of its bytes, its last write time, and the Unity product name. The digest MUST be read while the assembly loads, because a deploy into a running game replaces that file and a later read would report the deployed build as the running one. The controller MUST compare that digest against the plugin deployed to the main game and MUST fail the export when they differ. It MUST also fail when the answering product is not `Ardenfall Alpha`. A comparison MUST NOT rest on a hard-coded plugin version.
+`compendium.preflight` SHALL report the running plugin assembly's location, SHA-256, last write time, and Unity product name. The digest SHALL be read while the assembly loads, because deploying into a running game replaces the file and a later read would identify the deployed build as the running one.
 
-The digest and product identity MUST reach the snapshot manifest, so a published snapshot names the mod and game that produced it. The manifest MUST NOT carry the plugin path, which is a property of the exporting machine.
+#### Scenario: Preflight reports the loaded assembly
+
+- WHEN a plugin assembly loads and later answers preflight
+- THEN preflight reports its load-time SHA-256, assembly location, last write time, and Unity product name
+
+### Requirement: Export rejects the wrong plugin or product
+
+The controller SHALL compare the running digest with the plugin deployed to the main game and fail the export on mismatch or when the product is not `Ardenfall Alpha`. Comparison SHALL NOT rest on a hard-coded plugin version.
 
 #### Scenario: A stale instance is rejected
 
@@ -92,3 +99,13 @@ The digest and product identity MUST reach the snapshot manifest, so a published
 - **WHEN** preflight reports no plugin identity or product name
 - **THEN** the export fails
 - **AND** the run does not fall back to a plugin version or path alone
+
+### Requirement: Snapshots retain portable plugin identity
+
+The digest and product identity SHALL reach the snapshot manifest so it names the mod and game that produced it. The manifest SHALL NOT carry the machine-specific plugin path.
+
+#### Scenario: A manifest identifies its producer
+
+- WHEN a snapshot is published
+- THEN its manifest records the plugin digest and product identity
+- AND it omits the plugin path

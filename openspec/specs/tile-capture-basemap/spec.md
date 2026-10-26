@@ -25,11 +25,7 @@ The published bounds MUST contain every placement the compendium publishes for t
 
 ### Requirement: A capture renders the world the game streams
 
-A capture MUST obtain each cell's geometry from the game's own world streamer, by moving the streamer's focus to that cell and waiting for its queue to drain, and MUST render from that state. A capture MUST NOT load a scene of its own, MUST NOT instantiate a distant-cell prefab of its own, and MUST NOT switch off a renderer to hide a second copy of a cell.
-
-Every position in the requested range MUST be rendered. There MUST be no mode that renders only the cells that ship an authored scene.
-
-When a capture ends it MUST hand the streamer's focus back to the camera and wait for the streamer to restore the player's world before it reports completion.
+A capture SHALL obtain each cell's geometry from the game's own world streamer by moving its focus to that cell, waiting for its queue to drain, and rendering that state. It SHALL NOT load its own scene, instantiate its own distant-cell prefab, or switch off a renderer to hide a second cell copy.
 
 #### Scenario: The player's own cell is captured
 
@@ -37,11 +33,19 @@ When a capture ends it MUST hand the streamer's focus back to the camera and wai
 - **THEN** the plate shows that cell as the player sees it from above
 - **AND** the capture treats it like every other cell
 
+### Requirement: Every requested grid position is captured
+
+Every position in the requested range SHALL be rendered. There SHALL be no mode that renders only cells shipping an authored scene.
+
 #### Scenario: A cell ships no authored scene
 
 - **WHEN** a capture reaches a grid position with no cell scene in the build
 - **THEN** the plate shows what the game streams there: distant terrain, water, or nothing
 - **AND** the position is recorded in the tile index
+
+### Requirement: Capture restores streamer focus
+
+A capture SHALL hand the streamer's focus back to the camera and wait for the player's world to be restored before reporting completion.
 
 #### Scenario: The capture ends
 
@@ -69,9 +73,7 @@ A rerun with equal recorded inputs MUST produce equal bounds and an equal tile i
 
 ### Requirement: A capture mutates no world state
 
-A capture MUST exclude transient content with a camera culling mask rather than by deactivating objects. The mask MUST name its layers, and a named layer the build does not carry MUST fail the capture, because `LayerMask.GetMask` counts an unknown name as nothing and the plate would silently carry what the name meant to leave out. Where a capture cannot express an exclusion as a layer, it MUST restore what it changed before it returns, and MUST report what it changed.
-
-After a capture, an export running in the same session MUST produce the same data it produces without a capture.
+A capture SHALL exclude transient content through a camera culling mask rather than by deactivating objects.
 
 #### Scenario: Transient content is excluded
 
@@ -79,11 +81,28 @@ After a capture, an export running in the same session MUST produce the same dat
 - **THEN** the plate contains none of them
 - **AND** every object in the scene remains active
 
+### Requirement: Culling masks validate named layers
+
+The mask SHALL name its layers and a named layer absent from the build SHALL fail the capture, because `LayerMask.GetMask` counts an unknown name as nothing and would silently retain excluded content.
+
 #### Scenario: The mask names a layer the build lacks
 
 - **WHEN** a capture starts against a build that has no layer of a name the mask uses
 - **THEN** the capture fails and names the missing layer
 - **AND** no plate is written
+
+### Requirement: Unavoidable capture changes are restored and reported
+
+When a capture cannot express an exclusion as a layer, it SHALL restore what it changed before returning and report what it changed.
+
+#### Scenario: A non-layer exclusion changes the world
+
+- WHEN capture must change state for an exclusion that no layer can express
+- THEN it restores that state before returning and reports the change
+
+### Requirement: Capture preserves subsequent export data
+
+An export after capture in the same session SHALL produce the same data as an export without capture.
 
 #### Scenario: An export follows a capture in one session
 
@@ -92,11 +111,7 @@ After a capture, an export running in the same session MUST produce the same dat
 
 ### Requirement: Tiles are published as content-hashed assets with a generated index
 
-Each tile MUST be published through the asset path that carries every other image, named by the hash of its content and recorded in the artifact manifest. The pipeline MUST emit a tile index that resolves a map, a zoom level, and a tile position to that asset and its byte size.
-
-The finest zoom level MUST match the maximum zoom the map view allows, and both MUST come from one producer.
-
-A tile position inside the published bounds that the index does not resolve MUST fail the pipeline. A position with nothing to render MUST be recorded as empty rather than omitted silently.
+Each tile SHALL publish through the asset path used for every other image, named by its content hash and recorded in the artifact manifest. The pipeline SHALL emit an index resolving a map, zoom level and tile position to that asset and its byte size.
 
 #### Scenario: A tile reaches the site
 
@@ -104,6 +119,19 @@ A tile position inside the published bounds that the index does not resolve MUST
 - **THEN** each tile is an asset named by its content hash
 - **AND** the tile index resolves its map, zoom, and position to that asset
 - **AND** the artifact manifest records it
+
+### Requirement: Tile and map zoom share one producer
+
+The finest tile zoom level SHALL match the map view's maximum allowed zoom, with both coming from one producer.
+
+#### Scenario: Finest zoom is published
+
+- WHEN tile metadata and the map view define their maximum zoom
+- THEN both consume the same producer and their maximum zoom levels match
+
+### Requirement: Tile indexes cover every bounded position
+
+A tile position inside published bounds that the index does not resolve SHALL fail the pipeline. A position with nothing to render SHALL be recorded as empty rather than silently omitted.
 
 #### Scenario: A tile is missing inside the published bounds
 

@@ -8,11 +8,7 @@ Defines scene dialogue, the half of the game's authored dialogue that does not h
 
 ### Requirement: Scene dialogue is extracted with the graph that holds it
 
-Authored dialogue a scene places MUST become a canonical row per dialogue graph, carrying the graph's asset name, the authored flow the `dialogue-flow` capability defines, and every placement that can start it.
-
-A placement is not the identity. A `SimpleDialogInteractable` carries no `GuidComponent` in 8 of the 27 placements this build ships, including both signs in `cell_interior_4.-2` whose graph holds greetings and topics, so a placement-keyed row cannot publish them at all. The graph asset and the quest that owns it are the identity together, and the same graph placed twice is one conversation rather than two. The asset name alone is not enough: 231 authored graphs ship under 211 names, because a quest reuses a generic name for its own graph.
-
-A scene placement is one holder among several. The same graph reached from a character definition or a quest MUST publish once, with both holders named.
+Authored scene dialogue SHALL become a canonical row per graph carrying its asset name, the authored `dialogue-flow` flow and every placement that can start it. Graph asset and owning quest SHALL jointly identify the conversation, not placement or asset name alone.
 
 #### Scenario: Scene dialogue is extracted
 
@@ -21,17 +17,44 @@ A scene placement is one holder among several. The same graph reached from a cha
 - **AND** its nodes, edges, statements, gates and outcomes publish through the flow contract
 - **AND** every placement that starts it appears as a marker on its map layer
 
+### Requirement: Repeated scene graphs publish once
+
+The same graph placed twice SHALL be one conversation carrying both placements.
+
 #### Scenario: One graph placed several times
 
 - **WHEN** two placements reference the same dialogue graph
 - **THEN** one row carries both placements
 - **AND** the page lists each place the reader can start it
 
+### Requirement: Placements need no identity to publish dialogue
+
+A placement lacking `GuidComponent` SHALL still publish its graph's dialogue, because the graph owns the identity.
+
 #### Scenario: A placement carrying no identity still publishes its dialogue
 
 - **WHEN** a placement carries no `GuidComponent`
 - **THEN** its graph's dialogue is still published, because the graph owns the identity
 - **AND** the placement is named by its cell and its authored speaker name
+
+#### Scenario: Scene placements lack guid components
+
+- WHEN the build's 27 placements include eight without `GuidComponent`
+- THEN both signs in `cell_interior_4.-2` still publish their graph's greetings and topics
+
+### Requirement: Shared scene and non-scene holders publish once
+
+A graph reached from a scene placement and a character definition or quest SHALL publish once with both holders named, because a scene placement is one holder among several.
+
+#### Scenario: A graph has scene and quest holders
+
+- WHEN the same graph is reached from a scene placement and a quest
+- THEN one conversation names both holders
+- AND graph identity includes the owning quest because 231 authored graphs ship under 211 names and quests reuse generic names
+
+### Requirement: Scene dialogue preserves speaker and flow data
+
+Scene dialogue SHALL publish authored speaker names and authored flow without inventing names or simulating branches.
 
 #### Scenario: A named speaker owns its lines
 

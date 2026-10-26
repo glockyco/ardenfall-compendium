@@ -56,20 +56,17 @@ Defines how extracted fields become canonical SQLite rows, generated read models
 
 ### Requirement: A runtime substitution publishes as data, not as markup
 
-Rich-text translation MUST publish a token the game substitutes at runtime as a typed node rather
-than as literal markup. A conditional token, which `Statement.NameReplace` reads as
-`<subject = value ? "a" : "b">`, MUST publish both alternatives and the state that chooses between
-them, and a page MUST render both.
-
-A brace token MUST publish as authored text when the build ships no tooltip dictionary, because
-`Statement.ApplyModifiers` substitutes no brace and the game renders it as authored. A diagnostic
-MUST NOT blame a dictionary the build does not carry.
+Rich-text translation SHALL publish a token the game substitutes at runtime as a typed node rather than literal markup. A conditional token, which `Statement.NameReplace` reads as `<subject = value ? "a" : "b">`, SHALL publish both alternatives and the state that chooses between them, and a page SHALL render both.
 
 #### Scenario: A line that differs by the player
 
 - **WHEN** a statement carries a conditional token
 - **THEN** the document holds both alternatives, the subject and the comparison
 - **AND** the page shows both and names the state that chooses
+
+### Requirement: Unsubstituted braces remain authored text
+
+A brace token SHALL publish as authored text when the build ships no tooltip dictionary, because `Statement.ApplyModifiers` substitutes no brace and the game renders it as authored. A diagnostic SHALL NOT blame a dictionary the build does not carry.
 
 #### Scenario: A brace in authored prose
 
