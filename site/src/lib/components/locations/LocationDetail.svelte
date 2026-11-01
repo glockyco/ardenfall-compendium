@@ -1,6 +1,6 @@
 <script lang="ts">
-  import AvailabilityNotice from "$lib/components/content/AvailabilityNotice.svelte";
-  import type { LocationPresentationRow } from "$lib/server/read-models";
+  import AvailabilityNotice from "#lib/components/content/AvailabilityNotice.svelte";
+  import type { LocationPresentationRow } from "#lib/server/read-models.js";
 
   let { presentation }: { presentation: LocationPresentationRow } = $props();
   const number = (value: number): string =>

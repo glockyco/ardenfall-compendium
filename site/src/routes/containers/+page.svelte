@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ContainerOverview from "$lib/components/containers/ContainerOverview.svelte";
+  import ContainerOverview from "#lib/components/containers/ContainerOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

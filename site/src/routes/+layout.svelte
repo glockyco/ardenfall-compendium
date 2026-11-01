@@ -37,7 +37,7 @@
           </a>
         {/each}
         <a
-          href={resolve("/search")}
+          href={resolve("search")}
           aria-current={isCurrent("/search") ? "page" : undefined}
           class="hover:text-foreground decoration-primary aria-[current=page]:text-foreground inline-flex min-h-6 items-center underline-offset-8 aria-[current=page]:underline aria-[current=page]:decoration-2"
         >

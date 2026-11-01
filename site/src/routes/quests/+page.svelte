@@ -1,6 +1,6 @@
 <script lang="ts">
-  import AvailabilityNotice from "$lib/components/content/AvailabilityNotice.svelte";
-  import type { AvailabilityFlag } from "$lib/components/content/availability-flags";
+  import AvailabilityNotice from "#lib/components/content/AvailabilityNotice.svelte";
+  import type { AvailabilityFlag } from "#lib/components/content/availability-flags.js";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

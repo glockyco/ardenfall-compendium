@@ -1,7 +1,7 @@
 <script lang="ts">
-  import BackLink from "$lib/components/navigation/BackLink.svelte";
-  import PlacedPlantDetail from "$lib/components/pickable-plants/PlacedPlantDetail.svelte";
-  import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
+  import BackLink from "#lib/components/navigation/BackLink.svelte";
+  import PlacedPlantDetail from "#lib/components/pickable-plants/PlacedPlantDetail.svelte";
+  import RelationshipSection from "#lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import BackLink from "$lib/components/navigation/BackLink.svelte";
-  import EntityTable from "$lib/components/EntityTable.svelte";
+  import BackLink from "#lib/components/navigation/BackLink.svelte";
+  import EntityTable from "#lib/components/EntityTable.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

@@ -6,7 +6,7 @@ import {
   listItemsByVariant,
   listOverviewColumns,
   type ItemOverviewRow,
-} from "$lib/server/read-models";
+} from "#lib/server/read-models.js";
 import type { EntryGenerator, PageServerLoad } from "./$types";
 
 export const prerender = true;

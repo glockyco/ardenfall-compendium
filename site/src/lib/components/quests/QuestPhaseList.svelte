@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { QuestPhase } from "$lib/server/read-models";
+  import type { QuestPhase } from "#lib/server/read-models.js";
 
   let { phases }: { phases: QuestPhase[] } = $props();
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SpellPresentationEffect } from "$lib/server/entities/spell";
+  import type { SpellPresentationEffect } from "#lib/server/entities/spell.js";
   import { spellEffectLabel } from "./spellEffect";
 
   let { effects }: { effects: SpellPresentationEffect[] } = $props();

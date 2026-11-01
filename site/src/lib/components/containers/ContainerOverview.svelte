@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ContainerOverviewRow } from "$lib/server/read-models";
+  import type { ContainerOverviewRow } from "#lib/server/read-models.js";
 
   let { rows }: { rows: ContainerOverviewRow[] } = $props();
 </script>

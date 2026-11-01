@@ -1,5 +1,5 @@
 <script lang="ts">
-  import FactionOverview from "$lib/components/factions/FactionOverview.svelte";
+  import FactionOverview from "#lib/components/factions/FactionOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ItemOverviewFilters from "$lib/components/items/ItemOverviewFilters.svelte";
+  import ItemOverviewFilters from "#lib/components/items/ItemOverviewFilters.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

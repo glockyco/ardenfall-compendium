@@ -1,6 +1,6 @@
 <script lang="ts">
-  import BackLink from "$lib/components/navigation/BackLink.svelte";
-  import ItemTagDetail from "$lib/components/tags/ItemTagDetail.svelte";
+  import BackLink from "#lib/components/navigation/BackLink.svelte";
+  import ItemTagDetail from "#lib/components/tags/ItemTagDetail.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

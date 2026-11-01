@@ -1,6 +1,6 @@
 <script lang="ts">
-  import EntityTable from "$lib/components/EntityTable.svelte";
-  import type { ItemOverviewRow, ItemTagPresentationRow } from "$lib/server/read-models";
+  import EntityTable from "#lib/components/EntityTable.svelte";
+  import type { ItemOverviewRow, ItemTagPresentationRow } from "#lib/server/read-models.js";
 
   type Column = {
     id: string;

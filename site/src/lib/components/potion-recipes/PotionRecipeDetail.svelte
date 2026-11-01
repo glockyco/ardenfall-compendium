@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PotionRecipePresentationRow } from "$lib/server/entities/potion-recipe";
+  import type { PotionRecipePresentationRow } from "#lib/server/entities/potion-recipe.js";
 
   let { recipe }: { recipe: PotionRecipePresentationRow } = $props();
 </script>

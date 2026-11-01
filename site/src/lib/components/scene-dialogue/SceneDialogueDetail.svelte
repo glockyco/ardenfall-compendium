@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SceneDialoguePresentationRow } from "$lib/server/read-models";
+  import type { SceneDialoguePresentationRow } from "#lib/server/read-models.js";
 
   let { presentation }: { presentation: SceneDialoguePresentationRow } = $props();
   const coordinate = (value: number | null): string =>

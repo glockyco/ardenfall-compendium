@@ -1,10 +1,10 @@
 <script lang="ts">
-  import RichText from "$lib/components/content/RichText.svelte";
+  import RichText from "#lib/components/content/RichText.svelte";
   import ItemEffectList from "./ItemEffectList.svelte";
   import ItemRequirementList from "./ItemRequirementList.svelte";
   import ItemStatBlock from "./ItemStatBlock.svelte";
   import ItemStateFacts from "./ItemStateFacts.svelte";
-  import type { ItemPresentationRow } from "$lib/server/read-models";
+  import type { ItemPresentationRow } from "#lib/server/read-models.js";
 
   let { item }: { item: ItemPresentationRow } = $props();
 </script>

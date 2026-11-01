@@ -76,7 +76,7 @@ const sitePackageJson = JSON.parse(readFileSync("site/package.json", "utf8")) as
   dependencies?: Record<string, string>;
 };
 const siteLayout = readFileSync("site/src/routes/+layout.ts", "utf8");
-const siteSvelteConfig = readFileSync("site/svelte.config.js", "utf8");
+const siteViteConfig = readFileSync("site/vite.config.ts", "utf8");
 const siteWranglerConfig = readFileSync("site/wrangler.toml", "utf8");
 const sitePrerenderSmoke = readFileSync("site/scripts/smoke-prerender-output.ts", "utf8");
 const siteAppCss = readFileSync("site/src/app.css", "utf8");
@@ -904,7 +904,7 @@ describe("site prerender architecture", () => {
   it("deploys files only, with no Worker in front of them", () => {
     // A Worker used to sit here and could only fail, because its bundle pulled in the server
     // modules that read the build database. It answered 500 for any address that matched no file.
-    expect(siteSvelteConfig).toContain("@sveltejs/adapter-static");
+    expect(siteViteConfig).toContain("@sveltejs/adapter-static");
     expect(siteWranglerConfig).toContain('directory = ".stage/release/output"');
     expect(siteWranglerConfig).not.toMatch(/^main\s*=/m);
     expect(siteWranglerConfig).not.toMatch(/^run_worker_first\s*=/m);
@@ -1230,8 +1230,8 @@ describe("site prerender architecture", () => {
     const detailRoute = existsSync("site/src/routes/items/[id]/+page.ts")
       ? readFileSync("site/src/routes/items/[id]/+page.ts", "utf8")
       : "";
-    expect(overviewRoute).not.toContain("$lib/store");
-    expect(detailRoute).not.toContain("$lib/store");
+    expect(overviewRoute).not.toContain("#lib/store");
+    expect(detailRoute).not.toContain("#lib/store");
   });
 });
 

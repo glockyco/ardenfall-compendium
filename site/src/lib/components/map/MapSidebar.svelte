@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { MapStore } from "$lib/map/map-store.svelte";
+  import type { MapStore } from "#lib/map/map-store.svelte.js";
 
   let { store }: { store: MapStore } = $props();
   const rgb = (c: [number, number, number, number]) => `rgb(${c[0]}, ${c[1]}, ${c[2]})`;

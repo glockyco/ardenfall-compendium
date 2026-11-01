@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SceneDialogueOverview from "$lib/components/scene-dialogue/SceneDialogueOverview.svelte";
+  import SceneDialogueOverview from "#lib/components/scene-dialogue/SceneDialogueOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

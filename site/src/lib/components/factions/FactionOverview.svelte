@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { FactionOverviewRow } from "$lib/server/read-models";
+  import type { FactionOverviewRow } from "#lib/server/read-models.js";
 
   let { rows }: { rows: FactionOverviewRow[] } = $props();
 </script>

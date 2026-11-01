@@ -27,7 +27,7 @@ import {
   listEnchantments,
   listStatTypes,
   listStatusEffects,
-} from "$lib/server/read-models";
+} from "#lib/server/read-models.js";
 import type { LayoutServerLoad } from "./$types";
 
 export interface NavSection {

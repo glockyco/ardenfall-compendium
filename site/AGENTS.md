@@ -43,6 +43,7 @@
 ## Layout
 
 - Put owned UI primitives in `src/lib/components/ui/`, entity presentation in `src/lib/components/<entity>/`, server-only loaders in `src/lib/server/`, and pages in `src/routes/`.
+- Configure SvelteKit through the Vite plugin in `vite.config.ts`. Use the package's subpath imports with explicit file extensions so build tools and TypeScript resolve the same modules.
 
 ## UI governance
 

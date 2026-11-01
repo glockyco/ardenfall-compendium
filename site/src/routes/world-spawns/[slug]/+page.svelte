@@ -1,7 +1,7 @@
 <script lang="ts">
-  import BackLink from "$lib/components/navigation/BackLink.svelte";
-  import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
-  import WorldSpawnDetail from "$lib/components/world-spawns/WorldSpawnDetail.svelte";
+  import BackLink from "#lib/components/navigation/BackLink.svelte";
+  import RelationshipSection from "#lib/components/relationships/RelationshipSection.svelte";
+  import WorldSpawnDetail from "#lib/components/world-spawns/WorldSpawnDetail.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

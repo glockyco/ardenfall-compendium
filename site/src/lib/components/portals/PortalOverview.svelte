@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PortalOverviewRow } from "$lib/server/read-models";
+  import type { PortalOverviewRow } from "#lib/server/read-models.js";
 
   let { rows }: { rows: PortalOverviewRow[] } = $props();
 </script>

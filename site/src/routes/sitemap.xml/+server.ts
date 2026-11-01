@@ -1,5 +1,5 @@
-import { all } from "$lib/server/db";
-import { sitemapRoutePaths, type EntityPageRoute } from "$lib/server/sitemap-routes";
+import { all } from "#lib/server/db.js";
+import { sitemapRoutePaths, type EntityPageRoute } from "#lib/server/sitemap-routes.js";
 import type { RequestHandler } from "./$types";
 
 export const prerender = true;

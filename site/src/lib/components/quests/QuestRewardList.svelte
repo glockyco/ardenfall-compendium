@@ -1,5 +1,9 @@
 <script lang="ts">
-  import type { QuestReward, QuestRewardSet, QuestRewardSetType } from "$lib/server/entities/quest";
+  import type {
+    QuestReward,
+    QuestRewardSet,
+    QuestRewardSetType,
+  } from "#lib/server/entities/quest.js";
 
   let { rewards }: { rewards: QuestRewardSet[] } = $props();
 

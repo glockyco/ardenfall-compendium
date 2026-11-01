@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CharacterOverview from "$lib/components/characters/CharacterOverview.svelte";
+  import CharacterOverview from "#lib/components/characters/CharacterOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

@@ -1,5 +1,5 @@
 import { error } from "@sveltejs/kit";
-import { getTerm, listTermIds } from "$lib/server/read-models";
+import { getTerm, listTermIds } from "#lib/server/read-models.js";
 import type { EntryGenerator, PageServerLoad } from "./$types";
 
 export const prerender = "auto";

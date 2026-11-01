@@ -1,8 +1,8 @@
 <script lang="ts">
-  import BackLink from "$lib/components/navigation/BackLink.svelte";
-  import ItemHeader from "$lib/components/items/ItemHeader.svelte";
-  import ItemPresentationPanel from "$lib/components/items/ItemPresentationPanel.svelte";
-  import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
+  import BackLink from "#lib/components/navigation/BackLink.svelte";
+  import ItemHeader from "#lib/components/items/ItemHeader.svelte";
+  import ItemPresentationPanel from "#lib/components/items/ItemPresentationPanel.svelte";
+  import RelationshipSection from "#lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

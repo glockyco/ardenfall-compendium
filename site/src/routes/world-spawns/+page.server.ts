@@ -1,4 +1,4 @@
-import { listWorldSpawns } from "$lib/server/read-models";
+import { listWorldSpawns } from "#lib/server/read-models.js";
 import type { PageServerLoad } from "./$types";
 
 export const prerender = true;

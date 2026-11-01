@@ -1,5 +1,5 @@
 import { error } from "@sveltejs/kit";
-import { getStatTypePresentation, listStatTypes } from "$lib/server/read-models";
+import { getStatTypePresentation, listStatTypes } from "#lib/server/read-models.js";
 import type { EntryGenerator, PageServerLoad } from "./$types";
 
 const slugFromRoutePath = (routePath: string) => routePath.slice(routePath.lastIndexOf("/") + 1);

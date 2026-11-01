@@ -1,12 +1,12 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import { afterNavigate, goto } from "$app/navigation";
-  import { MapStore } from "$lib/map/map-store.svelte";
-  import { encodeMapState } from "$lib/map/url-state";
-  import MapCanvas from "$lib/components/map/MapCanvas.svelte";
-  import MapSidebar from "$lib/components/map/MapSidebar.svelte";
-  import MapSearch from "$lib/components/map/MapSearch.svelte";
-  import DetailsPanel from "$lib/components/map/DetailsPanel.svelte";
+  import { MapStore } from "#lib/map/map-store.svelte.js";
+  import { encodeMapState } from "#lib/map/url-state.js";
+  import MapCanvas from "#lib/components/map/MapCanvas.svelte";
+  import MapSidebar from "#lib/components/map/MapSidebar.svelte";
+  import MapSearch from "#lib/components/map/MapSearch.svelte";
+  import DetailsPanel from "#lib/components/map/DetailsPanel.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -18,7 +18,8 @@
 
   // afterNavigate runs after the client router is ready (post-hydration), which
   // is when programmatic navigation is safe to call.
-  afterNavigate(() => {
+  afterNavigate(({ shallow, type }) => {
+    if (shallow && type === "goto") return;
     if (ready) return;
     store.hydrateFromSearch(location.search);
     ready = true;
@@ -39,9 +40,8 @@
     if (search !== location.search) {
       // eslint-disable-next-line svelte/no-navigation-without-resolve -- same-page query sync to the static /map route
       void goto(`${location.pathname}${search}`, {
-        replaceState: true,
-        keepFocus: true,
-        noScroll: true,
+        replace: true,
+        reset: false,
       });
     }
   });

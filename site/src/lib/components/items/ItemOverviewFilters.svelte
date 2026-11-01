@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import EntityTable from "$lib/components/EntityTable.svelte";
-  import type { ItemOverviewFilter, ItemOverviewRow } from "$lib/server/read-models";
+  import { browser } from "$app/env";
+  import EntityTable from "#lib/components/EntityTable.svelte";
+  import type { ItemOverviewFilter, ItemOverviewRow } from "#lib/server/read-models.js";
 
   type Column = {
     id: string;
@@ -105,6 +105,7 @@
     </p>
   {:else}
     <EntityTable {columns} rows={visibleRows} rowHref={(row) => row.routePath} />
+
     {#if pageCount > 1}
       <nav aria-label="Item table pages" class="flex items-center justify-between gap-3 text-sm">
         <button

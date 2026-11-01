@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ItemTagOverview from "$lib/components/tags/ItemTagOverview.svelte";
+  import ItemTagOverview from "#lib/components/tags/ItemTagOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

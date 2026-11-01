@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { WorldSpawnOverviewRow } from "$lib/server/read-models";
+  import type { WorldSpawnOverviewRow } from "#lib/server/read-models.js";
 
   let { rows }: { rows: WorldSpawnOverviewRow[] } = $props();
 </script>
