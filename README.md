@@ -16,6 +16,8 @@ The site identifies the game build behind its data and marks missing or ambiguou
 
 The website and pipeline need Bun and Node. [`package.json`](package.json) declares the Bun requirement, and [`flake.nix`](flake.nix) defines the development toolchain, including the .NET SDK needed for the extraction mod.
 
+[`bunfig.toml`](bunfig.toml) delays newly released dependencies before Bun can resolve them, so fresh releases have time to settle.
+
 On a supported Nix system:
 
 ```sh
