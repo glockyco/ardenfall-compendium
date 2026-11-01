@@ -1,4 +1,4 @@
-import { listRouteSections } from "$lib/server/read-models";
+import { listRouteSections } from "#lib/server/read-models.js";
 import type { PageServerLoad } from "./$types";
 
 /**

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PortalPresentationRow } from "$lib/server/read-models";
+  import type { PortalPresentationRow } from "#lib/server/read-models.js";
 
   let { presentation }: { presentation: PortalPresentationRow } = $props();
   const number = (value: number | null): string =>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { RelationshipEdge } from "$lib/server/read-models";
+  import type { RelationshipEdge } from "#lib/server/read-models.js";
 
   let { edge }: { edge: RelationshipEdge } = $props();
 </script>

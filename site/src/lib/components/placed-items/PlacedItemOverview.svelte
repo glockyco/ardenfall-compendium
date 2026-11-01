@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PlacedItemOverviewRow } from "$lib/server/read-models";
+  import type { PlacedItemOverviewRow } from "#lib/server/read-models.js";
 
   let { rows }: { rows: PlacedItemOverviewRow[] } = $props();
 </script>

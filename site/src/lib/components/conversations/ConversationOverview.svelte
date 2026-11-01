@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { DialogueOverviewRow } from "$lib/server/entities/dialogue";
+  import type { DialogueOverviewRow } from "#lib/server/entities/dialogue.js";
 
   let { rows }: { rows: DialogueOverviewRow[] } = $props();
   const count = (value: number, one: string, many: string) =>

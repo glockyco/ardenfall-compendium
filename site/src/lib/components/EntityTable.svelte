@@ -1,5 +1,5 @@
 <script lang="ts" generics="T extends { id: string | number }">
-  import ItemIcon from "$lib/components/items/ItemIcon.svelte";
+  import ItemIcon from "#lib/components/items/ItemIcon.svelte";
   type Column = {
     id: string;
     label: string;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { StatTypeOverviewRow } from "$lib/server/read-models";
+  import type { StatTypeOverviewRow } from "#lib/server/read-models.js";
   type StatGroup = StatTypeOverviewRow["grouping"];
 
   let { rows }: { rows: StatTypeOverviewRow[] } = $props();

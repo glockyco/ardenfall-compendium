@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ItemPresentationRequirement } from "$lib/server/read-models";
+  import type { ItemPresentationRequirement } from "#lib/server/read-models.js";
 
   let { requirements }: { requirements: ItemPresentationRequirement[] } = $props();
 </script>

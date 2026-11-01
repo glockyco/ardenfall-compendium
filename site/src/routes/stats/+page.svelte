@@ -1,5 +1,5 @@
 <script lang="ts">
-  import StatTypeOverview from "$lib/components/stats/StatTypeOverview.svelte";
+  import StatTypeOverview from "#lib/components/stats/StatTypeOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

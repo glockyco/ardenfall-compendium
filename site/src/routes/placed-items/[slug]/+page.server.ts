@@ -3,7 +3,7 @@ import {
   getPlacedItemPresentation,
   listPlacedItems,
   listRelationshipSections,
-} from "$lib/server/read-models";
+} from "#lib/server/read-models.js";
 import type { EntryGenerator, PageServerLoad } from "./$types";
 
 const slugFromRoutePath = (routePath: string) => routePath.slice(routePath.lastIndexOf("/") + 1);

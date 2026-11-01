@@ -1,6 +1,6 @@
 <script lang="ts">
   import EntityLink from "./EntityLink.svelte";
-  import type { RelationshipEdge } from "$lib/server/read-models";
+  import type { RelationshipEdge } from "#lib/server/read-models.js";
 
   let { edge }: { edge: RelationshipEdge } = $props();
 </script>

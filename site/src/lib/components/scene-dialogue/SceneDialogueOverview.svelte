@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { SceneDialogueOverviewRow } from "$lib/server/read-models";
+  import type { SceneDialogueOverviewRow } from "#lib/server/read-models.js";
 
   let { rows }: { rows: SceneDialogueOverviewRow[] } = $props();
   const places = (count: number) => (count === 1 ? "1 place" : `${count} places`);

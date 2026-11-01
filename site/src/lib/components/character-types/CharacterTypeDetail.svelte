@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { CharacterTypePresentationRow } from "$lib/server/read-models";
+  import type { CharacterTypePresentationRow } from "#lib/server/read-models.js";
 
   let { presentation }: { presentation: CharacterTypePresentationRow } = $props();
   const pageName = $derived(presentation.name);

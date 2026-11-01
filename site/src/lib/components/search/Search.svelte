@@ -2,8 +2,8 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
-  import { decodeSearchQuery, encodeSearchQuery } from "$lib/search/url-state";
-  import { searchDisplayState, type SearchStatus } from "$lib/search/state";
+  import { decodeSearchQuery, encodeSearchQuery } from "#lib/search/url-state.js";
+  import { searchDisplayState, type SearchStatus } from "#lib/search/state.js";
 
   interface PagefindResultData {
     url: string;
@@ -15,7 +15,6 @@
     id: string;
     data: () => Promise<PagefindResultData>;
   }
-
   interface PagefindSearchResponse {
     results: PagefindResult[];
   }
@@ -91,6 +90,7 @@
   const sectionForUrl = (url: string): string => {
     try {
       const pathname = new URL(url, window.location.origin).pathname;
+
       return (
         sections.find(({ prefix }) => pathname === prefix || pathname.startsWith(`${prefix}/`))
           ?.label ?? "Compendium"
@@ -148,9 +148,9 @@
     event.preventDefault();
     const query = inputValue.trim();
     const encoded = encodeSearchQuery(query);
-    const destination = encoded ? `${resolve("/search")}?${encoded}` : resolve("/search");
+    const destination = encoded ? `${resolve("search")}?${encoded}` : resolve("search");
     // eslint-disable-next-line svelte/no-navigation-without-resolve -- same-page query sync to the static /search route
-    await goto(destination, { keepFocus: true });
+    await goto(destination, { reset: false });
   };
 </script>
 
@@ -198,9 +198,9 @@
     <div class="border-border bg-muted/30 rounded-lg border p-5">
       <p>No results for “{activeQuery}”.</p>
       <p class="text-muted-foreground mt-2">
-        Try a different search, or <a class="underline" href={resolve("/search")}
-          >clear the search</a
-        >.
+        Try a different search, or
+        <a class="underline" href={resolve("search")}>clear the search</a>
+        .
       </p>
     </div>
   {:else}

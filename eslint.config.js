@@ -2,7 +2,6 @@ import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import svelte from "eslint-plugin-svelte";
 import globals from "globals";
-import svelteConfig from "./site/svelte.config.js";
 
 export default tseslint.config(
   {
@@ -31,7 +30,6 @@ export default tseslint.config(
         parser: tseslint.parser,
         projectService: true,
         extraFileExtensions: [".svelte"],
-        svelteConfig,
       },
     },
   },

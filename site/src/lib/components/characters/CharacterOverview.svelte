@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { CharacterOverviewRow } from "$lib/server/read-models";
+  import type { CharacterOverviewRow } from "#lib/server/read-models.js";
 
   let { rows }: { rows: CharacterOverviewRow[] } = $props();
 </script>

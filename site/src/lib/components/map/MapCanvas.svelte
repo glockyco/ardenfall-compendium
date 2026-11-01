@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
-  import { buildMapLayerSpecs, type LayerSpec } from "$lib/map/layer-spec";
-  import { mapAccessibleName, visibleMapMarkers } from "$lib/map/map-accessibility";
-  import { composeMapLayers, visibleBasemapTiles } from "$lib/map/basemap";
-  import type { MapStore } from "$lib/map/map-store.svelte";
-  import type { MapBounds } from "$lib/map/types";
+  import { buildMapLayerSpecs, type LayerSpec } from "#lib/map/layer-spec.js";
+  import { mapAccessibleName, visibleMapMarkers } from "#lib/map/map-accessibility.js";
+  import { composeMapLayers, visibleBasemapTiles } from "#lib/map/basemap.js";
+  import type { MapStore } from "#lib/map/map-store.svelte.js";
+  import type { MapBounds } from "#lib/map/types.js";
   // Type-only imports are erased at build time, so they do not pull deck.gl into
   // the SSR/prerender graph; the values are imported lazily in onMount below.
   import type { Deck, Layer, OrthographicView, PickingInfo } from "@deck.gl/core";

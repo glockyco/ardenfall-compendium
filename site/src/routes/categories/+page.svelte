@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ItemCategoryOverview from "$lib/components/categories/ItemCategoryOverview.svelte";
+  import ItemCategoryOverview from "#lib/components/categories/ItemCategoryOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

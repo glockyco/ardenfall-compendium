@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { MapStore } from "$lib/map/map-store.svelte";
+  import type { MapStore } from "#lib/map/map-store.svelte.js";
   import {
     MAP_SEARCH_RESULT_LIMIT,
     mapMarkerSearchMatches,
     mapSearchEmptyState,
-  } from "$lib/map/map-accessibility";
+  } from "#lib/map/map-accessibility.js";
 
   let { store }: { store: MapStore } = $props();
   let query = $state("");

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import BackLink from "$lib/components/navigation/BackLink.svelte";
-  import EntityDetailHeader from "$lib/components/EntityDetailHeader.svelte";
-  import QuestPhaseList from "$lib/components/quests/QuestPhaseList.svelte";
-  import QuestLogicSection from "$lib/components/quests/QuestLogicSection.svelte";
-  import QuestRewardList from "$lib/components/quests/QuestRewardList.svelte";
-  import AvailabilityNotice from "$lib/components/content/AvailabilityNotice.svelte";
-  import type { AvailabilityFlag } from "$lib/components/content/availability-flags";
-  import ConversationList from "$lib/components/conversations/ConversationList.svelte";
-  import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
+  import BackLink from "#lib/components/navigation/BackLink.svelte";
+  import EntityDetailHeader from "#lib/components/EntityDetailHeader.svelte";
+  import QuestPhaseList from "#lib/components/quests/QuestPhaseList.svelte";
+  import QuestLogicSection from "#lib/components/quests/QuestLogicSection.svelte";
+  import QuestRewardList from "#lib/components/quests/QuestRewardList.svelte";
+  import AvailabilityNotice from "#lib/components/content/AvailabilityNotice.svelte";
+  import type { AvailabilityFlag } from "#lib/components/content/availability-flags.js";
+  import ConversationList from "#lib/components/conversations/ConversationList.svelte";
+  import RelationshipSection from "#lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

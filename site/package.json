@@ -14,8 +14,8 @@
     "better-sqlite3": "^13.0.2",
     "clsx": "^2.1.1",
     "pagefind": "^1.5.2",
-    "svelte": "^5.56.8",
-    "svelte-check": "^4.7.4",
+    "svelte": "^5.57.2",
+    "svelte-check": "^4.7.5",
     "tailwind-merge": "^3.6.0",
     "tailwind-variants": "^3.3.0",
     "tailwindcss": "^4.3.3",
@@ -41,5 +41,8 @@
     "deploy:production": "bun run scripts/deploy-production.ts",
     "build:release": "SITE_STAGE=release bun run build:prepared"
   },
-  "type": "module"
+  "type": "module",
+  "imports": {
+    "#lib/*": "./src/lib/*"
+  }
 }

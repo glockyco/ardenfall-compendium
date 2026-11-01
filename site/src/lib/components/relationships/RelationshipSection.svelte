@@ -1,6 +1,6 @@
 <script lang="ts">
   import RelatedEntityCard from "./RelatedEntityCard.svelte";
-  import type { RelationshipSection } from "$lib/server/read-models";
+  import type { RelationshipSection } from "#lib/server/read-models.js";
 
   let { section }: { section: RelationshipSection } = $props();
 </script>

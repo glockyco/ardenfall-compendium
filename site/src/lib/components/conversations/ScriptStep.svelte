@@ -1,9 +1,9 @@
 <script lang="ts">
-  import RichText from "$lib/components/content/RichText.svelte";
+  import RichText from "#lib/components/content/RichText.svelte";
   import GateNote from "./GateNote.svelte";
   import OutcomeList from "./OutcomeList.svelte";
   import ScriptStep from "./ScriptStep.svelte";
-  import type { DialogueScriptStep } from "$lib/server/entities/dialogue";
+  import type { DialogueScriptStep } from "#lib/server/entities/dialogue.js";
 
   let {
     step,

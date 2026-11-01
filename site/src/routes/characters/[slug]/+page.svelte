@@ -1,8 +1,8 @@
 <script lang="ts">
-  import BackLink from "$lib/components/navigation/BackLink.svelte";
-  import CharacterDetail from "$lib/components/characters/CharacterDetail.svelte";
-  import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
-  import ConversationList from "$lib/components/conversations/ConversationList.svelte";
+  import BackLink from "#lib/components/navigation/BackLink.svelte";
+  import CharacterDetail from "#lib/components/characters/CharacterDetail.svelte";
+  import RelationshipSection from "#lib/components/relationships/RelationshipSection.svelte";
+  import ConversationList from "#lib/components/conversations/ConversationList.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

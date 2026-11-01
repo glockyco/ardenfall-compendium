@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { QuestLogic } from "$lib/server/entities/quest";
+  import type { QuestLogic } from "#lib/server/entities/quest.js";
 
   let { logic }: { logic: QuestLogic } = $props();
 

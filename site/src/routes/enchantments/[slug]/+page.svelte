@@ -1,8 +1,8 @@
 <script lang="ts">
-  import BackLink from "$lib/components/navigation/BackLink.svelte";
-  import EnchantmentDetail from "$lib/components/enchantments/EnchantmentDetail.svelte";
-  import EntityDetailHeader from "$lib/components/EntityDetailHeader.svelte";
-  import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
+  import BackLink from "#lib/components/navigation/BackLink.svelte";
+  import EnchantmentDetail from "#lib/components/enchantments/EnchantmentDetail.svelte";
+  import EntityDetailHeader from "#lib/components/EntityDetailHeader.svelte";
+  import RelationshipSection from "#lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

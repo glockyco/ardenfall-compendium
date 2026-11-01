@@ -1,5 +1,5 @@
 <script lang="ts">
-  import LocationOverview from "$lib/components/locations/LocationOverview.svelte";
+  import LocationOverview from "#lib/components/locations/LocationOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

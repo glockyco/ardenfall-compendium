@@ -2,7 +2,7 @@
   import type {
     ItemPresentationDurability,
     ItemPresentationStateFact,
-  } from "$lib/server/read-models";
+  } from "#lib/server/read-models.js";
 
   let {
     facts,

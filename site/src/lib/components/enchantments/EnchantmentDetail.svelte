@@ -1,6 +1,6 @@
 <script lang="ts">
-  import RichText from "$lib/components/content/RichText.svelte";
-  import type { EnchantmentPresentationRow } from "$lib/server/entities/enchantment";
+  import RichText from "#lib/components/content/RichText.svelte";
+  import type { EnchantmentPresentationRow } from "#lib/server/entities/enchantment.js";
 
   let { enchantment }: { enchantment: EnchantmentPresentationRow } = $props();
 </script>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import ItemStatRow from "./ItemStatRow.svelte";
-  import type { ItemPresentationStatRow } from "$lib/server/read-models";
+  import type { ItemPresentationStatRow } from "#lib/server/read-models.js";
 
   let { rows }: { rows: ItemPresentationStatRow[] } = $props();
 </script>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ConversationOverview from "$lib/components/conversations/ConversationOverview.svelte";
+  import ConversationOverview from "#lib/components/conversations/ConversationOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

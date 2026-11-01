@@ -1,6 +1,6 @@
 <script lang="ts">
   import ScriptStep from "./ScriptStep.svelte";
-  import type { DialoguePresentationRow } from "$lib/server/entities/dialogue";
+  import type { DialoguePresentationRow } from "#lib/server/entities/dialogue.js";
 
   let { presentation }: { presentation: DialoguePresentationRow } = $props();
 

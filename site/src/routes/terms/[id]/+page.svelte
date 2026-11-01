@@ -1,5 +1,5 @@
 <script lang="ts">
-  import BackLink from "$lib/components/navigation/BackLink.svelte";
+  import BackLink from "#lib/components/navigation/BackLink.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

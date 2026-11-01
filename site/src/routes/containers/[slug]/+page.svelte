@@ -1,7 +1,7 @@
 <script lang="ts">
-  import ContainerDetail from "$lib/components/containers/ContainerDetail.svelte";
-  import BackLink from "$lib/components/navigation/BackLink.svelte";
-  import RelationshipSection from "$lib/components/relationships/RelationshipSection.svelte";
+  import ContainerDetail from "#lib/components/containers/ContainerDetail.svelte";
+  import BackLink from "#lib/components/navigation/BackLink.svelte";
+  import RelationshipSection from "#lib/components/relationships/RelationshipSection.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

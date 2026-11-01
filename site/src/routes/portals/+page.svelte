@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PortalOverview from "$lib/components/portals/PortalOverview.svelte";
+  import PortalOverview from "#lib/components/portals/PortalOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

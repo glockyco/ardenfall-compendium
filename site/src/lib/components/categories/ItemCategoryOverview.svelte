@@ -1,6 +1,6 @@
 <script lang="ts">
-  import ItemIcon from "$lib/components/items/ItemIcon.svelte";
-  import type { ItemCategoryOverviewRow } from "$lib/server/read-models";
+  import ItemIcon from "#lib/components/items/ItemIcon.svelte";
+  import type { ItemCategoryOverviewRow } from "#lib/server/read-models.js";
 
   let { rows }: { rows: ItemCategoryOverviewRow[] } = $props();
 </script>

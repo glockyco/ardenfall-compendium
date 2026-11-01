@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { DialogueGate } from "$lib/server/entities/dialogue";
+  import type { DialogueGate } from "#lib/server/entities/dialogue.js";
   import GateNote from "./GateNote.svelte";
 
   let { gate }: { gate: DialogueGate } = $props();

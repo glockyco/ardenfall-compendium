@@ -1,4 +1,4 @@
-import { listStatusEffects, type StatusEffectOverviewRow } from "$lib/server/read-models";
+import { listStatusEffects, type StatusEffectOverviewRow } from "#lib/server/read-models.js";
 import type { PageServerLoad } from "./$types";
 
 export const prerender = true;

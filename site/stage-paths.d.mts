@@ -1,9 +1,8 @@
 /**
  * Hand-written declaration for `stage-paths.mjs`.
  *
- * The module is plain JavaScript because `svelte.config.js` imports it while Node loads the
- * SvelteKit config, before any TypeScript step exists. Declaring its shape here keeps the
- * TypeScript callers, which are the scripts, the read models and the layout, type-checked.
+ * The module is plain JavaScript so build configuration and Bun scripts can share staging
+ * paths without a TypeScript loader. This declaration keeps their callers type-checked.
  */
 export type StageKind = "fixture" | "release";
 

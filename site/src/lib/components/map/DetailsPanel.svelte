@@ -1,6 +1,6 @@
 <script lang="ts">
-  import AvailabilityNotice from "$lib/components/content/AvailabilityNotice.svelte";
-  import type { MapStore } from "$lib/map/map-store.svelte";
+  import AvailabilityNotice from "#lib/components/content/AvailabilityNotice.svelte";
+  import type { MapStore } from "#lib/map/map-store.svelte.js";
 
   let { store }: { store: MapStore } = $props();
   const point = $derived(store.selectedPoint);

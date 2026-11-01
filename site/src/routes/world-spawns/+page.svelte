@@ -1,5 +1,5 @@
 <script lang="ts">
-  import WorldSpawnOverview from "$lib/components/world-spawns/WorldSpawnOverview.svelte";
+  import WorldSpawnOverview from "#lib/components/world-spawns/WorldSpawnOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

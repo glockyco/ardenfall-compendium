@@ -23,7 +23,8 @@
     also disappear when the game stops shipping the thing it described.
   </p>
   <p>
-    <a class="underline underline-offset-4" href={resolve("/search")}>Search for a page by name</a>
+    <a class="underline underline-offset-4" href={resolve("search")}>Search for a page by name</a>
+
     , or start from the
     <a class="underline underline-offset-4" href={resolve("/")}>home page</a>.
   </p>

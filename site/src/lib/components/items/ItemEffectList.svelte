@@ -1,6 +1,6 @@
 <script lang="ts">
-  import RichText from "$lib/components/content/RichText.svelte";
-  import type { ItemPresentationEffect, RichTextDocument } from "$lib/server/read-models";
+  import RichText from "#lib/components/content/RichText.svelte";
+  import type { ItemPresentationEffect, RichTextDocument } from "#lib/server/read-models.js";
   import { UNRESOLVED_EFFECT_TARGET, effectRoleLabel } from "./itemEffect";
 
   let {

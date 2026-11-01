@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { DialogueOutcome } from "$lib/server/entities/dialogue";
+  import type { DialogueOutcome } from "#lib/server/entities/dialogue.js";
 
   let { outcomes }: { outcomes: DialogueOutcome[] } = $props();
 

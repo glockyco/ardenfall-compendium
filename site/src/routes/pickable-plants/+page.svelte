@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PlacedPlantOverview from "$lib/components/pickable-plants/PlacedPlantOverview.svelte";
+  import PlacedPlantOverview from "#lib/components/pickable-plants/PlacedPlantOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

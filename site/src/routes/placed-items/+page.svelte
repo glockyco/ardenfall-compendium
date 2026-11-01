@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PlacedItemOverview from "$lib/components/placed-items/PlacedItemOverview.svelte";
+  import PlacedItemOverview from "#lib/components/placed-items/PlacedItemOverview.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

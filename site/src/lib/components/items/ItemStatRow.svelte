@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ItemPresentationStatRow } from "$lib/server/read-models";
+  import type { ItemPresentationStatRow } from "#lib/server/read-models.js";
 
   let { row }: { row: ItemPresentationStatRow } = $props();
 </script>

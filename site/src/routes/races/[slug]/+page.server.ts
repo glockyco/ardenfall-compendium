@@ -1,5 +1,5 @@
 import { error } from "@sveltejs/kit";
-import { getCharacterRacePresentation, listCharacterRaces } from "$lib/server/read-models";
+import { getCharacterRacePresentation, listCharacterRaces } from "#lib/server/read-models.js";
 import type { EntryGenerator, PageServerLoad } from "./$types";
 
 const slugFromRoutePath = (routePath: string) => routePath.slice(routePath.lastIndexOf("/") + 1);

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ContainerPresentationRow } from "$lib/server/read-models";
+  import type { ContainerPresentationRow } from "#lib/server/read-models.js";
 
   let { presentation }: { presentation: ContainerPresentationRow } = $props();
   const number = (value: number | null): string =>

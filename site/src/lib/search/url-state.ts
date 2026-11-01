@@ -9,6 +9,6 @@ export function encodeSearchQuery(query: string): string {
   return params.toString();
 }
 
-export function decodeSearchQuery(params: URLSearchParams): string {
+export function decodeSearchQuery(params: Pick<URLSearchParams, "get">): string {
   return params.get(searchQueryParam)?.trim() ?? "";
 }

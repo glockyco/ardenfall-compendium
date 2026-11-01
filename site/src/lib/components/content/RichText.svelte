@@ -1,6 +1,6 @@
 <script lang="ts">
   import RichTextNode from "./RichTextNode.svelte";
-  import type { RichTextDocument } from "$lib/server/read-models";
+  import type { RichTextDocument } from "#lib/server/read-models.js";
 
   let { richText }: { richText: RichTextDocument } = $props();
 </script>
