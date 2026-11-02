@@ -85,6 +85,20 @@ describe("sitemap routes", () => {
     expect(builtSitemapRoutes()).toEqual(builtPageRoutes());
   });
 
+  it("keeps every built page out of indexes while allowing crawlers to read it", () => {
+    const pages = readdirSync(builtOutputRoot, { recursive: true, encoding: "utf8" }).filter(
+      (path) => path.endsWith(".html"),
+    );
+    expect(pages.length).toBeGreaterThan(0);
+    for (const page of pages) {
+      const html = readFileSync(join(builtOutputRoot, page), "utf8");
+      expect(html).toContain('<meta name="robots" content="noindex"');
+    }
+    const robots = readFileSync(join(builtOutputRoot, "robots.txt"), "utf8");
+    expect(robots).toContain("User-agent: *\nAllow: /\n");
+    expect(robots).not.toMatch(/^Disallow:\s*\S/m);
+  });
+
   it("adds listing pages and entity page routes", () => {
     const routes = sitemapRoutePaths([
       { route_path: "/items/iron-sword--abcdef12" },

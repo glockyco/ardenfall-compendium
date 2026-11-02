@@ -95,6 +95,8 @@ bun run --cwd site deploy:production ../pipeline/artifacts/releases/<game-versio
 
 This stages the artifact in the release slot, builds the pages and search index, runs the prerender and search checks, publishes static files to Cloudflare, and checks the deployed release. The private build database is not deployed. Fixture and release staging slots are separate, so fixture builds do not overwrite the staged live data.
 
+Every page carries `noindex` until the site has real page titles and substantive content. Remove that directive from [`site/src/app.html`](site/src/app.html) and update its built-page test when those pages are ready for indexing, keeping `robots.txt` open to crawling so search engines can read the directive.
+
 [`site/AGENTS.md`](site/AGENTS.md#deployment) explains staging, preview selection, and deployment rules. [`pipeline/src/cli.ts`](pipeline/src/cli.ts) defines artifact commands and output naming.
 
 ## Change the project
